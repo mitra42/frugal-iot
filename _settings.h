@@ -7,9 +7,12 @@
  */
 #ifndef FRUGALIOT_SETTINGS_H
 #define FRUGALIOT_SETTINGS_H
-#define FRUGALIOT_DEBUG       // Turn on top level debugging
 
-// #define WANT_SENSOR_DHT11            // DHT11 Temp and humidity sensor
-#define WANT_ACTUATOR_BLINKEN
+#define FRUGALIOT_DEBUG       // Turn on top level debugging
+#include "_configuration.h"      // Include (eventually) auto-generated file, especially defines a lot of "WANT_"
+
+#ifdef WANT_ACTUATOR_BLINKEN
+#include "actuator_blinken.h"
+#endif
 
 #endif FRUGALIOT_SETTINGS_H
