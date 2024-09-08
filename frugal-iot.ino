@@ -11,7 +11,7 @@ void setup() {
   while (!Serial) { 
     ; // wait for serial port to connect. Needed for Arduino Leonardo only
   }
-  Serial.setDebugOutput(true);  // Enable debug from wifi, also needed to enable output from printf
+  //Serial.setDebugOutput(true);  // Enable debug from wifi, also needed to enable output from printf
   Serial.println("FrugalIoT Starting");
 #endif FRUGALIOT_DEBUG
 // put setup code here, to run once:

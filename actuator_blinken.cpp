@@ -12,12 +12,16 @@
 
 #include <Arduino.h>
 #include "actuator_blinken.h"
+#include "logic_clock.h"
 
 #ifndef BUILTIN_LED
 #define BUILTIN_LED 13
 #endif
 
 namespace aBlinken {
+
+unsigned long lastBlinkTime = 0;
+const unsigned long blinkInterval = 1000; // 1 second
 
 void setup() {                
   // Comment out this line unless debugging port numbers
@@ -35,9 +39,9 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(BUILTIN_LED, HIGH);   // set the LED on
-  delay(2000);              // wait for a second - TODO its obvious bad practice to put a delay here, should be using some kind of global clock etc
-  digitalWrite(BUILTIN_LED, LOW);    // set the LED off
-  delay(200);              // wait for a second - TODO its obvious bad practice to put a delay here, should be using some kind of global clock etc
+  if (Clock::hasIntervalPassed(lastBlinkTime, blinkInterval)) {
+        digitalWrite(BUILTIN_LED, !digitalRead(BUILTIN_LED));
+        lastBlinkTime = Clock::getTime();
+    }
 }
 } //namespace aBlinken
