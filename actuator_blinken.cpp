@@ -12,7 +12,7 @@
 
 #include <Arduino.h>
 #include "actuator_blinken.h"
-#include "logic_clock.h"
+#include "system_clock.h"
 
 #ifndef BUILTIN_LED
 #define BUILTIN_LED 13
@@ -39,9 +39,9 @@ void setup() {
 }
 
 void loop() {
-  if (Clock::hasIntervalPassed(lastBlinkTime, blinkInterval)) {
+  if (sClock::hasIntervalPassed(lastBlinkTime, blinkInterval)) {
         digitalWrite(BUILTIN_LED, !digitalRead(BUILTIN_LED));
-        lastBlinkTime = Clock::getTime();
+        lastBlinkTime = sClock::getTime();
     }
 }
 } //namespace aBlinken

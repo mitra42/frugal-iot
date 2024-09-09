@@ -1,6 +1,6 @@
-#include "logic_clock.h"
+#include "system_clock.h"
 
-namespace Clock {
+namespace sClock {
     void init() {
 
     }
@@ -13,4 +13,4 @@ namespace Clock {
         unsigned long currentTime = getTime();
         return (currentTime - lastTime >= interval);
     }
-} // namespace Clock
+} // namespace sClock
