@@ -17,12 +17,18 @@
 #include "actuator_blinken.h"
 #include "system_clock.h"
 
+// This next part is to handle some weirdnesses where early versions of ESP8266 define BUILTIN_LED instead of LED_BUILTIN
+// but BUILTIN_LED responds to ifndef
+// This version works on ESP8266 D1 Mini - not tested on others 
 #ifndef ACTUATOR_BLINKIN_PIN
-#ifndef BUILTIN_LED
-#define BUILTIN_LED 13
-#endif
+#ifdef LED_BUILTIN
+#define ACTUATOR_BLINKIN_PIN LED_BUILTIN
+#else // !LED_BUILTIN
+#ifdef BUILTIN_LED
 #define ACTUATOR_BLINKIN_PIN BUILTIN_LED
-#endif
+#endif // BUILTIN_LED
+#endif // LED_BUILTIN
+#endif // ACTUATOR_BLINKIN_PIN
 
 namespace aBlinken {
 
@@ -37,6 +43,16 @@ const unsigned long blinkInterval = 1000; // 1 second
 void setup() {                
   // initialize the digital pin as an output.
   pinMode(ACTUATOR_BLINKIN_PIN, OUTPUT);
+#ifdef ACTUATOR_BLINKIN_DEBUG
+  Serial.print("BUILTIN_LED="); Serial.print(BUILTIN_LED);
+  Serial.print(" INPUT="); Serial.print(INPUT); 
+  Serial.print(" OUTPUT="); Serial.print(OUTPUT); 
+  Serial.print(" INPUT_PULLUP="); Serial.print(INPUT_PULLUP); 
+  Serial.print(" HIGH="); Serial.print(HIGH); 
+  Serial.print(" LOW="); Serial.print(LOW);   
+  Serial.println("");
+#endif // ACTUATOR_BLINKIN_DEBUG
+
 }
 
 void loop() {

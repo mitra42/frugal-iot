@@ -5,6 +5,7 @@
 #ifndef FRUGALIOT_CONFIGURATION_H
 #define FRUGALIOT_CONFIGURATION_H
 
+//#define ESP8266_D1_MINI
 // #define WANT_SENSOR_DHT11            // DHT11 Temp and humidity sensor
 #define WANT_ACTUATOR_BLINKEN // Demo blinking led on board
 #define ACTUATOR_BLINKEN_MS 1000
