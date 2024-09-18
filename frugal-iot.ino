@@ -18,6 +18,9 @@ void setup() {
 #ifdef WANT_ACTUATOR_BLINKEN
   aBlinken::setup();
 #endif
+#ifdef WANT_SENSOR_ANALOG
+  sAnalog::setup();
+#endif
 
 #ifdef FRUGALIOT_DEBUG
   Serial.println("FrugalIoT Starting Loop");
@@ -29,6 +32,10 @@ void loop() {
 #ifdef WANT_ACTUATOR_BLINKEN
   aBlinken::loop();
 #endif
+#ifdef WANT_SENSOR_ANALOG
+  sAnalog::loop();
+#endif
+
 }
 
 

@@ -14,5 +14,9 @@
 #ifdef WANT_ACTUATOR_BLINKEN
 #include "actuator_blinken.h"
 #endif
+#ifdef WANT_SENSOR_ANALOG
+#include "sensor_analog.h"
+#endif
+
 
 #endif FRUGALIOT_SETTINGS_H
