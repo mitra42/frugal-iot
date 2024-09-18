@@ -16,16 +16,20 @@
 
 namespace sAnalog {
 
-int value = 0;
-
 #ifdef SENSOR_ANALOG_MS
 unsigned long lastLoopTime = 0;
 #endif // SENSOR_ANALOG_MS
 
+#ifdef SENSOR_ANALOG_SMOOTH
+unsigned long value = 0;
+#else
+int value = 0;
+#endif
 
 void setup() {      
   // pinMode(SENSOR_ANALOG_PIN, INPUT); // I don't think this is needed
   analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
+  //value = 0;
 }
 
 void loop() {
@@ -37,6 +41,10 @@ void loop() {
 #else // !SENSOR_ANALOG_SMOOTH
         value = analogRead(SENSOR_ANALOG_PIN);
 #endif // SENSOR_ANALOG_SMOOTH
+#ifdef SENSOR_ANALOG_DEBUG
+        Serial.print("Analog:");
+        Serial.println(value);
+#endif // SENSOR_ANALOG_DEBUG
 #ifdef SENSOR_ANALOG_MS
         lastLoopTime = sClock::getTime();
     }

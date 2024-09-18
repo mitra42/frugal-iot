@@ -11,7 +11,9 @@
 #define ACTUATOR_BLINKEN_MS 1000
 
 #define WANT_SENSOR_ANALOG // simple analog read 
-#define SENSOR_ANALOG_PIN 3 // Which pin to read - this might be board specific
+#define SENSOR_ANALOG_PIN A0 // Which pin to read - this might be board specific
 #define SENSOR_ANALOG_MS 1000 // How often to read in MS
+#define SENSOR_ANALOG_DEBUG
+#define SENSOR_ANALOG_SMOOTH 2
 
 #endif FRUGALIOT_CONFIGURATION_H
