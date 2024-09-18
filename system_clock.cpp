@@ -1,3 +1,6 @@
+#include "_settings.h"  // Settings for what to include etc
+#include "_common.h"    // Main include file for Framework
+
 #include "system_clock.h"
 
 namespace sClock {

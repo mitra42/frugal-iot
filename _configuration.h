@@ -7,5 +7,7 @@
 
 // #define WANT_SENSOR_DHT11            // DHT11 Temp and humidity sensor
 #define WANT_ACTUATOR_BLINKEN // Demo blinking led on board
+#define ACTUATOR_BLINKEN_MS 1000
+
 
 #endif FRUGALIOT_CONFIGURATION_H
