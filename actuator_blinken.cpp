@@ -2,21 +2,21 @@
   Blink
   Turns on an LED on for one second, then off for one second, repeatedly.
  
-  This example code is in the public domain.
+  Based on the Blinken demo in the IDE
  */
 
-// Arduinos unfortunately dont use any kind of #define for the board type so the 
-// standard blinkplay fails on for example the WEMOS boards.
-// Arduino_UNO Pin 13 has an LED connected on most Arduino boards but doesnt define BUILTIN_LED
-// ESP8266 has it on pin 2, but strangely BUILTIN_LED responds as ifndef !
 
 #include "_settings.h"  // Settings for what to include etc
 #include "_common.h"    // Main include file for Framework
 
+#ifdef WANT_ACTUATOR_BLINKEN
 #include <Arduino.h>
 #include "actuator_blinken.h"
 #include "system_clock.h"
 
+// Arduinos unfortunately dont use any kind of #define for the board type so the 
+// standard blinkplay fails on for example the WEMOS boards.
+// Arduino_UNO Pin 13 has an LED connected on most Arduino boards but doesnt define BUILTIN_LED
 // This next part is to handle some weirdnesses where early versions of ESP8266 define BUILTIN_LED instead of LED_BUILTIN
 // but BUILTIN_LED responds to ifndef
 // This version works on ESP8266 D1 Mini - not tested on others 
@@ -44,6 +44,7 @@ void setup() {
   // initialize the digital pin as an output.
   pinMode(ACTUATOR_BLINKIN_PIN, OUTPUT);
 #ifdef ACTUATOR_BLINKIN_DEBUG
+  Serial.println(__FILE__);
   Serial.print("BUILTIN_LED="); Serial.print(BUILTIN_LED);
   Serial.print(" INPUT="); Serial.print(INPUT); 
   Serial.print(" OUTPUT="); Serial.print(OUTPUT); 
@@ -68,3 +69,4 @@ void loop() {
 }
 
 } //namespace aBlinken
+#endif // WANT_ACTUATOR_BLINKEN
