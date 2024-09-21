@@ -17,6 +17,9 @@
 #ifdef WANT_SENSOR_ANALOG
 #include "sensor_analog.h"
 #endif
+#ifdef WANT_SENSOR_SHT85
+#include "sensor_sht85.h"
+#endif
 
 
 #endif FRUGALIOT_SETTINGS_H

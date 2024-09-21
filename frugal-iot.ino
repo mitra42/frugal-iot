@@ -22,6 +22,10 @@ void setup() {
 #ifdef WANT_SENSOR_ANALOG
   sAnalog::setup();
 #endif
+#ifdef WANT_SENSOR_SHT85
+  sSHT85::setup();
+#endif
+
 
 #ifdef FRUGALIOT_DEBUG
   Serial.println("FrugalIoT Starting Loop");
@@ -35,6 +39,9 @@ void loop() {
 #endif
 #ifdef WANT_SENSOR_ANALOG
   sAnalog::loop();
+#endif
+#ifdef WANT_SENSOR_SHT85
+  sSHT85::loop();
 #endif
 
 }

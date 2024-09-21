@@ -1,65 +1,79 @@
-//
-//    FILE: SHT85_demo_async.ino
-//  AUTHOR: Rob Tillaart
-// PURPOSE: demo async interface
-//     URL: https://github.com/RobTillaart/SHT85
-//
-// TOPVIEW SHT85  (check datasheet)
-//            +-------+
-// +-----\    | SDA 4 -----
-// | +-+  ----+ GND 3 -----
-// | +-+  ----+ +5V 2 -----
-// +-----/    | SCL 1 -----
-//            +-------+
+/*
+ * Temperature and Humidity sensor, 
+ * Based on SHT85_demo_async.ino in https://github.com/RobTillaart/SHT85
+ *
+ * Tested on Lolin SHT30 shield
+ */
+
+#include "_settings.h"  // Settings for what to include etc
+#include "_common.h"    // Main include file for Framework
+
+#ifdef WANT_SENSOR_SHT85
+
+#include <Arduino.h>
+#include <SHT85.h>
+#include "system_clock.h"
+#include "sensor_sht85.h"
 
 
-//  TODO verify with HW
+namespace sSHT85 {
 
-
-#include "SHT85.h"
-
-#define SHT85_ADDRESS         0x44
-
-SHT85 sht(SHT85_ADDRESS);
-
+SENSOR_SHT85_DEVICE sht(SENSOR_SHT85_ADDRESS);
+unsigned long lastLoopTime = 0;
+float temperature; 
+float humidity; 
 
 void setup()
 {
-  Serial.begin(115200);
+#ifdef SENSOR_SHT85_DEBUG
   Serial.println(__FILE__);
   Serial.print("SHT_LIB_VERSION: \t");
-  Serial.println(SHT_LIB_VERSION);
+  Serial.print(SHT_LIB_VERSION);
+  Serial.print(" on "); 
+  Serial.print(SENSOR_SHT85_ADDRESS, HEX);
+#endif
 
+  //TODO It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   Wire.begin();
   Wire.setClock(100000);
-  sht.begin();
 
+  sht.begin();
   uint16_t stat = sht.readStatus();
+
+#ifdef SENSOR_SHT85_DEBUG
+  Serial.print("status: ");
   Serial.print(stat, HEX);
   Serial.println();
+#endif
 
-  sht.requestData();
+  sht.requestData(); // Initial request queued up 
 }
 
 
 void loop()
 {
-  if (sht.dataReady())
-  {
-    sht.readData();
-    Serial.print("\t");
-    Serial.print(micros());
-    Serial.print("\t");
-    Serial.print(sht.lastRequest());
-    Serial.print("\t");
-    Serial.print(sht.getTemperature(), 1);
-    Serial.print("\t");
-    Serial.println(sht.getHumidity(), 1);
-    sht.requestData();
+  if (sClock::hasIntervalPassed(lastLoopTime, SENSOR_SHT85_MS)) {
+    if (sht.dataReady())
+    {
+      sht.readData();
+      temperature = sht.getTemperature(); // TODO use raw version https://github.com/RobTillaart/SHT85
+      humidity = sht.getHumidity(); // TODO use raw version https://github.com/RobTillaart/SHT85
+      // Note, not smoothing the data as it seems fairly stable and is float rather than bits anyway
+  #ifdef SENSOR_SHT85_DEBUG
+      Serial.print(temperature, 1);
+      Serial.print("°C\t");
+      Serial.print(humidity, 1);
+      Serial.println("%");
+  #endif
+      // Note only set next delay and request more Data if was dataReady
+      sht.requestData(); // Request next one
+      lastLoopTime = sClock::getTime(); 
+    }
   }
-  delay(10000);  //  do not call sensor too often (see datasheet)
 }
+} // namespace sSHT85
 
+#endif WANT_SENSOR_SHT85
 
 //  -- END OF FILE --
 
