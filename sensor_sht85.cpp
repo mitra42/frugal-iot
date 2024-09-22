@@ -18,59 +18,116 @@
 
 namespace sSHT85 {
 
-SENSOR_SHT85_DEVICE sht(SENSOR_SHT85_ADDRESS);
+#ifndef SENSOR_SHT85_ADDRESS_ARRAY
+  SENSOR_SHT85_DEVICE *sht;
+#else
+  SENSOR_SHT85_DEVICE *sht_array[SENSOR_SHT85_COUNT];
+  int sht_address_array[] = {SENSOR_SHT85_ADDRESS_ARRAY};
+  // Defining SENSOR_SHT85_ADDRESS simplifies some code as always used in context of 'i' being defined
+  #define SENSOR_SHT85_ADDRESS sht_address_array[i]
+#endif // SENSOR_SHT85_ADDRESS_ARRAY
+
 unsigned long lastLoopTime = 0;
+#ifndef SENSOR_SHT85_ADDRESS_ARRAY
 float temperature; 
 float humidity; 
+#else
+float temperature[SENSOR_SHT85_COUNT];
+float humidity[SENSOR_SHT85_COUNT];
+#endif // SENSOR_SHT85_ADDRESS_ARRAY
 
+SENSOR_SHT85_DEVICE *setup_sensor(unsigned int addr) {
+  SENSOR_SHT85_DEVICE *sht = new SENSOR_SHT85_DEVICE(addr);
+  sht->begin();
+#ifdef SENSOR_SHT85_DEBUG
+  uint16_t stat = sht->readStatus();
+  Serial.print("addr: ");
+  Serial.print(addr);
+  Serial.print(" status: ");
+  Serial.print(stat, HEX);
+  Serial.println();
+  sht->requestData(); // Initial request queued up 
+#endif
+  return sht;
+}
 void setup()
 {
 #ifdef SENSOR_SHT85_DEBUG
   Serial.println(__FILE__);
   Serial.print("SHT_LIB_VERSION: \t");
-  Serial.print(SHT_LIB_VERSION);
-  Serial.print(" on "); 
-  Serial.print(SENSOR_SHT85_ADDRESS, HEX);
+  Serial.println(SHT_LIB_VERSION);
 #endif
 
   //TODO It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   Wire.begin();
   Wire.setClock(100000);
 
-  sht.begin();
-  uint16_t stat = sht.readStatus();
-
-#ifdef SENSOR_SHT85_DEBUG
-  Serial.print("status: ");
-  Serial.print(stat, HEX);
-  Serial.println();
-#endif
-
-  sht.requestData(); // Initial request queued up 
+#ifndef SENSOR_SHT85_ADDRESS_ARRAY // TODO could merge the if and else with clever ifdef around the looping part
+  sht = setup_sensor(SENSOR_SHT85_ADDRESS);
+#else // SENSOR_SHT85_ADDRESS_ARRAY
+  for(int i = 0 ; i < SENSOR_SHT85_COUNT; i++) { //TODO can use length of sht_address_array and dont think need _COUNT 
+    sht_array[i] = setup_sensor(sht_address_array[i]);
+  }
+#endif // SENSOR_SHT85_ADDRESS_ARRAY
 }
 
-
-void loop()
-{
-  if (sClock::hasIntervalPassed(lastLoopTime, SENSOR_SHT85_MS)) {
-    if (sht.dataReady())
-    {
-      sht.readData();
-      temperature = sht.getTemperature(); // TODO use raw version https://github.com/RobTillaart/SHT85
-      humidity = sht.getHumidity(); // TODO use raw version https://github.com/RobTillaart/SHT85
-      // Note, not smoothing the data as it seems fairly stable and is float rather than bits anyway
+void readSensor(SENSOR_SHT85_DEVICE *sht, unsigned int i) {
   #ifdef SENSOR_SHT85_DEBUG
-      Serial.print(temperature, 1);
-      Serial.print("°C\t");
-      Serial.print(humidity, 1);
-      Serial.println("%");
+    Serial.print(SENSOR_SHT85_ADDRESS);
+    Serial.print("   ");
   #endif
-      // Note only set next delay and request more Data if was dataReady
-      sht.requestData(); // Request next one
-      lastLoopTime = sClock::getTime(); 
+  if (sht->dataReady())
+  {
+    if (sht->readData()) {
+      #ifndef SENSOR_SHT85_ADDRESS_ARRAY
+        temperature = sht->getTemperature(); // TODO use raw version https://github.com/RobTillaart/SHT85
+        humidity = sht->getHumidity(); // TODO use raw version https://github.com/RobTillaart/SHT85
+      #else
+        temperature[i] = sht->getTemperature(); // TODO use raw version https://github.com/RobTillaart/SHT85
+        humidity[i] = sht->getHumidity(); // TODO use raw version https://github.com/RobTillaart/SHT85
+      #endif
+      // Note, not smoothing the data as it seems fairly stable and is float rather than bits anyway
+      #ifdef SENSOR_SHT85_DEBUG
+        #ifndef SENSOR_SHT85_ADDRESS_ARRAY
+          Serial.print(temperature, 1);
+        #else
+          Serial.print(temperature[i], 1);
+        #endif
+        Serial.print("°C\t");
+        #ifndef SENSOR_SHT85_ADDRESS_ARRAY
+          Serial.print(humidity, 1);
+        #else
+          Serial.print(humidity[i], 1);
+        #endif
+        Serial.println("%");
+      #endif
+      // Note only request more Data if was dataReady
+      sht->requestData(); // Request next one
+#ifdef SENSOR_SHT85_DEBUG
+  } else {
+    Serial.println("SHT sensor did not return data");
+#endif
     }
+#ifdef SENSOR_SHT85_DEBUG
+  } else {
+    Serial.println("SHT sensor not ready");
+#endif
   }
 }
+
+void loop() {
+  if (sClock::hasIntervalPassed(lastLoopTime, SENSOR_SHT85_MS)) {
+    #ifndef SENSOR_SHT85_ADDRESS_ARRAY
+        readSensor(sht,0);
+    #else
+      for(int i = 0 ; i < SENSOR_SHT85_COUNT; i++) {
+        readSensor(sht_array[i],i);
+      }
+    #endif
+    lastLoopTime = sClock::getTime(); 
+  }
+}
+
 } // namespace sSHT85
 
 #endif WANT_SENSOR_SHT85
