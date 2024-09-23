@@ -4,6 +4,7 @@
 */
 
 // TODO turn this into a template
+// TODO add the _ARRAY parameters as used in sensor_sht85.cpp so will read multiple analog inputs.
 
 #include "_settings.h"  // Settings for what to include etc
 #include "_common.h"    // Main include file for Framework

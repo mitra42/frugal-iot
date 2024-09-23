@@ -2,7 +2,24 @@
  * Temperature and Humidity sensor, 
  * Based on SHT85_demo_async.ino in https://github.com/RobTillaart/SHT85
  *
- * Tested on Lolin SHT30 shield
+ * Mitra Ardron: Sept 2024
+ * 
+ * Tested on Lolin SHT30 shield on ESP8266 - not yet tested on other devices or processors
+ * 
+ * Configuration options example - these are all in _configuration.h
+ * Required:
+ * SENSOR_SHT85_DEVICE SHT30                   // Which kind of device, for now it presumes they are all the same.
+ * SENSOR_SHT85_ADDRESS 0x45                   // A single device address in hex
+ * or SENSOR_SHT85_ADDRESS_ARRAY 0x45,0x44     // A list of device addresses
+ * SENSOR_SHT85_MS                             // How often to poll each sensor, for now we presume we poll them all this often
+ * Optional: 
+ * SENSOR_SHT85_DEBUG                          // Debugging output
+ *
+ * TODO Support multiple I2C Wires - so for example can use two sensors on each wire. See Issue#16
+ * TODO Pull the Wire support into a seperate module so that a single Wire can be used for alternate sensors. See Issue#16
+ * TODO Clock refactoring to use nextLoopTime - as part of Issue#15 
+*/
+
  */
 
 #include "_settings.h"  // Settings for what to include etc
