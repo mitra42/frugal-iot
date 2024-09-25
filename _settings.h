@@ -11,14 +11,17 @@
 #define FRUGALIOT_DEBUG       // Turn on top level debugging
 #include "_configuration.h"      // Include (eventually) auto-generated file, especially defines a lot of "WANT_"
 
-#ifdef WANT_ACTUATOR_BLINKEN
-#include "actuator_blinken.h"
+#ifdef WANT_ACTUATOR_LEDBUILTIN
+#include "actuator_ledbuiltin.h"
 #endif
 #ifdef WANT_SENSOR_ANALOG
 #include "sensor_analog.h"
 #endif
 #ifdef WANT_SENSOR_SHT85
 #include "sensor_sht85.h"
+#endif
+#ifdef WANT_CONTROL_BLINKEN
+#include "control_blinken.h"
 #endif
 
 

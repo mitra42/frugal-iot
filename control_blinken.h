@@ -1,14 +1,13 @@
-#ifndef ACTUATOR_BLINKEN_H
-#define ACTUATOR_BLINKEN_H
+#ifndef CONTROL_BLINKEN_H
+#define CONTROL_BLINKEN_H
 
 /* Configuration options
- * Required: ACTUATOR_BLINKEN_MS
- * Optional: ACTUATOR_BLINKEN_DEBUG ACTUATOR_BLINKEN_PIN - defaults
+ * Required: CONTROL_BLINKEN_MS
 */
 
 
-namespace aBlinken {
+namespace cBlinken {
 void setup();
 void loop();
 } // namespace aBlinken
-#endif // ACTUATOR_BLINKEN_H
+#endif // CONTROL_BLINKEN_H

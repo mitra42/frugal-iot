@@ -1,14 +1,14 @@
-#ifndef ACTUATOR_BLINKEN_H
-#define ACTUATOR_BLINKEN_H
+#ifndef ACTUATOR_LEDBUILTIN_H
+#define ACTUATOR_LEDBUILTIN_H
 
 /* Configuration options
- * Required: ACTUATOR_BLINKEN_MS
- * Optional: ACTUATOR_BLINKEN_DEBUG ACTUATOR_BLINKEN_PIN - defaults
+ * Optional: ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_PIN - defaults
 */
 
 
-namespace aBlinken {
+namespace aLedbuiltin {
 void setup();
 void loop();
-} // namespace aBlinken
-#endif // ACTUATOR_BLINKEN_H
+extern bool value;
+} // namespace aLedbuiltin
+#endif // ACTUATOR_LEDBUILTIN_H
