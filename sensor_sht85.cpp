@@ -20,8 +20,6 @@
  * TODO Clock refactoring to use nextLoopTime - as part of Issue#15 
 */
 
- */
-
 #include "_settings.h"  // Settings for what to include etc
 #include "_common.h"    // Main include file for Framework
 
