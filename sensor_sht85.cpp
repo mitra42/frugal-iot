@@ -18,6 +18,7 @@
  * TODO Support multiple I2C Wires - so for example can use two sensors on each wire. See Issue#16
  * TODO Pull the Wire support into a seperate module so that a single Wire can be used for alternate sensors. See Issue#16
  * TODO Clock refactoring to use nextLoopTime - as part of Issue#15 
+ * TODO Support I2C multiplexors - see sample code at https://github.com/RobTillaart/SHT85/issues/26#issuecomment-2367448245
 */
 
 #include "_settings.h"  // Settings for what to include etc
