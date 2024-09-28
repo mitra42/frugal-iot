@@ -16,6 +16,9 @@ void setup() {
   Serial.println("FrugalIoT Starting");
 #endif FRUGALIOT_DEBUG
 // put setup code here, to run once:
+#ifdef WANT_SYSTEM_MQTT
+  xMqtt::setup();
+#endif
 #ifdef WANT_ACTUATOR_LEDBUILTIN
   aLedbuiltin::setup();
 #endif
@@ -37,6 +40,9 @@ void setup() {
 
 void loop() {
   // Put code for each sensor etc here - call functions in those sections
+#ifdef WANT_SYSTEM_MQTT
+  xMqtt::loop();
+#endif
 #ifdef WANT_ACTUATOR_LEDBUILTIN
   aLedbuiltin::loop();
 #endif

@@ -132,7 +132,7 @@ void readSensor(SENSOR_SHT85_DEVICE *sht, unsigned int i) {
 }
 
 void loop() {
-  if (sClock::hasIntervalPassed(lastLoopTime, SENSOR_SHT85_MS)) {
+  if (xClock::hasIntervalPassed(lastLoopTime, SENSOR_SHT85_MS)) {
     #ifndef SENSOR_SHT85_ADDRESS_ARRAY
         readSensor(sht,0);
     #else
@@ -140,7 +140,7 @@ void loop() {
         readSensor(sht_array[i],i);
       }
     #endif
-    lastLoopTime = sClock::getTime(); 
+    lastLoopTime = xClock::getTime(); 
   }
 }
 

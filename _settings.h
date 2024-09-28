@@ -11,6 +11,9 @@
 #define FRUGALIOT_DEBUG       // Turn on top level debugging
 #include "_configuration.h"      // Include (eventually) auto-generated file, especially defines a lot of "WANT_"
 
+#ifdef WANT_SYSTEM_MQTT
+#include "system_mqtt.h"
+#endif
 #ifdef WANT_ACTUATOR_LEDBUILTIN
 #include "actuator_ledbuiltin.h"
 #endif
