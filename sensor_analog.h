@@ -15,10 +15,9 @@ namespace sAnalog {
 #define SENSOR_ANALOG_REFERENCE DEFAULT
 #endif //  SENSOR_ANALOG_REFERENCE
 #ifdef SENSOR_ANALOG_SMOOTH
-extern unsigned long value;
-#else
-extern int value;
+extern unsigned long smoothedValue;
 #endif
+extern int value;
 void setup();
 void loop();
 } // namespace sAnalog

@@ -34,7 +34,7 @@ void setup() {
   //value = 0;
 }
 
-int readSensor() {
+void readSensor() {
   value = analogRead(SENSOR_ANALOG_PIN);
 }
 
