@@ -9,21 +9,21 @@
 #define FRUGALIOT_SETTINGS_H
 
 #define FRUGALIOT_DEBUG       // Turn on top level debugging
-#include "_configuration.h"      // Include (eventually) auto-generated file, especially defines a lot of "WANT_"
+#include "_configuration.h"      // Include (eventually) auto-generated file, defines _WANT and parameters for each module"
 
-#ifdef WANT_SYSTEM_MQTT
+#ifdef SYSTEM_MQTT_WANT
 #include "system_mqtt.h"
 #endif
-#ifdef WANT_ACTUATOR_LEDBUILTIN
+#ifdef ACTUATOR_LEDBUILTIN_WANT
 #include "actuator_ledbuiltin.h"
 #endif
-#ifdef WANT_SENSOR_ANALOG
+#ifdef SENSOR_ANALOG_WANT
 #include "sensor_analog.h"
 #endif
-#ifdef WANT_SENSOR_SHT85
+#ifdef SENSOR_SHT85_WANT
 #include "sensor_sht85.h"
 #endif
-#ifdef WANT_CONTROL_BLINKEN
+#ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
 #endif
 

@@ -8,7 +8,7 @@
 
 #include "_settings.h"  // Settings for what to include etc
 #include "_common.h"    // Main include file for Framework
-#ifdef WANT_SENSOR_ANALOG
+#ifdef SENSOR_ANALOG_WANT
 #include <Arduino.h>
 #include "sensor_analog.h"
 #ifdef SENSOR_ANALOG_MS
@@ -60,4 +60,4 @@ void loop() {
 #endif // SENSOR_ANALOG_MS
 }
 } //namespace sAnalog
-#endif // WANT_SENSOR_ANALOG
+#endif // SENSOR_ANALOG_WANT

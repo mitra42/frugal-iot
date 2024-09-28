@@ -16,19 +16,19 @@ void setup() {
   Serial.println("FrugalIoT Starting");
 #endif FRUGALIOT_DEBUG
 // put setup code here, to run once:
-#ifdef WANT_SYSTEM_MQTT
+#ifdef SYSTEM_MQTT_WANT
   xMqtt::setup();
 #endif
-#ifdef WANT_ACTUATOR_LEDBUILTIN
+#ifdef ACTUATOR_LEDBUILTIN_WANT
   aLedbuiltin::setup();
 #endif
-#ifdef WANT_SENSOR_ANALOG
+#ifdef SENSOR_ANALOG_WANT
   sAnalog::setup();
 #endif
-#ifdef WANT_SENSOR_SHT85
+#ifdef SENSOR_SHT85_WANT
   sSHT85::setup();
 #endif
-#ifdef WANT_CONTROL_BLINKEN
+#ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
 #endif
 
@@ -40,19 +40,19 @@ void setup() {
 
 void loop() {
   // Put code for each sensor etc here - call functions in those sections
-#ifdef WANT_SYSTEM_MQTT
+#ifdef SYSTEM_MQTT_WANT
   xMqtt::loop();
 #endif
-#ifdef WANT_ACTUATOR_LEDBUILTIN
+#ifdef ACTUATOR_LEDBUILTIN_WANT
   aLedbuiltin::loop();
 #endif
-#ifdef WANT_SENSOR_ANALOG
+#ifdef SENSOR_ANALOG_WANT
   sAnalog::loop();
 #endif
-#ifdef WANT_SENSOR_SHT85
+#ifdef SENSOR_SHT85_WANT
   sSHT85::loop();
 #endif
-#ifdef WANT_CONTROL_BLINKEN
+#ifdef CONTROL_BLINKEN_WANT
   cBlinken::loop();
 #endif
 }

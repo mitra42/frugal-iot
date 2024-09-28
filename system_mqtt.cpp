@@ -10,7 +10,7 @@
 
 #include "_settings.h"
 
-#ifdef WANT_SYSTEM_MQTT
+#ifdef SYSTEM_MQTT_WANT
 
 #include "system_clock.h"
 
@@ -103,4 +103,4 @@ void loop() {
 }
 
 } // Namespace xMqtt
-#endif //WANT_SYSTEM_MQTT
+#endif //SYSTEM_MQTT_WANT

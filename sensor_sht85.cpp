@@ -24,7 +24,7 @@
 #include "_settings.h"  // Settings for what to include etc
 #include "_common.h"    // Main include file for Framework
 
-#ifdef WANT_SENSOR_SHT85
+#ifdef SENSOR_SHT85_WANT
 
 #include <Arduino.h>
 #include <SHT85.h>
@@ -146,7 +146,7 @@ void loop() {
 
 } // namespace sSHT85
 
-#endif WANT_SENSOR_SHT85
+#endif SENSOR_SHT85_WANT
 
 //  -- END OF FILE --
 

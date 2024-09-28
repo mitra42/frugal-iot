@@ -11,7 +11,7 @@
 #include "_settings.h"  // Settings for what to include etc
 #include "_common.h"    // Main include file for Framework
 
-#ifdef WANT_CONTROL_BLINKEN
+#ifdef CONTROL_BLINKEN_WANT
 #include <Arduino.h>
 #include "control_blinken.h"
 #include "system_clock.h"
@@ -35,4 +35,4 @@ void loop() {
 }
 
 } //namespace cBlinken
-#endif // WANT_CONTROL_BLINKEN
+#endif // CONTROL_BLINKEN_WANT

@@ -6,7 +6,7 @@
 #include "_settings.h"  // Settings for what to include etc
 #include "_common.h"    // Main include file for Framework
 
-#ifdef WANT_ACTUATOR_LEDBUILTIN
+#ifdef ACTUATOR_LEDBUILTIN_WANT
 #include <Arduino.h>
 #include "actuator_ledbuiltin.h"
 
@@ -53,4 +53,4 @@ void loop() {
 }
 
 } //namespace aLEDBUILTIN
-#endif // WANT_ACTUATOR_LEDBUILTIN
+#endif // ACTUATOR_LEDBUILTIN_WANT
