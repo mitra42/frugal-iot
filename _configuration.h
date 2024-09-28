@@ -14,13 +14,13 @@
 #define CONTROL_BLINKEN_MS 1000
 //#define CONTROL_BLINKEN_DEBUG
 
-// #define SENSOR_ANALOG_WANT // simple analog read 
+#define SENSOR_ANALOG_WANT // simple analog read 
 #define SENSOR_ANALOG_PIN A0 // Which pin to read - this might be board specific
 #define SENSOR_ANALOG_MS 1000 // How often to read in MS
 #define SENSOR_ANALOG_DEBUG
 #define SENSOR_ANALOG_SMOOTH 2
 
-//#define SENSOR_SHT85_WANT
+#define SENSOR_SHT85_WANT
 #define SENSOR_SHT85_DEVICE SHT30 // e.g. The Lolin SHT30 shield
 #define SENSOR_SHT85_DEBUG
 #define SENSOR_SHT85_MS 1000 // Warning not to do this too often seen range in examples from 100 to 10000 not sure why such range

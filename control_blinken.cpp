@@ -10,6 +10,7 @@
 
 #include "_settings.h"  // Settings for what to include etc
 #include "_common.h"    // Main include file for Framework
+#include "actuator_ledbuiltin.h"
 
 #ifdef CONTROL_BLINKEN_WANT
 #include <Arduino.h>

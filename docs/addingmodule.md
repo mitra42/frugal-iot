@@ -11,6 +11,5 @@ the namespace will be sFoo
 *_configuration.h*: Define a SENSOR_FOO_WANT, and any parameters to be used,
 follow the patterns of other variables i.e. they should all start SENSOR_FOO_
 
-*_settings.h*: Include the .h files 
 
-*frugal_iot.ino*: call the sFoo::setup() and sFoo::loop()
+*frugal_iot.ino*: include sensor_foo and call the sFoo::setup() and sFoo::loop()

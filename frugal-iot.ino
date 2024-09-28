@@ -5,6 +5,22 @@
 #include "_settings.h"  // Settings for what to include etc
 #include "_common.h"    // Main include file for Framework
 
+#ifdef SYSTEM_MQTT_WANT
+#include "system_mqtt.h"
+#endif
+#ifdef ACTUATOR_LEDBUILTIN_WANT
+#include "actuator_ledbuiltin.h"
+#endif
+#ifdef SENSOR_ANALOG_WANT
+#include "sensor_analog.h"
+#endif
+#ifdef SENSOR_SHT85_WANT
+#include "sensor_sht85.h"
+#endif
+#ifdef CONTROL_BLINKEN_WANT
+#include "control_blinken.h"
+#endif
+
 void setup() {
 #ifdef FRUGALIOT_DEBUG
   Serial.begin(460800); // Initialize IO port TODO move to somewhere Forth wants it
