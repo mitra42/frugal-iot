@@ -11,16 +11,13 @@
 #ifdef SENSOR_ANALOG_WANT
 #include <Arduino.h>
 #include "sensor_analog.h"
-#ifdef SENSOR_ANALOG_MS
-#include "system_clock.h"
-#endif // SENSOR_ANALOG_MS
 
 // TODO figure out how to handle multiple analog input pins 
 
 namespace sAnalog {
 
 #ifdef SENSOR_ANALOG_MS
-unsigned long lastLoopTime = 0;
+unsigned long nextLoopTime = 0;
 #endif // SENSOR_ANALOG_MS
 
 int value = 0;
@@ -40,7 +37,7 @@ void readSensor() {
 
 void loop() {
 #ifdef SENSOR_ANALOG_MS
-  if (xClock::hasIntervalPassed(lastLoopTime, SENSOR_ANALOG_MS)) {
+  if (nextLoopTime <= millis()) {
 #endif // SENSOR_ANALOG_MS
     readSensor();
 #ifdef SENSOR_ANALOG_SMOOTH // TODO maybe copy this to a system function
@@ -55,7 +52,7 @@ void loop() {
 #endif // SENSOR_ANALOG_SMOOTH
 #endif // SENSOR_ANALOG_DEBUG
 #ifdef SENSOR_ANALOG_MS
-        lastLoopTime = xClock::getTime();
+        nextLoopTime += SENSOR_ANALOG_MS;
     }
 #endif // SENSOR_ANALOG_MS
 }

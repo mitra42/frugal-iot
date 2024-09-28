@@ -28,7 +28,6 @@
 
 #include <Arduino.h>
 #include <SHT85.h>
-#include "system_clock.h"
 #include "sensor_sht85.h"
 
 
@@ -43,7 +42,7 @@ namespace sSHT85 {
   #define SENSOR_SHT85_ADDRESS sht_address_array[i]
 #endif // SENSOR_SHT85_ADDRESS_ARRAY
 
-unsigned long lastLoopTime = 0;
+unsigned long nextLoopTime = 0;
 #ifndef SENSOR_SHT85_ADDRESS_ARRAY
 float temperature; 
 float humidity; 
@@ -132,7 +131,7 @@ void readSensor(SENSOR_SHT85_DEVICE *sht, unsigned int i) {
 }
 
 void loop() {
-  if (xClock::hasIntervalPassed(lastLoopTime, SENSOR_SHT85_MS)) {
+  if (nextLoopTime <= millis() ) {
     #ifndef SENSOR_SHT85_ADDRESS_ARRAY
         readSensor(sht,0);
     #else
@@ -140,7 +139,7 @@ void loop() {
         readSensor(sht_array[i],i);
       }
     #endif
-    lastLoopTime = xClock::getTime(); 
+    nextLoopTime += SENSOR_SHT85_MS;
   }
 }
 

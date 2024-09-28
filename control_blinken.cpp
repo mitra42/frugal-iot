@@ -15,23 +15,22 @@
 #ifdef CONTROL_BLINKEN_WANT
 #include <Arduino.h>
 #include "control_blinken.h"
-#include "system_clock.h"
 
 namespace cBlinken {
 
-unsigned long lastLoopTime = 0;
+unsigned long nextLoopTime = 0;
 
 void setup() {                
 }
 
 void loop() {
-  if (xClock::hasIntervalPassed(lastLoopTime, CONTROL_BLINKEN_MS)) {
+  if (nextLoopTime <= millis()) {
     aLedbuiltin::value = !aLedbuiltin::value;
     #ifdef CONTROL_BLINKEN_DEBUG
       Serial.print("Set LED to ");
       Serial.println(aLedbuiltin::value);
     #endif // CONTROL_BLINKEN_DEBUG
-    lastLoopTime = xClock::getTime();
+    nextLoopTime += CONTROL_BLINKEN_MS;
   }
 }
 

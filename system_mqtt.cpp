@@ -12,8 +12,6 @@
 
 #ifdef SYSTEM_MQTT_WANT
 
-#include "system_clock.h"
-
 #if CHIP == ESP8266
 #include <ESP8266WiFi.h> 
 #else
@@ -31,7 +29,7 @@ WiFiClient net;
 MQTTClient client;
 
 #ifdef SENSOR_ANALOG_MS
-unsigned long lastLoopTime = 0;
+unsigned long nextLoopTime = 0;
 #endif // SENSOR_ANALOG_MS
 
 
@@ -93,12 +91,12 @@ void loop() {
     connect();
   }
 #ifdef SENSOR_ANALOG_MS
-  if (xClock::hasIntervalPassed(lastLoopTime, SENSOR_MQTT_MS)) {
+  if (nextLoopTime <= millis()) {
 #endif // SENSOR_ANALOG_MS
     client.publish(SENSOR_MQTT_TOPIC, SENSOR_MQTT_PAYLOAD);
 #ifdef SENSOR_ANALOG_MS
-        lastLoopTime = xClock::getTime();
-    }
+    nextLoopTime += SENSOR_ANALOG_MS;
+  }
 #endif // SENSOR_ANALOG_MS
 }
 
