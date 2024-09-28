@@ -24,13 +24,13 @@ void setup() {
 }
 
 void loop() {
-  if (sClock::hasIntervalPassed(lastLoopTime, CONTROL_BLINKEN_MS)) {
+  if (xClock::hasIntervalPassed(lastLoopTime, CONTROL_BLINKEN_MS)) {
     aLedbuiltin::value = !aLedbuiltin::value;
     #ifdef CONTROL_BLINKEN_DEBUG
       Serial.print("Set LED to ");
       Serial.println(aLedbuiltin::value);
     #endif // CONTROL_BLINKEN_DEBUG
-    lastLoopTime = sClock::getTime();
+    lastLoopTime = xClock::getTime();
   }
 }
 

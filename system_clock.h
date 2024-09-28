@@ -3,9 +3,9 @@
 
 #include <Arduino.h>
 
-namespace sClock {
+namespace xClock {
     void init();
     unsigned long getTime();
     bool hasIntervalPassed(unsigned long lastTime, unsigned long interval);
-} // namespace sClock
+} // namespace xClock
 #endif // SYSTEM_CLOCK_H

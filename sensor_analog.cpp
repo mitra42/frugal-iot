@@ -40,7 +40,7 @@ int readSensor() {
 
 void loop() {
 #ifdef SENSOR_ANALOG_MS
-  if (sClock::hasIntervalPassed(lastLoopTime, SENSOR_ANALOG_MS)) {
+  if (xClock::hasIntervalPassed(lastLoopTime, SENSOR_ANALOG_MS)) {
 #endif // SENSOR_ANALOG_MS
     readSensor();
 #ifdef SENSOR_ANALOG_SMOOTH // TODO maybe copy this to a system function
@@ -55,7 +55,7 @@ void loop() {
 #endif // SENSOR_ANALOG_SMOOTH
 #endif // SENSOR_ANALOG_DEBUG
 #ifdef SENSOR_ANALOG_MS
-        lastLoopTime = sClock::getTime();
+        lastLoopTime = xClock::getTime();
     }
 #endif // SENSOR_ANALOG_MS
 }

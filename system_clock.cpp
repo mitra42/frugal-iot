@@ -3,7 +3,7 @@
 
 #include "system_clock.h"
 
-namespace sClock {
+namespace xClock {
     void init() {
 
     }
@@ -16,4 +16,4 @@ namespace sClock {
         unsigned long currentTime = getTime();
         return (currentTime - lastTime >= interval);
     }
-} // namespace sClock
+} // namespace xClock
