@@ -5,7 +5,9 @@
 #ifndef FRUGALIOT_CONFIGURATION_H
 #define FRUGALIOT_CONFIGURATION_H
 
-//#define ESP8266_D1_MINI
+#define CHIP ESP8266
+#define BOARD ESP8266_D1_MINI // Board level - define - will only support boards devs are actually using, but intended to support board specific fixes
+
 #define WANT_ACTUATOR_LEDBUILTIN // Control led on board
 //#define ACTUATOR_LEDBUILTIN_DEBUG
 #define WANT_CONTROL_BLINKEN // Demo blinking led on board
@@ -25,5 +27,14 @@
 //#define SENSOR_SHT85_ADDRESS 0x45  // e.g. The Lolin SHT30 shield
 #define SENSOR_SHT85_ADDRESS_ARRAY 0x45,0x44  // e.g. The Lolin SHT30 shield
 #define SENSOR_SHT85_COUNT 2 // Count of array - makes code easier for fixed length arrays
+
+#define WANT_SYSTEM_MQTT
+#define SYSTEM_MQTT_SSID "Zest" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
+#define SYSTEM_MQTT_PASSWORD "#zestubud" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
+#define SYSTEM_MQTT_SERVER "public.cloud.shiftr.io" // From the demo
+#define SENSOR_MQTT_MS 1000 // Message every second
+#define SENSOR_MQTT_TOPIC "/hello"
+#define SENSOR_MQTT_PAYLOAD "world"
+#define SYSTEM_MQTT_DEBUG
 
 #endif FRUGALIOT_CONFIGURATION_H
