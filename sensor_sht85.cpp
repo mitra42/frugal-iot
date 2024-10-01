@@ -162,7 +162,7 @@ void loop() {
         ERROR - undefined // intentionally wont compile !! 
       #endif
     #endif
-    nextLoopTime += SENSOR_SHT85_MS;
+    nextLoopTime = millis() + SENSOR_SHT85_MS;
 
 // Now convert to string using dtostrf 
 

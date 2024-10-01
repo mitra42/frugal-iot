@@ -30,7 +30,7 @@ void loop() {
       Serial.print("Set LED to ");
       Serial.println(aLedbuiltin::value);
     #endif // CONTROL_BLINKEN_DEBUG
-    nextLoopTime += CONTROL_BLINKEN_MS;
+    nextLoopTime = millis() + CONTROL_BLINKEN_MS;
   }
 }
 

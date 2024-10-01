@@ -52,7 +52,7 @@ void loop() {
 #endif // SENSOR_ANALOG_SMOOTH
 #endif // SENSOR_ANALOG_DEBUG
 #ifdef SENSOR_ANALOG_MS
-        nextLoopTime += SENSOR_ANALOG_MS;
+        nextLoopTime = millis() + SENSOR_ANALOG_MS;
     }
 #endif // SENSOR_ANALOG_MS
 }
