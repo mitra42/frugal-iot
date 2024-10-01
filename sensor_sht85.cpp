@@ -30,6 +30,16 @@
 #include <SHT85.h>
 #include "sensor_sht85.h"
 
+#if defined(SENSOR_SHT85_TOPIC_TEMPERATURE) || defined(SENSOR_SHT85_TOPIC_HUMIDITY)
+#include "system_mqtt.h"
+#ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
+String *topicT = new String(SENSOR_SHT85_TOPIC_TEMPERATURE);
+#endif
+#ifdef SENSOR_SHT85_TOPIC_HUMIDITY
+String *topicH = new String(SENSOR_SHT85_TOPIC_HUMIDITY);
+#endif
+#endif // SENSOR_SHT85_TOPIC_TEMPERATURE || SENSOR_SHT85_TOPIC_HUMIDITY
+
 
 namespace sSHT85 {
 
@@ -138,6 +148,19 @@ void loop() {
       for(int i = 0 ; i < SENSOR_SHT85_COUNT; i++) {
         readSensor(sht_array[i],i);
       }
+    #endif
+    // TODO expand to do MQTT with array 
+    #ifndef SENSOR_SHT85_ADDRESS_ARRAY
+      #ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
+        xMqtt::messageSend(*topicT, temperature, 1);
+      #endif
+      #ifdef SENSOR_SHT85_TOPIC_HUMIDITY
+        xMqtt::messageSend(*topicH, humidity, 1);
+      #endif
+    #else
+      #if defined(SENSOR_SHT85_TOPIC_TEMPERATURE) || defined(SENSOR_SHT85_TOPIC_HUMIDITY)
+        ERROR - undefined // intentionally wont compile !! 
+      #endif
     #endif
     nextLoopTime += SENSOR_SHT85_MS;
 

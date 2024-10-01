@@ -6,6 +6,7 @@
 * Optional: CHIP SYSTEM_MQTT_DEBUG SYSTEM_MQTT_DEMO
 * 
 * TODO - split out the WiFi to system_wifi and configure that
+* TODO - split out the message and dispatching so can be used internally for wiring between modules or via MQTT 
 */
 
 #include "_settings.h"
@@ -31,7 +32,8 @@ MQTTClient client;
 unsigned long nextLoopTime = 0;
 
 #ifdef SYSTEM_MQTT_DEMO
-String* sTopic = new String("/hello");
+// Hint, For testing, you can subscribe to some other string instead of "/hello" e.g. from a sensor, and display on receipt
+String* sTopic = new String("/hello"); 
 const char demopayload[] = "world";
 unsigned long nextDemoLoopTime = 0;
 #endif // SYSTEM_MQTT_DEMO
@@ -75,8 +77,7 @@ void connect() {
     Serial.println("\nMQTT connected!");
   #endif
 
-  // TODO probably need to resubscribe anything in subscriptions when reconnect
-
+  // Resubscribe to any subscriptions after reconnect
   Serial.print("Re-Subscribing to:");
   Subscription* sub = subscriptions; 
   while (sub) {
@@ -104,12 +105,19 @@ void subscribe(String &topic, MQTTClientCallbackSimple cb) {
 #ifdef SYSTEM_MQTT_DEMO
   void demoHandler(String &topic, String &payload) {
     Serial.println("handling: " + topic + " - " + payload);
-  }
+}
 #endif // SYSTEM_MQTT_DEMO
 // ==== END EXPERIMENTAL
 
 void messageSend(String &topic, String &payload) {
+  #ifdef SYSTEM_MQTT_DEBUG
+    Serial.println("MQTT sending:" + topic + " " + payload);
+  #endif
   client.publish(topic, payload);
+}
+void messageSend(String &topic, float &value, int width) {
+  String *foo = new String(value, width);
+  messageSend(topic, *foo);
 }
 
 void messageReceived(String &topic, String &payload) {
