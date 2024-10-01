@@ -4,10 +4,10 @@
 
 
 #include "_settings.h"  // Settings for what to include etc
-#include "_common.h"    // Main include file for Framework
 
 #ifdef ACTUATOR_LEDBUILTIN_WANT
 #include <Arduino.h>
+#include "_common.h"    // Main include file for Framework
 #include "actuator_ledbuiltin.h"
 
 // Arduinos unfortunately dont use any kind of #define for the board type so the 

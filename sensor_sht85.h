@@ -12,7 +12,7 @@ namespace sSHT85 {
 extern float temperature;
 extern float humidity;
 #else
-extern float temperature[SENSOR_SHT85_COUNT];
+extern float temperature[SENSOR_SHT85_COUNT]; 
 extern float humidity[SENSOR_SHT85_COUNT];
 #endif // SENSOR_SHT85_ADDRESS_ARRAY
 

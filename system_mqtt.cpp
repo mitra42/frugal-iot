@@ -2,8 +2,8 @@
 * Based on the example in https://github.com/256dpi/arduino-mqtt
 * 
 * Configuration
-* Required: SYSTEM_MQTT_SSID SYSTEM_MQTT_PASSWORD SYSTEM_MQTT_SERVER SENSOR_MQTT_TOPIC SENSOR_MQTT_PAYLOAD
-* Optional: CHIP SYSTEM_MQTT_DEBUG
+* Required: SYSTEM_MQTT_SSID SYSTEM_MQTT_PASSWORD SYSTEM_MQTT_SERVER SYSTEM_MQTT_MS
+* Optional: CHIP SYSTEM_MQTT_DEBUG SYSTEM_MQTT_DEMO
 * 
 * TODO - split out the WiFi to system_wifi and configure that
 */
@@ -28,10 +28,28 @@ const char pass[] = SYSTEM_MQTT_PASSWORD;
 WiFiClient net;
 MQTTClient client;
 
-#ifdef SENSOR_ANALOG_MS
 unsigned long nextLoopTime = 0;
-#endif // SENSOR_ANALOG_MS
 
+#ifdef SYSTEM_MQTT_DEMO
+String* sTopic = new String("/hello");
+const char demopayload[] = "world";
+unsigned long nextDemoLoopTime = 0;
+#endif // SYSTEM_MQTT_DEMO
+
+// Note order if this is important - the constructor needs the variable. 
+class Subscription {
+  public: 
+    String *topic; 
+    MQTTClientCallbackSimple cb;
+    Subscription *next;
+    //Subscription() { topic = NULL; cb = NULL; next = NULL}
+    Subscription(String &t, MQTTClientCallbackSimple c, Subscription* n) {
+      topic = &t;
+      cb = c;
+      next = n;
+    };
+};
+Subscription *subscriptions = NULL;
 
 void connect() {
   #ifdef SYSTEM_MQTT_DEBUG
@@ -57,18 +75,65 @@ void connect() {
     Serial.println("\nMQTT connected!");
   #endif
 
-  client.subscribe(SENSOR_MQTT_TOPIC);
+  // TODO probably need to resubscribe anything in subscriptions when reconnect
+
+  Serial.print("Re-Subscribing to:");
+  Subscription* sub = subscriptions; 
+  while (sub) {
+    client.subscribe(*(sub->topic));
+    #ifdef SYSTEM_MQTT_DEBUG
+      Serial.print(" " + *(sub->topic));
+    #endif // SYSTEM_MQTT_DEBUG
+    sub = sub->next;
+  }
+  #ifdef SYSTEM_MQTT_DEBUG
+  Serial.println();
+  #endif // SYSTEM_MQTT_DEBUG
   // client.unsubscribe(SENSOR_MQTT_TOPIC);
+}
+
+// Call this from any module that wants to listen to a channel
+void subscribe(String &topic, MQTTClientCallbackSimple cb) {
+  subscriptions = new Subscription(topic, cb, subscriptions);
+  client.subscribe(topic);
+  #ifdef SYSTEM_MQTT_DEBUG
+    Serial.println("Subscribing to: " + topic);
+  #endif // SYSTEM_MQTT_DEBUG
+}
+
+#ifdef SYSTEM_MQTT_DEMO
+  void demoHandler(String &topic, String &payload) {
+    Serial.println("handling: " + topic + " - " + payload);
+  }
+#endif // SYSTEM_MQTT_DEMO
+// ==== END EXPERIMENTAL
+
+void messageSend(String &topic, String &payload) {
+  client.publish(topic, payload);
 }
 
 void messageReceived(String &topic, String &payload) {
   #ifdef SYSTEM_MQTT_DEBUG
-    Serial.println("incoming: " + topic + " - " + payload);
+    Serial.println("MQTT incoming: " + topic + " - " + payload);
   #endif
   // Note: Do not use the client in the callback to publish, subscribe or
   // unsubscribe as it may cause deadlocks when other things arrive while
   // sending and receiving acknowledgments. Instead, change a global variable,
   // or push to a queue and handle it in the loop after calling `client.loop()`.
+
+  // TODO maybe this should be a separate dispatcher, independent of MQTT so can be used internally for event changes.
+  Subscription* sub = subscriptions; 
+  while (sub) {
+    if (*sub->topic == topic) {
+      #ifdef SYSTEM_MQTT_DEBUG
+        Serial.println("Dispatching:"+topic);
+      #endif // SYSTEM_MQTT_DEBUG
+      sub->cb(topic, payload);
+    }
+    // debugging if needed to figure out why the comparisom above was mismatching
+    // else { Serial.println("No match "+*(sub->topic)+" "+topic); }
+    sub = sub->next;
+  }
 }
 
 void setup() {
@@ -80,25 +145,26 @@ void setup() {
   client.onMessage(messageReceived);  // Called back from client.loop
 
   connect();
+  #ifdef SYSTEM_MQTT_DEMO
+    subscribe(*sTopic, &demoHandler);
+  #endif
 }
 
 void loop() {
-  client.loop();
-  delay(10);  // <- fixes some issues with WiFi stability
-
-  // Automatically reconnect
-  if (!client.connected()) {
-    connect();
-  }
-#ifdef SENSOR_ANALOG_MS
   if (nextLoopTime <= millis()) {
-#endif // SENSOR_ANALOG_MS
-    client.publish(SENSOR_MQTT_TOPIC, SENSOR_MQTT_PAYLOAD);
-#ifdef SENSOR_ANALOG_MS
-    nextLoopTime += SENSOR_ANALOG_MS;
+    // Automatically reconnect
+    if (!client.connected()) {
+      connect();
+    }
+    client.loop(); // Do this at end of loop so some time before checks if connected
+    nextLoopTime = millis() + SYSTEM_MQTT_MS;
   }
-#endif // SENSOR_ANALOG_MS
+  #ifdef SENSOR_MQTT_DEMO
+    if (nextDemoLoopTime <= millis()) {
+      messageSend(sTopic, &demopayload);
+      nextDemoLoopTime = millis + 1000;
+    }
+  #endif // SENSOR_MQTT_DEMO
 }
-
 } // Namespace xMqtt
 #endif //SYSTEM_MQTT_WANT

@@ -22,11 +22,11 @@
 */
 
 #include "_settings.h"  // Settings for what to include etc
-#include "_common.h"    // Main include file for Framework
 
 #ifdef SENSOR_SHT85_WANT
 
 #include <Arduino.h>
+#include "_common.h"    // Main include file for Framework
 #include <SHT85.h>
 #include "sensor_sht85.h"
 
@@ -140,6 +140,10 @@ void loop() {
       }
     #endif
     nextLoopTime += SENSOR_SHT85_MS;
+
+// Now convert to string using dtostrf 
+
+
   }
 }
 
