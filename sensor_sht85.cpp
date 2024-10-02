@@ -17,7 +17,6 @@
  *
  * TODO Support multiple I2C Wires - so for example can use two sensors on each wire. See Issue#16
  * TODO Pull the Wire support into a seperate module so that a single Wire can be used for alternate sensors. See Issue#16
- * TODO Clock refactoring to use nextLoopTime - as part of Issue#15 
  * TODO Support I2C multiplexors - see sample code at https://github.com/RobTillaart/SHT85/issues/26#issuecomment-2367448245
 */
 
@@ -31,15 +30,8 @@
 #include "sensor_sht85.h"
 
 #if defined(SENSOR_SHT85_TOPIC_TEMPERATURE) || defined(SENSOR_SHT85_TOPIC_HUMIDITY)
-#include "system_mqtt.h"
-#ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
-String *topicT = new String(SENSOR_SHT85_TOPIC_TEMPERATURE);
-#endif
-#ifdef SENSOR_SHT85_TOPIC_HUMIDITY
-String *topicH = new String(SENSOR_SHT85_TOPIC_HUMIDITY);
-#endif
+  #include "system_mqtt.h"
 #endif // SENSOR_SHT85_TOPIC_TEMPERATURE || SENSOR_SHT85_TOPIC_HUMIDITY
-
 
 namespace sSHT85 {
 
@@ -60,6 +52,15 @@ float humidity;
 float temperature[SENSOR_SHT85_COUNT];
 float humidity[SENSOR_SHT85_COUNT];
 #endif // SENSOR_SHT85_ADDRESS_ARRAY
+
+#ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
+  String *topicT = new String(SENSOR_SHT85_TOPIC_TEMPERATURE);
+  float lastTemperature;
+#endif
+#ifdef SENSOR_SHT85_TOPIC_HUMIDITY
+  String *topicH = new String(SENSOR_SHT85_TOPIC_HUMIDITY);
+  float lastHumidity;
+#endif
 
 SENSOR_SHT85_DEVICE *setup_sensor(unsigned int addr) {
   SENSOR_SHT85_DEVICE *sht = new SENSOR_SHT85_DEVICE(addr);
@@ -149,15 +150,21 @@ void loop() {
         readSensor(sht_array[i],i);
       }
     #endif
-    // TODO expand to do MQTT with array 
     #ifndef SENSOR_SHT85_ADDRESS_ARRAY
       #ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
-        xMqtt::messageSend(*topicT, temperature, 1);
+        if (temperature != lastTemperature) { // TODO may want to add some bounds (e.g a percentage)
+          xMqtt::messageSend(*topicT, temperature, 1);
+          lastTemperature = temperature;
+        }
       #endif
       #ifdef SENSOR_SHT85_TOPIC_HUMIDITY
-        xMqtt::messageSend(*topicH, humidity, 1);
+        if (humidity != lastHumidity) { // TODO may want to add some bounds (e.g a percentage)
+          xMqtt::messageSend(*topicH, humidity, 1);
+          lastHumidity = humidity;
+        }
       #endif
     #else
+      // TODO expand to do MQTT with array 
       #if defined(SENSOR_SHT85_TOPIC_TEMPERATURE) || defined(SENSOR_SHT85_TOPIC_HUMIDITY)
         ERROR - undefined // intentionally wont compile !! 
       #endif

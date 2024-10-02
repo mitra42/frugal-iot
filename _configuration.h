@@ -13,6 +13,9 @@
 //#define CONTROL_BLINKEN_WANT // Demo blinking led on board
 #define CONTROL_BLINKEN_MS 1000
 //#define CONTROL_BLINKEN_DEBUG
+#define CONTROL_DEMO_MQTT_WANT
+#define CONTROL_DEMO_MQTT_DEBUG
+
 
 //#define SENSOR_ANALOG_WANT // simple analog read 
 #define SENSOR_ANALOG_PIN A0 // Which pin to read - this might be board specific
@@ -31,8 +34,8 @@
 #define SENSOR_SHT85_TOPIC_HUMIDITY "/humidity"
 
 #define SYSTEM_MQTT_WANT
-#define SYSTEM_MQTT_SSID "ALCHEMY" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
-#define SYSTEM_MQTT_PASSWORD "jesusisvegan" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
+#define SYSTEM_MQTT_SSID "Silver" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
+#define SYSTEM_MQTT_PASSWORD "O2IL-w8k2-w6ki-TzqG" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
 #define SYSTEM_MQTT_SERVER "public.cloud.shiftr.io" // From the demo
 #define SYSTEM_MQTT_MS 10 //Run client every 10ms
 #define SYSTEM_MQTT_DEBUG
