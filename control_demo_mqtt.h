@@ -3,5 +3,6 @@
 
 namespace cDemoMqtt {
 void setup();
-} // namespace aBlinken
+//void loop();
+} // namespace cDemoMqtt
 #endif // CONTROL_DEMO_MQTT_H

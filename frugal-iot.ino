@@ -51,9 +51,8 @@ void setup() {
   cBlinken::setup();
 #endif
 #ifdef CONTROL_DEMO_MQTT_WANT
-  cDemoMqtt::setup();
+  cDemoMqtt::setup(); // Must be after system_mqtt
 #endif
-
 
 #ifdef FRUGALIOT_DEBUG
   Serial.println("FrugalIoT Starting Loop");
@@ -77,6 +76,10 @@ void loop() {
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::loop();
 #endif
+#ifdef CONTROL_DEMO_MQTT_WANT
+//  cDemoMqtt::Loop(); // Not currently used
+#endif
+
 }
 
 

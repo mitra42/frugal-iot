@@ -6,7 +6,6 @@
 
 
 #include "_settings.h"  // Settings for what to include etc
-#include "actuator_ledbuiltin.h"
 
 #ifdef CONTROL_DEMO_MQTT_WANT
 #include <Arduino.h>
@@ -27,9 +26,10 @@ void messageReceived(String &topic, String &payload) {
   #endif
   aLedbuiltin::value = humidity > 75;  // TODO move to sending this value via MQTT
 }
+
 void setup() {             
   xMqtt::subscribe(*topic, *messageReceived);
 }
 
 } //namespace cDemoMqtt
-#endif // CONTROL_DEMO_MQTT
+#endif // CONTROL_DEMO_MQTT_WANT
