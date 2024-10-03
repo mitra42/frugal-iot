@@ -10,6 +10,7 @@
 
 #define ACTUATOR_LEDBUILTIN_WANT // Control led on board
 //#define ACTUATOR_LEDBUILTIN_DEBUG
+#define ACTUATOR_LEDBUILTIN_TOPIC "/ledbuiltin"
 //#define CONTROL_BLINKEN_WANT // Demo blinking led on board
 #define CONTROL_BLINKEN_MS 1000
 //#define CONTROL_BLINKEN_DEBUG

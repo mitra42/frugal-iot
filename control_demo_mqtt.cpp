@@ -12,11 +12,12 @@
 #include "_common.h"    // Main include file for Framework
 #include "control_demo_mqtt.h"
 #include "system_mqtt.h"
-#include "actuator_ledbuiltin.h" // TODO remove after sending back via MQTT
  
 namespace cDemoMqtt {
 
-String *topic = new String(SENSOR_SHT85_TOPIC_HUMIDITY);
+String *inTopic = new String(SENSOR_SHT85_TOPIC_HUMIDITY);
+String *outTopic = new String(ACTUATOR_LEDBUILTIN_TOPIC);
+bool value = false;
 
 void messageReceived(String &topic, String &payload) {
   float humidity = payload.toFloat();
@@ -24,11 +25,17 @@ void messageReceived(String &topic, String &payload) {
     Serial.print("cDemoMqtt received ");
     Serial.println(humidity);
   #endif
-  aLedbuiltin::value = humidity > 75;  // TODO move to sending this value via MQTT
+  bool newValue = humidity > 75;
+  // Only send if its changed.
+  if (newValue != value) {
+    xMqtt::messageSend(*outTopic, value);
+    value = newValue;
+  }
 }
 
 void setup() {             
-  xMqtt::subscribe(*topic, *messageReceived);
+  xMqtt::subscribe(*inTopic, *messageReceived);
+  xMqtt::messageSend(*outTopic, value); // set initial value
 }
 
 } //namespace cDemoMqtt

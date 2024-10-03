@@ -120,6 +120,10 @@ void messageSend(String &topic, float &value, int width) {
   String *foo = new String(value, width);
   messageSend(topic, *foo);
 }
+void messageSend(String &topic, int value) {
+  String *foo = new String(value);
+  messageSend(topic, *foo);
+}
 
 void messageReceived(String &topic, String &payload) {
   #ifdef SYSTEM_MQTT_DEBUG

@@ -1,5 +1,7 @@
 /*
   Turn the built in LED on or off
+
+  Optional: ACTUATOR_LEDBUILTIN_TOPIC ACTUATOR_LEDBUILTIN_PIN BUILTIN_LED LED_BUILTIN ACTUATOR_LEDBUILTIN_DEBUG
 */
 
 
@@ -9,6 +11,9 @@
 #include <Arduino.h>
 #include "_common.h"    // Main include file for Framework
 #include "actuator_ledbuiltin.h"
+#ifdef ACTUATOR_LEDBUILTIN_TOPIC
+#include "system_mqtt.h"
+#endif
 
 // Arduinos unfortunately dont use any kind of #define for the board type so the 
 // standard blinkplay fails on for example the WEMOS boards.
@@ -30,6 +35,18 @@ namespace aLedbuiltin {
 
 bool value;
 
+#ifdef ACTUATOR_LEDBUILTIN_TOPIC
+String *topic = new String(ACTUATOR_LEDBUILTIN_TOPIC);
+
+void messageReceived(String &topic, String &payload) {
+  value = payload.toInt(); // Copied to pin in the loop 
+  #ifdef CONTROL_DEMO_MQTT_DEBUG
+    Serial.print("aLedbuiltin received ");
+    Serial.println(value);
+  #endif
+}
+#endif
+
 void setup() {                
   // initialize the digital pin as an output.
   pinMode(ACTUATOR_LEDBUILTIN_PIN, OUTPUT);
@@ -44,7 +61,9 @@ void setup() {
   //Serial.print(" LOW="); Serial.print(LOW);   
   Serial.println("");
 #endif // ACTUATOR_BLINKIN_DEBUG
-
+#ifdef ACTUATOR_LEDBUILTIN_TOPIC
+  xMqtt::subscribe(*topic, *messageReceived);
+#endif // ACTUATOR_LEDBUILTIN_TOPIC
 }
 
 void loop() {
