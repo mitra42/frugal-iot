@@ -4,6 +4,7 @@
 namespace xMqtt {
 void messageSend(String &topic, String &payload);
 void messageSend(String &topic, float &value, int width);
+void subscribe(String &topic, MQTTClientCallbackSimple cb);
 
 void setup();
 void loop();

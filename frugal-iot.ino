@@ -20,6 +20,9 @@
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
 #endif
+#ifdef CONTROL_DEMO_MQTT_WANT
+#include "control_demo_mqtt.h"
+#endif
 
 void setup() {
 #ifdef FRUGALIOT_DEBUG
@@ -46,6 +49,9 @@ void setup() {
 #endif
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
+#endif
+#ifdef CONTROL_DEMO_MQTT_WANT
+  cDemoMqtt::setup();
 #endif
 
 

@@ -60,6 +60,7 @@ void connect() {
   while (WiFi.status() != WL_CONNECTED) {
     #ifdef SYSTEM_MQTT_DEBUG
       Serial.print(".");
+      Serial.print(WiFi.status());
     #endif // SYSTEM_MQTT_DEBUG
     delay(1000);
   }

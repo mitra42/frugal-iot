@@ -8,11 +8,14 @@
 #define CHIP ESP8266
 #define BOARD ESP8266_D1_MINI // Board level - define - will only support boards devs are actually using, but intended to support board specific fixes
 
-//#define ACTUATOR_LEDBUILTIN_WANT // Control led on board
+#define ACTUATOR_LEDBUILTIN_WANT // Control led on board
 //#define ACTUATOR_LEDBUILTIN_DEBUG
 //#define CONTROL_BLINKEN_WANT // Demo blinking led on board
 #define CONTROL_BLINKEN_MS 1000
 //#define CONTROL_BLINKEN_DEBUG
+#define CONTROL_DEMO_MQTT_WANT
+#define CONTROL_DEMO_MQTT_DEBUG
+
 
 //#define SENSOR_ANALOG_WANT // simple analog read 
 #define SENSOR_ANALOG_PIN A0 // Which pin to read - this might be board specific
@@ -31,8 +34,10 @@
 #define SENSOR_SHT85_TOPIC_HUMIDITY "/humidity"
 
 #define SYSTEM_MQTT_WANT
-#define SYSTEM_MQTT_SSID "ALCHEMY" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
-#define SYSTEM_MQTT_PASSWORD "jesusisvegan" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
+//#define SYSTEM_MQTT_SSID "ALCHEMY" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
+//#define SYSTEM_MQTT_PASSWORD "jesusisvegan" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
+#define SYSTEM_MQTT_SSID "GEREBIG VILLA" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
+#define SYSTEM_MQTT_PASSWORD "KADEKGRB" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
 #define SYSTEM_MQTT_SERVER "public.cloud.shiftr.io" // From the demo
 #define SYSTEM_MQTT_MS 10 //Run client every 10ms
 #define SYSTEM_MQTT_DEBUG
