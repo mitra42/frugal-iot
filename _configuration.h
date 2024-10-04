@@ -28,8 +28,7 @@
 #define SENSOR_SHT85_DEVICE SHT30 // e.g. The Lolin SHT30 shield
 #define SENSOR_SHT85_DEBUG
 #define SENSOR_SHT85_MS 1000 // Warning not to do this too often seen range in examples from 100 to 10000 not sure why such range
-#define SENSOR_SHT85_ADDRESS 0x45  // e.g. The Lolin SHT30 shield
-//#define SENSOR_SHT85_ADDRESS_ARRAY 0x45,0x44  // e.g. The Lolin SHT30 shield
+#define SENSOR_SHT85_ADDRESS_ARRAY 0x45,0x44  // e.g. The Lolin SHT30 shield plus non-existant sensor for testing only
 #define SENSOR_SHT85_COUNT 2 // Count of array - makes code easier for fixed length arrays
 #define SENSOR_SHT85_TOPIC_TEMPERATURE "/temperature"
 #define SENSOR_SHT85_TOPIC_HUMIDITY "/humidity"
