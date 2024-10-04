@@ -42,5 +42,6 @@
 #define SYSTEM_MQTT_MS 10 //Run client every 10ms
 #define SYSTEM_MQTT_DEBUG
 #define SYSTEM_MQTT_DEMO
+#define SYSTEM_MQTT_LOOPBACK // If true dispatch the message locally as well.
 
 #endif FRUGALIOT_CONFIGURATION_H

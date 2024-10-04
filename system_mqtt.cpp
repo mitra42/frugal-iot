@@ -106,24 +106,8 @@ void subscribe(String &topic, MQTTClientCallbackSimple cb) {
 #ifdef SYSTEM_MQTT_DEMO
   void demoHandler(String &topic, String &payload) {
     Serial.println("handling: " + topic + " - " + payload);
-}
+  }
 #endif // SYSTEM_MQTT_DEMO
-// ==== END EXPERIMENTAL
-
-void messageSend(String &topic, String &payload) {
-  #ifdef SYSTEM_MQTT_DEBUG
-    Serial.println("MQTT sending:" + topic + " " + payload);
-  #endif
-  client.publish(topic, payload);
-}
-void messageSend(String &topic, float &value, int width) {
-  String *foo = new String(value, width);
-  messageSend(topic, *foo);
-}
-void messageSend(String &topic, int value) {
-  String *foo = new String(value);
-  messageSend(topic, *foo);
-}
 
 void messageReceived(String &topic, String &payload) {
   #ifdef SYSTEM_MQTT_DEBUG
@@ -147,6 +131,26 @@ void messageReceived(String &topic, String &payload) {
     // else { Serial.println("No match "+*(sub->topic)+" "+topic); }
     sub = sub->next;
   }
+}
+
+void messageSend(String &topic, String &payload) {
+  #ifdef SYSTEM_MQTT_DEBUG
+    Serial.println("MQTT sending:" + topic + " " + payload);
+  #endif
+  client.publish(topic, payload);
+  // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
+  #ifdef SYSTEM_MQTT_LOOPBACK
+    messageReceived(topic, payload);
+  #endif
+}
+void messageSend(String &topic, float &value, int width) {
+  String *foo = new String(value, width);
+  messageSend(topic, *foo);
+
+}
+void messageSend(String &topic, int value) {
+  String *foo = new String(value);
+  messageSend(topic, *foo);
 }
 
 void setup() {
