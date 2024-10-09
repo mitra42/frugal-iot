@@ -2,9 +2,9 @@
 #define SYSTEM_MQTT_H
 
 namespace xMqtt {
-void messageSend(String &topic, String &payload);
-void messageSend(String &topic, float &value, int width);
-void messageSend(String &topic, int value);
+void messageSend(String &topic, String &payload, bool retain, int qos);
+void messageSend(String &topic, float &value, int width, bool retain, int qos);
+void messageSend(String &topic, int value, bool retain, int qos);
 void subscribe(String &topic, MQTTClientCallbackSimple cb);
 
 void setup();
