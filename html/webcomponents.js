@@ -101,7 +101,7 @@ class MqttElement extends HTMLElementExtended {
 
 class MqttReceiver extends MqttElement {
   // constructor() { super(); }
-  static get observedAttributes() { return ['topic',]; }
+  static get observedAttributes() { return ['topic','value']; }
   // TODO - think this could be super() &&  !this.state.subscribed;
   //shouldLoadWhenConnected() { return !!mqtt_client && !this.state.subscribed; }
   shouldLoadWhenConnected() { return super.shouldLoadWhenConnected() && !this.state.subscribed; }
@@ -134,23 +134,28 @@ customElements.define('mqtt-text', MqttText);
 class MqttTransmitter extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['retain', 'qos']); }
   static get integerAttributes() { return MqttReceiver.integerAttributes.concat(['retain', 'qos']) };
-}
-
-// TODO this will probably split to insert a MqttTransmitter as subclass of MqttReceiver
-class MqttToggle extends MqttTransmitter {
-  constructor() {
-    super();
-  }
-  valueSet() {
-    this.state.indeterminate = false;
-  }
-  static get observedAttributes() {
-    return MqttTransmitter.observedAttributes.concat(['value']);
-  }
+  // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
     //console.log("Changed"+e.target.checked);
     this.state.value = e.target.checked;
+    super.onChange(e);
     mqtt_client.publish(this.state.topic, this.state.value, { retain: this.state.retain, qos: this.state.qos});
+  }
+}
+
+class MqttToggle extends MqttTransmitter {
+  valueSet() {
+    super.valueSet();
+    this.state.indeterminate = false;
+  }
+  static get observedAttributes() {
+    return MqttTransmitter.observedAttributes.concat(['checked','indeterminate']);
+  }
+  // TODO - make sure this doesn't get triggered by a message from server.
+  onChange(e) {
+    //console.log("Changed"+e.target.checked);
+    this.state.value = e.target.checked;
+    super.onChange(e);
   }
 
   render() {
@@ -169,3 +174,36 @@ class MqttToggle extends MqttTransmitter {
   }
 }
 customElements.define('mqtt-toggle', MqttToggle);
+
+const MBstyle = `
+.outer {border: 2px,black,solid; background-color: white;margin:5px;}
+ .left {display:inline-block; text-align: right;}
+ .right {background-color:white; display:inline-block;}
+ .val {margin:5px;}
+ `;
+class MqttBar extends MqttTransmitter {
+  // TODO - make sure this doesn't get triggered by a message from server.
+  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['value','min','max','color']); }
+  static get floatAttributes() { return MqttTransmitter.floatAttributes.concat(['value','min','max']); }
+
+  onChange(e) {
+    super.onChange(e);
+  }
+
+  render() {
+    //this.state.changeable.addEventListener('change', this.onChange.bind(this));
+    let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
+    return [
+      EL('style', {textContent: MBstyle}), // Using styles defined above
+      EL('div', {class: "outer",},[
+        EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
+          EL('span', {class: "val", textContent: this.state.value}),
+        ]),
+        EL('span', {class: "right", style: "width:"+(100-width)+"%"}),
+//        EL('span',{class: 'demo', textContent: this.state.value || ""}),
+      ]),
+    ];
+  }
+}
+customElements.define('mqtt-bar', MqttBar);
+
