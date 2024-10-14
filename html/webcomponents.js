@@ -1,7 +1,7 @@
 /*
  * Simple MQTT template for FrugalIoT
  */
-import {EL, HTMLElementExtended, getUrl} from './node_modules/html-element-extended/htmlelementextended.js';
+import {EL, HTMLElementExtended, getUrl, toBool} from './node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 
 var mqtt_client;
@@ -109,12 +109,13 @@ class MqttReceiver extends MqttElement {
     this.state.subscribed = true;
     mqtt_subscribe(this.state.topic, this.message_received.bind(this));
   }
-  valueSet() { } // Intended to be subclassed
+  valueSet(val) {
+    this.state.value = val;
+  } // Intended to be subclassed
 
   message_received(topic, message) {
     console.log("Setting ", topic, " to ", message );
-    this.state.value = message;
-    this.valueSet();
+    this.valueSet(message);
     this.renderAndReplace();
   }
 }
@@ -135,18 +136,24 @@ class MqttTransmitter extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['retain', 'qos']); }
   static get integerAttributes() { return MqttReceiver.integerAttributes.concat(['retain', 'qos']) };
   // TODO - make sure this doesn't get triggered by a message from server.
+  valueGet() { // Needs to return an integer or a string
+    return this.state.value
+  } // Overridden for booleans
   onChange(e) {
     //console.log("Changed"+e.target.checked);
     this.state.value = e.target.checked;
-    super.onChange(e);
-    mqtt_client.publish(this.state.topic, this.state.value, { retain: this.state.retain, qos: this.state.qos});
+    // super.onChange(e);
+    mqtt_client.publish(this.state.topic, this.valueGet(), { retain: this.state.retain, qos: this.state.qos});
   }
 }
 
 class MqttToggle extends MqttTransmitter {
-  valueSet() {
-    super.valueSet();
+  valueSet(val) {
+    super.valueSet(toBool(val));
     this.state.indeterminate = false;
+  }
+  valueGet() {
+    return (+this.state.value).toString(); // Implicit conversion from bool to int then to String.
   }
   static get observedAttributes() {
     return MqttTransmitter.observedAttributes.concat(['checked','indeterminate']);
@@ -154,7 +161,7 @@ class MqttToggle extends MqttTransmitter {
   // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
     //console.log("Changed"+e.target.checked);
-    this.state.value = e.target.checked;
+    this.state.value = e.target.checked; // Boolean
     super.onChange(e);
   }
 
@@ -186,6 +193,9 @@ class MqttBar extends MqttTransmitter {
   static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['value','min','max','color']); }
   static get floatAttributes() { return MqttTransmitter.floatAttributes.concat(['value','min','max']); }
 
+  valueSet(val) {
+    super.valueSet(Number(val));
+  }
   onChange(e) {
     super.onChange(e);
   }
