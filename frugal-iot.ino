@@ -5,6 +5,9 @@
 #include "_settings.h"  // Settings for what to include etc
 #include "_common.h"    // Main include file for Framework
 
+#ifdef SYSTEM_WIFI_WANT
+#include "system_wifi.h"
+#endif
 #ifdef SYSTEM_MQTT_WANT
 #include "system_mqtt.h"
 #endif
@@ -35,6 +38,9 @@ void setup() {
   Serial.println("FrugalIoT Starting");
 #endif FRUGALIOT_DEBUG
 // put setup code here, to run once:
+#ifdef SYSTEM_WIFI_WANT
+  xWifi::setup();
+#endif
 #ifdef SYSTEM_MQTT_WANT
   xMqtt::setup();
 #endif
@@ -61,6 +67,9 @@ void setup() {
 
 void loop() {
   // Put code for each sensor etc here - call functions in those sections
+#ifdef SYSTEM_WIFI_WANT
+//  xWifi::loop(); // Not currently used
+#endif
 #ifdef SYSTEM_MQTT_WANT
   xMqtt::loop();
 #endif
@@ -77,7 +86,7 @@ void loop() {
   cBlinken::loop();
 #endif
 #ifdef CONTROL_DEMO_MQTT_WANT
-//  cDemoMqtt::Loop(); // Not currently used
+//  cDemoMqtt::loop(); // Not currently used
 #endif
 
 }

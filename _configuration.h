@@ -5,7 +5,7 @@
 #ifndef FRUGALIOT_CONFIGURATION_H
 #define FRUGALIOT_CONFIGURATION_H
 
-#define CHIP ESP8266
+// Note that on ESP that ESP32 or ESP8266 will be defined - should define other chips names here.
 #define BOARD ESP8266_D1_MINI // Board level - define - will only support boards devs are actually using, but intended to support board specific fixes
 
 #define ACTUATOR_LEDBUILTIN_WANT // Control led on board
@@ -35,15 +35,12 @@
 #define SENSOR_SHT85_TOPIC_TEMPERATURE "/temperature"
 #define SENSOR_SHT85_TOPIC_HUMIDITY "/humidity"
 
-#define SYSTEM_MQTT_WANT
-//#define SYSTEM_MQTT_SSID "ALCHEMY" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
-//#define SYSTEM_MQTT_PASSWORD "jesusisvegan" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
-#define SYSTEM_MQTT_SSID "GEREBIG VILLA" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
-#define SYSTEM_MQTT_PASSWORD "KADEKGRB" // Expect this to move to SYSTEM_WIFI and then be configured in some other way
-#define SYSTEM_MQTT_SERVER "public.cloud.shiftr.io" // From the demo
+#define SYSTEM_WIFI_WANT
+#define SYSTEM_WIFI_DEBUG
+#define SYSTEM_MQTT_WANT // At this point, commenting this line out is not going to complie - too many dependencies on MQTT
+#define SYSTEM_MQTT_SERVER "public.cloud.shiftr.io" // From the demo - default - can be overridden
 #define SYSTEM_MQTT_MS 10 //Run client every 10ms
 #define SYSTEM_MQTT_DEBUG
-#define SYSTEM_MQTT_DEMO
 #define SYSTEM_MQTT_LOOPBACK // If true dispatch the message locally as well.
 
 #endif FRUGALIOT_CONFIGURATION_H

@@ -3,7 +3,7 @@
 * 
 * Configuration
 * Required: SYSTEM_MQTT_SSID SYSTEM_MQTT_PASSWORD SYSTEM_MQTT_SERVER SYSTEM_MQTT_MS
-* Optional: CHIP SYSTEM_MQTT_DEBUG SYSTEM_MQTT_DEMO
+* Optional: ESP8266 SYSTEM_MQTT_DEBUG SYSTEM_MQTT_DEMO
 * 
 * TODO - split out the WiFi to system_wifi and configure that
 */
@@ -12,30 +12,22 @@
 
 #ifdef SYSTEM_MQTT_WANT
 
-#if CHIP == ESP8266
-#include <ESP8266WiFi.h> 
+#if ESP8266 // Note ESP8266 and ESP32 are defined for respective chips - unclear if anything like that for other Arduinos
+#include <ESP8266WiFi.h>  // for WiFiClient
 #else
-#include <WiFi.h> // This will be platform dependent, will most likely want configurration for other chips/boards
+#include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
 
 #include <MQTT.h>
+#include "system_wifi.h"   // xWifi
 
 namespace xMqtt {
-
-const char ssid[] = SYSTEM_MQTT_SSID;
-const char pass[] = SYSTEM_MQTT_PASSWORD;
 
 WiFiClient net;
 MQTTClient client;
 
 unsigned long nextLoopTime = 0;
 
-#ifdef SYSTEM_MQTT_DEMO
-// Hint, For testing, you can subscribe to some other string instead of "/hello" e.g. from a sensor, and display on receipt
-String* sTopic = new String("/hello"); 
-const char demopayload[] = "world";
-unsigned long nextDemoLoopTime = 0;
-#endif // SYSTEM_MQTT_DEMO
 
 // The subscription class manages a list of subscription topics & callbacks. 
 // It is not totally self contained as it knows how to call the client to subscribe and how to dispatch. 
@@ -72,7 +64,7 @@ class Subscription {
       for (sub = subscriptions; sub; sub = sub->next) {
         if (*sub->topic == topic) {
           #ifdef SYSTEM_MQTT_DEBUG
-            Serial.println("Dispatching:"+topic);
+            Serial.println("Dispatching: "+topic);
           #endif // SYSTEM_MQTT_DEBUG
           sub->cb(topic, payload);
         }
@@ -129,38 +121,31 @@ class Retention {
 };
 Retention *Retention::retained = NULL;
 
-void connect() {
-  #ifdef SYSTEM_MQTT_DEBUG
-    Serial.print("WiFi connecting:");
-  #endif // SYSTEM_MQTT_DEBUG
-  while (WiFi.status() != WL_CONNECTED) {
+bool connect() {
+  if (WiFi.status() != WL_CONNECTED) {
     #ifdef SYSTEM_MQTT_DEBUG
-      Serial.print(".");
-      Serial.print(WiFi.status());
-    #endif // SYSTEM_MQTT_DEBUG
-    delay(1000);
-  }
-
-  #ifdef SYSTEM_MQTT_DEBUG
-    Serial.print("\nMQTT connecting:");
-  #endif 
-  while (!client.connect("arduino", "public", "public")) {
-    #ifdef SYSTEM_MQTT_DEBUG
-      Serial.print(".");
+      Serial.println("MQTT forcing WiFi reconnect");
     #endif
-    delay(1000);
+    xWifi::connect(); // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
   }
-  #ifdef SYSTEM_MQTT_DEBUG
-    Serial.println("\nMQTT connected!");
-  #endif
-  Subscription::resubscribeAll();
+  if (client.connected()) {
+    return true;
+  } else {
+    #ifdef SYSTEM_MQTT_DEBUG
+      Serial.print("\nMQTT connecting: to ");
+      Serial.print(xWifi::mqtt_host.c_str());
+    #endif 
+    if (client.connect("arduino", "public", "public")) { // TODO-21 parameterize this
+      #ifdef SYSTEM_MQTT_DEBUG
+        Serial.println("Connected");
+      #endif
+      Subscription::resubscribeAll();
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
-
-#ifdef SYSTEM_MQTT_DEMO
-  void demoHandler(String &topic, String &payload) {
-    Serial.println("handling: " + topic + " - " + payload);
-  }
-#endif // SYSTEM_MQTT_DEMO
 
 // Note this is called both as a callback from client.onMessage and from messageSend if SYSTEM_MQTT_LOOPBACK
 void messageReceived(String &topic, String &payload) {
@@ -214,34 +199,32 @@ void messageSend(String &topic, int value, bool retain, int qos) {
 }
 
 void setup() {
-  WiFi.begin(ssid, pass);
-
   // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
   // by Arduino. You need to set the IP address directly.
-  client.begin(SYSTEM_MQTT_SERVER, net);
+  client.begin(xWifi::mqtt_host.c_str(), net);
   client.onMessage(messageReceived);  // Called back from client.loop
 
-  connect();
-  #ifdef SYSTEM_MQTT_DEMO
-    Subscription::subscribe(*sTopic, &demoHandler);
-  #endif
+  // Note WiFi should be connected by this point but will check here anyway
+  while (!connect()) {
+    #ifdef SYSTEM_MQTT_DEBUG
+      Serial.print(".");
+    #endif
+    delay(1000); // Block waiting for WiFi and MQTT to connect 
+  }
 }
 
 void loop() {
   if (nextLoopTime <= millis()) {
     // Automatically reconnect
     if (!client.connected()) {
-      connect();
+      if (!connect()) { // Non blocking but skip client.loop. Note if fails to connect will set nextLoopTime in 1000 ms.
+        nextLoopTime = millis() + 1000; // If non-blocking then dont do any MQTT for a second then try connect again
+      }
+    } else {
+      client.loop(); // Do this at end of loop so some time before checks if connected
+      nextLoopTime = millis() + SYSTEM_MQTT_MS;
     }
-    client.loop(); // Do this at end of loop so some time before checks if connected
-    nextLoopTime = millis() + SYSTEM_MQTT_MS;
   }
-  #ifdef SENSOR_MQTT_DEMO
-    if (nextDemoLoopTime <= millis()) {
-      messageSend(sTopic, &demopayload, false, 0);
-      nextDemoLoopTime = millis + 1000;
-    }
-  #endif // SENSOR_MQTT_DEMO
 }
 } // Namespace xMqtt
 #endif //SYSTEM_MQTT_WANT
