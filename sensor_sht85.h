@@ -6,7 +6,7 @@
  * Optional: SENSOR_SHT85_DEBUG
 */
 
-namespace sSHT85 { // TODO 19D review if need namespace once have class 
+namespace sSHT85 {
 void setup();
 void loop();
 } // namespace sSHT85

@@ -29,7 +29,7 @@
 
 void setup() {
 #ifdef FRUGALIOT_DEBUG
-  Serial.begin(460800); // Initialize IO port TODO move to somewhere Forth wants it
+  Serial.begin(460800);
   while (!Serial) { 
     ; // wait for serial port to connect. Needed for Arduino Leonardo only
   }

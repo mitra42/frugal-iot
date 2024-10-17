@@ -28,7 +28,7 @@ void messageReceived(String &topic, String &payload) {
   bool newValue = humidity > 75;
   // Only send if its changed.
   if (newValue != value) {
-    // TODO should not send this here (rule against sending with qos>0 withink messagReceived), it should be in a "loop" 
+    // TODO-33 should not send this here (rule against sending with qos>0 withink messagReceived), it should be in a "loop" 
     xMqtt::messageSend(*outTopic, value, true, 1);
     value = newValue;
   }

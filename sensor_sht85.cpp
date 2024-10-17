@@ -15,8 +15,8 @@
  * Optional: 
  * SENSOR_SHT85_DEBUG                          // Debugging output
  *
- * TODO Support multiple I2C Wires - so for example can use two sensors on each wire. See Issue#16
- * TODO Pull the Wire support into a seperate module so that a single Wire can be used for alternate sensors. See Issue#16
+ * TODO-16 Support multiple I2C Wires - so for example can use two sensors on each wire. See Issue#16
+ * TODO-16 Pull the Wire support into a seperate module so that a single Wire can be used for alternate sensors. See Issue#16
  * TODO Support I2C multiplexors - see sample code at https://github.com/RobTillaart/SHT85/issues/26#issuecomment-2367448245
 */
 
@@ -66,7 +66,7 @@ void setup()
   Serial.println(SHT_LIB_VERSION);
 #endif
 
-  //TODO 19b It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
+  //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   Wire.begin(); // Appears to default to 4,5 which is correct for the Lolin D1 Mini SHT30 shield
   Wire.setClock(100000);
 

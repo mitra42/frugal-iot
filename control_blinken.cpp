@@ -4,7 +4,7 @@
  
   Based on the Blinken demo in the IDE
 
-  Required CONTROL_BLINKEN_MS // TODO replace with a settable parameter
+  Required CONTROL_BLINKEN_MS // TODO-30 replace with a settable parameter
  */
 
 
