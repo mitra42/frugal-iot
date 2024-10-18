@@ -40,7 +40,15 @@ void connect() {
     WiFiSettings.connect();
     // Serial.println("XXX-22a connect exited gracefully without reset")
 }
-
+// Blocking attempt at reconnecting
+void checkConnected() {
+  if (WiFi.status() != WL_CONNECTED) {
+    #ifdef SYSTEM_WIFI_DEBUG
+      Serial.println("WiFi not connected, forcing reconnect");
+    #endif
+    connect(); // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
+  }
+}
 // Note this is blocking - so order is important, in particular it must complete this before trying xMqtt::setup
 void setup() {
   #ifdef ESP32

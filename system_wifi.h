@@ -7,6 +7,7 @@ extern String mqtt_host;
 
 void setup();
 void connect();
+void checkConnected();
 //void loop();
 } // namespace xWifi
 #endif // SYSTEM_WIFI_H
