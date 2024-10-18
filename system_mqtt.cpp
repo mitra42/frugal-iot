@@ -3,7 +3,7 @@
 * 
 * Configuration
 * Required: SYSTEM_MQTT_SSID SYSTEM_MQTT_PASSWORD SYSTEM_MQTT_SERVER SYSTEM_MQTT_MS
-* Optional: ESP8266 SYSTEM_MQTT_DEBUG SYSTEM_MQTT_DEMO
+* Optional: ESP8266 SYSTEM_MQTT_DEBUG SYSTEM_WANT_WIFI SYSTEM_MQTT_LOOPBACK
 * 
 * TODO - split out the WiFi to system_wifi and configure that
 */
@@ -19,12 +19,21 @@
 #endif
 
 #include <MQTT.h>
+
+// If configred not to use Wifi (or in future BLE) then will just operate locally, sending MQTT between components on this node, but 
+// not elsewhere.
+// TODO add support for BLE if it makes sense for MQTT
+#ifdef SYSTEM_WANT_WIFI
 #include "system_wifi.h"   // xWifi
+#endif  //SYSTEM_WANT_WIFI
 
 namespace xMqtt {
 
-WiFiClient net;
-MQTTClient client;
+#ifdef SYSTEM_WANT_WIFI
+  WiFiClient net;
+  MQTTClient client;
+#endif // SYSTEM_WANT_WIFI
+
 
 unsigned long nextLoopTime = 0;
 
@@ -53,7 +62,9 @@ class Subscription {
       Subscription *existingSub = find(topic);
       subscriptions = new Subscription(topic, cb, subscriptions);
       if (!existingSub) { 
-        client.subscribe(topic);
+        #ifdef SYSTEM_WANT_WIFI
+          client.subscribe(topic);
+        #endif // SYSTEM_WANT_WIFI
       }
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.println("Subscribing to: " + topic);
@@ -73,19 +84,21 @@ class Subscription {
       }
     }
     static void resubscribeAll() {
-      Subscription *sub;
-      #ifdef SYSTEM_MQTT_DEBUG
-        Serial.print("Resubscribing: "); 
-      #endif
-      for (sub = subscriptions; sub; sub = sub->next) {
-        client.subscribe(*(sub->topic));
+      #ifdef SYSTEM_WANT_WIFI
+        Subscription *sub;
         #ifdef SYSTEM_MQTT_DEBUG
-          Serial.print(" " + *(sub->topic));
-        #endif // SYSTEM_MQTT_DEBUG
-      }
-      #ifdef SYSTEM_MQTT_DEBUG
-        Serial.println();
-      #endif;
+          Serial.print("Resubscribing: "); 
+        #endif
+        for (sub = subscriptions; sub; sub = sub->next) {
+          client.subscribe(*(sub->topic));
+          #ifdef SYSTEM_MQTT_DEBUG
+            Serial.print(" " + *(sub->topic));
+          #endif // SYSTEM_MQTT_DEBUG
+        }
+        #ifdef SYSTEM_MQTT_DEBUG
+          Serial.println();
+        #endif;
+      #endif //SYSTEM_WANT_WIFI
     }
 };
 Subscription *Subscription::subscriptions = NULL;
@@ -121,6 +134,7 @@ class Retention {
 };
 Retention *Retention::retained = NULL;
 
+#ifdef SYSTEM_WANT_WIFI // Until we have BLE, compiling without WIFI means just work locally. 
 bool connect() {
   if (WiFi.status() != WL_CONNECTED) {
     #ifdef SYSTEM_MQTT_DEBUG
@@ -146,6 +160,7 @@ bool connect() {
     }
   }
 }
+#endif // SYSTEM_WANT_WIFI
 
 // Note this is called both as a callback from client.onMessage and from messageSend if SYSTEM_MQTT_LOOPBACK
 void messageReceived(String &topic, String &payload) {
@@ -179,14 +194,16 @@ void messageSend(String &topic, String &payload, bool retain, int qos) {
   #ifdef SYSTEM_MQTT_DEBUG
     Serial.println("MQTT sending:" + topic + " " + payload);
   #endif
-  client.publish(topic, payload, retain, qos);
-  // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
+  #ifdef SYSTEM_WANT_WIFI
+    client.publish(topic, payload, retain, qos);
+  #endif // SYSTEM_WANT_WIFI
   #ifdef SYSTEM_MQTT_LOOPBACK
+    // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
     if (retain) {
      Retention::retain(topic, payload); // Keep a copy of outgoing, so local subscribers will see 
     }
     messageReceived(topic, payload);
-  #endif
+  #endif // SYSTEM_MQTT_LOOPBACK
 }
 void messageSend(String &topic, float &value, int width, bool retain, int qos) {
   String *foo = new String(value, width);
@@ -199,32 +216,36 @@ void messageSend(String &topic, int value, bool retain, int qos) {
 }
 
 void setup() {
-  // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
-  // by Arduino. You need to set the IP address directly.
-  client.begin(xWifi::mqtt_host.c_str(), net);
-  client.onMessage(messageReceived);  // Called back from client.loop
+  #ifdef SYSTEM_WANT_WIFI // Until have BLE, no WIFI means local only
+    // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
+    // by Arduino. You need to set the IP address directly.
+    client.begin(xWifi::mqtt_host.c_str(), net);
+    client.onMessage(messageReceived);  // Called back from client.loop
 
-  // Note WiFi should be connected by this point but will check here anyway
-  while (!connect()) {
-    #ifdef SYSTEM_MQTT_DEBUG
-      Serial.print(".");
-    #endif
-    delay(1000); // Block waiting for WiFi and MQTT to connect 
-  }
+    // Note WiFi should be connected by this point but will check here anyway
+    while (!connect()) {
+      #ifdef SYSTEM_MQTT_DEBUG
+        Serial.print(".");
+      #endif
+      delay(1000); // Block waiting for WiFi and MQTT to connect 
+    }
+  #endif // SYSTEM_WANT_WIFI
 }
 
 void loop() {
-  if (nextLoopTime <= millis()) {
-    // Automatically reconnect
-    if (!client.connected()) {
-      if (!connect()) { // Non blocking but skip client.loop. Note if fails to connect will set nextLoopTime in 1000 ms.
-        nextLoopTime = millis() + 1000; // If non-blocking then dont do any MQTT for a second then try connect again
+  #ifdef SYSTEM_WANT_WIFI // Until have BLE, no WIFI means local only
+    if (nextLoopTime <= millis()) {
+      // Automatically reconnect
+      if (!client.connected()) {
+        if (!connect()) { // Non blocking but skip client.loop. Note if fails to connect will set nextLoopTime in 1000 ms.
+          nextLoopTime = millis() + 1000; // If non-blocking then dont do any MQTT for a second then try connect again
+        }
+      } else {
+        client.loop(); // Do this at end of loop so some time before checks if connected
+        nextLoopTime = millis() + SYSTEM_MQTT_MS;
       }
-    } else {
-      client.loop(); // Do this at end of loop so some time before checks if connected
-      nextLoopTime = millis() + SYSTEM_MQTT_MS;
     }
-  }
+  #endif // SYSTEM_WANT_WIFI
 }
 } // Namespace xMqtt
 #endif //SYSTEM_MQTT_WANT
