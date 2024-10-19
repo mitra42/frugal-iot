@@ -25,11 +25,8 @@ void setup() {
 
 void loop() {
   if (nextLoopTime <= millis()) {
-    aLedbuiltin::value = !aLedbuiltin::value;
-    #ifdef CONTROL_BLINKEN_DEBUG
-      Serial.print("Set LED to ");
-      Serial.println(aLedbuiltin::value);
-    #endif // CONTROL_BLINKEN_DEBUG
+    // TODO send via MQTT instead of setting directly
+    aLedbuiltin::set(!aLedbuiltin::value);
     nextLoopTime = millis() + CONTROL_BLINKEN_MS;
   }
 }

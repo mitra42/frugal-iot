@@ -31,9 +31,26 @@
 #endif // LED_BUILTIN
 #endif // ACTUATOR_BLINKIN_PIN
 
+#ifndef ACTUATOR_LEDBUILTIN_BRIGHTNESS
+#define ACTUATOR_LEDBUILTIN_BRIGHTNESS 64
+#endif
+
 namespace aLedbuiltin {
 
-bool value;
+bool value;  // 1 for on, 0 for off.
+
+void set(int v) {
+  value = v;
+  #ifdef ACTUATOR_LEDBUILTIN_DEBUG
+    Serial.print("\nSetting LED to "); Serial.println(value);
+  #endif // ACTUATOR_LEDBUILTIN_DEBUG
+  #ifdef LOLIN_C3_PICO // Lolon C3 doesnt have RGB_BUILTIN defined so digitalWrite doesnt work correctly
+    uint8_t brightness = v ? ACTUATOR_LEDBUILTIN_BRIGHTNESS : 0;
+    neopixelWrite(ACTUATOR_LEDBUILTIN_PIN,brightness,brightness,brightness);   // Note this is g,r,b NOT r g b on Lolin
+  #else // LOLIN_C3_PICO
+    digitalWrite(ACTUATOR_LEDBUILTIN_PIN, v ? LOW : HIGH); // LED pin is inverted, at least on Lolin D1 Mini
+  #endif // LOLIN_C3_PICO
+}
 
 #ifdef ACTUATOR_LEDBUILTIN_TOPIC
 String *topic = new String(ACTUATOR_LEDBUILTIN_TOPIC);
@@ -45,20 +62,21 @@ void messageReceived(String &topic, String &payload) {
     Serial.println(value);
   #endif
 }
-#endif
-
 void setup() {                
   // initialize the digital pin as an output.
   pinMode(ACTUATOR_LEDBUILTIN_PIN, OUTPUT);
 #ifdef ACTUATOR_LEDBUILTIN_DEBUG
   // There is a lot of possible debugging because this is surprisingly hard i.e. non-standard across boards! 
-  Serial.println(__FILE__);
-  Serial.print("BUILTIN_LED="); Serial.print(BUILTIN_LED);
+  Serial.print(__FILE__); Serial.print(" LED on "); Serial.println(ACTUATOR_LEDBUILTIN_PIN);
   //Serial.print(" INPUT="); Serial.print(INPUT); 
   //Serial.print(" OUTPUT="); Serial.print(OUTPUT); 
   //Serial.print(" INPUT_PULLUP="); Serial.print(INPUT_PULLUP); 
-  //Serial.print(" HIGH="); Serial.print(HIGH); 
-  //Serial.print(" LOW="); Serial.print(LOW);   
+  Serial.print(" HIGH="); Serial.print(HIGH); 
+  Serial.print(" LOW="); Serial.print(LOW);   
+  // Supposed to be defined, but known problem that not defined on Lolin C3 pico; 
+  #ifdef RGB_BUILTIN
+    Serial.print(" RGB_BUILTIN="); Serial.print(RGB_BUILTIN);
+  #endif
   Serial.println("");
 #endif // ACTUATOR_BLINKIN_DEBUG
 #ifdef ACTUATOR_LEDBUILTIN_TOPIC
@@ -66,10 +84,7 @@ void setup() {
 #endif // ACTUATOR_LEDBUILTIN_TOPIC
 }
 
-void loop() {
-  // Note, I'm presuming there is no cost/power overhead in doing this continuously.
-  digitalWrite(ACTUATOR_LEDBUILTIN_PIN, aLedbuiltin::value);
-}
+// void loop() { }
 
 } //namespace aLEDBUILTIN
 #endif // ACTUATOR_LEDBUILTIN_WANT

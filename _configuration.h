@@ -7,7 +7,8 @@
 
 // Note that on ESP that ESP32 or ESP8266 will be defined - should define other chips names here.
 // #define BOARD ESP8266_D1_MINI // Board level - define - will only support boards devs are actually using, but intended to support board specific fixes
-#define BOARD ESP32_LOLIN_C3_PICO
+#define LOLIN_C3_PICO // For some bug workaround in actuator_ledbuiltin.cpp
+#define SERIAL_BAUD 460800
 
 #define ACTUATOR_LEDBUILTIN_WANT // Control led on board
 //#define ACTUATOR_LEDBUILTIN_DEBUG
