@@ -25,7 +25,7 @@ void messageReceived(String &topic, String &payload) {
     Serial.print("cDemoMqtt received ");
     Serial.println(humidity);
   #endif
-  bool newValue = humidity > 75;
+  bool newValue = humidity > CONTROL_DEMO_MQTT_HUMIDITY_MAX;
   // Only send if its changed.
   if (newValue != value) {
     // TODO-33 should not send this here (rule against sending with qos>0 withink messagReceived), it should be in a "loop" 

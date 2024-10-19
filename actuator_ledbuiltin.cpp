@@ -1,7 +1,8 @@
 /*
   Turn the built in LED on or off
 
-  Optional: ACTUATOR_LEDBUILTIN_TOPIC ACTUATOR_LEDBUILTIN_PIN BUILTIN_LED LED_BUILTIN ACTUATOR_LEDBUILTIN_DEBUG
+  Optional: ACTUATOR_LEDBUILTIN_TOPIC ACTUATOR_LEDBUILTIN_PIN ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_BRIGHTNESS
+  Optional: BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
 */
 
 
@@ -22,17 +23,17 @@
 // but BUILTIN_LED responds to ifndef
 // This version works on ESP8266 D1 Mini - not tested on others 
 #ifndef ACTUATOR_LEDBUILTIN_PIN
-#ifdef LED_BUILTIN
-#define ACTUATOR_LEDBUILTIN_PIN LED_BUILTIN
-#else // !LED_BUILTIN
-#ifdef BUILTIN_LED
-#define ACTUATOR_LEDBUILTIN_PIN BUILTIN_LED
-#endif // BUILTIN_LED
-#endif // LED_BUILTIN
+  #ifdef LED_BUILTIN
+    #define ACTUATOR_LEDBUILTIN_PIN LED_BUILTIN
+  #else // !LED_BUILTIN
+    #ifdef BUILTIN_LED
+      #define ACTUATOR_LEDBUILTIN_PIN BUILTIN_LED
+    #endif // BUILTIN_LED
+  #endif // LED_BUILTIN
 #endif // ACTUATOR_BLINKIN_PIN
 
 #ifndef ACTUATOR_LEDBUILTIN_BRIGHTNESS
-#define ACTUATOR_LEDBUILTIN_BRIGHTNESS 64
+  #define ACTUATOR_LEDBUILTIN_BRIGHTNESS 64
 #endif
 
 namespace aLedbuiltin {
@@ -56,32 +57,35 @@ void set(int v) {
 String *topic = new String(ACTUATOR_LEDBUILTIN_TOPIC);
 
 void messageReceived(String &topic, String &payload) {
-  value = payload.toInt(); // Copied to pin in the loop 
+  uint8_t v = payload.toInt(); // Copied to pin in the loop 
   #ifdef CONTROL_DEMO_MQTT_DEBUG
     Serial.print("aLedbuiltin received ");
-    Serial.println(value);
+    Serial.println(v);
   #endif
+  set(v);
 }
+#endif
+
 void setup() {                
   // initialize the digital pin as an output.
   pinMode(ACTUATOR_LEDBUILTIN_PIN, OUTPUT);
-#ifdef ACTUATOR_LEDBUILTIN_DEBUG
-  // There is a lot of possible debugging because this is surprisingly hard i.e. non-standard across boards! 
-  Serial.print(__FILE__); Serial.print(" LED on "); Serial.println(ACTUATOR_LEDBUILTIN_PIN);
-  //Serial.print(" INPUT="); Serial.print(INPUT); 
-  //Serial.print(" OUTPUT="); Serial.print(OUTPUT); 
-  //Serial.print(" INPUT_PULLUP="); Serial.print(INPUT_PULLUP); 
-  Serial.print(" HIGH="); Serial.print(HIGH); 
-  Serial.print(" LOW="); Serial.print(LOW);   
-  // Supposed to be defined, but known problem that not defined on Lolin C3 pico; 
-  #ifdef RGB_BUILTIN
-    Serial.print(" RGB_BUILTIN="); Serial.print(RGB_BUILTIN);
-  #endif
-  Serial.println("");
-#endif // ACTUATOR_BLINKIN_DEBUG
-#ifdef ACTUATOR_LEDBUILTIN_TOPIC
-  xMqtt::subscribe(*topic, *messageReceived);
-#endif // ACTUATOR_LEDBUILTIN_TOPIC
+  #ifdef ACTUATOR_LEDBUILTIN_DEBUG
+    // There is a lot of possible debugging because this is surprisingly hard i.e. non-standard across boards! 
+    Serial.print(__FILE__); Serial.print(" LED on "); Serial.println(ACTUATOR_LEDBUILTIN_PIN);
+    //Serial.print(" INPUT="); Serial.print(INPUT); 
+    //Serial.print(" OUTPUT="); Serial.print(OUTPUT); 
+    //Serial.print(" INPUT_PULLUP="); Serial.print(INPUT_PULLUP); 
+    Serial.print(" HIGH="); Serial.print(HIGH); 
+    Serial.print(" LOW="); Serial.print(LOW);   
+    // Supposed to be defined, but known problem that not defined on Lolin C3 pico; 
+    #ifdef RGB_BUILTIN
+      Serial.print(" RGB_BUILTIN="); Serial.print(RGB_BUILTIN);
+    #endif
+    Serial.println("");
+  #endif // ACTUATOR_BLINKIN_DEBUG
+  #ifdef ACTUATOR_LEDBUILTIN_TOPIC
+    xMqtt::subscribe(*topic, *messageReceived);
+  #endif // ACTUATOR_LEDBUILTIN_TOPIC
 }
 
 // void loop() { }

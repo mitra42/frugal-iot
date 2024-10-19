@@ -33,7 +33,7 @@ void setup() {
   while (!Serial) { 
     ; // wait for serial port to connect. Needed for Arduino Leonardo only
   }
-  delay(5000); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
+  delay(SERIAL_DELAY); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
   //Serial.setDebugOutput(true);  // Enable debug from wifi, also needed to enable output from printf
   Serial.println("FrugalIoT Starting");
 #endif FRUGALIOT_DEBUG
