@@ -8,6 +8,7 @@
 
 namespace aLedbuiltin {
 void setup();
+void set(int value);
 void loop();
 extern bool value;
 } // namespace aLedbuiltin

@@ -29,7 +29,7 @@
 
 void setup() {
 #ifdef FRUGALIOT_DEBUG
-  Serial.begin(460800);
+  Serial.begin(SERIAL_BAUD);
   while (!Serial) { 
     ; // wait for serial port to connect. Needed for Arduino Leonardo only
   }
@@ -67,14 +67,8 @@ void setup() {
 
 void loop() {
   // Put code for each sensor etc here - call functions in those sections
-#ifdef SYSTEM_WIFI_WANT
-//  xWifi::loop(); // Not currently used
-#endif
 #ifdef SYSTEM_MQTT_WANT
   xMqtt::loop();
-#endif
-#ifdef ACTUATOR_LEDBUILTIN_WANT
-  aLedbuiltin::loop();
 #endif
 #ifdef SENSOR_ANALOG_WANT
   sAnalog::loop();
@@ -85,10 +79,6 @@ void loop() {
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::loop();
 #endif
-#ifdef CONTROL_DEMO_MQTT_WANT
-//  cDemoMqtt::loop(); // Not currently used
-#endif
-
 }
 
 
