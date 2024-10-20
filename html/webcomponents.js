@@ -27,15 +27,13 @@ class MqttClient extends HTMLElementExtended {
   loadContent() {
     //console.log("loadContent", this.state.server);
     if (!mqtt_client) {
-      // this.state.client = mqtt.connect(this.state.server); //
       // See https://stackoverflow.com/questions/69709461/mqtt-websocket-connection-failed
-      //const URL = "ws://localhost:9012";
 
       this.setStatus("Connecting");
       mqtt_client = mqtt.connect(this.state.server, {
         connectTimeout: 5000,
-        username: "public",
-        password: "public",
+        username: "public", //TODO-30 parameterize this
+        password: "public", //TODO-30 parameterize this
         // Remainder dont appear to be needed
         //hostname: "127.0.0.1",
         //port: 9012, // Has to be configured in mosquitto configuration
@@ -59,15 +57,15 @@ class MqttClient extends HTMLElementExtended {
       mqtt_client.on('error', function (error) {
         console.log(error);
         this.state.status = "Error:" + error.message;
-      });
+      }.bind(this));
       mqtt_client.on("message", (topic, message) => {
         // message is Buffer
         let msg = message.toString();
         console.log("Received", topic, " ", msg);
         for (let o of mqtt_subscriptions) {
-          console.log("Dispatch testing: ", topic)
+          // console.log("Dispatch testing: ", topic)
           if (o.topic === topic) {
-            console.log("Dispatching: ", topic, msg)
+            // console.log("Dispatching: ", topic, msg)
             o.cb(topic, msg)
           }
         }
@@ -114,7 +112,7 @@ class MqttReceiver extends MqttElement {
   } // Intended to be subclassed
 
   message_received(topic, message) {
-    console.log("Setting ", topic, " to ", message );
+    // console.log("Setting ", topic, " to ", message );
     this.valueSet(message);
     this.renderAndReplace();
   }
