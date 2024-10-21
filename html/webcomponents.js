@@ -75,13 +75,8 @@ class MqttClient extends HTMLElementExtended {
       // console.log("XXX already started connection") // We expect this, probably one time
     }
   }
-  publish(topic, msg, options) {
-    console.log("Publishing", topic, " ", msg);
-    mqtt_client.publish(topic, msg, options);
-  }
   // TODO display some more about the client and its status.
   render() {
-    console.log("render");
     return [
       EL('div', {},[
         EL('span',{class: 'demo', textContent: "MQTT Client"}),
@@ -137,10 +132,9 @@ class MqttTransmitter extends MqttReceiver {
   valueGet() { // Needs to return an integer or a string
     return this.state.value
   } // Overridden for booleans
-  onChange(e) {
-    //console.log("Changed"+e.target.checked);
-    this.state.value = e.target.checked;
+  publish() {
     // super.onChange(e);
+    console.log("Publishing ", this.state.topic, this.valueGet(), this.state.retain ? "retain": "", " qos=", this.state.qos );
     mqtt_client.publish(this.state.topic, this.valueGet(), { retain: this.state.retain, qos: this.state.qos});
   }
 }
@@ -160,7 +154,7 @@ class MqttToggle extends MqttTransmitter {
   onChange(e) {
     //console.log("Changed"+e.target.checked);
     this.state.value = e.target.checked; // Boolean
-    super.onChange(e);
+    this.publish(e);
   }
 
   render() {
@@ -181,37 +175,121 @@ class MqttToggle extends MqttTransmitter {
 customElements.define('mqtt-toggle', MqttToggle);
 
 const MBstyle = `
-.outer {border: 2px,black,solid; background-color: white;margin:5px;}
+.outer {background-color: white;margin:5px; padding:5px;}
+.bar {border: 1px,black,solid; background-color: white;margin: 0px;}
  .left {display:inline-block; text-align: right;}
  .right {background-color:white; display:inline-block;}
  .val {margin:5px;}
  `;
-class MqttBar extends MqttTransmitter {
-  // TODO - make sure this doesn't get triggered by a message from server.
+class MqttBar extends MqttReceiver {
   static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['value','min','max','color']); }
   static get floatAttributes() { return MqttTransmitter.floatAttributes.concat(['value','min','max']); }
 
+  constructor() {
+    super();
+  }
   valueSet(val) {
     super.valueSet(Number(val));
   }
-  onChange(e) {
-    super.onChange(e);
-  }
-
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
+    let setpointwidth = 100*(this.state.setpoint-this.state.min)/(this.state.max-this.state.min);
+
     return [
       EL('style', {textContent: MBstyle}), // Using styles defined above
-      EL('div', {class: "outer",},[
-        EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
-          EL('span', {class: "val", textContent: this.state.value}),
+      EL('div', {class: "outer"}, [
+        EL('div', {class: "bar",},[
+          EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
+            EL('span', {class: "val", textContent: this.state.value}),
+          ]),
+          EL('span', {class: "right", style: "width:"+(100-width)+"%"}),
         ]),
-        EL('span', {class: "right", style: "width:"+(100-width)+"%"}),
-//        EL('span',{class: 'demo', textContent: this.state.value || ""}),
+        EL('slot',{}),
       ]),
     ];
   }
 }
 customElements.define('mqtt-bar', MqttBar);
+
+
+const MSstyle = `
+.pointbar {margin:0px; padding 0px;}
+.setpoint {
+    position: relative;
+    top: -5px;
+    cursor: pointer;
+    width: max-content;
+    height: max-content;
+  }
+ `;
+
+// TODO Add some way to do numeric display, numbers should change on mousemoves.
+class MqttSlider extends MqttTransmitter {
+  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['value','min','max','color','setpoint']); }
+  static get floatAttributes() { return MqttTransmitter.floatAttributes.concat(['value','min','max', 'setpoint']); }
+  static get boolAttributes() { return MqttTransmitter.boolAttributes.concat(['continuous'])}
+
+  constructor() {
+    super();
+    // Build once as don't want rerendered
+    //this.thumb = EL('span', {class: "setpoint", textContent: "△"});
+    //this.thumb = EL('slot', {class: "setpoint"});
+    //this.slider = EL('div', {class: "pointbar",},[this.thumb]);
+    this.thumb = EL('div', {class: "setpoint"}, this.children);
+    this.slider = EL('div', {class: "pointbar",},[this.thumb]);
+    this.slider.onmousedown = this.onmousedown.bind(this);
+  }
+  valueSet(val) {
+    super.valueSet(Number(val));
+    this.thumb.style.left = this.leftOffset() + "px";
+  }
+  valueGet() {
+    return (this.state.value).toString(); // Conversion from int to String (for MQTT)
+  }
+  leftToValue(l) {
+    return (l+this.thumb.offsetWidth/2)/this.slider.offsetWidth * (this.state.max-this.state.min) + this.state.min;
+  }
+  leftOffset() {
+    return ((this.state.value-this.state.min)/(this.state.max-this.state.min)) * (this.slider.offsetWidth) - this.thumb.offsetWidth/2;
+  }
+  onmousedown(event) {
+    event.preventDefault();
+    let shiftX = event.clientX - this.thumb.getBoundingClientRect().left; // Pixels of mouse click from left
+    let thumb = this.thumb;
+    let slider = this.slider;
+    let tt = this;
+    let lastvalue = this.state.value;
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    function onMouseMove(event) {
+      let newLeft = event.clientX - shiftX - slider.getBoundingClientRect().left;
+      // if the pointer is out of slider => lock the thumb within the bounaries
+      newLeft = Math.min(Math.max( -thumb.offsetWidth/2, newLeft,), slider.offsetWidth - thumb.offsetWidth/2);
+      tt.valueSet(tt.leftToValue(newLeft));
+      if (tt.state.continuous && (tt.state.value != lastvalue)) { tt.publish(); lastvalue = tt.state.value; }
+    }
+    function onMouseUp(event) {
+      tt.publish();
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('mousemove', onMouseMove);
+    }
+    // shiftY not needed, the thumb moves only horizontally
+  }
+  renderAndReplace() {
+    super.renderAndReplace();
+    this.thumb.style.left = this.leftOffset() + "px";
+  }
+  render() {
+    //this.state.changeable.addEventListener('change', this.onChange.bind(this));
+    let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
+    let setpointwidth = 100*(this.state.setpoint-this.state.min)/(this.state.max-this.state.min);
+
+    return [
+      EL('style', {textContent: MSstyle}), // Using styles defined above
+      this.slider  // <div.setpoint><child></div
+    ];
+  }
+}
+customElements.define('mqtt-slider', MqttSlider);
 
