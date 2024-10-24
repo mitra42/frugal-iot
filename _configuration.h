@@ -47,6 +47,8 @@
 
 #define SYSTEM_WIFI_WANT
 #define SYSTEM_WIFI_DEBUG
+#define SYSTEM_WIFI_PORTAL_RESTART 120000 // How long (ms) portal should wait before restarting - 2 mins probably about right
+
 #define SYSTEM_MQTT_WANT // At this point, commenting this line out is not going to complie - too many dependencies on MQTT
 #define SYSTEM_MQTT_SERVER "public.cloud.shiftr.io" // From the demo - default - can be overridden
 #define SYSTEM_MQTT_MS 10 //Run client every 10ms

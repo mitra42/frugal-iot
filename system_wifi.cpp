@@ -38,9 +38,10 @@ void connect() {
     // If no credentials are stored or if the access point is out of reach,
     // an access point will be started with a captive portal to configure WiFi.
     WiFiSettings.connect();
+    // If WiFi connected, returns true, if WiFi fails then puts up portal and never returns - portal initiates reset 
     // Serial.println("XXX-22a connect exited gracefully without reset")
 }
-// Blocking attempt at reconnecting
+// Blocking attempt at reconnecting - can be called by MQTT
 void checkConnected() {
   if (WiFi.status() != WL_CONNECTED) {
     #ifdef SYSTEM_WIFI_DEBUG
@@ -49,6 +50,19 @@ void checkConnected() {
     connect(); // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
   }
 }
+#ifdef SYSTEM_WIFI_PORTAL_RESTART
+// A watchdog on the portal, that will reset after SYSTEM_WIFI_PORTAL_RESTART ms
+void portalWatchdog() {
+  static long OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART; // initialized first time this is called
+  if (OPWLrestart < millis()) {
+    #ifdef SYSTEM_WIFI_DEBUG
+      Serial.println(F("WiFiSettings portal timed out - restarting and will retry WiFi"));
+    #endif
+    if (WiFiSettings.onRestart) { WiFiSettings.onRestart(); }
+    ESP.restart();
+  } 
+}
+#endif // SYSTEM_WIFI_PORTAL_RESTART
 // Note this is blocking - so order is important, in particular it must complete this before trying xMqtt::setup
 void setup() {
   #ifdef ESP32
@@ -61,12 +75,21 @@ void setup() {
 
   // Custom configuration variables, these will read configured values if previously set and return default values if not.
   mqtt_host = WiFiSettings.string("mqtt_host", 4,40, SYSTEM_MQTT_SERVER, "MQTT Host"); 
-  
-  // TODO-22a WiFiSettings.onPortalWaitLoop may be the hook to recheck if WiFi connected and if so restart or maybe exit? 
-  // TODO-22a Or maybe just countdown and clear some flag
-  // WiFiSettings.onPortalWaitLoop = []() { 
-  //  Serial.println("XXX-22 onPortalWaitLoop");
-  // };
+ 
+  // Cases of connect and portal
+  // a: no SSID; portal run without attempting to connect - never resets
+  // b: SSID but connect fails, we have settings, so set a watchdog on portal
+  // c: Something (e.g. MQTT) calls checkConnected, which calls connect - SSID will be set, so should attempt, and if fail - do portal with watchdog
+  #ifdef SYSTEM_WIFI_PORTAL_RESTART
+    WiFiSettings.onFailure = []() {
+      #ifdef SYSTEM_WIFI_DEBUG
+        Serial.print(F("Setting portal watchdog for "));
+        Serial.println(SYSTEM_WIFI_PORTAL_RESTART);
+      #endif
+      WiFiSettings.onPortalWaitLoop = portalWatchdog;
+    };
+  #endif // SYSTEM_WIFI_PORTAL_RESTART
+
   connect();
 }
 
