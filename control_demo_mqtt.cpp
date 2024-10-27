@@ -15,8 +15,8 @@
  
 namespace cDemoMqtt {
 
-String *inTopic = new String(SENSOR_SHT85_TOPIC_HUMIDITY);
-String *outTopic = new String(ACTUATOR_LEDBUILTIN_TOPIC);
+String *inTopic = new String(SYSTEM_DISCOVERY_PROJECT SYSTEM_DISCOVERY_DEVICE SENSOR_SHT85_TOPIC_HUMIDITY); // TODO-29 will come from config
+String *outTopic = new String(SYSTEM_DISCOVERY_PROJECT SYSTEM_DISCOVERY_DEVICE ACTUATOR_LEDBUILTIN_TOPIC);  // TODO-29 will come from config
 bool value = false;
 
 void messageReceived(String &topic, String &payload) {

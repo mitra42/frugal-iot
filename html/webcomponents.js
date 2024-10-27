@@ -3,6 +3,7 @@
  */
 import {EL, HTMLElementExtended, getUrl, toBool} from './node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
+import yaml from './node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
 
 var mqtt_client;
 var mqtt_subscriptions = [];
@@ -39,6 +40,7 @@ class MqttClient extends HTMLElementExtended {
         //port: 9012, // Has to be configured in mosquitto configuration
         //path: "/mqtt",
       });
+      // TODO need to check for disconnect and set status accordingly
       mqtt_client.on("connect", () => {
         console.log("connected");
         this.setStatus("Connected");
@@ -49,10 +51,10 @@ class MqttClient extends HTMLElementExtended {
             mqtt_client.publish("presence", "Hello mqtt");
           }
         });
-         */
         // TODO simple message sent by local client, index.html can watch for it to know the local route is working
         this.setStatus("Testing presence");
         mqtt_client.publish("presence", "Hello mqtt");
+       */
       });
       mqtt_client.on('error', function (error) {
         console.log(error);
@@ -94,7 +96,7 @@ class MqttElement extends HTMLElementExtended {
 
 class MqttReceiver extends MqttElement {
   // constructor() { super(); }
-  static get observedAttributes() { return ['topic','value']; }
+  static get observedAttributes() { return ['topic','value','name']; }
   // TODO - think this could be super() &&  !this.state.subscribed;
   //shouldLoadWhenConnected() { return !!mqtt_client && !this.state.subscribed; }
   shouldLoadWhenConnected() { return super.shouldLoadWhenConnected() && !this.state.subscribed; }
@@ -104,12 +106,14 @@ class MqttReceiver extends MqttElement {
   }
   valueSet(val) {
     this.state.value = val;
+    return true; // Rerender
   } // Intended to be subclassed
 
   message_received(topic, message) {
     // console.log("Setting ", topic, " to ", message );
-    this.valueSet(message);
-    this.renderAndReplace();
+    if (this.valueSet(message)) {
+      this.renderAndReplace();
+    }
   }
 }
 class MqttText extends MqttReceiver {
@@ -143,6 +147,7 @@ class MqttToggle extends MqttTransmitter {
   valueSet(val) {
     super.valueSet(toBool(val));
     this.state.indeterminate = false;
+    return true; // Rerender
   }
   valueGet() {
     return (+this.state.value).toString(); // Implicit conversion from bool to int then to String.
@@ -190,6 +195,7 @@ class MqttBar extends MqttReceiver {
   }
   valueSet(val) {
     super.valueSet(Number(val));
+    return true; // Note shouldn't re-render children like a MqttSlider.
   }
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
@@ -199,6 +205,9 @@ class MqttBar extends MqttReceiver {
     return [
       EL('style', {textContent: MBstyle}), // Using styles defined above
       EL('div', {class: "outer"}, [
+        EL('div', {class: "name"}, [
+          EL('span', {textContent: this.state.name}),
+        ]),
         EL('div', {class: "bar",},[
           EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
             EL('span', {class: "val", textContent: this.state.value}),
@@ -243,6 +252,7 @@ class MqttSlider extends MqttTransmitter {
   valueSet(val) {
     super.valueSet(Number(val));
     this.thumb.style.left = this.leftOffset() + "px";
+    return true; // Rerenders on moving based on any received value but not when dragged
   }
   valueGet() {
     return (this.state.value).toString(); // Conversion from int to String (for MQTT)
@@ -293,3 +303,96 @@ class MqttSlider extends MqttTransmitter {
 }
 customElements.define('mqtt-slider', MqttSlider);
 
+const MPstyle = `
+.outer {border: 1px,black,solid;  margin: 0.2em; }
+.projectname, .name { margin-left: 1em; margin-right: 1em; } 
+`;
+
+class MqttProject extends MqttReceiver {
+  constructor() {
+    super();
+    this.state.nodes = [];
+  }
+  valueSet(val) {
+    if (!this.state.nodes.includes(val)) {
+      this.state.nodes.push(val);
+      let id = val;
+      let topic = this.state.topic + val;
+      this.append(EL('mqtt-node', {id, topic},[]));
+    }
+  }
+  render() {
+    return [
+      EL('style', {textContent: MPstyle}), // Using styles defined above
+      EL('div', {class: "outer"}, [
+        EL('div', {class: "title"},[
+          EL('span',{class: 'projectname', textContent: this.state.topic}),
+          EL('span',{class: 'name', textContent: this.state.name}),
+        ]),
+        EL('div', {class: "nodes"},[
+          EL('slot', {}),
+        ]),
+      ])
+    ];
+  }
+}
+customElements.define('mqtt-project', MqttProject);
+
+const MNstyle = `
+.outer { border: 1px,black,solid;  margin: 0.2em; }
+.name, .description, .nodeid { margin-left: 1em; margin-right: 1em; } 
+`;
+
+class MqttNode extends MqttReceiver {
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id']); }
+  constructor() { super(); }// Will subscribe to topic
+
+  elementFrom(t) {
+    let topic = this.state.topic + t.topic;
+    let name = t.name;
+    if (t.display === "toggle") {
+      // Assuming rw: rw, type: bool
+      this.append(EL('mqtt-toggle', {topic, name, retain: 1, qos: 1},[name]));
+    } else if (t.display === "bar") {
+      // Assuming rw: r, type: float
+      this.append(EL('mqtt-bar', {topic, name, max: t.max, min: t.min, color: t.color},[]));
+    } else if (t.display === "text") {
+      this.append(EL('mqtt-text', {},[name, topic]));
+    } else {
+      console.log("do not know how to display a ", t.display);
+      //TODO add slider (MqttSlider), need to specify which other element attached to.
+    }
+  }
+  valueSet(val) {
+    this.state.value = val;
+    let obj = yaml.loadAll(val,{ onWarning: (warn) => console.log('Yaml warning:', warn) });
+    console.log(obj);
+    let node = obj[0]; // Should only ever be one of them
+    ['id','description','name'].forEach(k => this.state[k] = node[k]);
+    while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace
+    node.topics.forEach(t => { this.elementFrom(t); });
+    return true;
+  }
+  /*
+  shouldLoadWhenConnected() {
+  // For now relying on retaintion of advertisement by broker
+    return this.state.id && super.shouldLoadWhenConnected() ;
+  }
+ */
+  render() { // TODO-29 expand this
+    return [
+      EL('style', {textContent: MNstyle}), // Using styles defined above
+      EL('div', {class: "outer"}, [
+        EL('div', {class: "title"},[
+          EL('span',{class: 'name', textContent: this.state.name}),
+          EL('span',{class: 'description', textContent: this.state.description}),
+          EL('span',{class: 'nodeid', textContent: this.state.id}),
+        ]),
+        EL('div', {class: "nodes"},[
+          EL('slot', {}),
+        ]),
+      ])
+    ]
+  }
+}
+customElements.define('mqtt-node', MqttNode);

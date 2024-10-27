@@ -30,7 +30,7 @@ namespace xMqtt {
 
 #ifdef SYSTEM_WIFI_WANT
   WiFiClient net;
-  MQTTClient client;
+  MQTTClient client(512,128); //TODO 29 large receive buffer as Advert bounces bacj
 #endif // SYSTEM_WIFI_WANT
 
 
@@ -62,7 +62,12 @@ class Subscription {
       subscriptions = new Subscription(topic, cb, subscriptions);
       if (!existingSub) { 
         #ifdef SYSTEM_WIFI_WANT
-          client.subscribe(topic);
+          if (!client.subscribe(topic)) {
+            #ifdef SYSTEM_MQTT_DEBUG
+              Serial.println("MQTT Subscription failed to ");
+              Serial.print(topic);
+            #endif // SYSTEM_MQTT_DEBUG
+          };
         #endif // SYSTEM_WIFI_WANT
       }
       #ifdef SYSTEM_MQTT_DEBUG
@@ -87,16 +92,20 @@ class Subscription {
         Subscription *sub;
         #ifdef SYSTEM_MQTT_DEBUG
           Serial.print("Resubscribing: "); 
-        #endif
+        #endif // SYSTEM_MQTT_DEBUG
         for (sub = subscriptions; sub; sub = sub->next) {
-          client.subscribe(*(sub->topic));
+          if (!client.subscribe(*(sub->topic))) {
+            #ifdef SYSTEM_MQTT_DEBUG
+              Serial.print("MQTT resubscription failed to ");
+            #endif // SYSTEM_MQTT_DEBUG
+          }
           #ifdef SYSTEM_MQTT_DEBUG
             Serial.print(" " + *(sub->topic));
           #endif // SYSTEM_MQTT_DEBUG
         }
         #ifdef SYSTEM_MQTT_DEBUG
           Serial.println();
-        #endif;
+        #endif; // SYSTEM_MQTT_DEBUG
       #endif //SYSTEM_WIFI_WANT
     }
 };
@@ -216,7 +225,14 @@ void subscribe(String &topic, MQTTClientCallbackSimple cb) {
 // These are intentionally required parameters rather than defaulting so the coder thinks about the desired behavior
 void messageSendInner(Message *m) {
   #ifdef SYSTEM_WIFI_WANT
-    client.publish(*m->topic, *m->message, m->retain, m->qos);
+    if (!client.publish(*m->topic, *m->message, m->retain, m->qos)) {
+      #ifdef SYSTEM_MQTT_DEBUG
+        Serial.print("Failed to publish");
+        Serial.print(*m->topic);
+        Serial.print('=');
+        Serial.println(*m->message);
+      #endif // SYSTEM_MQTT_DEBUG
+    };
   #endif // SYSTEM_WIFI_WANT
 }
 void messageSend(String &topic, String &payload, bool retain, int qos) {
@@ -278,7 +294,13 @@ void loop() {
         }
       } else {
         messageSendQueued();
-        client.loop(); // Do this at end of loop so some time before checks if connected
+        if (!client.loop()) {
+          #ifdef SYSTEM_MQTT_DEBUG
+            Serial.print("MQTT client loop failed ");
+            lwmqtt_err_t err = client.lastError();
+            Serial.println(err);
+          #endif // SYSTEM_MQTT_DEBUG
+        }; // Do this at end of loop so some time before checks if connected
         nextLoopTime = millis() + SYSTEM_MQTT_MS;
       }
     }

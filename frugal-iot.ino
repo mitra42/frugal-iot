@@ -26,6 +26,9 @@
 #ifdef CONTROL_DEMO_MQTT_WANT
 #include "control_demo_mqtt.h"
 #endif
+#ifdef SYSTEM_DISCOVERY_WANT
+#include "system_discovery.h"
+#endif
 
 void setup() {
 #ifdef FRUGALIOT_DEBUG
@@ -59,6 +62,9 @@ void setup() {
 #ifdef CONTROL_DEMO_MQTT_WANT
   cDemoMqtt::setup(); // Must be after system_mqtt
 #endif
+#ifdef SYSTEM_DISCOVERY_WANT
+  xDiscovery::setup(); // Must be after system mqtt
+#endif
 
 #ifdef FRUGALIOT_DEBUG
   Serial.println("FrugalIoT Starting Loop");
@@ -78,6 +84,9 @@ void loop() {
 #endif
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::loop();
+#endif
+#ifdef SYSTEM_DISCOVERY_WANT
+  xDiscovery::loop();
 #endif
 }
 

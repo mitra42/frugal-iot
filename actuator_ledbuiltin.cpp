@@ -54,7 +54,7 @@ void set(int v) {
 }
 
 #ifdef ACTUATOR_LEDBUILTIN_TOPIC
-String *topic = new String(ACTUATOR_LEDBUILTIN_TOPIC);
+String *topic = new String(SYSTEM_DISCOVERY_PROJECT SYSTEM_DISCOVERY_DEVICE ACTUATOR_LEDBUILTIN_TOPIC); // TODO-29 will come from config
 
 void messageReceived(String &topic, String &payload) {
   uint8_t v = payload.toInt(); // Copied to pin in the loop 
