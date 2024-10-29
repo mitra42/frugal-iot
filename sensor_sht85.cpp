@@ -28,6 +28,7 @@
 #include "_common.h"    // Main include file for Framework
 #include <SHT85.h>
 #include "sensor_sht85.h"
+#include "system_wifi.h"
 
 #if defined(SENSOR_SHT85_TOPIC_TEMPERATURE) || defined(SENSOR_SHT85_TOPIC_HUMIDITY)
   #include "system_mqtt.h"                // Library for sending messages
@@ -50,10 +51,10 @@ unsigned long nextLoopTime = 0;
 sSHTxx *sht_array[SENSOR_SHT85_COUNT];
 
 #ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
-  String *topicT = new String(SYSTEM_DISCOVERY_PROJECT SYSTEM_DISCOVERY_DEVICE SENSOR_SHT85_TOPIC_TEMPERATURE);
+  String *topicT = new String(SYSTEM_DISCOVERY_PROJECT + xWifi::clientid() + "/" SENSOR_SHT85_TOPIC_TEMPERATURE);
 #endif
 #ifdef SENSOR_SHT85_TOPIC_HUMIDITY
-  String *topicH = new String(SYSTEM_DISCOVERY_PROJECT SYSTEM_DISCOVERY_DEVICE SENSOR_SHT85_TOPIC_HUMIDITY);
+  String *topicH = new String(SYSTEM_DISCOVERY_PROJECT + xWifi::clientid() + "/" SENSOR_SHT85_TOPIC_HUMIDITY);
 #endif
 
 void setup()

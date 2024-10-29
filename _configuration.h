@@ -60,7 +60,6 @@
 
 #define SYSTEM_DISCOVERY_WANT
 #define SYSTEM_DISCOVERY_DEBUG
-#define SYSTEM_DISCOVERY_DEVICE "esp8266-12346/" // TODO-29 mnove this to configuration screen  
 #define SYSTEM_DISCOVERY_PROJECT "dev/Lotus Ponds/" // TODO-29 append the "/" in xMqtt::announce // TODO-29 move to configuration screen
 #define SYSTEM_DISCOVERY_ADVERTISEMENT "id: esp8266-12346\nname: Foo\ndescription: ESP8266 with SHT85 sensor\ntopics:" // TODO-29 move to configuration screen
 #define SYSTEM_DISCOVERY_MS 30000

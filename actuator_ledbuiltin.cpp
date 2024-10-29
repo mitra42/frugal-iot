@@ -5,7 +5,6 @@
   Optional: BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
 */
 
-
 #include "_settings.h"  // Settings for what to include etc
 
 #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -14,6 +13,7 @@
 #include "actuator_ledbuiltin.h"
 #ifdef ACTUATOR_LEDBUILTIN_TOPIC
 #include "system_mqtt.h"
+#include "system_wifi.h"
 #endif
 
 // Arduinos unfortunately dont use any kind of #define for the board type so the 
@@ -54,7 +54,7 @@ void set(int v) {
 }
 
 #ifdef ACTUATOR_LEDBUILTIN_TOPIC
-String *topic = new String(SYSTEM_DISCOVERY_PROJECT SYSTEM_DISCOVERY_DEVICE ACTUATOR_LEDBUILTIN_TOPIC); // TODO-29 will come from config
+String *topic = new String(SYSTEM_DISCOVERY_PROJECT + xWifi::clientid() + "/" ACTUATOR_LEDBUILTIN_TOPIC); // TODO-29 will come from config
 
 void messageReceived(String &topic, String &payload) {
   uint8_t v = payload.toInt(); // Copied to pin in the loop 

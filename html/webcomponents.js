@@ -348,7 +348,7 @@ class MqttNode extends MqttReceiver {
   constructor() { super(); }// Will subscribe to topic
 
   elementFrom(t) {
-    let topic = this.state.topic + t.topic;
+    let topic = this.state.topic + "/" + t.topic;
     let name = t.name;
     if (t.display === "toggle") {
       // Assuming rw: rw, type: bool

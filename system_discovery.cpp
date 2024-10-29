@@ -6,7 +6,7 @@
    Respond with a YAML string that describes this node and all sensors actuators
 
   Required SYSTEM_DISCOVERY_MS 
-  Required SYSTEM_DISCOVERY_PROJECT SYSTEM_DISCOVERY_DEVICE // TODO-29 will move to configuration
+  Required SYSTEM_DISCOVERY_PROJECT // TODO-29 will move to configuration
   Optional SYSTEM_DISCOVERY_DEBUG
   Optional *_WANT and *ADVERTISEMENT for each sensor and actuator
 
@@ -16,12 +16,13 @@
 #include "_settings.h"
 
 #ifdef SYSTEM_DISCOVERY_WANT // Until have BLE, no WIFI means local only
-#if (!defined(SYSTEM_DISCOVERY_MS) || !defined(SYSTEM_DISCOVERY_PROJECT) || !defined(SYSTEM_DISCOVERY_DEVICE))
-  error system_discover does not have all required configuration: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_PROJECT SYSTEM_DISCOVERY_DEVICE
+#if (!defined(SYSTEM_DISCOVERY_MS) || !defined(SYSTEM_DISCOVERY_PROJECT) )
+  error system_discover does not have all required configuration: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_PROJECT
 #endif
 
 #include <Arduino.h>
 #include "_common.h"    // Main include file for Framework
+#include "system_wifi.h"
 #include "system_mqtt.h"  // xMqtt
 #include "system_discovery.h"
 
@@ -29,9 +30,8 @@ namespace xDiscovery {
 
 unsigned long nextLoopTime = 0;
 
-String *projectTopic = new String(SYSTEM_DISCOVERY_PROJECT); // e.g. "dev/Lotus Ponds/node1" TODO-29 will come from configure
-String *projectPayload = new String(SYSTEM_DISCOVERY_DEVICE); // e.g. "node1"
-String *advertiseTopic = new String(SYSTEM_DISCOVERY_PROJECT SYSTEM_DISCOVERY_DEVICE); // e.g. "dev/Lotus Ponds/node1"     TODO-29 will come from configure
+String *projectTopic = new String(SYSTEM_DISCOVERY_PROJECT); // e.g. "dev/Lotus Ponds/" TODO-29 will come from configure
+String *advertiseTopic = new String(SYSTEM_DISCOVERY_PROJECT + xWifi::clientid()); // e.g. "dev/Lotus Ponds/node1"     TODO-29 will come from configure
 String *advertisePayload = new String(
     SYSTEM_DISCOVERY_ADVERTISEMENT
     #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -42,7 +42,7 @@ String *advertisePayload = new String(
     #endif
   );
 void quickAdvertise() {
-    xMqtt::messageSend(*projectTopic, *projectPayload, false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
+    xMqtt::messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
 }
 
 void fullAdvertise() {

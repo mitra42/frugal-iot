@@ -178,7 +178,8 @@ bool connect() {
       Serial.print("\nMQTT connecting: to ");
       Serial.print(xWifi::mqtt_host.c_str());
     #endif 
-    if (client.connect("arduino", "public", "public")) { // TODO-21 parameterize this
+   
+    if (client.connect(xWifi::clientid().c_str(), "public", "public")) { // TODO-21 parameterize this
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.println("Connected");
       #endif

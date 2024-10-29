@@ -12,11 +12,12 @@
 #include "_common.h"    // Main include file for Framework
 #include "control_demo_mqtt.h"
 #include "system_mqtt.h"
+#include "system_wifi.h"
  
 namespace cDemoMqtt {
 
-String *inTopic = new String(SYSTEM_DISCOVERY_PROJECT SYSTEM_DISCOVERY_DEVICE SENSOR_SHT85_TOPIC_HUMIDITY); // TODO-29 will come from config
-String *outTopic = new String(SYSTEM_DISCOVERY_PROJECT SYSTEM_DISCOVERY_DEVICE ACTUATOR_LEDBUILTIN_TOPIC);  // TODO-29 will come from config
+String *inTopic = new String(SYSTEM_DISCOVERY_PROJECT + xWifi::clientid() + "/" SENSOR_SHT85_TOPIC_HUMIDITY); // TODO-29 will come from config
+String *outTopic = new String(SYSTEM_DISCOVERY_PROJECT + xWifi::clientid() + "/" ACTUATOR_LEDBUILTIN_TOPIC);  // TODO-29 will come from config
 bool value = false;
 
 void messageReceived(String &topic, String &payload) {

@@ -47,7 +47,7 @@ void checkConnected() {
     #ifdef SYSTEM_WIFI_DEBUG
       Serial.println("WiFi not connected, forcing reconnect");
     #endif
-    connect(); // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
+    connect();
   }
 }
 #ifdef SYSTEM_WIFI_PORTAL_RESTART
@@ -63,6 +63,12 @@ void portalWatchdog() {
   } 
 }
 #endif // SYSTEM_WIFI_PORTAL_RESTART
+
+String &clientid() {
+  WiFiSettings.begin(); // Ensure WiFi has created variables
+  return WiFiSettings.hostname;
+}
+
 // Note this is blocking - so order is important, in particular it must complete this before trying xMqtt::setup
 void setup() {
   #ifdef ESP32
@@ -89,12 +95,12 @@ void setup() {
       WiFiSettings.onPortalWaitLoop = portalWatchdog;
     };
   #endif // SYSTEM_WIFI_PORTAL_RESTART
-
+  #ifdef SYSTEM_WIFI_DEBUG
+    Serial.print("WiFi hostname=");
+    Serial.println(clientid());
+  #endif // SYSTEM_WIFI_DEBUG
   connect();
 }
 
-/*
-void loop() { } //TODO-22 maybe try and reconnect here ?
-*/
 } // namespace xWifi
 #endif SYSTEM_WIFI_WANT
