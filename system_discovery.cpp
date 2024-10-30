@@ -35,15 +35,7 @@ String *projectTopic;
 String *advertiseTopic;
 String *topicPrefix;
 
-String *advertisePayload = new String(
-    SYSTEM_DISCOVERY_ADVERTISEMENT
-    #ifdef ACTUATOR_LEDBUILTIN_WANT
-      ACTUATOR_LEDBUILTIN_ADVERTISEMENT
-    #endif
-    #ifdef SENSOR_SHT85_WANT
-      SENSOR_SHT85_ADVERTISEMENT
-    #endif
-  );
+String *advertisePayload;
 void quickAdvertise() {
     xMqtt::messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
 }
@@ -71,7 +63,15 @@ void setup() {
   projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project + "/"); // e.g. "dev/Lotus Ponds/" TODO-29 will come from configure
   advertiseTopic = new String(*projectTopic + xWifi::clientid()); // e.g. "dev/Lotus Ponds/esp32-12345"     TODO-29 will come from configure
   topicPrefix = new String(*advertiseTopic + "/"); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
-
+  advertisePayload = new String(F(
+    SYSTEM_DISCOVERY_ADVERTISEMENT
+    #ifdef ACTUATOR_LEDBUILTIN_WANT
+      ACTUATOR_LEDBUILTIN_ADVERTISEMENT
+    #endif
+    #ifdef SENSOR_SHT85_WANT
+      SENSOR_SHT85_ADVERTISEMENT
+    #endif
+  ));
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print("topicPrefix="); Serial.println(*topicPrefix);
   #endif

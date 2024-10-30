@@ -30,7 +30,7 @@ namespace xMqtt {
 
 #ifdef SYSTEM_WIFI_WANT
   WiFiClient net;
-  MQTTClient client(); //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.
+  MQTTClient client; //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.
 #endif // SYSTEM_WIFI_WANT
 
 
