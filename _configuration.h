@@ -53,14 +53,14 @@
 #define SYSTEM_WIFI_PORTAL_RESTART 120000 // How long (ms) portal should wait before restarting - 2 mins probably about right
 
 #define SYSTEM_MQTT_WANT // At this point, commenting this line out is not going to compile - too many dependencies on MQTT
-#define SYSTEM_MQTT_SERVER "public.cloud.shiftr.io" // From the demo - default - can be overridden
+#define SYSTEM_MQTT_SERVER "naturalinnovation.org" // From the demo - default - can be overridden
 #define SYSTEM_MQTT_MS 10 //Run client every 10ms
 #define SYSTEM_MQTT_DEBUG
 #define SYSTEM_MQTT_LOOPBACK // If true dispatch the message locally as well.
 
 #define SYSTEM_DISCOVERY_WANT
 #define SYSTEM_DISCOVERY_DEBUG
-#define SYSTEM_DISCOVERY_PROJECT "dev/Lotus Ponds/" // TODO-29 append the "/" in xMqtt::announce // TODO-29 move to configuration screen
+#define SYSTEM_DISCOVERY_ORGANIZATION "dev"  // Organization behind this set of devices. Also used for MQTT userid //TODO-29 setup place to register new ones
 #define SYSTEM_DISCOVERY_ADVERTISEMENT "id: esp8266-12346\nname: Foo\ndescription: ESP8266 with SHT85 sensor\ntopics:" // TODO-29 move to configuration screen
 #define SYSTEM_DISCOVERY_MS 30000
 

@@ -47,6 +47,9 @@ void setup() {
 #ifdef SYSTEM_MQTT_WANT
   xMqtt::setup();
 #endif
+#ifdef SYSTEM_DISCOVERY_WANT
+  xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+#endif
 #ifdef ACTUATOR_LEDBUILTIN_WANT
   aLedbuiltin::setup();
 #endif
@@ -61,9 +64,6 @@ void setup() {
 #endif
 #ifdef CONTROL_DEMO_MQTT_WANT
   cDemoMqtt::setup(); // Must be after system_mqtt
-#endif
-#ifdef SYSTEM_DISCOVERY_WANT
-  xDiscovery::setup(); // Must be after system mqtt
 #endif
 
 #ifdef FRUGALIOT_DEBUG

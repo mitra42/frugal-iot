@@ -1,6 +1,7 @@
 /*
   Turn the built in LED on or off
 
+  Required: SYSTEM_DISCOVERY_ORGANIZATION
   Optional: ACTUATOR_LEDBUILTIN_TOPIC ACTUATOR_LEDBUILTIN_PIN ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_BRIGHTNESS
   Optional: BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
 */
@@ -8,12 +9,18 @@
 #include "_settings.h"  // Settings for what to include etc
 
 #ifdef ACTUATOR_LEDBUILTIN_WANT
+
+#if (!defined(SYSTEM_DISCOVERY_ORGANIZATION))
+  error actuator_ledbuiltin does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_ORGANIZATION
+#endif
+
+
 #include <Arduino.h>
 #include "_common.h"    // Main include file for Framework
 #include "actuator_ledbuiltin.h"
 #ifdef ACTUATOR_LEDBUILTIN_TOPIC
 #include "system_mqtt.h"
-#include "system_wifi.h"
+#include "system_discovery.h"
 #endif
 
 // Arduinos unfortunately dont use any kind of #define for the board type so the 
@@ -54,7 +61,8 @@ void set(int v) {
 }
 
 #ifdef ACTUATOR_LEDBUILTIN_TOPIC
-String *topic = new String(SYSTEM_DISCOVERY_PROJECT + xWifi::clientid() + "/" ACTUATOR_LEDBUILTIN_TOPIC); // TODO-29 will come from config
+//TODO29 maybe should be &topic
+String *topic;
 
 void messageReceived(String &topic, String &payload) {
   uint8_t v = payload.toInt(); // Copied to pin in the loop 
@@ -67,6 +75,9 @@ void messageReceived(String &topic, String &payload) {
 #endif
 
 void setup() {                
+  topic = new String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC);
+  Serial.println("XXX Discovery project=" + *xDiscovery::topicPrefix); //TODO-29 delete
+  Serial.println("Topic = " + *topic);
   // initialize the digital pin as an output.
   pinMode(ACTUATOR_LEDBUILTIN_PIN, OUTPUT);
   #ifdef ACTUATOR_LEDBUILTIN_DEBUG

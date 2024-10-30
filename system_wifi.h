@@ -4,6 +4,7 @@
 namespace xWifi {
 // Customized variables from configuration
 extern String mqtt_host;
+extern String discovery_project;
 
 void setup();
 void connect();

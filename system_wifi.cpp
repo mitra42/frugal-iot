@@ -31,6 +31,7 @@
 namespace xWifi {
 
 String mqtt_host;
+String discovery_project;
 
 // This is called - blocking - by xWiFi.setup, but can also be called if discover no longer connected
 void connect() {
@@ -81,7 +82,13 @@ void setup() {
 
   // Custom configuration variables, these will read configured values if previously set and return default values if not.
   mqtt_host = WiFiSettings.string("mqtt_host", 4,40, SYSTEM_MQTT_SERVER, "MQTT Host"); 
- 
+  // TODO-29 turn discovery_project into a dropdown, use an ifdef for the ORGANIZATION in configuration.h
+  discovery_project = WiFiSettings.string("discovery_project", 3,20, "project", "Project"); 
+  #ifdef SYSTEM_WIFI_DEBUG
+  Serial.println("MQTT host = " + mqtt_host);
+  Serial.println("Project = " + discovery_project);
+  #endif
+
   // Cases of connect and portal
   // a: no SSID; portal run without attempting to connect - never resets
   // b: SSID but connect fails, we have settings, so set a watchdog on portal

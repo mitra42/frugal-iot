@@ -6,7 +6,7 @@
    Respond with a YAML string that describes this node and all sensors actuators
 
   Required SYSTEM_DISCOVERY_MS 
-  Required SYSTEM_DISCOVERY_PROJECT // TODO-29 will move to configuration
+  Required SYSTEM_DISCOVERY_ORGANIZATION // TODO-29 will move to configuration
   Optional SYSTEM_DISCOVERY_DEBUG
   Optional *_WANT and *ADVERTISEMENT for each sensor and actuator
 
@@ -16,8 +16,8 @@
 #include "_settings.h"
 
 #ifdef SYSTEM_DISCOVERY_WANT // Until have BLE, no WIFI means local only
-#if (!defined(SYSTEM_DISCOVERY_MS) || !defined(SYSTEM_DISCOVERY_PROJECT) )
-  error system_discover does not have all required configuration: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_PROJECT
+#if (!defined(SYSTEM_DISCOVERY_MS) || !defined(SYSTEM_DISCOVERY_ORGANIZATION))
+  error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_ORGANIZATION
 #endif
 
 #include <Arduino.h>
@@ -30,8 +30,11 @@ namespace xDiscovery {
 
 unsigned long nextLoopTime = 0;
 
-String *projectTopic = new String(SYSTEM_DISCOVERY_PROJECT); // e.g. "dev/Lotus Ponds/" TODO-29 will come from configure
-String *advertiseTopic = new String(SYSTEM_DISCOVERY_PROJECT + xWifi::clientid()); // e.g. "dev/Lotus Ponds/node1"     TODO-29 will come from configure
+//TODO Optimization - should these be String & instead of String *
+String *projectTopic;
+String *advertiseTopic;
+String *topicPrefix;
+
 String *advertisePayload = new String(
     SYSTEM_DISCOVERY_ADVERTISEMENT
     #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -63,6 +66,13 @@ void messageReceived(String &topic, String &payload) {
 
 
 void setup() {
+  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project + "/"); // e.g. "dev/Lotus Ponds/" TODO-29 will come from configure
+  advertiseTopic = new String(*projectTopic + xWifi::clientid()); // e.g. "dev/Lotus Ponds/esp32-12345"     TODO-29 will come from configure
+  topicPrefix = new String(*advertiseTopic + "/"); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
+
+  #ifdef SYSTEM_DISCOVERY_DEBUG
+    Serial.print("topicPrefix="); Serial.println(*topicPrefix);
+  #endif
     fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise)
     xMqtt::subscribe(*advertiseTopic, *messageReceived);
 }

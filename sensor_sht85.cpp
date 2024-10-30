@@ -8,6 +8,7 @@
  * 
  * Configuration options example - these are all in _configuration.h
  * Required:
+ * SYSTEM_DISCOVERY_ORGANIZATION
  * SENSOR_SHT85_DEVICE SHT30                  // Which kind of device, for now it presumes they are all the same.
  * SENSOR_SHT85_ADDRESS_ARRAY 0x45,0x44       // A list of device addresses
  * SENSOR_SHT85_COUNT                         // How many devices
@@ -24,11 +25,16 @@
 
 #ifdef SENSOR_SHT85_WANT
 
+#if (!defined(SENSOR_SHT85_DEVICE) || !defined(SENSOR_SHT85_ADDRESS_ARRAY) || !defined(SENSOR_SHT85_COUNT) || !defined(SENSOR_SHT85_MS) || !defined(SYSTEM_DISCOVERY_ORGANIZATION))
+  error sensor_sht85 does not have all requirements in _configuration.h: SENSOR_SHT85_DEVICE SENSOR_SHT85_ADDRESS_ARRAY SENSOR_SHT85_COUNT SENSOR_SHT85_MS SYSTEM_DISCOVERY_ORGANIZATION
+#endif
+
+
 #include <Arduino.h>
 #include "_common.h"    // Main include file for Framework
 #include <SHT85.h>
 #include "sensor_sht85.h"
-#include "system_wifi.h"
+#include "system_discovery.h"
 
 #if defined(SENSOR_SHT85_TOPIC_TEMPERATURE) || defined(SENSOR_SHT85_TOPIC_HUMIDITY)
   #include "system_mqtt.h"                // Library for sending messages
@@ -51,21 +57,22 @@ unsigned long nextLoopTime = 0;
 sSHTxx *sht_array[SENSOR_SHT85_COUNT];
 
 #ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
-  String *topicT = new String(SYSTEM_DISCOVERY_PROJECT + xWifi::clientid() + "/" SENSOR_SHT85_TOPIC_TEMPERATURE);
+  String *topicT;
 #endif
 #ifdef SENSOR_SHT85_TOPIC_HUMIDITY
-  String *topicH = new String(SYSTEM_DISCOVERY_PROJECT + xWifi::clientid() + "/" SENSOR_SHT85_TOPIC_HUMIDITY);
+  String *topicH;
 #endif
 
 void setup()
 {
   uint8_t sht_address_array[] = {SENSOR_SHT85_ADDRESS_ARRAY};
 
-#ifdef SENSOR_SHT85_DEBUG
-  Serial.println(__FILE__);
-  Serial.print("SHT_LIB_VERSION: \t");
-  Serial.println(SHT_LIB_VERSION);
-#endif
+  #ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
+    topicT = new String(*xDiscovery::topicPrefix + SENSOR_SHT85_TOPIC_TEMPERATURE);
+  #endif
+  #ifdef SENSOR_SHT85_TOPIC_HUMIDITY
+    topicH = new String(*xDiscovery::topicPrefix + SENSOR_SHT85_TOPIC_HUMIDITY);
+  #endif
 
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   Wire.begin(); // Appears to default to 4,5 which is correct for the Lolin D1 Mini SHT30 shield
