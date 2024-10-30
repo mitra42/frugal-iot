@@ -48,9 +48,11 @@ void quickAdvertise() {
     xMqtt::messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
 }
 
+//TODO-29 want retained upstream but not local - non trivial
 void fullAdvertise() {
   xMqtt::messageSend(*advertiseTopic, *advertisePayload, true, 1); //TODO-29 should fbe retain=true qos=1
 }
+/*
 void messageReceived(String &topic, String &payload) {
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print("Discovery message receieved:");
@@ -63,7 +65,7 @@ void messageReceived(String &topic, String &payload) {
     fullAdvertise();
   }
 }
-
+*/
 
 void setup() {
   projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project + "/"); // e.g. "dev/Lotus Ponds/" TODO-29 will come from configure
@@ -73,8 +75,8 @@ void setup() {
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print("topicPrefix="); Serial.println(*topicPrefix);
   #endif
-    fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise)
-    xMqtt::subscribe(*advertiseTopic, *messageReceived);
+    fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
+    // xMqtt::subscribe(*advertiseTopic, *messageReceived); // Commented out as don't see why need to receive this
 }
 
 void loop() {

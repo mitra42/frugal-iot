@@ -30,7 +30,7 @@ namespace xMqtt {
 
 #ifdef SYSTEM_WIFI_WANT
   WiFiClient net;
-  MQTTClient client(512,128); //TODO 29 large receive buffer as Advert bounces bacj
+  MQTTClient client(); //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.
 #endif // SYSTEM_WIFI_WANT
 
 
