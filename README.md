@@ -25,30 +25,17 @@ Our current test dev board is a ESP8266 Lolin D1 Mini with a SHT30 Temp & Humidi
 I expect to start testing other combinations of boards and sensors soon. 
 Instructions for other board/sensor combinations are welcome. 
 
-I've tried testing on a Lolin C3 Pico (ESP3C) but so far (2024-10-18) not successfully. I expect to solve that soon.
+I've also tested on a Lolin C3 Pico (ESP32-C3), but do not test every git push on that board. 
 
-### Install pre-requisites
+### Install prerequisites
 * Check you have node & npm & http-server installed `node -v` If not then you'll need nodejs from (nodejs.org)
-* cd `html`
-* `npm install` # Adds the libraries needd for the html
-* then fork this repo, and `cd` into wherever it is installed.
+
+### Install Repo
+* clone this repo, and `cd` into wherever it is installed.
 * For the purpose of these instructions we will assume that is `~/frugal-iot` but it could be anywhere.
-
-### Install mosquitto
-* Note, at some point soon we'll have a MQTT server on a known location - watch issue#30.d
-* On a mac
-  * check you have homebrew installed `brew -v`
-  * `brew install mosquitto` worked for me with no problems. 
-  * `cd ~/frugal-iot/html`
-  * `mosquitto -c mosquitto.conf` # Run a mqtt server (which the sensor node will use) and websockets (which the browser uses) on default ports
-
-### Run http server
-* cd `~/frugal-iot/html`
-* http-server   
-* Not down the IP address it reports (not the `127.0.0.1`, the other one) - this will also be the address of the mqtt server
-* open (http://localhost:8080) in your browser
-
-
+* cd ~/frugal-iot/html`
+* `npm install` # Adds the libraries needd for the html
+* cd ~/frugal-iot
 
 #### Arduino IDE basics - skip if you know what you are doing
 * In Arduino IDE 
@@ -63,21 +50,29 @@ I've tried testing on a Lolin C3 Pico (ESP3C) but so far (2024-10-18) not succes
   * This can be tricky - it should open at 460800 but might need changing after the first run at which point it should remember
 
 
-### Installing on a dev board
+### Installing and testing on a dev board
 
 #### Basic test
 * Edit _configuration.h to match your system and functionality required for example uncomment SENSOR_SHT85_WANT to enable that functionality
-* Compile and Flash to your dev board (ESP8266 tested, ESP32 should work)
+* Compile and Flash to your dev board
 * On a Wifi device such as a phone
 * Connect to the wifi node of the board which will have a SSID like esp8266-12345
-* Configure the Wifi SSID and Password of your router, 
-* Configure the mqtt server address (address of your laptop noted when setting up the http server)
+* Configure the Wifi SSID and Password of your router,
+* Pick the name for your project (use the same one for all your boards), and also give your board a name and description
 * SAVE and RESTART
-* It should now connect to the mqtt server 
+* It should now connect to the mqtt server at naturalinnovation.org
 
 If you got the configuration wrong, you'll need (for now - part of issue#22) to 
 * erase the settings - on Arduino IDE this is Tools->Erase->All Flash
 * recompile/flash.
+
+### For now run http server locally
+* At some point the html code will be someewhere you can run it, but for now - run on your own machine
+* cd `~/frugal-iot/html`
+* edit index.html so that it connects to your project (as configured on your board)
+  * for example if your project name is `My home` then the mqtt-projct should point at `topic="dev/Lotus Ponds/"`
+* Run `http-server` which will start a trivial http-server on port 8080
+* open (http://localhost:8080) in your browser
 
 
 
