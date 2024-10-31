@@ -379,14 +379,16 @@ class MqttNode extends MqttReceiver {
     return this.state.id && super.shouldLoadWhenConnected() ;
   }
  */
-  render() { // TODO-29 expand this
+  render() {
     return [
       EL('style', {textContent: MNstyle}), // Using styles defined above
       EL('div', {class: "outer"}, [
         EL('div', {class: "title"},[
-          EL('span',{class: 'name', textContent: this.state.name}),
+          EL('div', {},[
+            EL('span',{class: 'name', textContent: this.state.name}),
+            EL('span',{class: 'nodeid', textContent: this.state.id}),
+            ]),
           EL('span',{class: 'description', textContent: this.state.description}),
-          EL('span',{class: 'nodeid', textContent: this.state.id}),
         ]),
         EL('div', {class: "nodes"},[
           EL('slot', {}),

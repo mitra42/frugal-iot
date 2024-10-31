@@ -76,8 +76,6 @@ void messageReceived(String &topic, String &payload) {
 
 void setup() {                
   topic = new String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC);
-  Serial.println("XXX Discovery project=" + *xDiscovery::topicPrefix); //TODO-29 delete
-  Serial.println("Topic = " + *topic);
   // initialize the digital pin as an output.
   pinMode(ACTUATOR_LEDBUILTIN_PIN, OUTPUT);
   #ifdef ACTUATOR_LEDBUILTIN_DEBUG

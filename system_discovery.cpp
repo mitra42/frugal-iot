@@ -6,11 +6,10 @@
    Respond with a YAML string that describes this node and all sensors actuators
 
   Required SYSTEM_DISCOVERY_MS 
-  Required SYSTEM_DISCOVERY_ORGANIZATION // TODO-29 will move to configuration
+  Required SYSTEM_DISCOVERY_ORGANIZATION
   Optional SYSTEM_DISCOVERY_DEBUG
   Optional *_WANT and *ADVERTISEMENT for each sensor and actuator
 
-  //TODO-29 rename this to system_discovery.cpp 
 */
 
 #include "_settings.h"
@@ -42,7 +41,7 @@ void quickAdvertise() {
 
 //TODO-29 want retained upstream but not local - non trivial
 void fullAdvertise() {
-  xMqtt::messageSend(*advertiseTopic, *advertisePayload, true, 1); //TODO-29 should fbe retain=true qos=1
+  xMqtt::messageSend(*advertiseTopic, *advertisePayload, true, 1);
 }
 /*
 void messageReceived(String &topic, String &payload) {
@@ -60,17 +59,20 @@ void messageReceived(String &topic, String &payload) {
 */
 
 void setup() {
-  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project + "/"); // e.g. "dev/Lotus Ponds/" TODO-29 will come from configure
-  advertiseTopic = new String(*projectTopic + xWifi::clientid()); // e.g. "dev/Lotus Ponds/esp32-12345"     TODO-29 will come from configure
+  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project + "/");
+  advertiseTopic = new String(*projectTopic + xWifi::clientid()); // e.g. "dev/Lotus Ponds/esp32-12345"
   topicPrefix = new String(*advertiseTopic + "/"); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
-  advertisePayload = new String(F(
-    SYSTEM_DISCOVERY_ADVERTISEMENT
-    #ifdef ACTUATOR_LEDBUILTIN_WANT
-      ACTUATOR_LEDBUILTIN_ADVERTISEMENT
-    #endif
-    #ifdef SENSOR_SHT85_WANT
-      SENSOR_SHT85_ADVERTISEMENT
-    #endif
+  advertisePayload = new String( 
+    "id: " + xWifi::clientid() 
+    + "\nname: " + SYSTEM_DISCOVERY_DEVICE_NAME 
+    + "\ndescription: " +  SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
+    + "\ntopics:" + F(
+      #ifdef ACTUATOR_LEDBUILTIN_WANT
+        ACTUATOR_LEDBUILTIN_ADVERTISEMENT
+      #endif
+      #ifdef SENSOR_SHT85_WANT
+        SENSOR_SHT85_ADVERTISEMENT
+      #endif
   ));
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print("topicPrefix="); Serial.println(*topicPrefix);

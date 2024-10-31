@@ -13,6 +13,8 @@
 #define SERIAL_BAUD 460800
 #define SERIAL_DELAY 5000 // Necessary to avoid losing initial messsage in garbage, at least on ESP8266_D1_MINI
 
+//TO-ADD-NEW-ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO-ADD-NEW-ACTUATOR
+
 #define ACTUATOR_LEDBUILTIN_WANT // Control led on board
 #define ACTUATOR_LEDBUILTIN_DEBUG
 #define ACTUATOR_LEDBUILTIN_TOPIC "ledbuiltin"
@@ -28,6 +30,7 @@
 #define CONTROL_DEMO_MQTT_DEBUG
 #define CONTROL_DEMO_MQTT_HUMIDITY_MAX 75 // turn on LED above this humidity
 
+//TO-ADD-NEW-SENSOR - follow the pattern below and add any variables and search for other places tagged TO-ADD-NEW-SENSOR
 
 //#define SENSOR_ANALOG_WANT // simple analog read 
 #define SENSOR_ANALOG_PIN A0 // Which pin to read - this might be board specific
@@ -57,12 +60,16 @@
 #define SYSTEM_MQTT_MS 10 //Run client every 10ms
 #define SYSTEM_MQTT_DEBUG
 #define SYSTEM_MQTT_LOOPBACK // If true dispatch the message locally as well.
+#define SYSTEM_MQTT_USER "dev"  // Recommend this matches SYSTEM_DISCOVERY_ORGANIZATION below
+#define SYSTEM_MQTT_PASSWORD "public" // this should move to non-git organization specific configurartion file
 
 #define SYSTEM_DISCOVERY_WANT
 #define SYSTEM_DISCOVERY_DEBUG
-#define SYSTEM_DISCOVERY_ORGANIZATION "dev"  // Organization behind this set of devices. Also used for MQTT userid //TODO-29 setup place to register new ones
-#define SYSTEM_DISCOVERY_ADVERTISEMENT "id: esp8266-12346\nname: Foo\ndescription: ESP8266 with SHT85 sensor\ntopics:" // TODO-29 move to configuration screen
+#define SYSTEM_DISCOVERY_ORGANIZATION "dev"  // Organization behind this set of devices. Also used for MQTT userid //TODO-29 setup process to register new ones
+#define SYSTEM_DISCOVERY_DEVICE_NAME "Foo" // TODO-29 Move to config
+#define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION "ESP8266 with SHT85 sensor" // TODO-29 Move to config or build automatically
 #define SYSTEM_DISCOVERY_MS 30000
 
+//TO-ADD-NEW-SENSOR - follow the pattern above and add any variables
 
 #endif FRUGALIOT_CONFIGURATION_H

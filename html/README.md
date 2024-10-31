@@ -60,7 +60,7 @@ The web browser should be able to navigate to `http://localhost:8080`
 Find the IP of your local server
 
 Edit that into `SYSTEM_MQTT_SERVER` in `_configuration.h`
-Edit the `SYSTEM_MQTT_SSID` and `SYSTEM_MQTT_PASSWORD` in the same file
+Edit the `SYSTEM_MQTT_PASSWORD` and `SYSTEM_MQTT_PASSWORD` in the same file
 Flash the node. 
 
 You should see the connection both in the Serial Monitor of the node, 

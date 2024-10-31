@@ -2,7 +2,7 @@
 * Based on the example in https://github.com/256dpi/arduino-mqtt
 * 
 * Configuration
-* Required: SYSTEM_MQTT_SSID SYSTEM_MQTT_PASSWORD SYSTEM_MQTT_SERVER SYSTEM_MQTT_MS
+* Required: SYSTEM_MQTT_MS SYSTEM_DISCOVERY_ORGANIZATION SYSTEM_MQTT_PASSWORD
 * Optional: ESP8266 SYSTEM_MQTT_DEBUG SYSTEM_WIFI_WANT SYSTEM_MQTT_LOOPBACK
 * 
 */
@@ -10,6 +10,9 @@
 #include "_settings.h"
 
 #ifdef SYSTEM_MQTT_WANT
+#if (!defined(SYSTEM_MQTT_USER) || !defined(SYSTEM_MQTT_PASSWORD) || !defined(SYSTEM_DISCOVERY_ORGANIZATION) || !defined(SYSTEM_MQTT_MS))
+  error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_ORGANIZATION
+#endif
 
 #if ESP8266 // Note ESP8266 and ESP32 are defined for respective chips - unclear if anything like that for other Arduinos
 #include <ESP8266WiFi.h>  // for WiFiClient
@@ -179,7 +182,8 @@ bool connect() {
       Serial.print(xWifi::mqtt_host.c_str());
     #endif 
    
-    if (client.connect(xWifi::clientid().c_str(), "public", "public")) { // TODO-21 parameterize this
+    // Each organization needs a password in mosquitto_passwords which can be added by Mitra using mosquitto_passwd
+    if (client.connect(xWifi::clientid().c_str(), SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD)) { // TODO-29 password should be in local non-git config file
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.println("Connected");
       #endif

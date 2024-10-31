@@ -42,8 +42,8 @@ void messageReceived(String &topic, String &payload) {
 }
 
 void setup() {          
-  inTopic = new String(xDiscovery::topicPrefix + SENSOR_SHT85_TOPIC_HUMIDITY); // TODO-29 will come from config
-  outTopic = new String(xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC);  // TODO-29 will come from config
+  inTopic = new String(xDiscovery::topicPrefix + SENSOR_SHT85_TOPIC_HUMIDITY);
+  outTopic = new String(xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC);
    
   xMqtt::subscribe(*inTopic, *messageReceived);
   xMqtt::messageSend(*outTopic, value, true, 1); // set initial value
