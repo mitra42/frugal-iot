@@ -17,13 +17,13 @@
 #include <Arduino.h>
 #include "_common.h"    // Main include file for Framework
 #include "control_demo_mqtt.h"
+#include "actuator_ledbuiltin.h"
 #include "system_mqtt.h"
 #include "system_discovery.h"
  
 namespace cDemoMqtt {
 
 String *inTopic;
-String *outTopic;
 bool value = false;
 
 void messageReceived(String &topic, String &payload) {
@@ -36,17 +36,16 @@ void messageReceived(String &topic, String &payload) {
   // Only send if its changed.
   if (newValue != value) {
     // TODO-33 should not send this here (rule against sending with qos>0 withink messagReceived), it should be in a "loop" 
-    xMqtt::messageSend(*outTopic, value, true, 1);
+    xMqtt::messageSend(*aLedbuiltin::topic, value, true, 1);
     value = newValue;
   }
 }
 
 void setup() {          
   inTopic = new String(xDiscovery::topicPrefix + SENSOR_SHT85_TOPIC_HUMIDITY);
-  outTopic = new String(xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC);
    
   xMqtt::subscribe(*inTopic, *messageReceived);
-  xMqtt::messageSend(*outTopic, value, true, 1); // set initial value
+  xMqtt::messageSend(*aLedbuiltin::topic, value, true, 1); // set initial value
 }
 
 } //namespace cDemoMqtt

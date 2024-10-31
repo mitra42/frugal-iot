@@ -1,8 +1,9 @@
 /*
   Turn the built in LED on or off
 
-  Required: SYSTEM_DISCOVERY_ORGANIZATION
-  Optional: ACTUATOR_LEDBUILTIN_TOPIC ACTUATOR_LEDBUILTIN_PIN ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_BRIGHTNESS
+  Required: SYSTEM_DISCOVERY_ORGANIZATION 
+  Required from .h: ACTUATOR_LEDBUILTIN_TOPIC
+  Optional:  ACTUATOR_LEDBUILTIN_PIN ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_BRIGHTNESS
   Optional: BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
 */
 
@@ -14,14 +15,11 @@
   error actuator_ledbuiltin does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_ORGANIZATION
 #endif
 
-
 #include <Arduino.h>
 #include "_common.h"    // Main include file for Framework
 #include "actuator_ledbuiltin.h"
-#ifdef ACTUATOR_LEDBUILTIN_TOPIC
 #include "system_mqtt.h"
 #include "system_discovery.h"
-#endif
 
 // Arduinos unfortunately dont use any kind of #define for the board type so the 
 // standard blinkplay fails on for example the WEMOS boards.
@@ -60,21 +58,19 @@ void set(int v) {
   #endif // LOLIN_C3_PICO
 }
 
-#ifdef ACTUATOR_LEDBUILTIN_TOPIC
 //TODO29 maybe should be &topic
 String *topic;
 
 void messageReceived(String &topic, String &payload) {
   uint8_t v = payload.toInt(); // Copied to pin in the loop 
-  #ifdef CONTROL_DEMO_MQTT_DEBUG
+  #ifdef ACTUATOR_LEDBUILTIN_DEBUG
     Serial.print("aLedbuiltin received ");
     Serial.println(v);
   #endif
   set(v);
 }
-#endif
 
-void setup() {                
+void setup() {           
   topic = new String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC);
   // initialize the digital pin as an output.
   pinMode(ACTUATOR_LEDBUILTIN_PIN, OUTPUT);
@@ -92,9 +88,7 @@ void setup() {
     #endif
     Serial.println("");
   #endif // ACTUATOR_BLINKIN_DEBUG
-  #ifdef ACTUATOR_LEDBUILTIN_TOPIC
-    xMqtt::subscribe(*topic, *messageReceived);
-  #endif // ACTUATOR_LEDBUILTIN_TOPIC
+  xMqtt::subscribe(*topic, *messageReceived);
 }
 
 // void loop() { }

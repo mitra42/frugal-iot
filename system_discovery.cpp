@@ -66,12 +66,16 @@ void setup() {
     "id: " + xWifi::clientid() 
     + "\nname: " + SYSTEM_DISCOVERY_DEVICE_NAME 
     + "\ndescription: " +  SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
-    + "\ntopics:" + F(
+    + "\ntopics:" + F( 
+      // For any module with a control, add it here.  TO-ADD-NEW-SENSOR TO-ADD-NEW-ACTUATOR TO-ADD-NEW-CONTROL
       #ifdef ACTUATOR_LEDBUILTIN_WANT
         ACTUATOR_LEDBUILTIN_ADVERTISEMENT
       #endif
       #ifdef SENSOR_SHT85_WANT
         SENSOR_SHT85_ADVERTISEMENT
+      #endif
+      #ifdef CONTROL_BLINKEN_WANT
+        CONTROL_BLINKEN_ADVERTISEMENT
       #endif
   ));
   #ifdef SYSTEM_DISCOVERY_DEBUG

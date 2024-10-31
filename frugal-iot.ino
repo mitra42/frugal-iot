@@ -71,13 +71,13 @@ void setup() {
   cDemoMqtt::setup(); // Must be after system_mqtt
 #endif
 
-}
-
-void loop() {
 #ifdef ANY_DEBUG
   Serial.println("FrugalIoT Starting Loop");
 #endif // ANY_DEBUG
 
+}
+
+void loop() {
   // Put code for each sensor etc here - call functions in those sections
 #ifdef SYSTEM_MQTT_WANT
   xMqtt::loop();

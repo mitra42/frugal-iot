@@ -223,7 +223,9 @@ customElements.define('mqtt-bar', MqttBar);
 
 
 const MSstyle = `
+.outer {background-color: white;margin:5px; padding:5px;}
 .pointbar {margin:0px; padding 0px;}
+.val {margin:5px;}
 .setpoint {
     position: relative;
     top: -5px;
@@ -241,13 +243,6 @@ class MqttSlider extends MqttTransmitter {
 
   constructor() {
     super();
-    // Build once as don't want rerendered
-    //this.thumb = EL('span', {class: "setpoint", textContent: "△"});
-    //this.thumb = EL('slot', {class: "setpoint"});
-    //this.slider = EL('div', {class: "pointbar",},[this.thumb]);
-    this.thumb = EL('div', {class: "setpoint"}, this.children);
-    this.slider = EL('div', {class: "pointbar",},[this.thumb]);
-    this.slider.onmousedown = this.onmousedown.bind(this);
   }
   valueSet(val) {
     super.valueSet(Number(val));
@@ -255,7 +250,7 @@ class MqttSlider extends MqttTransmitter {
     return true; // Rerenders on moving based on any received value but not when dragged
   }
   valueGet() {
-    return (this.state.value).toString(); // Conversion from int to String (for MQTT)
+    return (this.state.value).toPrecision(3); // Conversion from int to String (for MQTT)
   }
   leftToValue(l) {
     return (l+this.thumb.offsetWidth/2)/this.slider.offsetWidth * (this.state.max-this.state.min) + this.state.min;
@@ -288,16 +283,26 @@ class MqttSlider extends MqttTransmitter {
   }
   renderAndReplace() {
     super.renderAndReplace();
-    this.thumb.style.left = this.leftOffset() + "px";
+    if (this.thumb) {
+      this.thumb.style.left = this.leftOffset() + "px";
+    }
   }
   render() {
-    //this.state.changeable.addEventListener('change', this.onChange.bind(this));
-    let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
-    let setpointwidth = 100*(this.state.setpoint-this.state.min)/(this.state.max-this.state.min);
-
+    if ((!this.slider) && (this.children.length > 0)) {
+      // Build once as don't want rerendered - but dont render till after children added (end of EL)
+      this.thumb = EL('div', {class: "setpoint"}, this.children);
+      this.slider = EL('div', {class: "pointbar",},[this.thumb]);
+      this.slider.onmousedown = this.onmousedown.bind(this);
+    }
     return [
       EL('style', {textContent: MSstyle}), // Using styles defined above
-      this.slider  // <div.setpoint><child></div
+      EL('div', {class: "outer"}, [
+        EL('div', {class: "name"}, [
+          EL('span', {textContent: this.state.name}),
+          EL('span', {class: "val", textContent: this.state.value}), // TODO restrict number of DP
+        ]),
+        this.slider,  // <div.setpoint><child></div
+      ])
     ];
   }
 }
@@ -357,7 +362,11 @@ class MqttNode extends MqttReceiver {
       // Assuming rw: r, type: float
       this.append(EL('mqtt-bar', {topic, name, max: t.max, min: t.min, color: t.color},[]));
     } else if (t.display === "text") {
-      this.append(EL('mqtt-text', {},[name, topic]));
+      this.append(EL('mqtt-text', {name, topic},[]));
+    } else if (t.display === "slider") {
+      this.append(EL('mqtt-slider', {name, topic, min: t.min, max: t.max, value: (t.max + t.min)/2 }, [
+          EL('span', { textContent: "△"}, []),
+      ]));
     } else {
       console.log("do not know how to display a ", t.display);
       //TODO add slider (MqttSlider), need to specify which other element attached to.

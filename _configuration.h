@@ -17,13 +17,13 @@
 
 #define ACTUATOR_LEDBUILTIN_WANT // Control led on board
 #define ACTUATOR_LEDBUILTIN_DEBUG
-#define ACTUATOR_LEDBUILTIN_TOPIC "ledbuiltin"
 #define ACTUATOR_LEDBUILTIN_ADVERTISEMENT "\n  -\n    topic: ledbuiltin\n    name: Built in LED\n    type: bool\n    display: toggle\n    rw: rw"
 
 // Demo blinking led on board
-//#define CONTROL_BLINKEN_WANT 
-#define CONTROL_BLINKEN_MS 1000
-//#define CONTROL_BLINKEN_DEBUG
+#define CONTROL_BLINKEN_WANT 
+#define CONTROL_BLINKEN_S 1
+#define CONTROL_BLINKEN_DEBUG
+#define CONTROL_BLINKEN_ADVERTISEMENT "\n  -\n    topic: control_blinken_s\n    name: Blink period (s)\n    type: int\n    min: 1\n    max: 60\n    display: slider\n    rw: rw"
 
 // Demo controlling LED based on humidity level
 //#define CONTROL_DEMO_MQTT_WANT
