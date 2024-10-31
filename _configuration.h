@@ -38,6 +38,7 @@
 #define SENSOR_ANALOG_DEBUG
 #define SENSOR_ANALOG_SMOOTH 2
 
+//TO-ADD-NEW-SENSOR - follow the pattern below and add any variables
 #define SENSOR_SHT85_WANT
 #define SENSOR_SHT85_DEVICE SHT30 // e.g. The Lolin SHT30 shield
 #define SENSOR_SHT85_DEBUG
@@ -69,7 +70,5 @@
 #define SYSTEM_DISCOVERY_DEVICE_NAME "Foo" // TODO-29 Move to config
 #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION "ESP8266 with SHT85 sensor" // TODO-29 Move to config or build automatically
 #define SYSTEM_DISCOVERY_MS 30000
-
-//TO-ADD-NEW-SENSOR - follow the pattern above and add any variables
 
 #endif FRUGALIOT_CONFIGURATION_H

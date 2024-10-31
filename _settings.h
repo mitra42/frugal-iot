@@ -8,7 +8,10 @@
 #ifndef FRUGALIOT_SETTINGS_H
 #define FRUGALIOT_SETTINGS_H
 
-#define FRUGALIOT_DEBUG       // Turn on top level debugging - TODO if this is off may get errors in Serial.println
 #include "_configuration.h"      // Include (eventually) auto-generated file, defines _WANT and parameters for each module"
+
+#if ( defined(ACTUATOR_LEDBUILTIN_DEBUG) || defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_DEMO_MQTT_DEBUG) || defined(SENSOR_ANALOG_DEBUG) || defined(SENSOR_SHT85_DEBUG) || defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) )
+  #define ANY_DEBUG // If this is commented out, the serial port will not be setup for debugging.
+#endif // any *_DEBUG
 
 #endif FRUGALIOT_SETTINGS_H

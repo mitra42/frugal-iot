@@ -34,7 +34,7 @@
 #endif
 
 void setup() {
-#ifdef FRUGALIOT_DEBUG
+#ifdef ANY_DEBUG
   Serial.begin(SERIAL_BAUD);
   while (!Serial) { 
     ; // wait for serial port to connect. Needed for Arduino Leonardo only
@@ -42,7 +42,7 @@ void setup() {
   delay(SERIAL_DELAY); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
   //Serial.setDebugOutput(true);  // Enable debug from wifi, also needed to enable output from printf
   Serial.println("FrugalIoT Starting");
-#endif FRUGALIOT_DEBUG
+#endif // ANY_DEBUG
 // put setup code here, to run once:
 #ifdef SYSTEM_WIFI_WANT
   xWifi::setup();
@@ -71,12 +71,13 @@ void setup() {
   cDemoMqtt::setup(); // Must be after system_mqtt
 #endif
 
-#ifdef FRUGALIOT_DEBUG
-  Serial.println("FrugalIoT Starting Loop");
-#endif FRUGALIOT_DEBUG
 }
 
 void loop() {
+#ifdef ANY_DEBUG
+  Serial.println("FrugalIoT Starting Loop");
+#endif // ANY_DEBUG
+
   // Put code for each sensor etc here - call functions in those sections
 #ifdef SYSTEM_MQTT_WANT
   xMqtt::loop();
