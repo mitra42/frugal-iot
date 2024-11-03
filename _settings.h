@@ -5,8 +5,8 @@
  * This file will be built automatically from something in YAML
  * OR there will be part auto-built and that will be included from here
  */
-#ifndef FRUGALIOT_SETTINGS_H
-#define FRUGALIOT_SETTINGS_H
+#ifndef _SETTINGS_H
+#define _SETTINGS_H
 
 #include "_configuration.h"      // Include (eventually) auto-generated file, defines _WANT and parameters for each module"
 
@@ -14,4 +14,4 @@
   #define ANY_DEBUG // If this is commented out, the serial port will not be setup for debugging.
 #endif // any *_DEBUG
 
-#endif FRUGALIOT_SETTINGS_H
+#endif // _SETTINGS_H

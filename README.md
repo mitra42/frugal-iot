@@ -41,6 +41,15 @@ I've also tested on a Lolin C3 Pico (ESP32-C3), but do not test every git push o
 * In Arduino IDE 
 * Open `~/frugal-iot/`
 * Tools -> Upload Speed -> 460800
+* Tools -> Manage Libraries -> Search for, and install:
+  * Libraries used by almost all cases
+    * ESP-WiFiSettings by Juerd Waalboer
+    * MQTT by Joel Gaehwiler
+  * Libraries only needed if you use specific sensors. 
+    * SHT85 by Rob Tillaart; (SENSOR_SHT85_WANT to enable SHT3X or SHT85 series sensors)
+    * If you add more sensors make sure to add any library requirement here (TO-ADD-NEW-SENSOR)
+  * Libraries only needed if you use specific sensors. 
+    * If you add more actuators make sure to add any library requirement here (TO-ADD-NEW-ACTUATOR)
 * Tools -> Board 
   * Check you have selected the dev board
   * TODO add instructions, or a link here for adding new boards to an Arduino IDE - most will need to do this. 

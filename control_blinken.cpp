@@ -40,7 +40,10 @@ void set(float v) {
   #endif // CONTROL_BLINKEN_DEBUG
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void messageReceived(String &topic, String &payload) {
+#pragma GCC diagnostic pop
   float v = payload.toFloat(); // Copied to pin in the loop 
   set(v);
 }

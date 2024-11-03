@@ -61,7 +61,10 @@ void set(int v) {
 //TODO29 maybe should be &topic
 String *topic;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void messageReceived(String &topic, String &payload) {
+#pragma GCC diagnostic pop
   uint8_t v = payload.toInt(); // Copied to pin in the loop 
   #ifdef ACTUATOR_LEDBUILTIN_DEBUG
     Serial.print("aLedbuiltin received ");

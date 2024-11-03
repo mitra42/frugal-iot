@@ -2,8 +2,8 @@
  * This file will be auto-generated, once auto-generation is built, this file shouldn't be human edited
  */
 
-#ifndef FRUGALIOT_CONFIGURATION_H
-#define FRUGALIOT_CONFIGURATION_H
+#ifndef _CONFIGURATION_H
+#define _CONFIGURATION_H
 
 // Board and processor definitions - to allow for code that works across different boards #TO_ADD_NEW_BOARD 
 // Note that on ESP that ESP32 or ESP8266 will be defined - should define other chips names here.
@@ -70,4 +70,4 @@
 //#define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION "ESP8266 with SHT85 sensor" // Can override automatically gnerated description
 #define SYSTEM_DISCOVERY_MS 30000
 
-#endif FRUGALIOT_CONFIGURATION_H
+#endif // _CONFIGURATION_H

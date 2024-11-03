@@ -108,7 +108,7 @@ class Subscription {
         }
         #ifdef SYSTEM_MQTT_DEBUG
           Serial.println();
-        #endif; // SYSTEM_MQTT_DEBUG
+        #endif // SYSTEM_MQTT_DEBUG
       #endif //SYSTEM_WIFI_WANT
     }
 };
@@ -147,10 +147,10 @@ class MessageList {
     }
     Message *shift() {
       Message *i = top;
-      Message *j;
+      Message *j = NULL;
       if (!i) return NULL;
       for (;i->next;(j=i, i = i->next)) {}
-      j->next = NULL;
+      if (j) { j->next = NULL; }
       return i;
     }
     void retain(Message *m) {

@@ -55,7 +55,7 @@ void checkConnected() {
 #ifdef SYSTEM_WIFI_PORTAL_RESTART
 // A watchdog on the portal, that will reset after SYSTEM_WIFI_PORTAL_RESTART ms
 void portalWatchdog() {
-  static long OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART; // initialized first time this is called
+  static unsigned long OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART; // initialized first time this is called
   if (OPWLrestart < millis()) {
     #ifdef SYSTEM_WIFI_DEBUG
       Serial.println(F("WiFiSettings portal timed out - restarting and will retry WiFi"));
@@ -118,4 +118,4 @@ void setup() {
 }
 
 } // namespace xWifi
-#endif SYSTEM_WIFI_WANT
+#endif // SYSTEM_WIFI_WANT

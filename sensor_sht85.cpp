@@ -164,6 +164,6 @@ void sSHTxx::readSensor() {
   }
 }
 
-#endif SENSOR_SHT85_WANT
+#endif // SENSOR_SHT85_WANT
 
 //  -- END OF FILE --
