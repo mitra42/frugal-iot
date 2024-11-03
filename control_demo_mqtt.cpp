@@ -35,8 +35,7 @@ void messageReceived(String &topic, String &payload) {
   bool newValue = humidity > CONTROL_DEMO_MQTT_HUMIDITY_MAX;
   // Only send if its changed.
   if (newValue != value) {
-    // TODO-33 should not send this here (rule against sending with qos>0 withink messagReceived), it should be in a "loop" 
-    xMqtt::messageSend(*aLedbuiltin::topic, value, true, 1);
+    xMqtt::messageSend(*aLedbuiltin::topic, value, true, 1); // Note message will be queued , and sent outside of messageReceived handler
     value = newValue;
   }
 }

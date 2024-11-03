@@ -4,7 +4,11 @@
  
   Based on the Blinken demo in the IDE
 
-  Required CONTROL_BLINKEN_S // TODO-30 replace with a settable parameter
+  Required CONTROL_BLINKEN_S // Initial time, note overridden by message
+
+  TODO-43 - allow the destination to be set - e.g. some other digital pin
+  TODO-43 - allow the input to be routed from somewhere (e.g. from temperature or a potentiometer )
+
  */
 
 

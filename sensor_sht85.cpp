@@ -79,7 +79,7 @@ void setup()
   Wire.setClock(100000);
 
 
-  for(uint8_t i = 0 ; i < SENSOR_SHT85_COUNT; i++) { //TODO can use length of sht_address_array and dont think need _COUNT 
+  for(uint8_t i = 0 ; i < SENSOR_SHT85_COUNT; i++) {
     sht_array[i] = new sSHTxx(sht_address_array[i], &Wire);
   }
 
@@ -101,9 +101,9 @@ sSHTxx::sSHTxx(uint8_t addr, TwoWire *wire) {
     sht = new SENSOR_SHT85_DEVICE(addr, wire);
     temperature = 0;
     humidity = 0; 
-    address = addr; // Keep copy for debugging TODO 19D check where used, and maybe protected and/or ifdef-ed
     sht->begin();
     #ifdef SENSOR_SHT85_DEBUG
+      address = addr; // Just copy for debugging
       Serial.print("addr: ");
       Serial.print(addr, HEX);
       Serial.print(" status: ");
