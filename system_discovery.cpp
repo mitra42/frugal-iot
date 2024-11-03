@@ -16,8 +16,27 @@
 
 #ifdef SYSTEM_DISCOVERY_WANT // Until have BLE, no WIFI means local only
 #if (!defined(SYSTEM_DISCOVERY_MS) || !defined(SYSTEM_DISCOVERY_ORGANIZATION))
-  error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_ORGANIZATION
+  #error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_ORGANIZATION
 #endif
+
+#ifndef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
+  // add new boards english description here.
+  #ifdef ESP8266_D1_MINI
+    #define TEMP1 "ESP8266 D1 Mini"
+  #else
+    #ifdef LOLIN_C3_PICO
+      #define TEMP1 "Lolin C3 Pico"
+    #else
+      #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
+    #endif
+  #endif
+  #ifdef SENSOR_SHT85_WANT
+    #define TEMP2 " with SHTxx temp/humidity"
+  #else
+    #define TEMP2 ""
+  #endif
+  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION TEMP1 TEMP2
+#endif  
 
 #include <Arduino.h>
 #include "_common.h"    // Main include file for Framework
@@ -64,7 +83,7 @@ void setup() {
   topicPrefix = new String(*advertiseTopic + "/"); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
   advertisePayload = new String( 
     "id: " + xWifi::clientid() 
-    + "\nname: " + SYSTEM_DISCOVERY_DEVICE_NAME 
+    + "\nname: " + xWifi::device_name
     + "\ndescription: " +  SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
     + "\ntopics:" + F( 
       // For any module with a control, add it here.  TO-ADD-NEW-SENSOR TO-ADD-NEW-ACTUATOR TO-ADD-NEW-CONTROL

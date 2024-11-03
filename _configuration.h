@@ -5,7 +5,7 @@
 #ifndef FRUGALIOT_CONFIGURATION_H
 #define FRUGALIOT_CONFIGURATION_H
 
-// Board and processor definitions - to allow for code that works across different boards
+// Board and processor definitions - to allow for code that works across different boards #TO_ADD_NEW_BOARD 
 // Note that on ESP that ESP32 or ESP8266 will be defined - should define other chips names here.
 #define ESP8266_D1_MINI // Board level - define - will only support boards devs are actually using, but intended to support board specific fixes
 //#define LOLIN_C3_PICO // For some bug workaround in actuator_ledbuiltin.cpp
@@ -67,8 +67,7 @@
 #define SYSTEM_DISCOVERY_WANT
 #define SYSTEM_DISCOVERY_DEBUG
 #define SYSTEM_DISCOVERY_ORGANIZATION "dev"  // Organization behind this set of devices. Also used for MQTT userid //TODO-29 setup process to register new ones
-#define SYSTEM_DISCOVERY_DEVICE_NAME "Foo" // TODO-29 Move to config
-#define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION "ESP8266 with SHT85 sensor" // TODO-29 Move to config or build automatically
+//#define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION "ESP8266 with SHT85 sensor" // Can override automatically gnerated description
 #define SYSTEM_DISCOVERY_MS 30000
 
 #endif FRUGALIOT_CONFIGURATION_H
