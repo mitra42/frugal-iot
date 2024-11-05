@@ -11,7 +11,6 @@
 
 
 #include <Arduino.h>
-#include "_common.h"    // Main include file for Framework
 #include "control_demo_mqtt.h"
 #include "actuator_ledbuiltin.h"
 #include "system_mqtt.h"

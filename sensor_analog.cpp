@@ -9,7 +9,6 @@
 #include "_settings.h"  // Settings for what to include etc
 #ifdef SENSOR_ANALOG_WANT
 #include <Arduino.h>
-#include "_common.h"    // Main include file for Framework
 #include "sensor_analog.h"
 
 // TODO figure out how to handle multiple analog input pins 

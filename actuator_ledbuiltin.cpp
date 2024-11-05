@@ -11,7 +11,6 @@
 #ifdef ACTUATOR_LEDBUILTIN_WANT
 
 #include <Arduino.h>
-#include "_common.h"    // Main include file for Framework
 #include "actuator_ledbuiltin.h"
 #include "system_mqtt.h"
 #include "system_discovery.h"

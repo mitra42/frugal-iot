@@ -183,7 +183,7 @@ bool connect() {
     #endif 
    
     // Each organization needs a password in mosquitto_passwords which can be added by Mitra using mosquitto_passwd
-    if (client.connect(xWifi::clientid().c_str(), SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD)) { // TODO-29 password should be in local non-git config file
+    if (client.connect(xWifi::clientid().c_str(), SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD)) {
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.println(F("Connected"));
       #endif

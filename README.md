@@ -62,7 +62,8 @@ I've also tested on a Lolin C3 Pico (ESP32-C3), but do not test every git push o
 ### Installing and testing on a dev board
 
 #### Basic test
-* Edit _configuration.h to match your system and functionality required for example uncomment SENSOR_SHT85_WANT to enable that functionality
+* Copy _local-template.h to _local.h and edit to put your organization, MQTT server, userid and password, and which devices you have on the board.
+* Check _configuration.h t - for now this is a good place to set how much debugging you want.  TODO maybe move to _local.h
 * Compile and Flash to your dev board
 * On a Wifi device such as a phone
   * Connect to the wifi node of the board which will have a SSID like esp8266-12345

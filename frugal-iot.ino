@@ -3,7 +3,6 @@
  */
 
 #include "_settings.h"  // Settings for what to include etc
-#include "_common.h"    // Main include file for Framework
 
 #ifdef SYSTEM_WIFI_WANT
 #include "system_wifi.h"

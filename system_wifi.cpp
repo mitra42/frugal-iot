@@ -14,7 +14,6 @@
 #else
 #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
-// #include "_common.h"
 #include "system_wifi.h"
 
 
@@ -88,7 +87,7 @@ void setup() {
     bool checkbox(String name, bool init = false, String label = name);
   */
   mqtt_host = WiFiSettings.string(F("mqtt_host"), 4,40, F(SYSTEM_MQTT_SERVER), F("MQTT Host")); 
-  // TODO-29 turn discovery_project into a dropdown, use an ifdef for the ORGANIZATION in configuration.h
+  // TODO-29 turn discovery_project into a dropdown, use an ifdef for the ORGANIZATION in configuration.h not support by ESPWifi-Settings yet.
   discovery_project = WiFiSettings.string(F("discovery_project"), 3,20, F("project"), F("Project")); 
   device_name = WiFiSettings.string(F("device_name"), 3,20, F("device"), F("Device Name")); 
   #ifdef SYSTEM_WIFI_DEBUG

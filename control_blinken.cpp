@@ -21,7 +21,6 @@
 #endif
 
 #include <Arduino.h>
-#include "_common.h"    // Main include file for Framework
 #include "control_blinken.h"
 #include "system_discovery.h"
 #include "system_mqtt.h"

@@ -30,7 +30,6 @@
 
 
 #include <Arduino.h>
-#include "_common.h"    // Main include file for Framework
 #include <SHT85.h>
 #include "sensor_sht85.h"
 #include "system_discovery.h"
