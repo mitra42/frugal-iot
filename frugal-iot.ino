@@ -41,7 +41,7 @@ void setup() {
   }
   delay(SERIAL_DELAY); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
   //Serial.setDebugOutput(true);  // Enable debug from wifi, also needed to enable output from printf
-  Serial.println("FrugalIoT Starting");
+  Serial.println(F("FrugalIoT Starting"));
 #endif // ANY_DEBUG
 // put setup code here, to run once:
 #ifdef SYSTEM_WIFI_WANT
@@ -72,7 +72,7 @@ void setup() {
 #endif
 
 #ifdef ANY_DEBUG
-  Serial.println("FrugalIoT Starting Loop");
+  Serial.println(F("FrugalIoT Starting Loop"));
 #endif // ANY_DEBUG
 
 }

@@ -2,7 +2,7 @@
 * Based on the example in https://github.com/256dpi/arduino-mqtt
 * 
 * Configuration
-* Required: SYSTEM_MQTT_MS SYSTEM_DISCOVERY_ORGANIZATION SYSTEM_MQTT_PASSWORD
+* Required: SYSTEM_MQTT_MS SYSTEM_MQTT_PASSWORD
 * Optional: ESP8266 SYSTEM_MQTT_DEBUG SYSTEM_WIFI_WANT SYSTEM_MQTT_LOOPBACK
 * 
 */
@@ -10,8 +10,8 @@
 #include "_settings.h"
 
 #ifdef SYSTEM_MQTT_WANT
-#if (!defined(SYSTEM_MQTT_USER) || !defined(SYSTEM_MQTT_PASSWORD) || !defined(SYSTEM_DISCOVERY_ORGANIZATION) || !defined(SYSTEM_MQTT_MS))
-  error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_ORGANIZATION
+#if (!defined(SYSTEM_MQTT_USER) || !defined(SYSTEM_MQTT_PASSWORD) || !defined(SYSTEM_MQTT_MS))
+  error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS 
 #endif
 
 #if ESP8266 // Note ESP8266 and ESP32 are defined for respective chips - unclear if anything like that for other Arduinos
@@ -67,14 +67,14 @@ class Subscription {
         #ifdef SYSTEM_WIFI_WANT
           if (!client.subscribe(topic)) {
             #ifdef SYSTEM_MQTT_DEBUG
-              Serial.println("MQTT Subscription failed to ");
+              Serial.println(F("MQTT Subscription failed to "));
               Serial.print(topic);
             #endif // SYSTEM_MQTT_DEBUG
           };
         #endif // SYSTEM_WIFI_WANT
       }
       #ifdef SYSTEM_MQTT_DEBUG
-        Serial.println("Subscribing to: " + topic);
+        Serial.print(F("Subscribing to: ")); Serial.println(topic);
       #endif // SYSTEM_MQTT_DEBUG
     }
     static void dispatch(String &topic, String &payload) {
@@ -82,7 +82,7 @@ class Subscription {
       for (sub = subscriptions; sub; sub = sub->next) {
         if (*sub->topic == topic) {
           #ifdef SYSTEM_MQTT_DEBUG
-            Serial.println("Dispatching: "+topic);
+            Serial.print(F("Dispatching: ")); Serial.println(topic);
           #endif // SYSTEM_MQTT_DEBUG
           sub->cb(topic, payload);
         }
@@ -94,16 +94,16 @@ class Subscription {
       #ifdef SYSTEM_WIFI_WANT
         Subscription *sub;
         #ifdef SYSTEM_MQTT_DEBUG
-          Serial.print("Resubscribing: "); 
+          Serial.print(F("Resubscribing: ")); 
         #endif // SYSTEM_MQTT_DEBUG
         for (sub = subscriptions; sub; sub = sub->next) {
           if (!client.subscribe(*(sub->topic))) {
             #ifdef SYSTEM_MQTT_DEBUG
-              Serial.print("MQTT resubscription failed to ");
+              Serial.print(F("MQTT resubscription failed to "));
             #endif // SYSTEM_MQTT_DEBUG
           }
           #ifdef SYSTEM_MQTT_DEBUG
-            Serial.print(" " + *(sub->topic));
+            Serial.print(F(" ")); Serial.print(*(sub->topic));
           #endif // SYSTEM_MQTT_DEBUG
         }
         #ifdef SYSTEM_MQTT_DEBUG
@@ -178,14 +178,14 @@ bool connect() {
     return true;
   } else {
     #ifdef SYSTEM_MQTT_DEBUG
-      Serial.print("\nMQTT connecting: to ");
+      Serial.print(F("\nMQTT connecting: to "));
       Serial.print(xWifi::mqtt_host.c_str());
     #endif 
    
     // Each organization needs a password in mosquitto_passwords which can be added by Mitra using mosquitto_passwd
     if (client.connect(xWifi::clientid().c_str(), SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD)) { // TODO-29 password should be in local non-git config file
       #ifdef SYSTEM_MQTT_DEBUG
-        Serial.println("Connected");
+        Serial.println(F("Connected"));
       #endif
       Subscription::resubscribeAll();
       return true;
@@ -202,7 +202,7 @@ bool inReceived = false;
 // Note this is called both as a callback from client.onMessage and from messageSend if SYSTEM_MQTT_LOOPBACK
 void messageReceived(String &topic, String &payload) {
   #ifdef SYSTEM_MQTT_DEBUG
-    Serial.println("MQTT incoming: " + topic + " - " + payload);
+    Serial.print(F("MQTT incoming: ")); Serial.print(topic); Serial.print(F(" - ")); Serial.println(payload);
   #endif
   inReceived = true;
   // Note: Do not use the client in the callback to publish, subscribe or
@@ -232,9 +232,9 @@ void messageSendInner(Message *m) {
   #ifdef SYSTEM_WIFI_WANT
     if (!client.publish(*m->topic, *m->message, m->retain, m->qos)) {
       #ifdef SYSTEM_MQTT_DEBUG
-        Serial.print("Failed to publish");
+        Serial.print(F("Failed to publish"));
         Serial.print(*m->topic);
-        Serial.print('=');
+        Serial.print(F("="));
         Serial.println(*m->message);
       #endif // SYSTEM_MQTT_DEBUG
     };
@@ -282,7 +282,7 @@ void setup() {
     // Note WiFi should be connected by this point but will check here anyway
     while (!connect()) {
       #ifdef SYSTEM_MQTT_DEBUG
-        Serial.print(".");
+        Serial.print(F("."));
       #endif
       delay(1000); // Block waiting for WiFi and MQTT to connect 
     }
@@ -301,7 +301,7 @@ void loop() {
         messageSendQueued();
         if (!client.loop()) {
           #ifdef SYSTEM_MQTT_DEBUG
-            Serial.print("MQTT client loop failed ");
+            Serial.print(F("MQTT client loop failed "));
             lwmqtt_err_t err = client.lastError();
             Serial.println(err);
           #endif // SYSTEM_MQTT_DEBUG

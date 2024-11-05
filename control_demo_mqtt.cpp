@@ -1,7 +1,6 @@
 /*
   Demo MQTT by listening for humidity and controlling LED
 
-  Required SYSTEM_DISCOVERY_ORGANIZATION
   Optional CONTROL_DEMO_MQTT_DEBUG 
  */
 
@@ -10,9 +9,6 @@
 
 #ifdef CONTROL_DEMO_MQTT_WANT
 
-#if (!defined(SYSTEM_DISCOVERY_ORGANIZATION))
-  error actuator_ledbuiltin does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_ORGANIZATION
-#endif
 
 #include <Arduino.h>
 #include "_common.h"    // Main include file for Framework
@@ -29,7 +25,7 @@ bool value = false;
 void messageReceived(String &topic, String &payload) {
   float humidity = payload.toFloat();
   #ifdef CONTROL_DEMO_MQTT_DEBUG
-    Serial.print("cDemoMqtt received ");
+    Serial.print(F("cDemoMqtt received "));
     Serial.println(humidity);
   #endif
   bool newValue = humidity > CONTROL_DEMO_MQTT_HUMIDITY_MAX;
@@ -41,7 +37,7 @@ void messageReceived(String &topic, String &payload) {
 }
 
 void setup() {          
-  inTopic = new String(xDiscovery::topicPrefix + SENSOR_SHT85_TOPIC_HUMIDITY);
+  inTopic = new String(xDiscovery::topicPrefix + F(SENSOR_SHT85_TOPIC_HUMIDITY));
    
   xMqtt::subscribe(*inTopic, *messageReceived);
   xMqtt::messageSend(*aLedbuiltin::topic, value, true, 1); // set initial value

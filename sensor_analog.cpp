@@ -44,11 +44,9 @@ void loop() {
     smoothedValue = smoothedValue - (smoothedValue >> SENSOR_ANALOG_SMOOTH) + value;
 #endif // SENSOR_ANALOG_SMOOTH
 #ifdef SENSOR_ANALOG_DEBUG
-        Serial.print("Analog:");
-        Serial.println(value);
+        Serial.print(F("Analog:")); Serial.println(value);
 #ifdef SENSOR_ANALOG_SMOOTH
-        Serial.print("Smoothed Analog:");
-        Serial.println(smoothedValue);
+        Serial.print(F("Smoothed Analog:")); Serial.println(smoothedValue);
 #endif // SENSOR_ANALOG_SMOOTH
 #endif // SENSOR_ANALOG_DEBUG
 #ifdef SENSOR_ANALOG_MS

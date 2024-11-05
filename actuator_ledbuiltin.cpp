@@ -1,7 +1,6 @@
 /*
   Turn the built in LED on or off
 
-  Required: SYSTEM_DISCOVERY_ORGANIZATION 
   Required from .h: ACTUATOR_LEDBUILTIN_TOPIC
   Optional:  ACTUATOR_LEDBUILTIN_PIN ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_BRIGHTNESS
   Optional: BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
@@ -10,10 +9,6 @@
 #include "_settings.h"  // Settings for what to include etc
 
 #ifdef ACTUATOR_LEDBUILTIN_WANT
-
-#if (!defined(SYSTEM_DISCOVERY_ORGANIZATION))
-  error actuator_ledbuiltin does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_ORGANIZATION
-#endif
 
 #include <Arduino.h>
 #include "_common.h"    // Main include file for Framework
@@ -48,7 +43,7 @@ bool value;  // 1 for on, 0 for off.
 void set(int v) {
   value = v;
   #ifdef ACTUATOR_LEDBUILTIN_DEBUG
-    Serial.print("\nSetting LED to "); Serial.println(value);
+    Serial.print(F("\nSetting LED to ")); Serial.println(value);
   #endif // ACTUATOR_LEDBUILTIN_DEBUG
   #ifdef LOLIN_C3_PICO // Lolon C3 doesnt have RGB_BUILTIN defined so digitalWrite doesnt work correctly
     uint8_t brightness = v ? ACTUATOR_LEDBUILTIN_BRIGHTNESS : 0;
@@ -67,7 +62,7 @@ void messageReceived(String &topic, String &payload) {
 #pragma GCC diagnostic pop
   uint8_t v = payload.toInt(); // Copied to pin in the loop 
   #ifdef ACTUATOR_LEDBUILTIN_DEBUG
-    Serial.print("aLedbuiltin received ");
+    Serial.print(F("aLedbuiltin received "));
     Serial.println(v);
   #endif
   set(v);
@@ -79,17 +74,17 @@ void setup() {
   pinMode(ACTUATOR_LEDBUILTIN_PIN, OUTPUT);
   #ifdef ACTUATOR_LEDBUILTIN_DEBUG
     // There is a lot of possible debugging because this is surprisingly hard i.e. non-standard across boards! 
-    Serial.print(__FILE__); Serial.print(" LED on "); Serial.println(ACTUATOR_LEDBUILTIN_PIN);
-    //Serial.print(" INPUT="); Serial.print(INPUT); 
-    //Serial.print(" OUTPUT="); Serial.print(OUTPUT); 
-    //Serial.print(" INPUT_PULLUP="); Serial.print(INPUT_PULLUP); 
-    Serial.print(" HIGH="); Serial.print(HIGH); 
-    Serial.print(" LOW="); Serial.print(LOW);   
+    Serial.print(__FILE__); Serial.print(F(" LED on ")); Serial.println(ACTUATOR_LEDBUILTIN_PIN);
+    //Serial.print(F(" INPUT=")); Serial.print(INPUT); 
+    //Serial.print(F(" OUTPUT=")); Serial.print(OUTPUT); 
+    //Serial.print(F(" INPUT_PULLUP=")); Serial.print(INPUT_PULLUP); 
+    Serial.print(F(" HIGH=")); Serial.print(HIGH); 
+    Serial.print(F(" LOW=")); Serial.print(LOW);   
     // Supposed to be defined, but known problem that not defined on Lolin C3 pico; 
     #ifdef RGB_BUILTIN
-      Serial.print(" RGB_BUILTIN="); Serial.print(RGB_BUILTIN);
+      Serial.print(F(" RGB_BUILTIN=")); Serial.print(RGB_BUILTIN);
     #endif
-    Serial.println("");
+    Serial.println();
   #endif // ACTUATOR_BLINKIN_DEBUG
   xMqtt::subscribe(*topic, *messageReceived);
 }

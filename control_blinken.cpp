@@ -40,7 +40,7 @@ void set(float v) {
   }
   value = v;
   #ifdef CONTROL_BLINKEN_DEBUG
-    Serial.print("\nSetting Blink time (s) to:"); Serial.println(value);
+    Serial.print(F("\nSetting Blink time (s) to:")); Serial.println(value);
   #endif // CONTROL_BLINKEN_DEBUG
 }
 
@@ -53,7 +53,7 @@ void messageReceived(String &topic, String &payload) {
 }
 
 void setup() {
-  topic = new String(*xDiscovery::topicPrefix + "control_blinken_s");
+  topic = new String(*xDiscovery::topicPrefix + F("control_blinken_s"));
   set(CONTROL_BLINKEN_S); // default time            
   xMqtt::subscribe(*topic, *messageReceived);
 }

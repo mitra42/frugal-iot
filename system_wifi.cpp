@@ -41,13 +41,13 @@ void connect() {
     // an access point will be started with a captive portal to configure WiFi.
     WiFiSettings.connect();
     // If WiFi connected, returns true, if WiFi fails then puts up portal and never returns - portal initiates reset 
-    // Serial.println("XXX-22a connect exited gracefully without reset")
+    // Serial.println(F("XXX-22a connect exited gracefully without reset"))
 }
 // Blocking attempt at reconnecting - can be called by MQTT
 void checkConnected() {
   if (WiFi.status() != WL_CONNECTED) {
     #ifdef SYSTEM_WIFI_DEBUG
-      Serial.println("WiFi not connected, forcing reconnect");
+      Serial.println(F("WiFi not connected, forcing reconnect"));
     #endif
     connect();
   }
@@ -87,14 +87,14 @@ void setup() {
     String string(String name, [[unsigned int min_length,] unsigned int max_length,] String init = "", String label = name);
     bool checkbox(String name, bool init = false, String label = name);
   */
-  mqtt_host = WiFiSettings.string("mqtt_host", 4,40, SYSTEM_MQTT_SERVER, "MQTT Host"); 
+  mqtt_host = WiFiSettings.string(F("mqtt_host"), 4,40, F(SYSTEM_MQTT_SERVER), F("MQTT Host")); 
   // TODO-29 turn discovery_project into a dropdown, use an ifdef for the ORGANIZATION in configuration.h
-  discovery_project = WiFiSettings.string("discovery_project", 3,20, "project", "Project"); 
-  device_name = WiFiSettings.string("device_name", 3,20, "device", "Device Name"); 
+  discovery_project = WiFiSettings.string(F("discovery_project"), 3,20, F("project"), F("Project")); 
+  device_name = WiFiSettings.string(F("device_name"), 3,20, F("device"), F("Device Name")); 
   #ifdef SYSTEM_WIFI_DEBUG
-  Serial.println("MQTT host = " + mqtt_host);
-  Serial.println("Project = " + discovery_project);
-  Serial.println("Device Name = " + device_name);
+  Serial.print(F("MQTT host = ")); Serial.println(mqtt_host);
+  Serial.print(F("Project = ")); Serial.println(discovery_project);
+  Serial.print(F("Device Name = ")); Serial.println(device_name);
   #endif
 
   // Cases of connect and portal
@@ -111,7 +111,7 @@ void setup() {
     };
   #endif // SYSTEM_WIFI_PORTAL_RESTART
   #ifdef SYSTEM_WIFI_DEBUG
-    Serial.print("WiFi hostname=");
+    Serial.print(F("WiFi hostname="));
     Serial.println(clientid());
   #endif // SYSTEM_WIFI_DEBUG
   connect();

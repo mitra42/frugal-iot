@@ -8,7 +8,6 @@
  * 
  * Configuration options example - these are all in _configuration.h
  * Required:
- * SYSTEM_DISCOVERY_ORGANIZATION
  * SENSOR_SHT85_DEVICE SHT30                  // Which kind of device, for now it presumes they are all the same.
  * SENSOR_SHT85_ADDRESS_ARRAY 0x45,0x44       // A list of device addresses
  * SENSOR_SHT85_COUNT                         // How many devices
@@ -25,8 +24,8 @@
 
 #ifdef SENSOR_SHT85_WANT
 
-#if (!defined(SENSOR_SHT85_DEVICE) || !defined(SENSOR_SHT85_ADDRESS_ARRAY) || !defined(SENSOR_SHT85_COUNT) || !defined(SENSOR_SHT85_MS) || !defined(SYSTEM_DISCOVERY_ORGANIZATION))
-  error sensor_sht85 does not have all requirements in _configuration.h: SENSOR_SHT85_DEVICE SENSOR_SHT85_ADDRESS_ARRAY SENSOR_SHT85_COUNT SENSOR_SHT85_MS SYSTEM_DISCOVERY_ORGANIZATION
+#if (!defined(SENSOR_SHT85_DEVICE) || !defined(SENSOR_SHT85_ADDRESS_ARRAY) || !defined(SENSOR_SHT85_COUNT) || !defined(SENSOR_SHT85_MS))
+  error sensor_sht85 does not have all requirements in _configuration.h: SENSOR_SHT85_DEVICE SENSOR_SHT85_ADDRESS_ARRAY SENSOR_SHT85_COUNT SENSOR_SHT85_MS 
 #endif
 
 
@@ -35,10 +34,7 @@
 #include <SHT85.h>
 #include "sensor_sht85.h"
 #include "system_discovery.h"
-
-#if defined(SENSOR_SHT85_TOPIC_TEMPERATURE) || defined(SENSOR_SHT85_TOPIC_HUMIDITY)
-  #include "system_mqtt.h"                // Library for sending messages
-#endif // SENSOR_SHT85_TOPIC_TEMPERATURE || SENSOR_SHT85_TOPIC_HUMIDITY
+#include "system_mqtt.h"                // Library for sending messages
 
 class sSHTxx {
 public:
@@ -68,10 +64,10 @@ void setup()
   uint8_t sht_address_array[] = {SENSOR_SHT85_ADDRESS_ARRAY};
 
   #ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
-    topicT = new String(*xDiscovery::topicPrefix + SENSOR_SHT85_TOPIC_TEMPERATURE);
+    topicT = new String(*xDiscovery::topicPrefix + F(SENSOR_SHT85_TOPIC_TEMPERATURE));
   #endif
   #ifdef SENSOR_SHT85_TOPIC_HUMIDITY
-    topicH = new String(*xDiscovery::topicPrefix + SENSOR_SHT85_TOPIC_HUMIDITY);
+    topicH = new String(*xDiscovery::topicPrefix + F(SENSOR_SHT85_TOPIC_HUMIDITY));
   #endif
 
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
@@ -104,10 +100,8 @@ sSHTxx::sSHTxx(uint8_t addr, TwoWire *wire) {
     sht->begin();
     #ifdef SENSOR_SHT85_DEBUG
       address = addr; // Just copy for debugging
-      Serial.print("addr: ");
-      Serial.print(addr, HEX);
-      Serial.print(" status: ");
-      Serial.print(sht->readStatus(), HEX);
+      Serial.print(F("addr: ")); Serial.print(addr, HEX);
+      Serial.print(F(" status: ")); Serial.print(sht->readStatus(), HEX);
       Serial.println();
     #endif // SENSOR_SHT85_DEBUG
     sht->requestData(); // Initial request queued up  (loop is to read data and queue up next read)
@@ -116,7 +110,7 @@ sSHTxx::sSHTxx(uint8_t addr, TwoWire *wire) {
 void sSHTxx::readSensor() {
   #ifdef SENSOR_SHT85_DEBUG
     Serial.print(address, HEX);
-    Serial.print("   ");
+    Serial.print(F("   "));
   #endif
   // There is an implicit asssumption here that sensors should be able to go from requestData to dataReady between loops -
   // and if not it will be reported and read on next loop
@@ -129,9 +123,9 @@ void sSHTxx::readSensor() {
       // Note, not smoothing the data as it seems fairly stable and is float rather than bits anyway
       #ifdef SENSOR_SHT85_DEBUG
         Serial.print(temperature, 1);
-        Serial.print("°C\t");
+        Serial.print(F("°C\t"));
         Serial.print(humidity, 1);
-        Serial.println("%");
+        Serial.println(F("%"));
       #endif
 
       // Store new results and optionally if changed send on MQTT
@@ -154,12 +148,12 @@ void sSHTxx::readSensor() {
 
     #ifdef SENSOR_SHT85_DEBUG
     } else {
-      Serial.println("SHT sensor did not return data");
+      Serial.println(F("SHT sensor did not return data"));
     #endif // SENSOR_SHT85_DEBUG
     }
   #ifdef SENSOR_SHT85_DEBUG
   } else {
-    Serial.println("SHT sensor not ready");
+    Serial.println(F("SHT sensor not ready"));
   #endif
   }
 }

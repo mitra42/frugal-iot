@@ -65,12 +65,12 @@ void fullAdvertise() {
 /*
 void messageReceived(String &topic, String &payload) {
   #ifdef SYSTEM_DISCOVERY_DEBUG
-    Serial.print("Discovery message receieved:");
+    Serial.print(F("Discovery message receieved:"));
   #endif // SYSTEM_DISCOVERY_DEBUG
   // topic can only be advertiseTopic so no need to test
   if (payload[0] == '?') {
     #ifdef SYSTEM_DISCOVERY_DEBUG
-      Serial.println("Request for advertisement");
+      Serial.println(F("Request for advertisement"));
     #endif
     fullAdvertise();
   }
@@ -78,14 +78,14 @@ void messageReceived(String &topic, String &payload) {
 */
 
 void setup() {
-  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project + "/");
+  projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
   advertiseTopic = new String(*projectTopic + xWifi::clientid()); // e.g. "dev/Lotus Ponds/esp32-12345"
-  topicPrefix = new String(*advertiseTopic + "/"); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
+  topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
   advertisePayload = new String( 
-    "id: " + xWifi::clientid() 
-    + "\nname: " + xWifi::device_name
-    + "\ndescription: " +  SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
-    + "\ntopics:" + F( 
+    F("id: ") + xWifi::clientid() 
+    + F("\nname: ") + xWifi::device_name
+    + F("\ndescription: " SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
+    "\ntopics:" 
       // For any module with a control, add it here.  TO-ADD-NEW-SENSOR TO-ADD-NEW-ACTUATOR TO-ADD-NEW-CONTROL
       #ifdef ACTUATOR_LEDBUILTIN_WANT
         ACTUATOR_LEDBUILTIN_ADVERTISEMENT
@@ -96,9 +96,10 @@ void setup() {
       #ifdef CONTROL_BLINKEN_WANT
         CONTROL_BLINKEN_ADVERTISEMENT
       #endif
-  ));
+    )
+  );
   #ifdef SYSTEM_DISCOVERY_DEBUG
-    Serial.print("topicPrefix="); Serial.println(*topicPrefix);
+    Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
   #endif
     fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
     // xMqtt::subscribe(*advertiseTopic, *messageReceived); // Commented out as don't see why need to receive this
