@@ -65,17 +65,17 @@ I've also tested on a Lolin C3 Pico (ESP32-C3), but do not test every git push o
 * Edit _configuration.h to match your system and functionality required for example uncomment SENSOR_SHT85_WANT to enable that functionality
 * Compile and Flash to your dev board
 * On a Wifi device such as a phone
-* Connect to the wifi node of the board which will have a SSID like esp8266-12345
-* Configure the Wifi SSID and Password of your router,
-* Pick the name for your project (use the same one for all your boards), and also give your board a name and description
-* SAVE and RESTART
-* It should now connect to the mqtt server at naturalinnovation.org
+  * Connect to the wifi node of the board which will have a SSID like esp8266-12345
+  * Configure the Wifi SSID and Password of your router,
+  * Pick the name for your project (use the same one for all your boards), and also give your board a name and description
+  * Click SAVE then RESTART
+* The device should now connect to the mqtt server at naturalinnovation.org
 
-If you got the configuration wrong, you'll need (for now - part of issue#22) to 
+If you get the configuration wrong, you'll need (for now - part of issue#22) to 
 * erase the settings - on Arduino IDE this is Tools->Erase->All Flash
 * recompile/flash.
 
-### For now run http server locally
+### For now run http server locally (but watch issue#41 for server development)
 * At some point the html code will be someewhere you can run it, but for now - run on your own machine
 * cd `~/frugal-iot/html`
 * edit index.html so that it connects to your project (as configured on your board)
