@@ -22,20 +22,27 @@
 #ifndef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
   // add new boards english description here.
   #ifdef ESP8266_D1_MINI
-    #define TEMP1 "ESP8266 D1 Mini"
+    #define TEMPBOARD "ESP8266 D1 Mini"
   #else
     #ifdef LOLIN_C3_PICO
-      #define TEMP1 "Lolin C3 Pico"
+      #define TEMPBOARD "Lolin C3 Pico"
     #else
       #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
     #endif
   #endif
+  // TO-ADD-SENSOR
   #ifdef SENSOR_SHT85_WANT
-    #define TEMP2 " with SHTxx temp/humidity"
+    #define TEMPSHT85 " SHTxx temp/humidity"
   #else
-    #define TEMP2 ""
+    #define TEMPSHT85 ""
   #endif
-  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION TEMP1 TEMP2
+  // TO-ADD-ACTUATOR
+  #ifdef ACTUATOR_RELAY_WANT
+    #define TEMPRELAY " Relay"
+  #else
+    #define TEMPRELAY ""
+  #endif
+  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION TEMPBOARD TEMPSHT85 TEMPRELAY
 #endif  
 
 #include <Arduino.h>
@@ -85,9 +92,12 @@ void setup() {
     + F("\nname: ") + xWifi::device_name
     + F("\ndescription: " SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
     "\ntopics:" 
-      // For any module with a control, add it here.  TO-ADD-NEW-SENSOR TO-ADD-NEW-ACTUATOR TO-ADD-NEW-CONTROL
+      // For any module with a control, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO-ADD-NEW-CONTROL
       #ifdef ACTUATOR_LEDBUILTIN_WANT
         ACTUATOR_LEDBUILTIN_ADVERTISEMENT
+      #endif
+      #ifdef ACTUATOR_RELAY_WANT
+        ACTUATOR_RELAY_ADVERTISEMENT
       #endif
       #ifdef SENSOR_SHT85_WANT
         SENSOR_SHT85_ADVERTISEMENT

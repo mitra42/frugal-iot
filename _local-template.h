@@ -15,13 +15,16 @@
 //#define LOLIN_C3_PICO // For some bug workaround in actuator_ledbuiltin.cpp
 
 // Organization behind this set of devices. Also used for MQTT userid //TODO-51 setup process to register new ones
-#define SYSTEM_DISCOVERY_ORGANIZATION "dev"  
+#define SYSTEM_DISCOVERY_ORGANIZATION "dev"
 #define SYSTEM_MQTT_USER SYSTEM_DISCOVERY_ORGANIZATION  // Edit if you use something other than the organization name for MQTT user
 // Specify the password for your organization on the MQTT server
 #define SYSTEM_MQTT_PASSWORD "public"
 // Where your MQTT server is - if using naturalinnovation.org for more than some development please let us know #TODO say how ! 
 #define SYSTEM_MQTT_SERVER "naturalinnovation.org"
 
-// Can override automatically gnerated description for your device
+// Can override automatically gnerated description for your device e.g.
 //#define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION "ESP8266 with SHT85 sensor" 
 
+// Now define the actual (non-default) sensors and actuators used
+#define ACTUATOR_RELAY_WANT
+// #define SENSOR_SHT85_WANT

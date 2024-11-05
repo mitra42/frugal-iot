@@ -52,14 +52,14 @@ void set(int v) {
   #endif // LOLIN_C3_PICO
 }
 
-//TODO29 maybe should be &topic
+//TODO-53 maybe should be &topic
 String *topic;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void messageReceived(String &topic, String &payload) {
 #pragma GCC diagnostic pop
-  uint8_t v = payload.toInt(); // Copied to pin in the loop 
+  uint8_t v = payload.toInt(); 
   #ifdef ACTUATOR_LEDBUILTIN_DEBUG
     Serial.print(F("aLedbuiltin received "));
     Serial.println(v);
@@ -84,7 +84,7 @@ void setup() {
       Serial.print(F(" RGB_BUILTIN=")); Serial.print(RGB_BUILTIN);
     #endif
     Serial.println();
-  #endif // ACTUATOR_BLINKIN_DEBUG
+  #endif // ACTUATOR_LEDBUILTIN_DEBUG
   xMqtt::subscribe(*topic, *messageReceived);
 }
 

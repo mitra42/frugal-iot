@@ -9,11 +9,15 @@
 #define SERIAL_BAUD 460800 // Generally find 460800 works well - reliability on all boards tested
 #define SERIAL_DELAY 5000 // Necessary to avoid losing initial messsage in garbage, at least on ESP8266_D1_MINI
 
-//TO-ADD-NEW-ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO-ADD-NEW-ACTUATOR
+//TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 
 #define ACTUATOR_LEDBUILTIN_WANT // Control led on board
 #define ACTUATOR_LEDBUILTIN_DEBUG
 #define ACTUATOR_LEDBUILTIN_ADVERTISEMENT "\n  -\n    topic: ledbuiltin\n    name: Built in LED\n    type: bool\n    display: toggle\n    rw: rw"
+
+// #define ACTUATOR_RELAY_WANT // Control relay - enable in _local.h
+#define ACTUATOR_RELAY_DEBUG
+#define ACTUATOR_RELAY_ADVERTISEMENT "\n  -\n    topic: relay\n    name: Relay\n    type: bool\n    display: toggle\n    rw: rw"
 
 // Demo blinking led on board
 // #define CONTROL_BLINKEN_WANT // Define in _local.h if want to test with this
@@ -26,7 +30,7 @@
 #define CONTROL_DEMO_MQTT_DEBUG
 #define CONTROL_DEMO_MQTT_HUMIDITY_MAX 75 // turn on LED above this humidity
 
-//TO-ADD-NEW-SENSOR - follow the pattern below and add any variables and search for other places tagged TO-ADD-NEW-SENSOR
+//TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 
 // simple analog r
 //#define SENSOR_ANALOG_WANT // Define in _local.h if using sensor
@@ -35,7 +39,7 @@
 #define SENSOR_ANALOG_DEBUG
 #define SENSOR_ANALOG_SMOOTH 2
 
-//TO-ADD-NEW-SENSOR - follow the pattern below and add any variables
+//TO_ADD_SENSOR - follow the pattern below and add any variables
 // #define SENSOR_SHT85_WANT // Define in _local.h if using sensor
 #define SENSOR_SHT85_DEVICE SHT30 // e.g. The Lolin SHT30 shield
 #define SENSOR_SHT85_DEBUG
