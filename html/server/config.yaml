@@ -1,0 +1,13 @@
+# Configuration for FrugalIoT server
+server:
+  port: 8080
+organizations:
+  - name: dev
+    password: public
+    projects:
+      - name: Lotus Ponds
+        track:
+          - temperature
+
+
+
