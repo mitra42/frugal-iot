@@ -52,30 +52,44 @@ void setup() {
 #ifdef SYSTEM_MQTT_WANT
   xMqtt::setup();
 #endif
+Serial.print(__FILE__); Serial.println(__LINE__);
+
 #ifdef SYSTEM_DISCOVERY_WANT
   xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
 #endif
+Serial.print(__FILE__); Serial.println(__LINE__);
+
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
   aLedbuiltin::setup();
 #endif
+Serial.print(__FILE__); Serial.println(__LINE__);
+
 #ifdef ACTUATOR_RELAY_WANT
   aRelay::setup();
 #endif
-
+Serial.print(__FILE__); Serial.println(__LINE__);
 //TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 #ifdef SENSOR_ANALOG_WANT
   sAnalog::setup();
 #endif
+Serial.print(__FILE__); Serial.println(__LINE__);
+
 #ifdef SENSOR_SHT85_WANT
   sSHT85::setup();
 #endif
+Serial.print(__FILE__); Serial.println(__LINE__);
+
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
 #endif
+Serial.print(__FILE__); Serial.println(__LINE__);
+
 #ifdef CONTROL_DEMO_MQTT_WANT
   cDemoMqtt::setup(); // Must be after system_mqtt
 #endif
+Serial.print(__FILE__); Serial.println(__LINE__);
+
 
 #ifdef ANY_DEBUG
   Serial.println(F("FrugalIoT Starting Loop"));
