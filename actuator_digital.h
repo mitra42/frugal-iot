@@ -15,7 +15,7 @@ class Actuator_Digital {
       String *name;
     #endif
     Actuator_Digital(const uint8_t p);
-    void act();
+    virtual void act();
     void set(const int v);
     void messageReceived(const String &topic, const String &payload);
     void setup();

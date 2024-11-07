@@ -42,7 +42,7 @@ class Actuator_Ledbuiltin : public Actuator_Digital {
   public: 
     Actuator_Ledbuiltin(const uint8_t p) : Actuator_Digital(p) { }
 
-    void act() {
+    virtual void act() {
       #ifdef RGB_BUILTIN // Lolon C3 doesnt have RGB_BUILTIN defined so digitalWrite doesnt work correctly
         #error Unclear to me if boards with RGB_BUILTIN shoul used the neopixelwrie or digitalWrite (with latter doing a neopixelwrite)
       #endif
@@ -69,7 +69,7 @@ void messageReceived(String &topic, String &payload) {
 
 void setup() {
   #ifdef ACTUATOR_DIGITAL_DEBUG
-    *actuator_ledbuiltin.name = F("ledbuiltin");
+    actuator_ledbuiltin.name = new String(F("ledbuiltin"));
   #endif // ACTUATOR_DIGITAL_DEBUG
   actuator_ledbuiltin.topic = String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC);
   actuator_ledbuiltin.setup();

@@ -20,7 +20,7 @@ void Actuator_Digital::act() {
 void Actuator_Digital::set(const int v) {
   value = v;
   #ifdef ACTUATOR_DIGITAL_DEBUG
-    Serial.print(F("\nSetting ")); Serial.print(*name); Serial.println(v ? F("on") : F("off"));
+    Serial.print(F("\nSetting ")); Serial.print(*name); Serial.println(v ? F(" on") : F(" off"));
   #endif
 }
 

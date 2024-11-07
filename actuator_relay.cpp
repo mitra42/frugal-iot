@@ -39,7 +39,7 @@ void messageReceived(String &topic, String &payload) {
 }
 void setup() {
   #ifdef ACTUATOR_DIGITAL_DEBUG
-    *actuator_relay.name = F("relay");
+      actuator_relay.name = new String(F("relay"));
   #endif // ACTUATOR_DIGITAL_DEBUG
   actuator_relay.topic = String(*xDiscovery::topicPrefix + ACTUATOR_RELAY_TOPIC);
   actuator_relay.setup();
