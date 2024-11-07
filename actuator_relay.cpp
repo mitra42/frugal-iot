@@ -13,6 +13,7 @@
 
 #include <Arduino.h>
 #include "actuator_relay.h"
+#include "actuator_digital.h"
 #include "system_mqtt.h"
 #include "system_discovery.h"
 
@@ -27,40 +28,25 @@
 
 namespace aRelay {
 
-bool value;  // 1 for on, 0 for off.
+Actuator_Digital actuator_relay(ACTUATOR_RELAY_PIN);
 
-void set(int v) {
-  value = v;
-  #ifdef ACTUATOR_RELAY_DEBUG
-    Serial.print(F("\nSetting Relay ")); Serial.println(v ? F("on") : F("off"));
-  #endif // ACTUATOR_RELAY_DEBUG
-
-  digitalWrite(ACTUATOR_RELAY_PIN, v ? HIGH : LOW); // Relay pin on Wemos shield is NOT inverted
-}
-
-//TODO-53 maybe should be &topic
-String *topic;
-
+// TODO-C++EXPERT I cant figure out how to pass the class Actuator_Digital.messageReceived as callback, have tried various combinstiaons of std::bind but to no success
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void messageReceived(String &topic, String &payload) {
-#pragma GCC diagnostic pop
-  uint8_t v = payload.toInt(); // Copied to pin in the loop 
-  #ifdef ACTUATOR_RELAY_DEBUG
-    Serial.print(F("aRelay received "));
-    Serial.println(v);
-  #endif
-  set(v);
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+  actuator_relay.messageReceived(topic, payload);
 }
-
-void setup() {           
-  topic = new String(*xDiscovery::topicPrefix + ACTUATOR_RELAY_TOPIC);
-  // initialize the digital pin as an output.
-  pinMode(ACTUATOR_RELAY_PIN, OUTPUT);
-  xMqtt::subscribe(*topic, *messageReceived);
+void setup() {
+  #ifdef ACTUATOR_DIGITAL_DEBUG
+    *actuator_relay.name = F("relay");
+  #endif // ACTUATOR_DIGITAL_DEBUG
+  actuator_relay.topic = String(*xDiscovery::topicPrefix + ACTUATOR_RELAY_TOPIC);
+  actuator_relay.setup();
+  xMqtt::subscribe(actuator_relay.topic, *messageReceived); // TODO-C++EXPERT see comment above
 }
 
 // void loop() { }
 
-} //namespace aLEDBUILTIN
+} //namespace aRelay
 #endif // ACTUATOR_RELAY_WANT

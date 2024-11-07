@@ -12,6 +12,7 @@
 
 #include <Arduino.h>
 #include "actuator_ledbuiltin.h"
+#include "actuator_digital.h"
 #include "system_mqtt.h"
 #include "system_discovery.h"
 
@@ -29,63 +30,50 @@
       #define ACTUATOR_LEDBUILTIN_PIN BUILTIN_LED
     #endif // BUILTIN_LED
   #endif // LED_BUILTIN
-#endif // ACTUATOR_BLINKIN_PIN
+#endif // ACTUATOR_LEDBUILTIN_PIN
 
-#ifndef ACTUATOR_LEDBUILTIN_BRIGHTNESS
-  #define ACTUATOR_LEDBUILTIN_BRIGHTNESS 64
-#endif
+#ifdef LOLIN_C3_PICO
+  #ifndef ACTUATOR_LEDBUILTIN_BRIGHTNESS
+    #define ACTUATOR_LEDBUILTIN_BRIGHTNESS 64
+  #endif
+#endif // LOLIN_C3_PICO
+
+class Actuator_Ledbuiltin : public Actuator_Digital {
+  public: 
+    Actuator_Ledbuiltin(const uint8_t p) : Actuator_Digital(p) { }
+
+    void act() {
+      #ifdef RGB_BUILTIN // Lolon C3 doesnt have RGB_BUILTIN defined so digitalWrite doesnt work correctly
+        #error Unclear to me if boards with RGB_BUILTIN shoul used the neopixelwrie or digitalWrite (with latter doing a neopixelwrite)
+      #endif
+      #if defined(LOLIN_C3_PICO) 
+        const uint8_t brightness = value ? ACTUATOR_LEDBUILTIN_BRIGHTNESS : 0;
+        neopixelWrite(ACTUATOR_LEDBUILTIN_PIN,brightness,brightness,brightness);   // Note this is g,r,b NOT r g b on Lolin
+      #else // LOLIN_C3_PICO
+        digitalWrite(ACTUATOR_LEDBUILTIN_PIN, value ? LOW : HIGH); // LED pin is inverted, at least on Lolin D1 Mini
+      #endif // LOLIN_C3_PICO
+    }
+};
 
 namespace aLedbuiltin {
 
-bool value;  // 1 for on, 0 for off.
+Actuator_Ledbuiltin actuator_ledbuiltin(ACTUATOR_LEDBUILTIN_PIN);
 
-void set(int v) {
-  value = v;
-  #ifdef ACTUATOR_LEDBUILTIN_DEBUG
-    Serial.print(F("\nSetting LED to ")); Serial.println(value);
-  #endif // ACTUATOR_LEDBUILTIN_DEBUG
-  #ifdef LOLIN_C3_PICO // Lolon C3 doesnt have RGB_BUILTIN defined so digitalWrite doesnt work correctly
-    uint8_t brightness = v ? ACTUATOR_LEDBUILTIN_BRIGHTNESS : 0;
-    neopixelWrite(ACTUATOR_LEDBUILTIN_PIN,brightness,brightness,brightness);   // Note this is g,r,b NOT r g b on Lolin
-  #else // LOLIN_C3_PICO
-    digitalWrite(ACTUATOR_LEDBUILTIN_PIN, v ? LOW : HIGH); // LED pin is inverted, at least on Lolin D1 Mini
-  #endif // LOLIN_C3_PICO
-}
-
-//TODO-53 maybe should be &topic
-String *topic;
-
+// TODO-C++EXPERT I cant figure out how to pass the class Actuator_Digital.messageReceived as callback, have tried various combinstiaons of std::bind but to no success
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void messageReceived(String &topic, String &payload) {
-#pragma GCC diagnostic pop
-  uint8_t v = payload.toInt(); 
-  #ifdef ACTUATOR_LEDBUILTIN_DEBUG
-    Serial.print(F("aLedbuiltin received "));
-    Serial.println(v);
-  #endif
-  set(v);
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+  actuator_ledbuiltin.messageReceived(topic, payload);
 }
 
-void setup() {           
-  topic = new String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC);
-  // initialize the digital pin as an output.
-  pinMode(ACTUATOR_LEDBUILTIN_PIN, OUTPUT);
-  #ifdef ACTUATOR_LEDBUILTIN_DEBUG
-    // There is a lot of possible debugging because this is surprisingly hard i.e. non-standard across boards! 
-    Serial.print(__FILE__); Serial.print(F(" LED on ")); Serial.println(ACTUATOR_LEDBUILTIN_PIN);
-    //Serial.print(F(" INPUT=")); Serial.print(INPUT); 
-    //Serial.print(F(" OUTPUT=")); Serial.print(OUTPUT); 
-    //Serial.print(F(" INPUT_PULLUP=")); Serial.print(INPUT_PULLUP); 
-    Serial.print(F(" HIGH=")); Serial.print(HIGH); 
-    Serial.print(F(" LOW=")); Serial.print(LOW);   
-    // Supposed to be defined, but known problem that not defined on Lolin C3 pico; 
-    #ifdef RGB_BUILTIN
-      Serial.print(F(" RGB_BUILTIN=")); Serial.print(RGB_BUILTIN);
-    #endif
-    Serial.println();
-  #endif // ACTUATOR_LEDBUILTIN_DEBUG
-  xMqtt::subscribe(*topic, *messageReceived);
+void setup() {
+  #ifdef ACTUATOR_DIGITAL_DEBUG
+    *actuator_ledbuiltin.name = F("ledbuiltin");
+  #endif // ACTUATOR_DIGITAL_DEBUG
+  actuator_ledbuiltin.topic = String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC);
+  actuator_ledbuiltin.setup();
+  xMqtt::subscribe(actuator_ledbuiltin.topic, *messageReceived); // TODO-C++EXPERT see comment above
 }
 
 // void loop() { }

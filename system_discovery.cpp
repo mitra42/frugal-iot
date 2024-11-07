@@ -19,6 +19,7 @@
   #error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_ORGANIZATION
 #endif
 
+// TODO Move this horrible bit of code into the individual xx.cpp setup() where relevant ! 
 #ifndef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
   // add new boards english description here.
   #ifdef ESP8266_D1_MINI
