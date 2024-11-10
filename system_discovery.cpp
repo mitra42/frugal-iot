@@ -15,31 +15,12 @@
 #include "_settings.h"
 
 #ifdef SYSTEM_DISCOVERY_WANT // Until have BLE, no WIFI means local only
+
 #if (!defined(SYSTEM_DISCOVERY_MS) || !defined(SYSTEM_DISCOVERY_ORGANIZATION))
   #error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_ORGANIZATION
 #endif
 
-#ifndef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
-  // add new boards english description here.
-  #ifdef ESP8266_D1_MINI
-    #define TEMP1 "ESP8266 D1 Mini"
-  #else
-    #ifdef LOLIN_C3_PICO
-      #define TEMP1 "Lolin C3 Pico"
-    #else
-      #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
-    #endif
-  #endif
-  #ifdef SENSOR_SHT85_WANT
-    #define TEMP2 " with SHTxx temp/humidity"
-  #else
-    #define TEMP2 ""
-  #endif
-  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION TEMP1 TEMP2
-#endif  
-
 #include <Arduino.h>
-#include "_common.h"    // Main include file for Framework
 #include "system_wifi.h"
 #include "system_mqtt.h"  // xMqtt
 #include "system_discovery.h"
@@ -49,6 +30,7 @@ namespace xDiscovery {
 unsigned long nextLoopTime = 0;
 
 //TODO Optimization - should these be String & instead of String *
+// projectTopic - gets 30592; 332252 *projectTopic 30584 / 332220
 String *projectTopic;
 String *advertiseTopic;
 String *topicPrefix;
@@ -65,12 +47,12 @@ void fullAdvertise() {
 /*
 void messageReceived(String &topic, String &payload) {
   #ifdef SYSTEM_DISCOVERY_DEBUG
-    Serial.print("Discovery message receieved:");
+    Serial.print(F("Discovery message receieved:"));
   #endif // SYSTEM_DISCOVERY_DEBUG
   // topic can only be advertiseTopic so no need to test
   if (payload[0] == '?') {
     #ifdef SYSTEM_DISCOVERY_DEBUG
-      Serial.println("Request for advertisement");
+      Serial.println(F("Request for advertisement"));
     #endif
     fullAdvertise();
   }
@@ -78,17 +60,43 @@ void messageReceived(String &topic, String &payload) {
 */
 
 void setup() {
-  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project + "/");
+  projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
   advertiseTopic = new String(*projectTopic + xWifi::clientid()); // e.g. "dev/Lotus Ponds/esp32-12345"
-  topicPrefix = new String(*advertiseTopic + "/"); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
+  topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
   advertisePayload = new String( 
-    "id: " + xWifi::clientid() 
-    + "\nname: " + xWifi::device_name
-    + "\ndescription: " +  SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
-    + "\ntopics:" + F( 
-      // For any module with a control, add it here.  TO-ADD-NEW-SENSOR TO-ADD-NEW-ACTUATOR TO-ADD-NEW-CONTROL
+    F("id: ") + xWifi::clientid() 
+    + F("\nname: ") + xWifi::device_name
+    + F("\ndescription: "
+    // Can be overridden in _local.h
+    #ifdef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
+      SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
+    #else
+      #ifdef ESP8266_D1_MINI
+        "ESP8266 D1 Mini"
+      #else
+        #ifdef LOLIN_C3_PICO
+          "Lolin C3 Pico"
+        #else
+          #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
+        #endif
+      #endif
+      // TO-ADD-SENSOR (note space at start of string)
+      #ifdef SENSOR_SHT85_WANT
+        " SHTxx temp/humidity"
+      #endif
+      // TO-ADD-ACTUATOR
+      #ifdef ACTUATOR_RELAY_WANT
+        " Relay"
+      #endif
+    #endif
+    // TODO-44 add location: <gsm coords>
+    "\ntopics:" 
+      // For any module with a control, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO-ADD-NEW-CONTROL
       #ifdef ACTUATOR_LEDBUILTIN_WANT
         ACTUATOR_LEDBUILTIN_ADVERTISEMENT
+      #endif
+      #ifdef ACTUATOR_RELAY_WANT
+        ACTUATOR_RELAY_ADVERTISEMENT
       #endif
       #ifdef SENSOR_SHT85_WANT
         SENSOR_SHT85_ADVERTISEMENT
@@ -96,9 +104,10 @@ void setup() {
       #ifdef CONTROL_BLINKEN_WANT
         CONTROL_BLINKEN_ADVERTISEMENT
       #endif
-  ));
+    )
+  );
   #ifdef SYSTEM_DISCOVERY_DEBUG
-    Serial.print("topicPrefix="); Serial.println(*topicPrefix);
+    Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
   #endif
     fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
     // xMqtt::subscribe(*advertiseTopic, *messageReceived); // Commented out as don't see why need to receive this

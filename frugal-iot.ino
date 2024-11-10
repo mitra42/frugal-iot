@@ -3,7 +3,6 @@
  */
 
 #include "_settings.h"  // Settings for what to include etc
-#include "_common.h"    // Main include file for Framework
 
 #ifdef SYSTEM_WIFI_WANT
 #include "system_wifi.h"
@@ -11,12 +10,15 @@
 #ifdef SYSTEM_MQTT_WANT
 #include "system_mqtt.h"
 #endif
-//TO-ADD-NEW-ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO-ADD-NEW-ACTUATOR
+//TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
 #include "actuator_ledbuiltin.h"
 #endif
+#ifdef ACTUATOR_RELAY_WANT
+#include "actuator_relay.h"
+#endif
 
-//TO-ADD-NEW-SENSOR - follow the pattern below and add any variables and search for other places tagged TO-ADD-NEW-SENSOR
+//TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 #ifdef SENSOR_ANALOG_WANT
 #include "sensor_analog.h"
 #endif
@@ -41,7 +43,7 @@ void setup() {
   }
   delay(SERIAL_DELAY); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
   //Serial.setDebugOutput(true);  // Enable debug from wifi, also needed to enable output from printf
-  Serial.println("FrugalIoT Starting");
+  Serial.println(F("FrugalIoT Starting"));
 #endif // ANY_DEBUG
 // put setup code here, to run once:
 #ifdef SYSTEM_WIFI_WANT
@@ -53,11 +55,15 @@ void setup() {
 #ifdef SYSTEM_DISCOVERY_WANT
   xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
 #endif
-//TO-ADD-NEW-ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO-ADD-NEW-ACTUATOR
+//TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
   aLedbuiltin::setup();
 #endif
-//TO-ADD-NEW-SENSOR - follow the pattern below and add any variables and search for other places tagged TO-ADD-NEW-SENSOR
+#ifdef ACTUATOR_RELAY_WANT
+  aRelay::setup();
+#endif
+
+//TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 #ifdef SENSOR_ANALOG_WANT
   sAnalog::setup();
 #endif
@@ -72,7 +78,7 @@ void setup() {
 #endif
 
 #ifdef ANY_DEBUG
-  Serial.println("FrugalIoT Starting Loop");
+  Serial.println(F("FrugalIoT Starting Loop"));
 #endif // ANY_DEBUG
 
 }
@@ -82,14 +88,14 @@ void loop() {
 #ifdef SYSTEM_MQTT_WANT
   xMqtt::loop();
 #endif
-//TO-ADD-NEW-ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO-ADD-NEW-ACTUATOR
+//TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 /*
 #ifdef ACTUATOR_XXX
   aXXX::loop();
 #endif
 */
 
-//TO-ADD-NEW-SENSOR - follow the pattern below and add any variables and search for other places tagged TO-ADD-NEW-SENSOR
+//TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 #ifdef SENSOR_ANALOG_WANT
   sAnalog::loop();
 #endif

@@ -47,9 +47,9 @@ I've also tested on a Lolin C3 Pico (ESP32-C3), but do not test every git push o
     * MQTT by Joel Gaehwiler
   * Libraries only needed if you use specific sensors. 
     * SHT85 by Rob Tillaart; (SENSOR_SHT85_WANT to enable SHT3X or SHT85 series sensors)
-    * If you add more sensors make sure to add any library requirement here (TO-ADD-NEW-SENSOR)
+    * If you add more sensors make sure to add any library requirement here (TO_ADD_SENSOR)
   * Libraries only needed if you use specific sensors. 
-    * If you add more actuators make sure to add any library requirement here (TO-ADD-NEW-ACTUATOR)
+    * If you add more actuators make sure to add any library requirement here (TO_ADD_ACTUATOR)
 * Tools -> Board 
   * Check you have selected the dev board
   * TODO add instructions, or a link here for adding new boards to an Arduino IDE - most will need to do this. 
@@ -62,20 +62,21 @@ I've also tested on a Lolin C3 Pico (ESP32-C3), but do not test every git push o
 ### Installing and testing on a dev board
 
 #### Basic test
-* Edit _configuration.h to match your system and functionality required for example uncomment SENSOR_SHT85_WANT to enable that functionality
+* Copy _local-template.h to _local.h and edit to put your organization, MQTT server, userid and password, and which devices you have on the board.
+* Check _configuration.h t - for now this is a good place to set how much debugging you want.  TODO maybe move to _local.h
 * Compile and Flash to your dev board
 * On a Wifi device such as a phone
-* Connect to the wifi node of the board which will have a SSID like esp8266-12345
-* Configure the Wifi SSID and Password of your router,
-* Pick the name for your project (use the same one for all your boards), and also give your board a name and description
-* SAVE and RESTART
-* It should now connect to the mqtt server at naturalinnovation.org
+  * Connect to the wifi node of the board which will have a SSID like esp8266-12345
+  * Configure the Wifi SSID and Password of your router,
+  * Pick the name for your project (use the same one for all your boards), and also give your board a name and description
+  * Click SAVE then RESTART
+* The device should now connect to the mqtt server at naturalinnovation.org
 
-If you got the configuration wrong, you'll need (for now - part of issue#22) to 
+If you get the configuration wrong, you'll need (for now - part of issue#22) to 
 * erase the settings - on Arduino IDE this is Tools->Erase->All Flash
 * recompile/flash.
 
-### For now run http server locally
+### For now run http server locally (but watch issue#41 for server development)
 * At some point the html code will be someewhere you can run it, but for now - run on your own machine
 * cd `~/frugal-iot/html`
 * edit index.html so that it connects to your project (as configured on your board)
