@@ -13,11 +13,13 @@ import morgan from 'morgan'; // https://www.npmjs.com/package/morgan - http requ
 import async from 'async'; // https://caolan.github.io/async/v3/docs.html
 import yaml from 'js-yaml';
 import fs from "fs"; // https://www.npmjs.com/package/js-yamlc
+import mqtt from 'mqtt'; // https://www.npmjs.com/package/mqtt
 
 //const htmldir = process.cwd() + "/.."; // TODO move this to point at wherever index.html relative to Main.js
 const htmldir = "/Users/mitra/Documents/Arduino/frugal-iot/html"
 let config;
-
+let mqtt_client; // Object from library
+let mqtt_local = {}; // Our control
 
 const optionsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,7 +58,58 @@ function startServer() {
 }
 
 function startClient() {
-  console.log("MQTT client will go here")
+  function mqtt_status_set(k) {
+    console.log('mqtt',k);
+    mqtt_local.status = k;
+  }
+  let config_organization;
+  if (!mqtt_client) {
+    // See https://stackoverflow.com/questions/69709461/mqtt-websocket-connection-failed
+    // TODO-41 handle multiple projects -> multiple mqtt sessions
+    config_organization = config.organizations[0];
+    mqtt_status_set("connecting");
+    // TODO go thru the options at https://www.npmjs.com/package/mqtt#client-connect and check optimal
+    mqtt_client = mqtt.connect(config.mqtt.broker, {
+      connectTimeout: 5000,
+      username: config_organization.name, //TODO-30 parameterize this
+      password: config_organization.mqtt_password, //TODO-30 parameterize this
+      // Remainder dont appear to be needed
+      //hostname: "127.0.0.1",
+      //port: 9012, // Has to be configured in mosquitto configuration
+      //path: "/mqtt",
+    });
+    // TODO need to check for disconnect and set status accordingly
+    /*
+    mqtt_client.on("connect", () => {
+      console.log("connected");
+      mqtt_local.status = "Connected";
+    });
+     */
+    for (let k of ['connect','disconnect','reconnect','close','offline','end']) {
+      mqtt_client.on(k, () => {
+        mqtt_status_set(k);
+      });
+    };
+    mqtt_client.on('error', function (error) {
+      console.log(error);
+      mqtt_local.status = "Error:" + error.message;
+    });
+    mqtt_client.on("message", (topic, message) => {
+      // message is Buffer
+      let msg = message.toString();
+      console.log("Received", topic, " ", msg);
+      /*
+      for (let o of mqtt_subscriptions) {
+        // console.log("Dispatch testing: ", topic)
+        if (o.topic === topic) {
+          // console.log("Dispatching: ", topic, msg)
+          o.cb(topic, msg)
+        }
+      }
+     `*/
+      //mqtt_client.end();
+    });
+  }
 }
 
 const app = express();
