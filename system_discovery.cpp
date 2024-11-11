@@ -45,6 +45,7 @@ void fullAdvertise() {
   xMqtt::messageSend(*advertiseTopic, *advertisePayload, true, 1);
 }
 /*
+// This is a previous idea that clients ask for the fullAdvertise, but since its retained at the broker that isn't needed. 
 void messageReceived(String &topic, String &payload) {
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("Discovery message receieved:"));
@@ -59,13 +60,19 @@ void messageReceived(String &topic, String &payload) {
 }
 */
 
+const char PROGMEM system_discovery_organization_slash[] = SYSTEM_DISCOVERY_ORGANIZATION "/";
+const char PROGMEM id_colon[] = "id: ";
+const char PROGMEM nl_name_colon[] = "\nname: ";
+
 void setup() {
-  projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
+  // This line fails when board 'LOLIN C3 PICO' is chosen
+  // projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
+  projectTopic = new String(system_discovery_organization_slash + xWifi::discovery_project + F("/"));
   advertiseTopic = new String(*projectTopic + xWifi::clientid()); // e.g. "dev/Lotus Ponds/esp32-12345"
   topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
   advertisePayload = new String( 
-    F("id: ") + xWifi::clientid() 
-    + F("\nname: ") + xWifi::device_name
+    id_colon + xWifi::clientid() 
+    + nl_name_colon + xWifi::device_name
     + F("\ndescription: "
     // Can be overridden in _local.h
     #ifdef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
