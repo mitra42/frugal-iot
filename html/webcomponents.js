@@ -4,6 +4,8 @@
 import {EL, HTMLElementExtended, getUrl, toBool} from './node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 import yaml from './node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
+import { Chart, registerables } from './node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
+Chart.register(...registerables); //TODO figure out how to only import that chart types needed
 
 var mqtt_client;
 var mqtt_subscriptions = [];
@@ -407,3 +409,54 @@ class MqttNode extends MqttReceiver {
   }
 }
 customElements.define('mqtt-node', MqttNode);
+
+/* This could be part of MqttBar, but maybe better standalone) */
+class MqttGraph extends HTMLElementExtended {
+  constructor() {
+    super();
+    this.data = [
+      {year: 2010, count: 10},
+      {year: 2011, count: 20},
+      {year: 2012, count: 15},
+      {year: 2013, count: 25},
+      {year: 2014, count: 22},
+      {year: 2015, count: 30},
+      {year: 2016, count: 28},
+    ];
+  }
+
+  // Note - makeChart is really fussy, the canvas must be inside something with a size.
+  loadContent() {
+    let canvas = EL('canvas');
+    this.append(EL('div', {style: "width: 80%;"},[canvas]));
+    this.makeChart(canvas, this.data);
+  }
+  shouldLoadWhenConnected() {return true;}
+
+  makeChart(canvas, data) {
+    //canvas = document.getElementById("XXX");
+    new Chart(
+      canvas,
+      {
+        type: 'bar',
+        data: {
+          labels: data.map(row => row.year),
+          datasets: [
+            {
+              label: 'Acquisitions by year',
+              data: data.map(row => row.count)
+            }
+          ]
+        }
+      }
+    );
+  }
+  render() {
+    return (
+      EL("div", {style: "width: 800px; height: 100px;"}, [ // TODO Move style to sheet
+        EL('slot', {}),
+      ])
+    );
+  }
+}
+customElements.define('mqtt-graph', MqttGraph);

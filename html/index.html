@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <title>Frugal IoT  Demo</title>
     <link href="./frugaliot.css" rel="stylesheet" type="text/css">
+    <script type="importmap">
+        {
+        "imports": {
+            "@kurkle/color": "./node_modules/@kurkle/color/dist/color.esm.js"
+        }
+        }
+    </script>
     <script src="./webcomponents.js" type="module"></script>
 </head>
 <body>
@@ -20,5 +27,6 @@
 <mqtt-toggle topic="/ledbuiltin" retain="1", qos="1">LED</mqtt-toggle>
 -->
 <mqtt-project topic="dev/Lotus Ponds/" name="Lotus Ponds"><div class="xxx"></div></mqtt-project>
+<mqtt-graph></mqtt-graph>
 </body>
 </html>
