@@ -15,18 +15,18 @@
 #endif
 
 #if ESP8266 // Note ESP8266 and ESP32 are defined for respective chips - unclear if anything like that for other Arduinos
-#include <ESP8266WiFi.h>  // for WiFiClient
+  #include <ESP8266WiFi.h>  // for WiFiClient
 #else
-#include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
+  #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
 
 #include <MQTT.h>
 
 // If configred not to use Wifi (or in future BLE) then will just operate locally, sending MQTT between components on this node, but 
 // not elsewhere.
-// TODO add support for BLE if it makes sense for MQTT
+// TODO-49 add support for BLE if it makes sense for MQTT
 #ifdef SYSTEM_WIFI_WANT
-#include "system_wifi.h"   // xWifi
+  #include "system_wifi.h"   // xWifi
 #endif  //SYSTEM_WIFI_WANT
 
 namespace xMqtt {
@@ -36,39 +36,33 @@ namespace xMqtt {
   MQTTClient client; //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.
 #endif // SYSTEM_WIFI_WANT
 
-
 unsigned long nextLoopTime = 0;
-
 
 // The subscription class manages a list of subscription topics & callbacks. 
 // It is not totally self contained as it knows how to call the client to subscribe and how to dispatch. 
 class Subscription {
   public: 
-    static Subscription *subscriptions;
-    String *topic; 
-    MQTTClientCallbackSimple cb;
-    Subscription *next;
+    static const Subscription *subscriptions;
+    const String* const topic; 
+    const MQTTClientCallbackSimple cb;
+    const Subscription* const next;
     //Subscription() { topic = NULL; cb = NULL; next = NULL}
-    Subscription(String &t, MQTTClientCallbackSimple c, Subscription* n) {
-      topic = &t;
-      cb = c;
-      next = n;
-    };
-    static Subscription *find(String &t) {
-      Subscription *i; 
+    Subscription(const String &t, const MQTTClientCallbackSimple c, const Subscription* const n):topic(&t), cb(c), next(n) { };
+
+    static const Subscription *find(const String &t) {
+      const Subscription *i; 
       for (i = subscriptions; i && (*i->topic != t); i = i->next) {
       }
       return i; // Found or not found case both return here
     }
-    static void subscribe(String &topic, MQTTClientCallbackSimple cb) {
-      Subscription *existingSub = find(topic);
+    static void subscribe(const String &topic, const MQTTClientCallbackSimple cb) {
+      const Subscription* const existingSub = find(topic);
       subscriptions = new Subscription(topic, cb, subscriptions);
       if (!existingSub) { 
         #ifdef SYSTEM_WIFI_WANT
           if (!client.subscribe(topic)) {
             #ifdef SYSTEM_MQTT_DEBUG
-              Serial.println(F("MQTT Subscription failed to "));
-              Serial.print(topic);
+              Serial.println(F("MQTT Subscription failed to ")); Serial.print(topic);
             #endif // SYSTEM_MQTT_DEBUG
           };
         #endif // SYSTEM_WIFI_WANT
@@ -77,8 +71,8 @@ class Subscription {
         Serial.print(F("Subscribing to: ")); Serial.println(topic);
       #endif // SYSTEM_MQTT_DEBUG
     }
-    static void dispatch(String &topic, String &payload) {
-      Subscription *sub;
+    static void dispatch(String &topic, String &payload) { // Can't be constants as passed to callback which isn't
+      const Subscription* sub;
       for (sub = subscriptions; sub; sub = sub->next) {
         if (*sub->topic == topic) {
           #ifdef SYSTEM_MQTT_DEBUG
@@ -92,10 +86,10 @@ class Subscription {
     }
     static void resubscribeAll() {
       #ifdef SYSTEM_WIFI_WANT
-        Subscription *sub;
         #ifdef SYSTEM_MQTT_DEBUG
           Serial.print(F("Resubscribing: ")); 
         #endif // SYSTEM_MQTT_DEBUG
+        const Subscription *sub;
         for (sub = subscriptions; sub; sub = sub->next) {
           if (!client.subscribe(*(sub->topic))) {
             #ifdef SYSTEM_MQTT_DEBUG
@@ -112,30 +106,24 @@ class Subscription {
       #endif //SYSTEM_WIFI_WANT
     }
 };
-Subscription *Subscription::subscriptions = NULL;
+const Subscription *Subscription::subscriptions = NULL;
 
 // A data structure that represents a single MQTT message
 class Message {
   public:
-    String *topic;
-    String *message;
-    bool retain;
-    int qos;
-    Message *next; // Allows a chain of them in a queue
-    Message(String &t, String &m, bool r, int q) {
-      topic = &t;
-      message = &m;
-      retain = r;
-      qos = q;
-      next = NULL;
-    } 
+    String * const topic; // cant be const const as goes to  messageReceived which isnt 
+    String * message; // cant be const as goes to  messageReceived which isnt and changed in retain
+    const bool retain;
+    const int qos;
+    Message * next; // Allows a chain of them in a queue - not const as queue rearranged
+    Message(String &t, String &m, const bool r, const int q): topic(&t), message(&m), retain(r), qos(q), next(NULL) {}; 
 };
 class MessageList {
   public:
     MessageList() {
       top = NULL;
     }
-    Message *find(String &t) {
+    Message *find(const String &t) {
       Message *i; 
       for (i = top; i && (*i->topic != t); i = i->next) {
       }
@@ -178,8 +166,7 @@ bool connect() {
     return true;
   } else {
     #ifdef SYSTEM_MQTT_DEBUG
-      Serial.print(F("\nMQTT connecting: to "));
-      Serial.print(xWifi::mqtt_host.c_str());
+      Serial.print(F("\nMQTT connecting: to ")); Serial.print(xWifi::mqtt_host.c_str());
     #endif 
    
     // Each organization needs a password in mosquitto_passwords which can be added by Mitra using mosquitto_passwd
@@ -200,7 +187,7 @@ bool connect() {
 bool inReceived = false; 
 
 // Note this is called both as a callback from client.onMessage and from messageSend if SYSTEM_MQTT_LOOPBACK
-void messageReceived(String &topic, String &payload) {
+void messageReceived(String &topic, String &payload) { // cant be constant as dispatch isnt
   #ifdef SYSTEM_MQTT_DEBUG
     Serial.print(F("MQTT incoming: ")); Serial.print(topic); Serial.print(F(" - ")); Serial.println(payload);
   #endif
@@ -228,21 +215,18 @@ void subscribe(String &topic, MQTTClientCallbackSimple cb) {
 // TODO implement qos on broker in this library
 // qos: 0 = send at most once; 1 = send at least once; 2 = send exactly once
 // These are intentionally required parameters rather than defaulting so the coder thinks about the desired behavior
-void messageSendInner(Message *m) {
+void messageSendInner(const Message* const m) {
   #ifdef SYSTEM_WIFI_WANT
     if (!client.publish(*m->topic, *m->message, m->retain, m->qos)) {
       #ifdef SYSTEM_MQTT_DEBUG
-        Serial.print(F("Failed to publish"));
-        Serial.print(*m->topic);
-        Serial.print(F("="));
-        Serial.println(*m->message);
+        Serial.print(F("Failed to publish")); Serial.print(*m->topic); Serial.print(F("=")); Serial.println(*m->message);
       #endif // SYSTEM_MQTT_DEBUG
     };
   #endif // SYSTEM_WIFI_WANT
 }
-void messageSend(String &topic, String &payload, bool retain, int qos) {
+void messageSend(String &topic, String &payload, const bool retain, const int qos) {
   // TODO-21-sema also queue if WiFi is down and qos>0 - not worth doing till xWifi::connect is non-blocking
-  Message *m = new Message(topic, payload, retain, qos);
+  Message * const m = new Message(topic, payload, retain, qos);
   if (inReceived && qos) {
     queued.push(m);
   } else {
@@ -257,18 +241,18 @@ void messageSend(String &topic, String &payload, bool retain, int qos) {
     messageReceived(m);
   #endif // SYSTEM_MQTT_LOOPBACK
 }
-void messageSend(String &topic, float &value, int width, bool retain, int qos) {
-  String *foo = new String(value, width);
+void messageSend(String &topic, const float &value, const int width, const bool retain, const int qos) {
+  String * const foo = new String(value, width);
   messageSend(topic, *foo, retain, qos);
 
 }
-void messageSend(String &topic, int value, bool retain, int qos) {
-  String *foo = new String(value);
+void messageSend(String &topic, const int value, const bool retain, const int qos) {
+  String * const foo = new String(value);
   messageSend(topic, *foo, retain, qos);
 }
 
 void messageSendQueued() {
-  Message *m;
+  const Message* m;
   for (;!inReceived && (m = queued.shift()); messageSendInner(m)) {}
 }
 
@@ -301,9 +285,7 @@ void loop() {
         messageSendQueued();
         if (!client.loop()) {
           #ifdef SYSTEM_MQTT_DEBUG
-            Serial.print(F("MQTT client loop failed "));
-            lwmqtt_err_t err = client.lastError();
-            Serial.println(err);
+            Serial.print(F("MQTT client loop failed ")); Serial.println(client.lastError()); // lwmqtt_err
           #endif // SYSTEM_MQTT_DEBUG
         }; // Do this at end of loop so some time before checks if connected
         nextLoopTime = millis() + SYSTEM_MQTT_MS;
