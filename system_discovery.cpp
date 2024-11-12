@@ -111,6 +111,9 @@ void setup() {
       #ifdef CONTROL_BLINKEN_WANT
         CONTROL_BLINKEN_ADVERTISEMENT
       #endif
+      #ifdef CONTROL_DEMO_MQTT_WANT
+        CONTROL_DEMO_MQTT_ADVERTISEMENT
+      #endif
     )
   );
   #ifdef SYSTEM_DISCOVERY_DEBUG

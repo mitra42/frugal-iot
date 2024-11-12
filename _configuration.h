@@ -29,6 +29,7 @@
 //#define CONTROL_DEMO_MQTT_WANT // Define in _local.h if want to test with this
 #define CONTROL_DEMO_MQTT_DEBUG
 #define CONTROL_DEMO_MQTT_HUMIDITY_MAX 75 // turn on LED above this humidity
+#define CONTROL_DEMO_MQTT_ADVERTISEMENT "\n  -\n    topic: control_demo_mqtt_output\n    name: Control Demo MQTT output\n    type: topic\n    options: bool\n    display: dropdown\n    rw: rw"
 
 //TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 

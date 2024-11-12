@@ -12,34 +12,37 @@
 
 #include <Arduino.h>
 #include "control_demo_mqtt.h"
-#include "actuator_ledbuiltin.h"
+#include "actuator_ledbuiltin.h"  // TODO-43 remove dependency once controllable.
 #include "system_mqtt.h"
-#include "system_discovery.h"
+#include "sensor_sht85.h" // TODO-43 remove dependency once controllable.
  
 namespace cDemoMqtt {
 
 String *inTopic;
 bool value = false;
 
+void send() {
+    xMqtt::messageSend(aLedbuiltin::actuator_ledbuiltin.topic, value, true, 1); // Note message will be queued , and sent outside of messageReceived handler
+}
+
 void messageReceived(String &topic, String &payload) {
   float humidity = payload.toFloat();
   #ifdef CONTROL_DEMO_MQTT_DEBUG
-    Serial.print(F("cDemoMqtt received "));
-    Serial.println(humidity);
+    Serial.print(F("cDemoMqtt received ")); Serial.println(humidity);
   #endif
   bool newValue = humidity > CONTROL_DEMO_MQTT_HUMIDITY_MAX;
   // Only send if its changed.
   if (newValue != value) {
-    xMqtt::messageSend(*aLedbuiltin::topic, value, true, 1); // Note message will be queued , and sent outside of messageReceived handler
     value = newValue;
+    send();
   }
 }
 
 void setup() {          
-  inTopic = new String(xDiscovery::topicPrefix + F(SENSOR_SHT85_TOPIC_HUMIDITY));
+  inTopic = sSHT85::topicH;
    
   xMqtt::subscribe(*inTopic, *messageReceived);
-  xMqtt::messageSend(*aLedbuiltin::topic, value, true, 1); // set initial value
+  send();
 }
 
 } //namespace cDemoMqtt
