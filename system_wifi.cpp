@@ -10,17 +10,19 @@
 
 // #include <Arduino.h>
 #if ESP8266
-#include <ESP8266WiFi.h>  // for WiFiClient
+  #include <ESP8266WiFi.h>  // for WiFiClient
 #else
-#include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
+  #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
 #include "system_wifi.h"
 
 
 // TODO find a way to store in eeprom rather than SPIFFS. 
 #ifdef ESP32
+  #define ESPFS SPIFFS
   #include <SPIFFS.h>
 #elif ESP8266
+  #define ESPFS LittleFS
   #include <LittleFS.h>
 #else
     #error "This example only supports ESP32 and ESP8266"
@@ -52,16 +54,32 @@ void checkConnected() {
   }
 }
 #ifdef SYSTEM_WIFI_PORTAL_RESTART
+
+// Copied from WiFiSettings - TODO would be nice to export from there
+String slurp(const String& fn) {
+    File f = ESPFS.open(fn, "r");
+    String r = f.readString();
+    f.close();
+    return r;
+}
+
 // A watchdog on the portal, that will reset after SYSTEM_WIFI_PORTAL_RESTART ms
+// Adding ability to reset if wanted wifi appears. 
 void portalWatchdog() {
   static unsigned long OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART; // initialized first time this is called
+  static String current = slurp("/wifi-ssid"); // Get from WiFiSettings - only changes after Save which usually leads to restart
   if (OPWLrestart < millis()) {
-    #ifdef SYSTEM_WIFI_DEBUG
-      Serial.println(F("WiFiSettings portal timed out - restarting and will retry WiFi"));
-    #endif
-    if (WiFiSettings.onRestart) { WiFiSettings.onRestart(); }
-    ESP.restart();
-  } 
+    const int num_networks = WiFi.scanNetworks();
+    int i;
+    for (i = 0; (i < num_networks) && (current != WiFi.SSID(i)); i++) { } // i will be ssid o num_networks if not found 
+    if (i != num_networks) { // we found it
+      #ifdef SYSTEM_WIFI_DEBUG
+        Serial.println(F("WiFiSettings portal timed out - restarting and will retry WiFi"));
+      #endif
+      if (WiFiSettings.onRestart) { WiFiSettings.onRestart(); } // We aren't setting it here so should do nothing
+      ESP.restart();
+    }
+  }
 }
 #endif // SYSTEM_WIFI_PORTAL_RESTART
 
