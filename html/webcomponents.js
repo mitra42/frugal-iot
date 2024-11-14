@@ -4,8 +4,107 @@
 import {EL, HTMLElementExtended, getUrl, toBool} from './node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 import yaml from './node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
-import { Chart, registerables } from './node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
+import { Chart, registerables, _adapters } from './node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
+//import 'chartjs-adapter-luxon';
 Chart.register(...registerables); //TODO figure out how to only import that chart types needed
+/* This is copied from the chartjs-adapter-luxon, I could not get it to import - gave me an error every time */
+/*!
+ * chartjs-adapter-luxon v1.3.1
+ * https://www.chartjs.org
+ * (c) 2023 chartjs-adapter-luxon Contributors
+ * Released under the MIT license
+ */
+import { DateTime } from 'luxon';
+
+const FORMATS = {
+  datetime: DateTime.DATETIME_MED_WITH_SECONDS,
+  millisecond: 'h:mm:ss.SSS a',
+  second: DateTime.TIME_WITH_SECONDS,
+  minute: DateTime.TIME_SIMPLE,
+  hour: {hour: 'numeric'},
+  day: {day: 'numeric', month: 'short'},
+  week: 'DD',
+  month: {month: 'short', year: 'numeric'},
+  quarter: "'Q'q - yyyy",
+  year: {year: 'numeric'}
+};
+
+_adapters._date.override({
+  _id: 'luxon', // DEBUG
+
+  /**
+   * @private
+   */
+  _create: function(time) {
+    return DateTime.fromMillis(time, this.options);
+  },
+
+  init(chartOptions) {
+    if (!this.options.locale) {
+      this.options.locale = chartOptions.locale;
+    }
+  },
+
+  formats: function() {
+    return FORMATS;
+  },
+
+  parse: function(value, format) {
+    const options = this.options;
+
+    const type = typeof value;
+    if (value === null || type === 'undefined') {
+      return null;
+    }
+
+    if (type === 'number') {
+      value = this._create(value);
+    } else if (type === 'string') {
+      if (typeof format === 'string') {
+        value = DateTime.fromFormat(value, format, options);
+      } else {
+        value = DateTime.fromISO(value, options);
+      }
+    } else if (value instanceof Date) {
+      value = DateTime.fromJSDate(value, options);
+    } else if (type === 'object' && !(value instanceof DateTime)) {
+      value = DateTime.fromObject(value, options);
+    }
+
+    return value.isValid ? value.valueOf() : null;
+  },
+
+  format: function(time, format) {
+    const datetime = this._create(time);
+    return typeof format === 'string'
+      ? datetime.toFormat(format)
+      : datetime.toLocaleString(format);
+  },
+
+  add: function(time, amount, unit) {
+    const args = {};
+    args[unit] = amount;
+    return this._create(time).plus(args).valueOf();
+  },
+
+  diff: function(max, min, unit) {
+    return this._create(max).diff(this._create(min)).as(unit).valueOf();
+  },
+
+  startOf: function(time, unit, weekday) {
+    if (unit === 'isoWeek') {
+      weekday = Math.trunc(Math.min(Math.max(0, weekday), 6));
+      const dateTime = this._create(time);
+      return dateTime.minus({days: (dateTime.weekday - weekday + 7) % 7}).startOf('day').valueOf();
+    }
+    return unit ? this._create(time).startOf(unit).valueOf() : time;
+  },
+
+  endOf: function(time, unit) {
+    return this._create(time).endOf(unit).valueOf();
+  }
+});
+/* End of code copied from chartjs-adapter-luxon.esm.js */
 
 var mqtt_client;
 var mqtt_subscriptions = [];
@@ -16,6 +115,17 @@ function mqtt_subscribe(topic, cb) {
   mqtt_subscriptions.push({topic, cb});
   mqtt_client.subscribe(topic, (err) => { if (err) console.error(err); })
 }
+/* Helpers of various kinds */
+function date_start_hour(x) {
+  let y = x ? new Date(x) : new Date();
+  y.setMinutes(0);
+  y.setSeconds(0);
+  y.setMilliseconds(0);
+  return y;
+}
+
+
+/* MQTT support */
 class MqttClient extends HTMLElementExtended {
   // TODO consider reconnection - see mqtt's README.md
   static get observedAttributes() {
@@ -427,59 +537,77 @@ class MqttGraph extends HTMLElementExtended {
   shouldLoadWhenConnected() {return true;}
 
   makeChart() {
-    //canvas = document.getElementById("XXX");
-    /*
-
-    */
-
-    this.chart = new Chart(
+    this.data = [
+      {time: Date.now(), value: 50.0},
+      {time: Date.now()+50*60*1000, value: 55.0},
+      {time: Date.now()+60*60*1000, value: 53.3},
+    ];
+    this.datax = [
+      {time: '2024-11-14T06:09:40.970Z', value: 50.0},
+      {time: '2024-11-14T06:39:55.970Z', value: 55.0},
+      {time: '2024-11-14T06:50:55.970Z', value: 53.3},
+      {time: '2024-11-14T07:50:55.970Z', value: 48.3},
+    ];
+    //this.data = [40,50,60];
+    // let suggestedMin = date_start_hour(this.data[0].time);
+    // let suggestedMax = date_start_hour(this.data[this.data.length - 1].time);
+    // console.log("from:", suggestedMin, suggestedMax);
+      this.chart = new Chart(
       this.canvas,
       {
         type: 'line', // Really want it to be a line
+        //labels: ['2024-11-14T06:09:40.970Z', '2024-11-14T06:39:55.970Z', '2024-11-14T06:50:55.970Z'],
         data: {
           //labels: data.map(row => row.year),
-          labels: [10,'xx',30], // TODO-46-line these need to come from data, but only if integral (e.g. 15 mins)
+          //labels: [10,20,30], // TODO-46-line these need to come from data, but only if integral (e.g. 15 mins)
           //labels: this.datasets[0].map(row => row.time), // TODO-46-line placeholder, will want actual date and not every one
           datasets: [{ // Format needed for Chart TODO-46 check its the same for bar vs graph vs xy etc
               label: "XXX", // TODO-46-line Probably have to get this from setAttribute
-              data: [
-                /*
-                {time: Date.now(), value: 50.0},
-                {time: Date.now()+30000, value: 55.0},
-                {time: Date.now()+60000, value: 53.3},
-                 */
-                /* Works but vertical line
-                {time: 10, value: 50.0},
-                {time: 20, value: 55.0},
-                {time: 30, value: 53.3},
-                 */
-                50.0,55.0,53.3,
-              ],
-/*
+              data: this.data,
               parsing: {
                   xAxisKey: 'time',
                   yAxisKey: 'value'
               },
-             */
             }],
           // this.datasets, // TODO-46 should be live
         },
         options: {
+          //zone: "America/Denver", // Comment out to use system time
           scales: { // For some reason cant put this on a dataset
-            x: {
-              beginAtZero: true
-            }
+            xAxis: {
+              // display: false,
+              type: 'time',
+              distribution: 'series',
+              adapters: {
+                date: {
+                  // locale: 'en-US', // Comment out to Use systems Locale
+                }
+              },
+
+              /* // Doesnt seem to work
+              ticks: {
+                suggestedMin: suggestedMin,
+                suggestedMax: suggestedMax,
+                //display: false //this will remove only the label
+              },
+              */
+              /*  // Does stuff, but not sure useful
+              time: {
+                unit: 'hour',
+                // displayFormats: { day: 'MMM DD, YYYY' } // or any desired format               }
+              },
+              */
+              /*
+              type: 'linear',
+              ticks: {
+                suggestedMin: date_start_hour(this.data[0].time).getMilliseconds(),
+                suggestedMax: date_start_hour(this.data[this.data.length - 1].time+60*60*1000).getMilliseconds(),
+                //display: false //this will remove only the label
+              },
+              */
+            },
           }
         }
-        /*
-        options: { // TODO-46 this is NOT where we want to specify keys
-          parsing: {
-            xAxisKey: 'time',
-            yAxisKey: 'value'
-          }
-        },
-
-         */
       }
     );
   }
