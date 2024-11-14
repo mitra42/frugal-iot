@@ -414,49 +414,119 @@ customElements.define('mqtt-node', MqttNode);
 class MqttGraph extends HTMLElementExtended {
   constructor() {
     super();
-    this.data = [
-      {year: 2010, count: 10},
-      {year: 2011, count: 20},
-      {year: 2012, count: 15},
-      {year: 2013, count: 25},
-      {year: 2014, count: 22},
-      {year: 2015, count: 30},
-      {year: 2016, count: 28},
-    ];
+    this.datasets = []; // Child elements will add/remove here
   }
 
   // Note - makeChart is really fussy, the canvas must be inside something with a size.
+  // For some reason this does not work by adding inside the render - i.e. to the virtual Dom.
   loadContent() {
-    let canvas = EL('canvas');
-    this.append(EL('div', {style: "width: 80%;"},[canvas]));
-    this.makeChart(canvas, this.data);
+    this.canvas = EL('canvas');
+    this.append(EL('div', {style: "width: 80%;"},[this.canvas]));
+    this.makeChart();
   }
   shouldLoadWhenConnected() {return true;}
 
-  makeChart(canvas, data) {
+  makeChart() {
     //canvas = document.getElementById("XXX");
-    new Chart(
-      canvas,
+    /*
+
+    */
+
+    this.chart = new Chart(
+      this.canvas,
       {
-        type: 'bar',
+        type: 'line', // Really want it to be a line
         data: {
-          labels: data.map(row => row.year),
-          datasets: [
-            {
-              label: 'Acquisitions by year',
-              data: data.map(row => row.count)
+          //labels: data.map(row => row.year),
+          labels: [10,'xx',30], // TODO-46-line these need to come from data, but only if integral (e.g. 15 mins)
+          //labels: this.datasets[0].map(row => row.time), // TODO-46-line placeholder, will want actual date and not every one
+          datasets: [{ // Format needed for Chart TODO-46 check its the same for bar vs graph vs xy etc
+              label: "XXX", // TODO-46-line Probably have to get this from setAttribute
+              data: [
+                /*
+                {time: Date.now(), value: 50.0},
+                {time: Date.now()+30000, value: 55.0},
+                {time: Date.now()+60000, value: 53.3},
+                 */
+                /* Works but vertical line
+                {time: 10, value: 50.0},
+                {time: 20, value: 55.0},
+                {time: 30, value: 53.3},
+                 */
+                50.0,55.0,53.3,
+              ],
+/*
+              parsing: {
+                  xAxisKey: 'time',
+                  yAxisKey: 'value'
+              },
+             */
+            }],
+          // this.datasets, // TODO-46 should be live
+        },
+        options: {
+          scales: { // For some reason cant put this on a dataset
+            x: {
+              beginAtZero: true
             }
-          ]
+          }
         }
+        /*
+        options: { // TODO-46 this is NOT where we want to specify keys
+          parsing: {
+            xAxisKey: 'time',
+            yAxisKey: 'value'
+          }
+        },
+
+         */
       }
     );
   }
   render() {
     return (
       EL("div", {style: "width: 800px; height: 100px;"}, [ // TODO Move style to sheet
-        EL('slot', {}),
+        EL('slot', {}), // TODO-46-line should just be the chart slot I think
       ])
     );
   }
 }
 customElements.define('mqtt-graph', MqttGraph);
+
+//TODO-46-multiline X axis wont work if different from each data set, may need interpolation ?
+class MqttGraphDataset extends MqttReceiver {
+  constructor() {
+    super();
+    /*
+    this.data = [];
+    this.chartdataset = { // Format needed for Chart TODO-46 check its the same for bar vs graph vs xy etc
+      label: this.state.name, // TODO-46-line Probably have to get this from setAttribute
+      data: this.data,
+      options: { // TODO-46 this is where we want to specify keys
+        parsing: {
+          xAxisKey: 'time',
+          yAxisKey: 'value'
+        }
+      },
+    };
+    this.chartEl = this.parentElement;
+    this.chartEl.datasets.push(this.chartdataset);
+    // TODO-46 this is sample data to separate out for testing
+    this.data.push([
+      {time: Date.now(), value: 50.0},
+      {time: Date.now()+30000, value: 55.0},
+      {time: Date.now()+60000, value: 53.3},
+    ]);
+    this.parentElement.chart.update();
+    */
+  }
+  valueSet(val) {
+    this.data.push({time: Date.now(), value: val});
+    // TODO-46 need to add to both X labels and to data in dataset, not just this.data
+    this.parent.chart.update();
+  }
+  render() {
+    return EL('span', { textContent: this.state.name}); // TODO-46-line should be controls
+  }
+}
+customElements.define('mqtt-graphdataset', MqttGraphDataset);

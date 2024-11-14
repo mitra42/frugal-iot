@@ -9,7 +9,7 @@
   "private": true,
   "dependencies": {
     "chart.js": "^4.4.6",
-    "html-element-extended": "^0.0.10",
+    "html-element-extended": "^0.1.0",
     "js-yaml": "^4.1.0",
     "mqtt": "^5.10.1"
   }
