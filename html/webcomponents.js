@@ -537,43 +537,20 @@ class MqttGraph extends HTMLElementExtended {
   shouldLoadWhenConnected() {return true;}
 
   makeChart() {
-    this.data = [
-      {time: Date.now(), value: 50.0},
-      {time: Date.now()+50*60*1000, value: 55.0},
-      {time: Date.now()+60*60*1000, value: 53.3},
-    ];
-    this.datax = [
-      {time: '2024-11-14T06:09:40.970Z', value: 50.0},
-      {time: '2024-11-14T06:39:55.970Z', value: 55.0},
-      {time: '2024-11-14T06:50:55.970Z', value: 53.3},
-      {time: '2024-11-14T07:50:55.970Z', value: 48.3},
-    ];
-    //this.data = [40,50,60];
-    // let suggestedMin = date_start_hour(this.data[0].time);
-    // let suggestedMax = date_start_hour(this.data[this.data.length - 1].time);
-    // console.log("from:", suggestedMin, suggestedMax);
-      this.chart = new Chart(
+    this.chart = new Chart(
       this.canvas,
       {
         type: 'line', // Really want it to be a line
-        //labels: ['2024-11-14T06:09:40.970Z', '2024-11-14T06:39:55.970Z', '2024-11-14T06:50:55.970Z'],
         data: {
-          //labels: data.map(row => row.year),
-          //labels: [10,20,30], // TODO-46-line these need to come from data, but only if integral (e.g. 15 mins)
-          //labels: this.datasets[0].map(row => row.time), // TODO-46-line placeholder, will want actual date and not every one
-          datasets: [{ // Format needed for Chart TODO-46 check its the same for bar vs graph vs xy etc
-              label: "XXX", // TODO-46-line Probably have to get this from setAttribute
-              data: this.data,
-              parsing: {
-                  xAxisKey: 'time',
-                  yAxisKey: 'value'
-              },
-            }],
-          // this.datasets, // TODO-46 should be live
+          datasets: this.datasets,
         },
         options: {
           //zone: "America/Denver", // Comment out to use system time
           scales: { // For some reason cant put this on a dataset
+            y:{ // TODO-46 why is there a second y Axis shown
+              suggestedMin: 10,
+              suggestedMax: 40,
+            },
             xAxis: {
               // display: false,
               type: 'time',
@@ -583,28 +560,6 @@ class MqttGraph extends HTMLElementExtended {
                   // locale: 'en-US', // Comment out to Use systems Locale
                 }
               },
-
-              /* // Doesnt seem to work
-              ticks: {
-                suggestedMin: suggestedMin,
-                suggestedMax: suggestedMax,
-                //display: false //this will remove only the label
-              },
-              */
-              /*  // Does stuff, but not sure useful
-              time: {
-                unit: 'hour',
-                // displayFormats: { day: 'MMM DD, YYYY' } // or any desired format               }
-              },
-              */
-              /*
-              type: 'linear',
-              ticks: {
-                suggestedMin: date_start_hour(this.data[0].time).getMilliseconds(),
-                suggestedMax: date_start_hour(this.data[this.data.length - 1].time+60*60*1000).getMilliseconds(),
-                //display: false //this will remove only the label
-              },
-              */
             },
           }
         }
@@ -621,37 +576,31 @@ class MqttGraph extends HTMLElementExtended {
 }
 customElements.define('mqtt-graph', MqttGraph);
 
-//TODO-46-multiline X axis wont work if different from each data set, may need interpolation ?
 class MqttGraphDataset extends MqttReceiver {
   constructor() {
     super();
-    /*
     this.data = [];
-    this.chartdataset = { // Format needed for Chart TODO-46 check its the same for bar vs graph vs xy etc
+    this.chartdataset = {
       label: this.state.name, // TODO-46-line Probably have to get this from setAttribute
       data: this.data,
-      options: { // TODO-46 this is where we want to specify keys
-        parsing: {
-          xAxisKey: 'time',
-          yAxisKey: 'value'
-        }
+      parsing: {
+        xAxisKey: 'time',
+        yAxisKey: 'value'
       },
-    };
+    }
     this.chartEl = this.parentElement;
     this.chartEl.datasets.push(this.chartdataset);
     // TODO-46 this is sample data to separate out for testing
-    this.data.push([
-      {time: Date.now(), value: 50.0},
-      {time: Date.now()+30000, value: 55.0},
-      {time: Date.now()+60000, value: 53.3},
-    ]);
+    /*
+    this.data.push({time: Date.now(), value: 50.0});
+    this.data.push({time: Date.now()+50*60*1000, value: 55.0});
+    this.data.push({time: Date.now()+60*60*1000, value: 53.3});
     this.parentElement.chart.update();
-    */
+     */
   }
   valueSet(val) {
     this.data.push({time: Date.now(), value: val});
-    // TODO-46 need to add to both X labels and to data in dataset, not just this.data
-    this.parent.chart.update();
+    this.parentElement.chart.update();
   }
   render() {
     return EL('span', { textContent: this.state.name}); // TODO-46-line should be controls
