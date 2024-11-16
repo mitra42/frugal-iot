@@ -11,7 +11,6 @@
 
  */
 
-
 #include "_settings.h"  // Settings for what to include etc
 
 #ifdef CONTROL_BLINKEN_WANT
@@ -30,7 +29,7 @@
 namespace cBlinken {
 
 unsigned long nextLoopTime = 0;
-float value;
+float value; // Time per blink (each phase)
 String *topic; 
 
 void set(float v) {
@@ -59,7 +58,8 @@ void setup() {
 
 void loop() {
   if (nextLoopTime <= millis()) {
-    xMqtt::messageSend(*aLedbuiltin::topic, !aLedbuiltin::value, true, 1);
+    String* topic = new String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC); // TODO cant be const const (as Message cant be)
+    xMqtt::messageSend(*topic, !value, true, 1);
     nextLoopTime = millis() + value*1000;
   }
 }
