@@ -26,7 +26,11 @@ unsigned long smoothedValue = 0;
 
 void setup() {      
   // pinMode(SENSOR_ANALOG_PIN, INPUT); // I don't think this is needed
-  analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
+  #ifdef ESP8266_D1_MINI
+    analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
+  #else
+    #error analogReference is board specific, appears to be undefined on ESP32C3 
+  #endif
   //value = 0;
 }
 

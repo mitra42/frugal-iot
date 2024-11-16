@@ -15,36 +15,10 @@
 #include "_settings.h"
 
 #ifdef SYSTEM_DISCOVERY_WANT // Until have BLE, no WIFI means local only
+
 #if (!defined(SYSTEM_DISCOVERY_MS) || !defined(SYSTEM_DISCOVERY_ORGANIZATION))
   #error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_ORGANIZATION
 #endif
-
-// TODO Move this horrible bit of code into the individual xx.cpp setup() where relevant ! 
-#ifndef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
-  // add new boards english description here.
-  #ifdef ESP8266_D1_MINI
-    #define TEMPBOARD "ESP8266 D1 Mini"
-  #else
-    #ifdef LOLIN_C3_PICO
-      #define TEMPBOARD "Lolin C3 Pico"
-    #else
-      #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
-    #endif
-  #endif
-  // TO-ADD-SENSOR
-  #ifdef SENSOR_SHT85_WANT
-    #define TEMPSHT85 " SHTxx temp/humidity"
-  #else
-    #define TEMPSHT85 ""
-  #endif
-  // TO-ADD-ACTUATOR
-  #ifdef ACTUATOR_RELAY_WANT
-    #define TEMPRELAY " Relay"
-  #else
-    #define TEMPRELAY ""
-  #endif
-  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION TEMPBOARD TEMPSHT85 TEMPRELAY
-#endif  
 
 #include <Arduino.h>
 #include "system_wifi.h"
@@ -56,6 +30,7 @@ namespace xDiscovery {
 unsigned long nextLoopTime = 0;
 
 //TODO Optimization - should these be String & instead of String *
+// projectTopic - gets 30592; 332252 *projectTopic 30584 / 332220
 String *projectTopic;
 String *advertiseTopic;
 String *topicPrefix;
@@ -70,6 +45,7 @@ void fullAdvertise() {
   xMqtt::messageSend(*advertiseTopic, *advertisePayload, true, 1);
 }
 /*
+// This is a previous idea that clients ask for the fullAdvertise, but since its retained at the broker that isn't needed. 
 void messageReceived(String &topic, String &payload) {
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("Discovery message receieved:"));
@@ -84,14 +60,43 @@ void messageReceived(String &topic, String &payload) {
 }
 */
 
+const char PROGMEM system_discovery_organization_slash[] = SYSTEM_DISCOVERY_ORGANIZATION "/";
+const char PROGMEM id_colon[] = "id: ";
+const char PROGMEM nl_name_colon[] = "\nname: ";
+
 void setup() {
-  projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
+  // This line fails when board 'LOLIN C3 PICO' is chosen
+  // projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
+  projectTopic = new String(system_discovery_organization_slash + xWifi::discovery_project + F("/"));
   advertiseTopic = new String(*projectTopic + xWifi::clientid()); // e.g. "dev/Lotus Ponds/esp32-12345"
   topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
   advertisePayload = new String( 
-    F("id: ") + xWifi::clientid() 
-    + F("\nname: ") + xWifi::device_name
-    + F("\ndescription: " SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
+    id_colon + xWifi::clientid() 
+    + nl_name_colon + xWifi::device_name
+    + F("\ndescription: "
+    // Can be overridden in _local.h
+    #ifdef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
+      SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
+    #else
+      #ifdef ESP8266_D1_MINI
+        "ESP8266 D1 Mini"
+      #else
+        #ifdef LOLIN_C3_PICO
+          "Lolin C3 Pico"
+        #else
+          #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
+        #endif
+      #endif
+      // TO-ADD-SENSOR (note space at start of string)
+      #ifdef SENSOR_SHT85_WANT
+        " SHTxx temp/humidity"
+      #endif
+      // TO-ADD-ACTUATOR
+      #ifdef ACTUATOR_RELAY_WANT
+        " Relay"
+      #endif
+    #endif
+    // TODO-44 add location: <gsm coords>
     "\ntopics:" 
       // For any module with a control, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO-ADD-NEW-CONTROL
       #ifdef ACTUATOR_LEDBUILTIN_WANT
