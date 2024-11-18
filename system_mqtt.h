@@ -5,9 +5,9 @@
 typedef void (*MQTTClientCallbackSimple)(String &, String &);
 
 namespace xMqtt {
-void messageSend(String &topic, String &payload, bool retain, int qos);
-void messageSend(String &topic, float &value, int width, bool retain, int qos);
-void messageSend(String &topic, int value, bool retain, int qos);
+void messageSend(String &topic, String &payload, const bool retain, const int qos);
+void messageSend(String &topic, const float &value, const int width, const bool retain, const int qos);
+void messageSend(String &topic, const int value, const bool retain, const int qos);
 void subscribe(String &topic, MQTTClientCallbackSimple cb);
 
 void setup();

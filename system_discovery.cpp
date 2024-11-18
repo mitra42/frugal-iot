@@ -60,19 +60,26 @@ void messageReceived(String &topic, String &payload) {
 }
 */
 
-const char PROGMEM system_discovery_organization_slash[] = SYSTEM_DISCOVERY_ORGANIZATION "/";
-const char PROGMEM id_colon[] = "id: ";
-const char PROGMEM nl_name_colon[] = "\nname: ";
+//const char PROGMEM system_discovery_organization_slash[] = SYSTEM_DISCOVERY_ORGANIZATION "/";
+#ifdef ESP8266 // Runtime Exception if try and add char[] to String 
+  #define idcolon F("id: ")
+  #define nlNameColon F("\nname: ")
+  //const char PROGMEM xxx[] = ""; //TODO_C++EXPERT - for weird reason requires this and Serial.print(xxx) or get run time exception
+#else // ESP32 - can't start a String concat with a F()
+  #define idcolon "id: "
+  #define nlNameColon F("\nname: ")
+#endif
 
 void setup() {
   // This line fails when board 'LOLIN C3 PICO' is chosen
   // projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
-  projectTopic = new String(system_discovery_organization_slash + xWifi::discovery_project + F("/"));
+  //Serial.print(xxx); //TODO_C++EXPERT - for weird reason requires this and const char PROGMEM above  or get run time exception
+  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project + F("/"));
   advertiseTopic = new String(*projectTopic + xWifi::clientid()); // e.g. "dev/Lotus Ponds/esp32-12345"
   topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
-  advertisePayload = new String( 
-    id_colon + xWifi::clientid() 
-    + nl_name_colon + xWifi::device_name
+    advertisePayload = new String( 
+    idcolon + xWifi::clientid() 
+    + nlNameColon + xWifi::device_name
     + F("\ndescription: "
     // Can be overridden in _local.h
     #ifdef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION

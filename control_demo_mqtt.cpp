@@ -18,14 +18,16 @@
  
 namespace cDemoMqtt {
 
-String *inTopic;
 bool value = false;
 
-void send() {
-    xMqtt::messageSend(aLedbuiltin::actuator_ledbuiltin.topic, value, true, 1); // Note message will be queued , and sent outside of messageReceived handler
+void act() {
+  static String* topic =  new String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC); 
+  xMqtt::messageSend(*topic, value, true, 1); // Note message will be queued , and sent outside of messageReceived handler
 }
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void messageReceived(String &topic, String &payload) {
+#pragma GCC diagnostic pop
   float humidity = payload.toFloat();
   #ifdef CONTROL_DEMO_MQTT_DEBUG
     Serial.print(F("cDemoMqtt received ")); Serial.println(humidity);
@@ -34,15 +36,14 @@ void messageReceived(String &topic, String &payload) {
   // Only send if its changed.
   if (newValue != value) {
     value = newValue;
-    send();
+    act();
   }
 }
 
 void setup() {          
-  inTopic = sSHT85::topicH;
-   
+  String *inTopic = new String(*xDiscovery::topicPrefix + F(SENSOR_SHT85_TOPIC_HUMIDITY));
   xMqtt::subscribe(*inTopic, *messageReceived);
-  send();
+  act();
 }
 
 } //namespace cDemoMqtt
