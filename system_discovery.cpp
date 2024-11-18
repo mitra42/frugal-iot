@@ -68,7 +68,6 @@ void messageReceived(String &topic, String &payload) {
 #else // ESP32 - can't start a String concat with a F()
   #define idcolon "id: "
   #define nlNameColon F("\nname: ")
-  const char PROGMEM xxx[] = "";
 #endif
 
 void setup() {

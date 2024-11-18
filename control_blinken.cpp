@@ -58,6 +58,7 @@ void setup() {
 
 void loop() {
   if (nextLoopTime <= millis()) {
+    // TODO should almost certainly be static, but check topicPrefix is valid at the first loop.
     String* topic = new String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC); // TODO cant be const const (as Message cant be)
     xMqtt::messageSend(*topic, !value, true, 1);
     nextLoopTime = millis() + value*1000;
