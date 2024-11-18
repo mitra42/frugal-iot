@@ -115,6 +115,12 @@ class MqttReceiver extends MqttElement {
       this.renderAndReplace();
     }
   }
+  findProject() {
+    return this.closest("mqtt-project");
+  }
+  findNode() {
+    return this.closest("mqtt-node");
+  }
 }
 class MqttText extends MqttReceiver {
   // constructor() { super(); }
@@ -308,6 +314,28 @@ class MqttSlider extends MqttTransmitter {
 }
 customElements.define('mqtt-slider', MqttSlider);
 
+class MqttDropdown extends MqttTransmitter {
+  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['type','options','value']); }
+
+  constructor() {
+    super();
+  }
+  findTopics() {
+    // TODO-42 can collapse this once working
+    let project = this.findProject();
+    let nodes = project.children;
+    let topics = nodes.map(n => { n.value.topics.filter ....
+
+  }
+  valueSet(val) {
+    super.valueSet(val);
+    // TODO-43 need to set which of dropdown are selected
+    return true; // Rerenders on moving based on any received value but not when dragged
+  }
+  // super.valueGet fine as its text
+}
+customElements.define('mqtt-dropdown', MqttDropdown);
+
 const MPstyle = `
 .outer {border: 1px,black,solid;  margin: 0.2em; }
 .projectname, .name { margin-left: 1em; margin-right: 1em; } 
@@ -350,33 +378,42 @@ const MNstyle = `
 
 class MqttNode extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id']); }
-  constructor() { super(); }// Will subscribe to topic
-
+  constructor() {
+    super(); // Will subscribe to topic
+    this.state.topics = {};
+  }
   elementFrom(t) {
     let topic = this.state.topic + "/" + t.topic;
     let name = t.name;
+    let el;
     if (t.display === "toggle") {
       // Assuming rw: rw, type: bool
-      this.append(EL('mqtt-toggle', {topic, name, retain: 1, qos: 1},[name]));
+      el = EL('mqtt-toggle', {topic, name, retain: 1, qos: 1},[name]);
     } else if (t.display === "bar") {
       // Assuming rw: r, type: float
-      this.append(EL('mqtt-bar', {topic, name, max: t.max, min: t.min, color: t.color},[]));
+      el = EL('mqtt-bar', {topic, name, max: t.max, min: t.min, color: t.color},[]);
     } else if (t.display === "text") {
-      this.append(EL('mqtt-text', {name, topic},[]));
+      el = EL('mqtt-text', {name, topic},[]);
     } else if (t.display === "slider") {
-      this.append(EL('mqtt-slider', {name, topic, min: t.min, max: t.max, value: (t.max + t.min)/2 }, [
+      el = EL('mqtt-slider', {name, topic, min: t.min, max: t.max, value: (t.max + t.min)/2 }, [
           EL('span', { textContent: "△"}, []),
-      ]));
+      ]);
+    } else if (t.display === "dropdown") {
+      el = EL('mqtt-dropdown', {name, topic, type: t.type, options: t.options}, []);
     } else {
       console.log("do not know how to display a ", t.display);
       //TODO add slider (MqttSlider), need to specify which other element attached to.
     }
+    if (el) {
+      this.append(el);
+      this.state.topics[t.topic] = el; // Index into elements - e.g. used by MqttDropdown
+    }
   }
   valueSet(val) {
-    this.state.value = val;
     let obj = yaml.loadAll(val,{ onWarning: (warn) => console.log('Yaml warning:', warn) });
     console.log(obj);
     let node = obj[0]; // Should only ever be one of them
+    this.state.value = node; // Save the object for this node
     ['id','description','name'].forEach(k => this.state[k] = node[k]);
     while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace
     node.topics.forEach(t => { this.elementFrom(t); });
