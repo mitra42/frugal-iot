@@ -69,6 +69,9 @@ void portalWatchdog() {
   static unsigned long OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART; // initialized first time this is called
   static String current = slurp("/wifi-ssid"); // Get from WiFiSettings - only changes after Save which usually leads to restart
   if (OPWLrestart < millis()) {
+      #ifdef SYSTEM_WIFI_DEBUG
+        Serial.println(F("WiFiSettings Rescanning"));
+      #endif
     const int num_networks = WiFi.scanNetworks();
     int i;
     for (i = 0; (i < num_networks) && (current != WiFi.SSID(i)); i++) { } // i will be ssid o num_networks if not found 
