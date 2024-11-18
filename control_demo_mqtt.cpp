@@ -15,6 +15,7 @@
 #include "actuator_ledbuiltin.h"  // TODO-43 remove dependency once controllable.
 #include "system_mqtt.h"
 #include "sensor_sht85.h" // TODO-43 remove dependency once controllable.
+#include "system_discovery.h"
  
 namespace cDemoMqtt {
 
