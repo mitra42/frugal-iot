@@ -18,11 +18,16 @@
 #include "system_discovery.h"
 
 #ifndef ACTUATOR_RELAY_PIN
-  #if defined(LOLIN_C3_PICO) || defined(ESP8266_D1_MINI)
+  #ifdef ESP8266_D1_MINI
     // Reasonable to assume using the Wemos Relay shield
     #define ACTUATOR_RELAY_PIN D1 // Default on Wemos relay shield for D1 mini or C3 Pico 
-  #else
-    #error Need to define ACTUATOR_RELAY_PIN for unknown boards
+  #else 
+    #ifdef LOLIN_C3_PICO
+      // Reasonable to assume using the Wemos Relay shield
+      #define ACTUATOR_RELAY_PIN 10 // Not sure if pin 10 is called "10" in digital write
+    #else
+      #error Need to define ACTUATOR_RELAY_PIN for unknown boards
+    #endif
   #endif
 #endif // ACTUATOR_RELAY_PIN
 
