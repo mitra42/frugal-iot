@@ -53,6 +53,16 @@ void checkConnected() {
     connect();
   }
 }
+#ifdef SYSTEM_WIFI_SSID
+bool spurt(const String& fn, const String& content) {
+    File f = ESPFS.open(fn, "w");
+    if (!f) return false;
+    auto w = f.print(content);
+    f.close();
+    return w == content.length();
+}
+#endif
+
 #ifdef SYSTEM_WIFI_PORTAL_RESTART
 
 // Copied from WiFiSettings - TODO would be nice to export from there
@@ -77,10 +87,12 @@ void portalWatchdog() {
     for (i = 0; (i < num_networks) && (current != WiFi.SSID(i)); i++) { } // i will be ssid o num_networks if not found 
     if (i != num_networks) { // we found it
       #ifdef SYSTEM_WIFI_DEBUG
-        Serial.println(F("WiFiSettings portal timed out - restarting and will retry WiFi"));
+        Serial.println(F("WiFiSettings portal timed out - found Wifi so restarting"));
       #endif
       if (WiFiSettings.onRestart) { WiFiSettings.onRestart(); } // We aren't setting it here so should do nothing
       ESP.restart();
+    } else {
+      OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART;
     }
   }
 }
@@ -90,7 +102,6 @@ String &clientid() {
   WiFiSettings.begin(); // Ensure WiFi has created variables
   return WiFiSettings.hostname;
 }
-
 // Note this is blocking - so order is important, in particular it must complete this before trying xMqtt::setup
 void setup() {
   #ifdef ESP32
@@ -101,16 +112,30 @@ void setup() {
     #error "This example only supports ESP32 and ESP8266"
   #endif
 
+  // TODO-61 add default SSID & PW if defined in _local.h
+  #ifdef SYSTEM_WIFI_SSID
+    Serial.println("Overriding WiFi SSID / Password for dev");
+    spurt("/wifi-ssid", SYSTEM_WIFI_SSID);
+    spurt("/wifi-password", SYSTEM_WIFI_PASSWORD);
+  #endif // SYSTEM_WIFI_SSID
+
   // Custom configuration variables, these will read configured values if previously set and return default values if not.
   /*
     int integer(String name, [long min, long max,] int init = 0, String label = name);
     String string(String name, [[unsigned int min_length,] unsigned int max_length,] String init = "", String label = name);
     bool checkbox(String name, bool init = false, String label = name);
   */
+
+  #ifndef SYSTEM_WIFI_DEVICE
+    #define SYSTEM_WIFI_DEVICE "device"
+  #endif
+  #ifndef SYSTEM_WIFI_PROJECT
+    #define SYSTEM_WIFI_PROJECT "project"]
+  #endif
   mqtt_host = WiFiSettings.string(F("mqtt_host"), 4,40, F(SYSTEM_MQTT_SERVER), F("MQTT Host")); 
   // TODO-29 turn discovery_project into a dropdown, use an ifdef for the ORGANIZATION in configuration.h not support by ESPWifi-Settings yet.
-  discovery_project = WiFiSettings.string(F("discovery_project"), 3,20, F("project"), F("Project")); 
-  device_name = WiFiSettings.string(F("device_name"), 3,20, F("device"), F("Device Name")); 
+  discovery_project = WiFiSettings.string(F("discovery_project"), 3,20, F(SYSTEM_WIFI_PROJECT), F("Project")); 
+  device_name = WiFiSettings.string(F("device_name"), 3,20, F(SYSTEM_WIFI_DEVICE), F("Device Name")); 
   #ifdef SYSTEM_WIFI_DEBUG
   Serial.print(F("MQTT host = ")); Serial.println(mqtt_host);
   Serial.print(F("Project = ")); Serial.println(discovery_project);
