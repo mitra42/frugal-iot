@@ -115,10 +115,10 @@ class MqttReceiver extends MqttElement {
       this.renderAndReplace();
     }
   }
-  findProject() {
+  findProject() { // Note this will only work once the element is connected
     return this.closest("mqtt-project");
   }
-  findNode() {
+  findNode() { // Note this will only work once the element is connected.
     return this.closest("mqtt-node");
   }
 }
@@ -314,23 +314,42 @@ class MqttSlider extends MqttTransmitter {
 }
 customElements.define('mqtt-slider', MqttSlider);
 
+const MDDstyle = `
+.outer { border: 0px,black,solid;  margin: 0.2em; }
+.name, .description, .nodeid { margin-left: 1em; margin-right: 1em; } 
+`;
+
 class MqttDropdown extends MqttTransmitter {
-  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['type','options','value']); }
+  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['type','options','value','project']); }
 
   constructor() {
     super();
   }
+  // TODO-42 may need to change findTopics to account for other selection criteria
   findTopics() {
     // TODO-42 can collapse this once working
-    let project = this.findProject();
-    let nodes = project.children;
-    let topics = nodes.map(n => { n.value.topics.filter ....
-
+    let project = this.state.project;
+    let nodes = Array.from(project.children);
+    let topics = nodes.map(n => n.state.value.topics.filter( t => t.type == this.state.options).map(t=> { return({name: t.name, topic: n.state.topic + "/" + t.topic})}) ).flat();
+    return topics;
   }
   valueSet(val) {
     super.valueSet(val);
     // TODO-43 need to set which of dropdown are selected
     return true; // Rerenders on moving based on any received value but not when dragged
+  }
+  render() {
+    return this.state.topic && this.state.project && this.state.options && [
+      EL('style', {textContent: MDDstyle}), // Using styles defined above
+      EL('div', {class: 'outer'}, [
+        EL('label', {for: this.state.topic, textContent: this.state.name}),
+        EL('select', {id: this.state.topic}, [
+          this.findTopics().map( t => // { name, type etc }
+            EL('option', {value: t.topic, textContent: t.name})
+          ),
+        ]),
+      ]),
+    ];
   }
   // super.valueGet fine as its text
 }
@@ -399,7 +418,7 @@ class MqttNode extends MqttReceiver {
           EL('span', { textContent: "△"}, []),
       ]);
     } else if (t.display === "dropdown") {
-      el = EL('mqtt-dropdown', {name, topic, type: t.type, options: t.options}, []);
+      el = EL('mqtt-dropdown', {name, topic, type: t.type, options: t.options, project: this.findProject()}, []);
     } else {
       console.log("do not know how to display a ", t.display);
       //TODO add slider (MqttSlider), need to specify which other element attached to.
@@ -425,6 +444,9 @@ class MqttNode extends MqttReceiver {
     return this.state.id && super.shouldLoadWhenConnected() ;
   }
  */
+  findProject() { // Note this will only work once the element is connected
+    return this.closest("mqtt-project");
+  }
   render() {
     return [
       EL('style', {textContent: MNstyle}), // Using styles defined above
