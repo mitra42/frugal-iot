@@ -65,4 +65,12 @@
 #define SYSTEM_DISCOVERY_DEBUG
 #define SYSTEM_DISCOVERY_MS 30000
 
+#if \
+   !defined LANGUAGE_EN \
+&& !defined LANGUAGE_NL \
+&& !defined LANGUAGE_DE \
+&& !defined LANGUAGE_ID
+    #define LANGUAGE_ALL
+#endif
+
 #endif // _CONFIGURATION_H

@@ -29,6 +29,20 @@
 
 namespace xWifi {
 
+struct Texts {
+    const __FlashStringHelper
+      *MqttServer,
+      *DeviceName,
+      *Project
+    ;
+    /*
+    const char
+        *init
+    ;
+    */
+};
+Texts T;
+
 String mqtt_host;
 String discovery_project;
 String device_name;
@@ -99,6 +113,35 @@ String &clientid() {
   WiFiSettings.begin(); // Ensure WiFi has created variables
   return WiFiSettings.hostname;
 }
+
+void setupLanguages() {
+  // TODO-39 need to make sure external for language is set prior to this - get defined from _local.h and LANGUAGE_ALL from configuration.h
+  String language = slurp("/WiFiSettings-language"); //TODO-39 better to get from WiFiSettings - but need to do a PR for that
+  if (language.length() == 0) {
+    #if defined LANGUAGE_EN || defined LANGUAGE_ALL
+      language = "en";
+    #else 
+      #ifdef LANGUAGE_ID
+        language = "id";
+      #endif
+    #endif
+  };
+  #if defined LANGUAGE_EN || defined LANGUAGE_ALL
+    if (language == "en") {
+      T.MqttServer = F("MQTT server");
+      T.DeviceName = F("Device Name");
+      T.Project = F("Project");
+    } 
+  #endif
+  #if defined LANGUAGE_ID || defined LANGUAGE_ALL
+    if (language == "id") {
+      T.MqttServer = F("MQTT server");
+      T.DeviceName = F("Nama Perangkat");
+      T.Project = F("Proyek");
+    }
+  #endif
+}
+
 // Note this is blocking - so order is important, in particular it must complete this before trying xMqtt::setup
 void setup() {
   #ifdef ESP32
@@ -108,6 +151,8 @@ void setup() {
   #else
     #error "This example only supports ESP32 and ESP8266"
   #endif
+  
+  setupLanguages();
 
   #ifdef SYSTEM_WIFI_SSID
     Serial.println(F("Overriding WiFi SSID / Password for dev"));
@@ -128,10 +173,10 @@ void setup() {
   #ifndef SYSTEM_WIFI_PROJECT
     #define SYSTEM_WIFI_PROJECT "project"
   #endif
-  mqtt_host = WiFiSettings.string(F("mqtt_host"), 4,40, F(SYSTEM_MQTT_SERVER), F("MQTT Host")); 
+  mqtt_host = WiFiSettings.string(F("mqtt_host"), 4,40, F(SYSTEM_MQTT_SERVER), T.MqttServer); 
   // TODO-29 turn discovery_project into a dropdown, use an ifdef for the ORGANIZATION in configuration.h not support by ESPWifi-Settings yet.
-  discovery_project = WiFiSettings.string(F("discovery_project"), 3,20, F(SYSTEM_WIFI_PROJECT), F("Project")); 
-  device_name = WiFiSettings.string(F("device_name"), 3,20, F(SYSTEM_WIFI_DEVICE), F("Device Name")); 
+  discovery_project = WiFiSettings.string(F("discovery_project"), 3,20, F(SYSTEM_WIFI_PROJECT), T.Project); 
+  device_name = WiFiSettings.string(F("device_name"), 3,20, F(SYSTEM_WIFI_DEVICE), T.DeviceName); 
   #ifdef SYSTEM_WIFI_DEBUG
   Serial.print(F("MQTT host = ")); Serial.println(mqtt_host);
   Serial.print(F("Project = ")); Serial.println(discovery_project);
