@@ -1,7 +1,7 @@
 {
-  "name": "mqtt-client-template",
+  "name": "frugaliot-clientserver",
   "version": "1.0.0",
-  "description": "",
+  "description": "Frugal IoT client and server",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,5 +16,7 @@
     "js-yaml": "^4.1.0",
     "mqtt": "^5.10.1",
     "morgan": "^1.10.0"
-  }
+  },
+  "repository": "https://github.com/mitra42/frugal-iot",
+  "type": "module"
 }
