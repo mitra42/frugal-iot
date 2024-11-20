@@ -141,8 +141,7 @@ class MqttClient extends HTMLElementExtended {
     //console.log("loadContent", this.state.server);
     if (!mqtt_client) {
       // See https://stackoverflow.com/questions/69709461/mqtt-websocket-connection-failed
-
-      this.setStatus("Connecting");
+      this.setStatus("connecting");
       mqtt_client = mqtt.connect(this.state.server, {
         connectTimeout: 5000,
         username: "public", //TODO-30 parameterize this
@@ -152,22 +151,26 @@ class MqttClient extends HTMLElementExtended {
         //port: 9012, // Has to be configured in mosquitto configuration
         //path: "/mqtt",
       });
-      // TODO need to check for disconnect and set status accordingly
-      mqtt_client.on("connect", () => {
-        console.log("connected");
-        this.setStatus("Connected");
-        /*
-        mqtt_client.subscribe("presence", (err) => {
-          console.log("Subscribed to presence");
-          if (!err) {
-            mqtt_client.publish("presence", "Hello mqtt");
-          }
+      for (let k of ['connect','disconnect','reconnect','close','offline','end']) {
+        mqtt_client.on(k, () => {
+          this.setStatus(k);
         });
-        // TODO simple message sent by local client, index.html can watch for it to know the local route is working
-        this.setStatus("Testing presence");
-        mqtt_client.publish("presence", "Hello mqtt");
-       */
+      };
+      /* - replace generic connect with option to test presence
+      mqtt_client.on("connect", () => {
+      console.log("connected");
+      this.setStatus("Connected");
+      mqtt_client.subscribe("presence", (err) => {
+        console.log("Subscribed to presence");
+        if (!err) {
+          mqtt_client.publish("presence", "Hello mqtt");
+        }
       });
+      // TODO simple message sent by local client, index.html can watch for it to know the local route is working
+      //this.setStatus("Testing presence");
+      //mqtt_client.publish("presence", "Hello mqtt");
+      });
+     */
       mqtt_client.on('error', function (error) {
         console.log(error);
         this.state.status = "Error:" + error.message;

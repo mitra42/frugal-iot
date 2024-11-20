@@ -65,7 +65,7 @@ Actuator_Ledbuiltin actuator_ledbuiltin(ACTUATOR_LEDBUILTIN_PIN);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void messageReceived(String &topic, String &payload) {
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic pop
   actuator_ledbuiltin.messageReceived(topic, payload);
 }
 
