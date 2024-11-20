@@ -15,8 +15,7 @@ import yaml from 'js-yaml';
 import fs from "fs"; // https://www.npmjs.com/package/js-yamlc
 import mqtt from 'mqtt'; // https://www.npmjs.com/package/mqtt
 
-//const htmldir = process.cwd() + "/.."; // TODO move this to point at wherever index.html relative to Main.js
-const htmldir = "/Users/mitra/Documents/Arduino/frugal-iot/html"
+const htmldir = process.cwd() + "/.."; // TODO move this to point at wherever index.html relative to Main.js
 let config;
 let mqtt_client; // Object from library
 let mqtt_local = {}; // Our control
