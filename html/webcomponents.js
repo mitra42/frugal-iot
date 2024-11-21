@@ -230,6 +230,12 @@ class MqttReceiver extends MqttElement {
       this.renderAndReplace();
     }
   }
+  findProject() { // Note this will only work once the element is connected
+    return this.closest("mqtt-project");
+  }
+  findNode() { // Note this will only work once the element is connected.
+    return this.closest("mqtt-node");
+  }
 }
 class MqttText extends MqttReceiver {
   // constructor() { super(); }
@@ -295,11 +301,12 @@ class MqttToggle extends MqttTransmitter {
 customElements.define('mqtt-toggle', MqttToggle);
 
 const MBstyle = `
-.outer {background-color: white;margin:5px; padding:5px;}
-.bar {border: 1px,black,solid; background-color: white;margin: 0px;}
- .left {display:inline-block; text-align: right;}
- .right {background-color:white; display:inline-block;}
- .val {margin:5px;}
+  .outer {background-color: white;margin:5px; padding:5px;}
+  .bar {border: 1px,black,solid; background-color: white;margin: 0px;}
+  .left {display:inline-block; text-align: right;}
+  .right {background-color:white; display:inline-block;}
+  .val {margin:5px;}
+  .icon {height:12px;width:12px;float:right;border: 1px,black,solid}
  `;
 class MqttBar extends MqttReceiver {
   static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['value','min','max','color']); }
@@ -312,16 +319,32 @@ class MqttBar extends MqttReceiver {
     super.valueSet(Number(val));
     return true; // Note shouldn't re-render children like a MqttSlider.
   }
+  findGraph() { // TODO-46 probably belongs in MqttReceiver
+    let project = this.findProject();
+    if (!project.state.graph) {
+      project.state.graph = EL('mqtt-graph');
+      project.append(project.state.graph);
+    }
+    return project.state.graph;
+  }
+  opengraph(e) {
+    console.log("Graph clicked", e, this);
+    let graph = this.findGraph();
+    // TODO-46 - should check its not already there.
+    graph.append(
+      EL('mqtt-graphdataset', {topic: this.state.topic, label: this.state.name})
+    );
+  }
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
     let setpointwidth = 100*(this.state.setpoint-this.state.min)/(this.state.max-this.state.min);
-
     return [
       EL('style', {textContent: MBstyle}), // Using styles defined above
       EL('div', {class: "outer"}, [
-        EL('div', {class: "name"}, [
+        EL('div', {class: "name"}, [ // TODO-30 maybe should use a <label>
           EL('span', {textContent: this.state.name}),
+          EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
         ]),
         EL('div', {class: "bar",},[
           EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
@@ -540,6 +563,9 @@ class MqttGraph extends HTMLElementExtended {
   shouldLoadWhenConnected() {return true;}
 
   makeChart() {
+    if (this.chart) {
+      this.chart.destroy();
+    }
     this.chart = new Chart(
       this.canvas,
       {
@@ -591,15 +617,15 @@ class MqttGraphDataset extends MqttReceiver {
         yAxisKey: 'value'
       },
     }
+  }
+  shouldLoadWhenConnected() {
+    return super.shouldLoadWhenConnected() ;
+  }
+  loadContent() { // Happens when connected
+    super.loadContent(); // Subscribe to topic
     this.chartEl = this.parentElement;
     this.chartEl.datasets.push(this.chartdataset);
-    // TODO-46 this is sample data to separate out for testing
-    /*
-    this.data.push({time: Date.now(), value: 50.0});
-    this.data.push({time: Date.now()+50*60*1000, value: 55.0});
-    this.data.push({time: Date.now()+60*60*1000, value: 53.3});
-    this.parentElement.chart.update();
-     */
+    this.chartEl.makeChart();
   }
   valueSet(val) {
     this.data.push({time: Date.now(), value: val});

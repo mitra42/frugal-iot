@@ -20,19 +20,6 @@
 <!--<mqtt-client server="ws://localhost:9012"></mqtt-client>-->
 <!-- wont work on public.cloud.shiftr.io mqtt://test.mosquitto.org" which doesnt appear to open websockets-->
 <mqtt-client server="ws://naturalinnovation.org:9012"></mqtt-client>
-<!--
-<mqtt-bar topic="/temperature" value="34.3" min="0" max="45", color="red", name="Temperature"></mqtt-bar>
-<mqtt-bar topic="/humidity" value="75" min="0" max="100" color="cornflowerblue", name="Humidity">
-    <mqtt-slider topic="/maxhumidity" value="75" min="0" max="100">
-        <span>△</span>
-    </mqtt-slider>
-</mqtt-bar>
-<mqtt-toggle topic="/ledbuiltin" retain="1", qos="1">LED</mqtt-toggle>
--->
 <mqtt-project topic="dev/Lotus Ponds/" name="Lotus Ponds"><div class="xxx"></div></mqtt-project>
-<mqtt-graph>
-    <!--TODO-46 remove hard-coded topic -->
-    <mqtt-graphdataset topic="dev/Lotus Ponds/esp8266-85ea2b/temperature" label="Temperature"></mqtt-graphdataset>
-</mqtt-graph>
 </body>
 </html>
