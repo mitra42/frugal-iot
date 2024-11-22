@@ -118,6 +118,9 @@ void setup() {
       #ifdef SENSOR_SHT85_WANT
         SENSOR_SHT85_ADVERTISEMENT
       #endif
+      #ifdef SENSOR_DHT_WANT
+        SENSOR_DHT_ADVERTISEMENT
+      #endif
       #ifdef CONTROL_BLINKEN_WANT
         CONTROL_BLINKEN_ADVERTISEMENT
       #endif
