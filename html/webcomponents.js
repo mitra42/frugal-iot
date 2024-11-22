@@ -450,6 +450,56 @@ class MqttSlider extends MqttTransmitter {
 }
 customElements.define('mqtt-slider', MqttSlider);
 
+const MDDstyle = `
+.outer { border: 0px,black,solid;  margin: 0.2em; }
+.name, .description, .nodeid { margin-left: 1em; margin-right: 1em; } 
+`;
+
+class MqttDropdown extends MqttTransmitter {
+  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['type','options','value','project']); }
+
+  constructor() {
+    super();
+  }
+  // TODO-42 may need to change findTopics to account for other selection criteria
+  findTopics() {
+    // TODO-42 can collapse this once working
+    let project = this.state.project;
+    let nodes = Array.from(project.children);
+    let topics = nodes.map(n => n.state.value.topics.filter( t => t.type === this.state.options).map(t=> { return({name: t.name, topic: n.state.topic + "/" + t.topic})}) ).flat();
+    return topics;
+  }
+  // noinspection JSCheckFunctionSignatures
+  valueSet(val) {
+    super.valueSet(val);
+    // TODO-43 need to set which of dropdown are selected
+    return true; // Rerenders on moving based on any received value but not when dragged
+  }
+  // TODO check what triggers this
+  onchange(e) {
+    //console.log("Dropdown onchange");
+    this.state.value = e.target.value; // Want the value
+    this.publish();
+  }
+
+  render() {
+    return this.state.topic && this.state.project && this.state.options && [
+      EL('style', {textContent: MDDstyle}), // Using styles defined above
+      EL('div', {class: 'outer'}, [
+        EL('label', {for: this.state.topic, textContent: this.state.name}),
+        EL('select', {id: this.state.topic, onchange: this.onchange.bind(this)}, [
+          EL('option', {value: "", textContent: "Unused", selected: !this.state.value}),
+          this.findTopics().map( t => // { name, type etc. }
+            EL('option', {value: t.topic, textContent: t.name, selected: t.topic === this.state.value}),
+          ),
+        ]),
+      ]),
+    ];
+  }
+  // super.valueGet fine as its text
+}
+customElements.define('mqtt-dropdown', MqttDropdown);
+
 const MPstyle = `
 .outer {border: 1px,black,solid;  margin: 0.2em; }
 .projectname, .name { margin-left: 1em; margin-right: 1em; } 
@@ -466,6 +516,7 @@ class MqttProject extends MqttReceiver {
       let id = val;
       let topic = this.state.topic + val;
       this.append(EL('mqtt-node', {id, topic},[]));
+      return false; // Should not need to rerender
     }
   }
   render() {
@@ -531,6 +582,10 @@ class MqttNode extends MqttReceiver {
     return this.state.id && super.shouldLoadWhenConnected() ;
   }
  */
+  findProject() { // Note this will only work once the element is connected
+    // noinspection CssInvalidHtmlTagReference
+    return this.closest("mqtt-project");
+  }
   render() {
     return [
       EL('style', {textContent: MNstyle}), // Using styles defined above
