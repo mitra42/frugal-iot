@@ -24,6 +24,9 @@
 #include "system_wifi.h"
 #include "system_mqtt.h"  // xMqtt
 #include "system_discovery.h"
+#ifdef CONTROL_DEMO_MQTT_WANT
+  #include "control_demo_mqtt.h"
+#endif
 
 namespace xDiscovery {
 
@@ -117,6 +120,9 @@ void setup() {
       #endif
       #ifdef CONTROL_BLINKEN_WANT
         CONTROL_BLINKEN_ADVERTISEMENT
+      #endif
+      #ifdef CONTROL_DEMO_MQTT_WANT
+        CONTROL_DEMO_MQTT_ADVERTISEMENT
       #endif
     )
   );

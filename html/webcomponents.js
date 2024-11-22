@@ -475,7 +475,6 @@ class MqttDropdown extends MqttTransmitter {
     // TODO-43 need to set which of dropdown are selected
     return true; // Rerenders on moving based on any received value but not when dragged
   }
-  // TODO check what triggers this
   onchange(e) {
     //console.log("Dropdown onchange");
     this.state.value = e.target.value; // Want the value
@@ -543,34 +542,43 @@ const MNstyle = `
 
 class MqttNode extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id']); }
-  constructor() { super(); }// Will subscribe to topic
-
+  constructor() {
+    super(); // Will subscribe to topic
+    this.state.topics = {};
+  }
   elementFrom(t) {
     let topic = this.state.topic + "/" + t.topic;
     let name = t.name;
+    let el;
     if (t.display === "toggle") {
       // Assuming rw: rw, type: bool
-      this.append(EL('mqtt-toggle', {topic, name, retain: 1, qos: 1},[name]));
+      el = EL('mqtt-toggle', {topic, name, retain: 1, qos: 1},[name]);
     } else if (t.display === "bar") {
       // Assuming rw: r, type: float
-      this.append(EL('mqtt-bar', {topic, name, max: t.max, min: t.min, color: t.color},[]));
+      el = EL('mqtt-bar', {topic, name, max: t.max, min: t.min, color: t.color},[]);
     } else if (t.display === "text") {
-      this.append(EL('mqtt-text', {name, topic},[]));
+      el = EL('mqtt-text', {name, topic},[]);
     } else if (t.display === "slider") {
-      this.append(EL('mqtt-slider', {name, topic, min: t.min, max: t.max, value: (t.max + t.min)/2 }, [
+      el = EL('mqtt-slider', {name, topic, min: t.min, max: t.max, value: (t.max + t.min)/2 }, [
           EL('span', { textContent: "△"}, []),
-      ]));
+      ]);
+    } else if (t.display === "dropdown") {
+      el = EL('mqtt-dropdown', {name, topic, type: t.type, options: t.options, project: this.findProject()}, []);
     } else {
       console.log("do not know how to display a ", t.display);
       //TODO add slider (MqttSlider), need to specify which other element attached to.
     }
+    if (el) {
+      this.append(el);
+      this.state.topics[t.topic] = el; // Index into elements - e.g. used by MqttDropdown
+    }
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
-    this.state.value = val;
     let obj = yaml.loadAll(val,{ onWarning: (warn) => console.log('Yaml warning:', warn) });
     console.log(obj);
     let node = obj[0]; // Should only ever be one of them
+    this.state.value = node; // Save the object for this node
     ['id','description','name'].forEach(k => this.state[k] = node[k]);
     while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace
     node.topics.forEach(t => { this.elementFrom(t); });

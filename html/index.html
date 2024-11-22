@@ -17,9 +17,8 @@
     <script src="./webcomponents.js" type="module"></script>
 </head>
 <body>
-<!--<mqtt-client server="ws://localhost:9012"></mqtt-client>-->
-<!-- wont work on public.cloud.shiftr.io mqtt://test.mosquitto.org" which doesnt appear to open websockets-->
-<mqtt-client server="ws://naturalinnovation.org:9012"></mqtt-client>
-<mqtt-project topic="dev/Lotus Ponds/" name="Lotus Ponds"><div class="xxx"></div></mqtt-project>
+<!-- TODO should have attribute "discover" on project and node -->
+<mqtt-client server="ws://naturalinnovation.org:9012" discover></mqtt-client>
+<mqtt-project topic="dev/Lotus Ponds/" name="Lotus Ponds" discover></mqtt-project>
 </body>
 </html>
