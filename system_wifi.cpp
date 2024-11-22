@@ -3,8 +3,6 @@
     Based on the example from https://github.com/Juerd/ESP-WiFiSettings
 */
 
-// TODO - remove extra wifi in system_mqtt and make sure it can find this
-
 #include "_settings.h"  // Settings for what to include etc
 #ifdef SYSTEM_WIFI_WANT
 
@@ -42,7 +40,6 @@ void connect() {
     // an access point will be started with a captive portal to configure WiFi.
     WiFiSettings.connect();
     // If WiFi connected, returns true, if WiFi fails then puts up portal and never returns - portal initiates reset 
-    // Serial.println(F("XXX-22a connect exited gracefully without reset"))
 }
 // Blocking attempt at reconnecting - can be called by MQTT
 void checkConnected() {
@@ -77,7 +74,7 @@ String slurp(const String& fn) {
 // Adding ability to reset if wanted wifi appears. 
 void portalWatchdog() {
   static unsigned long OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART; // initialized first time this is called
-  static String current = slurp("/wifi-ssid"); // Get from WiFiSettings - only changes after Save which usually leads to restart
+  static const String current = slurp("/wifi-ssid"); // Get from WiFiSettings - only changes after Save which usually leads to restart
   if (OPWLrestart < millis()) {
       #ifdef SYSTEM_WIFI_DEBUG
         Serial.println(F("WiFiSettings Rescanning"));
@@ -112,11 +109,10 @@ void setup() {
     #error "This example only supports ESP32 and ESP8266"
   #endif
 
-  // TODO-61 add default SSID & PW if defined in _local.h
   #ifdef SYSTEM_WIFI_SSID
-    Serial.println("Overriding WiFi SSID / Password for dev");
-    spurt("/wifi-ssid", SYSTEM_WIFI_SSID);
-    spurt("/wifi-password", SYSTEM_WIFI_PASSWORD);
+    Serial.println(F("Overriding WiFi SSID / Password for dev"));
+    spurt(F("/wifi-ssid"), SYSTEM_WIFI_SSID);
+    spurt(F("/wifi-password"), SYSTEM_WIFI_PASSWORD);
   #endif // SYSTEM_WIFI_SSID
 
   // Custom configuration variables, these will read configured values if previously set and return default values if not.
@@ -130,7 +126,7 @@ void setup() {
     #define SYSTEM_WIFI_DEVICE "device"
   #endif
   #ifndef SYSTEM_WIFI_PROJECT
-    #define SYSTEM_WIFI_PROJECT "project"]
+    #define SYSTEM_WIFI_PROJECT "project"
   #endif
   mqtt_host = WiFiSettings.string(F("mqtt_host"), 4,40, F(SYSTEM_MQTT_SERVER), F("MQTT Host")); 
   // TODO-29 turn discovery_project into a dropdown, use an ifdef for the ORGANIZATION in configuration.h not support by ESPWifi-Settings yet.
@@ -149,7 +145,7 @@ void setup() {
   #ifdef SYSTEM_WIFI_PORTAL_RESTART
     WiFiSettings.onFailure = []() {
       #ifdef SYSTEM_WIFI_DEBUG
-        Serial.print(F("Setting portal watchdog for "));
+        Serial.print(F("Setting portal watchdog for ms"));
         Serial.println(SYSTEM_WIFI_PORTAL_RESTART);
       #endif
       WiFiSettings.onPortalWaitLoop = portalWatchdog;

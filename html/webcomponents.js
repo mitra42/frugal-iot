@@ -4,6 +4,107 @@
 import {EL, HTMLElementExtended, getUrl, toBool} from './node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 import yaml from './node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
+import { Chart, registerables, _adapters } from './node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
+//import 'chartjs-adapter-luxon';
+Chart.register(...registerables); //TODO figure out how to only import that chart types needed
+/* This is copied from the chartjs-adapter-luxon, I could not get it to import - gave me an error every time */
+/*!
+ * chartjs-adapter-luxon v1.3.1
+ * https://www.chartjs.org
+ * (c) 2023 chartjs-adapter-luxon Contributors
+ * Released under the MIT license
+ */
+import { DateTime } from 'luxon';
+
+const FORMATS = {
+  datetime: DateTime.DATETIME_MED_WITH_SECONDS,
+  millisecond: 'h:mm:ss.SSS a',
+  second: DateTime.TIME_WITH_SECONDS,
+  minute: DateTime.TIME_SIMPLE,
+  hour: {hour: 'numeric'},
+  day: {day: 'numeric', month: 'short'},
+  week: 'DD',
+  month: {month: 'short', year: 'numeric'},
+  quarter: "'Q'q - yyyy",
+  year: {year: 'numeric'}
+};
+
+_adapters._date.override({
+  _id: 'luxon', // DEBUG
+
+  /**
+   * @private
+   */
+  _create: function(time) {
+    return DateTime.fromMillis(time, this.options);
+  },
+
+  init(chartOptions) {
+    if (!this.options.locale) {
+      this.options.locale = chartOptions.locale;
+    }
+  },
+
+  formats: function() {
+    return FORMATS;
+  },
+
+  parse: function(value, format) {
+    const options = this.options;
+
+    const type = typeof value;
+    if (value === null || type === 'undefined') {
+      return null;
+    }
+
+    if (type === 'number') {
+      value = this._create(value);
+    } else if (type === 'string') {
+      if (typeof format === 'string') {
+        value = DateTime.fromFormat(value, format, options);
+      } else {
+        value = DateTime.fromISO(value, options);
+      }
+    } else if (value instanceof Date) {
+      value = DateTime.fromJSDate(value, options);
+    } else if (type === 'object' && !(value instanceof DateTime)) {
+      value = DateTime.fromObject(value, options);
+    }
+
+    return value.isValid ? value.valueOf() : null;
+  },
+
+  format: function(time, format) {
+    const datetime = this._create(time);
+    return typeof format === 'string'
+      ? datetime.toFormat(format)
+      : datetime.toLocaleString(format);
+  },
+
+  add: function(time, amount, unit) {
+    const args = {};
+    args[unit] = amount;
+    return this._create(time).plus(args).valueOf();
+  },
+
+  diff: function(max, min, unit) {
+    return this._create(max).diff(this._create(min)).as(unit).valueOf();
+  },
+
+  startOf: function(time, unit, weekday) {
+    if (unit === 'isoWeek') {
+      weekday = Math.trunc(Math.min(Math.max(0, weekday), 6));
+      const dateTime = this._create(time);
+      return dateTime.minus({days: (dateTime.weekday - weekday + 7) % 7}).startOf('day').valueOf();
+    }
+    return unit ? this._create(time).startOf(unit).valueOf() : time;
+  },
+
+  endOf: function(time, unit) {
+    return this._create(time).endOf(unit).valueOf();
+  }
+});
+/* End of code copied from chartjs-adapter-luxon.esm.js */
 
 var mqtt_client;
 var mqtt_subscriptions = [];
@@ -14,6 +115,17 @@ function mqtt_subscribe(topic, cb) {
   mqtt_subscriptions.push({topic, cb});
   mqtt_client.subscribe(topic, (err) => { if (err) console.error(err); })
 }
+/* Helpers of various kinds */
+function date_start_hour(x) {
+  let y = x ? new Date(x) : new Date();
+  y.setMinutes(0);
+  y.setSeconds(0);
+  y.setMilliseconds(0);
+  return y;
+}
+
+
+/* MQTT support */
 class MqttClient extends HTMLElementExtended {
   // TODO consider reconnection - see mqtt's README.md
   static get observedAttributes() {
@@ -29,8 +141,7 @@ class MqttClient extends HTMLElementExtended {
     //console.log("loadContent", this.state.server);
     if (!mqtt_client) {
       // See https://stackoverflow.com/questions/69709461/mqtt-websocket-connection-failed
-
-      this.setStatus("Connecting");
+      this.setStatus("connecting");
       mqtt_client = mqtt.connect(this.state.server, {
         connectTimeout: 5000,
         username: "public", //TODO-30 parameterize this
@@ -40,22 +151,26 @@ class MqttClient extends HTMLElementExtended {
         //port: 9012, // Has to be configured in mosquitto configuration
         //path: "/mqtt",
       });
-      // TODO need to check for disconnect and set status accordingly
-      mqtt_client.on("connect", () => {
-        console.log("connected");
-        this.setStatus("Connected");
-        /*
-        mqtt_client.subscribe("presence", (err) => {
-          console.log("Subscribed to presence");
-          if (!err) {
-            mqtt_client.publish("presence", "Hello mqtt");
-          }
+      for (let k of ['connect','disconnect','reconnect','close','offline','end']) {
+        mqtt_client.on(k, () => {
+          this.setStatus(k);
         });
-        // TODO simple message sent by local client, index.html can watch for it to know the local route is working
-        this.setStatus("Testing presence");
-        mqtt_client.publish("presence", "Hello mqtt");
-       */
+      };
+      /* - replace generic connect with option to test presence
+      mqtt_client.on("connect", () => {
+      console.log("connected");
+      this.setStatus("Connected");
+      mqtt_client.subscribe("presence", (err) => {
+        console.log("Subscribed to presence");
+        if (!err) {
+          mqtt_client.publish("presence", "Hello mqtt");
+        }
       });
+      // TODO simple message sent by local client, index.html can watch for it to know the local route is working
+      //this.setStatus("Testing presence");
+      //mqtt_client.publish("presence", "Hello mqtt");
+      });
+     */
       mqtt_client.on('error', function (error) {
         console.log(error);
         this.state.status = "Error:" + error.message;
@@ -186,11 +301,12 @@ class MqttToggle extends MqttTransmitter {
 customElements.define('mqtt-toggle', MqttToggle);
 
 const MBstyle = `
-.outer {background-color: white;margin:5px; padding:5px;}
-.bar {border: 1px,black,solid; background-color: white;margin: 0px;}
- .left {display:inline-block; text-align: right;}
- .right {background-color:white; display:inline-block;}
- .val {margin:5px;}
+  .outer {background-color: white;margin:5px; padding:5px;}
+  .bar {border: 1px,black,solid; background-color: white;margin: 0px;}
+  .left {display:inline-block; text-align: right;}
+  .right {background-color:white; display:inline-block;}
+  .val {margin:5px;}
+  .icon {height:12px;width:12px;float:right;border: 1px,black,solid}
  `;
 class MqttBar extends MqttReceiver {
   static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['value','min','max','color']); }
@@ -203,16 +319,32 @@ class MqttBar extends MqttReceiver {
     super.valueSet(Number(val));
     return true; // Note shouldn't re-render children like a MqttSlider.
   }
+  findGraph() { // TODO-46 probably belongs in MqttReceiver
+    let project = this.findProject();
+    if (!project.state.graph) {
+      project.state.graph = EL('mqtt-graph');
+      project.append(project.state.graph);
+    }
+    return project.state.graph;
+  }
+  opengraph(e) {
+    console.log("Graph clicked", e, this);
+    let graph = this.findGraph();
+    // TODO-46 - should check its not already there.
+    graph.append(
+      EL('mqtt-graphdataset', {topic: this.state.topic, label: this.state.name})
+    );
+  }
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
     let setpointwidth = 100*(this.state.setpoint-this.state.min)/(this.state.max-this.state.min);
-
     return [
       EL('style', {textContent: MBstyle}), // Using styles defined above
       EL('div', {class: "outer"}, [
-        EL('div', {class: "name"}, [
+        EL('div', {class: "name"}, [ // TODO-30 maybe should use a <label>
           EL('span', {textContent: this.state.name}),
+          EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
         ]),
         EL('div', {class: "bar",},[
           EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
@@ -466,3 +598,94 @@ class MqttNode extends MqttReceiver {
   }
 }
 customElements.define('mqtt-node', MqttNode);
+
+/* This could be part of MqttBar, but maybe better standalone) */
+class MqttGraph extends HTMLElementExtended {
+  constructor() {
+    super();
+    this.datasets = []; // Child elements will add/remove here
+  }
+
+  // Note - makeChart is really fussy, the canvas must be inside something with a size.
+  // For some reason this does not work by adding inside the render - i.e. to the virtual Dom.
+  loadContent() {
+    this.canvas = EL('canvas');
+    this.append(EL('div', {style: "width: 80%;"},[this.canvas]));
+    this.makeChart();
+  }
+  shouldLoadWhenConnected() {return true;}
+
+  makeChart() {
+    if (this.chart) {
+      this.chart.destroy();
+    }
+    this.chart = new Chart(
+      this.canvas,
+      {
+        type: 'line', // Really want it to be a line
+        data: {
+          datasets: this.datasets,
+        },
+        options: {
+          //zone: "America/Denver", // Comment out to use system time
+          scales: { // For some reason cant put this on a dataset
+            y:{ // TODO-46 why is there a second y Axis shown
+              suggestedMin: 10,
+              suggestedMax: 40,
+            },
+            xAxis: {
+              // display: false,
+              type: 'time',
+              distribution: 'series',
+              adapters: {
+                date: {
+                  // locale: 'en-US', // Comment out to Use systems Locale
+                }
+              },
+            },
+          }
+        }
+      }
+    );
+  }
+  render() {
+    return (
+      EL("div", {style: "width: 800px; height: 100px;"}, [ // TODO Move style to sheet
+        EL('slot', {}), // TODO-46-line should just be the chart slot I think
+      ])
+    );
+  }
+}
+customElements.define('mqtt-graph', MqttGraph);
+
+class MqttGraphDataset extends MqttReceiver {
+  constructor() {
+    super();
+    this.data = [];
+    this.chartdataset = {
+      label: this.state.name, // TODO-46-line Probably have to get this from setAttribute
+      data: this.data,
+      parsing: {
+        xAxisKey: 'time',
+        yAxisKey: 'value'
+      },
+    }
+  }
+  shouldLoadWhenConnected() {
+    return super.shouldLoadWhenConnected() ;
+  }
+  loadContent() { // Happens when connected
+    super.loadContent(); // Subscribe to topic
+    this.chartEl = this.parentElement;
+    this.chartEl.datasets.push(this.chartdataset);
+    this.chartEl.makeChart();
+  }
+  valueSet(val) {
+    this.data.push({time: Date.now(), value: val});
+    this.parentElement.chart.update();
+  }
+  render() {
+    return EL('span', { textContent: this.state.name}); // TODO-46-line should be controls
+  }
+}
+customElements.define('mqtt-graphdataset', MqttGraphDataset);

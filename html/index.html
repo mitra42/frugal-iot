@@ -4,13 +4,21 @@
     <meta charset="UTF-8">
     <title>Frugal IoT  Demo</title>
     <link href="./frugaliot.css" rel="stylesheet" type="text/css">
+    <script type="importmap">
+        {
+        "imports": {
+            "@kurkle/color": "./node_modules/@kurkle/color/dist/color.esm.js",
+            "chart.js": "./node_modules/chart.js/dist/Chart.js",
+            "luxon": "./node_modules/luxon/src/luxon.js",
+            "chartjs-adapter-luxon": "./node_modules/chartjs-adapter-luxon/dist/chartjs-adapter-luxon.esm.js"
+            }
+        }
+    </script>
     <script src="./webcomponents.js" type="module"></script>
 </head>
 <body>
-<!--<mqtt-client server="ws://localhost:9012"></mqtt-client>-->
-<!-- wont work on public.cloud.shiftr.io mqtt://test.mosquitto.org" which doesnt appear to open websockets-->
-<!-- should have attribute "discover" on project and node -->
-<mqtt-client server="ws://naturalinnovation.org:9012"></mqtt-client>
-<mqtt-project topic="dev/Lotus Ponds/" name="Lotus Ponds"></mqtt-project>
+<!-- TODO should have attribute "discover" on project and node -->
+<mqtt-client server="ws://naturalinnovation.org:9012" discover></mqtt-client>
+<mqtt-project topic="dev/Lotus Ponds/" name="Lotus Ponds" discover></mqtt-project>
 </body>
 </html>
