@@ -9,9 +9,10 @@ e.g. to include a Sensor Foo, with files sensor_foo.cpp and sensor_foo.h
 the namespace will be sFoo
 
 * _configuration.h*: Define a section with any parameters to use that are common across (most) uses
+  follow the patterns of other variables i.e. they should all start SENSOR_FOO_
 * _local.h*: Define a SENSOR_FOO_WANT, and any parameters likely to be unique to your instance
+* system_discovery.cpp: If it should appear in UI, then needs to include its discovery string
 
-follow the patterns of other variables i.e. they should all start SENSOR_FOO_
 
 
 *frugal_iot.ino*: Add the following code at the different TO_ADD_SENSOR places
@@ -33,6 +34,3 @@ note that most actuators do not have a loop as they respond to incoming MQTT
 #endif
 ```
 
-
-
-include sensor_foo and call the sFoo::setup() and sFoo::loop()
