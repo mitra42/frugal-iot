@@ -12,8 +12,9 @@
 
 #include <Arduino.h>
 #include "control_demo_mqtt.h"
-#include "actuator_ledbuiltin.h"
+#include "actuator_ledbuiltin.h"  // TODO-43 remove dependency once controllable.
 #include "system_mqtt.h"
+#include "sensor_sht85.h" // TODO-43 remove dependency once controllable.
 #include "system_discovery.h"
  
 namespace cDemoMqtt {
@@ -30,8 +31,7 @@ void messageReceived(String &topic, String &payload) {
 #pragma GCC diagnostic pop
   float humidity = payload.toFloat();
   #ifdef CONTROL_DEMO_MQTT_DEBUG
-    Serial.print(F("cDemoMqtt received "));
-    Serial.println(humidity);
+    Serial.print(F("cDemoMqtt received ")); Serial.println(humidity);
   #endif
   bool newValue = humidity > CONTROL_DEMO_MQTT_HUMIDITY_MAX;
   // Only send if its changed.
