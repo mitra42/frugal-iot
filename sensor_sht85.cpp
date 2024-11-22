@@ -121,9 +121,9 @@ void sSHTxx::readSensor() {
       float humy = sht->getHumidity(); // TODO use raw version https://github.com/RobTillaart/SHT85
       // Note, not smoothing the data as it seems fairly stable and is float rather than bits anyway
       #ifdef SENSOR_SHT85_DEBUG
-        Serial.print(temperature, 1);
+        Serial.print(temp, 1);
         Serial.print(F("°C\t"));
-        Serial.print(humidity, 1);
+        Serial.print(humy, 1);
         Serial.println(F("%"));
       #endif
 

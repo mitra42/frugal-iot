@@ -1,7 +1,7 @@
 /*
  * Simple MQTT template for FrugalIoT
  */
-import {EL, HTMLElementExtended, getUrl, toBool} from './node_modules/html-element-extended/htmlelementextended.js';
+import {EL, HTMLElementExtended, toBool} from './node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 import yaml from './node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
 import { Chart, registerables, _adapters } from './node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
@@ -29,6 +29,7 @@ const FORMATS = {
   year: {year: 'numeric'}
 };
 
+// noinspection JSCheckFunctionSignatures
 _adapters._date.override({
   _id: 'luxon', // DEBUG
 
@@ -101,13 +102,14 @@ _adapters._date.override({
   },
 
   endOf: function(time, unit) {
+    // noinspection JSCheckFunctionSignatures
     return this._create(time).endOf(unit).valueOf();
   }
 });
 /* End of code copied from chartjs-adapter-luxon.esm.js */
 
-var mqtt_client;
-var mqtt_subscriptions = [];
+let mqtt_client;
+let mqtt_subscriptions = [];
 let unique_id = 1; // Just used as a label for auto-generated elements
 
 function mqtt_subscribe(topic, cb) {
@@ -116,6 +118,7 @@ function mqtt_subscribe(topic, cb) {
   mqtt_client.subscribe(topic, (err) => { if (err) console.error(err); })
 }
 /* Helpers of various kinds */
+/* - not currently used as graph.js adjust automatically
 function date_start_hour(x) {
   let y = x ? new Date(x) : new Date();
   y.setMinutes(0);
@@ -123,7 +126,7 @@ function date_start_hour(x) {
   y.setMilliseconds(0);
   return y;
 }
-
+*/
 
 /* MQTT support */
 class MqttClient extends HTMLElementExtended {
@@ -155,7 +158,7 @@ class MqttClient extends HTMLElementExtended {
         mqtt_client.on(k, () => {
           this.setStatus(k);
         });
-      };
+      }
       /* - replace generic connect with option to test presence
       mqtt_client.on("connect", () => {
       console.log("connected");
@@ -180,9 +183,7 @@ class MqttClient extends HTMLElementExtended {
         let msg = message.toString();
         console.log("Received", topic, " ", msg);
         for (let o of mqtt_subscriptions) {
-          // console.log("Dispatch testing: ", topic)
           if (o.topic === topic) {
-            // console.log("Dispatching: ", topic, msg)
             o.cb(topic, msg)
           }
         }
@@ -225,15 +226,16 @@ class MqttReceiver extends MqttElement {
   } // Intended to be subclassed
 
   message_received(topic, message) {
-    // console.log("Setting ", topic, " to ", message );
     if (this.valueSet(message)) {
       this.renderAndReplace();
     }
   }
   findProject() { // Note this will only work once the element is connected
+    // noinspection CssInvalidHtmlTagReference
     return this.closest("mqtt-project");
   }
   findNode() { // Note this will only work once the element is connected.
+    // noinspection CssInvalidHtmlTagReference
     return this.closest("mqtt-node");
   }
 }
@@ -280,7 +282,7 @@ class MqttToggle extends MqttTransmitter {
   onChange(e) {
     //console.log("Changed"+e.target.checked);
     this.state.value = e.target.checked; // Boolean
-    this.publish(e);
+    this.publish();
   }
 
   render() {
@@ -315,6 +317,7 @@ class MqttBar extends MqttReceiver {
   constructor() {
     super();
   }
+  // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     super.valueSet(Number(val));
     return true; // Note shouldn't re-render children like a MqttSlider.
@@ -338,7 +341,6 @@ class MqttBar extends MqttReceiver {
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
-    let setpointwidth = 100*(this.state.setpoint-this.state.min)/(this.state.max-this.state.min);
     return [
       EL('style', {textContent: MBstyle}), // Using styles defined above
       EL('div', {class: "outer"}, [
@@ -375,13 +377,14 @@ const MSstyle = `
 
 // TODO Add some way to do numeric display, numbers should change on mousemoves.
 class MqttSlider extends MqttTransmitter {
-  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['value','min','max','color','setpoint']); }
+  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['value','min','max','color','setpoint','continuous']); }
   static get floatAttributes() { return MqttTransmitter.floatAttributes.concat(['value','min','max', 'setpoint']); }
   static get boolAttributes() { return MqttTransmitter.boolAttributes.concat(['continuous'])}
 
   constructor() {
     super();
   }
+  // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     super.valueSet(Number(val));
     this.thumb.style.left = this.leftOffset() + "px";
@@ -407,11 +410,12 @@ class MqttSlider extends MqttTransmitter {
     document.addEventListener('mouseup', onMouseUp);
     function onMouseMove(event) {
       let newLeft = event.clientX - shiftX - slider.getBoundingClientRect().left;
-      // if the pointer is out of slider => lock the thumb within the bounaries
+      // if the pointer is out of slider => lock the thumb within the boundaries
       newLeft = Math.min(Math.max( -thumb.offsetWidth/2, newLeft,), slider.offsetWidth - thumb.offsetWidth/2);
       tt.valueSet(tt.leftToValue(newLeft));
-      if (tt.state.continuous && (tt.state.value != lastvalue)) { tt.publish(); lastvalue = tt.state.value; }
+      if (tt.state.continuous && (tt.state.value !== lastvalue)) { tt.publish(); lastvalue = tt.state.value; }
     }
+    // noinspection JSUnusedLocalSymbols
     function onMouseUp(event) {
       tt.publish();
       document.removeEventListener('mouseup', onMouseUp);
@@ -427,7 +431,7 @@ class MqttSlider extends MqttTransmitter {
   }
   render() {
     if ((!this.slider) && (this.children.length > 0)) {
-      // Build once as don't want rerendered - but dont render till after children added (end of EL)
+      // Build once as don't want rerendered - but do not render till after children added (end of EL)
       this.thumb = EL('div', {class: "setpoint"}, this.children);
       this.slider = EL('div', {class: "pointbar",},[this.thumb]);
       this.slider.onmousedown = this.onmousedown.bind(this);
@@ -462,22 +466,30 @@ class MqttDropdown extends MqttTransmitter {
     // TODO-42 can collapse this once working
     let project = this.state.project;
     let nodes = Array.from(project.children);
-    let topics = nodes.map(n => n.state.value.topics.filter( t => t.type == this.state.options).map(t=> { return({name: t.name, topic: n.state.topic + "/" + t.topic})}) ).flat();
+    let topics = nodes.map(n => n.state.value.topics.filter( t => t.type === this.state.options).map(t=> { return({name: t.name, topic: n.state.topic + "/" + t.topic})}) ).flat();
     return topics;
   }
+  // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     super.valueSet(val);
     // TODO-43 need to set which of dropdown are selected
     return true; // Rerenders on moving based on any received value but not when dragged
   }
+  onchange(e) {
+    //console.log("Dropdown onchange");
+    this.state.value = e.target.value; // Want the value
+    this.publish();
+  }
+
   render() {
     return this.state.topic && this.state.project && this.state.options && [
       EL('style', {textContent: MDDstyle}), // Using styles defined above
       EL('div', {class: 'outer'}, [
         EL('label', {for: this.state.topic, textContent: this.state.name}),
-        EL('select', {id: this.state.topic}, [
-          this.findTopics().map( t => // { name, type etc }
-            EL('option', {value: t.topic, textContent: t.name})
+        EL('select', {id: this.state.topic, onchange: this.onchange.bind(this)}, [
+          EL('option', {value: "", textContent: "Unused", selected: !this.state.value}),
+          this.findTopics().map( t => // { name, type etc. }
+            EL('option', {value: t.topic, textContent: t.name, selected: t.topic === this.state.value}),
           ),
         ]),
       ]),
@@ -503,6 +515,7 @@ class MqttProject extends MqttReceiver {
       let id = val;
       let topic = this.state.topic + val;
       this.append(EL('mqtt-node', {id, topic},[]));
+      return false; // Should not need to rerender
     }
   }
   render() {
@@ -560,6 +573,7 @@ class MqttNode extends MqttReceiver {
       this.state.topics[t.topic] = el; // Index into elements - e.g. used by MqttDropdown
     }
   }
+  // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     let obj = yaml.loadAll(val,{ onWarning: (warn) => console.log('Yaml warning:', warn) });
     console.log(obj);
@@ -572,11 +586,12 @@ class MqttNode extends MqttReceiver {
   }
   /*
   shouldLoadWhenConnected() {
-  // For now relying on retaintion of advertisement by broker
+  // For now relying on retention of advertisement by broker
     return this.state.id && super.shouldLoadWhenConnected() ;
   }
  */
   findProject() { // Note this will only work once the element is connected
+    // noinspection CssInvalidHtmlTagReference
     return this.closest("mqtt-project");
   }
   render() {
@@ -599,7 +614,7 @@ class MqttNode extends MqttReceiver {
 }
 customElements.define('mqtt-node', MqttNode);
 
-/* This could be part of MqttBar, but maybe better standalone) */
+/* This could be part of MqttBar, but maybe better standalone */
 class MqttGraph extends HTMLElementExtended {
   constructor() {
     super();
@@ -680,6 +695,7 @@ class MqttGraphDataset extends MqttReceiver {
     this.chartEl.datasets.push(this.chartdataset);
     this.chartEl.makeChart();
   }
+  // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     this.data.push({time: Date.now(), value: val});
     this.parentElement.chart.update();
