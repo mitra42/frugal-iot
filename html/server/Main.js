@@ -17,8 +17,7 @@ import mqtt from 'mqtt'; // https://www.npmjs.com/package/mqtt
 
 const htmldir = process.cwd() + "/.."; // TODO move this to point at wherever index.html relative to Main.js
 let config;
-let mqtt_client; // Object from library
-let mqtt_local = {}; // Our control
+let clients = [];
 
 const optionsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,61 +54,111 @@ function startServer() {
     }
   });
 }
+// ================== MQTT Client embedded in server ========================
 
-function startClient() {
-  function mqtt_status_set(k) {
-    console.log('mqtt',k);
-    mqtt_local.status = k;
+// Manages a connection to a broker - each organization needs its own connection
+class MqttOrganization {
+  constructor(config_org, config_mqtt)
+  {
+    this.config_org = config_org; // Config structure currently: { name, mqtt_password, projects[ {name, track[]}]}
+    this.config_mqtt = config_mqtt; // { broker }
+    this.mqtt_client = null; // Object from library
+    this.subscriptions = []; // [{topic, qos, cb(topic, message)}]
+    this.status = "constructing";
+    console.log("XXX Connection is", this);
   }
-  let config_organization;
-  if (!mqtt_client) {
-    // See https://stackoverflow.com/questions/69709461/mqtt-websocket-connection-failed
-    // TODO-41 handle multiple projects -> multiple mqtt sessions
-    config_organization = config.organizations[0];
-    mqtt_status_set("connecting");
-    // TODO go thru the options at https://www.npmjs.com/package/mqtt#client-connect and check optimal
-    mqtt_client = mqtt.connect(config.mqtt.broker, {
-      connectTimeout: 5000,
-      username: config_organization.name, //TODO-30 parameterize this
-      password: config_organization.mqtt_password, //TODO-30 parameterize this
-      // Remainder dont appear to be needed
-      //hostname: "127.0.0.1",
-      //port: 9012, // Has to be configured in mosquitto configuration
-      //path: "/mqtt",
-    });
-    // TODO need to check for disconnect and set status accordingly
-    /*
-    mqtt_client.on("connect", () => {
-      console.log("connected");
-      mqtt_local.status = "Connected";
-    });
-     */
-    for (let k of ['connect','disconnect','reconnect','close','offline','end']) {
-      mqtt_client.on(k, () => {
-        mqtt_status_set(k);
+  mqtt_status_set(k) {
+    console.log('mqtt', this.config_org.name, k);
+    this.status = k;
+  }
+  startClient() {
+    if (!this.mqtt_client) {
+      // See https://stackoverflow.com/questions/69709461/mqtt-websocket-connection-failed
+      // TODO-41 handle multiple projects -> multiple mqtt sessions
+      this.mqtt_status_set("connecting");
+      // TODO go thru the options at https://www.npmjs.com/package/mqtt#client-connect and check optimal
+      this.mqtt_client = mqtt.connect(this.config_mqtt.broker, {
+        connectTimeout: 5000,
+        username: this.config_org.userid || this.config_org.name,
+        password: this.config_org.mqtt_password,
+        // Remainder dont appear to be needed
+        //hostname: "127.0.0.1",
+        //port: 9012, // Has to be configured in mosquitto configuration
+        //path: "/mqtt",
       });
-    };
-    mqtt_client.on('error', function (error) {
-      console.log(error);
-      mqtt_local.status = "Error:" + error.message;
-    });
-    mqtt_client.on("message", (topic, message) => {
-      // message is Buffer
-      let msg = message.toString();
-      console.log("Received", topic, " ", msg);
-      /*
-      for (let o of mqtt_subscriptions) {
-        // console.log("Dispatch testing: ", topic)
-        if (o.topic === topic) {
-          // console.log("Dispatching: ", topic, msg)
-          o.cb(topic, msg)
+      this.mqtt_client.on("connect", () => {
+        this.mqtt_status_set('connect');
+        this.configSubscribe();
+      });
+      this.mqtt_client.on("reconnect", () => {
+        this.mqtt_status_set('reconnect');
+        this.resubscribe();
+      });
+      for (let k of ['connect', 'disconnect', 'close', 'offline', 'end']) {
+        this.mqtt_client.on(k, () => {
+          this.mqtt_status_set(k);
+        });
+      }
+      ;
+      this.mqtt_client.on('error', (error) => {
+        this.mqtt_status_set("Error:" + error.message);
+      });
+      this.mqtt_client.on("message", (topic, message) => {
+        // message is Buffer
+        let msg = message.toString();
+        console.log("Received", topic, " ", msg);
+        this.dispatch(topic,message);
+      });
+    }
+  }
+  subErr(err, val) {
+    if (err) {
+      console.log("Subscription failed", val, err);
+    }
+  }
+  mqtt_subscribe(topic, qos) {
+    this.mqtt_client.subscribe(topic, {qos: qos}, this.subErr);
+  }
+  subscribe(topic, qos, cb) {
+    this.mqtt_subscribe(topic, qos);
+    this.subscriptions.push({topic, qos, cb});
+    console.log("XXX subscribing to ",topic);
+  }
+  configSubscribe() {
+    for (let p of this.config_org.projects) {
+      for (let n of p.nodes) { // Note that node could have name of '+' for tracking all of them
+        for (let t of n.track) {
+          let topic = `${this.config_org.name}/${p.name}/${n.id}/${t}`;
+          // TODO-server for now its a generic messageReceived - will need some kind of action
+          this.subscribe(topic, 0, this.messageReceived); // TODO-66 think about QOS, add optional in YAML
         }
       }
-     `*/
-      //mqtt_client.end();
-    });
+    }
+  }
+  resubscribe() {
+    for (let sub of this.subscriptions) {
+      this.mqtt_subscribe(sub.topic, sub.qos);
+    }
+  }
+  dispatch(topic, message) {
+    for (let sub of this.subscriptions) {
+      if (sub.topic === topic) {
+        sub.cb(topic, message);
+      }
+    }
+  }
+  messageReceived(topic, message) {
+    console.log("XXX messageReceived:",topic,message); // TODO-server dont log this - will be a lot
   }
 }
+function startClient() {
+  for (let o of config.organizations) {
+    let c = new MqttOrganization(o, config.mqtt); // Will subscribe when connects
+    clients.push(c);
+    c.startClient();
+  }
+}
+// ============ END of MQTT client ================
 
 const app = express();
 

@@ -8,8 +8,14 @@ organizations:
     mqtt_password: public
     projects:
       - name: Lotus Ponds
-        track:
-          - temperature
-
+        nodes:
+          - id: esp8266-85ea2b
+            track:
+            - temperature
+            - humidity
+          - id: esp8266-95a754
+            track:
+              - temperature
+              - humidity
 
 
