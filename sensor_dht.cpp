@@ -18,7 +18,9 @@
  * See examples at https://www.thegeekpub.com/wiki/sensor-wiki-ky-015-dht11-combination-temperature-and-humidity-sensor
  * Bit bashing at https://www.phippselectronics.com/using-the-temperature-and-humidity-sensor-ky-015-with-arduino/ looks simple as well
  * similar at https://arduinomodules.info/ky-015-temperature-humidity-sensor-module/ 
- * TODO-64 use non-blocking DHT at https://github.com/toannv17/DHT-Sensors-Non-Blocking/blob/main/DHT_Async.cpp (this is a library)
+ * or non-blocking DHT at https://github.com/toannv17/DHT-Sensors-Non-Blocking/blob/main/DHT_Async.cpp (this is a library)
+ *
+ * This version uses Rob Tillart's library (who also did the SHT library we use) 
 */
 // TODO-64 edits suggested for SHT - rename to SHT from SHT85, and change most SHTxx etc to SHT
 // Use defaults for count (probably not device type as there are many)
@@ -41,7 +43,7 @@
 
 
 #include <Arduino.h>
-#include <dhtnew.h>
+#include <dhtnew.h>                     // https://github.com/RobTillaart/DHTNew
 #include "sensor_dht.h"
 #include "system_discovery.h"
 #include "system_mqtt.h"                // Library for sending messages
