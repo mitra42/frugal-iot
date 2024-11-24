@@ -101,6 +101,9 @@ void setup() {
       #ifdef SENSOR_SHT85_WANT
         " SHTxx temp/humidity"
       #endif
+      #ifdef SENSOR_DHT_WANT
+        " DHT temp/humidity"
+      #endif
       // TO-ADD-ACTUATOR
       #ifdef ACTUATOR_RELAY_WANT
         " Relay"

@@ -55,7 +55,7 @@
 #define SENSOR_DHT_DEVICE DHT11 // as in KY-015 board
 #define SENSOR_DHT_DEBUG
 #define SENSOR_DHT_MS 10000 // Warning not to do this too often seen range in examples from 100 to 10000 not sure why such range
-#define SENSOR_DHT_PIN_ARRAY D1  // e.g. The Lolin SHT30 shield plus non-existant sensor for testing only
+#define SENSOR_DHT_PIN_ARRAY D2  // e.g. The Lolin SHT30 shield plus non-existant sensor for testing only
 #define SENSOR_DHT_COUNT 1 // Count of array - makes code easier for fixed length arrays
 #define SENSOR_DHT_TOPIC_TEMPERATURE "temperature"
 #define SENSOR_DHT_TOPIC_HUMIDITY "humidity"
