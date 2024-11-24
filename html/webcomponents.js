@@ -213,6 +213,7 @@ class MqttElement extends HTMLElementExtended {
 class MqttReceiver extends MqttElement {
   // constructor() { super(); }
   static get observedAttributes() { return ['topic','value','name']; }
+  static get boolAttributes() { return []; }
   shouldLoadWhenConnected() { return super.shouldLoadWhenConnected() && !this.state.subscribed; }
   loadContent() {
     this.state.subscribed = true;
@@ -511,14 +512,19 @@ class MqttProject extends MqttReceiver {
     super();
     this.state.nodes = [];
   }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['discover']); }
+  static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
+
   valueSet(val) {
-    if (!this.state.nodes.includes(val)) {
-      this.state.nodes.push(val);
-      let id = val;
-      let topic = this.state.topic + val;
-      this.append(EL('mqtt-node', {id, topic},[]));
-      return false; // Should not need to rerender
+    if (this.state.discover) {
+      if (!this.state.nodes.includes(val)) {
+        this.state.nodes.push(val);
+        let id = val;
+        let topic = this.state.topic + val;
+        this.append(EL('mqtt-node', {id, topic, discover: this.state.discover},[]));
+      }
     }
+    return false; // Should not need to rerender
   }
   render() {
     return [
@@ -543,7 +549,8 @@ const MNstyle = `
 `;
 
 class MqttNode extends MqttReceiver {
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id']); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id', 'discover']); }
+  static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
   constructor() {
     super(); // Will subscribe to topic
     this.state.topics = {};
@@ -577,14 +584,20 @@ class MqttNode extends MqttReceiver {
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
-    let obj = yaml.loadAll(val,{ onWarning: (warn) => console.log('Yaml warning:', warn) });
-    console.log(obj);
-    let node = obj[0]; // Should only ever be one of them
-    this.state.value = node; // Save the object for this node
-    ['id','description','name'].forEach(k => this.state[k] = node[k]);
-    while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace
-    node.topics.forEach(t => { this.elementFrom(t); });
-    return true;
+    if (this.state.discover) { // If dont have discover set, then presume have defind what UI we want on this node
+      let obj = yaml.loadAll(val, {onWarning: (warn) => console.log('Yaml warning:', warn)});
+      console.log(obj);
+      let node = obj[0]; // Should only ever be one of them
+      this.state.value = node; // Save the object for this node
+      ['id', 'description', 'name'].forEach(k => this.state[k] = node[k]);
+      while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace
+      node.topics.forEach(t => {
+        this.elementFrom(t);
+      });
+      return true;
+    } else {
+      return false;
+    }
   }
   /*
   shouldLoadWhenConnected() {
