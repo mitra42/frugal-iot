@@ -15,7 +15,7 @@ import yaml from 'js-yaml';
 import fs from "fs"; // https://www.npmjs.com/package/js-yamlc
 import mqtt from 'mqtt'; // https://www.npmjs.com/package/mqtt
 
-const htmldir = process.cwd() + "/.."; // TODO move this to point at wherever index.html relative to Main.js
+const htmldir = process.cwd() + "/..";
 let config;
 let mqtt_client; // Object from library
 let mqtt_local = {}; // Our control
@@ -67,17 +67,17 @@ function startClient() {
     // TODO-41 handle multiple projects -> multiple mqtt sessions
     config_organization = config.organizations[0];
     mqtt_status_set("connecting");
-    // TODO go thru the options at https://www.npmjs.com/package/mqtt#client-connect and check optimal
+    // TODO-41 go thru the options at https://www.npmjs.com/package/mqtt#client-connect and check optimal
+    // TODO-41 needs a client id
     mqtt_client = mqtt.connect(config.mqtt.broker, {
       connectTimeout: 5000,
-      username: config_organization.name, //TODO-30 parameterize this
-      password: config_organization.mqtt_password, //TODO-30 parameterize this
+      username: config_organization.name,
+      password: config_organization.mqtt_password,
       // Remainder dont appear to be needed
       //hostname: "127.0.0.1",
       //port: 9012, // Has to be configured in mosquitto configuration
       //path: "/mqtt",
     });
-    // TODO need to check for disconnect and set status accordingly
     /*
     mqtt_client.on("connect", () => {
       console.log("connected");
@@ -142,6 +142,6 @@ async.waterfall([
     startClient();
     cb(null,null);
   }
-  // TODO read project specfic configurations from config.d
+  // TODO-9 read project specfic configurations from config.d
 ], (err, unused) => {});
 
