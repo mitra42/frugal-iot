@@ -11,8 +11,8 @@
 import express from 'express'; // http://expressjs.com/
 import morgan from 'morgan'; // https://www.npmjs.com/package/morgan - http request logging
 import async from 'async'; // https://caolan.github.io/async/v3/docs.html
-import yaml from 'js-yaml';
-import fs from "fs"; // https://www.npmjs.com/package/js-yamlc
+import yaml from 'js-yaml'; // https://www.npmjs.com/package/js-yaml
+import { appendFile, mkdir, readFile } from "fs"; // https://nodejs.org/api/fs.html
 import mqtt from 'mqtt'; // https://www.npmjs.com/package/mqtt
 
 const htmldir = process.cwd() + "/.."; // TODO move this to point at wherever index.html relative to Main.js
@@ -36,7 +36,7 @@ const responseHeaders = {
 function readYamlConfig(inputFilePathOrDescriptor, cb) {
   // Read configuration file and return object
   async.waterfall([
-      (cb) => fs.readFile(inputFilePathOrDescriptor, 'utf8', cb),
+      (cb) => readFile(inputFilePathOrDescriptor, 'utf8', cb),
       (yamldata, cb) => cb(null, yaml.loadAll(yamldata, {onWarning: (warn) => console.log('Yaml warning:', warn)})),
     ],
     cb
@@ -107,7 +107,7 @@ class MqttOrganization {
         // message is Buffer
         let msg = message.toString();
         console.log("Received", topic, " ", msg);
-        this.dispatch(topic,message);
+        this.dispatch(topic,msg);
       });
     }
   }
@@ -130,7 +130,7 @@ class MqttOrganization {
         for (let t of n.track) {
           let topic = `${this.config_org.name}/${p.name}/${n.id}/${t}`;
           // TODO-server for now its a generic messageReceived - will need some kind of action
-          this.subscribe(topic, 0, this.messageReceived); // TODO-66 think about QOS, add optional in YAML
+          this.subscribe(topic, 0, this.messageReceived.bind(this)); // TODO-66 think about QOS, add optional in YAML
         }
       }
     }
@@ -149,6 +149,25 @@ class MqttOrganization {
   }
   messageReceived(topic, message) {
     console.log("XXX messageReceived:",topic,message); // TODO-server dont log this - will be a lot
+    this.log(topic, message);
+  }
+  log(topic, message) {
+    // TODO sanitize topic - remove any leading '/' and any '..'
+    let path = `data/${topic}`;
+    let now = (new Date()).toISOString();
+    let filename = `${now.substring(0,10)}.csv`
+    this.appendPathFile(path, filename, `"${now}","${message}"\n`);
+  }
+  appendPathFile(path, filename, message) {
+    mkdir (path, {recursive: true}, (err, val) => {
+      if (err) {
+        console.error(err);
+      } else {
+        appendFile(path + "/" +filename, message, (err) => {
+          if (err) console.log(err);
+        });
+      }
+    })
   }
 }
 function startClient() {
