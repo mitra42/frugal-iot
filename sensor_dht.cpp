@@ -101,7 +101,6 @@ void loop() {
 
 sensorDHT::sensorDHT(uint8_t p) {
     dht = new DHTNEW(p); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
-    dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/102
     temperature = 0;
     humidity = 0; 
     #ifdef SENSOR_DHT_DEBUG
