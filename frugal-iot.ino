@@ -25,6 +25,9 @@
 #ifdef SENSOR_SHT85_WANT
 #include "sensor_sht85.h"
 #endif
+#ifdef SENSOR_DHT_WANT
+#include "sensor_dht.h"
+#endif
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
 #endif
@@ -70,6 +73,9 @@ void setup() {
 #ifdef SENSOR_SHT85_WANT
   sSHT85::setup();
 #endif
+#ifdef SENSOR_DHT_WANT
+  sDHT::setup();
+#endif
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
 #endif
@@ -101,6 +107,9 @@ void loop() {
 #endif
 #ifdef SENSOR_SHT85_WANT
   sSHT85::loop();
+#endif
+#ifdef SENSOR_DHT_WANT
+  sDHT::loop();
 #endif
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::loop();

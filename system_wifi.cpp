@@ -76,29 +76,21 @@ bool spurt(const String& fn, const String& content) {
 
 #ifdef SYSTEM_WIFI_PORTAL_RESTART
 
-// Copied from WiFiSettings - TODO would be nice to export from there
-String slurp(const String& fn) {
-    File f = ESPFS.open(fn, "r");
-    String r = f.readString();
-    f.close();
-    return r;
-}
-
 // A watchdog on the portal, that will reset after SYSTEM_WIFI_PORTAL_RESTART ms
 // Adding ability to reset if wanted wifi appears. 
 void portalWatchdog() {
   static unsigned long OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART; // initialized first time this is called
-  static const String current = slurp("/wifi-ssid"); // Get from WiFiSettings - only changes after Save which usually leads to restart
   if (OPWLrestart < millis()) {
       #ifdef SYSTEM_WIFI_DEBUG
         Serial.println(F("WiFiSettings Rescanning"));
       #endif
+    // Note this rescan wont be reflected in a any open portal as the HTML generated is static
     const int num_networks = WiFi.scanNetworks();
     int i;
-    for (i = 0; (i < num_networks) && (current != WiFi.SSID(i)); i++) { } // i will be ssid o num_networks if not found 
+    for (i = 0; (i < num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { } // i will be ssid o num_networks if not found 
     if (i != num_networks) { // we found it
       #ifdef SYSTEM_WIFI_DEBUG
-        Serial.println(F("WiFiSettings portal timed out - found Wifi so restarting"));
+        Serial.print(F("WiFiSettings portal timed out and restarting cos now see")); Serial.println(WiFiSettings.ssid);
       #endif
       if (WiFiSettings.onRestart) { WiFiSettings.onRestart(); } // We aren't setting it here so should do nothing
       ESP.restart();
@@ -178,9 +170,9 @@ void setup() {
   discovery_project = WiFiSettings.string(F("discovery_project"), 3,20, F(SYSTEM_WIFI_PROJECT), T.Project); 
   device_name = WiFiSettings.string(F("device_name"), 3,20, F(SYSTEM_WIFI_DEVICE), T.DeviceName); 
   #ifdef SYSTEM_WIFI_DEBUG
-  Serial.print(F("MQTT host = ")); Serial.println(mqtt_host);
-  Serial.print(F("Project = ")); Serial.println(discovery_project);
-  Serial.print(F("Device Name = ")); Serial.println(device_name);
+    Serial.print(F("MQTT host = ")); Serial.println(mqtt_host);
+    Serial.print(F("Project = ")); Serial.println(discovery_project);
+    Serial.print(F("Device Name = ")); Serial.println(device_name);
   #endif
 
   // Cases of connect and portal
