@@ -83,8 +83,20 @@ If you get the configuration wrong, you'll need (for now - part of issue#22) to
 Open a browser to http://naturalinnovation:8080 
 - note this will move to a https address with its own domain name 
 
-NOTE For now - index.html is hard coded to only worth with the "Lotus Ponds" project,
+NOTE For now - index.html is hard coded to only work with the "Lotus Ponds" project,
 I expect this to change very soon. See [issue #63](https://github.com/mitra42/frugal-iot/issues/63)
+
+#### Other languages
+At the moment (Nov2024) - see [issue #42](https://github.com/mitra42/frugal-iot/issues/42), language support is being added. 
+
+You can define `#define LANGUAGE_DEFAULT "de"` in `_local.h` to default to German. 
+And you can add `#define LANGUAGE_DE` to `_local.h` to *only* compile German (saving program space)
+You can add multiple lines to compile multiple languages.
+
+To only compile one language (which saves memory) go into Arduino/libraries/ESP-WiFiSettings/WiFiSettings_strings.h 
+and add one or more lines at the top like `#define LANGUAGE_DE`. 
+
+Unfortunately we haven't found a way to control the library compilation from the `_local.h` file.
 
 ### Server development
 
@@ -94,7 +106,7 @@ But if you want to do server or client development ...
 #### Install prerequisites
 * Check you have node & npm & http-server installed `node -v` If not then you'll need nodejs from (nodejs.org)
 
-### Install Repo
+#### Install Repo
 * clone this repo, and `cd` into wherever it is installed.
 * For the purpose of these instructions we will assume that is `~/frugal-iot` on your laptop;  but it could be anywhere.
 * cd ~/frugal-iot/html`

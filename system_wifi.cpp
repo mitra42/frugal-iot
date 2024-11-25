@@ -102,31 +102,33 @@ void portalWatchdog() {
 #endif // SYSTEM_WIFI_PORTAL_RESTART
 
 String &clientid() {
-  WiFiSettings.begin(); // Ensure WiFi has created variables
+  WiFiSettings.begin(); // Ensure WiFi has created variables - at this point any previous ssid and language are now set
   return WiFiSettings.hostname;
 }
 
 void setupLanguages() {
   // TODO-39 need to make sure external for language is set prior to this - get defined from _local.h and LANGUAGE_ALL from configuration.h
-  String language = slurp("/WiFiSettings-language"); //TODO-39 better to get from WiFiSettings - but need to do a PR for that
-  if (language.length() == 0) {
-    #if defined LANGUAGE_EN || defined LANGUAGE_ALL
-      language = "en";
-    #else 
-      #ifdef LANGUAGE_ID
-        language = "id";
-      #endif
-    #endif
-  };
+  #ifdef LANGUAGE_DEFAULT
+    WiFiSettings.language = LANGUAGE_DEFAULT; // This must happen BEFORE WiFiSettings.begin().
+  #endif
+  WiFiSettings.begin(); // WiFi has created variables - at this point any previous ssid and language are now set
+  Serial.print("XXX Language = "); Serial.println(WiFiSettings.language);
   #if defined LANGUAGE_EN || defined LANGUAGE_ALL
-    if (language == "en") {
+    if (WiFiSettings.language == "en") {
       T.MqttServer = F("MQTT server");
       T.DeviceName = F("Device Name");
       T.Project = F("Project");
     } 
   #endif
+  #if defined LANGUAGE_DE || defined LANGUAGE_ALL
+    if (WiFiSettings.language == "de") {
+      T.MqttServer = F("MQTT server");
+      T.DeviceName = F("Gerätename");
+      T.Project = F("Projekt");
+    }
+  #endif
   #if defined LANGUAGE_ID || defined LANGUAGE_ALL
-    if (language == "id") {
+    if (WiFiSettings.language == "id") {
       T.MqttServer = F("MQTT server");
       T.DeviceName = F("Nama Perangkat");
       T.Project = F("Proyek");
@@ -144,7 +146,7 @@ void setup() {
     #error "This example only supports ESP32 and ESP8266"
   #endif
   
-  setupLanguages();
+  setupLanguages(); // Must come before any calls to WiFiSettings.<anything> 
 
   #ifdef SYSTEM_WIFI_SSID
     Serial.println(F("Overriding WiFi SSID / Password for dev"));
