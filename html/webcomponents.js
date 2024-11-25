@@ -253,7 +253,8 @@ customElements.define('mqtt-text', MqttText);
 
 class MqttTransmitter extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['retain', 'qos']); }
-  static get integerAttributes() { return MqttReceiver.integerAttributes.concat(['retain', 'qos']) };
+  static get integerAttributes() { return MqttReceiver.integerAttributes.concat(['qos']) };
+  static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['retain']) }
   // TODO - make sure this doesn't get triggered by a message from server.
   valueGet() { // Needs to return an integer or a string
     return this.state.value
@@ -561,7 +562,7 @@ class MqttNode extends MqttReceiver {
     let el;
     if (t.display === "toggle") {
       // Assuming rw: rw, type: bool
-      el = EL('mqtt-toggle', {topic, name, retain: 1, qos: 1},[name]);
+      el = EL('mqtt-toggle', {topic, name, retain: true, qos: 1},[name]);
     } else if (t.display === "bar") {
       // Assuming rw: r, type: float
       el = EL('mqtt-bar', {topic, name, max: t.max, min: t.min, color: t.color},[]);
@@ -572,7 +573,7 @@ class MqttNode extends MqttReceiver {
           EL('span', { textContent: "△"}, []),
       ]);
     } else if (t.display === "dropdown") {
-      el = EL('mqtt-dropdown', {name, topic, type: t.type, options: t.options, project: this.findProject()}, []);
+      el = EL('mqtt-dropdown', {name, topic, type: t.type, options: t.options, retain: true, project: this.findProject()}, []);
     } else {
       console.log("do not know how to display a ", t.display);
       //TODO add slider (MqttSlider), need to specify which other element attached to.
