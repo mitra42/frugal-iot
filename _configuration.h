@@ -39,7 +39,6 @@
 #define SENSOR_ANALOG_DEBUG
 #define SENSOR_ANALOG_SMOOTH 2
 
-//TO_ADD_SENSOR - follow the pattern below and add any variables
 // #define SENSOR_SHT85_WANT // Define in _local.h if using sensor
 #define SENSOR_SHT85_DEVICE SHT30 // e.g. The Lolin SHT30 shield
 #define SENSOR_SHT85_DEBUG
@@ -51,6 +50,17 @@
 #define SENSOR_SHT85_TOPIC_TEMPERATURE "temperature"
 #define SENSOR_SHT85_TOPIC_HUMIDITY "humidity"
 #define SENSOR_SHT85_ADVERTISEMENT "\n  -\n    topic: temperature\n    name: Temperature\n    type: float\n    display: bar\n    min: 0\n    max: 45\n    color: red\n    rw: r\n  -\n    topic: humidity\n    name: Humidity\n    type: float\n    display: bar\n    min: 0\n    max: 100\n    color: cornflowerblue\n    rw: r"
+
+// #define SENSOR_DHT_WANT // Define in _local.h if using sensor
+#define SENSOR_DHT_DEVICE DHT11 // as in KY-015 board
+#define SENSOR_DHT_DEBUG
+#define SENSOR_DHT_MS 10000 // Warning not to do this too often seen range in examples from 100 to 10000 not sure why such range
+#define SENSOR_DHT_PIN_ARRAY 4  // hard wired to a pin - 4 is D2 on the Lolin D1 but is somewhere else on C3 Pico
+#define SENSOR_DHT_COUNT 1 // Count of array - makes code easier for fixed length arrays
+#define SENSOR_DHT_TOPIC_TEMPERATURE "temperature"
+#define SENSOR_DHT_TOPIC_HUMIDITY "humidity"
+#define SENSOR_DHT_ADVERTISEMENT "\n  -\n    topic: temperature\n    name: Temperature\n    type: float\n    display: bar\n    min: 0\n    max: 45\n    color: red\n    rw: r\n  -\n    topic: humidity\n    name: Humidity\n    type: float\n    display: bar\n    min: 0\n    max: 100\n    color: cornflowerblue\n    rw: r"
+
 
 #define SYSTEM_WIFI_WANT // Will always want WiFi until have BLE &/or LoRa
 #define SYSTEM_WIFI_DEBUG

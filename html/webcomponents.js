@@ -213,8 +213,7 @@ class MqttElement extends HTMLElementExtended {
 class MqttReceiver extends MqttElement {
   // constructor() { super(); }
   static get observedAttributes() { return ['topic','value','name']; }
-  // TODO - think this could be super() &&  !this.state.subscribed;
-  //shouldLoadWhenConnected() { return !!mqtt_client && !this.state.subscribed; }
+  static get boolAttributes() { return []; }
   shouldLoadWhenConnected() { return super.shouldLoadWhenConnected() && !this.state.subscribed; }
   loadContent() {
     this.state.subscribed = true;
@@ -330,13 +329,17 @@ class MqttBar extends MqttReceiver {
     }
     return project.state.graph;
   }
+  // Event gets called when graph icon is clicked - adds a line to the graph
   opengraph(e) {
     console.log("Graph clicked", e, this);
     let graph = this.findGraph();
-    // TODO-46 - should check its not already there.
-    graph.append(
-      EL('mqtt-graphdataset', {topic: this.state.topic, label: this.state.name})
-    );
+    if (!this.state.dataset) {
+      // TODO-46 possibly move dataset creation to earlier - but leave floating, and accumulate data in it even before displayed
+      this.state.dataset = EL('mqtt-graphdataset', {topic: this.state.topic, name: this.state.name, color: this.state.color});
+    }
+    if (!graph.contains(this.state.dataset)) {
+      graph.append(this.state.dataset);
+    }
   }
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
@@ -509,14 +512,19 @@ class MqttProject extends MqttReceiver {
     super();
     this.state.nodes = [];
   }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['discover']); }
+  static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
+
   valueSet(val) {
-    if (!this.state.nodes.includes(val)) {
-      this.state.nodes.push(val);
-      let id = val;
-      let topic = this.state.topic + val;
-      this.append(EL('mqtt-node', {id, topic},[]));
-      return false; // Should not need to rerender
+    if (this.state.discover) {
+      if (!this.state.nodes.includes(val)) {
+        this.state.nodes.push(val);
+        let id = val;
+        let topic = this.state.topic + val;
+        this.append(EL('mqtt-node', {id, topic, discover: this.state.discover},[]));
+      }
     }
+    return false; // Should not need to rerender
   }
   render() {
     return [
@@ -541,7 +549,8 @@ const MNstyle = `
 `;
 
 class MqttNode extends MqttReceiver {
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id']); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id', 'discover']); }
+  static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
   constructor() {
     super(); // Will subscribe to topic
     this.state.topics = {};
@@ -575,14 +584,20 @@ class MqttNode extends MqttReceiver {
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
-    let obj = yaml.loadAll(val,{ onWarning: (warn) => console.log('Yaml warning:', warn) });
-    console.log(obj);
-    let node = obj[0]; // Should only ever be one of them
-    this.state.value = node; // Save the object for this node
-    ['id','description','name'].forEach(k => this.state[k] = node[k]);
-    while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace
-    node.topics.forEach(t => { this.elementFrom(t); });
-    return true;
+    if (this.state.discover) { // If dont have discover set, then presume have defind what UI we want on this node
+      let obj = yaml.loadAll(val, {onWarning: (warn) => console.log('Yaml warning:', warn)});
+      console.log(obj);
+      let node = obj[0]; // Should only ever be one of them
+      this.state.value = node; // Save the object for this node
+      ['id', 'description', 'name'].forEach(k => this.state[k] = node[k]);
+      while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace
+      node.topics.forEach(t => {
+        this.elementFrom(t);
+      });
+      return true;
+    } else {
+      return false;
+    }
   }
   /*
   shouldLoadWhenConnected() {
@@ -677,17 +692,32 @@ class MqttGraphDataset extends MqttReceiver {
   constructor() {
     super();
     this.data = [];
-    this.chartdataset = {
-      label: this.state.name, // TODO-46-line Probably have to get this from setAttribute
-      data: this.data,
-      parsing: {
-        xAxisKey: 'time',
-        yAxisKey: 'value'
-      },
-    }
+    // Dont make chartDataset here, know its not got all attributes
   }
-  shouldLoadWhenConnected() {
-    return super.shouldLoadWhenConnected() ;
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['color']); }
+  /*
+  shouldLoadWhenConnected() { return super.shouldLoadWhenConnected() ; }
+   */
+  makeChartDataset() {
+    // Some other priorities that might be useful are at https://www.chartjs.org/docs/latest/samples/line/segments.html
+    // TODO-46-XXX shouldnt create each time
+    if (!this.chartdataset) {
+      // Fields only defined once - especially data
+      this.chartdataset = {
+        data: this.data,
+        parsing: {
+          xAxisKey: 'time',
+          yAxisKey: 'value'
+        },
+      };
+    }
+    // Things that are changed by attributes
+    this.chartdataset.label = this.state.name; // TODO-46-line Probably have to get this from setAttribute
+      this.chartdataset.borderColor = this.state.color; // Should also set point color TODO-46 check
+  }
+  changeAttribute(name, value) {
+    super.changeAttribute(name, value); // Set on state
+    this.makeChartDataset();
   }
   loadContent() { // Happens when connected
     super.loadContent(); // Subscribe to topic
