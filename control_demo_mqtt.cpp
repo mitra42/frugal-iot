@@ -22,11 +22,20 @@ namespace cDemoMqtt {
 
 bool value = false;
 String *inTopic;  // Topic for value checking
+String *outTopic;  // Topic for value checking
 String *controlOutTopic; // The topic to listen to to hear what topic should be sending to
 
 void act() {
-  static String* topic =  new String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC); 
-  xMqtt::messageSend(*topic, value, true, 1); // Note message will be queued , and sent outside of messageReceived handler
+  if (outTopic) {
+    #ifdef CONTROL_DEMO_MQTT_DEBUG
+      Serial.print(F("Control_demo_MQTT: Sending on ")); Serial.print(*outTopic); Serial.print(F(" ")),Serial.println(value);
+    #endif
+    xMqtt::messageSend(*outTopic, value, true, 1); // Note message will be queued , and sent outside of messageReceived handler
+  #ifdef CONTROL_DEMO_MQTT_DEBUG
+  } else {
+    Serial.print(F("Control_demo_MQTT: no outTopic"));
+  #endif
+  }
 }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -46,11 +55,11 @@ void inputMessageReceived(String &topic, String &payload) {
 void controlOutMessageReceived(String &topic, String &payload) {
 #pragma GCC diagnostic pop
   #ifdef CONTROL_DEMO_MQTT_DEBUG
-    Serial.print(F("cDemoMqtt received controlOut ")); Serial.println(humidity);
+    Serial.print(F("cDemoMqtt received controlOut ")); Serial.println(payload);
   #endif
-  if (outTopic != value) {
+  if (!outTopic || *outTopic != payload) {
     // Only send if its changed.
-    outTopic = value;
+    outTopic = new String(payload);
     act();
   }
 }
