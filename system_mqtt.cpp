@@ -76,7 +76,7 @@ class Subscription {
       for (sub = subscriptions; sub; sub = sub->next) {
         if (*sub->topic == topic) {
           #ifdef SYSTEM_MQTT_DEBUG
-            Serial.print(F("Dispatching: ")); Serial.println(topic);
+            // Serial.print(F("Dispatching: ")); Serial.println(topic);
           #endif // SYSTEM_MQTT_DEBUG
           sub->cb(topic, payload);
         }
@@ -129,6 +129,7 @@ class MessageList {
       }
       return i; // Found or not found case both return here
     }
+    // Put a message at the front of the queue
     void push(Message *m) {
       m->next = top;
       top = m;
@@ -138,7 +139,11 @@ class MessageList {
       Message *j = NULL;
       if (!i) return NULL;
       for (;i->next;(j=i, i = i->next)) {}
-      if (j) { j->next = NULL; }
+      if (j) { 
+        j->next = NULL;
+      } else {
+        top = NULL;
+      }
       return i;
     }
     void retain(Message *m) {
@@ -219,7 +224,7 @@ void messageSendInner(const Message* const m) {
   #ifdef SYSTEM_WIFI_WANT
     if (!client.publish(*m->topic, *m->message, m->retain, m->qos)) {
       #ifdef SYSTEM_MQTT_DEBUG
-        Serial.print(F("Failed to publish")); Serial.print(*m->topic); Serial.print(F("=")); Serial.println(*m->message);
+        Serial.print(F("Failed to publish ")); Serial.print(*m->topic); Serial.print(F("=")); Serial.println(*m->message);
       #endif // SYSTEM_MQTT_DEBUG
     };
   #endif // SYSTEM_WIFI_WANT
