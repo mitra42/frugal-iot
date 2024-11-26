@@ -640,7 +640,8 @@ class MqttGraph extends HTMLElementExtended {
   // For some reason this does not work by adding inside the render - i.e. to the virtual Dom.
   loadContent() {
     this.canvas = EL('canvas');
-    this.append(EL('div', {style: "width: 80%;"},[this.canvas]));
+    // TODO Move style to sheet
+    this.append(EL('div', {slot: "chart", style: "width: 80vw; height: 60vw; position: relative;"},[this.canvas]));
     this.makeChart();
   }
   shouldLoadWhenConnected() {return true;}
@@ -658,6 +659,7 @@ class MqttGraph extends HTMLElementExtended {
         },
         options: {
           //zone: "America/Denver", // Comment out to use system time
+          response: true,
           scales: { // For some reason cant put this on a dataset
             y:{ // TODO-46 why is there a second y Axis shown
               suggestedMin: 10,
@@ -680,7 +682,9 @@ class MqttGraph extends HTMLElementExtended {
   }
   render() {
     return (
-      EL("div", {style: "width: 800px; height: 100px;"}, [ // TODO Move style to sheet
+      // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
+      EL("div", {class: 'outer'}, [ // TODO Move style to sheet
+        EL('slot', {name: "chart"}), // TODO-46-line should just be the chart slot I think
         EL('slot', {}), // TODO-46-line should just be the chart slot I think
       ])
     );
