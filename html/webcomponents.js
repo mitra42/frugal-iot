@@ -335,7 +335,11 @@ class MqttBar extends MqttReceiver {
     let graph = this.findGraph();
     if (!this.state.dataset) {
       // TODO-46 possibly move dataset creation to earlier - but leave floating, and accumulate data in it even before displayed
-      this.state.dataset = EL('mqtt-graphdataset', {topic: this.state.topic, name: this.state.name, color: this.state.color});
+      this.state.dataset = EL('mqtt-graphdataset', {
+        topic: this.state.topic, name: this.state.name, color: this.state.color,
+        // TODO-46 yaxis should depend on type of graph BUT cant use name as that may end up language dependent
+        min: this.state.min, max: this.state.max, yaxisid: "temperature",
+      });
     }
     if (!graph.contains(this.state.dataset)) {
       graph.append(this.state.dataset);
@@ -661,9 +665,25 @@ class MqttGraph extends HTMLElementExtended {
           //zone: "America/Denver", // Comment out to use system time
           response: true,
           scales: { // For some reason cant put this on a dataset
-            y:{ // TODO-46 why is there a second y Axis shown
+            temperature:{
+              type: 'linear',
+              display: true, // TODO switch this and position based on usage
               suggestedMin: 10,
               suggestedMax: 40,
+              position: 'left',
+              grid: {
+                drawOnChartArea: true, // only want the grid lines for one axis to show up
+              },
+            },
+            humidity:{
+              type: 'linear',
+              display: true, // TODO switch this and position based on usage
+              suggestedMin: 30,
+              suggestedMax: 100,
+              position: 'right',
+              grid: {
+                drawOnChartArea: false, // only want the grid lines for one axis to show up
+              },
             },
             xAxis: {
               // display: false,
@@ -698,7 +718,10 @@ class MqttGraphDataset extends MqttReceiver {
     this.data = [];
     // Dont make chartDataset here, know its not got all attributes
   }
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['color']); }
+  static get observedAttributes() {
+    return MqttReceiver.observedAttributes.concat(['color','min','max','yaxisid']); }
+  static get integerAttributes() {
+    return MqttReceiver.integerAttributes.concat(['min', 'max']) };
   /*
   shouldLoadWhenConnected() { return super.shouldLoadWhenConnected() ; }
    */
@@ -716,8 +739,10 @@ class MqttGraphDataset extends MqttReceiver {
       };
     }
     // Things that are changed by attributes
-    this.chartdataset.label = this.state.name; // TODO-46-line Probably have to get this from setAttribute
-      this.chartdataset.borderColor = this.state.color; // Should also set point color TODO-46 check
+    this.chartdataset.label = this.state.name;
+    this.chartdataset.borderColor = this.state.color; // also sets color of point
+    this.chartdataset.yAxisID = this.state.yaxisid;
+    // Should override display and position and grid of each axis used
   }
   changeAttribute(name, value) {
     super.changeAttribute(name, value); // Set on state
