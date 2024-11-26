@@ -111,6 +111,7 @@ _adapters._date.override({
 let mqtt_client;
 let mqtt_subscriptions = [];
 let unique_id = 1; // Just used as a label for auto-generated elements
+let graph;
 
 function mqtt_subscribe(topic, cb) {
   console.log("Subscribing to ", topic);
@@ -130,7 +131,7 @@ function date_start_hour(x) {
 
 /* MQTT support */
 class MqttClient extends HTMLElementExtended {
-  // TODO consider reconnection - see mqtt's README.md
+  // This appears to be reconnecting properly, but if not see mqtt (library I hink)'s README
   static get observedAttributes() {
     return ['server',]; }
 
@@ -213,8 +214,7 @@ class MqttElement extends HTMLElementExtended {
 class MqttReceiver extends MqttElement {
   // constructor() { super(); }
   static get observedAttributes() { return ['topic','value','name']; }
-  // TODO - think this could be super() &&  !this.state.subscribed;
-  //shouldLoadWhenConnected() { return !!mqtt_client && !this.state.subscribed; }
+  static get boolAttributes() { return []; }
   shouldLoadWhenConnected() { return super.shouldLoadWhenConnected() && !this.state.subscribed; }
   loadContent() {
     this.state.subscribed = true;
@@ -254,7 +254,8 @@ customElements.define('mqtt-text', MqttText);
 
 class MqttTransmitter extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['retain', 'qos']); }
-  static get integerAttributes() { return MqttReceiver.integerAttributes.concat(['retain', 'qos']) };
+  static get integerAttributes() { return MqttReceiver.integerAttributes.concat(['qos']) };
+  static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['retain']) }
   // TODO - make sure this doesn't get triggered by a message from server.
   valueGet() { // Needs to return an integer or a string
     return this.state.value
@@ -323,20 +324,27 @@ class MqttBar extends MqttReceiver {
     return true; // Note shouldn't re-render children like a MqttSlider.
   }
   findGraph() { // TODO-46 probably belongs in MqttReceiver
-    let project = this.findProject();
-    if (!project.state.graph) {
-      project.state.graph = EL('mqtt-graph');
-      project.append(project.state.graph);
+    if (!graph) {
+      graph = EL('mqtt-graph');
+      document.body.append(graph);
     }
-    return project.state.graph;
+    return graph;
   }
+  // Event gets called when graph icon is clicked - adds a line to the graph
   opengraph(e) {
     console.log("Graph clicked", e, this);
     let graph = this.findGraph();
-    // TODO-46 - should check its not already there.
-    graph.append(
-      EL('mqtt-graphdataset', {topic: this.state.topic, label: this.state.name})
-    );
+    if (!this.state.dataset) {
+      // TODO-46 possibly move dataset creation to earlier - but leave floating, and accumulate data in it even before displayed
+      this.state.dataset = EL('mqtt-graphdataset', {
+        topic: this.state.topic, name: this.state.name, color: this.state.color,
+        // TODO-46 yaxis should depend on type of graph BUT cant use name as that may end up language dependent
+        min: this.state.min, max: this.state.max, yaxisid: "temperature",
+      });
+    }
+    if (!graph.contains(this.state.dataset)) {
+      graph.append(this.state.dataset);
+    }
   }
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
@@ -509,14 +517,19 @@ class MqttProject extends MqttReceiver {
     super();
     this.state.nodes = [];
   }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['discover']); }
+  static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
+
   valueSet(val) {
-    if (!this.state.nodes.includes(val)) {
-      this.state.nodes.push(val);
-      let id = val;
-      let topic = this.state.topic + val;
-      this.append(EL('mqtt-node', {id, topic},[]));
-      return false; // Should not need to rerender
+    if (this.state.discover) {
+      if (!this.state.nodes.includes(val)) {
+        this.state.nodes.push(val);
+        let id = val;
+        let topic = this.state.topic + val;
+        this.append(EL('mqtt-node', {id, topic, discover: this.state.discover},[]));
+      }
     }
+    return false; // Should not need to rerender
   }
   render() {
     return [
@@ -541,7 +554,8 @@ const MNstyle = `
 `;
 
 class MqttNode extends MqttReceiver {
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id']); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id', 'discover']); }
+  static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
   constructor() {
     super(); // Will subscribe to topic
     this.state.topics = {};
@@ -552,7 +566,7 @@ class MqttNode extends MqttReceiver {
     let el;
     if (t.display === "toggle") {
       // Assuming rw: rw, type: bool
-      el = EL('mqtt-toggle', {topic, name, retain: 1, qos: 1},[name]);
+      el = EL('mqtt-toggle', {topic, name, retain: true, qos: 1},[name]);
     } else if (t.display === "bar") {
       // Assuming rw: r, type: float
       el = EL('mqtt-bar', {topic, name, max: t.max, min: t.min, color: t.color},[]);
@@ -563,7 +577,7 @@ class MqttNode extends MqttReceiver {
           EL('span', { textContent: "△"}, []),
       ]);
     } else if (t.display === "dropdown") {
-      el = EL('mqtt-dropdown', {name, topic, type: t.type, options: t.options, project: this.findProject()}, []);
+      el = EL('mqtt-dropdown', {name, topic, type: t.type, options: t.options, retain: true, project: this.findProject()}, []);
     } else {
       console.log("do not know how to display a ", t.display);
       //TODO add slider (MqttSlider), need to specify which other element attached to.
@@ -575,14 +589,20 @@ class MqttNode extends MqttReceiver {
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
-    let obj = yaml.loadAll(val,{ onWarning: (warn) => console.log('Yaml warning:', warn) });
-    console.log(obj);
-    let node = obj[0]; // Should only ever be one of them
-    this.state.value = node; // Save the object for this node
-    ['id','description','name'].forEach(k => this.state[k] = node[k]);
-    while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace
-    node.topics.forEach(t => { this.elementFrom(t); });
-    return true;
+    if (this.state.discover) { // If dont have discover set, then presume have defind what UI we want on this node
+      let obj = yaml.loadAll(val, {onWarning: (warn) => console.log('Yaml warning:', warn)});
+      console.log(obj);
+      let node = obj[0]; // Should only ever be one of them
+      this.state.value = node; // Save the object for this node
+      ['id', 'description', 'name'].forEach(k => this.state[k] = node[k]);
+      while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace
+      node.topics.forEach(t => {
+        this.elementFrom(t);
+      });
+      return true;
+    } else {
+      return false;
+    }
   }
   /*
   shouldLoadWhenConnected() {
@@ -625,7 +645,8 @@ class MqttGraph extends HTMLElementExtended {
   // For some reason this does not work by adding inside the render - i.e. to the virtual Dom.
   loadContent() {
     this.canvas = EL('canvas');
-    this.append(EL('div', {style: "width: 80%;"},[this.canvas]));
+    // TODO Move style to sheet
+    this.append(EL('div', {slot: "chart", style: "width: 80vw; height: 60vw; position: relative;"},[this.canvas]));
     this.makeChart();
   }
   shouldLoadWhenConnected() {return true;}
@@ -643,10 +664,27 @@ class MqttGraph extends HTMLElementExtended {
         },
         options: {
           //zone: "America/Denver", // Comment out to use system time
+          response: true,
           scales: { // For some reason cant put this on a dataset
-            y:{ // TODO-46 why is there a second y Axis shown
+            temperature:{
+              type: 'linear',
+              display: true, // TODO switch this and position based on usage
               suggestedMin: 10,
               suggestedMax: 40,
+              position: 'left',
+              grid: {
+                drawOnChartArea: true, // only want the grid lines for one axis to show up
+              },
+            },
+            humidity:{
+              type: 'linear',
+              display: true, // TODO switch this and position based on usage
+              suggestedMin: 30,
+              suggestedMax: 100,
+              position: 'right',
+              grid: {
+                drawOnChartArea: false, // only want the grid lines for one axis to show up
+              },
             },
             xAxis: {
               // display: false,
@@ -665,7 +703,9 @@ class MqttGraph extends HTMLElementExtended {
   }
   render() {
     return (
-      EL("div", {style: "width: 800px; height: 100px;"}, [ // TODO Move style to sheet
+      // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
+      EL("div", {class: 'outer'}, [ // TODO Move style to sheet
+        EL('slot', {name: "chart"}), // TODO-46-line should just be the chart slot I think
         EL('slot', {}), // TODO-46-line should just be the chart slot I think
       ])
     );
@@ -677,17 +717,37 @@ class MqttGraphDataset extends MqttReceiver {
   constructor() {
     super();
     this.data = [];
-    this.chartdataset = {
-      label: this.state.name, // TODO-46-line Probably have to get this from setAttribute
-      data: this.data,
-      parsing: {
-        xAxisKey: 'time',
-        yAxisKey: 'value'
-      },
-    }
+    // Dont make chartDataset here, know its not got all attributes
   }
-  shouldLoadWhenConnected() {
-    return super.shouldLoadWhenConnected() ;
+  static get observedAttributes() {
+    return MqttReceiver.observedAttributes.concat(['color','min','max','yaxisid']); }
+  static get integerAttributes() {
+    return MqttReceiver.integerAttributes.concat(['min', 'max']) };
+  /*
+  shouldLoadWhenConnected() { return super.shouldLoadWhenConnected() ; }
+   */
+  makeChartDataset() {
+    // Some other priorities that might be useful are at https://www.chartjs.org/docs/latest/samples/line/segments.html
+    // TODO-46-XXX shouldnt create each time
+    if (!this.chartdataset) {
+      // Fields only defined once - especially data
+      this.chartdataset = {
+        data: this.data,
+        parsing: {
+          xAxisKey: 'time',
+          yAxisKey: 'value'
+        },
+      };
+    }
+    // Things that are changed by attributes
+    this.chartdataset.label = this.state.name;
+    this.chartdataset.borderColor = this.state.color; // also sets color of point
+    this.chartdataset.yAxisID = this.state.yaxisid;
+    // Should override display and position and grid of each axis used
+  }
+  changeAttribute(name, value) {
+    super.changeAttribute(name, value); // Set on state
+    this.makeChartDataset();
   }
   loadContent() { // Happens when connected
     super.loadContent(); // Subscribe to topic

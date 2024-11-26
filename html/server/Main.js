@@ -15,7 +15,7 @@ import yaml from 'js-yaml'; // https://www.npmjs.com/package/js-yaml
 import { appendFile, mkdir, readFile } from "fs"; // https://nodejs.org/api/fs.html
 import mqtt from 'mqtt'; // https://www.npmjs.com/package/mqtt
 
-const htmldir = process.cwd() + "/.."; // TODO move this to point at wherever index.html relative to Main.js
+const htmldir = process.cwd() + "/..";
 let config;
 let clients = [];
 
@@ -99,7 +99,6 @@ class MqttOrganization {
           this.mqtt_status_set(k);
         });
       }
-      ;
       this.mqtt_client.on('error', (error) => {
         this.mqtt_status_set("Error:" + error.message);
       });
@@ -210,6 +209,6 @@ async.waterfall([
     startClient();
     cb(null,null);
   }
-  // TODO read project specfic configurations from config.d
+  // TODO-9 read project specfic configurations from config.d
 ], (err, unused) => {});
 
