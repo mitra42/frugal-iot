@@ -1,6 +1,7 @@
 /*
  * Simple MQTT template for FrugalIoT
  */
+// noinspection ES6PreferShortImport
 import {EL, HTMLElementExtended, toBool} from './node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 import yaml from './node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
@@ -131,7 +132,7 @@ function date_start_hour(x) {
 
 /* MQTT support */
 class MqttClient extends HTMLElementExtended {
-  // This appears to be reconnecting properly, but if not see mqtt (library I hink)'s README
+  // This appears to be reconnecting properly, but if not see mqtt (library I think)'s README
   static get observedAttributes() {
     return ['server',]; }
 
@@ -439,7 +440,7 @@ class MqttSlider extends MqttTransmitter {
   }
   render() {
     if ((!this.slider) && (this.children.length > 0)) {
-      // Build once as don't want rerendered - but do not render till after children added (end of EL)
+      // Build once as don't want re-rendered - but do not render till after children added (end of EL)
       this.thumb = EL('div', {class: "setpoint"}, this.children);
       this.slider = EL('div', {class: "pointbar",},[this.thumb]);
       this.slider.onmousedown = this.onmousedown.bind(this);
@@ -471,11 +472,9 @@ class MqttDropdown extends MqttTransmitter {
   }
   // TODO-42 may need to change findTopics to account for other selection criteria
   findTopics() {
-    // TODO-42 can collapse this once working
     let project = this.state.project;
     let nodes = Array.from(project.children);
-    let topics = nodes.map(n => n.state.value.topics.filter( t => t.type === this.state.options).map(t=> { return({name: t.name, topic: n.state.topic + "/" + t.topic})}) ).flat();
-    return topics;
+    return nodes.map(n => n.state.value.topics.filter( t => t.type === this.state.options).map(t=> { return({name: t.name, topic: n.state.topic + "/" + t.topic})}) ).flat();
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
@@ -520,6 +519,7 @@ class MqttProject extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['discover']); }
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
 
+  // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     if (this.state.discover) {
       if (!this.state.nodes.includes(val)) {
@@ -589,7 +589,7 @@ class MqttNode extends MqttReceiver {
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
-    if (this.state.discover) { // If dont have discover set, then presume have defind what UI we want on this node
+    if (this.state.discover) { // If do not have discover set, then presume have defined what UI we want on this node
       let obj = yaml.loadAll(val, {onWarning: (warn) => console.log('Yaml warning:', warn)});
       console.log(obj);
       let node = obj[0]; // Should only ever be one of them
@@ -717,7 +717,7 @@ class MqttGraphDataset extends MqttReceiver {
   constructor() {
     super();
     this.data = [];
-    // Dont make chartDataset here, know its not got all attributes
+    // Do not make chartDataset here, as do not have attributes yet
   }
   static get observedAttributes() {
     return MqttReceiver.observedAttributes.concat(['color','min','max','yaxisid']); }
@@ -728,7 +728,7 @@ class MqttGraphDataset extends MqttReceiver {
    */
   makeChartDataset() {
     // Some other priorities that might be useful are at https://www.chartjs.org/docs/latest/samples/line/segments.html
-    // TODO-46-XXX shouldnt create each time
+    // TODO-46-XXX should not create each time
     if (!this.chartdataset) {
       // Fields only defined once - especially data
       this.chartdataset = {
