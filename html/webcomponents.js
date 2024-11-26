@@ -111,6 +111,7 @@ _adapters._date.override({
 let mqtt_client;
 let mqtt_subscriptions = [];
 let unique_id = 1; // Just used as a label for auto-generated elements
+let graph;
 
 function mqtt_subscribe(topic, cb) {
   console.log("Subscribing to ", topic);
@@ -322,12 +323,11 @@ class MqttBar extends MqttReceiver {
     return true; // Note shouldn't re-render children like a MqttSlider.
   }
   findGraph() { // TODO-46 probably belongs in MqttReceiver
-    let project = this.findProject();
-    if (!project.state.graph) {
-      project.state.graph = EL('mqtt-graph');
-      project.append(project.state.graph);
+    if (!graph) {
+      graph = EL('mqtt-graph');
+      document.body.append(graph);
     }
-    return project.state.graph;
+    return graph;
   }
   // Event gets called when graph icon is clicked - adds a line to the graph
   opengraph(e) {
