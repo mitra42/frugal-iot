@@ -26,13 +26,21 @@ const optionsHeaders = {
   // Needs: Range; User-Agent; Not Needed: Authorization; Others are suggested in some online posts
   'Access-Control-Allow-Headers': 'Cache-Control, Content-Type, Content-Length, Range, User-Agent, X-Requested-With',
 };
+/* Not currently used, might add back Accesin if either a: CORS issues
 const responseHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  server: 'express/frugaliot',
-  Connection: 'keep-alive',
+  'Access-Control-Allow-Origin': '*',  // Needed if have CORS issues with things included
+  server: 'express/frugaliot',         // May be worth indicating
+  Connection: 'keep-alive',            // Helps with load, but since serving static it might not be useful
   'Keep-Alive': 'timeout=5, max=1000', // Up to 5 seconds idle, 1000 requests max
 };
-
+app.use((req, res, next) => {
+  res.set(responseHeaders);
+  if (req.url.length > 1 && req.url.endsWith('/')) {
+    req.url = req.url.slice(0, req.url.length - 1);
+    console.log(`Rewriting url to ${req.url}`);
+  }
+  next(); });
+*/
 function readYamlConfig(inputFilePathOrDescriptor, cb) {
   // Read configuration file and return object
   async.waterfall([
