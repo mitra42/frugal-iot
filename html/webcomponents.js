@@ -2,7 +2,7 @@
  * Simple MQTT template for FrugalIoT
  */
 // noinspection ES6PreferShortImport
-import {EL, HTMLElementExtended, toBool} from './node_modules/html-element-extended/htmlelementextended.js';
+import {EL, HTMLElementExtended, toBool, GET} from './node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 import yaml from './node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
 import { Chart, registerables, _adapters } from './node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
@@ -113,6 +113,7 @@ let mqtt_client;
 let mqtt_subscriptions = [];
 let unique_id = 1; // Just used as a label for auto-generated elements
 let graph;
+let server_config;
 
 function mqtt_subscribe(topic, cb) {
   console.log("Subscribing to ", topic);
@@ -515,6 +516,137 @@ class MqttDropdown extends MqttTransmitter {
   // super.valueGet fine as its text
 }
 customElements.define('mqtt-dropdown', MqttDropdown);
+
+// TODO merge all the styles into a stylesheet and load that and reference in each class
+const MWstyle = `
+.wrapper {border: 1px,black,solid;  margin: 0.2em; }
+`;
+// Outer element of the client - Top Level logic
+// If specifies org / project / node then believe it and build to that
+// otherwise get config from server
+// Add appropriate internals
+
+function oHasProject(o, project) {
+  return o.projects.some(p => p.name === project);
+}
+function pHasNode(p, nodename) {
+  return p.nodes.some(n => n.name === nodename);
+}
+function o2ProjectWithNode(o, nodename) {
+  return o.projects.find(p => pHasNode(p, nodename)); // returns a project
+}
+function modeName2OrgProject(nodename) {
+  for ( let o in server_config.organizations) {
+    let p;
+    if ( p = o2ProjectWithNode(nodename)) {
+      return [o.name, p.name];
+    }
+  }
+  return [null, null];
+}
+class MqttWrapper extends HTMLElementExtended {
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['organization','project','node']); }
+  // Maybe add 'discover' but think thru interactions
+  //static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
+
+  // Note this is not using the standard connectedCallBack which loads content and re-renders,
+  // its going to instead add things to the slot
+
+  onOrganization(e) {
+    this.state.organization = e.target.value;
+    this.appender();
+  }
+  onProject(e) {
+    this.state.project = e.target.value;
+    this.appender();
+  }
+  appender() {
+    // At this point could have any combination of org project or node
+    if (this.state.node) { // n
+      if (!this.state.organization || !this.state.project) {   // n, !(o,p)
+        let [o,p] = nodename2OrgProject(this.state.node);
+        if (!o) {
+          console.error("Unable to find node=", this.state.node);
+          // TODO-69 display error to user, not just console
+          return;
+        } else {
+          this.state.organization = o;
+          this.state.project = p;
+        }
+      } // Drop through with o & p
+      this.append(
+        EL('mqtt-project', {topic: `${this.state.organization}/${this.state.project}/`, name: `${this.state.project}`}, [
+          EL('mqtt-node', {topic: `${this.state.organization}/${this.state.project}/${this.state.node}`}),
+        ]));
+    } else { // !n
+      if (!this.state.project)  { // !n !p ?o
+        if (!this.state.organization) { // !n !p !o
+          this.append(
+            EL('div', {class: 'dropdown'}, [
+              EL('label', {for: 'organizations', textContent: "Organization"}),
+              EL('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
+                EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
+                server_config.organizations.map( o =>
+                  EL('option', {value: o.name, textContent: o.name, selected: false}),
+                ),
+              ]),
+            ]));
+        } else { // !n !p o  // TODO-69 maybe this should be a blank project ?
+          this.append(
+            EL('div', {class: 'dropdown'}, [
+              EL('label', {for: 'projects', textContent: "Project"}),
+              EL('select', {id: 'projects', onchange: this.onProject.bind(this)}, [
+                EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
+                server_config.organizations.find(o => o.name === this.state.organization).projects.map( p =>
+                  EL('option', {value: p.name, textContent: p.name, selected: false}),
+                ),
+              ]),
+            ]));
+        }
+      } else { // !n p ?o
+        if (!this.state.organization) {
+          let o = server_config.organizations.find(o => oHasProject(o, this.state.project));
+          if (!o) {
+            console.error("Unable to find project:", this.state.project);
+            // TODO-69 display error to user, not just console
+            return;
+          } else {
+            this.state.organization = o.name;
+          }
+        } // drop through with !n p o
+        // TODO-69 need to have a human-friendly name, and short project id - will be needed in configuration and elsewhere.
+        this.append(EL('mqtt-project', {topic: `${this.state.organization}/${this.state.project}/`, name: `${this.state.project}`, discover: true}));
+      }
+    }
+  }
+  connectedCallback() {
+      // TODO-69 security this will be replaced by a subset of config.yaml,
+      //  that is public, but in the same format, so safe to build on this for now
+      GET("/config", {}, (err, json) => {
+        if (err) {
+          console.error(err);
+          // TODO-69 display error to user, not just console
+          return;
+        } else { // got config
+          server_config = json;
+          this.loadAttributesFromURL();
+          this.appender();
+        }
+        this.renderAndReplace();
+      });
+      //super.connectedCallback(); // Not doing as finishes with a re-render.
+  }
+  render() {
+    return [
+      EL('style', {textContent: MPstyle}), // Using styles defined above
+      EL('div', {class: 'outer'}, [
+          EL('slot'),
+        ]),
+    ];
+
+  }
+}
+customElements.define('mqtt-wrapper', MqttWrapper);
 
 const MPstyle = `
 .outer {border: 1px,black,solid;  margin: 0.2em; }

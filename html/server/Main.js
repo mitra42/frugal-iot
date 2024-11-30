@@ -204,7 +204,9 @@ app.options('/', (req, res) => {
 app.get('/echo', (req, res) => {
   res.status(200).json(req.headers);
 });
-
+app.get('/config', (req, res) => {
+    res.status(200).json(config);
+});
 // Main for server
 async.waterfall([
   (cb) => readYamlConfig('./config.yaml', cb),
