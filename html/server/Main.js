@@ -26,7 +26,8 @@ const optionsHeaders = {
   // Needs: Range; User-Agent; Not Needed: Authorization; Others are suggested in some online posts
   'Access-Control-Allow-Headers': 'Cache-Control, Content-Type, Content-Length, Range, User-Agent, X-Requested-With',
 };
-/* Not currently used, might add back Accesin if either a: CORS issues
+/*
+// Not currently used, might add back
 const responseHeaders = {
   'Access-Control-Allow-Origin': '*',  // Needed if have CORS issues with things included
   server: 'express/frugaliot',         // May be worth indicating
@@ -35,7 +36,7 @@ const responseHeaders = {
 };
 app.use((req, res, next) => {
   res.set(responseHeaders);
-  if (req.url.length > 1 && req.url.endsWith('/')) {
+  if (req.url.length > 1 && req.url.endsWith('/')) { // Strip trailing slash
     req.url = req.url.slice(0, req.url.length - 1);
     console.log(`Rewriting url to ${req.url}`);
   }
@@ -85,11 +86,12 @@ class MqttOrganization {
       // TODO-41 handle multiple projects -> multiple mqtt sessions
       this.mqtt_status_set("connecting");
       // TODO go thru the options at https://www.npmjs.com/package/mqtt#client-connect and check optimal
+      // noinspection JSUnresolvedReference
       this.mqtt_client = mqtt.connect(this.config_mqtt.broker, {
         connectTimeout: 5000,
         username: this.config_org.userid || this.config_org.name,
         password: this.config_org.mqtt_password,
-        // Remainder dont appear to be needed
+        // Remainder do not appear to be needed
         //hostname: "127.0.0.1",
         //port: 9012, // Has to be configured in mosquitto configuration
         //path: "/mqtt",
@@ -102,7 +104,7 @@ class MqttOrganization {
         this.mqtt_status_set('reconnect');
         this.resubscribe();
       });
-      for (let k of ['connect', 'disconnect', 'close', 'offline', 'end']) {
+      for (let k of ['disconnect', 'close', 'offline', 'end']) {
         this.mqtt_client.on(k, () => {
           this.mqtt_status_set(k);
         });
@@ -132,6 +134,7 @@ class MqttOrganization {
     console.log("XXX subscribing to ",topic);
   }
   configSubscribe() {
+    // noinspection JSUnresolvedReference
     for (let p of this.config_org.projects) {
       for (let n of p.nodes) { // Note that node could have name of '+' for tracking all of them
         for (let t of n.track) {
@@ -161,12 +164,12 @@ class MqttOrganization {
   log(topic, message) {
     // TODO sanitize topic - remove any leading '/' and any '..'
     let path = `data/${topic}`;
-    let now = (new Date()).toISOString();
-    let filename = `${now.substring(0,10)}.csv`
-    this.appendPathFile(path, filename, `"${now}","${message}"\n`);
+    let dateNow = new Date();
+    let filename = `${dateNow.toISOString().substring(0,10)}.csv`
+    this.appendPathFile(path, filename, `${dateNow.valueOf()},"${message}"\n`);
   }
   appendPathFile(path, filename, message) {
-    mkdir (path, {recursive: true}, (err, val) => {
+    mkdir (path, {recursive: true}, (err/*, val*/) => {
       if (err) {
         console.error(err);
       } else {
@@ -178,6 +181,7 @@ class MqttOrganization {
   }
 }
 function startClient() {
+  // noinspection JSUnresolvedReference
   for (let o of config.organizations) {
     let c = new MqttOrganization(o, config.mqtt); // Will subscribe when connects
     clients.push(c);
@@ -217,6 +221,8 @@ async.waterfall([
     startClient();
     cb(null,null);
   }
-  // TODO-9 read project specfic configurations from config.d
-], (err, unused) => {});
+  // TODO-9 read project specific configurations from config.d
+], (err/*, unused*/) => {
+  console.log("Server running in background callbacks",err)
+});
 

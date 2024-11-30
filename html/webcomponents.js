@@ -213,18 +213,22 @@ class MqttElement extends HTMLElementExtended {
 }
 
 class MqttReceiver extends MqttElement {
-  // constructor() { super(); }
+  constructor() {
+    super();
+  }
   static get observedAttributes() { return ['topic','value','name']; }
   static get boolAttributes() { return []; }
   shouldLoadWhenConnected() { return super.shouldLoadWhenConnected() && !this.state.subscribed; }
   loadContent() {
     this.state.subscribed = true;
     mqtt_subscribe(this.state.topic, this.message_received.bind(this));
+    if (!this.state.data) { this.state.data = []; }
   }
-  valueSet(val) {
+  valueSet(val) { // Note val can be of many types - it will be subclass dependent
     this.state.value = val;
+    this.state.data.push({time: Date.now(), value: val}); // Same format as graph dataset expects
     return true; // Rerender
-  } // Intended to be subclassed
+  } // Intended to be subclassed and subclass will often return false
 
   message_received(topic, message) {
     if (this.valueSet(message)) {
@@ -322,7 +326,8 @@ class MqttBar extends MqttReceiver {
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     super.valueSet(Number(val));
-    return true; // Note shouldn't re-render children like a MqttSlider.
+    if (this.state.dataset) { this.state.dataset.dataChanged(); } // Will typically update graph
+    return true; // Note shouldn't re-render children like a MqttSlider because these are inserted into DOM via a "slpt"
   }
   findGraph() { // TODO-46 probably belongs in MqttReceiver
     if (!graph) {
@@ -337,11 +342,16 @@ class MqttBar extends MqttReceiver {
     let graph = this.findGraph();
     if (!this.state.dataset) {
       // TODO-46 possibly move dataset creation to earlier - but leave floating, and accumulate data in it even before displayed
-      this.state.dataset = EL('mqtt-graphdataset', {
-        topic: this.state.topic, name: this.state.name, color: this.state.color,
+      let ds = EL('mqtt-graphdataset', {
+        // No topic since piggybacking off this.
+        name: this.state.name, color: this.state.color,
         // TODO-46 yaxis should depend on type of graph BUT cant use name as that may end up language dependent
         min: this.state.min, max: this.state.max, yaxisid: "temperature",
       });
+      this.state.dataset = ds;
+      // TODO move next two lines to a method on MqttGraphdataset
+      ds.state.data = this.state.data;  // Link, not copy
+      ds.chartdataset.data = this.state.data; // Link, not copy
     }
     if (!graph.contains(this.state.dataset)) {
       graph.append(this.state.dataset);
@@ -560,36 +570,49 @@ class MqttNode extends MqttReceiver {
     super(); // Will subscribe to topic
     this.state.topics = {};
   }
+
   elementFrom(t) {
     let topic = this.state.topic + "/" + t.topic;
-    let name = t.name;
-    let el;
-    if (t.display === "toggle") {
-      // Assuming rw: rw, type: bool
-      el = EL('mqtt-toggle', {topic, name, retain: true, qos: 1},[name]);
-    } else if (t.display === "bar") {
-      // Assuming rw: r, type: float
-      el = EL('mqtt-bar', {topic, name, max: t.max, min: t.min, color: t.color},[]);
-    } else if (t.display === "text") {
-      el = EL('mqtt-text', {name, topic},[]);
-    } else if (t.display === "slider") {
-      el = EL('mqtt-slider', {name, topic, min: t.min, max: t.max, value: (t.max + t.min)/2 }, [
-          EL('span', { textContent: "△"}, []),
-      ]);
-    } else if (t.display === "dropdown") {
-      el = EL('mqtt-dropdown', {name, topic, type: t.type, options: t.options, retain: true, project: this.findProject()}, []);
+    if (!this.state.topics[topic]) {
+      let name = t.name;
+      let el;
+      if (t.display === "toggle") {
+        // Assuming rw: rw, type: bool
+        el = EL('mqtt-toggle', {topic, name, retain: true, qos: 1}, [name]);
+      } else if (t.display === "bar") {
+        // Assuming rw: r, type: float
+        el = EL('mqtt-bar', {topic, name, max: t.max, min: t.min, color: t.color}, []);
+      } else if (t.display === "text") {
+        el = EL('mqtt-text', {name, topic}, []);
+      } else if (t.display === "slider") {
+        el = EL('mqtt-slider', {name, topic, min: t.min, max: t.max, value: (t.max + t.min) / 2}, [
+          EL('span', {textContent: "△"}, []),
+        ]);
+      } else if (t.display === "dropdown") {
+        el = EL('mqtt-dropdown', {
+          name,
+          topic,
+          type: t.type,
+          options: t.options,
+          retain: true,
+          project: this.findProject()
+        }, []);
+      } else {
+        console.log("do not know how to display a ", t.display);
+        //TODO add slider (MqttSlider), need to specify which other element attached to.
+      }
+      if (el) {
+        this.append(el);
+        this.state.topics[t.topic] = el; // Index into elements - e.g. used by MqttDropdown
+      }
     } else {
-      console.log("do not know how to display a ", t.display);
-      //TODO add slider (MqttSlider), need to specify which other element attached to.
-    }
-    if (el) {
-      this.append(el);
-      this.state.topics[t.topic] = el; // Index into elements - e.g. used by MqttDropdown
+      console.log("XXX Already have", topic);
     }
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     if (this.state.discover) { // If do not have discover set, then presume have defined what UI we want on this node
+      this.state.discover = false; // Only want discover once, if change then need to get smart about not redrawing working UI as may be relying on data[]
       let obj = yaml.loadAll(val, {onWarning: (warn) => console.log('Yaml warning:', warn)});
       console.log(obj);
       let node = obj[0]; // Should only ever be one of them
@@ -635,7 +658,7 @@ class MqttNode extends MqttReceiver {
 customElements.define('mqtt-node', MqttNode);
 
 /* This could be part of MqttBar, but maybe better standalone */
-class MqttGraph extends HTMLElementExtended {
+class MqttGraph extends MqttElement {
   constructor() {
     super();
     this.datasets = []; // Child elements will add/remove here
@@ -713,14 +736,13 @@ class MqttGraph extends HTMLElementExtended {
 }
 customElements.define('mqtt-graph', MqttGraph);
 
-class MqttGraphDataset extends MqttReceiver {
+class MqttGraphDataset extends MqttElement {
   constructor() {
     super();
-    this.data = [];
     // Do not make chartDataset here, as do not have attributes yet
   }
   static get observedAttributes() {
-    return MqttReceiver.observedAttributes.concat(['color','min','max','yaxisid']); }
+    return MqttReceiver.observedAttributes.concat(['name', 'color', 'min', 'max', 'yaxisid']); }
   static get integerAttributes() {
     return MqttReceiver.integerAttributes.concat(['min', 'max']) };
   /*
@@ -732,7 +754,7 @@ class MqttGraphDataset extends MqttReceiver {
     if (!this.chartdataset) {
       // Fields only defined once - especially data
       this.chartdataset = {
-        data: this.data,
+        data: this.state.data, // Should be pointer to receiver's data set in MqttReceiver.valueSet
         parsing: {
           xAxisKey: 'time',
           yAxisKey: 'value'
@@ -750,14 +772,11 @@ class MqttGraphDataset extends MqttReceiver {
     this.makeChartDataset();
   }
   loadContent() { // Happens when connected
-    super.loadContent(); // Subscribe to topic
     this.chartEl = this.parentElement;
     this.chartEl.datasets.push(this.chartdataset);
     this.chartEl.makeChart();
   }
-  // noinspection JSCheckFunctionSignatures
-  valueSet(val) {
-    this.data.push({time: Date.now(), value: val});
+  dataChanged() { // Called when creating UX adds data.
     this.parentElement.chart.update();
   }
   render() {
