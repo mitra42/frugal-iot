@@ -1,61 +1,54 @@
 /*
   Sensor Analog
-  Read from a pin and return as sAnalog::Value\
+  Read from a pin and return as sAnalog::Value
+
+Configuration options
+Optional: SENSOR_ANALOG_PIN SENSOR_ANALOG_MS SENSOR_ANALOG_SMOOTH SENSOR_ANALOG_EXAMPLE_TOPIC
+
 */
 
 // TODO turn this into a template
 // TODO add the _ARRAY parameters as used in sensor_sht85.cpp so will read multiple analog inputs.
 
 #include "_settings.h"  // Settings for what to include etc
-#ifdef SENSOR_ANALOG_WANT
+#ifdef SENSOR_ANALOG_EXAMPLE_WANT
 #include <Arduino.h>
 #include "sensor_analog.h"
+#include "sensor_analog_example.h"
+#include "system_discovery.h"
 
-// TODO figure out how to handle multiple analog input pins 
-
-namespace sAnalog {
-
-#ifdef SENSOR_ANALOG_MS
-unsigned long nextLoopTime = 0;
-#endif // SENSOR_ANALOG_MS
-
-int value = 0;
-#ifdef SENSOR_ANALOG_SMOOTH
-unsigned long smoothedValue = 0;
+#ifndef SENSOR_ANALOG_EXAMPLE_PIN
+  #ifdef LOLIN_C3_PICO
+    #define SENSOR_ANALOG_EXAMPLE_PIN A0 // Which pin to read - this might be board specific
+  #else
+    #error Sorry no default Analog pin for your board
+  #endif
+#endif
+#ifndef SENSOR_ANALOG_EXAMPLE_MS
+  #define SENSOR_ANALOG_EXAMPLE_MS 1000 // How often to read in MS
 #endif
 
-void setup() {      
-  // pinMode(SENSOR_ANALOG_PIN, INPUT); // I don't think this is needed
-  #ifdef ESP8266_D1_MINI
-    analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
-  #else
-    #error analogReference is board specific, appears to be undefined on ESP32C3 
+
+
+namespace sAnalogExample {
+
+Sensor_Analog sensor_analog_example(SENSOR_ANALOG_EXAMPLE_PIN);
+
+
+void setup() {
+  #ifdef SENSOR_ANALOG_EXAMPLE_DEBUG
+    sensor_analog_example.name = new String(F("analog_example"));
+  #endif // SENSOR_ANALOG_EXAMPLE_DEBUG
+  #ifdef SENSOR_ANALOG_SMOOTH
+    sensor_analog_example.smooth = SENSOR_ANALOG_SMOOTH;
   #endif
-  //value = 0;
+  sensor_analog_example.topic = String(*xDiscovery::topicPrefix + SENSOR_ANALOG_EXAMPLE_TOPIC);
+  sensor_analog_example.setup();
 }
-
-void readSensor() {
-  value = analogRead(SENSOR_ANALOG_PIN);
-}
-
+// TODO create a linked list of sensors, and another of actuators that can be called in loop OR use list by time
 void loop() {
-#ifdef SENSOR_ANALOG_MS
-  if (nextLoopTime <= millis()) {
-#endif // SENSOR_ANALOG_MS
-    readSensor();
-#ifdef SENSOR_ANALOG_SMOOTH // TODO maybe copy this to a system function
-    smoothedValue = smoothedValue - (smoothedValue >> SENSOR_ANALOG_SMOOTH) + value;
-#endif // SENSOR_ANALOG_SMOOTH
-#ifdef SENSOR_ANALOG_DEBUG
-        Serial.print(F("Analog:")); Serial.println(value);
-#ifdef SENSOR_ANALOG_SMOOTH
-        Serial.print(F("Smoothed Analog:")); Serial.println(smoothedValue);
-#endif // SENSOR_ANALOG_SMOOTH
-#endif // SENSOR_ANALOG_DEBUG
-#ifdef SENSOR_ANALOG_MS
-        nextLoopTime = millis() + SENSOR_ANALOG_MS;
-    }
-#endif // SENSOR_ANALOG_MS
+  sensor_analog_example.loop();
 }
+
 } //namespace sAnalog
-#endif // SENSOR_ANALOG_WANT
+#endif // SENSOR_ANALOG_EXAMPLE_WANT

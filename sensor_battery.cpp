@@ -1,61 +1,42 @@
 /*
-  Sensor Analog Class & Sensor Battery
-  Read from a pin and return as sAnalog::Value or as battery voltage
+  Sensor Battery
+  Read from some internal setup - that is board specific and report millivolts
 */
 
-// TODO merge with sensor_analog so have a class
-// TODO add the _ARRAY parameters as used in sensor_sht85.cpp so will read multiple analog inputs.
-
 #include "_settings.h"  // Settings for what to include etc
-#ifdef SENSOR_ANALOG_WANT
+#ifdef SENSOR_BATTERY_WANT
 #include <Arduino.h>
+#include "sensor_analog.h"
 #include "sensor_battery.h"
+#include "system_discovery.h"
 
-// TODO figure out how to handle multiple analog input pins 
-
-namespace sAnalog {
-
-#ifdef SENSOR_ANALOG_MS
-unsigned long nextLoopTime = 0;
-#endif // SENSOR_ANALOG_MS
-
-int value = 0;
-#ifdef SENSOR_ANALOG_SMOOTH
-unsigned long smoothedValue = 0;
+#ifdef LOLIN_C3_PICO
+  #define SENSOR_BATTERY_PIN 3
+#else
+  #error Measuring battery voltage is board specific, only currently defined for Lolin C3 Pico
 #endif
 
-void setup() {      
-  // pinMode(SENSOR_ANALOG_PIN, INPUT); // I don't think this is needed
-  #ifdef ESP8266_D1_MINI
-    analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
-  #else
-    #error analogReference is board specific, appears to be undefined on ESP32C3 
-  #endif
-  //value = 0;
+Sensor_Battery::Sensor_Battery(const uint8_t p) : Sensor_Analog(p) { }
+
+uint16_t Sensor_Battery::read() {
+  return analogReadMilliVolts(pin); // Note this returns uiunt32_t which makes no sense given max value is 5*1000 = 5000
 }
 
-void readSensor() {
-  value = analogRead(SENSOR_ANALOG_PIN);
-}
+namespace sBattery {
 
+Sensor_Battery sensor_battery(SENSOR_BATTERY_PIN);  // TODO-57 will rarely be as simple as this
+
+void setup() {
+  #ifdef SENSOR_BATTERY_DEBUG
+    sensor_battery.name = new String(F("battery"));
+  #endif // SENSOR_BATTERY_DEBUG
+  sensor_battery.topic = String(*xDiscovery::topicPrefix + SENSOR_BATTERY_TOPIC);
+  sensor_battery.setup();
+}
+// TODO create a linked list of sensors, and another of actuators that can be called in loop OR use list by time
 void loop() {
-#ifdef SENSOR_ANALOG_MS
-  if (nextLoopTime <= millis()) {
-#endif // SENSOR_ANALOG_MS
-    readSensor();
-#ifdef SENSOR_ANALOG_SMOOTH // TODO maybe copy this to a system function
-    smoothedValue = smoothedValue - (smoothedValue >> SENSOR_ANALOG_SMOOTH) + value;
-#endif // SENSOR_ANALOG_SMOOTH
-#ifdef SENSOR_ANALOG_DEBUG
-        Serial.print(F("Analog:")); Serial.println(value);
-#ifdef SENSOR_ANALOG_SMOOTH
-        Serial.print(F("Smoothed Analog:")); Serial.println(smoothedValue);
-#endif // SENSOR_ANALOG_SMOOTH
-#endif // SENSOR_ANALOG_DEBUG
-#ifdef SENSOR_ANALOG_MS
-        nextLoopTime = millis() + SENSOR_ANALOG_MS;
-    }
-#endif // SENSOR_ANALOG_MS
+  sensor_battery.loop();
 }
-} //namespace sAnalog
-#endif // SENSOR_ANALOG_WANT
+
+} //namespace sBattery
+#endif // SENSOR_BATTERY_WANT

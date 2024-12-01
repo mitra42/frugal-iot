@@ -24,6 +24,13 @@
 #include "system_wifi.h"
 #include "system_mqtt.h"  // xMqtt
 #include "system_discovery.h"
+// TO_ADD_SENSOR TO_ADD_ACTUATOR
+#ifdef SENSOR_ANALOG_EXAMPLE_WANT
+  #include "sensor_analog_example.h"
+#endif
+#ifdef SENSOR_BATTERY_WANT
+  #include "sensor_battery.h"
+#endif
 #ifdef CONTROL_DEMO_MQTT_WANT
   #include "control_demo_mqtt.h"
 #endif
@@ -117,6 +124,12 @@ void setup() {
       #endif
       #ifdef ACTUATOR_RELAY_WANT
         ACTUATOR_RELAY_ADVERTISEMENT
+      #endif
+      #ifdef SENSOR_ANALOG_EXAMPLE_WANT
+        SENSOR_ANALOG_EXAMPLE_ADVERTISEMENT
+      #endif
+      #ifdef SENSOR_BATTERY_WANT
+        SENSOR_BATTERY_ADVERTISEMENT
       #endif
       #ifdef SENSOR_SHT85_WANT
         SENSOR_SHT85_ADVERTISEMENT

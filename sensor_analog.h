@@ -1,29 +1,34 @@
 #ifndef SENSOR_ANALOG_H
 #define SENSOR_ANALOG_H
 
-/* Configuration options
- * Required: SENSOR_ANALOG_PIN
- * Optional: SENSOR_ANALOG_MS SENSOR_ANALOG_REFERENCE SENSOR_ANALOG_SMOOTH
-*/
+/* Configuration options.
+ *  
+ */
 
+// Add new digutal actuators to this statement.  #TO-ADD-ACTUATOR
+#if defined(SENSOR_ANALOG_EXAMPLE_DEBUG) || defined(SENSOR_BATTERY_DEBUG) // TODO make this generic, but LED almost always wanted
+#define SENSOR_ANALOG_DEBUG
+#endif 
 
-namespace sAnalog {
-//  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/
-// TODO what are the values on ESP8266 or ESP32
-// TODO map between one set of REFERENCE values and the board specfic ones from the docs 
-// See https://github.com/mitra42/frugal-iot/issues/60
-#ifndef SENSOR_ANALOG_REFERENCE
-  #ifdef ESP8266_D1_MINI
-    #define SENSOR_ANALOG_REFERENCE DEFAULT
-  #else
-    #error analogReference() is board dependent, review the docs and online and define 
-  #endif
-#endif //  SENSOR_ANALOG_REFERENCE
-#ifdef SENSOR_ANALOG_SMOOTH
-extern unsigned long smoothedValue;
-#endif
-extern int value;
-void setup();
-void loop();
-} // namespace sAnalog
+class Sensor_Analog {
+  public: 
+    uint8_t pin;
+    uint8_t value = 0;
+    // If non-zero smoothed by this many bits (newSmoothedValue = oldSmoothedValue - (oldSmoothedValue>>smooth) + (reading))
+    // Be careful of overflow - e.g. if 10 bit analog read then max smooth can be is 6 to smooth over 2^6 = 64 readings
+    uint8_t smooth = 0; 
+    unsigned long ms = 10000; // 10 second read
+    String topic; //TODO-53 maybe should be &topic
+    unsigned long nextLoopTime = 0;
+    #ifdef SENSOR_ANALOG_DEBUG
+      String *name;
+    #endif
+    Sensor_Analog(const uint8_t p);
+    virtual void act(); // send results
+    virtual void set(const uint16_t v); // convert from value read to value stored
+    virtual uint16_t read();
+    void setup();
+    void loop();
+}; // Class Actuator_Digital
+
 #endif // SENSOR_ANALOG_H
