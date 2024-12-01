@@ -337,20 +337,48 @@ class MqttBar extends MqttReceiver {
     }
     return graph;
   }
+  get yaxisid() { // TODO turn more things into getters.
+    let scaleNames = Object.keys(graph.state.scales);
+    let yaxisid;
+    let n = this.state.name.toLowerCase();
+    let t = this.state.topic.split('/').pop().toLowerCase();
+    if (scaleNames.includes(n)) { return n; }
+    if (scaleNames.includes(t)) { return t; }
+    if ( yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt)) ) { return yaxisid; }
+    if ( yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt)) ) { return yaxisid; }
+    // TODO-46 - need to turn axis on, and position when used.
+    // Not found - lets make one - this might get more parameters (e.g. linear vs exponential could be a attribute of Bar ?
+    graph.addScale(t, {
+      // TODO-46 add color
+      type: 'linear',
+      display: true,
+      title: {
+        color: this.state.color,
+        display: true,
+        text: this.state.name,
+      },
+      suggestedMin: this.state.min,
+      suggestedMax: this.state.max,
+    });
+    return t;
+  }
   // Event gets called when graph icon is clicked - adds a line to the graph
   opengraph(e) {
     console.log("Graph clicked", e, this);
-    let graph = this.findGraph();
+    let graph = this.findGraph(); // Side effect of creating if doesnt exist
+    let yaxisid = this.yaxisid;
+    // Figure out which scale to use, or build it
+
+    // Create a graphdataset to put in the chart
     if (!this.state.dataset) {
-      // TODO-46 possibly move dataset creation to earlier - but leave floating, and accumulate data in it even before displayed
       let ds = EL('mqtt-graphdataset', {
         // No topic since piggybacking off this.
         name: this.state.name, color: this.state.color,
         // TODO-46 yaxis should depend on type of graph BUT cant use name as that may end up language dependent
-        min: this.state.min, max: this.state.max, yaxisid: "temperature",
+        min: this.state.min, max: this.state.max, yaxisid: yaxisid,
       });
       this.state.dataset = ds;
-      // TODO move next two lines to a method on MqttGraphdataset
+      // TODO-46 move next two lines to a method on MqttGraphdataset
       ds.state.data = this.state.data;  // Link, not copy
       ds.chartdataset.data = this.state.data; // Link, not copy
     }
@@ -794,6 +822,20 @@ class MqttGraph extends MqttElement {
   constructor() {
     super();
     this.datasets = []; // Child elements will add/remove here
+    this.state.yAxisCount = 0; // 0 left, 1 right
+    this.state.scales = { // Start with an xAxis and add axis as needed
+      xAxis: {
+        // display: false,
+        type: 'time',
+        distribution: 'series',
+        axis: 'x',
+        adapters: {
+          date: {
+            // locale: 'en-US', // Comment out to Use systems Locale
+          },
+        },
+      }
+    };
   }
 
   // Note - makeChart is really fussy, the canvas must be inside something with a size.
@@ -805,7 +847,13 @@ class MqttGraph extends MqttElement {
     this.makeChart();
   }
   shouldLoadWhenConnected() {return true;}
-
+  addScale(id, o) {
+    if (!this.state.yAxisCount) {
+      o.grid = { drawOnChartArea: true } // only want the grid lines for one axis to show u
+    }
+    o.position = ((this.state.yAxisCount++) % 2) ? 'right' : 'left';
+    this.state.scales[id] = o;
+  }
   makeChart() {
     if (this.chart) {
       this.chart.destroy();
@@ -819,39 +867,8 @@ class MqttGraph extends MqttElement {
         },
         options: {
           //zone: "America/Denver", // Comment out to use system time
-          response: true,
-          scales: { // For some reason cant put this on a dataset
-            temperature:{
-              type: 'linear',
-              display: true, // TODO switch this and position based on usage
-              suggestedMin: 10,
-              suggestedMax: 40,
-              position: 'left',
-              grid: {
-                drawOnChartArea: true, // only want the grid lines for one axis to show up
-              },
-            },
-            humidity:{
-              type: 'linear',
-              display: true, // TODO switch this and position based on usage
-              suggestedMin: 30,
-              suggestedMax: 100,
-              position: 'right',
-              grid: {
-                drawOnChartArea: false, // only want the grid lines for one axis to show up
-              },
-            },
-            xAxis: {
-              // display: false,
-              type: 'time',
-              distribution: 'series',
-              adapters: {
-                date: {
-                  // locale: 'en-US', // Comment out to Use systems Locale
-                }
-              },
-            },
-          }
+          responsive: true,
+          scales: this.state.scales,
         }
       }
     );
@@ -882,7 +899,6 @@ class MqttGraphDataset extends MqttElement {
    */
   makeChartDataset() {
     // Some other priorities that might be useful are at https://www.chartjs.org/docs/latest/samples/line/segments.html
-    // TODO-46-XXX should not create each time
     if (!this.chartdataset) {
       // Fields only defined once - especially data
       this.chartdataset = {

@@ -74,7 +74,6 @@ class MqttOrganization {
     this.mqtt_client = null; // Object from library
     this.subscriptions = []; // [{topic, qos, cb(topic, message)}]
     this.status = "constructing";
-    console.log("XXX Connection is", this);
   }
   mqtt_status_set(k) {
     console.log('mqtt', this.config_org.name, k);
@@ -131,7 +130,6 @@ class MqttOrganization {
   subscribe(topic, qos, cb) {
     this.mqtt_subscribe(topic, qos);
     this.subscriptions.push({topic, qos, cb});
-    console.log("XXX subscribing to ",topic);
   }
   configSubscribe() {
     // noinspection JSUnresolvedReference
@@ -158,7 +156,6 @@ class MqttOrganization {
     }
   }
   messageReceived(topic, message) {
-    console.log("XXX messageReceived:",topic,message); // TODO-server dont log this - will be a lot
     this.log(topic, message);
   }
   log(topic, message) {
