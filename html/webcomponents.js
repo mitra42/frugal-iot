@@ -217,7 +217,7 @@ class MqttReceiver extends MqttElement {
   constructor() {
     super();
   }
-  static get observedAttributes() { return ['topic','value','name']; }
+  static get observedAttributes() { return ['topic', 'value', 'name', 'color']; }
   static get boolAttributes() { return []; }
   shouldLoadWhenConnected() { return super.shouldLoadWhenConnected() && !this.state.subscribed; }
   loadContent() {
@@ -228,6 +228,7 @@ class MqttReceiver extends MqttElement {
   valueSet(val) { // Note val can be of many types - it will be subclass dependent
     this.state.value = val;
     this.state.data.push({time: Date.now(), value: val}); // Same format as graph dataset expects
+    if (this.state.dataset) { this.state.dataset.dataChanged(); } // Will typically update graph
     return true; // Rerender
   } // Intended to be subclassed and subclass will often return false
 
@@ -244,6 +245,56 @@ class MqttReceiver extends MqttElement {
     // noinspection CssInvalidHtmlTagReference
     return this.closest("mqtt-node");
   }
+  get yaxisid() { // TODO turn more things into getters.
+    let scaleNames = Object.keys(graph.state.scales);
+    let yaxisid;
+    let n = this.state.name.toLowerCase();
+    let t = this.state.topic.split('/').pop().toLowerCase();
+    if (scaleNames.includes(n)) { return n; }
+    if (scaleNames.includes(t)) { return t; }
+    if ( yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt)) ) { return yaxisid; }
+    if ( yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt)) ) { return yaxisid; }
+    // TODO-46 - need to turn axis on, and position when used.
+    // Not found - lets make one - this might get more parameters (e.g. linear vs exponential could be a attribute of Bar ?
+    graph.addScale(t, {
+      // TODO-46 add color
+      type: 'linear',
+      display: true,
+      title: {
+        color: this.state.color,
+        display: true,
+        text: this.state.name,
+      },
+      suggestedMin: this.state.min,
+      suggestedMax: this.state.max,
+    });
+    return t;
+  }
+  // Event gets called when graph icon is clicked - adds a line to the graph
+  opengraph(e) {
+    console.log("Graph clicked", e, this);
+    let graph = MqttGraph.findGraph(); // Side effect of creating if doesnt exist
+    let yaxisid = this.yaxisid;
+    // Figure out which scale to use, or build it
+
+    // Create a graphdataset to put in the chart
+    if (!this.state.dataset) {
+      let ds = EL('mqtt-graphdataset', {
+        // No topic since piggybacking off this.
+        name: this.state.name, color: this.state.color,
+        // TODO-46 yaxis should depend on type of graph BUT cant use name as that may end up language dependent
+        min: this.state.min, max: this.state.max, yaxisid: yaxisid,
+      });
+      this.state.dataset = ds;
+      // TODO-46 move next two lines to a method on MqttGraphdataset
+      ds.state.data = this.state.data;  // Link, not copy
+      ds.chartdataset.data = this.state.data; // Link, not copy
+    }
+    if (!graph.contains(this.state.dataset)) {
+      graph.append(this.state.dataset);
+    }
+  }
+
 }
 class MqttText extends MqttReceiver {
   // constructor() { super(); }
@@ -318,8 +369,8 @@ const MBstyle = `
   .icon {height:12px;width:12px;float:right;border: 1px,black,solid}
  `;
 class MqttBar extends MqttReceiver {
-  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['value','min','max','color']); }
-  static get floatAttributes() { return MqttTransmitter.floatAttributes.concat(['value','min','max']); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['value','min','max']); }
+  static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['value','min','max']); }
 
   constructor() {
     super();
@@ -327,64 +378,7 @@ class MqttBar extends MqttReceiver {
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     super.valueSet(Number(val));
-    if (this.state.dataset) { this.state.dataset.dataChanged(); } // Will typically update graph
     return true; // Note shouldn't re-render children like a MqttSlider because these are inserted into DOM via a "slpt"
-  }
-  findGraph() { // TODO-46 probably belongs in MqttReceiver
-    if (!graph) {
-      graph = EL('mqtt-graph');
-      document.body.append(graph);
-    }
-    return graph;
-  }
-  get yaxisid() { // TODO turn more things into getters.
-    let scaleNames = Object.keys(graph.state.scales);
-    let yaxisid;
-    let n = this.state.name.toLowerCase();
-    let t = this.state.topic.split('/').pop().toLowerCase();
-    if (scaleNames.includes(n)) { return n; }
-    if (scaleNames.includes(t)) { return t; }
-    if ( yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt)) ) { return yaxisid; }
-    if ( yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt)) ) { return yaxisid; }
-    // TODO-46 - need to turn axis on, and position when used.
-    // Not found - lets make one - this might get more parameters (e.g. linear vs exponential could be a attribute of Bar ?
-    graph.addScale(t, {
-      // TODO-46 add color
-      type: 'linear',
-      display: true,
-      title: {
-        color: this.state.color,
-        display: true,
-        text: this.state.name,
-      },
-      suggestedMin: this.state.min,
-      suggestedMax: this.state.max,
-    });
-    return t;
-  }
-  // Event gets called when graph icon is clicked - adds a line to the graph
-  opengraph(e) {
-    console.log("Graph clicked", e, this);
-    let graph = this.findGraph(); // Side effect of creating if doesnt exist
-    let yaxisid = this.yaxisid;
-    // Figure out which scale to use, or build it
-
-    // Create a graphdataset to put in the chart
-    if (!this.state.dataset) {
-      let ds = EL('mqtt-graphdataset', {
-        // No topic since piggybacking off this.
-        name: this.state.name, color: this.state.color,
-        // TODO-46 yaxis should depend on type of graph BUT cant use name as that may end up language dependent
-        min: this.state.min, max: this.state.max, yaxisid: yaxisid,
-      });
-      this.state.dataset = ds;
-      // TODO-46 move next two lines to a method on MqttGraphdataset
-      ds.state.data = this.state.data;  // Link, not copy
-      ds.chartdataset.data = this.state.data; // Link, not copy
-    }
-    if (!graph.contains(this.state.dataset)) {
-      graph.append(this.state.dataset);
-    }
   }
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
@@ -837,6 +831,13 @@ class MqttGraph extends MqttElement {
       }
     };
   }
+  static findGraph() { // TODO-46 probably belongs in MqttReceiver
+    if (!graph) {
+      graph = EL('mqtt-graph');
+      document.body.append(graph);
+    }
+    return graph;
+  }
 
   // Note - makeChart is really fussy, the canvas must be inside something with a size.
   // For some reason this does not work by adding inside the render - i.e. to the virtual Dom.
@@ -848,9 +849,7 @@ class MqttGraph extends MqttElement {
   }
   shouldLoadWhenConnected() {return true;}
   addScale(id, o) {
-    if (!this.state.yAxisCount) {
-      o.grid = { drawOnChartArea: true } // only want the grid lines for one axis to show u
-    }
+    o.grid = { drawOnChartArea: !this.state.yAxisCount } // only want the grid lines for one axis to show u
     o.position = ((this.state.yAxisCount++) % 2) ? 'right' : 'left';
     this.state.scales[id] = o;
   }
