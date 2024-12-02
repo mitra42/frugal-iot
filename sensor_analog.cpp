@@ -66,8 +66,8 @@ void Sensor_Analog::setup() {
 void Sensor_Analog::loop() {
   if (nextLoopTime <= millis()) {
     set(read()); // Will also send message via act()
+    nextLoopTime = millis() + ms;
   }
-  nextLoopTime = millis() + ms;
 }
 
 #endif // SENSOR_ANALOG_WANT

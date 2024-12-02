@@ -16,7 +16,11 @@
   #error Measuring battery voltage is board specific, only currently defined for Lolin C3 Pico
 #endif
 
-Sensor_Battery::Sensor_Battery(const uint8_t p) : Sensor_Analog(p) { }
+Sensor_Battery::Sensor_Battery(const uint8_t p) : Sensor_Analog(p) { 
+  #ifdef SENSOR_BATTERY_MS
+    ms = SENSOR_BATTERY_MS;
+  #endif
+}
 
 uint16_t Sensor_Battery::read() {
   return analogReadMilliVolts(pin); // Note this returns uiunt32_t which makes no sense given max value is 5*1000 = 5000
