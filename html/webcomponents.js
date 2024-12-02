@@ -497,13 +497,15 @@ const MDDstyle = `
 .name, .description, .nodeid { margin-left: 1em; margin-right: 1em; } 
 `;
 
+// TODO-43 rename as MqttTopic
 class MqttDropdown extends MqttTransmitter {
+  // options = "bool" for boolean topics (matches t.type on others)
   static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['type','options','value','project']); }
 
   constructor() {
     super();
   }
-  // TODO-42 may need to change findTopics to account for other selection criteria
+  // TODO-43 may need to change findTopics to account for other selection criteria
   findTopics() {
     let project = this.state.project;
     let nodes = Array.from(project.children);
@@ -512,8 +514,7 @@ class MqttDropdown extends MqttTransmitter {
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     super.valueSet(val);
-    // TODO-43 need to set which of dropdown are selected
-    return true; // Rerenders on moving based on any received value but not when dragged
+    return true; // Rerenders on moving based on any received value to change selected topic
   }
   onchange(e) {
     //console.log("Dropdown onchange");
@@ -747,8 +748,9 @@ class MqttNode extends MqttReceiver {
           name,
           topic,
           type: t.type,
-          options: t.options,
+          options: t.options,  // e.g. "bool" for must be boolean topic
           retain: true,
+          qos: 1, // This message needs to get through to node
           project: this.findProject()
         }, []);
       } else {

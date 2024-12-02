@@ -60,7 +60,7 @@ void controlOutMessageReceived(String &topic, String &payload) {
   if (!outTopic || *outTopic != payload) {
     // Only send if its changed.
     outTopic = new String(payload);
-    act();
+    act(); // Send any result on this new topic
   }
 }
 void setup() {
