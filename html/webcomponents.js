@@ -313,6 +313,12 @@ class MqttTransmitter extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['retain', 'qos']); }
   static get integerAttributes() { return MqttReceiver.integerAttributes.concat(['qos']) };
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['retain']) }
+  constructor() {
+    super();
+    this.state.qos= 0; // Default to no QOS
+    this.state.retain = false; // default to not retaining
+  }
+
   // TODO - make sure this doesn't get triggered by a message from server.
   valueGet() { // Needs to return an integer or a string
     return this.state.value
@@ -504,6 +510,8 @@ class MqttDropdown extends MqttTransmitter {
 
   constructor() {
     super();
+    this.state.qos = 1; // Default to making sure it gets through
+    this.state.retain = true; // And that node can access result if reconnects.
   }
   // TODO-43 may need to change findTopics to account for other selection criteria
   findTopics() {
