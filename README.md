@@ -64,15 +64,17 @@ I've also tested on a Lolin C3 Pico (ESP32-C3), but do not test every git push o
 ### Installing and testing on a dev board
 
 #### Basic test
-* Copy _local-template.h to _local.h. For now leave the organization as "dev" unless you talk to us. 
-  Put the MQTT server, userid and password, and which sensors you have on the board.
+* Copy _local-template.h to _local.h. For now leave the ORGANIZATION as "dev" unless you talk to us. 
+  Add the MQTT server, userid and password, if you aren't going to use `naturalinnovation.org` 
+  Uncomment lines for any sensors you have on the board.
 * Check _configuration.h t - for now this is a good place to set how much debugging you want.  TODO maybe move to _local.h
 * Compile and Flash to your dev board
 * On a Wifi device such as a phone
   * Connect to the wifi node of the board which will have a SSID like esp8266-12345
   * Configure the Wifi SSID and Password of your router,
-  * Pick the name for your project (use the same one for all your boards), and also give your board a name and description
-    * Note for the moment [issue #63](https://github.com/mitra42/frugal-iot/issues/63) this should be `Lotus Ponds`
+  * Pick the name for your project (use the same one for all your boards), 
+    * Let us know by either (opening a Github issue)[https://github.com/mitra42/frugal-iot/issues/new/choose], or editing `html/server/config.yaml` and doing a Pull Request
+  * Give your board a name and description
   * Click SAVE then RESTART
 * The device should now connect to the mqtt server at naturalinnovation.org
 
@@ -82,9 +84,6 @@ If you get the configuration wrong, you'll need (for now - part of issue#22) to
 
 Open a browser to http://naturalinnovation:8080 
 - note this will move to a https address with its own domain name 
-
-NOTE For now - index.html is hard coded to only worth with the "Lotus Ponds" project,
-I expect this to change very soon. See [issue #63](https://github.com/mitra42/frugal-iot/issues/63)
 
 ### Server development
 
