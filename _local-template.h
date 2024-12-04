@@ -22,9 +22,27 @@
 // Where your MQTT server is - if using naturalinnovation.org for more than some development please let us know #TODO say how ! 
 #define SYSTEM_MQTT_SERVER "naturalinnovation.org"
 
-// Can override automatically gnerated description for your device e.g.
+// It can be slow developing by resting the portal each time, so if wanted define SSID and PASSWORD here, 
+// just don't forget to comment these out before release
+//#define SYSTEM_WIFI_SSID "myhomewifi"
+//#define SYSTEM_WIFI_PASSWORD "somesecretpassword"
+//#define SYSTEM_WIFI_DEVICE "ESP8266-A" // SH%
+
+// Can override automatically generated description for your device e.g.
 //#define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION "ESP8266 with SHT85 sensor" 
 
-// Now define the actual (non-default) sensors and actuators used
-#define ACTUATOR_RELAY_WANT
-// #define SENSOR_SHT85_WANT
+// Now define the actual (non-default) sensors and actuators used and any non-default settings
+#define ACTUATOR_LEDBUILTIN_WANT
+//#define ACTUATOR_RELAY_WANT
+//#define CONTROL_BLINKEN_WANT
+//#define CONTROL_DEMO_MQTT_WANT
+//#define SENSOR_ANALOG_EXAMPLE_WANT
+//#define SENSOR_BATTERY_WANT
+//#define SENSOR_BATTERY_MS 3000 // testing at 3secs while developing
+//#define SENSOR_BATTERY_DEBUG
+//#define SENSOR_SHT85_WANT
+//#define SENSOR_DHT_WANT
+
+// Can also define a default language
+// #define LANGUAGE_DEFAULT "de"
+
