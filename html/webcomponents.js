@@ -664,7 +664,7 @@ class MqttWrapper extends HTMLElementExtended {
   connectedCallback() {
       // TODO-69 security this will be replaced by a subset of config.yaml,
       //  that is public, but in the same format, so safe to build on this for now
-      GET("/config", {}, (err, json) => {
+      GET("/config.json", {}, (err, json) => {
         if (err) {
           console.error(err);
           // TODO-69 display error to user, not just console

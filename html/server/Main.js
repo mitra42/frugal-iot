@@ -137,7 +137,7 @@ class MqttOrganization {
       for (let n of p.nodes) { // Note that node could have name of '+' for tracking all of them
         for (let t of n.track) {
           let topic = `${this.config_org.name}/${p.name}/${n.id}/${t}`;
-          // TODO-server for now its a generic messageReceived - will need some kind of action
+          // TODO-server for now its a generic messageReceived - may need some kind of action - for example if Config had a "control" rule
           this.subscribe(topic, 0, this.messageReceived.bind(this)); // TODO-66 think about QOS, add optional in YAML
         }
       }
@@ -201,7 +201,7 @@ app.options('/', (req, res) => {
 app.get('/echo', (req, res) => {
   res.status(200).json(req.headers);
 });
-app.get('/config', (req, res) => {
+app.get('/config.json', (req, res) => {
     res.status(200).json(config);
 });
 // Main for server
