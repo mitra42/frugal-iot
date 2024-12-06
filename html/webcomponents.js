@@ -581,6 +581,11 @@ class MqttWrapper extends HTMLElementExtended {
     this.state.project = e.target.value;
     this.appender();
   }
+  appendClient() {
+    this.append(
+      EL('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}) // typically "ws://naturalinnovation.org:9012"
+    )
+  }
   appender() {
     // At this point could have any combination of org project or node
     if (this.state.node) { // n
@@ -651,6 +656,7 @@ class MqttWrapper extends HTMLElementExtended {
         } else { // got config
           server_config = json;
           this.loadAttributesFromURL();
+          this.appendClient();
           this.appender();
         }
         this.renderAndReplace();
@@ -659,8 +665,9 @@ class MqttWrapper extends HTMLElementExtended {
   }
   render() {
     return [
-      EL('style', {textContent: MPstyle}), // Using styles defined above
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
       EL('div', {class: 'outer'}, [
+          EL('slot', {name: 'client'}),
           EL('slot'),
         ]),
     ];
