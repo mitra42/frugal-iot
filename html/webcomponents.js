@@ -115,12 +115,13 @@ let unique_id = 1; // Just used as a label for auto-generated elements
 let graph;
 let server_config;
 
+/* Helpers of various kinds */
+
 function mqtt_subscribe(topic, cb) {
   console.log("Subscribing to ", topic);
   mqtt_subscriptions.push({topic, cb});
   mqtt_client.subscribe(topic, (err) => { if (err) console.error(err); })
 }
-/* Helpers of various kinds */
 /* - not currently used as graph.js adjust automatically
 function date_start_hour(x) {
   let y = x ? new Date(x) : new Date();
@@ -241,10 +242,12 @@ class MqttReceiver extends MqttElement {
     // noinspection CssInvalidHtmlTagReference
     return this.closest("mqtt-project");
   }
+  /* Unused
   findNode() { // Note this will only work once the element is connected.
     // noinspection CssInvalidHtmlTagReference
     return this.closest("mqtt-node");
   }
+   */
   get yaxisid() { // TODO turn more things into getters.
     let scaleNames = Object.keys(graph.state.scales);
     let yaxisid;
@@ -252,7 +255,9 @@ class MqttReceiver extends MqttElement {
     let t = this.state.topic.split('/').pop().toLowerCase();
     if (scaleNames.includes(n)) { return n; }
     if (scaleNames.includes(t)) { return t; }
+    // noinspection JSAssignmentUsedAsCondition
     if ( yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt)) ) { return yaxisid; }
+    // noinspection JSAssignmentUsedAsCondition
     if ( yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt)) ) { return yaxisid; }
     // TODO-46 - need to turn axis on, and position when used.
     // Not found - lets make one - this might get more parameters (e.g. linear vs exponential could be a attribute of Bar ?
@@ -273,7 +278,7 @@ class MqttReceiver extends MqttElement {
   // Event gets called when graph icon is clicked - adds a line to the graph
   opengraph(e) {
     console.log("Graph clicked", e, this);
-    let graph = MqttGraph.findGraph(); // Side effect of creating if doesnt exist
+    let graph = MqttGraph.findGraph(); // Side effect of creating if does not exist
     let yaxisid = this.yaxisid;
     // Figure out which scale to use, or build it
 
@@ -453,6 +458,7 @@ class MqttSlider extends MqttTransmitter {
       // if the pointer is out of slider => lock the thumb within the boundaries
       newLeft = Math.min(Math.max( -thumb.offsetWidth/2, newLeft,), slider.offsetWidth - thumb.offsetWidth/2);
       tt.valueSet(tt.leftToValue(newLeft));
+      // noinspection JSUnresolvedReference
       if (tt.state.continuous && (tt.state.value !== lastvalue)) { tt.publish(); lastvalue = tt.state.value; }
     }
     // noinspection JSUnusedLocalSymbols
@@ -548,17 +554,21 @@ customElements.define('mqtt-dropdown', MqttDropdown);
 // Add appropriate internals
 
 function oHasProject(o, project) {
+  // noinspection JSUnresolvedReference
   return o.projects.some(p => p.name === project);
 }
 function pHasNode(p, nodename) {
   return p.nodes.some(n => n.name === nodename);
 }
 function o2ProjectWithNode(o, nodename) {
+  // noinspection JSUnresolvedReference
   return o.projects.find(p => pHasNode(p, nodename)); // returns a project
 }
-function modeName2OrgProject(nodename) {
+function nodeName2OrgProject(nodename) {
+  // noinspection JSUnresolvedReference
   for ( let o in server_config.organizations) {
     let p;
+    // noinspection JSAssignmentUsedAsCondition
     if ( p = o2ProjectWithNode(nodename)) {
       return [o.name, p.name];
     }
@@ -571,7 +581,7 @@ class MqttWrapper extends HTMLElementExtended {
   //static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
 
   // Note this is not using the standard connectedCallBack which loads content and re-renders,
-  // its going to instead add things to the slot
+  // it is going to instead add things to the slot
 
   onOrganization(e) {
     this.state.organization = e.target.value;
@@ -590,7 +600,7 @@ class MqttWrapper extends HTMLElementExtended {
     // At this point could have any combination of org project or node
     if (this.state.node) { // n
       if (!this.state.organization || !this.state.project) {   // n, !(o,p)
-        let [o,p] = nodename2OrgProject(this.state.node);
+        let [o,p] = nodeName2OrgProject(this.state.node);
         if (!o) {
           console.error("Unable to find node=", this.state.node);
           // TODO-69 display error to user, not just console
@@ -607,22 +617,26 @@ class MqttWrapper extends HTMLElementExtended {
     } else { // !n
       if (!this.state.project)  { // !n !p ?o
         if (!this.state.organization) { // !n !p !o
+          // noinspection JSUnresolvedReference
           this.append(
             EL('div', {class: 'dropdown'}, [
               EL('label', {for: 'organizations', textContent: "Organization"}),
               EL('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
                 EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
+                // noinspection JSUnresolvedReference
                 server_config.organizations.map( o =>
                   EL('option', {value: o.name, textContent: o.name, selected: false}),
                 ),
               ]),
             ]));
         } else { // !n !p o  // TODO-69 maybe this should be a blank project ?
+          // noinspection JSUnresolvedReference
           this.append(
             EL('div', {class: 'dropdown'}, [
               EL('label', {for: 'projects', textContent: "Project"}),
               EL('select', {id: 'projects', onchange: this.onProject.bind(this)}, [
                 EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
+                // noinspection JSUnresolvedReference
                 server_config.organizations.find(o => o.name === this.state.organization).projects.map( p =>
                   EL('option', {value: p.name, textContent: p.name, selected: false}),
                 ),
@@ -630,7 +644,9 @@ class MqttWrapper extends HTMLElementExtended {
             ]));
         }
       } else { // !n p ?o
+        // noinspection JSUnresolvedReference
         if (!this.state.organization) {
+          // noinspection JSUnresolvedReference
           let o = server_config.organizations.find(o => oHasProject(o, this.state.project));
           if (!o) {
             console.error("Unable to find project:", this.state.project);
@@ -772,8 +788,8 @@ class MqttNode extends MqttReceiver {
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
-    if (this.state.discover) { // If do not have discover set, then presume have defined what UI we want on this node
-      this.state.discover = false; // Only want discover once, if change then need to get smart about not redrawing working UI as may be relying on data[]
+    if (this.state.discover) { // If do not have "discover" set, then presume have defined what UI we want on this node
+      this.state.discover = false; // Only want "discover" once, if change then need to get smart about not redrawing working UI as may be relying on data[]
       let obj = yaml.loadAll(val, {onWarning: (warn) => console.log('Yaml warning:', warn)});
       console.log(obj);
       let node = obj[0]; // Should only ever be one of them
