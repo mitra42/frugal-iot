@@ -366,14 +366,6 @@ class MqttToggle extends MqttTransmitter {
 }
 customElements.define('mqtt-toggle', MqttToggle);
 
-const MBstyle = `
-  .outer {background-color: white;margin:5px; padding:5px;}
-  .bar {border: 1px,black,solid; background-color: white;margin: 0px;}
-  .left {display:inline-block; text-align: right;}
-  .right {background-color:white; display:inline-block;}
-  .val {margin:5px;}
-  .icon {height:12px;width:12px;float:right;border: 1px,black,solid}
- `;
 class MqttBar extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['value','min','max']); }
   static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['value','min','max']); }
@@ -384,13 +376,13 @@ class MqttBar extends MqttReceiver {
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     super.valueSet(Number(val));
-    return true; // Note shouldn't re-render children like a MqttSlider because these are inserted into DOM via a "slpt"
+    return true; // Note shouldn't re-render children like a MqttSlider because these are inserted into DOM via a "slot"
   }
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
     return [
-      EL('style', {textContent: MBstyle}), // Using styles defined above
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
       EL('div', {class: "outer"}, [
         EL('div', {class: "name"}, [ // TODO-30 maybe should use a <label>
           EL('span', {textContent: this.state.name}),
@@ -549,9 +541,7 @@ class MqttDropdown extends MqttTransmitter {
 customElements.define('mqtt-dropdown', MqttDropdown);
 
 // TODO merge all the styles into a stylesheet and load that and reference in each class
-const MWstyle = `
-.wrapper {border: 1px,black,solid;  margin: 0.2em; }
-`;
+
 // Outer element of the client - Top Level logic
 // If specifies org / project / node then believe it and build to that
 // otherwise get config from server
@@ -883,8 +873,9 @@ class MqttGraph extends MqttElement {
     );
   }
   render() {
-    return (
-      // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
+    return ( [
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+        // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
       EL("div", {class: 'outer'}, [ // TODO Move style to sheet
         EL('slot', {name: "chart"}), // TODO-46-line should just be the chart slot I think
         EL('slot', {}), // TODO-46-line should just be the chart slot I think

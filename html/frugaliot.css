@@ -1,1 +1,15 @@
 /* Currently empty - placeholder */
+/* Multiple places */
+.outer {background-color: white;margin:5px; padding:5px;}
+/* In MqttBar */
+.bar {border: 1px,black,solid; background-color: white;margin: 0px;}
+.left {display:inline-block; text-align: right;}
+.right {background-color:white; display:inline-block;}
+.val {margin:5px;}
+.icon {height:12px;width:12px;float:right;border: 1px,black,solid}
+/* In MqttGraph */
+.leftright{display:flex; align-items:center;}
+.graphnavleft{}
+.right{{}}
+/* In MqttWrapper */
+.wrapper {border: 1px,black,solid;  margin: 0.2em; }
