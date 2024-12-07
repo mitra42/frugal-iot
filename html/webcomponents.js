@@ -151,8 +151,8 @@ class MqttClient extends HTMLElementExtended {
       this.setStatus("connecting");
       mqtt_client = mqtt.connect(this.state.server, {
         connectTimeout: 5000,
-        username: "public", //TODO-30 parameterize this
-        password: "public", //TODO-30 parameterize this
+        username: "public", //TODO-30 parameterize this but needs multiple clients first see MqttWrapper.appendClient
+        password: "public", //TODO-30 parameterize this but needs multiple clients first see MqttWrapper.appendClient
         // Remainder dont appear to be needed
         //hostname: "127.0.0.1",
         //port: 9012, // Has to be configured in mosquitto configuration
@@ -163,21 +163,6 @@ class MqttClient extends HTMLElementExtended {
           this.setStatus(k);
         });
       }
-      /* - replace generic connect with option to test presence
-      mqtt_client.on("connect", () => {
-      console.log("connected");
-      this.setStatus("Connected");
-      mqtt_client.subscribe("presence", (err) => {
-        console.log("Subscribed to presence");
-        if (!err) {
-          mqtt_client.publish("presence", "Hello mqtt");
-        }
-      });
-      // TODO simple message sent by local client, index.html can watch for it to know the local route is working
-      //this.setStatus("Testing presence");
-      //mqtt_client.publish("presence", "Hello mqtt");
-      });
-     */
       mqtt_client.on('error', function (error) {
         console.log(error);
         this.state.status = "Error:" + error.message;
@@ -197,7 +182,7 @@ class MqttClient extends HTMLElementExtended {
       // console.log("XXX already started connection") // We expect this, probably one time
     }
   }
-  // TODO display some more about the client and its status.
+  // TODO-86 display some more about the client and its status.
   render() {
     return [
       EL('div', {},[
@@ -220,6 +205,7 @@ class MqttReceiver extends MqttElement {
   }
   static get observedAttributes() { return ['topic', 'value', 'name', 'color']; }
   static get boolAttributes() { return []; }
+
   shouldLoadWhenConnected() { return super.shouldLoadWhenConnected() && !this.state.subscribed; }
   loadContent() {
     this.state.subscribed = true;
@@ -229,7 +215,9 @@ class MqttReceiver extends MqttElement {
   valueSet(val) { // Note val can be of many types - it will be subclass dependent
     this.state.value = val;
     this.state.data.push({time: Date.now(), value: val}); // Same format as graph dataset expects
-    if (this.state.dataset) { this.state.dataset.dataChanged(); } // Will typically update graph
+    if (this.state.dataset) {
+      // noinspection JSValidateTypes
+      this.state.dataset.dataChanged(); } // Will typically update graph
     return true; // Rerender
   } // Intended to be subclassed and subclass will often return false
 
@@ -592,6 +580,8 @@ class MqttWrapper extends HTMLElementExtended {
     this.appender();
   }
   appendClient() {
+    // TODO-security at some point we'll need one client per project and to use username and password from config.yaml which by then should be in config.d
+    // noinspection JSUnresolvedReference
     this.append(
       EL('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}) // typically "ws://naturalinnovation.org:9012"
     )
