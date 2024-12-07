@@ -5,6 +5,7 @@
 import {EL, HTMLElementExtended, toBool, GET} from './node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 import yaml from './node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
+import { parse } from "csv-parse"; // https://csv.js.org/parse/distributions/browser_esm/
 import { Chart, registerables, _adapters } from './node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
 //import 'chartjs-adapter-luxon';
 Chart.register(...registerables); //TODO figure out how to only import that chart types needed
@@ -131,7 +132,10 @@ function date_start_hour(x) {
   return y;
 }
 */
-
+function filenamenow() {
+  let dateNow = new Date();
+  return `${dateNow.toISOString().substring(0,10)}.csv`
+}
 /* MQTT support */
 class MqttClient extends HTMLElementExtended {
   // This appears to be reconnecting properly, but if not see mqtt (library I think)'s README
@@ -285,10 +289,10 @@ class MqttReceiver extends MqttElement {
     // Create a graphdataset to put in the chart
     if (!this.state.dataset) {
       let ds = EL('mqtt-graphdataset', {
-        // No topic since piggybacking off this.
         name: this.state.name, color: this.state.color,
         // TODO-46 yaxis should depend on type of graph BUT cant use name as that may end up language dependent
         min: this.state.min, max: this.state.max, yaxisid: yaxisid,
+        topic: this.state.topic,
       });
       this.state.dataset = ds;
       // TODO-46 move next two lines to a method on MqttGraphdataset
@@ -742,9 +746,12 @@ const MNstyle = `
 class MqttNode extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id', 'discover']); }
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
+  static get integerAttributes() { return MqttReceiver.integerAttributes.concat(['days'])}
+
   constructor() {
     super(); // Will subscribe to topic
     this.state.topics = {};
+    this.state.days = 0;
   }
 
   elementFrom(t) {
@@ -838,7 +845,7 @@ customElements.define('mqtt-node', MqttNode);
 class MqttGraph extends MqttElement {
   constructor() {
     super();
-    this.datasets = []; // Child elements will add/remove here
+    this.datasets = []; // Child elements will add/remove chartjs datasets here
     this.state.yAxisCount = 0; // 0 left, 1 right
     this.state.scales = { // Start with an xAxis and add axis as needed
       xAxis: {
@@ -895,15 +902,28 @@ class MqttGraph extends MqttElement {
       }
     );
   }
+  // noinspection JSUnusedLocalSymbols
+  graphnavleft(e) {
+    console.log("Graph Nav left TODO", filenamenow());
+    // If not first go back x days
+    for (let ds of this.children) {
+      if (ds.addDataFrom) {
+        ds.addDataFrom(filenamenow());
+      }
+    }
+  }
   render() {
     return ( [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
         // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
       EL("div", {class: 'outer'}, [ // TODO Move style to sheet
-        EL('slot', {name: "chart"}), // TODO-46-line should just be the chart slot I think
-        EL('slot', {}), // TODO-46-line should just be the chart slot I think
+        EL('div',{class: 'leftright'}, [
+          EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
+          EL('slot', {name: "chart"}), // This is <div><canvas></div>
+        ]),
+        EL('slot', {}), // This is the slot where the GraphDatasets get stored
       ])
-    );
+    ] );
   }
 }
 customElements.define('mqtt-graph', MqttGraph);
@@ -914,7 +934,7 @@ class MqttGraphDataset extends MqttElement {
     // Do not make chartDataset here, as do not have attributes yet
   }
   static get observedAttributes() {
-    return MqttReceiver.observedAttributes.concat(['name', 'color', 'min', 'max', 'yaxisid']); }
+    return MqttReceiver.observedAttributes.concat(['topic', 'name', 'color', 'min', 'max', 'yaxisid']); }
   static get integerAttributes() {
     return MqttReceiver.integerAttributes.concat(['min', 'max']) };
   /*
@@ -947,8 +967,47 @@ class MqttGraphDataset extends MqttElement {
     this.chartEl.datasets.push(this.chartdataset);
     this.chartEl.makeChart();
   }
+  // noinspection JSUnusedGlobalSymbols
   dataChanged() { // Called when creating UX adds data.
     this.parentElement.chart.update();
+  }
+  addDataFrom(filename) {
+    //TODO this location may change
+    let filepath = `/server/data/${this.state.topic}/${filename}`;
+    let self = this;
+    fetch(filepath)
+      .then(response => response.text())
+      .then(csvData => {
+        parse(csvData, (err, data) => {
+          if (err) {
+            console.error(err);
+          } else {
+            console.log(data);
+            data.forEach(r => {
+              r[0] = parseInt(r[0]);
+              r[1] = parseFloat(r[1]); // TODO-72 need function for this as presuming its float
+            });
+            console.log(data);
+            self.state.data = data;
+            // TODO-72 this doesnt change the dataset in the chart, need to change the contents of this.state.data not what this.state.data points to
+            this.parentElement.chart.update();
+          }
+        })
+      });
+
+    /*
+    let filepath = `/server/data/${this.state.topic}/${filename}`;
+    let parser = parse((err, records) => {
+      console.log(records);
+    });
+    GET(filepath, {}, (err, data) => {
+      if (err) {
+        console.error(err);
+      } else {
+        data.pipe(parser)
+      }
+    });
+     */
   }
   render() {
     return EL('span', { textContent: this.state.name}); // TODO-46-line should be controls

@@ -63,6 +63,13 @@ function startServer() {
     }
   });
 }
+// =========== Some generic helper functions, not specific to this client ========
+// Clean any leading "/" or "../" from a string so it can be safely appended to a path
+function sanitizeUrl(t) {
+  if(t && t[0] === '/') { return sanitizeUrl(t.substring(1)); }
+  return (t.replaceAll("../",""));
+}
+
 // ================== MQTT Client embedded in server ========================
 
 // Manages a connection to a broker - each organization needs its own connection
@@ -159,8 +166,7 @@ class MqttOrganization {
     this.log(topic, message);
   }
   log(topic, message) {
-    // TODO sanitize topic - remove any leading '/' and any '..'
-    let path = `data/${topic}`;
+    let path = `data/${sanitizeUrl(topic)}`;
     let dateNow = new Date();
     let filename = `${dateNow.toISOString().substring(0,10)}.csv`
     this.appendPathFile(path, filename, `${dateNow.valueOf()},"${message}"\n`);
