@@ -226,7 +226,8 @@ class MqttReceiver extends MqttElement {
       this.renderAndReplace();
     }
   }
-  findProject() { // Note this will only work once the element is connected
+
+  get project() { // Note this will only work once the element is connected
     // noinspection CssInvalidHtmlTagReference
     return this.closest("mqtt-project");
   }
@@ -236,7 +237,7 @@ class MqttReceiver extends MqttElement {
     return this.closest("mqtt-node");
   }
    */
-  get yaxisid() { // TODO turn more things into getters.
+  get yaxisid() {
     let scaleNames = Object.keys(graph.state.scales);
     let yaxisid;
     let n = this.state.name.toLowerCase();
@@ -289,6 +290,7 @@ class MqttReceiver extends MqttElement {
   }
 
 }
+// TODO turn more things into getters - check from here down
 class MqttText extends MqttReceiver {
   // constructor() { super(); }
   render() {
@@ -762,7 +764,7 @@ class MqttNode extends MqttReceiver {
           options: t.options,  // e.g. "bool" for must be boolean topic
           retain: true,
           qos: 1, // This message needs to get through to node
-          project: this.findProject()
+          project: this.project,
         }, []);
       } else {
         console.log("do not know how to display a ", t.display);
@@ -800,10 +802,6 @@ class MqttNode extends MqttReceiver {
     return this.state.id && super.shouldLoadWhenConnected() ;
   }
  */
-  findProject() { // Note this will only work once the element is connected
-    // noinspection CssInvalidHtmlTagReference
-    return this.closest("mqtt-project");
-  }
   render() {
     return [
       EL('style', {textContent: MNstyle}), // Using styles defined above
