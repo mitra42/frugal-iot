@@ -215,7 +215,9 @@ async.waterfall([
     // Seems to be writing to syslog which is being cycled.
     app.use(morgan(config.morgan)); // see https://www.npmjs.com/package/morgan )
     console.log("Serving from",htmldir);
-    app.use(express.static(htmldir,{}));
+    // Use a 1 day cache to keep traffic down TODO might want to override for /data/
+    // Its important that frugaliot.css is cached, or the UX will flash while checking it hasn't changed.
+    app.use(express.static(htmldir,{immutable: true, maxAge: 1000*60*60*24}));
     startServer();
     startClient();
     cb(null,null);
