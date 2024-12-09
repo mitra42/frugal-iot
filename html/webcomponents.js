@@ -987,10 +987,10 @@ class MqttGraphDataset extends MqttElement {
               r[0] = parseInt(r[0]);
               r[1] = parseFloat(r[1]); // TODO-72 need function for this as presuming its float
             });
-            console.log(data);
-            self.state.data = data;
-            // TODO-72 this doesnt change the dataset in the chart, need to change the contents of this.state.data not what this.state.data points to
-            this.parentElement.chart.update();
+            // self.state.data and self.parentElement.datasets[x] are same actual data,
+            // can't set one to this data as wont affect the other
+            self.state.data.splice(0,Infinity,...data); // TODO-72 dont remove (replace Infinity with 0) for next day
+            self.parentElement.chart.update();
           }
         })
       });
