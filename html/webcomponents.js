@@ -180,7 +180,7 @@ class MqttClient extends HTMLElementExtended {
         console.log("Received", topic, " ", msg);
         for (let o of mqtt_subscriptions) {
           if (o.topic === topic) {
-            o.cb(topic, msg)
+            o.cb(msg);
           }
         }
         //mqtt_client.end();
@@ -228,7 +228,7 @@ class MqttReceiver extends MqttElement {
     return true; // Rerender
   } // Intended to be subclassed and subclass will often return false
 
-  message_received(topic, message) {
+  message_received(message) {
     if (this.valueSet(message)) {
       this.renderAndReplace();
     }
