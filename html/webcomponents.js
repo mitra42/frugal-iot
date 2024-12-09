@@ -1,5 +1,8 @@
 /*
  * Simple MQTT template for FrugalIoT
+ *
+ * TODO - refactoring dataset
+ *  Use that - rather than pointed to dataset in Graph
  */
 // noinspection ES6PreferShortImport
 import {EL, HTMLElementExtended, toBool, GET} from './node_modules/html-element-extended/htmlelementextended.js';
@@ -509,7 +512,8 @@ class MqttDropdown extends MqttTransmitter {
   findTopics() {
     let project = this.state.project;
     let nodes = Array.from(project.children);
-    return nodes.map(n => n.state.value.topics.filter( t => t.type === this.state.options).map(t=> { return({name: t.name, topic: n.state.topic + "/" + t.topic})}) ).flat();
+    // Note the nodes value is its config
+    return nodes.map(n => n.topicsByType(this.state.options, this.state.topic)).flat();
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
@@ -735,6 +739,53 @@ const MNstyle = `
 .name, .description, .nodeid { margin-left: 1em; margin-right: 1em; } 
 `;
 
+
+class MqttTopic {
+  // Note this intentionally does NOT extend HtmlElement or MqttElement etc
+  // Encapsulate a single topic, mostly this will be built during discovery process,
+  // but could also be built by hard coded UI if doesn't exist
+  // Should be indexed in MqttNode
+  constructor(discoveredTopic, node) {
+    discoveredTopic.keys().forEach((k) => { this[k] = discoveredTopic[k]; });
+    this.topic = node.state.topic + "/" + discoveredTopic.topic; // Expand the topic
+    this.node = node;
+  }
+  get project() { return this.node.project(); }
+  get element() {
+    if (!this.element) {
+      let name = this.name;
+      let el;
+      if (this.display === "toggle") {
+        // Assuming rw: rw, type: bool
+        el = EL('mqtt-toggle', {topic, name, retain: true, qos: 1}, [name]);
+      } else if (this.display === "bar") {
+        // Assuming rw: r, type: float
+        el = EL('mqtt-bar', {topic, name, max: this.max, min: this.min, color: this.color}, []);
+      } else if (this.display === "text") {
+        el = EL('mqtt-text', {name, topic}, []);
+      } else if (this.display === "slider") {
+        el = EL('mqtt-slider', {name, topic, min: this.min, max: this.max, value: (this.max + this.min) / 2}, [
+          EL('span', {textContent: "△"}, []),
+        ]);
+      } else if (this.display === "dropdown") {
+        el = EL('mqtt-dropdown', {
+          name,
+          topic,
+          type: this.type,
+          options: this.options,  // e.g. "bool" for must be boolean topic
+          retain: true,
+          qos: 1, // This message needs to get through to node
+          project: this.project,
+        }, []);
+      } else {
+        console.log("do not know how to display a ", this.display);
+        //TODO add slider (MqttSlider), need to specify which other element attached to.
+      }
+      this.element = el;
+    }
+    return this.element;
+  }
+}
 class MqttNode extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id', 'discover']); }
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
@@ -742,61 +793,32 @@ class MqttNode extends MqttReceiver {
 
   constructor() {
     super(); // Will subscribe to topic
-    this.state.topics = {};
+    this.state.topics = {}; // Index of MqttTopic
     this.state.days = 0;
   }
 
-  elementFrom(t) {
-    let topic = this.state.topic + "/" + t.topic;
-    if (!this.state.topics[topic]) {
-      let name = t.name;
-      let el;
-      if (t.display === "toggle") {
-        // Assuming rw: rw, type: bool
-        el = EL('mqtt-toggle', {topic, name, retain: true, qos: 1}, [name]);
-      } else if (t.display === "bar") {
-        // Assuming rw: r, type: float
-        el = EL('mqtt-bar', {topic, name, max: t.max, min: t.min, color: t.color}, []);
-      } else if (t.display === "text") {
-        el = EL('mqtt-text', {name, topic}, []);
-      } else if (t.display === "slider") {
-        el = EL('mqtt-slider', {name, topic, min: t.min, max: t.max, value: (t.max + t.min) / 2}, [
-          EL('span', {textContent: "△"}, []),
-        ]);
-      } else if (t.display === "dropdown") {
-        el = EL('mqtt-dropdown', {
-          name,
-          topic,
-          type: t.type,
-          options: t.options,  // e.g. "bool" for must be boolean topic
-          retain: true,
-          qos: 1, // This message needs to get through to node
-          project: this.project,
-        }, []);
-      } else {
-        console.log("do not know how to display a ", t.display);
-        //TODO add slider (MqttSlider), need to specify which other element attached to.
-      }
-      if (el) {
-        this.append(el);
-        this.state.topics[t.topic] = el; // Index into elements - e.g. used by MqttDropdown
-      }
-    } else {
-      console.log("XXX Already have", topic);
-    }
+  topicsByType(type) {
+    return this.state.value.topics.filter( t => t.type === type).map(t=> { return({name: t.name, topic: this.state.topic + "/" + t.topic})});
   }
+
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     if (this.state.discover) { // If do not have "discover" set, then presume have defined what UI we want on this node
       this.state.discover = false; // Only want "discover" once, if change then need to get smart about not redrawing working UI as may be relying on data[]
       let obj = yaml.loadAll(val, {onWarning: (warn) => console.log('Yaml warning:', warn)});
       console.log(obj);
-      let node = obj[0]; // Should only ever be one of them
-      this.state.value = node; // Save the object for this node
-      ['id', 'description', 'name'].forEach(k => this.state[k] = node[k]);
-      while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace
-      node.topics.forEach(t => {
-        this.elementFrom(t);
+      let nodediscover = obj[0]; // Should only ever be one of them
+      this.state.value = nodediscover; // Save the object for this node
+      ['id', 'description', 'name'].forEach(k => this.state[k] = nodediscover[k]); // Grab top level properties from discover
+      while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace any existing nodes
+      nodediscover.topics.forEach(t => {
+        if (!this.state.topics[t.topic]) { // Have we done this already
+          let x1 = new MqttTopic(t, this);
+          this.state.topics[t.topic] = x1;
+          this.append(x1.element);
+        } else {
+          console.log("XXX Already have", topic); //TODO-REFACTOR delete
+        }
       });
       return true;
     } else {
