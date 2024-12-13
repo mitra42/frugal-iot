@@ -5,9 +5,6 @@
   * Maintains a client that watches MQTT broker
   * Has data management and graphing functionality
  */
-/* Notes for dev (to be deleted)
-  * Deleted from template: "debug"; fs; sqlite;
- */
 import express from 'express'; // http://expressjs.com/
 import morgan from 'morgan'; // https://www.npmjs.com/package/morgan - http request logging
 import async from 'async'; // https://caolan.github.io/async/v3/docs.html

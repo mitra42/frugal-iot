@@ -2,8 +2,7 @@
    Advertise in a way that allows a client to discover the nodes from knowing the project
  
    Periodically (SYSTEM_DISCOVERY_MS) send node name on project  e.g  "dev/Lotus/" = "node1"
-   When a client sends "?" to "dev/Lotus/"
-   Respond with a YAML string that describes this node and all sensors actuators
+  At startup send a YAML string that describes this node and all sensors actuators
 
   Required SYSTEM_DISCOVERY_MS 
   Required SYSTEM_DISCOVERY_ORGANIZATION
