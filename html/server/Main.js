@@ -10,7 +10,7 @@
  */
 import express from 'express'; // http://expressjs.com/
 import morgan from 'morgan'; // https://www.npmjs.com/package/morgan - http request logging
-import async from 'async'; // https://caolan.github.io/async/v3/docs.html
+import async from 'async'; // https://caolan.github.io/async/v3/docs.html // TODO move to async-es and then remove from package.json
 import yaml from 'js-yaml'; // https://www.npmjs.com/package/js-yaml
 import { appendFile, mkdir, readFile } from "fs"; // https://nodejs.org/api/fs.html
 import mqtt from 'mqtt'; // https://www.npmjs.com/package/mqtt
@@ -63,6 +63,13 @@ function startServer() {
     }
   });
 }
+// =========== Some generic helper functions, not specific to this client ========
+// Clean any leading "/" or "../" from a string so it can be safely appended to a path
+function sanitizeUrl(t) {
+  if(t && t[0] === '/') { return sanitizeUrl(t.substring(1)); }
+  return (t.replaceAll("../",""));
+}
+
 // ================== MQTT Client embedded in server ========================
 
 // Manages a connection to a broker - each organization needs its own connection
@@ -159,8 +166,7 @@ class MqttOrganization {
     this.log(topic, message);
   }
   log(topic, message) {
-    // TODO sanitize topic - remove any leading '/' and any '..'
-    let path = `data/${topic}`;
+    let path = `data/${sanitizeUrl(topic)}`;
     let dateNow = new Date();
     let filename = `${dateNow.toISOString().substring(0,10)}.csv`
     this.appendPathFile(path, filename, `${dateNow.valueOf()},"${message}"\n`);
@@ -202,7 +208,7 @@ app.get('/echo', (req, res) => {
   res.status(200).json(req.headers);
 });
 app.get('/config.json', (req, res) => {
-    res.status(200).json(config);
+  res.status(200).json(config);
 });
 // Main for server
 async.waterfall([
