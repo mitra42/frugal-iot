@@ -6,6 +6,9 @@
 import {EL, HTMLElementExtended, toBool, GET} from './node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 import yaml from './node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
+//Fails - reported as https://github.com/caolan/async/issues/2010
+//import { each } from './node_modules/async-es/index.js'; // https://caolan.github.io/async/v3/docs.html
+import async from './node_modules/async/dist/async.mjs'; // https://caolan.github.io/async/v3/docs.html
 import { parse } from "csv-parse"; // https://csv.js.org/parse/distributions/browser_esm/
 import { Chart, registerables, _adapters } from './node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
 //import 'chartjs-adapter-luxon';
@@ -126,12 +129,6 @@ function mqtt_subscribe(topic, cb) { // cb(message)
   console.log("Subscribing to ", topic);
   mqtt_subscriptions.push({topic, cb});
   mqtt_client.subscribe(topic, (err) => { if (err) console.error(err); })
-}
-
-// Get the filename the server should be using for this moment.
-function filenamenow() {
-  let dateNow = new Date();
-  return `${dateNow.toISOString().substring(0,10)}.csv`
 }
 
 /* MQTT support */
@@ -830,35 +827,56 @@ class MqttTopic {
     mqtt_client.publish(this.topic, val, { retain: this.retain, qos: this.qos});
   }
   // TODO would be better if caller updated chart when all complete. Needs Promise.all or similar.
-  addDataFrom(filename) {
+  addDataFrom(filename, first, cb) {
     //TODO this location may change
     let filepath = `/server/data/${this.topic}/${filename}`;
     let self = this;
     fetch(filepath)
       .then(response => response.text())
       .then(csvData => {
-        parse(csvData, (err, data) => {
+        parse(csvData, (err, newdata) => {
           if (err) {
             console.error(err);
           } else {
-            console.log(data);
-            data.forEach(r => {
+            console.log("retrieved new records", newdata.length);
+            newdata.forEach(r => {
               r[0] = parseInt(r[0]);
               r[1] = parseFloat(r[1]); // TODO-72 need function for this as presuming its float
             });
             // self.state.data and self.parentElement.datasets[x] are same actual data,
             // can't set one to this data as wont affect the other
-            this.data.splice(0,Infinity); // TODO-72 dont remove (replace Infinity with 0) for next day
+            // 25k 10 1227
+            // 305k 73ms 243seconds
+            // 121k 97ms 485secs
+            let xxx1 = Date.now();
+            let olddata = this.data.splice(0, Infinity);
+            for (let dd of newdata) { this.data.push(dd); }
+            if (!first) { // If its the first, dont put data back as will already be in newdata
+              for (let dd of olddata) {
+                this.data.push(dd);
+              }
+            }
+            /*
+            // 25k 41 3711
+            // 304k 24428 crashed
+            this.data.splice(0,first ? Infinity: 0); // TODO-72 dont remove (replace Infinity with 0) for next day
             for (let i = data.length-1; i >=0; i--) {
               this.data.unshift(data[i]);
             }
+             */
             if (this.data.length > 1000) {
               this.graphdataset.parentElement.chart.options.animations = false; // Disable animations get slow at scale
             }
-            self.graphdataset.parentElement.chart.update(); // TODO-REFACTOR make method on MqttGraph
+            let xxx2 = Date.now();
+            console.log("XXX72 splice took", xxx2-xxx1);
+            cb();
           }
         })
-      });
+      })
+      .catch(err => {
+        console.error(err);
+        cb(null); // Dont break caller
+      }); // May want to report filename here
   }
 
 }
@@ -930,6 +948,7 @@ class MqttGraph extends MqttElement {
   constructor() {
     super();
     this.datasets = []; // Child elements will add/remove chartjs datasets here
+    this.state.dataFrom = null;
     this.state.yAxisCount = 0; // 0 left, 1 right
     this.state.scales = { // Start with an xAxis and add axis as needed
       xAxis: {
@@ -988,14 +1007,40 @@ class MqttGraph extends MqttElement {
   // noinspection JSUnusedLocalSymbols
   graphnavleft(e) {
     // TODO If not first go back x days
-    // TODO should change arrow to hourglass until complete then switch back - but has to be at Graph level
-    // TODO and note that its async so would need to add, and wait for, a callback but could call dataChanged() at same time
+    let first = !this.state.dateFrom; // null or date
+    if (first) {
+      this.state.dateFrom = new Date();
+    } else {
+      this.state.dateFrom.setDate(this.state.dateFrom.getDate()-1); // Note this rolls over between months ok
+    }
+    let filename = this.state.dateFrom.toISOString().substring(0,10) + ".csv";
+    console.log("XXX72: adding from", filename);
+    this.addDataFrom(filename, first);
+  }
+  addDataFrom(filename, first) {
+    // TODO-72 should change arrow to hourglass until complete then switch back - but has to be at Graph level
+    async.each(this.children, ((ds,cb) => {
+      if (ds.addDataFrom) {
+        ds.addDataFrom(filename, first, cb);
+      } else {
+        cb();
+      }
+    }),(err) => {
+      console.log("XXX72 done all");
+      let xxx2 = Date.now(); // TODO-72 remove when done
+      this.chart.update();
+      console.log("XXX72 update took", Date.now()-xxx2);
+      // TODO-72 turn arrow back from hourglass here.
+    } );
+    /*
     for (let ds of this.children) {
       if (ds.addDataFrom) {
-        ds.addDataFrom(filenamenow());
+        ds.addDataFrom(filename, first);
       }
     }
+     */
   }
+
   // Called when data on one of the datasets has changed, can do an update, (makeChart is for more complex changes)
   dataChanged() {
     this.chart.update();
@@ -1067,9 +1112,9 @@ class MqttGraphDataset extends MqttElement {
     this.chartEl.dataChanged();
   }
   // Note this wont update the chart, but the caller will be fetching multiple data files and update all.
-  addDataFrom(filename) {
+  addDataFrom(filename, first, cb) {
     //TODO this location may change
-    this.mt.addDataFrom(filename);
+    this.mt.addDataFrom(filename, first, cb);
   }
 
   render() {

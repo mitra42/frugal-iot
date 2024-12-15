@@ -10,7 +10,7 @@
  */
 import express from 'express'; // http://expressjs.com/
 import morgan from 'morgan'; // https://www.npmjs.com/package/morgan - http request logging
-import async from 'async'; // https://caolan.github.io/async/v3/docs.html
+import async from 'async'; // https://caolan.github.io/async/v3/docs.html // TODO move to async-es and then remove from package.json
 import yaml from 'js-yaml'; // https://www.npmjs.com/package/js-yaml
 import { appendFile, mkdir, readFile } from "fs"; // https://nodejs.org/api/fs.html
 import mqtt from 'mqtt'; // https://www.npmjs.com/package/mqtt
