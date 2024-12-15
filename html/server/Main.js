@@ -10,7 +10,7 @@
  */
 import express from 'express'; // http://expressjs.com/
 import morgan from 'morgan'; // https://www.npmjs.com/package/morgan - http request logging
-import async from 'async'; // https://caolan.github.io/async/v3/docs.html
+import async from 'async'; // https://caolan.github.io/async/v3/docs.html // TODO move to async-es and then remove from package.json
 import yaml from 'js-yaml'; // https://www.npmjs.com/package/js-yaml
 import { appendFile, mkdir, readFile } from "fs"; // https://nodejs.org/api/fs.html
 import { MqttOrganization, MqttLogger } from "frugal-iot-logger";  // https://github.com/mitra42/frugal-iot-logger
@@ -55,6 +55,7 @@ function startServer() {
   });
 }
 
+
 const app = express();
 
 // Respond to options - not sure if really needed, but seems to help in other servers.
@@ -70,7 +71,7 @@ app.get('/echo', (req, res) => {
   res.status(200).json(req.headers);
 });
 app.get('/config.json', (req, res) => {
-    res.status(200).json(config);
+  res.status(200).json(config);
 });
 // Main for server
 async.waterfall([
