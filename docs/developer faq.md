@@ -36,7 +36,7 @@ To add an Organization: Select
 
 Note: A longer name, and a description are likely to be required for organizations in future.
 
-# Frugal IoT - adding a sensor or actuator.
+# Adding a sensor or actuator.
 
 To add a sensor or actuator to the FrugalIot app, 
 It has to be hooked into a few places, look for `TO_ADD_ACTUATOR` or `TO_ADD_SENSOR` and needs `.cpp` and `.h` files.
