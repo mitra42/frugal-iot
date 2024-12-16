@@ -10,12 +10,10 @@
  */
 import express from 'express'; // http://expressjs.com/
 import morgan from 'morgan'; // https://www.npmjs.com/package/morgan - http request logging
-import async from 'async'; // https://caolan.github.io/async/v3/docs.html // TODO move to async-es and then remove from package.json
-import yaml from 'js-yaml'; // https://www.npmjs.com/package/js-yaml
-import { appendFile, mkdir, readFile } from "fs"; // https://nodejs.org/api/fs.html
-import { MqttOrganization, MqttLogger } from "frugal-iot-logger";  // https://github.com/mitra42/frugal-iot-logger
+import { MqttLogger } from "frugal-iot-logger";  // https://github.com/mitra42/frugal-iot-logger
 
-const htmldir = process.cwd() + "/..";
+const htmldir = process.cwd() + "/../node_modules/frugal-iot-client";
+const nodemodulesdirparent = process.cwd() + "/.."; //TODO-84 this will probably move as split things up
 let config;
 let mqttLogger = new MqttLogger();
 
@@ -74,25 +72,25 @@ app.get('/config.json', (req, res) => {
   res.status(200).json(config);
 });
 // Main for server
-async.waterfall([
-  (cb) => mqttLogger.readYamlConfig('./config.yaml', cb),
-  (configobj, cb) => {
+mqttLogger.readYamlConfig('./config.yaml', (err, configobj) => {
+  if (err) {
+    console.error(err);
+  } else {
     config = configobj;
-    console.log("Config=",config);
+    console.log("Config=", config);
     // Could genericize config defaults
-    if (!config.morgan) { config.morgan = ':method :url :req[range] :status :res[content-length] :response-time ms :req[referer]'}
+    if (!config.morgan) {
+      config.morgan = ':method :url :req[range] :status :res[content-length] :response-time ms :req[referer]'
+    }
     // Seems to be writing to syslog which is being cycled.
     app.use(morgan(config.morgan)); // see https://www.npmjs.com/package/morgan )
-    console.log("Serving from",htmldir);
+    console.log("Serving from", htmldir);
     // Use a 1 day cache to keep traffic down TODO might want to override for /data/
     // Its important that frugaliot.css is cached, or the UX will flash while checking it hasn't changed.
-    app.use(express.static(htmldir,{immutable: true, maxAge: 1000*60*60*24}));
+    app.use(express.static(htmldir, {immutable: true, maxAge: 1000 * 60 * 60 * 24}));
+    app.use(express.static(nodemodulesdirparent, {immutable: true, maxAge: 1000 * 60 * 60 * 24}));
     startServer();
     mqttLogger.start(); // TODO-84 rename to start
-    cb(null,null);
   }
-  // TODO-9 read project specific configurations from config.d
-], (err/*, unused*/) => {
-  console.log("Server running in background callbacks",err)
 });
 
