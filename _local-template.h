@@ -14,12 +14,12 @@
 #define ESP8266_D1_MINI // Board level - define - will only support boards devs are actually using, but intended to support board specific fixes
 //#define LOLIN_C3_PICO // For some bug workaround in actuator_ledbuiltin.cpp
 
-// Organization behind this set of devices. Also used for MQTT userid //TODO-51 setup process to register new ones
+// Organization behind this set of devices. Also used for MQTT userid
 #define SYSTEM_DISCOVERY_ORGANIZATION "dev"
 #define SYSTEM_MQTT_USER SYSTEM_DISCOVERY_ORGANIZATION  // Edit if you use something other than the organization name for MQTT user
 // Specify the password for your organization on the MQTT server
 #define SYSTEM_MQTT_PASSWORD "public"
-// Where your MQTT server is - if using naturalinnovation.org for more than some development please let us know #TODO say how ! 
+// Where your MQTT server is - you can use naturalinnovation.org for testing, but talk to us if you are deploying live sites using it.
 #define SYSTEM_MQTT_SERVER "naturalinnovation.org"
 
 // It can be slow developing by resting the portal each time, so if wanted define SSID and PASSWORD here, 
