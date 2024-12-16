@@ -1,1 +1,0 @@
-TODO extract this from frugal-iot/README.md
