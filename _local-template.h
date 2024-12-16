@@ -36,7 +36,7 @@
 //#define ACTUATOR_RELAY_WANT
 //#define CONTROL_BLINKEN_WANT
 //#define CONTROL_DEMO_MQTT_WANT
-//#define SENSOR_ANALOG_EXAMPLE_WANT
+//#define SENSOR_ANALOG_WANT
 //#define SENSOR_BATTERY_WANT
 //#define SENSOR_BATTERY_MS 3000 // testing at 3secs while developing
 //#define SENSOR_BATTERY_DEBUG
