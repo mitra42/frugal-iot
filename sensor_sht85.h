@@ -2,8 +2,8 @@
 #define SENSOR_SHT85_H
 
 namespace sSHT85 {
-  extern String *topicT;
-  extern String *topicH;
+  //extern String *topicT;
+  //extern String *topicH;
   void setup();
   void loop();
 } // namespace sSHT85

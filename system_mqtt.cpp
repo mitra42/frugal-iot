@@ -28,6 +28,7 @@
 #ifdef SYSTEM_WIFI_WANT
   #include "system_wifi.h"   // xWifi
 #endif  //SYSTEM_WIFI_WANT
+#include "system_discovery.h"
 
 namespace xMqtt {
 
@@ -246,16 +247,28 @@ void messageSend(String &topic, String &payload, const bool retain, const int qo
     messageReceived(m);
   #endif // SYSTEM_MQTT_LOOPBACK
 }
+
+void messageSend(const char* topic, String &payload, const bool retain, const int qos) {
+  String *t = new String(*xDiscovery::topicPrefix + topic); // TODO can merge into next line
+  messageSend(*t, payload, retain, qos);
+}
+
 void messageSend(String &topic, const float &value, const int width, const bool retain, const int qos) {
   String * const foo = new String(value, width);
   messageSend(topic, *foo, retain, qos);
-
+}
+void messageSend(const char* topic, const float &value, const int width, const bool retain, const int qos) {
+  String * const foo = new String(value, width);
+  messageSend(topic, *foo, retain, qos);
 }
 void messageSend(String &topic, const int value, const bool retain, const int qos) {
   String * const foo = new String(value);
   messageSend(topic, *foo, retain, qos);
 }
-
+void messageSend(const char* topic, const int value, const bool retain, const int qos) {
+  String * const foo = new String(value);
+  messageSend(topic, *foo, retain, qos);
+}
 void messageSendQueued() {
   const Message* m;
   for (;!inReceived && (m = queued.shift()); messageSendInner(m)) {}
