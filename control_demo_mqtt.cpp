@@ -22,9 +22,9 @@ namespace cDemoMqtt {
 
 bool output = false;
 float input;
-float input2 = CONTROL_DEMO_MQTT_HUMIDITY_MAX; // TODO-55 control this through UI slider
-String *inputTopic;  // Topic for value checking
-String *outputTopic;  // Topic for sending result
+float input2 = CONTROL_DEMO_MQTT_HUMIDITY_MAX;
+String *inputTopic;  // Topic for value checking - will be strings as can be external to this node
+String *outputTopic;  // Topic for sending result - will be strings as can be external to this node
 
 void act() {
   if (outputTopic) {
