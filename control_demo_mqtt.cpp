@@ -12,9 +12,7 @@
 
 #include <Arduino.h>
 #include "control_demo_mqtt.h"
-#include "actuator_ledbuiltin.h"  // TODO-43 remove dependency once controllable.
 #include "system_mqtt.h"
-#include "sensor_sht85.h" // TODO-43 remove dependency once controllable.
 #include "system_discovery.h"
 
 // TODO-46 genericize this when works - around input. control, output etc  
