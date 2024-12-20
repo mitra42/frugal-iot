@@ -49,7 +49,7 @@ void fullAdvertise() {
 }
 /*
 // This is a previous idea that clients ask for the fullAdvertise, but since its retained at the broker that isn't needed. 
-void messageReceived(String &topic, String &payload) {
+void inputReceived(String &payload) {
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("Discovery message receieved:"));
   #endif // SYSTEM_DISCOVERY_DEBUG
@@ -136,7 +136,7 @@ void setup() {
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
   #endif
     fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
-    // xMqtt::subscribe(*advertiseTopic, *messageReceived); // Commented out as don't see why need to receive this
+    // xMqtt::subscribe(*advertiseTopic, *inputReceived); // Commented out as don't see why need to receive this
 }
 
 void loop() {

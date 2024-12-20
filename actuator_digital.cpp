@@ -23,10 +23,7 @@ void Actuator_Digital::set(const bool v) {
     Serial.print(F("\nSetting ")); Serial.print(*name); Serial.println(v ? F(" on") : F(" off"));
   #endif
 }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void Actuator_Digital::messageReceived(const String &topic, const String &payload) {
-#pragma GCC diagnostic pop
+void Actuator_Digital::inputReceived(const String &payload) {
   const uint8_t v = payload.toInt(); // Copied to pin in the loop 
   #ifdef ACTUATOR_DIGITAL_DEBUG
     Serial.print(*name); Serial.print(F(" received ")); Serial.println(v);
@@ -40,7 +37,7 @@ void Actuator_Digital::setup() {
   pinMode(pin, OUTPUT);
 
   //TODO-C++EXPERT done in actuator_relay.h etc as cant figure out how to do the callback (tried variations of std::bind etc)
-  //xMqtt::subscribe(*topic, [this](String &topic, String &payload) { this->messageReceived(topic, payload); } );
+  //xMqtt::subscribe(*topic, [this](String &topic, String &payload) { this->inputReceived(payload); } );
 }
 
 
