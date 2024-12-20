@@ -95,7 +95,7 @@ Open a browser to http://naturalinnovation:8080
 ### Server development
 
 Because of the demo servers on naturalinnovation.org, it is perfectly possible to develop the firmware without running your own servers.
-But if you want to do server or client development ... see the README.md on each components repository.
+But if you want to do server or client development ... see the README.md on each component's repository.
 
 
 
