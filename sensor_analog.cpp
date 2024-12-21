@@ -25,11 +25,13 @@
 Sensor_Analog::Sensor_Analog(const uint8_t p) { pin = p; };
 
 void Sensor_Analog::act() {
+    Serial.print("Sending value="); Serial.println(value);
     xMqtt::messageSend(topic, value, false, 0);
 }
 void Sensor_Analog::set(const uint16_t v) {
-  // May end up subclassing set if need to for example do a scaling here
-  uint8_t vv;
+  // Virtual and May end up subclassing set if need to for example do a scaling here
+  Serial.print("XXX set:"); Serial.println(v);
+  uint16_t vv;
   if (smooth) {
     vv = value - (value >> smooth) + v;
   } else {
@@ -42,6 +44,7 @@ void Sensor_Analog::set(const uint16_t v) {
     Serial.println(value);
   #endif // SENSOR_ANALOG_DEBUG
   if (value != vv) { // Only act if changed
+    Serial.print("XXX setting value="); Serial.println(vv);
     value = vv;
     act();
   }
@@ -49,6 +52,7 @@ void Sensor_Analog::set(const uint16_t v) {
 
 // Note this is virtual, and subclassed in Sensor_Battery
 uint16_t Sensor_Analog::read() {
+  Serial.println("analogRead");
   return analogRead(pin);
 }
 

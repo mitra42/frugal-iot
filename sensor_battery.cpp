@@ -23,7 +23,8 @@ Sensor_Battery::Sensor_Battery(const uint8_t p) : Sensor_Analog(p) {
 }
 
 uint16_t Sensor_Battery::read() {
-  return analogReadMilliVolts(pin); // Note this returns uiunt32_t which makes no sense given max value is 5*1000 = 5000
+  // Shifted left two because reading is from divide by 2 resistors
+  return analogReadMilliVolts(pin) << 1; // Note this returns uiunt32_t which makes no sense given max value is 5*1000 = 5000
 }
 
 namespace sBattery {

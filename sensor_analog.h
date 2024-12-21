@@ -13,7 +13,7 @@
 class Sensor_Analog {
   public: 
     uint8_t pin;
-    uint8_t value = 0;
+    uint16_t value = 0;
     // If non-zero smoothed by this many bits (newSmoothedValue = oldSmoothedValue - (oldSmoothedValue>>smooth) + (reading))
     // Be careful of overflow - e.g. if 10 bit analog read then max smooth can be is 6 to smooth over 2^6 = 64 readings
     uint8_t smooth = 0; 
