@@ -48,32 +48,25 @@ bool decide() {
   return (input > input2); // TODO add hysterisis
 }
 
-void inputSet(String *payload) {
-  float i = payload->toFloat();
+void inputSet(String payload) {
+  float i = payload.toFloat();
   if (i != input) {
     input = i;
     set(decide());
   }
 }
-void inputReceived(String *payload) {
+void inputReceived(String &payload) {
   inputSet(payload);
 }
-// TODO-81 replace all the messageReceived(&topic, &payload) with inputReceived(&payload) etc
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void inputMessageReceived(String &topic, String &payload) {
-#pragma GCC diagnostic pop
-  inputReceived(&payload);
-}
 
-void input2Set(String *payload) {
-  float i = payload->toFloat();
+void input2Set(String payload) {
+  float i = payload.toFloat();
   if (i != input2) {
     input2 = i;
     set(decide());
   }
 }
-void input2Received(String *payload) {
+void input2Received(String &payload) {
   input2Set(payload);
 }
 
@@ -90,28 +83,14 @@ void inputControlSet(String *t) {
     // Only send if its changed.
     inputTopic = new String(*t);
     // TODO-55 need to unsubscribe from previous topic, or will end up here as well
-    xMqtt::subscribe(*inputTopic, *inputMessageReceived); //TODO-81
+    xMqtt::subscribe(*inputTopic, *inputReceived); //TODO-81
   }
 }
 void inputControlReceived(String &payload) {
   inputControlSet(&payload);
 }
 
-// TODO-81 replace all the messageReceived(&topic, &payload) with inputReceived(&payload) etc
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void input2MessageReceived(String &topic, String &payload) {
-#pragma GCC diagnostic pop
-  input2Received(&payload);
-}
 
-// TODO-81 replace all the messageReceived(&topic, &payload) with inputReceived(&payload) etc
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void outputControlMessageReceived(String &topic, String &payload) {
-#pragma GCC diagnostic pop
-  outputControlReceived(payload);
-}
 
 // ===== not converted below here  ==================================
 
@@ -123,11 +102,11 @@ void setup() {
 
   //Input2: Will receive values from the UX
   t = new String(*xDiscovery::topicPrefix + F("control_demo_mqtt_input2")); 
-  xMqtt::subscribe(*t, *input2MessageReceived);
+  xMqtt::subscribe(*t, *input2Received);
 
   //Output: Go to topic as defined in UX
   t = new String(*xDiscovery::topicPrefix + "control_demo_mqtt_outputControl");
-  xMqtt::subscribe(*t, *outputControlMessageReceived);
+  xMqtt::subscribe(*t, *outputControlReceived);
 }
 
 } //namespace cDemoMqtt

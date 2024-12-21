@@ -45,7 +45,7 @@ void set(float v) {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-void messageReceived(String &topic, String &payload) {
+void inputReceived(String &payload) {
 #pragma GCC diagnostic pop
   float v = payload.toFloat(); // Copied to pin in the loop 
   set(v);
@@ -54,7 +54,7 @@ void messageReceived(String &topic, String &payload) {
 void setup() {
   inputTopic = new String(*xDiscovery::topicPrefix + F("control_blinken_seconds"));
   set(CONTROL_BLINKEN_S); // default time            
-  xMqtt::subscribe(*inputTopic, *messageReceived);
+  xMqtt::subscribe(*inputTopic, *inputReceived);
 }
 
 void loop() {

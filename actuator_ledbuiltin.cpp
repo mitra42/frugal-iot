@@ -57,12 +57,9 @@ namespace aLedbuiltin {
 
 Actuator_Ledbuiltin actuator_ledbuiltin(ACTUATOR_LEDBUILTIN_PIN);
 
-// TODO-C++EXPERT I cant figure out how to pass the class Actuator_Digital.messageReceived as callback, have tried various combinstiaons of std::bind but to no success
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void messageReceived(String &topic, String &payload) {
-#pragma GCC diagnostic pop
-  actuator_ledbuiltin.messageReceived(topic, payload);
+// TODO-C++EXPERT I cant figure out how to pass the class Actuator_Digital.inputReceived as callback, have tried various combinstiaons of std::bind but to no success
+void inputReceived(String &payload) {
+  actuator_ledbuiltin.inputReceived(payload);
 }
 
 void setup() {
@@ -71,7 +68,7 @@ void setup() {
   #endif // ACTUATOR_DIGITAL_DEBUG
   actuator_ledbuiltin.topic = String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC);
   actuator_ledbuiltin.setup();
-  xMqtt::subscribe(actuator_ledbuiltin.topic, *messageReceived); // TODO-C++EXPERT see comment above
+  xMqtt::subscribe(actuator_ledbuiltin.topic, *inputReceived); // TODO-C++EXPERT see comment above
 }
 
 // void loop() { }

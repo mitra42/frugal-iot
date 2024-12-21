@@ -17,7 +17,7 @@ class Actuator_Digital {
     Actuator_Digital(const uint8_t p);
     virtual void act();
     void set(const bool v);
-    void messageReceived(const String &topic, const String &payload);
+    void inputReceived(const String &payload);
     void setup();
 }; // Class Actuator_Digital
 
