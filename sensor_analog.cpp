@@ -25,12 +25,10 @@
 Sensor_Analog::Sensor_Analog(const uint8_t p) { pin = p; };
 
 void Sensor_Analog::act() {
-    Serial.print("Sending value="); Serial.println(value);
     xMqtt::messageSend(topic, value, false, 0);
 }
 void Sensor_Analog::set(const uint16_t v) {
   // Virtual and May end up subclassing set if need to for example do a scaling here
-  Serial.print("XXX set:"); Serial.println(v);
   uint16_t vv;
   if (smooth) {
     vv = value - (value >> smooth) + v;
