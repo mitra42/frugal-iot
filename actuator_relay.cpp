@@ -3,8 +3,6 @@
 
   Required from .h: ACTUATOR_RELAY_TOPIC
   Optional:  ACTUATOR_RELAY_PIN ACTUATOR_RELAY_DEBUG
-
-  TODO merge with actuator_ledbuiltin, maybe use a class
 */
 
 #include "_settings.h"  // Settings for what to include etc

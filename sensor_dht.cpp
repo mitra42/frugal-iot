@@ -64,23 +64,12 @@ namespace sDHT {
 unsigned long nextLoopTime = 0;
 sensorDHT *dht_array[SENSOR_DHT_COUNT];
 
-#ifdef SENSOR_DHT_TOPIC_TEMPERATURE
-  String *topicT;
-#endif
-#ifdef SENSOR_DHT_TOPIC_HUMIDITY
-  String *topicH;
-#endif
+const char* topicT = "temperature";
+const char* topicH = "humidity";
 
 void setup()
 {
   uint8_t dht_pin_array[] = {SENSOR_DHT_PIN_ARRAY};
-
-  #ifdef SENSOR_DHT_TOPIC_TEMPERATURE
-    topicT = new String(*xDiscovery::topicPrefix + F(SENSOR_DHT_TOPIC_TEMPERATURE));
-  #endif
-  #ifdef SENSOR_DHT_TOPIC_HUMIDITY
-    topicH = new String(*xDiscovery::topicPrefix + F(SENSOR_DHT_TOPIC_HUMIDITY));
-  #endif
 
   for(uint8_t i = 0 ; i < SENSOR_DHT_COUNT; i++) {
     dht_array[i] = new sensorDHT(dht_pin_array[i]);
@@ -101,7 +90,7 @@ void loop() {
 
 sensorDHT::sensorDHT(uint8_t p) {
     dht = new DHTNEW(p); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
-    dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/104
+    // dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/104
     temperature = 0;
     humidity = 0; 
     #ifdef SENSOR_DHT_DEBUG
@@ -177,14 +166,14 @@ void sensorDHT::readSensor() {
     // Store new results and optionally if changed send on MQTT
     #ifdef SENSOR_DHT_TOPIC_TEMPERATURE
       if (temp != temperature) {
-        xMqtt::messageSend(*sDHT::topicT, temp, 1, false, 0);
+        xMqtt::messageSend(sDHT::topicT, temp, 1, false, 0);
       }
     #endif
 
     temperature = temp;
     #ifdef SENSOR_DHT_TOPIC_HUMIDITY
       if (humy != humidity) { // TODO may want to add some bounds (e.g a percentage)
-        xMqtt::messageSend(*sDHT::topicH, humy, 1, false, 0);
+        xMqtt::messageSend(sDHT::topicH, humy, 1, false, 0);
       }
     #endif
     humidity = humy;

@@ -50,29 +50,16 @@ namespace sSHT85 {
 
 unsigned long nextLoopTime = 0;
 sSHTxx *sht_array[SENSOR_SHT85_COUNT];
-
-#ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
-  String *topicT;
-#endif
-#ifdef SENSOR_SHT85_TOPIC_HUMIDITY
-  String *topicH;
-#endif
+const char* topicT = "temperature";
+const char* topicH = "humidity";
 
 void setup()
 {
   uint8_t sht_address_array[] = {SENSOR_SHT85_ADDRESS_ARRAY};
 
-  #ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
-    topicT = new String(*xDiscovery::topicPrefix + F(SENSOR_SHT85_TOPIC_TEMPERATURE));
-  #endif
-  #ifdef SENSOR_SHT85_TOPIC_HUMIDITY
-    topicH = new String(*xDiscovery::topicPrefix + F(SENSOR_SHT85_TOPIC_HUMIDITY));
-  #endif
-
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   Wire.begin(); // Appears to default to 4,5 which is correct for the Lolin D1 Mini SHT30 shield
   Wire.setClock(100000);
-
 
   for(uint8_t i = 0 ; i < SENSOR_SHT85_COUNT; i++) {
     sht_array[i] = new sSHTxx(sht_address_array[i], &Wire);
@@ -130,13 +117,13 @@ void sSHTxx::readSensor() {
       // Store new results and optionally if changed send on MQTT
       #ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
       if (temp != temperature) {
-        xMqtt::messageSend(*sSHT85::topicT, temp, 1, false, 0);
+        xMqtt::messageSend(sSHT85::topicT, temp, 1, false, 0);
       }
       #endif
       temperature = temp;
       #ifdef SENSOR_SHT85_TOPIC_HUMIDITY
         if (humy != humidity) { // TODO may want to add some bounds (e.g a percentage)
-          xMqtt::messageSend(*sSHT85::topicH, humy, 1, false, 0);
+          xMqtt::messageSend(sSHT85::topicH, humy, 1, false, 0);
         }
       #endif
       humidity = humy;
