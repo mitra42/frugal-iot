@@ -19,8 +19,11 @@
 #endif
 
 //TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
-#ifdef SENSOR_ANALOG_WANT
-#include "sensor_analog.h"
+#ifdef SENSOR_ANALOG_EXAMPLE_WANT
+#include "sensor_analog_example.h"
+#endif
+#ifdef SENSOR_BATTERY_WANT
+#include "sensor_battery.h"
 #endif
 #ifdef SENSOR_SHT85_WANT
 #include "sensor_sht85.h"
@@ -67,8 +70,11 @@ void setup() {
 #endif
 
 //TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
-#ifdef SENSOR_ANALOG_WANT
-  sAnalog::setup();
+#ifdef SENSOR_ANALOG_EXAMPLE_WANT
+  sAnalogExample::setup();
+#endif
+#ifdef SENSOR_BATTERY_WANT
+  sBattery::setup();
 #endif
 #ifdef SENSOR_SHT85_WANT
   sSHT85::setup();
@@ -102,8 +108,11 @@ void loop() {
 */
 
 //TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
-#ifdef SENSOR_ANALOG_WANT
-  sAnalog::loop();
+#ifdef SENSOR_ANALOG_EXAMPLE_WANT
+  sAnalogExample::loop();
+#endif
+#ifdef SENSOR_BATTERY_WANT
+  sBattery::loop();
 #endif
 #ifdef SENSOR_SHT85_WANT
   sSHT85::loop();

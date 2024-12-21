@@ -3,8 +3,6 @@
 
   Required from .h: ACTUATOR_RELAY_TOPIC
   Optional:  ACTUATOR_RELAY_PIN ACTUATOR_RELAY_DEBUG
-
-  TODO merge with actuator_ledbuiltin, maybe use a class
 */
 
 #include "_settings.h"  // Settings for what to include etc
@@ -35,12 +33,9 @@ namespace aRelay {
 
 Actuator_Digital actuator_relay(ACTUATOR_RELAY_PIN);
 
-// TODO-C++EXPERT I cant figure out how to pass the class Actuator_Digital.messageReceived as callback, have tried various combinstiaons of std::bind but to no success
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void messageReceived(String &topic, String &payload) {
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-  actuator_relay.messageReceived(topic, payload);
+// TODO-C++EXPERT I cant figure out how to pass the class Actuator_Digital.inputReceived as callback, have tried various combinstiaons of std::bind but to no success
+void inputReceived(String &payload) {
+  actuator_relay.inputReceived(payload);
 }
 void setup() {
   #ifdef ACTUATOR_DIGITAL_DEBUG
@@ -48,7 +43,7 @@ void setup() {
   #endif // ACTUATOR_DIGITAL_DEBUG
   actuator_relay.topic = String(*xDiscovery::topicPrefix + ACTUATOR_RELAY_TOPIC);
   actuator_relay.setup();
-  xMqtt::subscribe(actuator_relay.topic, *messageReceived); // TODO-C++EXPERT see comment above
+  xMqtt::subscribe(actuator_relay.topic, *inputReceived); // TODO-C++EXPERT see comment above
 }
 
 // void loop() { }

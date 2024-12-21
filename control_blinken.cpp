@@ -27,10 +27,11 @@
 
 
 namespace cBlinken {
+String* inputTopic; 
+const char* outputTopic = ACTUATOR_LEDBUILTIN_TOPIC; // TODO-53 replace with string no need to parameterize
 
 unsigned long nextLoopTime = 0;
 float value; // Time per blink (each phase)
-String *topic; 
 
 void set(float v) {
   if (value > v) { // May be waiting on long time, bring up
@@ -44,23 +45,21 @@ void set(float v) {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-void messageReceived(String &topic, String &payload) {
+void inputReceived(String &payload) {
 #pragma GCC diagnostic pop
   float v = payload.toFloat(); // Copied to pin in the loop 
   set(v);
 }
 
 void setup() {
-  topic = new String(*xDiscovery::topicPrefix + F("control_blinken_s"));
+  inputTopic = new String(*xDiscovery::topicPrefix + F("control_blinken_seconds"));
   set(CONTROL_BLINKEN_S); // default time            
-  xMqtt::subscribe(*topic, *messageReceived);
+  xMqtt::subscribe(*inputTopic, *inputReceived);
 }
 
 void loop() {
   if (nextLoopTime <= millis()) {
-    // TODO should almost certainly be static, but check topicPrefix is valid at the first loop.
-    String* topic = new String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC); // TODO cant be const const (as Message cant be)
-    xMqtt::messageSend(*topic, !value, true, 1);
+    xMqtt::messageSend(outputTopic, !value, true, 1); //TODO-53 XXX comment back in 
     nextLoopTime = millis() + value*1000;
   }
 }

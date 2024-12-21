@@ -102,7 +102,7 @@ void setup() {
   #endif
 
   #ifdef SYSTEM_WIFI_SSID
-    Serial.println(F("Overriding WiFi SSID / Password for dev"));
+    Serial.println(F("Overriding WiFi SSID / Password for development"));
     spurt(F("/wifi-ssid"), SYSTEM_WIFI_SSID);
     spurt(F("/wifi-password"), SYSTEM_WIFI_PASSWORD);
   #endif // SYSTEM_WIFI_SSID

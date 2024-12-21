@@ -10,14 +10,14 @@ class Actuator_Digital {
   public: 
     uint8_t pin;
     bool value;
-    String topic; //TODO-53 maybe should be &topic
+    String topic; //TODO-53 maybe should be &topic also TODO-93
     #ifdef ACTUATOR_DIGITAL_DEBUG
       String *name;
     #endif
     Actuator_Digital(const uint8_t p);
     virtual void act();
     void set(const bool v);
-    void messageReceived(const String &topic, const String &payload);
+    void inputReceived(const String &payload);
     void setup();
 }; // Class Actuator_Digital
 

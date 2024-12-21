@@ -1,61 +1,77 @@
 /*
   Sensor Analog
   Read from a pin and return as sAnalog::Value\
+
+  See https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html for lots more on ESP ADCs
+
+ Configuration options.
+ SENSOR_ANALOG_REFERENCE for ESP8266 only  
+ 
 */
 
-// TODO turn this into a template
 // TODO add the _ARRAY parameters as used in sensor_sht85.cpp so will read multiple analog inputs.
 
 #include "_settings.h"  // Settings for what to include etc
-#ifdef SENSOR_ANALOG_WANT
+
+// Add new analog sensors here TO_ADD_SENSOR
+#if (defined(SENSOR_ANALOG_EXAMPLE_WANT) || defined(SENSOR_BATTERY_WANT))
+
 #include <Arduino.h>
 #include "sensor_analog.h"
+#include "system_mqtt.h"
+#include "system_discovery.h" // 
 
-// TODO figure out how to handle multiple analog input pins 
 
-namespace sAnalog {
+Sensor_Analog::Sensor_Analog(const uint8_t p) { pin = p; };
 
-#ifdef SENSOR_ANALOG_MS
-unsigned long nextLoopTime = 0;
-#endif // SENSOR_ANALOG_MS
+void Sensor_Analog::act() {
+    xMqtt::messageSend(topic, value, false, 0);
+}
+void Sensor_Analog::set(const uint16_t v) {
+  // Virtual and May end up subclassing set if need to for example do a scaling here
+  uint16_t vv;
+  if (smooth) {
+    vv = value - (value >> smooth) + v;
+  } else {
+    vv = v;
+  }
+  #ifdef SENSOR_ANALOG_DEBUG
+    Serial.print(*name);
+    if (smooth) { Serial.print(F(" Smoothed")); }
+    Serial.print(" ");
+    Serial.println(value);
+  #endif // SENSOR_ANALOG_DEBUG
+  if (value != vv) { // Only act if changed
+    Serial.print("XXX setting value="); Serial.println(vv);
+    value = vv;
+    act();
+  }
+}
 
-int value = 0;
-#ifdef SENSOR_ANALOG_SMOOTH
-unsigned long smoothedValue = 0;
-#endif
+// Note this is virtual, and subclassed in Sensor_Battery
+uint16_t Sensor_Analog::read() {
+  Serial.println("analogRead");
+  return analogRead(pin);
+}
 
-void setup() {      
-  // pinMode(SENSOR_ANALOG_PIN, INPUT); // I don't think this is needed
+void Sensor_Analog::setup() {
+  // initialize the analog pin as an input.
+  pinMode(pin, INPUT); // I don't think this is needed ?
   #ifdef ESP8266_D1_MINI
     analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
   #else
-    #error analogReference is board specific, appears to be undefined on ESP32C3 
+    //#error analogReference is board specific, appears to be undefined on ESP32C3 
   #endif
-  //value = 0;
+  
 }
 
-void readSensor() {
-  value = analogRead(SENSOR_ANALOG_PIN);
-}
-
-void loop() {
-#ifdef SENSOR_ANALOG_MS
+void Sensor_Analog::loop() {
   if (nextLoopTime <= millis()) {
-#endif // SENSOR_ANALOG_MS
-    readSensor();
-#ifdef SENSOR_ANALOG_SMOOTH // TODO maybe copy this to a system function
-    smoothedValue = smoothedValue - (smoothedValue >> SENSOR_ANALOG_SMOOTH) + value;
-#endif // SENSOR_ANALOG_SMOOTH
-#ifdef SENSOR_ANALOG_DEBUG
-        Serial.print(F("Analog:")); Serial.println(value);
-#ifdef SENSOR_ANALOG_SMOOTH
-        Serial.print(F("Smoothed Analog:")); Serial.println(smoothedValue);
-#endif // SENSOR_ANALOG_SMOOTH
-#endif // SENSOR_ANALOG_DEBUG
-#ifdef SENSOR_ANALOG_MS
-        nextLoopTime = millis() + SENSOR_ANALOG_MS;
-    }
-#endif // SENSOR_ANALOG_MS
+    set(read()); // Will also send message via act()
+    nextLoopTime = millis() + ms;
+  }
 }
-} //namespace sAnalog
+
 #endif // SENSOR_ANALOG_WANT
+// TODO-57 need to do discovery
+

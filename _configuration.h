@@ -23,7 +23,7 @@
 // #define CONTROL_BLINKEN_WANT // Define in _local.h if want to test with this
 #define CONTROL_BLINKEN_S 1
 #define CONTROL_BLINKEN_DEBUG
-#define CONTROL_BLINKEN_ADVERTISEMENT "\n  -\n    topic: control_blinken_s\n    name: Blink period (s)\n    type: int\n    min: 1\n    max: 60\n    display: slider\n    rw: rw"
+#define CONTROL_BLINKEN_ADVERTISEMENT "\n  -\n    topic: control_blinken_seconds\n    name: Blink period (s)\n    type: int\n    min: 1\n    max: 60\n    display: slider\n    rw: rw"
 
 // Demo controlling LED based on humidity level
 //#define CONTROL_DEMO_MQTT_WANT // Define in _local.h if want to test with this

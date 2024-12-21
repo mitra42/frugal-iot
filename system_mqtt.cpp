@@ -28,6 +28,8 @@
 #ifdef SYSTEM_WIFI_WANT
   #include "system_wifi.h"   // xWifi
 #endif  //SYSTEM_WIFI_WANT
+#include "system_discovery.h"
+#include "system_mqtt.h"
 
 namespace xMqtt {
 
@@ -44,10 +46,10 @@ class Subscription {
   public: 
     static const Subscription *subscriptions;
     const String* const topic; 
-    const MQTTClientCallbackSimple cb;
+    const InputReceivedCallback cb;
     const Subscription* const next;
     //Subscription() { topic = NULL; cb = NULL; next = NULL}
-    Subscription(const String &t, const MQTTClientCallbackSimple c, const Subscription* const n):topic(&t), cb(c), next(n) { };
+    Subscription(const String &t, const InputReceivedCallback c, const Subscription* const n):topic(&t), cb(c), next(n) { };
 
     static const Subscription *find(const String &t) {
       const Subscription *i; 
@@ -55,7 +57,7 @@ class Subscription {
       }
       return i; // Found or not found case both return here
     }
-    static void subscribe(const String &topic, const MQTTClientCallbackSimple cb) {
+    static void subscribe(const String &topic, const InputReceivedCallback cb) {
       const Subscription* const existingSub = find(topic);
       subscriptions = new Subscription(topic, cb, subscriptions);
       if (!existingSub) { 
@@ -78,7 +80,7 @@ class Subscription {
           #ifdef SYSTEM_MQTT_DEBUG
             // Serial.print(F("Dispatching: ")); Serial.println(topic);
           #endif // SYSTEM_MQTT_DEBUG
-          sub->cb(topic, payload);
+          sub->cb(payload);
         }
         // debugging if needed to figure out why the comparisom above was mismatching
         // else { Serial.println("No match "+*(sub->topic)+" "+topic); }
@@ -111,8 +113,8 @@ const Subscription *Subscription::subscriptions = NULL;
 // A data structure that represents a single MQTT message
 class Message {
   public:
-    String * const topic; // cant be const const as goes to  messageReceived which isnt 
-    String * message; // cant be const as goes to  messageReceived which isnt and changed in retain
+    String * const topic; //TODO recheck this - maybe can be const cant be const const as goes to messageReceived which isnt but no longer have messageReceived
+    String * message; // cant be const as goes to inputReceived which isnt and changed in retain
     const bool retain;
     const int qos;
     Message * next; // Allows a chain of them in a queue - not const as queue rearranged
@@ -208,11 +210,11 @@ void messageReceived(String &topic, String &payload) { // cant be constant as di
 void messageReceived(Message *m) {
   messageReceived(*m->topic, *m->message);
 }
-void subscribe(String &topic, MQTTClientCallbackSimple cb) {
+void subscribe(String &topic, InputReceivedCallback cb) {
   Subscription::subscribe(topic, cb);
   // If we have retained a previous message for this topic then send to client
   if (Message *r = retained.find(topic)) {
-    messageReceived(r);
+    messageReceived(r); // TODO-81 maybe send to cb, not messageReceived -> dispatch -> multiple cb's
   }
 }
 
@@ -246,16 +248,28 @@ void messageSend(String &topic, String &payload, const bool retain, const int qo
     messageReceived(m);
   #endif // SYSTEM_MQTT_LOOPBACK
 }
+
+void messageSend(const char* topic, String &payload, const bool retain, const int qos) {
+  String *t = new String(*xDiscovery::topicPrefix + topic); // TODO can merge into next line
+  messageSend(*t, payload, retain, qos);
+}
+
 void messageSend(String &topic, const float &value, const int width, const bool retain, const int qos) {
   String * const foo = new String(value, width);
   messageSend(topic, *foo, retain, qos);
-
+}
+void messageSend(const char* topic, const float &value, const int width, const bool retain, const int qos) {
+  String * const foo = new String(value, width);
+  messageSend(topic, *foo, retain, qos);
 }
 void messageSend(String &topic, const int value, const bool retain, const int qos) {
   String * const foo = new String(value);
   messageSend(topic, *foo, retain, qos);
 }
-
+void messageSend(const char* topic, const int value, const bool retain, const int qos) {
+  String * const foo = new String(value);
+  messageSend(topic, *foo, retain, qos);
+}
 void messageSendQueued() {
   const Message* m;
   for (;!inReceived && (m = queued.shift()); messageSendInner(m)) {}

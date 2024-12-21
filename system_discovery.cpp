@@ -2,8 +2,7 @@
    Advertise in a way that allows a client to discover the nodes from knowing the project
  
    Periodically (SYSTEM_DISCOVERY_MS) send node name on project  e.g  "dev/Lotus/" = "node1"
-   When a client sends "?" to "dev/Lotus/"
-   Respond with a YAML string that describes this node and all sensors actuators
+  At startup send a YAML string that describes this node and all sensors actuators
 
   Required SYSTEM_DISCOVERY_MS 
   Required SYSTEM_DISCOVERY_ORGANIZATION
@@ -24,6 +23,13 @@
 #include "system_wifi.h"
 #include "system_mqtt.h"  // xMqtt
 #include "system_discovery.h"
+// TO_ADD_SENSOR TO_ADD_ACTUATOR
+#ifdef SENSOR_ANALOG_EXAMPLE_WANT
+  #include "sensor_analog_example.h"
+#endif
+#ifdef SENSOR_BATTERY_WANT
+  #include "sensor_battery.h"
+#endif
 #ifdef CONTROL_DEMO_MQTT_WANT
   #include "control_demo_mqtt.h"
 #endif
@@ -49,7 +55,7 @@ void fullAdvertise() {
 }
 /*
 // This is a previous idea that clients ask for the fullAdvertise, but since its retained at the broker that isn't needed. 
-void messageReceived(String &topic, String &payload) {
+void inputReceived(String &payload) {
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("Discovery message receieved:"));
   #endif // SYSTEM_DISCOVERY_DEBUG
@@ -118,6 +124,12 @@ void setup() {
       #ifdef ACTUATOR_RELAY_WANT
         ACTUATOR_RELAY_ADVERTISEMENT
       #endif
+      #ifdef SENSOR_ANALOG_EXAMPLE_WANT
+        SENSOR_ANALOG_EXAMPLE_ADVERTISEMENT
+      #endif
+      #ifdef SENSOR_BATTERY_WANT
+        SENSOR_BATTERY_ADVERTISEMENT
+      #endif
       #ifdef SENSOR_SHT85_WANT
         SENSOR_SHT85_ADVERTISEMENT
       #endif
@@ -136,7 +148,7 @@ void setup() {
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
   #endif
     fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
-    // xMqtt::subscribe(*advertiseTopic, *messageReceived); // Commented out as don't see why need to receive this
+    // xMqtt::subscribe(*advertiseTopic, *inputReceived); // Commented out as don't see why need to receive this
 }
 
 void loop() {
