@@ -5,6 +5,8 @@
 Configuration options
 Optional: SENSOR_ANALOG_PIN SENSOR_ANALOG_MS SENSOR_ANALOG_SMOOTH SENSOR_ANALOG_EXAMPLE_TOPIC
 
+On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,10 just reads 0; 7 reads 0 ad seems connected to LED
+
 */
 
 // TODO turn this into a template
@@ -39,8 +41,11 @@ void setup() {
   #ifdef SENSOR_ANALOG_EXAMPLE_DEBUG
     sensor_analog_example.name = new String(F("analog_example"));
   #endif // SENSOR_ANALOG_EXAMPLE_DEBUG
-  #ifdef SENSOR_ANALOG_SMOOTH
-    sensor_analog_example.smooth = SENSOR_ANALOG_SMOOTH;
+  #ifdef SENSOR_ANALOG_EXAMPLE_SMOOTH
+    sensor_analog_example.smooth = SENSOR_ANALOG_EXAMPLE_SMOOTH;
+  #endif
+  #ifdef SENSOR_ANALOG_EXAMPLE_MS
+    sensor_analog_example.ms = SENSOR_ANALOG_EXAMPLE_MS;
   #endif
   sensor_analog_example.topic = String(*xDiscovery::topicPrefix + SENSOR_ANALOG_EXAMPLE_TOPIC);
   sensor_analog_example.setup();

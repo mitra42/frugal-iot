@@ -42,7 +42,6 @@ void Sensor_Analog::set(const uint16_t v) {
     Serial.println(value);
   #endif // SENSOR_ANALOG_DEBUG
   if (value != vv) { // Only act if changed
-    Serial.print("XXX setting value="); Serial.println(vv);
     value = vv;
     act();
   }
@@ -50,7 +49,6 @@ void Sensor_Analog::set(const uint16_t v) {
 
 // Note this is virtual, and subclassed in Sensor_Battery
 uint16_t Sensor_Analog::read() {
-  Serial.println("analogRead");
   return analogRead(pin);
 }
 

@@ -32,13 +32,6 @@
 
 //TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 
-// simple analog r
-//#define SENSOR_ANALOG_WANT // Define in _local.h if using sensor
-#define SENSOR_ANALOG_PIN A0 // Which pin to read - this might be board specific
-#define SENSOR_ANALOG_MS 10000 // How often to read in MS
-#define SENSOR_ANALOG_DEBUG
-//#define SENSOR_ANALOG_SMOOTH 2
-
 // #define SENSOR_SHT85_WANT // Define in _local.h if using sensor
 #define SENSOR_SHT85_DEVICE SHT30 // e.g. The Lolin SHT30 shield
 #define SENSOR_SHT85_DEBUG

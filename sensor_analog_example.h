@@ -11,7 +11,10 @@
 #ifndef SENSOR_ANALOG_EXAMPLE_TOPIC
   #define SENSOR_ANALOG_EXAMPLE_TOPIC "analog"
 #endif
-#define SENSOR_ANALOG_EXAMPLE_ADVERTISEMENT "\n  -\n    topic: " SENSOR_ANALOG_EXAMPLE_TOPIC "\n    name: Battery\n    type: int\n    display: bar\n    min: 0\n    max: 6000\n    color: green\n    rw: r"
+#ifndef SENSOR_ANALOG_EXAMPLE_NAME
+  #define SENSOR_ANALOG_EXAMPLE_NAME "Analog"
+#endif
+#define SENSOR_ANALOG_EXAMPLE_ADVERTISEMENT "\n  -\n    topic: " SENSOR_ANALOG_EXAMPLE_TOPIC "\n    name: " SENSOR_ANALOG_EXAMPLE_NAME "\n    type: int\n    display: bar\n    min: 0\n    max: 6000\n    color: purple\n    rw: r"
 
 
 //  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/
@@ -22,7 +25,9 @@
   #ifdef ESP8266_D1_MINI
     #define SENSOR_ANALOG_REFERENCE DEFAULT // TODO not clear if / where this is used 
   #else
-    #error analogReference() is board dependent, review the docs and online and define 
+    #ifndef LOLIN_C3_PICO
+      #error analogReference() is board dependent, review the docs and online and define 
+    #endif
   #endif
 #endif //  SENSOR_ANALOG_REFERENCE
 
