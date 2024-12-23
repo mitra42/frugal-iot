@@ -26,8 +26,8 @@ The hierarchy of entities in the FrugalIoT system are broken up as follow.
 * _Node_: A device - with a connection to the net.
 * _Sensor_: A sensor on a node.
 
-Topics follow this hierarchy e.g. `dev/Lotus Ponds/esp8266_ab123/humidity` would be a `humidity` sensor on the physical node
-`esp8266_ab123` at the site `Lotus Ponds` run by the `dev` organization (developers). 
+Topics follow this hierarchy e.g. `dev/lotus/esp8266_ab123/humidity` would be a `humidity` sensor on the physical node
+`esp8266_ab123` at the site `lotus` (Lotus Ponds) run by the `dev` organization (developers). 
 
 #### Adding an organization
 
