@@ -83,8 +83,8 @@ void setup() {
   // This line fails when board 'LOLIN C3 PICO' is chosen
   // projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
   //Serial.print(xxx); //TODO_C++EXPERT - for weird reason requires this and const char PROGMEM above  or get run time exception
-  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project + F("/"));
-  advertiseTopic = new String(*projectTopic + xWifi::clientid()); // e.g. "dev/lotus/esp32-12345"
+  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project );
+  advertiseTopic = new String(*projectTopic + F("/") + xWifi::clientid()); // e.g. "dev/lotus/esp32-12345"
   topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/lotus/esp32-12345/" prefix of most topics
     advertisePayload = new String( 
     idcolon + xWifi::clientid() 
