@@ -41,9 +41,8 @@ void setup() {
   #ifdef ACTUATOR_DIGITAL_DEBUG
       actuator_relay.name = new String(F("relay"));
   #endif // ACTUATOR_DIGITAL_DEBUG
-  actuator_relay.topic = String(*xDiscovery::topicPrefix + ACTUATOR_RELAY_TOPIC);
   actuator_relay.setup();
-  xMqtt::subscribe(actuator_relay.topic, *inputReceived); // TODO-C++EXPERT see comment above
+  xMqtt::subscribe(ACTUATOR_RELAY_TOPIC, *inputReceived); // TODO-C++EXPERT see comment above
 }
 
 // void loop() { }

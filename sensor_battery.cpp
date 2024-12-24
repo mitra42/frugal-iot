@@ -35,7 +35,7 @@ void setup() {
   #ifdef SENSOR_BATTERY_DEBUG
     sensor_battery.name = new String(F("battery"));
   #endif // SENSOR_BATTERY_DEBUG
-  sensor_battery.topic = String(*xDiscovery::topicPrefix + SENSOR_BATTERY_TOPIC);
+  sensor_battery.topic = SENSOR_BATTERY_TOPIC;
   sensor_battery.setup();
 }
 // TODO create a linked list of sensors, and another of actuators that can be called in loop OR use list by time

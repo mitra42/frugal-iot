@@ -18,7 +18,7 @@ class Sensor_Analog {
     // Be careful of overflow - e.g. if 10 bit analog read then max smooth can be is 6 to smooth over 2^6 = 64 readings
     uint8_t smooth = 0; 
     unsigned long ms = 10000; // 10 second read
-    String topic; //TODO-53 maybe should be &topic
+    char *topic;
     unsigned long nextLoopTime = 0;
     #ifdef SENSOR_ANALOG_DEBUG
       String *name;

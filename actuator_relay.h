@@ -12,6 +12,6 @@ void setup();
 void set(int value);
 void loop();
 extern bool value;
-extern String *topic;
+//extern String *topic;
 } // namespace aRelay
 #endif // ACTUATOR_RELAY_H

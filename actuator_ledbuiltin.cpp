@@ -66,9 +66,8 @@ void setup() {
   #ifdef ACTUATOR_DIGITAL_DEBUG
     actuator_ledbuiltin.name = new String(F("ledbuiltin"));
   #endif // ACTUATOR_DIGITAL_DEBUG
-  actuator_ledbuiltin.topic = String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC);
   actuator_ledbuiltin.setup();
-  xMqtt::subscribe(actuator_ledbuiltin.topic, *inputReceived); // TODO-C++EXPERT see comment above
+  xMqtt::subscribe(ACTUATOR_LEDBUILTIN_TOPIC, *inputReceived); // TODO-C++EXPERT see comment above
 }
 
 // void loop() { }

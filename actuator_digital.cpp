@@ -37,7 +37,7 @@ void Actuator_Digital::setup() {
   pinMode(pin, OUTPUT);
 
   //TODO-C++EXPERT done in actuator_relay.h etc as cant figure out how to do the callback (tried variations of std::bind etc)
-  //xMqtt::subscribe(*topic, [this](String &topic, String &payload) { this->inputReceived(payload); } );
+  //xMqtt::subscribe(*topic, [this](*topic, String &payload) { this->inputReceived(payload); } );
 }
 
 

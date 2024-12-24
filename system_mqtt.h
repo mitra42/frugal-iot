@@ -14,7 +14,7 @@ void messageSend(const char *topic, const float &value, const int width, const b
 void messageSend(String &topic, const int value, const bool retain, const int qos);
 void messageSend(const char *topic, const int value, const bool retain, const int qos);
 void subscribe(String &topic, InputReceivedCallback cb);
-
+void subscribe(const char* topic, InputReceivedCallback cb);
 void setup();
 void loop();
 } // namespace xMqtt

@@ -218,6 +218,12 @@ void subscribe(String &topic, InputReceivedCallback cb) {
   }
 }
 
+void subscribe(const char* topic, InputReceivedCallback cb) {
+  String *t = new String(*xDiscovery::topicPrefix + topic);
+  Subscription::subscribe(*t, cb);
+}
+
+
 // If retain is set, then the broker will keep a copy 
 // TODO implement qos on broker in this library
 // qos: 0 = send at most once; 1 = send at least once; 2 = send exactly once

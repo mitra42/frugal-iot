@@ -47,7 +47,7 @@ void setup() {
   #ifdef SENSOR_ANALOG_EXAMPLE_MS
     sensor_analog_example.ms = SENSOR_ANALOG_EXAMPLE_MS;
   #endif
-  sensor_analog_example.topic = String(*xDiscovery::topicPrefix + SENSOR_ANALOG_EXAMPLE_TOPIC);
+  sensor_analog_example.topic = SENSOR_ANALOG_EXAMPLE_TOPIC;
   sensor_analog_example.setup();
 }
 // TODO create a linked list of sensors, and another of actuators that can be called in loop OR use list by time

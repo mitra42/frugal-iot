@@ -52,9 +52,8 @@ void inputReceived(String &payload) {
 }
 
 void setup() {
-  inputTopic = new String(*xDiscovery::topicPrefix + F("control_blinken_seconds"));
   set(CONTROL_BLINKEN_S); // default time            
-  xMqtt::subscribe(*inputTopic, *inputReceived);
+  xMqtt::subscribe("control_blinken_seconds", *inputReceived);
 }
 
 void loop() {

@@ -80,7 +80,7 @@ void outputControlReceived(String &payload) {
 
 void inputControlSet(String *t) {
   if (!inputTopic || *inputTopic != *t) {
-    // Only send if its changed.
+    // Only subscribe if its changed.
     inputTopic = new String(*t);
     // TODO-55 need to unsubscribe from previous topic, or will end up here as well
     xMqtt::subscribe(*inputTopic, *inputReceived); //TODO-81
@@ -101,12 +101,10 @@ void setup() {
   inputControlSet(t);
 
   //Input2: Will receive values from the UX
-  t = new String(*xDiscovery::topicPrefix + F("control_demo_mqtt_input2")); 
-  xMqtt::subscribe(*t, *input2Received);
+  xMqtt::subscribe("control_demo_mqtt_input2", *input2Received);
 
   //Output: Go to topic as defined in UX
-  t = new String(*xDiscovery::topicPrefix + "control_demo_mqtt_outputControl");
-  xMqtt::subscribe(*t, *outputControlReceived);
+  xMqtt::subscribe( "control_demo_mqtt_outputControl", *outputControlReceived);
 }
 
 } //namespace cDemoMqtt
