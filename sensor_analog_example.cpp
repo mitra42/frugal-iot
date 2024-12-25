@@ -30,6 +30,20 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
   #define SENSOR_ANALOG_EXAMPLE_MS 1000 // How often to read in MS
 #endif
 
+//  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/
+// TODO what are the values on ESP8266 or ESP32
+// TODO map between one set of REFERENCE values and the board specfic ones from the docs 
+// See https://github.com/mitra42/frugal-iot/issues/60
+#ifndef SENSOR_ANALOG_REFERENCE
+  #ifdef ESP8266_D1_MINI
+    #define SENSOR_ANALOG_REFERENCE DEFAULT // TODO not clear if / where this is used 
+  #else
+    #ifndef LOLIN_C3_PICO
+      #error analogReference() is board dependent, review the docs and online and define 
+    #endif
+  #endif
+#endif //  SENSOR_ANALOG_REFERENCE
+
 
 
 namespace sAnalogExample {

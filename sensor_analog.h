@@ -5,8 +5,8 @@
  *  
  */
 
-// Add new digutal actuators to this statement.  #TO-ADD-ACTUATOR
-#if defined(SENSOR_ANALOG_EXAMPLE_DEBUG) || defined(SENSOR_BATTERY_DEBUG) // TODO make this generic, but LED almost always wanted
+// Add new analog sensors to this statement.  #TO_ADD_SENSOR
+#if defined(SENSOR_ANALOG_EXAMPLE_DEBUG) || defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG) // TODO make this generic, but LED almost always wanted
 #define SENSOR_ANALOG_DEBUG
 #endif 
 

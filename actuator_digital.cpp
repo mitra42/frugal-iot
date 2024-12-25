@@ -4,7 +4,7 @@
 
 #include "_settings.h"  // Settings for what to include etc
 
-// Add new digutal actuators to this statement.  #TO-ADD-ACTUATOR
+// Add new digital actuators to this statement.  #TO_ADD_ACTUATOR
 #if defined(ACTUATOR_RELAY_WANT) || defined(ACTUATOR_LEDBUILTIN_WANT) // TODO make this generic, but LED almost always wanted
 
 #include <Arduino.h>

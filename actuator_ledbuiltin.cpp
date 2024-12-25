@@ -44,7 +44,7 @@ void Actuator_Ledbuiltin::act() {
   #ifdef RGB_BUILTIN // Lolon C3 doesnt have RGB_BUILTIN defined so digitalWrite doesnt work correctly
     #error Unclear to me if boards with RGB_BUILTIN shoul used the neopixelwrie or digitalWrite (with latter doing a neopixelwrite)
   #endif
-  // TO-ADD-BOARD if the board's built in LED is RGB then add to the definition in the next line
+  // TO_ADD_BOARD if the board's built in LED is RGB then add to the definition in the next line
   #if defined(LOLIN_C3_PICO) 
     const uint8_t brightness = value ? ACTUATOR_LEDBUILTIN_BRIGHTNESS : 0;
     rgbLedWrite(ACTUATOR_LEDBUILTIN_PIN,brightness,brightness,brightness);   // Note this is r,g,b (Neopixel is g r b on Lolin)

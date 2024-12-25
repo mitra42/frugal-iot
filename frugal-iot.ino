@@ -18,9 +18,12 @@
 #include "actuator_relay.h"
 #endif
 
-//TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
+// Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 #ifdef SENSOR_ANALOG_EXAMPLE_WANT
 #include "sensor_analog_example.h"
+#endif
+#ifdef SENSOR_SOIL_WANT
+#include "sensor_soil.h"
 #endif
 #ifdef SENSOR_BATTERY_WANT
 #include "sensor_battery.h"
@@ -69,9 +72,12 @@ void setup() {
   aRelay::setup();
 #endif
 
-//TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
+// Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 #ifdef SENSOR_ANALOG_EXAMPLE_WANT
   sAnalogExample::setup();
+#endif
+#ifdef SENSOR_SOIL_WANT
+  sSoil::setup();
 #endif
 #ifdef SENSOR_BATTERY_WANT
   sBattery::setup();
@@ -107,9 +113,12 @@ void loop() {
 #endif
 */
 
-//TO_ADD_SENSOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
+// Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 #ifdef SENSOR_ANALOG_EXAMPLE_WANT
   sAnalogExample::loop();
+#endif
+#ifdef SENSOR_SOIL_WANT
+  sSoil::loop();
 #endif
 #ifdef SENSOR_BATTERY_WANT
   sBattery::loop();

@@ -1,7 +1,7 @@
 #ifndef ACTUATOR_DIGITAL_H
 #define ACTUATOR_DIGITAL_H
 
-// Add new digutal actuators to this statement.  #TO-ADD-ACTUATOR
+// Add new digital actuators to this statement.  #TO_ADD_ACTUATOR
 #if defined(ACTUATOR_RELAY_DEBUG) || defined(ACTUATOR_LEDBUILTIN_DEBUG) // TODO make this generic, but LED almost always wanted
 #define ACTUATOR_DIGITAL_DEBUG
 #endif 

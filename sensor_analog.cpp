@@ -5,7 +5,7 @@
   See https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html for lots more on ESP ADCs
 
  Configuration options.
- SENSOR_ANALOG_REFERENCE for ESP8266 only  
+ Optional: SENSOR_ANALOG_REFERENCE for ESP8266 only  
  
 */
 
@@ -14,7 +14,7 @@
 #include "_settings.h"  // Settings for what to include etc
 
 // Add new analog sensors here TO_ADD_SENSOR
-#if (defined(SENSOR_ANALOG_EXAMPLE_WANT) || defined(SENSOR_BATTERY_WANT))
+#if (defined(SENSOR_ANALOG_EXAMPLE_WANT) || defined(SENSOR_BATTERY_WANT) || defined(SENSOR_SOIL_WANT)) 
 
 #include <Arduino.h>
 #include "sensor_analog.h"

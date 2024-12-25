@@ -27,6 +27,9 @@
 #ifdef SENSOR_ANALOG_EXAMPLE_WANT
   #include "sensor_analog_example.h"
 #endif
+#ifdef SENSOR_SOIL_WANT
+  #include "sensor_soil.h"
+#endif
 #ifdef SENSOR_BATTERY_WANT
   #include "sensor_battery.h"
 #endif
@@ -103,21 +106,24 @@ void setup() {
           #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
         #endif
       #endif
-      // TO-ADD-SENSOR (note space at start of string)
+      // TO_ADD_SENSOR (note space at start of string)
       #ifdef SENSOR_SHT85_WANT
         " SHTxx temp/humidity"
       #endif
       #ifdef SENSOR_DHT_WANT
         " DHT temp/humidity"
       #endif
-      // TO-ADD-ACTUATOR
+      #ifdef SENSOR_SOIL_WANT
+        " Soil moisture"
+      #endif
+      // TO_ADD_ACTUATOR
       #ifdef ACTUATOR_RELAY_WANT
         " Relay"
       #endif
     #endif
     // TODO-44 add location: <gsm coords>
     "\ntopics:" 
-      // For any module with a control, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO-ADD-NEW-CONTROL
+      // For any module with a control, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO_ADD_NEW_CONTROL
       #ifdef ACTUATOR_LEDBUILTIN_WANT
         ACTUATOR_LEDBUILTIN_ADVERTISEMENT
       #endif
@@ -126,6 +132,9 @@ void setup() {
       #endif
       #ifdef SENSOR_ANALOG_EXAMPLE_WANT
         SENSOR_ANALOG_EXAMPLE_ADVERTISEMENT
+      #endif
+      #ifdef SENSOR_SOIL_WANT
+        SENSOR_SOIL_ADVERTISEMENT
       #endif
       #ifdef SENSOR_BATTERY_WANT
         SENSOR_BATTERY_ADVERTISEMENT
