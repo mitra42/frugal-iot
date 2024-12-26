@@ -46,7 +46,7 @@ public:
 protected:
 };
 
-namespace sSHT85 {
+namespace sSht85 {
 
 unsigned long nextLoopTime = 0;
 sSHTxx *sht_array[SENSOR_SHT85_COUNT];
@@ -76,7 +76,7 @@ void loop() {
   }
 }
 
-} // namespace sSHT85
+} // namespace sSht85
 
 sSHTxx::sSHTxx(uint8_t addr, TwoWire *wire) {
 

@@ -43,6 +43,10 @@
 #ifdef SYSTEM_DISCOVERY_WANT
 #include "system_discovery.h"
 #endif
+#ifdef SYSTEM_OTA_WANT
+#include "system_ota.h"
+#endif
+
 
 void setup() {
 #ifdef ANY_DEBUG
@@ -63,6 +67,9 @@ void setup() {
 #endif
 #ifdef SYSTEM_DISCOVERY_WANT
   xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+#endif
+#ifdef SYSTEM_OTA_WANT
+  xOta::setup();
 #endif
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -134,6 +141,9 @@ void loop() {
 #endif
 #ifdef SYSTEM_DISCOVERY_WANT
   xDiscovery::loop();
+#endif
+#ifdef SYSTEM_OTA_WANT
+  xOta::loop();
 #endif
 }
 

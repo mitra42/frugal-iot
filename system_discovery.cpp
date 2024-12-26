@@ -46,6 +46,9 @@ unsigned long nextLoopTime = 0;
 String *projectTopic;
 String *advertiseTopic;
 String *topicPrefix;
+#ifdef SYSTEM_OTA_WANT
+  String *otaKey;
+#endif
 
 String *advertisePayload;
 void quickAdvertise() {
@@ -82,6 +85,7 @@ void inputReceived(String &payload) {
   #define nlNameColon F("\nname: ")
 #endif
 
+
 void setup() {
   // This line fails when board 'LOLIN C3 PICO' is chosen
   // projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
@@ -89,7 +93,7 @@ void setup() {
   projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project );
   advertiseTopic = new String(*projectTopic + F("/") + xWifi::clientid()); // e.g. "dev/lotus/esp32-12345"
   topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/lotus/esp32-12345/" prefix of most topics
-    advertisePayload = new String( 
+  advertisePayload = new String( 
     idcolon + xWifi::clientid() 
     + nlNameColon + xWifi::device_name
     + F("\ndescription: "
@@ -153,10 +157,57 @@ void setup() {
       #endif
     )
   );
+  #ifdef SYSTEM_OTA_WANT
+    otaKey = new String( 
+    F(
+    // Can be overridden in _local.h
+    #ifdef SYSTEM_OTA_KEY
+      SYSTEM_OTA_KEY
+    #else
+      #ifdef ESP8266_D1_MINI
+        "ESP8266D1Mini"
+      #else
+        #ifdef LOLIN_C3_PICO
+          "LolinC3Pico"
+        #else
+          #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
+        #endif
+      #endif
+      // TO_ADD_SENSOR (note space at start of string)
+      #ifdef SENSOR_SHT85_WANT
+        "_sSht85"
+      #endif
+      #ifdef SENSOR_DHT_WANT
+        "_sDht"
+      #endif
+      #ifdef SENSOR_BATTERY_WANT
+        "_sBattery"
+      #endif
+      #ifdef SENSOR_SOIL_WANT
+        "_aSoil"
+      #endif
+      // TO_ADD_ACTUATOR
+      #ifdef ACTUATOR_RELAY_WANT
+        "_aRelay"
+      #endif
+      // TO_ADD_CONTROL
+      #ifdef CONTROL_BLINKEN_WANT
+        "_xBlinken"
+      #endif
+      #ifdef CONTROL_DEMO_MQTT_WANT
+        "_xDemoMqtt"
+      #endif
+    #endif // SYSTEM_OTA_KEY
+    )
+  );
+  #endif // SYSTEM_OTA_WANT
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
+    #ifdef SYSTEM_OTA_WANT
+      Serial.print(F("otaKey=")); Serial.println(*otaKey);
+    #endif
   #endif
-    fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
+  fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
     // xMqtt::subscribe(*advertiseTopic, *inputReceived); // Commented out as don't see why need to receive this
 }
 
