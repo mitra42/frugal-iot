@@ -19,6 +19,8 @@
   #error OTA is currently only defined for ESP8266
 #endif
 
+#include <Arduino.h>
+#include "system_discovery.h"
 #include "system_ota.h"
 
 #ifdef ESP8266
@@ -61,7 +63,10 @@ void updateAndReboot(bool sketch) {
   #endif
 
   if (sketch) {
-    t_httpUpdate_return ret = ESPhttpUpdate.update(net, "http://192.168.1.178:8080/ota_update","01.02.03");
+    // TODO-37 parameterize host:port 
+    String *url = new String(F("http://192.168.1.178:8080/ota_update/") + *xDiscovery::topicPrefix + *xDiscovery::otaKey);
+    Serial.print("Attempt OTA from:"); Serial.println(*url);
+    t_httpUpdate_return ret = ESPhttpUpdate.update(net, *url, SYSTEM_OTA_VERSION);
     Serial.print("Update return="); Serial.println(ret);
     if (ret == HTTP_UPDATE_OK) {
       Serial.println("HTTP_UPDATE_OK. Reboot");
