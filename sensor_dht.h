@@ -1,8 +1,8 @@
 #ifndef SENSOR_DHT_H
 #define SENSOR_DHT_H
 
-namespace sDHT {
+namespace sDht {
   void setup();
   void loop();
-} // namespace sDHT
+} // namespace sDht
 #endif // SENSOR_DHT_H

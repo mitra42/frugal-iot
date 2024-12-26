@@ -83,10 +83,10 @@ void setup() {
   sBattery::setup();
 #endif
 #ifdef SENSOR_SHT85_WANT
-  sSHT85::setup();
+  sSht85::setup();
 #endif
 #ifdef SENSOR_DHT_WANT
-  sDHT::setup();
+  sDht::setup();
 #endif
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
@@ -124,10 +124,10 @@ void loop() {
   sBattery::loop();
 #endif
 #ifdef SENSOR_SHT85_WANT
-  sSHT85::loop();
+  sSht85::loop();
 #endif
 #ifdef SENSOR_DHT_WANT
-  sDHT::loop();
+  sDht::loop();
 #endif
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::loop();

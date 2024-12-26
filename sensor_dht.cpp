@@ -24,7 +24,7 @@
 */
 // TODO-64 edits suggested for SHT - rename to SHT from SHT85, and change most SHTxx etc to SHT
 // Use defaults for count (probably not device type as there are many)
-// TODO-64 merge sensorDHT with sDHT - so that setup for example becomes static function of class
+// TODO-64 merge sensorDHT with sDht - so that setup for example becomes static function of class
 
 #include "_settings.h"  // Settings for what to include etc
 
@@ -59,7 +59,7 @@ public:
 protected:
 };
 
-namespace sDHT {
+namespace sDht {
 
 unsigned long nextLoopTime = 0;
 sensorDHT *dht_array[SENSOR_DHT_COUNT];
@@ -86,7 +86,7 @@ void loop() {
   }
 }
 
-} // namespace sDHT
+} // namespace sDht
 
 sensorDHT::sensorDHT(uint8_t p) {
     dht = new DHTNEW(p); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
@@ -166,14 +166,14 @@ void sensorDHT::readSensor() {
     // Store new results and optionally if changed send on MQTT
     #ifdef SENSOR_DHT_TOPIC_TEMPERATURE
       if (temp != temperature) {
-        xMqtt::messageSend(sDHT::topicT, temp, 1, false, 0);
+        xMqtt::messageSend(sDht::topicT, temp, 1, false, 0);
       }
     #endif
 
     temperature = temp;
     #ifdef SENSOR_DHT_TOPIC_HUMIDITY
       if (humy != humidity) { // TODO may want to add some bounds (e.g a percentage)
-        xMqtt::messageSend(sDHT::topicH, humy, 1, false, 0);
+        xMqtt::messageSend(sDht::topicH, humy, 1, false, 0);
       }
     #endif
     humidity = humy;
