@@ -32,6 +32,8 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
   #define SENSOR_SOIL_MS 15000 // How often to read in MS
 #endif
 
+#define SENSOR_SOIL_DEBUG // default to debugging for now
+
 //  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/
 // TODO what are the values on ESP8266 or ESP32
 // TODO map between one set of REFERENCE values and the board specfic ones from the docs 
