@@ -63,12 +63,15 @@ void setup() {
   xWifi::setup();
 #endif
 #ifdef SYSTEM_MQTT_WANT
+  // MQTT has to be after WiFi and typically followed immediately by Discovery.
   xMqtt::setup();
 #endif
 #ifdef SYSTEM_DISCOVERY_WANT
+  // Discovery should be after MQTT
   xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
 #endif
 #ifdef SYSTEM_OTA_WANT
+  // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();
 #endif
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
