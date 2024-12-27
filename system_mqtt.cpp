@@ -208,7 +208,8 @@ void messageReceived(String &topic, String &payload) { // cant be constant as di
   inReceived = false;
 }
 void messageReceived(Message *m) {
-  messageReceived(*m->topic, *m->message);
+  // Not going through messageReceived(String, String) because dont want to set the inReceived lock, or print debug for looping or subscription
+  Subscription::dispatch(*m->topic, *m->message);
 }
 void subscribe(String &topic, InputReceivedCallback cb) {
   Subscription::subscribe(topic, cb);
@@ -240,6 +241,9 @@ void messageSendInner(const Message* const m) {
 void messageSend(String &topic, String &payload, const bool retain, const int qos) {
   // TODO-21-sema also queue if WiFi is down and qos>0 - not worth doing till xWifi::connect is non-blocking
   Message * const m = new Message(topic, payload, retain, qos);
+  #ifdef SYSTEM_MQTT_DEBUG
+    Serial.print(F("MQTT publish: ")); Serial.print(topic); Serial.print(F(" - ")); Serial.println(payload);
+  #endif
   if (inReceived && qos) {
     queued.push(m);
   } else {
