@@ -17,6 +17,7 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
 #include <Arduino.h>
 #include "sensor_analog.h"
 #include "sensor_soil.h"
+#include "system_mqtt.h"
 #include "system_discovery.h"
 
 #ifndef SENSOR_SOIL_PIN
@@ -67,10 +68,22 @@ Sensor_Soil::Sensor_Soil(const uint8_t p) : Sensor_Analog(p) {
   #endif
 }
 
+#define SENSOR_SOIL_INVALIDVALUE 0xFFFF
+
 uint16_t Sensor_Soil::read() {
   const uint16_t x = analogRead(pin);
+  if (x == 4095) { // 12 bit -1 i.e. 0xFFF
+    return SENSOR_SOIL_INVALIDVALUE;
+  }
   // TODO-85 will want to be able to calibrate this somehow and remember calibration
   return map(x, SENSOR_SOIL_0, SENSOR_SOIL_100, 0, 100);
+}
+
+void Sensor_Soil::act() {
+  // Dont return if reading was invalid
+  if(value != SENSOR_SOIL_INVALIDVALUE) {
+    xMqtt::messageSend(topic, value, false, 0);
+  }
 }
 
 namespace sSoil {
