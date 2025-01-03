@@ -4,6 +4,9 @@
 
 #include "_settings.h"  // Settings for what to include etc
 
+#include "_base.h" // Base for new class version
+#include "sensor.h" // Base class for sensors
+
 #ifdef SYSTEM_WIFI_WANT
 #include "system_wifi.h"
 #endif
@@ -71,6 +74,8 @@ void setup() {
 #ifdef ACTUATOR_RELAY_WANT
   aRelay::setup();
 #endif
+
+  Sensor::setupAll(); // Will replace all setups as developed - but starting with sensors, so positioned here.
 
 // Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 #ifdef SENSOR_ANALOG_EXAMPLE_WANT

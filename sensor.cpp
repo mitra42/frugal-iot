@@ -4,8 +4,11 @@
 
 #include "_settings.h"  // Settings for what to include etc
 #include <Arduino.h>
+#include <forward_list>
 #include "sensor.h"
 #include "system_mqtt.h"
+
+std::forward_list<Sensor*> sensors; //TODO-25 may want to put this inside a namespace - didn't work as a static.
 
 Sensor::Sensor() : Frugal_Base() {  // TODO-25 might set topic here
   sensors.push_front(this);
@@ -51,6 +54,7 @@ void Sensor::setupAll() {
     s->setup();
   }
 }
+/*
 void Sensor::loop() { } // Default to do nothing
 
 void Sensor::loopAll() {
@@ -58,6 +62,7 @@ void Sensor::loopAll() {
     s->loop();
   }
 }
+*/
 /*
 At this point no dispatching for sensors as none have INCOMING messages
 

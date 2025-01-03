@@ -12,12 +12,13 @@ class Sensor : public Frugal_Base {
     const int qos = 0; // Default to no guarrantee of delivery
 
     Sensor();
-    static std::forward_list<Sensor*> sensors;
     virtual void setup();
     static void setupAll();
     virtual void loop();
     static void loopAll();
 }; // Class Sensor
+
+extern std::forward_list<Sensor*> sensors;
 
 class Sensor_Float : public Sensor {
     float value; 
