@@ -5,8 +5,6 @@
 
 class Frugal_Base {
   public:
-    Frugal_Base* next;
-
     Frugal_Base();
     virtual void setup();
     static void setupAll();

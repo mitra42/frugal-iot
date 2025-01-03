@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "_base.h"
+#include <forward_list>
 
 class Sensor : public Frugal_Base {
   public:
@@ -11,12 +12,11 @@ class Sensor : public Frugal_Base {
     const int qos = 0; // Default to no guarrantee of delivery
 
     Sensor();
-    static Sensor *first;
+    static std::forward_list<Sensor*> sensors;
     virtual void setup();
     static void setupAll();
     virtual void loop();
-    virtual void dispatch(String &topic, String &payload);
-
+    static void loopAll();
 }; // Class Sensor
 
 class Sensor_Float : public Sensor {

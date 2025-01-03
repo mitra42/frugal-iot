@@ -7,11 +7,8 @@
 #include "sensor.h"
 #include "system_mqtt.h"
 
-Sensor *Sensor::first = NULL;
-
 Sensor::Sensor() : Frugal_Base() {  // TODO-25 might set topic here
-  next = first; // Will be null the first time
-  first = this; // Static first points to new top of linked list
+  sensors.push_front(this);
 };
 Sensor_Float::Sensor_Float() : Sensor() {  // TODO-25 might set topic here
 };
@@ -38,20 +35,37 @@ bool Sensor_Uint16::changed(uint16_t newvalue) {
   return (newvalue == value);
 }
 void Sensor_Float::act() {
-      if (topic) {
+    if (topic) {
       xMqtt::messageSend(topic, value, retain, qos); // Note messageSend will convert value to String and expand topic
     }
 }
 void Sensor_Uint16::act() {
-      if (topic) {
+    if (topic) {
       xMqtt::messageSend(topic, value, retain, qos); // Note messageSend will convert value to String and expand topic
     }
 }
 void Sensor::setup() { } // Default to do nothing
 
 void Sensor::setupAll() {
-  Sensor *s;
-  for (s = first; s; s = (Sensor*)s->next) { // We know its a Sensor* since its under this list.
+  for (Sensor* s: sensors) {
     s->setup();
   }
 }
+void Sensor::loop() { } // Default to do nothing
+
+void Sensor::loopAll() {
+  for (Sensor* s: sensors) {
+    s->loop();
+  }
+}
+/*
+At this point no dispatching for sensors as none have INCOMING messages
+
+void Sensor::dispatch() { } // TODO-25 should check topic Default to do nothing
+
+void Sensor::dispatchAll() {
+  for (Sensor* s: sensors) {
+    s->dispatch();
+  }
+}
+*/
