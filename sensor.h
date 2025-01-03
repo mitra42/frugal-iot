@@ -12,6 +12,11 @@ class Sensor : public Frugal_Base {
 
     Sensor();
     static Sensor *first;
+    virtual void setup();
+    static void setupAll();
+    virtual void loop();
+    virtual void dispatch(String &topic, String &payload);
+
 }; // Class Sensor
 
 class Sensor_Float : public Sensor {

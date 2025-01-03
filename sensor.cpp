@@ -47,5 +47,11 @@ void Sensor_Uint16::act() {
       xMqtt::messageSend(topic, value, retain, qos); // Note messageSend will convert value to String and expand topic
     }
 }
+void Sensor::setup() { } // Default to do nothing
 
-
+void Sensor::setupAll() {
+  Sensor *s;
+  for (s = first; s; s = (Sensor*)s->next) { // We know its a Sensor* since its under this list.
+    s->setup();
+  }
+}
