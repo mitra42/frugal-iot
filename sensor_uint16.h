@@ -13,7 +13,7 @@ class Sensor_Uint16 : public Sensor {
     // Note this functionality might get pushed to a superclass
     uint8_t smooth = 0; 
 
-    Sensor_Uint16();
+    //Sensor_Uint16();
     Sensor_Uint16(const uint8_t smooth, const char* topic, const unsigned long ms);
     virtual uint16_t read();
     virtual void set(uint16_t newvalue);  // TODO-25 prob const

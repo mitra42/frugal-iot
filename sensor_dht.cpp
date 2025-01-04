@@ -8,12 +8,11 @@
  * 
  * Configuration options example - these are all in _configuration.h
  * Required:
- * SENSOR_DHT_PIN_ARRAY           // Which pins sensors connected to
- * SENSOR_DHT_MS                 // How often to poll each sensor, for now we presume we poll them all this often
  * Optional: 
+ * SENSOR_DHT_MS                 // How often to poll each sensor, for now we presume we poll them all this often
+ * SENSOR_DHT_PIN          // Which pins sensors connected to - default to 4
  * SENSOR_DHT_DEBUG              // Debugging output
  * SENSOR_DHT_COUNT              // How many devices - default to 1
- * SENSOR_DHT_DEVICE             // Defaults to DHT11 - have not seen any others
  *
  * See examples at https://www.thegeekpub.com/wiki/sensor-wiki-ky-015-dht11-combination-temperature-and-humidity-sensor
  * Bit bashing at https://www.phippselectronics.com/using-the-temperature-and-humidity-sensor-ky-015-with-arduino/ looks simple as well
@@ -30,72 +29,26 @@
 
 #ifdef SENSOR_DHT_WANT
 
-#if (!defined(SENSOR_DHT_PIN_ARRAY) || !defined(SENSOR_DHT_MS))
-  error sensor_dht does not have all requirements in _configuration.h: SENSOR_DHT_PIN_ARRAY SENSOR_DHT_MS
+#ifndef SENSOR_DHT_PIN
+  #define SENSOR_DHT_PIN 4  // hard wired to a pin - 4 is D2 on the Lolin D1 but is somewhere else on C3 Pico
 #endif
 
-#ifndef SENSOR_DHT_COUNT 
-  #define SENSOR_DHT_COUNT 1
+#ifndef SENSOR_DHT_MS
+  #define SENSOR_DHT_MS 60000
 #endif
-#ifndef SENSOR_DHT_DEVICE
-  #define SENSOR_DHT_DEVICE DHT
-#endif
-
 
 #include <Arduino.h>
 #include <dhtnew.h>                     // https://github.com/RobTillaart/DHTNew
 #include "sensor_dht.h"
-#include "system_discovery.h"
 #include "system_mqtt.h"                // Library for sending messages
 
-class sensorDHT {
-public:
-  sensorDHT(uint8_t);
-  void readSensor();
-  DHTNEW *dht; 
-  uint8_t pin;
-  float temperature;
-  float humidity;
-protected:
-};
-
-namespace sDHT {
-
-unsigned long nextLoopTime = 0;
-sensorDHT *dht_array[SENSOR_DHT_COUNT];
-
-const char* topicT = "temperature";
-const char* topicH = "humidity";
-
-void setup()
-{
-  uint8_t dht_pin_array[] = {SENSOR_DHT_PIN_ARRAY};
-
-  for(uint8_t i = 0 ; i < SENSOR_DHT_COUNT; i++) {
-    dht_array[i] = new sensorDHT(dht_pin_array[i]);
-  }
-
-}
-
-void loop() {
-  if (nextLoopTime <= millis() ) {
-    for(uint8_t i = 0 ; i < SENSOR_DHT_COUNT; i++) {
-      dht_array[i]->readSensor();
-    }
-    nextLoopTime = millis() + SENSOR_DHT_MS;
-  }
-}
-
-} // namespace sDHT
-
-sensorDHT::sensorDHT(uint8_t p) {
-    dht = new DHTNEW(p); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
-    // dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/104
-    temperature = 0;
-    humidity = 0; 
-    #ifdef SENSOR_DHT_DEBUG
-      pin = p; // Just copy for debugging
-    #endif // SENSOR_DHT_DEBUG
+Sensor_DHT::Sensor_DHT(const uint8_t pin_init, const char* topic_init, const char* topic2_init, const unsigned long ms_init) : Sensor_Float(topic_init, ms_init) { 
+  pin = pin_init;
+  topic2 = topic2_init;
+  temperature = 0;
+  humidity = 0; 
+  dht = new DHTNEW(pin_init); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
+  // dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/104
 }
 
 #ifdef SENSOR_DHT_DEBUG
@@ -138,7 +91,7 @@ void printErrorCode(int chk) {
 }
 #endif // SHT_DHT_DEBUG
 
-void sensorDHT::readSensor() {
+void Sensor_DHT::readAndSet() {
   #ifdef SENSOR_DHT_DEBUG
     Serial.print("DHT");
     Serial.print(pin);
@@ -164,22 +117,29 @@ void sensorDHT::readSensor() {
     #endif
 
     // Store new results and optionally if changed send on MQTT
-    #ifdef SENSOR_DHT_TOPIC_TEMPERATURE
-      if (temp != temperature) {
-        xMqtt::messageSend(sDHT::topicT, temp, 1, false, 0);
+    if (temp != temperature) {
+      temperature = temp;
+      if (topic) {
+        xMqtt::messageSend(topic, temperature, 1, false, 0);  // topic, value, width, retain, qos
       }
-    #endif
-
-    temperature = temp;
-    #ifdef SENSOR_DHT_TOPIC_HUMIDITY
-      if (humy != humidity) { // TODO may want to add some bounds (e.g a percentage)
-        xMqtt::messageSend(sDHT::topicH, humy, 1, false, 0);
+    }
+    if (humy != humidity) { // TODO may want to add some bounds (e.g a percentage)
+      humidity = humy;
+      if (topic2) {
+        xMqtt::messageSend(topic2, humidity, 1, false, 0);
       }
-    #endif
-    humidity = humy;
-
+    }
   }
 }
+
+void Sensor_DHT::loop() { // TODO-25 I think this is standard esp since readAndSet is type independent while read() and set(xxx) are type dependent
+  if (nextLoopTime <= millis()) {
+    readAndSet(); // Will also send message via act()
+    nextLoopTime = millis() + ms;
+  }
+}
+
+Sensor_DHT sensor_dht(SENSOR_DHT_PIN, "temperature", "humidity", SENSOR_DHT_MS);
 
 #endif // SENSOR_DHT_WANT
 

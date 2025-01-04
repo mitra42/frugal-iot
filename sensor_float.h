@@ -8,7 +8,7 @@
 class Sensor_Float : public Sensor {
   public:
     float value; 
-    Sensor_Float(); 
+    Sensor_Float(const char* topic, const unsigned long ms);
     virtual float read();
     virtual void set(float newvalue);  // TODO-25 prob const
     virtual bool changed(float newvalue); // TODO-25 prob const

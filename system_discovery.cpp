@@ -36,6 +36,9 @@
 #ifdef CONTROL_DEMO_MQTT_WANT
   #include "control_demo_mqtt.h"
 #endif
+#ifdef SENSOR_DHT_WANT
+  #include "sensor_dht.h"
+#endif
 
 namespace xDiscovery {
 

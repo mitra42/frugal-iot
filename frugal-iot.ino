@@ -81,9 +81,6 @@ Sensor::setupAll(); // Will replace all setups as developed - but starting with 
 #ifdef SENSOR_SHT85_WANT
   sSHT85::setup();
 #endif
-#ifdef SENSOR_DHT_WANT
-  sDHT::setup();
-#endif
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
 #endif
@@ -114,9 +111,6 @@ Sensor::loopAll(); // Will replace all loops as developed - but starting with se
 
 #ifdef SENSOR_SHT85_WANT
   sSHT85::loop();
-#endif
-#ifdef SENSOR_DHT_WANT
-  sDHT::loop();
 #endif
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::loop();
