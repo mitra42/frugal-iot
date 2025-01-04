@@ -58,7 +58,7 @@ void setup() {
 
 void loop() {
   if (nextLoopTime <= millis()) {
-    xMqtt::messageSend(outputTopic, !value, true, 1); //TODO-53 XXX comment back in 
+    xMqtt::messageSend(outputTopic, !value, true, 1);
     nextLoopTime = millis() + value*1000;
   }
 }

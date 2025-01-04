@@ -32,9 +32,6 @@ namespace sBattery {
 Sensor_Battery sensor_battery(SENSOR_BATTERY_PIN);  // TODO-57 will rarely be as simple as this
 
 void setup() {
-  #ifdef SENSOR_BATTERY_DEBUG
-    sensor_battery.name = new String(F("Battery"));
-  #endif // SENSOR_BATTERY_DEBUG
   sensor_battery.topic = SENSOR_BATTERY_TOPIC;
   sensor_battery.setup();
 }

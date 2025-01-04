@@ -75,7 +75,7 @@ void setup() {
   aRelay::setup();
 #endif
 
-  Sensor::setupAll(); // Will replace all setups as developed - but starting with sensors, so positioned here.
+Sensor::setupAll(); // Will replace all setups as developed - but starting with sensors, so positioned here.
 
 // Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 #ifdef SENSOR_ANALOG_EXAMPLE_WANT
@@ -113,8 +113,8 @@ void loop() {
 #endif
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 /*
-#ifdef ACTUATOR_XXX
-  aXXX::loop();
+#ifdef ACTUATOR_XYZ
+  aXYZ::loop();
 #endif
 */
 
@@ -122,6 +122,9 @@ void loop() {
 #ifdef SENSOR_ANALOG_EXAMPLE_WANT
   sAnalogExample::loop();
 #endif
+
+Sensor::loopAll(); // Will replace all loops as developed - but starting with sensors, so positioned here.
+
 #ifdef SENSOR_SOIL_WANT
   sSoil::loop();
 #endif

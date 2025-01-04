@@ -60,9 +60,6 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
 Sensor_Soil::Sensor_Soil(const uint8_t p) : Sensor_Analog(p) { 
   ms = SENSOR_SOIL_MS;
   topic = SENSOR_SOIL_TOPIC;
-  #ifdef SENSOR_SOIL_DEBUG
-    name = new String(F("Soil"));
-  #endif // SENSOR_SOIL_DEBUG
   #ifdef SENSOR_SOIL_SMOOTH
     smooth = SENSOR_SOIL_SMOOTH;
   #endif
