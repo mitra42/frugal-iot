@@ -20,8 +20,25 @@
 #include "system_mqtt.h"
 #include "system_discovery.h" // 
 
+//  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/
+// TODO what are the values on ESP8266 or ESP32
+// TODO map between one set of REFERENCE values and the board specfic ones from the docs 
+// See https://github.com/mitra42/frugal-iot/issues/60
+// TODO Note this is not going to make it to the place its used in sensor_analog
+#ifndef SENSOR_ANALOG_REFERENCE
+  #ifdef ESP8266_D1_MINI
+    #define SENSOR_ANALOG_REFERENCE DEFAULT // TODO not clear if / where this is used 
+  #else
+    #ifndef LOLIN_C3_PICO
+      #error analogReference() is board dependent, review the docs and online and define 
+    #endif
+  #endif
+#endif //  SENSOR_ANALOG_REFERENCE
+
+
 
 Sensor_Analog::Sensor_Analog(const uint8_t p) : Sensor_Uint16() { pin = p; }; // TODO-25 maybe add topic here
+Sensor_Analog::Sensor_Analog(const uint8_t pin_init, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init) : Sensor_Uint16(smooth_init, topic_init, ms_init) { pin = pin_init; }; // TODO-25 maybe add topic here
 
 // Sensor_Uint16_t::act is good - sends with retain=false; qos=0;
 // Sensor_Uint16_t::set is good - does optional smooth, compares and calls act
@@ -35,10 +52,8 @@ uint16_t Sensor_Analog::read() {
 void Sensor_Analog::setup() {
   // initialize the analog pin as an input.
   pinMode(pin, INPUT); // I don't think this is needed ?
-  #ifdef ESP8266_D1_MINI
+  #ifdef SENSOR_ANALOG_REFERENCE
     analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
-  #else
-    //#error analogReference is board specific, appears to be undefined on ESP32C3 
   #endif 
 }
 #endif // SENSOR_ANALOG_WANT

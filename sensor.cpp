@@ -18,6 +18,8 @@ Sensor::Sensor() : Frugal_Base() {  // TODO-25 might set topic here
   sensors.push_front(this);
 };
 
+Sensor::Sensor(const char* topic_init, const unsigned long ms_init) : Frugal_Base() { topic=topic_init; ms=ms_init; } //TODO I think there is a way to shortcut initialization rather than code in {} do on all constructors like this 
+
 void Sensor::setup() { } // Default to do nothing
 
 void Sensor::setupAll() {

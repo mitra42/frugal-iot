@@ -16,6 +16,8 @@
 Sensor_Uint16::Sensor_Uint16() : Sensor() {  // TODO-25 might set topic here
 // Serial.println("Sensor_Uint16_t constructor");
 };
+Sensor_Uint16::Sensor_Uint16(const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init): Sensor(topic_init, ms_init) { smooth = smooth_init; }
+    
 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
 // All subclasses will override this. 
