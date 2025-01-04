@@ -78,9 +78,6 @@ void setup() {
 Sensor::setupAll(); // Will replace all setups as developed - but starting with sensors, so positioned here.
 
 // Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
-#ifdef SENSOR_SOIL_WANT
-  sSoil::setup();
-#endif
 #ifdef SENSOR_SHT85_WANT
   sSHT85::setup();
 #endif
@@ -115,9 +112,6 @@ void loop() {
 // Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
 Sensor::loopAll(); // Will replace all loops as developed - but starting with sensors, so positioned here.
 
-#ifdef SENSOR_SOIL_WANT
-  sSoil::loop();
-#endif
 #ifdef SENSOR_SHT85_WANT
   sSHT85::loop();
 #endif

@@ -15,10 +15,8 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
 #define SENSOR_SOIL_DEBUG // default to debugging for now
 
 #include <Arduino.h>
-#include "sensor_analog.h"
 #include "sensor_soil.h"
 #include "system_mqtt.h"
-#include "system_discovery.h"
 
 #ifndef SENSOR_SOIL_PIN
   #ifdef LOLIN_C3_PICO
@@ -57,13 +55,7 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
   #endif
 #endif //  SENSOR_ANALOG_REFERENCE
 
-Sensor_Soil::Sensor_Soil(const uint8_t p) : Sensor_Analog(p) { 
-  ms = SENSOR_SOIL_MS;
-  topic = SENSOR_SOIL_TOPIC;
-  #ifdef SENSOR_SOIL_SMOOTH
-    smooth = SENSOR_SOIL_SMOOTH;
-  #endif
-}
+Sensor_Soil::Sensor_Soil(const uint16_t map0, const uint16_t map100, const uint8_t pin_init, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init) : Sensor_Analog(pin_init, smooth_init, topic_init, ms_init) { }
 
 #define SENSOR_SOIL_INVALIDVALUE 0xFFFF
 
@@ -73,27 +65,12 @@ uint16_t Sensor_Soil::read() {
     return SENSOR_SOIL_INVALIDVALUE;
   }
   // TODO-85 will want to be able to calibrate this somehow and remember calibration
-  return map(x, SENSOR_SOIL_0, SENSOR_SOIL_100, 0, 100);
+  return map(x, map0, map100, 0, 100);
+}
+bool Sensor_Soil::changed(uint16_t newvalue) {
+  return (newvalue != SENSOR_SOIL_INVALIDVALUE) && (newvalue != value);
 }
 
-void Sensor_Soil::act() {
-  // Dont return if reading was invalid
-  if(value != SENSOR_SOIL_INVALIDVALUE) {
-    xMqtt::messageSend(topic, value, false, 0);
-  }
-}
+Sensor_Soil sensor_soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS);
 
-namespace sSoil {
-
-Sensor_Soil sensor_soil(SENSOR_SOIL_PIN);  // TODO-57 will rarely be as simple as this
-
-void setup() {
-  sensor_soil.setup();
-}
-// TODO create a linked list of sensors, and another of actuators that can be called in loop OR use list by time
-void loop() {
-  sensor_soil.loop();
-}
-
-} //namespace sSoil
 #endif // SENSOR_SOIL_WANT
