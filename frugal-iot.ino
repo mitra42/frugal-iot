@@ -81,9 +81,6 @@ Sensor::setupAll(); // Will replace all setups as developed - but starting with 
 #ifdef SENSOR_SOIL_WANT
   sSoil::setup();
 #endif
-#ifdef SENSOR_BATTERY_WANT
-  sBattery::setup();
-#endif
 #ifdef SENSOR_SHT85_WANT
   sSHT85::setup();
 #endif
@@ -120,9 +117,6 @@ Sensor::loopAll(); // Will replace all loops as developed - but starting with se
 
 #ifdef SENSOR_SOIL_WANT
   sSoil::loop();
-#endif
-#ifdef SENSOR_BATTERY_WANT
-  sBattery::loop();
 #endif
 #ifdef SENSOR_SHT85_WANT
   sSHT85::loop();
