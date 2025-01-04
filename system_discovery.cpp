@@ -39,6 +39,9 @@
 #ifdef SENSOR_DHT_WANT
   #include "sensor_dht.h"
 #endif
+#ifdef SENSOR_SHT_WANT
+  #include "sensor_sht.h"
+#endif
 
 namespace xDiscovery {
 
@@ -110,7 +113,7 @@ void setup() {
         #endif
       #endif
       // TO_ADD_SENSOR (note space at start of string)
-      #ifdef SENSOR_SHT85_WANT
+      #ifdef SENSOR_SHT_WANT
         " SHTxx temp/humidity"
       #endif
       #ifdef SENSOR_DHT_WANT
@@ -142,8 +145,8 @@ void setup() {
       #ifdef SENSOR_BATTERY_WANT
         SENSOR_BATTERY_ADVERTISEMENT
       #endif
-      #ifdef SENSOR_SHT85_WANT
-        SENSOR_SHT85_ADVERTISEMENT
+      #ifdef SENSOR_SHT_WANT
+        SENSOR_SHT_ADVERTISEMENT
       #endif
       #ifdef SENSOR_DHT_WANT
         SENSOR_DHT_ADVERTISEMENT

@@ -31,8 +31,8 @@
 #ifdef SENSOR_BATTERY_WANT
 #include "sensor_battery.h"
 #endif
-#ifdef SENSOR_SHT85_WANT
-#include "sensor_sht85.h"
+#ifdef SENSOR_SHT_WANT
+#include "sensor_sht.h"
 #endif
 #ifdef SENSOR_DHT_WANT
 #include "sensor_dht.h"
@@ -77,10 +77,6 @@ void setup() {
 
 Sensor::setupAll(); // Will replace all setups as developed - but starting with sensors, so positioned here.
 
-// Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
-#ifdef SENSOR_SHT85_WANT
-  sSHT85::setup();
-#endif
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
 #endif
@@ -95,29 +91,25 @@ Sensor::setupAll(); // Will replace all setups as developed - but starting with 
 }
 
 void loop() {
-  // Put code for each sensor etc here - call functions in those sections
-#ifdef SYSTEM_MQTT_WANT
-  xMqtt::loop();
-#endif
-//TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
-/*
-#ifdef ACTUATOR_XYZ
-  aXYZ::loop();
-#endif
-*/
+  #ifdef SYSTEM_MQTT_WANT
+    xMqtt::loop();
+  #endif
+  //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
+  /*
+  #ifdef ACTUATOR_XYZ
+    aXYZ::loop();
+  #endif
+  */
 
-// Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
-Sensor::loopAll(); // Will replace all loops as developed - but starting with sensors, so positioned here.
+  Sensor::loopAll(); // Will replace all loops as developed - but starting with sensors, so positioned here.
 
-#ifdef SENSOR_SHT85_WANT
-  sSHT85::loop();
-#endif
-#ifdef CONTROL_BLINKEN_WANT
-  cBlinken::loop();
-#endif
-#ifdef SYSTEM_DISCOVERY_WANT
-  xDiscovery::loop();
-#endif
+
+  #ifdef CONTROL_BLINKEN_WANT
+    cBlinken::loop();
+  #endif
+  #ifdef SYSTEM_DISCOVERY_WANT
+    xDiscovery::loop();
+  #endif
 }
 
 

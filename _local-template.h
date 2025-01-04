@@ -1,7 +1,7 @@
 /* 
  * Copy this file to _local.h and edit it
  * Use it for local #ifdefs, for example that override global ones in _configuration.h 
- * Its also a great place to list the configuration of your device e.g. defines like SENSOR_SHT85_WANT 
+ * Its also a great place to list the configuration of your device e.g. defines like SENSOR_SHT_WANT 
  *
  * _local-template.h will be on github, but _local.h will not - so its a safer place for passwords etc.
  */
@@ -29,7 +29,7 @@
 //#define SYSTEM_WIFI_DEVICE "ESP8266-A" // SH%
 
 // Can override automatically generated description for your device e.g.
-//#define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION "ESP8266 with SHT85 sensor" 
+//#define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION "ESP8266 with SHT sensor" 
 
 // Now define the actual (non-default) sensors and actuators used and any non-default settings
 #define ACTUATOR_LEDBUILTIN_WANT
@@ -40,7 +40,7 @@
 //#define SENSOR_BATTERY_WANT
 //#define SENSOR_BATTERY_MS 3000 // testing at 3secs while developing
 //#define SENSOR_BATTERY_DEBUG
-//#define SENSOR_SHT85_WANT
+//#define SENSOR_SHT_WANT
 //#define SENSOR_DHT_WANT
 
 // Can also define a default language

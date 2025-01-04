@@ -15,7 +15,7 @@
 #if ( defined(ACTUATOR_LEDBUILTIN_DEBUG) || defined(ACTUATOR_RELAY_DEBUG) \
   || defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_DEMO_MQTT_DEBUG) \
   || defined(SENSOR_ANALOG_EXAMPLE_DEBUG) || defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_DHT_DEBUG) \
-  || defined(SENSOR_SHT85_DEBUG) || defined(SENSOR_SOIL_DEBUG) \
+  || defined(SENSOR_SHT_DEBUG) || defined(SENSOR_SOIL_DEBUG) \
   || defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) )
   #define ANY_DEBUG // If this is commented out, the serial port will not be setup for debugging.
 #endif // any *_DEBUG

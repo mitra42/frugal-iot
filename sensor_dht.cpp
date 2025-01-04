@@ -21,9 +21,6 @@
  *
  * This version uses Rob Tillart's library (who also did the SHT library we use) 
 */
-// TODO-64 edits suggested for SHT - rename to SHT from SHT85, and change most SHTxx etc to SHT
-// Use defaults for count (probably not device type as there are many)
-// TODO-64 merge sensorDHT with sDHT - so that setup for example becomes static function of class
 
 #include "_settings.h"  // Settings for what to include etc
 
@@ -42,11 +39,9 @@
 #include "sensor_dht.h"
 #include "system_mqtt.h"                // Library for sending messages
 
-Sensor_DHT::Sensor_DHT(const uint8_t pin_init, const char* topic_init, const char* topic2_init, const unsigned long ms_init) : Sensor_Float(topic_init, ms_init) { 
+Sensor_DHT::Sensor_DHT(const uint8_t pin_init, const char* topic_init, const char* topic2_init, const unsigned long ms_init) 
+  : Sensor_HT(topic_init, topic2_init, ms_init) {
   pin = pin_init;
-  topic2 = topic2_init;
-  temperature = 0;
-  humidity = 0; 
   dht = new DHTNEW(pin_init); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
   // dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/104
 }
@@ -129,13 +124,6 @@ void Sensor_DHT::readAndSet() {
         xMqtt::messageSend(topic2, humidity, 1, false, 0);
       }
     }
-  }
-}
-
-void Sensor_DHT::loop() { // TODO-25 I think this is standard esp since readAndSet is type independent while read() and set(xxx) are type dependent
-  if (nextLoopTime <= millis()) {
-    readAndSet(); // Will also send message via act()
-    nextLoopTime = millis() + ms;
   }
 }
 
