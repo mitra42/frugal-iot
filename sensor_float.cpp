@@ -34,10 +34,7 @@ void Sensor_Float::act() {
       xMqtt::messageSend(topic, value, retain, qos); // Note messageSend will convert value to String and expand topic
     }
 }
-void Sensor_Float::loop() {
-  if (nextLoopTime <= millis()) {
+void Sensor_Float::readAndSet() {
     set(read()); // Will also send message via act()
-    nextLoopTime = millis() + ms;
-  }
 }
 

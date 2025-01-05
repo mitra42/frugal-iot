@@ -15,7 +15,7 @@ void Frugal_Base::setupAll() {
   Sensor::setupAll();
   // TODO-25 calls system; sensor; actuator; control.setupAll
 }
-void Frugal_Base::loop() { Serial.println("XXX erroneously calling Frugal_Base::loop"); }; // TODO-25 what should go here - maybe nothing since subclasses will loop through list and calling thsi could just mean no loop() was needed in subclass
+void Frugal_Base::loop() { Serial.println("XXX25 erroneously calling Frugal_Base::loop"); }; // TODO-25 what should go here - maybe nothing since subclasses will loop through list and calling thsi could just mean no loop() was needed in subclass
 
 void Frugal_Base::loopAll() {
   Sensor::loopAll();

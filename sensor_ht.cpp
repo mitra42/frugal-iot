@@ -24,11 +24,4 @@ Sensor_HT::Sensor_HT(const char* topic_init, const char* topic2_init, const unsi
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16 and sensor_ht
 void Sensor_HT::readAndSet() { Serial.println("Sensor_HT::readAndSet must be subclassed"); }
 
-void Sensor_HT::loop() { // TODO-25 I think this is standard esp since readAndSet is type independent while read() and set(xxx) are type dependent
-  if (nextLoopTime <= millis()) {
-    readAndSet(); // Will also send message via act()
-    nextLoopTime = millis() + ms;
-  }
-}
-
 #endif // SENSOR_HT_WANT

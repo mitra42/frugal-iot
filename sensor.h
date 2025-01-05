@@ -17,6 +17,7 @@ class Sensor : public Frugal_Base {
     Sensor(const char* topic, const unsigned long ms);
     virtual void setup();
     static void setupAll();
+    virtual void readAndSet();
     virtual void loop();
     static void loopAll();
 }; // Class Sensor

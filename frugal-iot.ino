@@ -75,6 +75,10 @@ void setup() {
   aRelay::setup();
 #endif
 
+// TODO_C++_EXPERT weird I have to assign to a vaiable even though constructor sticks in the "sensors" vector, else compiler complains, 
+// but if I assign then it complaisn the variable isn't used. 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #ifdef SENSOR_ANALOG_EXAMPLE_WANT
   Sensor_Analog* s3 = new Sensor_Analog(SENSOR_ANALOG_EXAMPLE_PIN, SENSOR_ANALOG_EXAMPLE_SMOOTH, SENSOR_ANALOG_EXAMPLE_TOPIC, SENSOR_ANALOG_EXAMPLE_MS);
 #endif
@@ -90,6 +94,7 @@ void setup() {
 #ifdef SENSOR_SOIL_WANT
   Sensor_Soil* s5 = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS);
 #endif
+#pragma GCC diagnostic pop
 
 Sensor::setupAll(); // Will replace all setups as developed - but starting with sensors, so positioned here.
 

@@ -50,9 +50,6 @@ void Sensor_Uint16::act() {
       xMqtt::messageSend(topic, value, retain, qos); // Note messageSend will convert value to String and expand topic
     }
 }
-void Sensor_Uint16::loop() {
-  if (nextLoopTime <= millis()) {
+void Sensor_Uint16::readAndSet() {
     set(read()); // Will also send message via act()
-    nextLoopTime = millis() + ms;
-  }
 }

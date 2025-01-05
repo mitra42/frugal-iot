@@ -25,8 +25,6 @@ Sensor_Soil::Sensor_Soil(const uint16_t map0_init, const uint16_t map100_init, c
 
 uint16_t Sensor_Soil::read() {
   const uint16_t x = analogRead(pin);
-  Serial.print("XXX25 soil read from pin"); Serial.println(x); 
-  Serial.print("XXX25 soil map0="); Serial.print(map0);  Serial.print(" map100="); Serial.println(map100); 
   if (x == 4095) { // 12 bit -1 i.e. 0xFFF
     return SENSOR_SOIL_INVALIDVALUE;
   }
