@@ -38,9 +38,7 @@
 
 
 //Sensor_Analog::Sensor_Analog(const uint8_t p) : Sensor_Uint16() { pin = p; }; // TODO-25 maybe add topic here
-Sensor_Analog::Sensor_Analog(const uint8_t pin_init, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init) : Sensor_Uint16(smooth_init, topic_init, ms_init) { 
-  pin = pin_init; 
-}; // TODO-25 maybe add topic here
+Sensor_Analog::Sensor_Analog(const uint8_t p, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init) : Sensor_Uint16(smooth_init, topic_init, ms_init), pin(p) { }; // TODO-25 maybe add topic here
 
 // Sensor_Uint16_t::act is good - sends with retain=false; qos=0;
 // Sensor_Uint16_t::set is good - does optional smooth, compares and calls act

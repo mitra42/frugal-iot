@@ -30,8 +30,7 @@ void Sensor_debug(const char * msg) {
   delay(1000); // Allow Serial to stabilize
 }
 
-Sensor::Sensor(const char* topic_init, const unsigned long ms_init) : Frugal_Base() { 
-  topic=topic_init; ms=ms_init; 
+Sensor::Sensor(const char* t, const unsigned long m) : Frugal_Base(), topic(t), ms(m) { 
   sensors.push_back(this);
 } //TODO I think there is a way to shortcut initialization rather than code in {} do on all constructors like this 
 

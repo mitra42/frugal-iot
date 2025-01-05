@@ -32,8 +32,7 @@
 #include "system_mqtt.h"                // Library for sending messages
 
 Sensor_DHT::Sensor_DHT(const uint8_t pin_init, const char* topic_init, const char* topic2_init, const unsigned long ms_init) 
-  : Sensor_HT(topic_init, topic2_init, ms_init) {
-  pin = pin_init;
+  : Sensor_HT(topic_init, topic2_init, ms_init), pin(pin_init) {
   dht = new DHTNEW(pin_init); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
   // dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/104
 }
