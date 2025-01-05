@@ -4,7 +4,7 @@
 
 #include "_settings.h"  // Settings for what to include etc
 #include <Arduino.h>
-#include <forward_list>
+#include <vector>
 #include "sensor.h"
 #include "system_mqtt.h"
 
@@ -12,13 +12,28 @@
   #define SENSOR_DEBUG
 #endif
 
-std::forward_list<Sensor*> sensors; //TODO-25 TODO_C++_EXPERT I wanted this to be a static inside class Sensor but compiler barfs on it.
+std::vector<Sensor*> sensors; //TODO-25 TODO_C++_EXPERT I wanted this to be a static inside class Sensor but compiler barfs on it.
 
+/*
 Sensor::Sensor() : Frugal_Base() {  // TODO-25 might set topic here
-  sensors.push_front(this);
+  sensors.push_back(this);
 };
+*/
+uint8_t xxx25_sensorcount = 0;
 
-Sensor::Sensor(const char* topic_init, const unsigned long ms_init) : Frugal_Base() { topic=topic_init; ms=ms_init; } //TODO I think there is a way to shortcut initialization rather than code in {} do on all constructors like this 
+void Sensor_debug(const char * msg) {
+  Serial.print(msg); 
+  for (Sensor* s: sensors) {
+    Serial.print(s->topic); Serial.print(" ");
+  }
+  Serial.println();
+  delay(1000); // Allow Serial to stabilize
+}
+
+Sensor::Sensor(const char* topic_init, const unsigned long ms_init) : Frugal_Base() { 
+  topic=topic_init; ms=ms_init; 
+  sensors.push_back(this);
+} //TODO I think there is a way to shortcut initialization rather than code in {} do on all constructors like this 
 
 void Sensor::setup() { } // Default to do nothing
 
@@ -30,7 +45,7 @@ void Sensor::setupAll() {
 
 // TODO_C++_EXPERT - unclear why this is needed, all objects in "sensors" will be subclasses either Sensor_Uint16 or Sensor_Float each of which has a loop method.
 void Sensor::loop() {
-  Serial.println("TODO-25 Shouldnt be calling Sensor::loop - should be a subclass");
+  Serial.println("XXX-25 Shouldnt be calling Sensor::loop - should be a subclass");
 }
 
 void Sensor::loopAll() {

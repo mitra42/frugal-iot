@@ -16,7 +16,7 @@ class Sensor_Analog : public Sensor_Uint16 {
   public: 
     uint8_t pin;
     
-    Sensor_Analog(const uint8_t p);
+    //Sensor_Analog(const uint8_t p);
     Sensor_Analog(const uint8_t pin, const uint8_t smooth, const char* topic, const unsigned long ms);
     virtual void setup();
     virtual uint16_t read();

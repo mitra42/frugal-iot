@@ -26,14 +26,6 @@
 
 #ifdef SENSOR_DHT_WANT
 
-#ifndef SENSOR_DHT_PIN
-  #define SENSOR_DHT_PIN 4  // hard wired to a pin - 4 is D2 on the Lolin D1 but is somewhere else on C3 Pico
-#endif
-
-#ifndef SENSOR_DHT_MS
-  #define SENSOR_DHT_MS 60000
-#endif
-
 #include <Arduino.h>
 #include <dhtnew.h>                     // https://github.com/RobTillaart/DHTNew
 #include "sensor_dht.h"
@@ -127,7 +119,7 @@ void Sensor_DHT::readAndSet() {
   }
 }
 
-Sensor_DHT sensor_dht(SENSOR_DHT_PIN, "temperature", "humidity", SENSOR_DHT_MS);
+//Sensor_DHT sensor_dht(SENSOR_DHT_PIN, "temperature", "humidity", SENSOR_DHT_MS);
 
 #endif // SENSOR_DHT_WANT
 

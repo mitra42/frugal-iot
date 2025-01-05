@@ -75,6 +75,22 @@ void setup() {
   aRelay::setup();
 #endif
 
+#ifdef SENSOR_ANALOG_EXAMPLE_WANT
+  Sensor_Analog* s3 = new Sensor_Analog(SENSOR_ANALOG_EXAMPLE_PIN, SENSOR_ANALOG_EXAMPLE_SMOOTH, SENSOR_ANALOG_EXAMPLE_TOPIC, SENSOR_ANALOG_EXAMPLE_MS);
+#endif
+#ifdef SENSOR_BATTERY_WANT
+  Sensor_Battery* s4 = new Sensor_Battery(SENSOR_BATTERY_PIN);  // TODO-57 will rarely be as simple as this
+#endif
+#ifdef SENSOR_SHT_WANT
+  Sensor_SHT* s1 = new Sensor_SHT(SENSOR_SHT_ADDRESS, &Wire, "temperature", "humidity", SENSOR_SHT_MS);
+#endif
+#ifdef SENSOR_DHT_WANT
+  Sensor_DHT* s2 = new Sensor_DHT(SENSOR_DHT_PIN, "temperatureXX", "humidity", SENSOR_DHT_MS); //TODO-25 back to temperature
+#endif
+#ifdef SENSOR_SOIL_WANT
+  Sensor_Soil* s5 = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS);
+#endif
+
 Sensor::setupAll(); // Will replace all setups as developed - but starting with sensors, so positioned here.
 
 #ifdef CONTROL_BLINKEN_WANT

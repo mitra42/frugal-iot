@@ -31,7 +31,7 @@ void Sensor_Uint16::set(uint16_t newvalue) {
     vv = newvalue;
   }
   #ifdef SENSOR_DEBUG
-    Serial.print(*topic);
+    Serial.print(topic);
     if (smooth) { Serial.print(F(" Smoothed")); }
     Serial.print(" "); Serial.println(vv);
   #endif // SENSOR_DEBUG

@@ -8,6 +8,12 @@
 
 #include "sensor_analog.h"
 
+#ifdef LOLIN_C3_PICO
+  #define SENSOR_BATTERY_PIN 3
+#else
+  #error Measuring battery voltage is board specific, only currently defined for Lolin C3 Pico
+#endif
+
 #ifndef SENSOR_BATTERY_TOPIC
   #define SENSOR_BATTERY_TOPIC "battery"
 #endif

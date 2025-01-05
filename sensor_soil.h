@@ -14,6 +14,28 @@
 #ifndef SENSOR_SOIL_NAME
   #define SENSOR_SOIL_NAME "Soil"
 #endif
+#ifndef SENSOR_SOIL_PIN
+  #ifdef LOLIN_C3_PICO
+    #define SENSOR_SOIL_PIN 4 // Which pin to read - this will be board specific
+  #else
+    #ifdef ESP8266_D1_MINI
+      #define SENSOR_SOIL_PIN A0 // Which pin to read - this will be board specific
+    #else 
+      #error Sorry no default Analog pin for your board
+    #endif
+  #endif
+#endif
+
+#ifndef SENSOR_SOIL_MS
+  #define SENSOR_SOIL_MS 15000 // How often to read in MS
+#endif
+
+#ifndef SENSOR_SOIL_0
+  #define SENSOR_SOIL_0 3000
+#endif
+#ifndef SENSOR_SOIL_100
+  #define SENSOR_SOIL_100 1300
+#endif
 
 #define SENSOR_SOIL_ADVERTISEMENT "\n  -\n    topic: " SENSOR_SOIL_TOPIC "\n    name: " SENSOR_SOIL_NAME "\n    type: int\n    display: bar\n    min: 0\n    max: 100\n    color: brown\n    rw: r"
 

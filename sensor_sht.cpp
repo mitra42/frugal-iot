@@ -26,13 +26,6 @@
 
 #define SENSOR_SHT_DEBUG
 
-#ifndef SENSOR_SHT_ADDRESS
-  #define SENSOR_SHT_ADDRESS 0x45 // 0x44 is also common
-#endif
-#ifndef SENSOR_SHT_MS
-  #define SENSOR_SHT_MS 60000
-#endif
-
 
 #include <Arduino.h>
 #include <SHT85.h>
@@ -109,6 +102,6 @@ void Sensor_SHT::readAndSet() {
   }
 }
 
-Sensor_SHT sensor_sht(SENSOR_SHT_ADDRESS, &Wire, "temperature", "humidity", SENSOR_SHT_MS);
+//Sensor_SHT sensor_sht(SENSOR_SHT_ADDRESS, &Wire, "temperature", "humidity", SENSOR_SHT_MS);
 
 #endif // SENSOR_SHT_WANT
