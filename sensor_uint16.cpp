@@ -22,9 +22,9 @@ Sensor_Uint16::Sensor_Uint16(const uint8_t smooth_init, const char* topic_init, 
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16
 uint16_t Sensor_Uint16::read() { Serial.println("Sensor_Uint16::read must be subclassed"); return -1; }
 
-void Sensor_Uint16::set(uint16_t newvalue) {
+void Sensor_Uint16::set(const uint16_t newvalue) {
 
-  // TODO-25 can be copy/adapted to Sensor_Float if needed
+  // Can be copy/adapted to Sensor_Float if needed
   uint16_t vv;
   if (smooth) {
     vv = value - (value >> smooth) + newvalue;
@@ -42,7 +42,7 @@ void Sensor_Uint16::set(uint16_t newvalue) {
     act();
   }
 }
-bool Sensor_Uint16::changed(uint16_t newvalue) {
+bool Sensor_Uint16::changed(const uint16_t newvalue) {
   return (newvalue != value);
 }
 void Sensor_Uint16::act() {

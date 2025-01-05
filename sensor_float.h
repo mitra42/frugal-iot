@@ -11,8 +11,8 @@ class Sensor_Float : public Sensor {
     Sensor_Float(const char* topic, const unsigned long ms);
     virtual void readAndSet();
     virtual float read();
-    virtual void set(float newvalue);  // TODO-25 prob const
-    virtual bool changed(float newvalue); // TODO-25 prob const
+    virtual void set(const float newvalue);
+    virtual bool changed(const float newvalue);
     virtual void act();
 };
 #endif // SENSOR_FLOAT_H

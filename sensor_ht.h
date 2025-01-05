@@ -9,7 +9,7 @@ class Sensor_HT : public Sensor {
     float temperature;
     float humidity;
     Sensor_HT(const char* topic, const char* topic2, const unsigned long ms);
-    virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor // TODO-25 maybe combine as virtual function on Sensor
+    virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor
 };
 
 

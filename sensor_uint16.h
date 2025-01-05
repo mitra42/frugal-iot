@@ -16,8 +16,8 @@ class Sensor_Uint16 : public Sensor {
     //Sensor_Uint16();
     Sensor_Uint16(const uint8_t smooth, const char* topic, const unsigned long ms);
     virtual uint16_t read();
-    virtual void set(uint16_t newvalue);  // TODO-25 prob const
-    virtual bool changed(uint16_t newvalue); // TODO-25 prob const
+    virtual void set(const uint16_t newvalue);
+    virtual bool changed(const uint16_t newvalue);
     virtual void act();
     virtual void readAndSet();
 };

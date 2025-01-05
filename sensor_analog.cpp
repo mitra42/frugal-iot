@@ -11,12 +11,11 @@
  */
 
 #include "_settings.h"  // Settings for what to include etc
+#include "sensor_analog.h" // defines SENSOR_ANALOG_WANT if needed
 
-// Add new analog sensors (i.e. they read the A2D converter) here. TO_ADD_SENSOR
-#if (defined(SENSOR_ANALOG_EXAMPLE_WANT) || defined(SENSOR_BATTERY_WANT) || defined(SENSOR_SOIL_WANT)) 
+#ifdef SENSOR_ANALOG_WANT
 
 #include <Arduino.h>
-#include "sensor_analog.h"
 #include "system_mqtt.h"
 #include "system_discovery.h" // 
 
@@ -35,10 +34,7 @@
   #endif
 #endif //  SENSOR_ANALOG_REFERENCE
 
-
-
-//Sensor_Analog::Sensor_Analog(const uint8_t p) : Sensor_Uint16() { pin = p; }; // TODO-25 maybe add topic here
-Sensor_Analog::Sensor_Analog(const uint8_t p, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init) : Sensor_Uint16(smooth_init, topic_init, ms_init), pin(p) { }; // TODO-25 maybe add topic here
+Sensor_Analog::Sensor_Analog(const uint8_t p, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init) : Sensor_Uint16(smooth_init, topic_init, ms_init), pin(p) { };
 
 // Sensor_Uint16_t::act is good - sends with retain=false; qos=0;
 // Sensor_Uint16_t::set is good - does optional smooth, compares and calls act

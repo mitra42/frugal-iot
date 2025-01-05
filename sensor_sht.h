@@ -22,7 +22,7 @@ public:
   uint8_t address;
   SENSOR_SHT_DEVICE *sht; 
   Sensor_SHT(uint8_t address, TwoWire *wire, const char* topic, const char* topic2, const unsigned long ms);
-  virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor // TODO-25 maybe combine as virtual function on Sensor
+  virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor
 };
 
 extern Sensor_SHT sensor_sht;

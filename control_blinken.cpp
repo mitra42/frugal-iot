@@ -33,7 +33,7 @@ const char* outputTopic = ACTUATOR_LEDBUILTIN_TOPIC; // TODO-53 replace with str
 unsigned long nextLoopTime = 0;
 float value; // Time per blink (each phase)
 
-void set(float v) {
+void set(const float v) {
   if (value > v) { // May be waiting on long time, bring up
     nextLoopTime = millis();
   }

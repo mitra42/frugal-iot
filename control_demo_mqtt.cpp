@@ -37,7 +37,7 @@ void act() {
   }
 }
 
-void set(boolean o) {
+void set(const boolean o) {
   if (o != output) {
     output = o;
     act();
@@ -97,7 +97,7 @@ void inputControlReceived(String &payload) {
 void setup() {
   String *t;
   //Input1: Hard coded topic from elsewhere which will send values
-  t = new String(*xDiscovery::topicPrefix + F(SENSOR_SHT_TOPIC_HUMIDITY));  // Hard coded to own humidity - will allow control next
+  t = new String(*xDiscovery::topicPrefix + F("humidity"));  // Hard coded to own humidity - will allow control next
   inputControlSet(t);
 
   //Input2: Will receive values from the UX

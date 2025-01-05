@@ -9,7 +9,7 @@
 
 namespace aRelay {
 void setup();
-void set(int value);
+void set(const int value);
 void loop();
 extern bool value;
 //extern String *topic;

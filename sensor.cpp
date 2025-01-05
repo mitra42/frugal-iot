@@ -12,13 +12,8 @@
   #define SENSOR_DEBUG
 #endif
 
-std::vector<Sensor*> sensors; //TODO-25 TODO_C++_EXPERT I wanted this to be a static inside class Sensor but compiler barfs on it.
+std::vector<Sensor*> sensors; // TODO_C++_EXPERT I wanted this to be a static inside class Sensor but compiler barfs on it.
 
-/*
-Sensor::Sensor() : Frugal_Base() {  // TODO-25 might set topic here
-  sensors.push_back(this);
-};
-*/
 uint8_t xxx25_sensorcount = 0;
 
 void Sensor_debug(const char * msg) {
@@ -62,8 +57,7 @@ void Sensor::loopAll() {
 /*
 At this point no dispatching for sensors as none have INCOMING messages
 
-void Sensor::dispatch() { } // TODO-25 should check topic Default to do nothing
-
+void Sensor::dispatch() {String &topic, String &payload }
 void Sensor::dispatchAll() {
   for (Sensor* s: sensors) {
     s->dispatch();

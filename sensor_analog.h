@@ -8,6 +8,11 @@
  #include "sensor_uint16.h"
 
 // Add new analog sensors to this statement.  #TO_ADD_SENSOR
+#if defined(SENSOR_ANALOG_EXAMPLE_WANT) || defined(SENSOR_BATTERY_WANT) || defined(SENSOR_SOIL_WANT) // TODO make this generic, but LED almost always wanted
+  #define SENSOR_ANALOG_WANT
+#endif 
+
+// Add new analog sensors to this statement.  #TO_ADD_SENSOR
 #if defined(SENSOR_ANALOG_EXAMPLE_DEBUG) || defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG) // TODO make this generic, but LED almost always wanted
   #define SENSOR_ANALOG_DEBUG
 #endif 
