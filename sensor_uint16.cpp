@@ -9,6 +9,8 @@
 #include "sensor_uint16.h"
 #include "system_mqtt.h"
 
+#ifdef SENSOR_UINT16_WANT
+
 #if defined(SENSOR_ANALOG_EXAMPLE_DEBUG) || defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG) // TODO make this generic, but LED almost always wanted
   #define SENSOR_DEBUG
 #endif
@@ -53,3 +55,4 @@ void Sensor_Uint16::act() {
 void Sensor_Uint16::readAndSet() {
     set(read()); // Will also send message via act()
 }
+#endif //SENSOR_UINT16_WANT

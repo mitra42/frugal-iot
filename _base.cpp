@@ -23,12 +23,12 @@ void Frugal_Base::loopAll() {
 }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-void Frugal_Base::dispatch(String &topic, String &payload) { } // Default does nothing - actuators and controls and some system will override
+void Frugal_Base::dispatch(const String &topic, const String &payload) { } // Default does nothing - actuators and controls and some system will override
 #pragma GCC diagnostic pop
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-void Frugal_Base::dispatchAll(String &topic, String &payload) {
+void Frugal_Base::dispatchAll(const String &topic, const String &payload) {
 #pragma GCC diagnostic pop
   //Sensor::dispatchAll(topic, payload); // there is no Sensor::dispatchAll as no incoming messages to sensors.
   // TODO-25 calls system; sensor; actuator; control.dispatchAll

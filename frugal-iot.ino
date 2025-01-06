@@ -69,14 +69,15 @@ void setup() {
 #endif
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
-  aLedbuiltin::setup();
+Actuator_Ledbuiltin* a1 = new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, "ledbuiltin");
 #endif
 #ifdef ACTUATOR_RELAY_WANT
-  aRelay::setup();
+Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
 #endif
 
 // TODO_C++_EXPERT weird I have to assign to a vaiable even though constructor sticks in the "sensors" vector, else compiler complains, 
-// but if I assign then it complaisn the variable isn't used. 
+// but if I assign then it complaisn the variable isn't used.  And the pragma's seem to get ignored in the .ino file 
+//TODO-25 try adding these to a Sensor* Vector here instead of in constructor
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #ifdef SENSOR_ANALOG_EXAMPLE_WANT

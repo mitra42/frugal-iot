@@ -28,7 +28,7 @@
 
 namespace cBlinken {
 String* inputTopic; 
-const char* outputTopic = ACTUATOR_LEDBUILTIN_TOPIC; // TODO-53 replace with string no need to parameterize
+const char* outputTopic = "ledbuiltin"; // TODO-53 replace with string no need to parameterize
 
 unsigned long nextLoopTime = 0;
 float value; // Time per blink (each phase)

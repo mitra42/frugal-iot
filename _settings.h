@@ -20,4 +20,27 @@
   #define ANY_DEBUG // If this is commented out, the serial port will not be setup for debugging.
 #endif // any *_DEBUG
 
+// TODO_ADD_SENSOR
+#if defined(SENSOR_SHT_WANT) || defined(SENSOR_DHT_WANT)
+  #define SENSOR_HT_WANT
+#endif
+#if defined(SENSOR_ANALOG_EXAMPLE_WANT) || defined(SENSOR_BATTERY_WANT) || defined(SENSOR_SOIL_WANT)
+  #define SENSOR_ANALOG_WANT
+#endif
+#if defined(SENSOR_ANALOG_WANT) 
+  #define SENSOR_UINT16_WANT
+#endif
+#if defined(SENSOR_UINT16_WANT) || defined(SENSOR_FLOAT_WANT) || defined(SENSOR_HT_WANT)
+  #define SENSOR_WANT
+#endif
+
+//  TODO_ADD_ACTUATOR
+#if defined(ACTUATOR_RELAY_WANT) || defined(ACTUATOR_LEDBUILTIN_WANT)
+  #define ACTUATOR_DIGITAL_WANT
+#endif
+#if defined(ACTUATOR_DIGITAL_WANT)
+  #define ACTUATOR_WANT
+#endif
+
+
 #endif // _SETTINGS_H

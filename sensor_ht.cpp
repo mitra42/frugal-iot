@@ -4,13 +4,6 @@
 
 #include "_settings.h"  // Settings for what to include etc
 
-#if (defined(SENSOR_SHT_WANT) || defined(SENSOR_DHT_WANT))
-  #define SENSOR_HT_WANT
-#endif
-#if (defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG))
-  #define SENSOR_HT_DEBUG
-#endif
-
 #ifdef SENSOR_HT_WANT
 
 #include <Arduino.h>

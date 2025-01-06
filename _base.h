@@ -10,8 +10,8 @@ class Frugal_Base {
     static void setupAll();
     virtual void loop();
     static void loopAll();
-    virtual void dispatch(String &topic, String &payload);
-    static void dispatchAll(String &topic, String &payload);
+    virtual void dispatch(const String &topic_msg, const String &payload);
+    static void dispatchAll(const String &topic, const String &payload);
 }; // Class FrugalBase
 
 #endif // BASE_H

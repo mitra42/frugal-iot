@@ -5,16 +5,17 @@
 */
 
 #include "_settings.h"  // Settings for what to include etc
-#include <Arduino.h>
-#include <forward_list>
-#include "sensor.h"
-#include "sensor_float.h"
-#include "system_mqtt.h"
 
 #if defined(SENSOR_XYZ_WANT) || defined(SENSOR_MPQ_WANT)
   #define SENSOR_FLOAT_WANT
 #endif
 #ifdef SENSOR_FLOAT_WANT
+
+#include <Arduino.h>
+#include <forward_list>
+#include "sensor.h"
+#include "sensor_float.h"
+#include "system_mqtt.h"
 
 #if defined(SENSOR_XYZ_DEBUG) || defined(SENSOR_MPQ_DEBUG)  // TODO make this generic,
   #define SENSOR_FLOAT_DEBUG

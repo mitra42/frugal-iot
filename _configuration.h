@@ -11,13 +11,7 @@
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 
-#define ACTUATOR_LEDBUILTIN_WANT // Control led on board
-#define ACTUATOR_LEDBUILTIN_DEBUG
-#define ACTUATOR_LEDBUILTIN_ADVERTISEMENT "\n  -\n    topic: ledbuiltin\n    name: Built in LED\n    type: bool\n    display: toggle\n    rw: rw"
 
-// #define ACTUATOR_RELAY_WANT // Control relay - enable in _local.h
-#define ACTUATOR_RELAY_DEBUG
-#define ACTUATOR_RELAY_ADVERTISEMENT "\n  -\n    topic: relay\n    name: Relay\n    type: bool\n    display: toggle\n    rw: rw"
 
 // Demo blinking led on board
 // #define CONTROL_BLINKEN_WANT // Define in _local.h if want to test with this

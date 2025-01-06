@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "_base.h"
-#include <forward_list>
+#include <vector>
 
 class Sensor : public Frugal_Base {
   public:

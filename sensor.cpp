@@ -14,16 +14,15 @@
 
 std::vector<Sensor*> sensors; // TODO_C++_EXPERT I wanted this to be a static inside class Sensor but compiler barfs on it.
 
-uint8_t xxx25_sensorcount = 0;
-
-void Sensor_debug(const char * msg) {
-  Serial.print(msg); 
-  for (Sensor* s: sensors) {
-    Serial.print(s->topic); Serial.print(" ");
-  }
-  Serial.println();
-  delay(1000); // Allow Serial to stabilize
-}
+#ifdef SENSOR_DEBUG
+  void Sensor_debug(const char * msg) {
+    Serial.print(msg); 
+    for (Sensor* s: sensors) {
+      Serial.print(s->topic); Serial.print(" ");
+    }
+    Serial.println();
+    delay(1000); // Allow Serial to stabilize
+#endif // SENSOR_DEBUG
 
 Sensor::Sensor(const char* t, const unsigned long m) : Frugal_Base(), topic(t), ms(m) { 
   sensors.push_back(this);
@@ -37,7 +36,7 @@ void Sensor::setupAll() {
   }
 }
 
-// TODO_C++_EXPERT - unclear why this is needed, all objects in "sensors" will be subclasses either Sensor_Uint16 or Sensor_Float each of which has a loop method.
+// TODO_C++_EXPERT - unclear why this is needed, all objects in "sensors" will be subclasses either Sensor_Uint16 or Sensor_Float each of which has a readAndSet method.
 void Sensor::readAndSet() {
   Serial.println("XXX25 Shouldnt be calling Sensor::readAndSet - should be a subclass");
 }

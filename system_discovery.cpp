@@ -23,7 +23,14 @@
 #include "system_wifi.h"
 #include "system_mqtt.h"  // xMqtt
 #include "system_discovery.h"
-// TO_ADD_SENSOR TO_ADD_ACTUATOR
+// TO_ADD_ACTUATOR
+#ifdef ACTUATOR_RELAY_WANT
+  #include "actuator_relay.h"
+#endif
+#ifdef ACTUATOR_LEDBUILTIN_WANT
+  #include "actuator_ledbuiltin.h"
+#endif
+// TO_ADD_SENSOR 
 #ifdef SENSOR_ANALOG_EXAMPLE_WANT
   #include "sensor_analog_example.h"
 #endif
@@ -33,14 +40,15 @@
 #ifdef SENSOR_BATTERY_WANT
   #include "sensor_battery.h"
 #endif
-#ifdef CONTROL_DEMO_MQTT_WANT
-  #include "control_demo_mqtt.h"
-#endif
 #ifdef SENSOR_DHT_WANT
   #include "sensor_dht.h"
 #endif
 #ifdef SENSOR_SHT_WANT
   #include "sensor_sht.h"
+#endif
+// TO_ADD_CONTROL
+#ifdef CONTROL_DEMO_MQTT_WANT
+  #include "control_demo_mqtt.h"
 #endif
 
 namespace xDiscovery {
