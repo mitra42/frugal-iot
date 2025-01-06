@@ -29,16 +29,16 @@
 class Subscription {
   // This is both a subscription and a record of a message for retention purposes
   public:
-    String* topicpath;
+    const String* topicpath;
     String* payload;    // Retained payload
-    Subscription(String* tp);
+    Subscription(const String* tp);
     bool operator==(const String& topicpath);
 };
 class Message : Subscription {
   public:
     const bool retain;
     const int qos;
-    Message(String &tp, String &pl, const bool r, const int q);
+    Message(const String &tp, const String &pl, const bool r, const int q);
 };
 class MqttManager : Frugal_Base {
   public:
@@ -53,18 +53,18 @@ class MqttManager : Frugal_Base {
     bool connect();
     Subscription* find(const String &topicpath);
     void subscribe(const String& topicpath);
-    void subscribe(char* topicleaf);
-    void dispatch(String &topicpath, String &payload);
+    void subscribe(const char* topicleaf);
+    void dispatch(const String &topicpath, const  String &payload);
     void resubscribeAll();
-    void retain(String &topicpath, String &payload);
-    void messageReceived(String &topic, String &payload);
-    void messageSendInner(String &topicpath, String &payload, const bool retain, const int qos);
+    void retainPayload(const String &topicpath, const String &payload);
+    void messageReceived(const String &topic, const String &payload);
+    void messageSendInner(const String &topicpath, const String &payload, const bool retain, const int qos);
     // Note, there are many of messageSend to make sensor code simple and not duplicate conversions.
-    void messageSend(String &topicpath, String &payload, const bool retain, const int qos);
-    void messageSend(const char* topicleaf, String &payload, const bool retain, const int qos);
-    void messageSend(String &topicpath, const float &value, const int width, const bool retain, const int qos);
+    void messageSend(const String &topicpath, const String &payload, const bool retain, const int qos);
+    void messageSend(const char* topicleaf, const String &payload, const bool retain, const int qos);
+    void messageSend(const String &topicpath, const float &value, const int width, const bool retain, const int qos);
     void messageSend(const char* topicleaf, const float &value, const int width, const bool retain, const int qos);
-    void messageSend(String &topicpath, const int value, const bool retain, const int qos);
+    void messageSend(const String &topicpath, const int value, const bool retain, const int qos);
     void messageSend(const char* topicleaf, const int value, const bool retain, const int qos);
     void messageSendQueued();
   

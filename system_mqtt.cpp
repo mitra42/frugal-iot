@@ -33,7 +33,10 @@
 #include <Arduino.h>
 #include "system_discovery.h"
 #include "system_mqtt.h"
+#include "actuator.h"
 #include <forward_list>
+
+Subscription::Subscription(const String* tp) : topicpath(tp) { }
 
 bool Subscription::operator==(const String& tp) {
   Serial.print("Subscription:"); Serial.print(*topicpath); Serial.print(*topicpath == tp ? "==" : "!="); Serial.println(tp); // TODO-25 remove when debugged
@@ -105,9 +108,9 @@ bool MqttManager::connect() {
   }
 }
 Subscription* MqttManager::find(const String &topicpath) {
-  for(Subscription mi: items) {
+  for(Subscription& mi: items) {
     if (mi == topicpath) {
-      return mi;
+      return &mi;
     }
   }
   return NULL;
@@ -123,35 +126,36 @@ void MqttManager::subscribe(const String& topicpath) {
   #ifdef SYSTEM_MQTT_DEBUG
     Serial.print(F("Subscribing to: ")); Serial.println(topicpath);
   #endif
-  Subscription mi = find(topicpath);
+  Subscription* mi = find(topicpath);
   if (mi) { // No existing subscription
     if (!client.subscribe(topicpath)) {
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.println(F("MQTT Subscription failed to ")); Serial.print(topicpath);
       #endif // SYSTEM_MQTT_DEBUG
     }
-    items.emplace_front(topicpath); // Should create a Subscription
+    items.emplace_front(&topicpath); // Should create a Subscription
   } else { 
     if (mi->payload) { // If have retained previous data
-      messageReceived(mi); // TODO-25 check for loops or wasted internal duplicates
+      messageReceived(*mi->topicpath, *mi->payload); // TODO-25 check for loops or wasted internal duplicates
     }
   }
 }
 
-
 // Short cut to allow subscribing based on an actuator or sensors own topic
-void MqttManager::subscribe(char* topicleaf) {
+void MqttManager::subscribe(const char* topicleaf) {
   String *topicpath = new String(*xDiscovery::topicPrefix + topicleaf);
-  subscribe(*topicath);
+  subscribe(*topicpath);
 }
-void MqttManager::dispatch(String &topicpath, String &payload) {
-  if (topic.startsWith(*xDiscovery::topicPrefix)) {
-    String* topicleaf = topicpath;
-    topicleaf.remove(0, *xDiscovery::topicPrefix.length());
+void MqttManager::dispatch(const String &topicpath, const String &payload) {
+  if (topicpath.startsWith(*xDiscovery::topicPrefix)) {
+    String* topicleaf = new String(topicpath);
+    topicleaf->remove(0, xDiscovery::topicPrefix->length());
     //sensors.dispatchAll(topicleaf, payload);
-    actuators.dispatchAll(topicleaf, payload);
+    #ifdef ACTUATOR_WANT
+      actuators.dispatchAll(topicleaf, payload);
+    #endif
   }
-  controls.dispatchAll(topicpath, payload);
+  //TODO-25 controls.dispatchAll(topicpath, payload);
 }
 void MqttManager::resubscribeAll() {
   #ifdef SYSTEM_MQTT_DEBUG
@@ -159,7 +163,7 @@ void MqttManager::resubscribeAll() {
   #endif // SYSTEM_MQTT_DEBUG
   for (Subscription mi : items) {
     #ifdef SYSTEM_MQTT_DEBUG
-      Serial.print(mi.topicpath); Serial.print(F(" "));
+      Serial.print(*mi.topicpath); Serial.print(F(" "));
     #endif // SYSTEM_MQTT_DEBUG
     if (!client.subscribe(*(mi.topicpath))) {
       #ifdef SYSTEM_MQTT_DEBUG
@@ -171,13 +175,15 @@ void MqttManager::resubscribeAll() {
     Serial.println();
   #endif // SYSTEM_MQTT_DEBUG
 }
-void MqttManager::retain(String &topicpath, String &payload) {
-  MqttItem* mi = (find(topicpath));
+
+void MqttManager::retainPayload(const String &topicpath, const String &payload) {
+  Subscription* mi = find(topicpath);
   if (mi) {
-    mi.payload = payload;
+    mi->payload = new String(payload);
   }
 }
-void MqttManager::messageReceived(String &topic, String &payload) { // cant be constant as dispatch isnt
+
+void MqttManager::messageReceived(const String &topic, const String &payload) { // cant be constant as dispatch isnt
   #ifdef SYSTEM_MQTT_DEBUG
     Serial.print(F("MQTT incoming: ")); Serial.print(topic); Serial.print(F(" - ")); Serial.println(payload);
   #endif
@@ -196,15 +202,16 @@ void MqttManager::messageReceived(String &topic, String &payload) { // cant be c
 // These are intentionally required parameters rather than defaulting so the coder thinks about the desired behavior
 
 // Send message to Mqtt client - used for both repeats and first time messages
-void MqttManager::messageSendInner(String &topicpath, String &payload, const bool retain, const int qos) {
+void MqttManager::messageSendInner(const String &topicpath, const String &payload, const bool retain, const int qos) {
   if (!client.publish(topicpath, payload, retain, qos)) {
     #ifdef SYSTEM_MQTT_DEBUG
       Serial.print(F("Failed to publish ")); Serial.print(topicpath); Serial.print(F("=")); Serial.println(payload);
     #endif // SYSTEM_MQTT_DEBUG
   };
 }
+
 // Send or queue up a message 
-void MqttManager::messageSend(String &topicpath, String &payload, const bool retain, const int qos) {
+void MqttManager::messageSend(const String &topicpath, const String &payload, const bool retain, const int qos) {
   // TODO-21-sema also queue if WiFi is down and qos>0 - not worth doing till xWifi::connect is non-blocking
   #ifdef SYSTEM_MQTT_DEBUG
     Serial.print(F("MQTT ")); Serial.print(inReceived ? F("publish") : F("queue")); Serial.print(topicpath); Serial.print(F(" - ")); Serial.println(payload);
@@ -216,18 +223,18 @@ void MqttManager::messageSend(String &topicpath, String &payload, const bool ret
   }
   // Whether send to net or queue, send loopback and do the retention stuff. 
   if (retain) {
-    retained.retain(topicpath, payload); // Keep a copy of outgoing, so local subscribers will see 
+    retainPayload(topicpath, payload); // Keep a copy of outgoing, so local subscribers will see 
   }
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
   dispatch(topicpath, payload);
 }
 
-void MqttManager::messageSend(const char* topicleaf, String &payload, const bool retain, const int qos) {
+void MqttManager::messageSend(const char* topicleaf, const String &payload, const bool retain, const int qos) {
   String *topicpath = new String(*xDiscovery::topicPrefix + topicleaf); // TODO can merge into next line
   messageSend(*topicpath, payload, retain, qos);
 }
 
-void MqttManager::messageSend(String &topicpath, const float &value, const int width, const bool retain, const int qos) {
+void MqttManager::messageSend(const String &topicpath, const float &value, const int width, const bool retain, const int qos) {
   String * const foo = new String(value, width);
   messageSend(topicpath, *foo, retain, qos);
 }
@@ -235,7 +242,7 @@ void MqttManager::messageSend(const char* topicleaf, const float &value, const i
   String * const foo = new String(value, width);
   messageSend(topicleaf, *foo, retain, qos);
 }
-void MqttManager::messageSend(String &topicpath, const int value, const bool retain, const int qos) {
+void MqttManager::messageSend(const String &topicpath, const int value, const bool retain, const int qos) {
   String * const foo = new String(value);
   messageSend(topicpath, *foo, retain, qos);
 }
@@ -244,12 +251,11 @@ void MqttManager::messageSend(const char* topicleaf, const int value, const bool
   messageSend(topicleaf, *foo, retain, qos);
 }
 void MqttManager::messageSendQueued() {
-  const Message* m;
   for (; !queued.empty(); queued.pop_front()) {
-    messageSendInner(queued.front().topic, queued.front().payload);
+    Message &m = queued.front();
+    messageSendInner(m.topicpath, m.payload);
   }
 }
-*/
 /* TODO-25
 namespace xMqtt {
 
