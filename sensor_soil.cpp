@@ -3,7 +3,8 @@
   Read from a pin and return as sSoil::Value
 
 Configuration options
-Optional: SENSOR_SOIL_PIN SENSOR_SOIL_MS SENSOR_SOIL_SMOOTH SENSOR_SOIL_TOPIC
+Optional with defaults: SENSOR_SOIL_PIN=4 SENSOR_SOIL_MS=15000 SENSOR_SOIL_TOPIC=soil SENSOR_SOIL_0=3200 SENSOR_SOIL_100=1300 
+Optional undefined: SENSOR_SOIL_SMOOTH
 
 On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,10 just reads 0; 7 reads 0 ad seems connected to LED
 
@@ -11,9 +12,12 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
 
 #include "_settings.h"  // Settings for what to include etc
 #ifdef SENSOR_SOIL_WANT
+#define SENSOR_SOIL_DEBUG // default to debugging for now
+
 #include <Arduino.h>
 #include "sensor_analog.h"
 #include "sensor_soil.h"
+#include "system_mqtt.h"
 #include "system_discovery.h"
 
 #ifndef SENSOR_SOIL_PIN
@@ -32,6 +36,13 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
   #define SENSOR_SOIL_MS 15000 // How often to read in MS
 #endif
 
+#ifndef SENSOR_SOIL_0
+  #define SENSOR_SOIL_0 3200
+#endif
+#ifndef SENSOR_SOIL_100
+  #define SENSOR_SOIL_100 1300
+#endif
+
 //  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/
 // TODO what are the values on ESP8266 or ESP32
 // TODO map between one set of REFERENCE values and the board specfic ones from the docs 
@@ -47,9 +58,7 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
 #endif //  SENSOR_ANALOG_REFERENCE
 
 Sensor_Soil::Sensor_Soil(const uint8_t p) : Sensor_Analog(p) { 
-  #ifdef SENSOR_SOIL_MS
-    ms = SENSOR_SOIL_MS;
-  #endif
+  ms = SENSOR_SOIL_MS;
   topic = SENSOR_SOIL_TOPIC;
   #ifdef SENSOR_SOIL_DEBUG
     name = new String(F("Soil"));
@@ -57,15 +66,24 @@ Sensor_Soil::Sensor_Soil(const uint8_t p) : Sensor_Analog(p) {
   #ifdef SENSOR_SOIL_SMOOTH
     smooth = SENSOR_SOIL_SMOOTH;
   #endif
-  #ifdef SENSOR_SOIL_MS
-    ms = SENSOR_SOIL_MS;
-  #endif
 }
+
+#define SENSOR_SOIL_INVALIDVALUE 0xFFFF
 
 uint16_t Sensor_Soil::read() {
   const uint16_t x = analogRead(pin);
+  if (x == 4095) { // 12 bit -1 i.e. 0xFFF
+    return SENSOR_SOIL_INVALIDVALUE;
+  }
   // TODO-85 will want to be able to calibrate this somehow and remember calibration
-  return map(x, 1300, 3200, 100, 0);
+  return map(x, SENSOR_SOIL_0, SENSOR_SOIL_100, 0, 100);
+}
+
+void Sensor_Soil::act() {
+  // Dont return if reading was invalid
+  if(value != SENSOR_SOIL_INVALIDVALUE) {
+    xMqtt::messageSend(topic, value, false, 0);
+  }
 }
 
 namespace sSoil {

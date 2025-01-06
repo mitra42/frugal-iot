@@ -19,6 +19,7 @@
 class Sensor_Soil : public Sensor_Analog {
   public: 
     Sensor_Soil(const uint8_t p);
+    virtual void act();
     virtual uint16_t read();
 };
 
