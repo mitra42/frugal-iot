@@ -7,11 +7,29 @@
 
 #include "actuator_digital.h" // for class Actuator_Digital
 
-#define ACTUATOR_LEDBUILTIN_TOPIC "ledbuiltin"
+// Arduinos unfortunately dont use any kind of #define for the board type so the 
+// standard blinkplay fails on for example the WEMOS boards.
+// Arduino_UNO Pin 13 has an LED connected on most Arduino boards but doesnt define BUILTIN_LED
+// This next part is to handle some weirdnesses where early versions of ESP8266 define BUILTIN_LED instead of LED_BUILTIN
+// but BUILTIN_LED responds to ifndef
+// This version works on ESP8266 D1 Mini - not tested on others 
+#ifndef ACTUATOR_LEDBUILTIN_PIN
+  #ifdef LED_BUILTIN
+    #define ACTUATOR_LEDBUILTIN_PIN LED_BUILTIN
+  #else // !LED_BUILTIN
+    #ifdef BUILTIN_LED
+      #define ACTUATOR_LEDBUILTIN_PIN BUILTIN_LED
+    #endif // BUILTIN_LED
+  #endif // LED_BUILTIN
+#endif // ACTUATOR_LEDBUILTIN_PIN
+
+#define ACTUATOR_LEDBUILTIN_DEBUG
+#define ACTUATOR_LEDBUILTIN_ADVERTISEMENT "\n  -\n    topic: ledbuiltin\n    name: Built in LED\n    type: bool\n    display: toggle\n    rw: rw"
+
 
 class Actuator_Ledbuiltin : public Actuator_Digital {
   public: 
-    Actuator_Ledbuiltin(const uint8_t p);
+    Actuator_Ledbuiltin(const uint8_t p, const char* topic);
     virtual void act();
 };
 

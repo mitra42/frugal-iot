@@ -28,12 +28,12 @@
 
 namespace cBlinken {
 String* inputTopic; 
-const char* outputTopic = ACTUATOR_LEDBUILTIN_TOPIC; // TODO-53 replace with string no need to parameterize
+const char* outputTopic = "ledbuiltin"; // TODO-53 replace with string no need to parameterize
 
 unsigned long nextLoopTime = 0;
 float value; // Time per blink (each phase)
 
-void set(float v) {
+void set(const float v) {
   if (value > v) { // May be waiting on long time, bring up
     nextLoopTime = millis();
   }
@@ -53,12 +53,12 @@ void inputReceived(String &payload) {
 
 void setup() {
   set(CONTROL_BLINKEN_S); // default time            
-  xMqtt::subscribe("control_blinken_seconds", *inputReceived);
+  Mqtt->subscribe("control_blinken_seconds", *inputReceived);
 }
 
 void loop() {
   if (nextLoopTime <= millis()) {
-    xMqtt::messageSend(outputTopic, !value, true, 1); //TODO-53 XXX comment back in 
+    Mqtt->messageSend(outputTopic, !value, true, 1);
     nextLoopTime = millis() + value*1000;
   }
 }

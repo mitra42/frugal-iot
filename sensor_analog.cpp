@@ -1,51 +1,44 @@
 /*
-  Sensor Analog
-  Read from a pin and return as sAnalog::Value\
-
-  See https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html for lots more on ESP ADCs
-
- Configuration options.
- Optional: SENSOR_ANALOG_REFERENCE for ESP8266 only  
- 
-*/
-
-// TODO add the _ARRAY parameters as used in sensor_sht85.cpp so will read multiple analog inputs.
+ * Sensor Analog
+ * Read from a pin and send message
+ *
+ * See https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html for lots more on ESP ADCs
+ *
+ * Configuration options.
+ * Required: SENSOR_XYZ_WANT - compiled based on any of its subclasses
+ * Optional: SENSOR_ANALOG_REFERENCE for ESP8266 only  
+ *
+ */
 
 #include "_settings.h"  // Settings for what to include etc
+#include "sensor_analog.h" // defines SENSOR_ANALOG_WANT if needed
 
-// Add new analog sensors here TO_ADD_SENSOR
-#if (defined(SENSOR_ANALOG_EXAMPLE_WANT) || defined(SENSOR_BATTERY_WANT) || defined(SENSOR_SOIL_WANT)) 
+#ifdef SENSOR_ANALOG_WANT
 
 #include <Arduino.h>
-#include "sensor_analog.h"
 #include "system_mqtt.h"
 #include "system_discovery.h" // 
 
+//  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/
+// TODO what are the values on ESP8266 or ESP32
+// TODO map between one set of REFERENCE values and the board specfic ones from the docs 
+// See https://github.com/mitra42/frugal-iot/issues/60
+// TODO Note this is not going to make it to the place its used in sensor_analog
+#ifndef SENSOR_ANALOG_REFERENCE
+  #ifdef ESP8266_D1_MINI
+    #define SENSOR_ANALOG_REFERENCE DEFAULT // TODO not clear if / where this is used 
+  #else
+    #ifndef LOLIN_C3_PICO
+      #error analogReference() is board dependent, review the docs and online and define 
+    #endif
+  #endif
+#endif //  SENSOR_ANALOG_REFERENCE
 
-Sensor_Analog::Sensor_Analog(const uint8_t p) { pin = p; };
+Sensor_Analog::Sensor_Analog(const uint8_t p, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init) : Sensor_Uint16(smooth_init, topic_init, ms_init), pin(p) { };
 
-void Sensor_Analog::act() {
-    xMqtt::messageSend(topic, value, false, 0);
-}
-void Sensor_Analog::set(const uint16_t v) {
-  // Virtual and May end up subclassing set if need to for example do a scaling here
-  uint16_t vv;
-  if (smooth) {
-    vv = value - (value >> smooth) + v;
-  } else {
-    vv = v;
-  }
-  #ifdef SENSOR_ANALOG_DEBUG
-    Serial.print(*name);
-    if (smooth) { Serial.print(F(" Smoothed")); }
-    Serial.print(" ");
-    Serial.println(value);
-  #endif // SENSOR_ANALOG_DEBUG
-  if (value != vv) { // Only act if changed
-    value = vv;
-    act();
-  }
-}
+// Sensor_Uint16_t::act is good - sends with retain=false; qos=0;
+// Sensor_Uint16_t::set is good - does optional smooth, compares and calls act
+// Sensor_Uint16_t::loop is good - does periodic read and set
 
 // Note this is virtual, and subclassed in Sensor_Battery
 uint16_t Sensor_Analog::read() {
@@ -55,21 +48,10 @@ uint16_t Sensor_Analog::read() {
 void Sensor_Analog::setup() {
   // initialize the analog pin as an input.
   pinMode(pin, INPUT); // I don't think this is needed ?
-  #ifdef ESP8266_D1_MINI
+  #ifdef SENSOR_ANALOG_REFERENCE
     analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
-  #else
-    //#error analogReference is board specific, appears to be undefined on ESP32C3 
-  #endif
-  
+  #endif 
 }
-
-void Sensor_Analog::loop() {
-  if (nextLoopTime <= millis()) {
-    set(read()); // Will also send message via act()
-    nextLoopTime = millis() + ms;
-  }
-}
-
 #endif // SENSOR_ANALOG_WANT
 // TODO-57 need to do discovery
 

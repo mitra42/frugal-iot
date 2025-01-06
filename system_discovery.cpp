@@ -23,7 +23,14 @@
 #include "system_wifi.h"
 #include "system_mqtt.h"  // xMqtt
 #include "system_discovery.h"
-// TO_ADD_SENSOR TO_ADD_ACTUATOR
+// TO_ADD_ACTUATOR
+#ifdef ACTUATOR_RELAY_WANT
+  #include "actuator_relay.h"
+#endif
+#ifdef ACTUATOR_LEDBUILTIN_WANT
+  #include "actuator_ledbuiltin.h"
+#endif
+// TO_ADD_SENSOR 
 #ifdef SENSOR_ANALOG_EXAMPLE_WANT
   #include "sensor_analog_example.h"
 #endif
@@ -33,6 +40,13 @@
 #ifdef SENSOR_BATTERY_WANT
   #include "sensor_battery.h"
 #endif
+#ifdef SENSOR_DHT_WANT
+  #include "sensor_dht.h"
+#endif
+#ifdef SENSOR_SHT_WANT
+  #include "sensor_sht.h"
+#endif
+// TO_ADD_CONTROL
 #ifdef CONTROL_DEMO_MQTT_WANT
   #include "control_demo_mqtt.h"
 #endif
@@ -52,12 +66,12 @@ String *topicPrefix;
 
 String *advertisePayload;
 void quickAdvertise() {
-    xMqtt::messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
+    Mqtt->messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
 }
 
 //TODO-29 want retained upstream but not local - non trivial
 void fullAdvertise() {
-  xMqtt::messageSend(*advertiseTopic, *advertisePayload, true, 1);
+  Mqtt->messageSend(*advertiseTopic, *advertisePayload, true, 1);
 }
 /*
 // This is a previous idea that clients ask for the fullAdvertise, but since its retained at the broker that isn't needed. 
@@ -111,7 +125,7 @@ void setup() {
         #endif
       #endif
       // TO_ADD_SENSOR (note space at start of string)
-      #ifdef SENSOR_SHT85_WANT
+      #ifdef SENSOR_SHT_WANT
         " SHTxx temp/humidity"
       #endif
       #ifdef SENSOR_DHT_WANT
@@ -143,8 +157,8 @@ void setup() {
       #ifdef SENSOR_BATTERY_WANT
         SENSOR_BATTERY_ADVERTISEMENT
       #endif
-      #ifdef SENSOR_SHT85_WANT
-        SENSOR_SHT85_ADVERTISEMENT
+      #ifdef SENSOR_SHT_WANT
+        SENSOR_SHT_ADVERTISEMENT
       #endif
       #ifdef SENSOR_DHT_WANT
         SENSOR_DHT_ADVERTISEMENT
@@ -208,7 +222,6 @@ void setup() {
     #endif
   #endif
   fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
-    // xMqtt::subscribe(*advertiseTopic, *inputReceived); // Commented out as don't see why need to receive this
 }
 
 void loop() {
