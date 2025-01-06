@@ -63,12 +63,12 @@ String *topicPrefix;
 
 String *advertisePayload;
 void quickAdvertise() {
-    xMqtt::messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
+    Mqtt->messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
 }
 
 //TODO-29 want retained upstream but not local - non trivial
 void fullAdvertise() {
-  xMqtt::messageSend(*advertiseTopic, *advertisePayload, true, 1);
+  Mqtt->messageSend(*advertiseTopic, *advertisePayload, true, 1);
 }
 /*
 // This is a previous idea that clients ask for the fullAdvertise, but since its retained at the broker that isn't needed. 
@@ -171,7 +171,6 @@ void setup() {
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
   #endif
     fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
-    // xMqtt::subscribe(*advertiseTopic, *inputReceived); // Commented out as don't see why need to receive this
 }
 
 void loop() {

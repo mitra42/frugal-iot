@@ -32,8 +32,7 @@ Actuator::Actuator(const char* t) : Frugal_Base(), topic(t) {
 } //TODO I think there is a way to shortcut initialization rather than code in {} do on all constructors like this 
 
 void Actuator::setup() {
-  //XXX25 - next step to refactor subscriptions
-  //  xMqtt::subscribeXXX25(*topic); //TODO-25 this will become just subscribe once all converted to classes
+  Mqtt->subscribe(topic);
 } 
 
 void Actuator::setupAll() {
@@ -63,7 +62,10 @@ void Actuator::loopAll() {
 }
 */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void Actuator::inputReceived(const String &payload) {
+#pragma GCC diagnostic pop
   Serial.println("XXX25 Actuator::inputReceived should be subclassed");
 }
 

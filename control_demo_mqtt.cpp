@@ -29,7 +29,7 @@ void act() {
     #ifdef CONTROL_DEMO_MQTT_DEBUG
       Serial.print(F("Control_demo_MQTT: Sending on ")); Serial.print(*outputTopic); Serial.print(F(" ")),Serial.println(output);
     #endif
-    xMqtt::messageSend(*outputTopic, output, true, 1); // Note message will probably be queued, as this will be running inside a messageHandler and has qos!=0
+    Mqtt->messageSend(*outputTopic, output, true, 1); // Note message will probably be queued, as this will be running inside a messageHandler and has qos!=0
   #ifdef CONTROL_DEMO_MQTT_DEBUG
   } else {
     Serial.print(F("Control_demo_MQTT: no outputTopic"));
@@ -83,7 +83,7 @@ void inputControlSet(String *t) {
     // Only subscribe if its changed.
     inputTopic = new String(*t);
     // TODO-55 need to unsubscribe from previous topic, or will end up here as well
-    xMqtt::subscribe(*inputTopic, *inputReceived); //TODO-81
+    Mqtt->subscribe(*inputTopic, *inputReceived); //TODO-81
   }
 }
 void inputControlReceived(String &payload) {
@@ -101,10 +101,10 @@ void setup() {
   inputControlSet(t);
 
   //Input2: Will receive values from the UX
-  xMqtt::subscribe("control_demo_mqtt_input2", *input2Received);
+  Mqtt->subscribe("control_demo_mqtt_input2", *input2Received);
 
   //Output: Go to topic as defined in UX
-  xMqtt::subscribe( "control_demo_mqtt_outputControl", *outputControlReceived);
+  Mqtt->subscribe( "control_demo_mqtt_outputControl", *outputControlReceived);
 }
 
 } //namespace cDemoMqtt

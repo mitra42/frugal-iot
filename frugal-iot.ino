@@ -58,15 +58,10 @@ void setup() {
   Serial.println(F("FrugalIoT Starting"));
 #endif // ANY_DEBUG
 // put setup code here, to run once:
-#ifdef SYSTEM_WIFI_WANT
-  xWifi::setup();
-#endif
-#ifdef SYSTEM_MQTT_WANT
-  xMqtt::setup();
-#endif
-#ifdef SYSTEM_DISCOVERY_WANT
-  xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
-#endif
+xWifi::setup();
+Mqtt = new MqttManager();
+xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
 Actuator_Ledbuiltin* a1 = new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, "ledbuiltin");
@@ -97,7 +92,7 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
 #endif
 #pragma GCC diagnostic pop
 
-Sensor::setupAll(); // Will replace all setups as developed - but starting with sensors, so positioned here.
+Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuators
 
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
@@ -113,17 +108,8 @@ Sensor::setupAll(); // Will replace all setups as developed - but starting with 
 }
 
 void loop() {
-  #ifdef SYSTEM_MQTT_WANT
-    xMqtt::loop();
-  #endif
-  //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
-  /*
-  #ifdef ACTUATOR_XYZ
-    aXYZ::loop();
-  #endif
-  */
-
-  Sensor::loopAll(); // Will replace all loops as developed - but starting with sensors, so positioned here.
+  Mqtt->loop();
+  Frugal_Base::loopAll(); // Will replace all loops as developed - but starting with sensors, so positioned here.
 
 
   #ifdef CONTROL_BLINKEN_WANT

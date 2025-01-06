@@ -106,13 +106,13 @@ void Sensor_DHT::readAndSet() {
     if (temp != temperature) {
       temperature = temp;
       if (topic) {
-        xMqtt::messageSend(topic, temperature, 1, false, 0);  // topic, value, width, retain, qos
+        Mqtt->messageSend(topic, temperature, 1, false, 0);  // topic, value, width, retain, qos
       }
     }
     if (humy != humidity) { // TODO may want to add some bounds (e.g a percentage)
       humidity = humy;
       if (topic2) {
-        xMqtt::messageSend(topic2, humidity, 1, false, 0);
+        Mqtt->messageSend(topic2, humidity, 1, false, 0);
       }
     }
   }

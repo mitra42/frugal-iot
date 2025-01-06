@@ -39,7 +39,7 @@ bool Sensor_Float::changed(const float newvalue) {
 }
 void Sensor_Float::act() {
     if (topic) {
-      xMqtt::messageSend(topic, value, retain, qos); // Note messageSend will convert value to String and expand topic
+      Mqtt->messageSend(topic, value, retain, qos); // Note messageSend will convert value to String and expand topic
     }
 }
 void Sensor_Float::readAndSet() {

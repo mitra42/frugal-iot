@@ -33,7 +33,7 @@
 #define SYSTEM_MQTT_DEBUG
 #define SYSTEM_MQTT_LOOPBACK // If true dispatch the message locally as well.
 
-//TODO-25 #define SYSTEM_DISCOVERY_WANT // Almost always set, will tell the MQTT server about the device so the Client can find it. 
+#define SYSTEM_DISCOVERY_WANT // Almost always set, will tell the MQTT server about the device so the Client can find it. 
 #define SYSTEM_DISCOVERY_DEBUG
 #define SYSTEM_DISCOVERY_MS 30000
 

@@ -6,6 +6,7 @@
 #include <Arduino.h>
 #include "_base.h"
 #include "sensor.h"
+#include "actuator.h"
 
 Frugal_Base::Frugal_Base() { }; // Intentionally nothing here
 
@@ -13,13 +14,15 @@ void Frugal_Base::setup() { }; // TODO-25 what should go here - maybe nothing si
 
 void Frugal_Base::setupAll() {
   Sensor::setupAll();
-  // TODO-25 calls system; sensor; actuator; control.setupAll
+  Actuator::setupAll();
+  // TODO-25 calls system; sensor; ; control.setupAll
 }
 void Frugal_Base::loop() { Serial.println("XXX25 erroneously calling Frugal_Base::loop"); }; // TODO-25 what should go here - maybe nothing since subclasses will loop through list and calling thsi could just mean no loop() was needed in subclass
 
 void Frugal_Base::loopAll() {
   Sensor::loopAll();
-  // TODO-25 calls system; sensor; actuator; control.loopAll
+  //Actuator::loopAll(); // Currently no loops in Actuators
+  // TODO-25 call system; control.loopAll
 }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

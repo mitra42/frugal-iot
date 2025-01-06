@@ -36,15 +36,16 @@
 #include "actuator.h"
 #include <forward_list>
 
-Subscription::Subscription(const String* tp) : topicpath(tp) { }
+Subscription::Subscription(const String* const tp) : topicpath(tp), payload(NULL) { }
+Subscription::Subscription(const String* const tp, String const* pl) : topicpath(tp), payload(pl) { }
 
 bool Subscription::operator==(const String& tp) {
   Serial.print("Subscription:"); Serial.print(*topicpath); Serial.print(*topicpath == tp ? "==" : "!="); Serial.println(tp); // TODO-25 remove when debugged
   return *topicpath == tp;
 }
-/* TODO-25
+Message::Message(const String &tp, String const &pl, const bool r, const int q): Subscription(&tp, &pl), retain(r), qos(q) { }
+
 MqttManager* Mqtt; // Will get initialized by setup in frugalIot.ino
-*/
 
 
 void MqttManager::setup() {
@@ -64,7 +65,7 @@ void MqttManager::setup() {
 
 // Run every 10ms TODO-25 and TODO-23 this should be MUCH longer ideally
 MqttManager::MqttManager() : Frugal_Base(), nextLoopTime(0), ms(10) {
-  setup(); // TODO-25 check if do now, or later e.g. from frugaliot.ino
+  setup();
 }
 
 void MqttManager::loop() {
@@ -128,34 +129,35 @@ void MqttManager::subscribe(const String& topicpath) {
   #endif
   Subscription* mi = find(topicpath);
   if (mi) { // No existing subscription
+    if (mi->payload) { // If have retained previous data
+      messageReceived(*mi->topicpath, *mi->payload); // TODO-25 check for loops or wasted internal duplicates
+    }
+  } else { 
     if (!client.subscribe(topicpath)) {
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.println(F("MQTT Subscription failed to ")); Serial.print(topicpath);
       #endif // SYSTEM_MQTT_DEBUG
     }
     items.emplace_front(&topicpath); // Should create a Subscription
-  } else { 
-    if (mi->payload) { // If have retained previous data
-      messageReceived(*mi->topicpath, *mi->payload); // TODO-25 check for loops or wasted internal duplicates
-    }
   }
 }
 
 // Short cut to allow subscribing based on an actuator or sensors own topic
 void MqttManager::subscribe(const char* topicleaf) {
-  String *topicpath = new String(*xDiscovery::topicPrefix + topicleaf);
+  const String * const topicpath = new String(*xDiscovery::topicPrefix + topicleaf);
   subscribe(*topicpath);
 }
 void MqttManager::dispatch(const String &topicpath, const String &payload) {
   if (topicpath.startsWith(*xDiscovery::topicPrefix)) {
-    String* topicleaf = new String(topicpath);
+    String* const topicleaf = new String(topicpath);
     topicleaf->remove(0, xDiscovery::topicPrefix->length());
-    //sensors.dispatchAll(topicleaf, payload);
+    //Sensor::dispatchAll(*topicleaf, payload);
     #ifdef ACTUATOR_WANT
-      actuators.dispatchAll(topicleaf, payload);
+      Actuator::dispatchAll(*topicleaf, payload);
     #endif
   }
-  //TODO-25 controls.dispatchAll(topicpath, payload);
+  //TODO-25 Control::dispatchAll(*topicpath, payload);
+  //TODO-25 System::dispatchAll(*topicpath, payload)
 }
 void MqttManager::resubscribeAll() {
   #ifdef SYSTEM_MQTT_DEBUG
@@ -214,7 +216,7 @@ void MqttManager::messageSendInner(const String &topicpath, const String &payloa
 void MqttManager::messageSend(const String &topicpath, const String &payload, const bool retain, const int qos) {
   // TODO-21-sema also queue if WiFi is down and qos>0 - not worth doing till xWifi::connect is non-blocking
   #ifdef SYSTEM_MQTT_DEBUG
-    Serial.print(F("MQTT ")); Serial.print(inReceived ? F("publish") : F("queue")); Serial.print(topicpath); Serial.print(F(" - ")); Serial.println(payload);
+    Serial.print(F("MQTT ")); Serial.print((inReceived && qos) ? F("queue ") : F("publish ")); Serial.print(topicpath); Serial.print(F(" - ")); Serial.println(payload);
   #endif
   if (inReceived && qos) {
     queued.emplace_front(topicpath, payload, retain, qos);
@@ -229,45 +231,38 @@ void MqttManager::messageSend(const String &topicpath, const String &payload, co
   dispatch(topicpath, payload);
 }
 
-void MqttManager::messageSend(const char* topicleaf, const String &payload, const bool retain, const int qos) {
-  String *topicpath = new String(*xDiscovery::topicPrefix + topicleaf); // TODO can merge into next line
+void MqttManager::messageSend(const char* const topicleaf, const String &payload, const bool retain, const int qos) {
+  const String * const topicpath = new String(*xDiscovery::topicPrefix + topicleaf); // TODO can merge into next line
   messageSend(*topicpath, payload, retain, qos);
 }
 
 void MqttManager::messageSend(const String &topicpath, const float &value, const int width, const bool retain, const int qos) {
-  String * const foo = new String(value, width);
+  const String * const foo = new String(value, width);
   messageSend(topicpath, *foo, retain, qos);
 }
-void MqttManager::messageSend(const char* topicleaf, const float &value, const int width, const bool retain, const int qos) {
-  String * const foo = new String(value, width);
+void MqttManager::messageSend(const char* const topicleaf, const float &value, const int width, const bool retain, const int qos) {
+  const String * const foo = new String(value, width);
   messageSend(topicleaf, *foo, retain, qos);
 }
 void MqttManager::messageSend(const String &topicpath, const int value, const bool retain, const int qos) {
-  String * const foo = new String(value);
+  const String * const foo = new String(value);
   messageSend(topicpath, *foo, retain, qos);
 }
-void MqttManager::messageSend(const char* topicleaf, const int value, const bool retain, const int qos) {
-  String * const foo = new String(value);
+void MqttManager::messageSend(const char* const topicleaf, const int value, const bool retain, const int qos) {
+  const String * const foo = new String(value);
   messageSend(topicleaf, *foo, retain, qos);
 }
 void MqttManager::messageSendQueued() {
-  for (; !queued.empty(); queued.pop_front()) {
+  while (!queued.empty()) {
     Message &m = queued.front();
-    messageSendInner(m.topicpath, m.payload);
+    messageSendInner(*m.topicpath, *m.payload, m.retain, m.qos);
+    queued.pop_front();
   }
 }
-/* TODO-25
 namespace xMqtt {
 
 // Note intentionally outside class, passed as callback to Mqtt client
 void MessageReceived(String &topic, String &payload) { // cant be constant as dispatch isnt
-  Mqtt.messageReceived(topic, payload);
-}
-void setup() {
-  Mqtt = new MqttManager();
-}
-void loop() {
-  Mqtt.loop();
+  Mqtt->messageReceived(topic, payload);
 }
 } // namespace xMqtt
-TODO-25 */

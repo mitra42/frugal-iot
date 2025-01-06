@@ -49,7 +49,7 @@ bool Sensor_Uint16::changed(const uint16_t newvalue) {
 }
 void Sensor_Uint16::act() {
     if (topic) {
-      xMqtt::messageSend(topic, value, retain, qos); // Note messageSend will convert value to String and expand topic
+      Mqtt->messageSend(topic, value, retain, qos); // Note messageSend will convert value to String and expand topic
     }
 }
 void Sensor_Uint16::readAndSet() {

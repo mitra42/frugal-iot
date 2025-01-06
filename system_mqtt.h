@@ -30,17 +30,18 @@ class Subscription {
   // This is both a subscription and a record of a message for retention purposes
   public:
     const String* topicpath;
-    String* payload;    // Retained payload
+    String const* payload;    // Retained payload
     Subscription(const String* tp);
+    Subscription(const String* tp, String const * payload);
     bool operator==(const String& topicpath);
 };
-class Message : Subscription {
+class Message : public Subscription {
   public:
     const bool retain;
     const int qos;
     Message(const String &tp, const String &pl, const bool r, const int q);
 };
-class MqttManager : Frugal_Base {
+class MqttManager : public Frugal_Base {
   public:
     WiFiClient net;
     MQTTClient client; //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.

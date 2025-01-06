@@ -53,12 +53,12 @@ void inputReceived(String &payload) {
 
 void setup() {
   set(CONTROL_BLINKEN_S); // default time            
-  xMqtt::subscribe("control_blinken_seconds", *inputReceived);
+  Mqtt->subscribe("control_blinken_seconds", *inputReceived);
 }
 
 void loop() {
   if (nextLoopTime <= millis()) {
-    xMqtt::messageSend(outputTopic, !value, true, 1);
+    Mqtt->messageSend(outputTopic, !value, true, 1);
     nextLoopTime = millis() + value*1000;
   }
 }
