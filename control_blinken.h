@@ -9,5 +9,6 @@
 namespace cBlinken {
 void setup();
 void loop();
+void dispatch(const String &topic, const String &payload);
 } // namespace aBlinken
 #endif // CONTROL_BLINKEN_H
