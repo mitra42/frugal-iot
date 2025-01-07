@@ -45,15 +45,22 @@ void set(const float v) {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-void inputReceived(String &payload) {
+void inputReceived(const String &payload) {
 #pragma GCC diagnostic pop
   float v = payload.toFloat(); // Copied to pin in the loop 
   set(v);
 }
 
+// TODO-25 temporary patch till new control.cpp ready
+void dispatch(const String &topic, const String &payload) {
+  if (topic == *inputTopic) {
+    inputReceived(payload);
+  }
+}
+
 void setup() {
   set(CONTROL_BLINKEN_S); // default time            
-  Mqtt->subscribe("control_blinken_seconds", *inputReceived);
+  Mqtt->subscribe("control_blinken_seconds");
 }
 
 void loop() {
