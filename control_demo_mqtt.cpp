@@ -18,6 +18,10 @@
 // TODO-46 genericize this when works - around input. control, output etc  
 namespace cDemoMqtt {
 
+//TODO-25 temporary hack till control_dispatchAll ready
+const char* const control_demo_mqtt_input2 = "control_demo_mqtt_input2";
+const char* const control_demo_mqtt_outputControl = "control_demo_mqtt_outputControl";
+
 bool output = false;
 float input;
 float input2 = CONTROL_DEMO_MQTT_HUMIDITY_MAX;
@@ -55,7 +59,7 @@ void inputSet(String payload) {
     set(decide());
   }
 }
-void inputReceived(String &payload) {
+void inputReceived(const String &payload) {
   inputSet(payload);
 }
 
@@ -66,11 +70,11 @@ void input2Set(String payload) {
     set(decide());
   }
 }
-void input2Received(String &payload) {
+void input2Received(const String &payload) {
   input2Set(payload);
 }
 
-void outputControlReceived(String &payload) {
+void outputControlReceived(const String &payload) {
   if (!outputTopic || *outputTopic != payload) {
     // Only send if its changed.
     outputTopic = new String(payload);
@@ -78,19 +82,33 @@ void outputControlReceived(String &payload) {
   }
 }
 
-void inputControlSet(String *t) {
+void inputControlSet(const String *t) {
   if (!inputTopic || *inputTopic != *t) {
     // Only subscribe if its changed.
     inputTopic = new String(*t);
     // TODO-55 need to unsubscribe from previous topic, or will end up here as well
-    Mqtt->subscribe(*inputTopic, *inputReceived); //TODO-81
+    Mqtt->subscribe(*inputTopic); //TODO-81
   }
 }
-void inputControlReceived(String &payload) {
+void inputControlReceived(const String &payload) {
   inputControlSet(&payload);
 }
 
-
+// TODO-25 temporary patch till new control.cpp ready
+void dispatchLeaf(const String &topicleaf, const String &payload) {
+  if (topicleaf == control_demo_mqtt_input2) {
+    input2Received(payload);
+  }
+  if (topicleaf == control_demo_mqtt_outputControl) {
+    outputControlReceived(payload);
+  }
+}
+// TODO-25 temporary patch till new control.cpp ready
+void dispatchPath(const String &topicpath, const String &payload) {
+  if (topicpath == *inputTopic) {
+    inputReceived(payload);
+  }  
+}
 
 // ===== not converted below here  ==================================
 
@@ -101,10 +119,10 @@ void setup() {
   inputControlSet(t);
 
   //Input2: Will receive values from the UX
-  Mqtt->subscribe("control_demo_mqtt_input2", *input2Received);
+  Mqtt->subscribe(control_demo_mqtt_input2);
 
   //Output: Go to topic as defined in UX
-  Mqtt->subscribe( "control_demo_mqtt_outputControl", *outputControlReceived);
+  Mqtt->subscribe( control_demo_mqtt_outputControl);
 }
 
 } //namespace cDemoMqtt

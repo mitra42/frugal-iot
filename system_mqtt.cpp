@@ -34,6 +34,13 @@
 #include "system_discovery.h"
 #include "system_mqtt.h"
 #include "actuator.h"
+//TODO-25 replace with control.h when ready
+  #ifdef CONTROL_BLINKEN_WANT
+    #include "control_blinken.h"
+  #endif
+  #ifdef CONTROL_DEMO_MQTT_WANT
+    #include "control_demo_mqtt.h"
+  #endif
 #include <forward_list>
 
 Subscription::Subscription(const String* const tp) : topicpath(tp), payload(NULL) { }
@@ -155,8 +162,20 @@ void MqttManager::dispatch(const String &topicpath, const String &payload) {
     #ifdef ACTUATOR_WANT
       Actuator::dispatchAll(*topicleaf, payload);
     #endif
-  }
+  //TODO-25 temporary hack till Control::dispatchAll readu
+      #ifdef CONTROL_DEMO_MQTT_WANT
+      cDemoMqtt::dispatchLeaf(*topicleaf, payload);
+      #endif
+    }
   //TODO-25 Control::dispatchAll(*topicpath, payload);
+  //TODO-25 temporary hack till Control::dispatchAll readu
+    #ifdef CONTROL_BLINKEN_WANT
+      cBlinken::dispatch(topicpath, payload);
+    #endif
+  //TODO-25 temporary hack till Control::dispatchAll readu
+    #ifdef CONTROL_DEMO_MQTT_WANT
+      cDemoMqtt::dispatchPath(topicpath, payload);
+    #endif
   //TODO-25 System::dispatchAll(*topicpath, payload)
 }
 void MqttManager::resubscribeAll() {

@@ -8,5 +8,7 @@
 namespace cDemoMqtt {
 void setup();
 //void loop();
+void dispatchPath(const String &topicpath, const String &payload);
+void dispatchLeaf(const String &topicleaf, const String &payload);
 } // namespace cDemoMqtt
 #endif // CONTROL_DEMO_MQTT_H
