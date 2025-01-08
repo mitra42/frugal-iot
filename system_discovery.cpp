@@ -111,6 +111,7 @@ void setup() {
     #ifdef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
       SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
     #else
+      //TO_ADD_BOARD - only used if SYSTEM_DISCOVERY_DEVICE_DESCRIPTION undefined and displayed in UX.
       #ifdef ESP8266_D1_MINI
         "ESP8266 D1 Mini"
       #else

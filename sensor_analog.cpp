@@ -19,6 +19,7 @@
 #include "system_mqtt.h"
 #include "system_discovery.h" // 
 
+//TO_ADD_BOARD
 //  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/
 // TODO what are the values on ESP8266 or ESP32
 // TODO map between one set of REFERENCE values and the board specfic ones from the docs 
