@@ -21,7 +21,8 @@ std::vector<Sensor*> sensors; // TODO_C++_EXPERT I wanted this to be a static in
       Serial.print(s->topic); Serial.print(" ");
     }
     Serial.println();
-    delay(1000); // Allow Serial to stabilize
+    delay(1000);
+  } // Allow Serial to stabilize
 #endif // SENSOR_DEBUG
 
 Sensor::Sensor(const char* t, const unsigned long m) : Frugal_Base(), topic(t), ms(m) { 
