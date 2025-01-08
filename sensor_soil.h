@@ -14,7 +14,9 @@
 #ifndef SENSOR_SOIL_NAME
   #define SENSOR_SOIL_NAME "Soil"
 #endif
+
 #ifndef SENSOR_SOIL_PIN
+  //TO_ADD_BOARD
   #ifdef LOLIN_C3_PICO
     #define SENSOR_SOIL_PIN 4 // Which pin to read - this will be board specific
   #else

@@ -47,7 +47,6 @@ Subscription::Subscription(const String* const tp) : topicpath(tp), payload(NULL
 Subscription::Subscription(const String* const tp, String const* pl) : topicpath(tp), payload(pl) { }
 
 bool Subscription::operator==(const String& tp) {
-  Serial.print("Subscription:"); Serial.print(*topicpath); Serial.print(*topicpath == tp ? "==" : "!="); Serial.println(tp); // TODO-25 remove when debugged
   return *topicpath == tp;
 }
 Message::Message(const String &tp, String const &pl, const bool r, const int q): Subscription(&tp, &pl), retain(r), qos(q) { }
@@ -162,16 +161,16 @@ void MqttManager::dispatch(const String &topicpath, const String &payload) {
     #ifdef ACTUATOR_WANT
       Actuator::dispatchAll(*topicleaf, payload);
     #endif
-  //TODO-25 temporary hack till Control::dispatchAll readu
+    //TODO-25 temporary hack till Control::dispatchAll ready
       #ifdef CONTROL_DEMO_MQTT_WANT
       cDemoMqtt::dispatchLeaf(*topicleaf, payload);
       #endif
+    //TODO-25 temporary hack till Control::dispatchAll readu
+      #ifdef CONTROL_BLINKEN_WANT
+        cBlinken::dispatchLeaf(*topicleaf, payload);
+      #endif
     }
   //TODO-25 Control::dispatchAll(*topicpath, payload);
-  //TODO-25 temporary hack till Control::dispatchAll readu
-    #ifdef CONTROL_BLINKEN_WANT
-      cBlinken::dispatch(topicpath, payload);
-    #endif
   //TODO-25 temporary hack till Control::dispatchAll readu
     #ifdef CONTROL_DEMO_MQTT_WANT
       cDemoMqtt::dispatchPath(topicpath, payload);

@@ -7,6 +7,7 @@
 
 #include "actuator_digital.h" // for class Actuator_Digital
 
+// TO_ADD_BOARD, look this thru and check it - there are historical bugs in board definitions in this area, so its art rather than science! 
 // Arduinos unfortunately dont use any kind of #define for the board type so the 
 // standard blinkplay fails on for example the WEMOS boards.
 // Arduino_UNO Pin 13 has an LED connected on most Arduino boards but doesnt define BUILTIN_LED

@@ -47,6 +47,9 @@
   #include "sensor_sht.h"
 #endif
 // TO_ADD_CONTROL
+#ifdef CONTROL_BLINKEN_WANT
+  #include "control_blinken.h"
+#endif
 #ifdef CONTROL_DEMO_MQTT_WANT
   #include "control_demo_mqtt.h"
 #endif
@@ -111,6 +114,7 @@ void setup() {
     #ifdef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
       SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
     #else
+      //TO_ADD_BOARD - only used if SYSTEM_DISCOVERY_DEVICE_DESCRIPTION undefined and displayed in UX.
       #ifdef ESP8266_D1_MINI
         "ESP8266 D1 Mini"
       #else
