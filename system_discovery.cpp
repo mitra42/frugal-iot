@@ -47,6 +47,9 @@
   #include "sensor_sht.h"
 #endif
 // TO_ADD_CONTROL
+#ifdef CONTROL_BLINKEN_WANT
+  #include "control_blinken.h"
+#endif
 #ifdef CONTROL_DEMO_MQTT_WANT
   #include "control_demo_mqtt.h"
 #endif
