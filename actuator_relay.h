@@ -19,7 +19,11 @@
       // Reasonable to assume using the Wemos Relay shield
       #define ACTUATOR_RELAY_PIN 10 // Not sure if pin 10 is called "10" in digital write
     #else
-      #error Need to define ACTUATOR_RELAY_PIN for unknown boards
+      #ifdef ITEAD_SONOFF
+        #define ACTUATOR_RELAY_PIN 12
+      #else
+        #error Need to define ACTUATOR_RELAY_PIN for unknown boards
+      #endif
     #endif
   #endif
 #endif // ACTUATOR_RELAY_PIN
