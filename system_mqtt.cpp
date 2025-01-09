@@ -148,6 +148,18 @@ void MqttManager::subscribe(const String& topicpath) {
   }
 }
 
+String* MqttManager::topicPath(char const * const topicleaf) { // TODO find other places do this and replace with call to TopicPath
+  return new String(*xDiscovery::topicPrefix + topicleaf);
+}
+String* MqttManager::topicLeaf(const String &topicpath) { // TODO find other places do this and replace with call to topicLeaf
+  if (topicpath.startsWith(*xDiscovery::topicPrefix)) {
+    String* const topicleaf = new String(topicpath);
+    topicleaf->remove(0, xDiscovery::topicPrefix->length());
+    return topicleaf;
+  } else {
+    return nullptr;
+  }
+}
 // Short cut to allow subscribing based on an actuator or sensors own topic
 void MqttManager::subscribe(const char* topicleaf) {
   const String * const topicpath = new String(*xDiscovery::topicPrefix + topicleaf);
@@ -157,7 +169,9 @@ void MqttManager::dispatch(const String &topicpath, const String &payload) {
   if (topicpath.startsWith(*xDiscovery::topicPrefix)) {
     String* const topicleaf = new String(topicpath);
     topicleaf->remove(0, xDiscovery::topicPrefix->length());
-    //Sensor::dispatchAll(*topicleaf, payload);
+    #ifdef SENSOR_WANT
+      //Sensor::dispatchAll(*topicleaf, payload); // None of the sensors have subscriptions
+    #endif
     #ifdef ACTUATOR_WANT
       Actuator::dispatchAll(*topicleaf, payload);
     #endif
@@ -248,6 +262,8 @@ void MqttManager::messageSend(const String &topicpath, const String &payload, co
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
   dispatch(topicpath, payload);
 }
+
+
 
 void MqttManager::messageSend(const char* const topicleaf, const String &payload, const bool retain, const int qos) {
   const String * const topicpath = new String(*xDiscovery::topicPrefix + topicleaf); // TODO can merge into next line
