@@ -68,6 +68,7 @@ class MqttManager : public Frugal_Base {
     void messageSend(const String &topicpath, const int value, const bool retain, const int qos);
     void messageSend(const char* topicleaf, const int value, const bool retain, const int qos);
     void messageSendQueued();
+    String* topicPath(char const * const topicleaf);
   
   protected: // TODO - some of the other methods should probably be protected
     std::forward_list<Subscription> items; // An item could be a retained message or a subscription - they overlap

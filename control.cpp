@@ -17,46 +17,56 @@
 #endif
 
 class IO {
+  public:
     float value;
-    String const * topic; // Topic currently listening to for input1Value
-    String const * const control; // Topic to listen to, that is used to set input1Topic
-    IO(float v, String const * t = NULL, String const * const c = NULL);
+    String const * topicpath; // Topic currently listening to for input1Value
+    char const * controlleaf; // Topic to listen to, that is used to set input1Topic
+    IO(float v, String const * topicpath, char const * const controlleaf);
+    IO(float v, char const * const topicleaf, char const * const controlleaf);
     virtual void setup();
-    void dispatch(String &topic, String &payload); // Just checks control
+    void dispatchLeaf(const String &topicleaf, String &payload); // Just checks control
 };
-/*
-IO::IO(float v, String const * t = NULL, String const * const c = NULL): value(v), topic(t), control(c) {
-  topic = xMqtt::topic_expand(topic);
-  control = xMqtt::topic_expand(control);
+
+IO::IO(float v, String const * tp = NULL, char const * const cl = NULL): value(v), topicpath(tp), controlleaf(cl) { };
+
+IO::IO(float v, char const * const tl = NULL, char const * const cl = NULL) {
+  IO(v, tl ? Mqtt->topicPath(tl) : NULL, cl);
 };
-IO::setup() {
-    if (control) Mqtt->subscribe(control);
+void IO::setup() {
+    if (controlleaf) Mqtt->subscribe(controlleaf);
 }
 
-void IO::dispatch(String &t, String &p) {
-  if (control == t) {
-    if (*p != *topic) {
-      topic = p;
-      Mqtt->subscribe(topic);
+void IO::dispatchLeaf(const String &tl, String &p) {
+  if (tl == controlleaf) {
+    if (p != *topicpath) {
+      topicpath = new String(p);
+      Mqtt->subscribe(*topicpath);
       // Drop thru and return false;
     }
   }
 }
-*/
-/*
-class IN : IO {
-  IN(float v, String const * t = NULL, String const * const c = NULL);  
-  bool dispatched(String &topic, String &payload); // For IN checks 
+
+
+class IN : public IO {
+  public:
+  IN(float v, String const * topicpath, char const * const controlleaf);  
+  IN(float v, char const * const topicleaf, char const * const controlleaf);
+  bool dispatchPath(const String &topicpath, const String &payload); // For IN checks 
+  virtual void setup();
 };
-IN::IN(float v, String const * t = NULL, String const * const c = NULL) : IO(v,t,c) {}
-IN::setup() : {
-  IO::setup()
-  if (topic) Mqtt->subscribe(topic);
+
+IN::IN(float v, String const * tp, char const * const cl): IO(v,tp,cl) {}
+
+IN::IN(float v, char const * const tl, char const * const cl): IO(v,tl,cl) {}
+
+void IN::setup() {
+  IO::setup();
+  if (topicpath) Mqtt->subscribe(*topicpath);
 }
+
 // Check incoming message, return true if value changed and should carry out actions
-bool IN::dispatched(String &t, String &p) {
-  IO:dispatch(t, p)) { // check control
-  if (topic == t) { // Check if shoul be *topic == *t
+bool IN::dispatchPath(const String &tp, const String &p) {
+  if (topicpath && (tp == *topicpath)) {
     float v = p.toFloat();
     if (v != value) {
       value = v;
@@ -65,49 +75,58 @@ bool IN::dispatched(String &t, String &p) {
   }
   return false; 
 }
-*/
-/*
-class OUT : IO {
-  OUT(float v, String const * t = NULL, String const * const c = NULL);  
+
+class OUT : public IO {
+  public:
+    OUT(float v, String const * topicpath, char const * const controlleaf);  
+    OUT(float v, char const * const topicleaf, char const * const controlleaf);
+    void set(const float newvalue);
 };
-OUT::OUT(float v, String const * t = NULL, String const * const c = NULL) : IO(v,t,c) {}
+
+OUT::OUT(float v, String const * tp = NULL, char const * const cl = NULL) : IO(v,tp,cl) { }
+OUT::OUT(float v, char const * const tl = NULL, char const * const cl = NULL) : IO(v,tl,cl) { }
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
 // OUT::dispatch() - uses IO since wont be a topic, 
 
-OUT::set(float newvalue) {
+void OUT::set(const float newvalue) {
   if (newvalue != value) {
-    value == newvalue
-    Mqtt->send(topic, value);
+    value = newvalue;
+    Mqtt->messageSend(*topicpath, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
   }
 }
+
+class Control : public Frugal_Base {
+  public:
+    Control();
+};
+Control::Control() {}
+
 class Control_3x3x3 : public Control {
   public:
     typedef std::function<void(void)> TCallback;
-    IO inputs[3]; // Array of inputs
+    IN inputs[3]; // Array of inputs
     // TODO-25 probably better as function pointers rather than virtual, can define controls then without new classes.
-    Tcallback actions[3]; // Array of actions
-    IO outputs[3];
-    Control_3x3x3(IO inputs[3], IO outputs[3], Tcallback actions[3]);
-    setup();
-}
+    OUT outputs[3];
+    TCallback actions[3]; // Array of actions
+    Control_3x3x3(IN inputs[3], OUT outputs[3], TCallback actions[3]);
+    void setup();
+};
+
 extern std::vector<Control*> controls;
 
 
-*/
-/*
-class Control : public Frugal_Base {
-  public:
-}
-*/
-/*
-Control_3x3x3::Control_3x3x3(IO i[3], IO o[3], Tcallback a[3]): Control, inputs(i), outputs(o), actions(a) { 
+Control_3x3x3::Control_3x3x3(IN i[], OUT o[], TCallback a[]): Control() {
+  inputs = i;
+  //, outputs(o), actions(a)  
   controls.push_back(this); 
 }
-Control_3x3x3::setup() {
+/*
+void Control_3x3x3::setup() {
   for (IO i: inputs) { i.setup();
   for (IO o: outputs) { o.setup();
 }
 Control_3x3x3::dispatched() {
+  Split into dispatchPath and dispatchleaf for IN
   for (IO i: inputs) { if (i.dispatched()) { return true; }; // value changed
   for (IO o: outputs) { o.dispatch(); }
   return false; 
