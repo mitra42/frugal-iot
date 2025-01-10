@@ -113,55 +113,57 @@ Control::Control() {}
 class Control_3x3x3 : public Control {
   public:
     typedef std::function<void(Control_3x3x3*)> TCallback;
-    IN inputs[3]; // Array of inputs
-    OUT outputs[3]; // Array of outputs
-    TCallback actions[3]; // Array of actions
-    Control_3x3x3(IN i[3], OUT o[3], TCallback a[3]);
+    std::vector<IN> inputs; // Vector of inputs
+    std::vector<OUT> outputs; // Vector of outputs
+    std::vector<TCallback> actions; // Vector of actions
+
+    Control_3x3x3(std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a);
     void setup();
     void dispatch(const String &topicpath, const String &payload );
 };
 
 extern std::vector<Control*> controls;
 
-Control_3x3x3::Control_3x3x3(IN i[3], OUT o[3], TCallback a[3]) {
-  for (int j = 0; j < 3; ++j) {
-    inputs[j] = i[j];
-    outputs[j] = o[j];
-    actions[j] = a[j];
-  }
-  controls.push_back(this); 
+Control_3x3x3::Control_3x3x3(std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a)
+    : inputs(i), outputs(o), actions(a) {
+    controls.push_back(this);
 }
 
 void Control_3x3x3::setup() {
-  for (int j = 0; j < 3; ++j) {
-      inputs[j].setup();
-      outputs[j].setup();
-  }
-  // Try this
- // for (IO i: inputs) { i.setup();
- // for (IO o: outputs) { o.setup();
+    for (auto &input : inputs) {
+        input.setup();
+    }
+    for (auto &output : outputs) {
+        output.setup();
+    }
 }
+
 void Control_3x3x3::dispatch(const String &topicpath, const String &payload ) {
-  bool changed = false;
-  String* tl = Mqtt->topicLeaf(topicpath);
-  for (int j = 0; j < 3; ++j) {
-    if (tl) { // Will be nullptr if no match
-      // Both inputs and outputs have possible 'control' and therefore dispatchLeaf
-      inputs[j].dispatchLeaf(*tl, payload); // Does not trigger any messages or actions - though response to subscription will.
-      inputs[j].dispatchLeaf(*tl, payload); // TODO-25 Setting a topic *should* but doesnt yet send a message to new outout.topic
+    bool changed = false;
+    String* tl = Mqtt->topicLeaf(topicpath);
+    for (auto &input : inputs) {
+        if (tl) { // Will be nullptr if no match
+            // Both inputs and outputs have possible 'control' and therefore dispatchLeaf
+            input.dispatchLeaf(*tl, payload); //  // Does not trigger any messages or actions - though data received in response to subscription will.
+        }
+        // Only inputs are listening to potential topicpaths - i.e. other devices outputs
+        if (input.dispatchPath(topicpath, payload)) {
+            changed = true; // Changed an input, do the actions
+        }
     }
-    // Presuming only inputs get incoming messages to the topic
-    if (inputs[j].dispatchPath(topicpath, payload)) { 
-      changed = true; // Changed an input, do the actions
+    for (auto &output : outputs) {
+        if (tl) { // Will be nullptr if no match
+            // Both inputs and outputs have possible 'control' and therefore dispatchLeaf
+            output.dispatchLeaf(*tl, payload); // TODO-25 Setting an output topic *should* but doesnt yet send a message to new outout.topic
+        }
     }
-  }
-  if (changed) {
-    for (int j = 0; j < 3; ++j) {
-      if (actions[j]) {
-        actions[j](this);        // Actions should call self.outputs[x].set(newvalue); and allow .set to check if changed and send message
-      }
+    if (changed) {
+        for (auto &action : actions) {
+            if (action) {
+                action(this); // Actions should call self.outputs[x].set(newvalue); and allow .set to check if changed and send message
+            }
+        }
     }
-  }
 }
 
 std::vector<Control*> controls;
@@ -170,12 +172,10 @@ std::vector<Control*> controls;
 IN ch_in1(0, "humidity", "humidity_sensor_control");
 IN ch_in2(50, "limit");
 IN ch_in3(5, "hysterisis");
-IN ch_ins[3] = {ch_in1, ch_in2, ch_in3};
+std::vector<IN> ch_ins = {ch_in1, ch_in2, ch_in3};
 
 OUT ch_out1(0, "ledbuiltin", "relay_control"); // Default to control LED, controllable via "relay_control")
-OUT ch_out2; // Default constructor
-OUT ch_out3;
-OUT ch_outs[3] = {ch_out1, ch_out2, ch_out3};
+std::vector<OUT> ch_outs = {ch_out1};
 
 Control_3x3x3::TCallback hysterisisAction = [](Control_3x3x3* self) {
     const float hum = self->inputs[0].value;
@@ -189,8 +189,7 @@ Control_3x3x3::TCallback hysterisisAction = [](Control_3x3x3* self) {
     }
   // If  lim-histerisis < hum < lim+histerisis then don't change setting
 };
-Control_3x3x3::TCallback actions[3] = {hysterisisAction, nullptr, nullptr};
-
+std::vector<Control_3x3x3::TCallback> actions = {hysterisisAction};
 Control_3x3x3 control_humidity(ch_ins, ch_outs, actions);
 /*
 // Example for blinken  - TODO-25 note needs a loop for timing
