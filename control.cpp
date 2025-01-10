@@ -39,6 +39,7 @@ void IO::setup() {
 }
 
 void IO::dispatchLeaf(const String &tl, const String &p) {
+
   if (tl == controlleaf) {
     if (p != *topicpath) {
       topicpath = new String(p);
@@ -52,6 +53,7 @@ void IO::dispatchLeaf(const String &tl, const String &p) {
 class IN : public IO {
   public:
   IN(); 
+
   IN(float v, String const * topicpath, char const * const controlleaf);  
   IN(float v, char const * const topicleaf, char const * const controlleaf);
   bool dispatchPath(const String &topicpath, const String &payload); // For IN checks 
@@ -120,7 +122,6 @@ class Control_3x3x3 : public Control {
 };
 
 extern std::vector<Control*> controls;
-
 
 Control_3x3x3::Control_3x3x3(IN i[3], OUT o[3], TCallback a[3]) {
   for (int j = 0; j < 3; ++j) {
