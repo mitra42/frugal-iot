@@ -13,7 +13,9 @@
 // Arduino_UNO Pin 13 has an LED connected on most Arduino boards but doesnt define BUILTIN_LED
 // This next part is to handle some weirdnesses where early versions of ESP8266 define BUILTIN_LED instead of LED_BUILTIN
 // but BUILTIN_LED responds to ifndef
-// This version works on ESP8266 D1 Mini - not tested on others 
+// This version works on ESP8266 D1 Mini and ESP32 Lolin C3 Pico and SONOFF R2,
+// It is not tested on others but should work if LED_BUILTIN is corectly defined for them. 
+// 
 #ifndef ACTUATOR_LEDBUILTIN_PIN
   #ifdef LED_BUILTIN
     #define ACTUATOR_LEDBUILTIN_PIN LED_BUILTIN

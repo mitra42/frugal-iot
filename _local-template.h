@@ -24,6 +24,7 @@
 #define BOARD1 "ESP8266 D1 mini with SHT sensor"
 // #define BOARD2 "ESP8266 D1 mini with DHT sensor"
 //#define BOARD3 "ESP32 C3 Pico with Soil and Battery sensor"
+//#define SONOFF_R2 "Sonoff R2"
 
 // Note that on ESP that ESP32 or ESP8266 will be defined - should define other chips names here if its not ESP32 or ESP8266
 #ifdef BOARD1
@@ -60,6 +61,15 @@
   #define SENSOR_BATTERY_DEBUG
   #define SENSOR_BATTERY_MS 15000 // While debugging I want readings every 15 seconds
 #endif //BOARD3
+#ifdef SONOFF_R2
+  // See https://github.com/mitra42/frugal-iot/issues/108
+  #ifndef ESP8266
+    #error should be using ITEAD_SONOFF in the IDE which defines ESP8266 even though the Sonoff R2 is ESP8285
+  #endif
+  #define ITEAD_SONOFF
+  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION SONOFF_R2
+  #define ACTUATOR_RELAY_WANT
+#endif //SONOFF_R2
 
 // Wanted on all boards
 #define ACTUATOR_LEDBUILTIN_WANT
