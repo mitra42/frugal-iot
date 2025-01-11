@@ -31,7 +31,10 @@ class IN : public IO {
  // Copy constructor from copilot
   //IN(const IN &other) : IO(other.value, other.topicpath, other.controlleaf) { }
   IN(const IN &other) {
-    Serial.print("IN copy " __FILE__); Serial.println(__LINE__);
+    Serial.print("IN copy " __FILE__); Serial.print(__LINE__);
+    Serial.print(other.value); 
+    if (other.topicpath) { Serial.print(*other.topicpath); } else { Serial.print("topicpath is null");} 
+    if (other.controlleaf) { Serial.println(*other.controlleaf); } else { Serial.println("controlleaf is null");} 
     IO(other.value, other.topicpath, other.controlleaf);
     Serial.print("IN copy" __FILE__); Serial.println(__LINE__);
   }
