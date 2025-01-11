@@ -86,14 +86,25 @@ void OUT::set(const float newvalue) {
 
 // ==== Control - base class for all controls 
 
-
 Control::Control(std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a)
     : Frugal_Base(), inputs(i), outputs(o), actions(a) {
-    debug("inside constructor");
+      
+    //Serial.print("i0value="); Serial.print(i[0].value);
+    //Serial.print("i0tp="); Serial.print(*i[0].topicpath);
+    //debug("inside constructor");
+    // Additional debug statements
+    Serial.print("inputs size: "); Serial.println(inputs.size());
+    for (size_t idx = 0; idx < inputs.size(); ++idx) {
+        Serial.print("IN"); Serial.print(idx); Serial.print(" value: "); Serial.println(inputs[idx].value);
+        if (inputs[idx].topicpath) {
+            Serial.print("IN"); Serial.print(idx); Serial.print(" topicpath: "); Serial.println(*inputs[idx].topicpath);
+        } else {
+            Serial.print("IN"); Serial.print(idx); Serial.println(" topicpath is nullptr");
+        }
+    }
 
     controls.push_back(this);
 }
-
 void Control::debug(const char* const blah) {
   Serial.print("===Control debug==="); Serial.println(blah);
   Serial.print("IN0"); Serial.println(inputs[0].value);
