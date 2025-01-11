@@ -43,9 +43,26 @@
 #ifdef CONTROL_DEMO_MQTT_WANT
 #include "control_demo_mqtt.h"
 #endif
+#ifdef CONTROL_WANT
+#include "control.h"
+#endif
 #ifdef SYSTEM_DISCOVERY_WANT
 #include "system_discovery.h"
 #endif
+
+// TODO-25 move this function
+Control::TCallback hysterisisAction = [](Control* self) {
+    const float hum = self->inputs[0].value;
+    const float lim = self->inputs[1].value;
+    const float hysterisis = self->inputs[2].value;
+    if (hum > (lim + hysterisis)) {
+        self->outputs[0].set(1);
+    }
+    if (hum < (lim - hysterisis)) {
+        self->outputs[0].set(0);
+    }
+  // If  lim-histerisis < hum < lim+histerisis then don't change setting
+};
 
 void setup() {
 #ifdef ANY_DEBUG
@@ -90,9 +107,27 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
 #ifdef SENSOR_SOIL_WANT
   Sensor_Soil* s5 = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS);
 #endif
+
+
+// Example definition of control - //TODO-25 move this, but make sure run in setup, not prior to it as need Mqtt
+Control* control_humidity = new Control(
+  std::vector<IN> {
+    IN(0, "humidity", "sensor_control_input"),
+    IN(50, "humidity_limit", nullptr),
+    IN(5, "hysterisis", nullptr) // Note nullptr needed in .ino but not .cpp files :-(
+    },
+  std::vector<OUT> {
+    OUT(0, "ledbuiltin", "sensor_control_output") // Default to control LED, controllable via "relay_control")
+  },
+  std::vector<Control::TCallback> {
+    hysterisisAction
+  });
+  control_humidity->debug("frugal-iot.ino after instantiation");
+
+
 #pragma GCC diagnostic pop
 
-Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuators
+Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuatorsand controls
 
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();

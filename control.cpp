@@ -11,28 +11,22 @@
 #include "control.h"
 #include "system_mqtt.h"
 
+#ifdef CONTROL_WANT
+
 // TODO-ADD-CONTROL
 #if defined(CONTROL_XYZ_DEBUG) || defined(CONTROL_MPQ_DEBUG)
   #define CONTROL_DEBUG
 #endif
 
-class IO {
-  public:
-    float value;
-    String const * topicpath; // Topic currently listening to for input1Value
-    char const * controlleaf; // Topic to listen to, that is used to set input1Topic
-    IO();
-    IO(float v, String const * topicpath, char const * const controlleaf);
-    IO(float v, char const * const topicleaf, char const * const controlleaf);
-    virtual void setup();
-    void dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
-};
+// ========== IO - base class for IN and OUT ===== 
+
 IO::IO() {}
 
-IO::IO(float v, String const * tp = NULL, char const * const cl = NULL): value(v), topicpath(tp), controlleaf(cl) { };
+IO::IO(float v, String const * tp = nullptr, char const * const cl = nullptr): value(v), topicpath(tp), controlleaf(cl) { 
+};
 
-IO::IO(float v, char const * const tl = NULL, char const * const cl = NULL) {
-  IO(v, tl ? Mqtt->topicPath(tl) : NULL, cl);
+IO::IO(float v, char const * const tl = nullptr, char const * const cl = nullptr) {
+  IO(v, tl ? Mqtt->topicPath(tl) : nullptr, cl);
 };
 void IO::setup() {
     if (controlleaf) Mqtt->subscribe(controlleaf);
@@ -49,16 +43,7 @@ void IO::dispatchLeaf(const String &tl, const String &p) {
   }
 }
 
-
-class IN : public IO {
-  public:
-  IN(); 
-
-  IN(float v, String const * topicpath, char const * const controlleaf);  
-  IN(float v, char const * const topicleaf, char const * const controlleaf);
-  bool dispatchPath(const String &topicpath, const String &payload); // For IN checks 
-  virtual void setup();
-};
+// ========== IN for some topic we are monitoring and the most recent value ===== 
 
 IN::IN() {}
 
@@ -84,13 +69,8 @@ bool IN::dispatchPath(const String &tp, const String &p) {
   return false; 
 }
 
-class OUT : public IO {
-  public:
-    OUT();
-    OUT(float v, String const * topicpath, char const * const controlleaf);  
-    OUT(float v, char const * const topicleaf, char const * const controlleaf);
-    void set(const float newvalue);
-};
+// ========== OUT for some topic we are potentially sending to ===== 
+
 OUT::OUT() {};
 OUT::OUT(float v, String const * tp = NULL, char const * const cl = NULL) : IO(v,tp,cl) { }
 OUT::OUT(float v, char const * const tl = NULL, char const * const cl = NULL) : IO(v,tl,cl) { }
@@ -104,32 +84,25 @@ void OUT::set(const float newvalue) {
   }
 }
 
-class Control : public Frugal_Base {
-  public:
-    Control();
-};
-Control::Control() {}
+// ==== Control - base class for all controls 
 
-class Control_3x3x3 : public Control {
-  public:
-    typedef std::function<void(Control_3x3x3*)> TCallback;
-    std::vector<IN> inputs; // Vector of inputs
-    std::vector<OUT> outputs; // Vector of outputs
-    std::vector<TCallback> actions; // Vector of actions
 
-    Control_3x3x3(std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a);
-    void setup();
-    void dispatch(const String &topicpath, const String &payload );
-};
+Control::Control(std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a)
+    : Frugal_Base(), inputs(i), outputs(o), actions(a) {
+    debug("inside constructor");
 
-extern std::vector<Control*> controls;
-
-Control_3x3x3::Control_3x3x3(std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a)
-    : inputs(i), outputs(o), actions(a) {
     controls.push_back(this);
 }
 
-void Control_3x3x3::setup() {
+void Control::debug(const char* const blah) {
+  Serial.print("===Control debug==="); Serial.println(blah);
+  Serial.print("IN0"); Serial.println(inputs[0].value);
+  Serial.println(*inputs[0].topicpath);
+  Serial.println("===end Control debug ===");
+}
+
+void Control::setup() {
+    debug("Control setup");
     for (auto &input : inputs) {
         input.setup();
     }
@@ -138,7 +111,7 @@ void Control_3x3x3::setup() {
     }
 }
 
-void Control_3x3x3::dispatch(const String &topicpath, const String &payload ) {
+void Control::dispatch(const String &topicpath, const String &payload ) {
     bool changed = false;
     String* tl = Mqtt->topicLeaf(topicpath);
     for (auto &input : inputs) {
@@ -165,32 +138,20 @@ void Control_3x3x3::dispatch(const String &topicpath, const String &payload ) {
         }
     }
 }
+void Control::setupAll() {
+  for (Control* c: controls) {
+    c->setup();
+  }
+}
+void Control::dispatchAll(const String &topicpath, const String &payload) {
+  for (Control* c: controls) {
+    c->dispatch(topicpath, payload);
+  }
+}
 
 std::vector<Control*> controls;
 
-// Example definition
-IN ch_in1(0, "humidity", "humidity_sensor_control");
-IN ch_in2(50, "limit");
-IN ch_in3(5, "hysterisis");
-std::vector<IN> ch_ins = {ch_in1, ch_in2, ch_in3};
 
-OUT ch_out1(0, "ledbuiltin", "relay_control"); // Default to control LED, controllable via "relay_control")
-std::vector<OUT> ch_outs = {ch_out1};
-
-Control_3x3x3::TCallback hysterisisAction = [](Control_3x3x3* self) {
-    const float hum = self->inputs[0].value;
-    const float lim = self->inputs[1].value;
-    const float hysterisis = self->inputs[2].value;
-    if (hum > (lim + hysterisis)) {
-        self->outputs[0].set(1);
-    }
-    if (hum < (lim - hysterisis)) {
-        self->outputs[0].set(0);
-    }
-  // If  lim-histerisis < hum < lim+histerisis then don't change setting
-};
-std::vector<Control_3x3x3::TCallback> actions = {hysterisisAction};
-Control_3x3x3 control_humidity(ch_ins, ch_outs, actions);
 /*
 // Example for blinken  - TODO-25 note needs a loop for timing
 long unsigned lastblink; // Note local variable in same contex as control_blinken
@@ -198,12 +159,13 @@ IN cb_in1 = [1,"blinkspeed",NULL];
 OUT cb_out1 = [0, "ledbuiltin", NULL];
 IN* cb_ins[3] = [cb_in1, NULL, NULL];
 OUT* cb_outs[3] = [cb_out1, NULL, NULL];
-Tcallback blink(Control_3x3x3* self) {
+Tcallback blink(Control* self) {
   if (lastblink + (self->inputs[0].value*1000)) < millis() { 
     self->outputs[0].set(!!self->outputs[0].value);
     lastblink = millis();
   }
 }
 Tcallback cb_acts[3] = [xxx, NULL, NULL]
-Control_3x3x3* control_blinken = new Control_3xx3x3(cb_ins, cb_outs, cb_acts)
+Control* control_blinken = new Control_3xx3x3(cb_ins, cb_outs, cb_acts)
 */
+#endif //CONTROL_WANT

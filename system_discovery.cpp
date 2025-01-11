@@ -53,6 +53,9 @@
 #ifdef CONTROL_DEMO_MQTT_WANT
   #include "control_demo_mqtt.h"
 #endif
+#ifdef CONTROL_WANT
+  #include "control.h"
+#endif
 
 namespace xDiscovery {
 
@@ -168,6 +171,9 @@ void setup() {
       #endif
       #ifdef CONTROL_DEMO_MQTT_WANT
         CONTROL_DEMO_MQTT_ADVERTISEMENT
+      #endif
+      #ifdef CONTROL_WANT // TODO-25 will move and make automated
+        CONTROL_ADVERTISEMENT
       #endif
     )
   );
