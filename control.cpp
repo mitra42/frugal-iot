@@ -23,13 +23,23 @@
 IO::IO() {}
 
 IO::IO(float v, String const * tp = nullptr, char const * const cl = nullptr): value(v), topicpath(tp), controlleaf(cl) { 
+    Serial.print("XXX25" __FILE__); Serial.print(__LINE__); Serial.print(value); Serial.print(*topicpath); Serial.print("controlleaf="); Serial.println(controlleaf); delay(1000);
 };
 
 IO::IO(float v, char const * const tl = nullptr, char const * const cl = nullptr) {
-  IO(v, tl ? Mqtt->topicPath(tl) : nullptr, cl);
+  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); Serial.print(" Converting topicleaf"); Serial.println(tl);
+  if (tl) {
+    String* tp = Mqtt->topicPath(tl); 
+    Serial.print("XXX25" __FILE__); Serial.println(__LINE__); Serial.print(" Converting to"); Serial.println(*tp);
+    IO(v, tp, cl);
+  } else {
+    Serial.print("XXX25 dont think this should happen as should call other constructor __FILE__"); Serial.println(__LINE__);
+  }
 };
 void IO::setup() {
+    Serial.print("XXX25" __FILE__); Serial.println(__LINE__); Serial.print("controlleaf="); Serial.println(controlleaf); delay(1000);
     if (controlleaf) Mqtt->subscribe(controlleaf);
+    Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
 }
 
 void IO::dispatchLeaf(const String &tl, const String &p) {
@@ -37,7 +47,9 @@ void IO::dispatchLeaf(const String &tl, const String &p) {
   if (tl == controlleaf) {
     if (p != *topicpath) {
       topicpath = new String(p);
+      Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
       Mqtt->subscribe(*topicpath);
+      Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
       // Drop thru and return false;
     }
   }
@@ -47,13 +59,48 @@ void IO::dispatchLeaf(const String &tl, const String &p) {
 
 IN::IN() {}
 
+/* Replaced with debug version below TODO-25
 IN::IN(float v, String const * tp = nullptr, char const * const cl = nullptr): IO(v,tp,cl) {}
+*/
+IN::IN(float v, String const * tp = nullptr, char const * const cl = nullptr) {
+  Serial.print(__FILE__);Serial.println(__LINE__);
+  IO(v, tp, cl);
+    Serial.print("IN constructor called with value: "); Serial.print(v);
+    if (tp) {
+        Serial.print(", topicpath: "); Serial.print(*tp);
+    } else {
+        Serial.print(", topicpath is nullptr");
+    }
+    if (cl) {
+        Serial.print(", controlleaf: "); Serial.println(cl);
+    } else {
+        Serial.println(", controlleaf is nullptr");
+    }
+}
+//IN::IN(float v, char const * const tl = nullptr, char const * const cl = nullptr): IO(v,tl,cl) {}
+IN::IN(float v, char const * const tl = nullptr, char const * const cl = nullptr) {
+  Serial.print(__FILE__); Serial.println(__LINE__);
+  IO(v,tl,cl);
+  Serial.print(__FILE__); Serial.println(__LINE__);
+}
 
-IN::IN(float v, char const * const tl = nullptr, char const * const cl = nullptr): IO(v,tl,cl) {}
+/*
+IN::IN(const IN &other) : IO(other.value, other.topicpath, other.controlleaf) {
+  Serial.print("IN:IN(other) after __FILE__"); Serial.println(__LINE__);
+}
+*/
 
 void IN::setup() {
+  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
+  Serial.print(value);   Serial.print(*topicpath);   Serial.println(controlleaf);
+  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
   IO::setup();
+  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
+  Serial.println(*topicpath);
+  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
   if (topicpath) Mqtt->subscribe(*topicpath);
+  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
+
 }
 
 // Note also has dispatchLeaf via the superclass
@@ -72,8 +119,19 @@ bool IN::dispatchPath(const String &tp, const String &p) {
 // ========== OUT for some topic we are potentially sending to ===== 
 
 OUT::OUT() {};
-OUT::OUT(float v, String const * tp = NULL, char const * const cl = NULL) : IO(v,tp,cl) { }
-OUT::OUT(float v, char const * const tl = NULL, char const * const cl = NULL) : IO(v,tl,cl) { }
+//OUT::OUT(float v, String const * tp = NULL, char const * const cl = NULL) : IO(v,tp,cl) { }
+OUT::OUT(float v, String const * tp = NULL, char const * const cl = NULL) {
+  Serial.println(__FILE__); Serial.print(__LINE__);
+  IO(v,tp,cl);
+  Serial.println(__FILE__); Serial.print(__LINE__);
+}
+
+//OUT::OUT(float v, char const * const tl = NULL, char const * const cl = NULL) : {IO(v,tl,cl) { }
+OUT::OUT(float v, char const * const tl = NULL, char const * const cl = NULL) { 
+  Serial.println(__FILE__); Serial.print(__LINE__);
+  IO(v,tl,cl);
+  Serial.println(__FILE__); Serial.print(__LINE__);
+}
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
 // OUT::dispatchLeaf() - uses IO since wont be incoming topicpath, only a controlleaf
 
@@ -89,7 +147,20 @@ void OUT::set(const float newvalue) {
 
 Control::Control(std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a)
     : Frugal_Base(), inputs(i), outputs(o), actions(a) {
-    debug("inside constructor");
+      
+    //Serial.print("i0value="); Serial.print(i[0].value);
+    //Serial.print("i0tp="); Serial.print(*i[0].topicpath);
+    //debug("inside constructor");
+    // Additional debug statements
+    Serial.print("inputs size: "); Serial.println(inputs.size());
+    for (size_t idx = 0; idx < inputs.size(); ++idx) {
+        Serial.print("IN"); Serial.print(idx); Serial.print(" value: "); Serial.println(inputs[idx].value);
+        if (inputs[idx].topicpath) {
+            Serial.print("IN"); Serial.print(idx); Serial.print(" topicpath: "); Serial.println(*inputs[idx].topicpath);
+        } else {
+            Serial.print("IN"); Serial.print(idx); Serial.println(" topicpath is nullptr");
+        }
+    }
 
     controls.push_back(this);
 }
@@ -103,11 +174,17 @@ void Control::debug(const char* const blah) {
 
 void Control::setup() {
     debug("Control setup");
+    Serial.print("XXX25 __FILE__ Control::setup"); Serial.println(__LINE__); delay(1000);
     for (auto &input : inputs) {
+        Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
         input.setup();
+        Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
     }
+    Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
     for (auto &output : outputs) {
+        Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
         output.setup();
+        Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
     }
 }
 

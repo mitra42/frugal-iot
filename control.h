@@ -28,6 +28,24 @@ class IN : public IO {
 
   IN(float v, String const * topicpath, char const * const controlleaf);  
   IN(float v, char const * const topicleaf, char const * const controlleaf);
+ // Copy constructor from copilot
+  //IN(const IN &other) : IO(other.value, other.topicpath, other.controlleaf) { }
+  IN(const IN &other) {
+    Serial.print("IN copy " __FILE__); Serial.println(__LINE__);
+    IO(other.value, other.topicpath, other.controlleaf);
+    Serial.print("IN copy" __FILE__); Serial.println(__LINE__);
+  }
+
+    // Copy assignment operator
+    IN& operator=(const IN &other) {
+        Serial.print("IN assignment __FILE__"); Serial.println(__LINE__);
+        if (this != &other) {
+            value = other.value;
+            topicpath = other.topicpath;
+            controlleaf = other.controlleaf;
+        }
+        return *this;
+    }
   bool dispatchPath(const String &topicpath, const String &payload); // For IN checks 
   virtual void setup();
 };
