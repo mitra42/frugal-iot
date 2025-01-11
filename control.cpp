@@ -23,23 +23,17 @@
 IO::IO() {}
 
 IO::IO(float v, String const * tp = nullptr, char const * const cl = nullptr): value(v), topicpath(tp), controlleaf(cl) { 
-    Serial.print("XXX25" __FILE__); Serial.print(__LINE__); Serial.print(value); Serial.print(*topicpath); Serial.print("controlleaf="); Serial.println(controlleaf); delay(1000);
+      debug("...IO string constructor ");
 };
-
-IO::IO(float v, char const * const tl = nullptr, char const * const cl = nullptr) {
-  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); Serial.print(" Converting topicleaf"); Serial.println(tl);
-  if (tl) {
-    String* tp = Mqtt->topicPath(tl); 
-    Serial.print("XXX25" __FILE__); Serial.println(__LINE__); Serial.print(" Converting to"); Serial.println(*tp);
-    IO(v, tp, cl);
-  } else {
-    Serial.print("XXX25 dont think this should happen as should call other constructor __FILE__"); Serial.println(__LINE__);
-  }
+IO::IO(float v, char const * const tl = nullptr, char const * const cl = nullptr) 
+  : IO(v, tl ? Mqtt->topicPath(tl) : nullptr, cl)
+{
+    debug("...IO char constructor ");
 };
 void IO::setup() {
-    Serial.print("XXX25" __FILE__); Serial.println(__LINE__); Serial.print("controlleaf="); Serial.println(controlleaf); delay(1000);
+    debug("IO setup... ");
     if (controlleaf) Mqtt->subscribe(controlleaf);
-    Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
+    debug("...IO setup ");
 }
 
 void IO::dispatchLeaf(const String &tl, const String &p) {
@@ -47,12 +41,16 @@ void IO::dispatchLeaf(const String &tl, const String &p) {
   if (tl == controlleaf) {
     if (p != *topicpath) {
       topicpath = new String(p);
-      Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
       Mqtt->subscribe(*topicpath);
-      Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
       // Drop thru and return false;
     }
   }
+}
+void IO::debug(const char* const where) {
+    Serial.print(where); 
+    Serial.print(" value="); Serial.print(value); 
+    Serial.print(" topicpath="); Serial.print(topicpath ? *topicpath : "NULL"); 
+    Serial.print(" controlleaf="); Serial.println(controlleaf ? controlleaf : "NULL");
 }
 
 // ========== IN for some topic we are monitoring and the most recent value ===== 
@@ -62,45 +60,25 @@ IN::IN() {}
 /* Replaced with debug version below TODO-25
 IN::IN(float v, String const * tp = nullptr, char const * const cl = nullptr): IO(v,tp,cl) {}
 */
-IN::IN(float v, String const * tp = nullptr, char const * const cl = nullptr) {
-  Serial.print(__FILE__);Serial.println(__LINE__);
-  IO(v, tp, cl);
-    Serial.print("IN constructor called with value: "); Serial.print(v);
-    if (tp) {
-        Serial.print(", topicpath: "); Serial.print(*tp);
-    } else {
-        Serial.print(", topicpath is nullptr");
-    }
-    if (cl) {
-        Serial.print(", controlleaf: "); Serial.println(cl);
-    } else {
-        Serial.println(", controlleaf is nullptr");
-    }
+IN::IN(float v, String const * tp = nullptr, char const * const cl = nullptr)
+  :   IO(v, tp, cl) {
+  debug("...IN string constructor ");
 }
 //IN::IN(float v, char const * const tl = nullptr, char const * const cl = nullptr): IO(v,tl,cl) {}
-IN::IN(float v, char const * const tl = nullptr, char const * const cl = nullptr) {
-  Serial.print(__FILE__); Serial.println(__LINE__);
-  IO(v,tl,cl);
-  Serial.print(__FILE__); Serial.println(__LINE__);
+IN::IN(float v, char const * const tl = nullptr, char const * const cl = nullptr)
+  : IO(v,tl,cl) {
+  debug("...IN char constructor ");
 }
 
-/*
 IN::IN(const IN &other) : IO(other.value, other.topicpath, other.controlleaf) {
-  Serial.print("IN:IN(other) after __FILE__"); Serial.println(__LINE__);
+  //other.debug("IN copy constructor from:");
+  debug("IN copy constructor to:");
 }
-*/
 
 void IN::setup() {
-  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
-  Serial.print(value);   Serial.print(*topicpath);   Serial.println(controlleaf);
-  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
+  debug("IN setup:");
   IO::setup();
-  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
-  Serial.println(*topicpath);
-  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
   if (topicpath) Mqtt->subscribe(*topicpath);
-  Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
-
 }
 
 // Note also has dispatchLeaf via the superclass
@@ -119,21 +97,21 @@ bool IN::dispatchPath(const String &tp, const String &p) {
 // ========== OUT for some topic we are potentially sending to ===== 
 
 OUT::OUT() {};
-//OUT::OUT(float v, String const * tp = NULL, char const * const cl = NULL) : IO(v,tp,cl) { }
-OUT::OUT(float v, String const * tp = NULL, char const * const cl = NULL) {
-  Serial.println(__FILE__); Serial.print(__LINE__);
-  IO(v,tp,cl);
-  Serial.println(__FILE__); Serial.print(__LINE__);
+
+OUT::OUT(float v, String const * tp = NULL, char const * const cl = NULL) : IO(v,tp,cl) {
+   debug("OUT string constructor");
 }
 
-//OUT::OUT(float v, char const * const tl = NULL, char const * const cl = NULL) : {IO(v,tl,cl) { }
-OUT::OUT(float v, char const * const tl = NULL, char const * const cl = NULL) { 
-  Serial.println(__FILE__); Serial.print(__LINE__);
-  IO(v,tl,cl);
-  Serial.println(__FILE__); Serial.print(__LINE__);
+OUT::OUT(float v, char const * const tl = NULL, char const * const cl = NULL) : IO(v,tl,cl) {
+   debug("OUT char constructor");
 }
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
 // OUT::dispatchLeaf() - uses IO since wont be incoming topicpath, only a controlleaf
+
+OUT::OUT(const IN &other) : IO(other.value, other.topicpath, other.controlleaf) {
+  //other.debug("OUT copy constructor from:");
+  debug("OUT copy constructor to:");
+}
 
 void OUT::set(const float newvalue) {
   if (newvalue != value) {
@@ -145,45 +123,28 @@ void OUT::set(const float newvalue) {
 // ==== Control - base class for all controls 
 
 Control::Control(std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a)
-    : Frugal_Base(), inputs(i), outputs(o), actions(a) {
-      
-    //Serial.print("i0value="); Serial.print(i[0].value);
-    //Serial.print("i0tp="); Serial.print(*i[0].topicpath);
-    //debug("inside constructor");
-    // Additional debug statements
-    Serial.print("inputs size: "); Serial.println(inputs.size());
-    for (size_t idx = 0; idx < inputs.size(); ++idx) {
-        Serial.print("IN"); Serial.print(idx); Serial.print(" value: "); Serial.println(inputs[idx].value);
-        if (inputs[idx].topicpath) {
-            Serial.print("IN"); Serial.print(idx); Serial.print(" topicpath: "); Serial.println(*inputs[idx].topicpath);
-        } else {
-            Serial.print("IN"); Serial.print(idx); Serial.println(" topicpath is nullptr");
-        }
-    }
-
+    : Frugal_Base() , inputs(i), outputs(o), actions(a) {
     controls.push_back(this);
 }
-void Control::debug(const char* const blah) {
-  Serial.print("===Control debug==="); Serial.println(blah);
-  Serial.print("IN0"); Serial.println(inputs[0].value);
-  Serial.println(*inputs[0].topicpath);
-  Serial.println("===end Control debug ===");
+void Control::debug(const char* const where) {
+  Serial.println(where);
+  for (auto &input : inputs) {
+      input.debug("IN:");
+  }
+  for (auto &output : outputs) {
+      output.debug("OUT:");
+  }
 }
 
 void Control::setup() {
-    debug("Control setup");
-    Serial.print("XXX25 __FILE__ Control::setup"); Serial.println(__LINE__); delay(1000);
+    debug("Control setup... ");
     for (auto &input : inputs) {
-        Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
         input.setup();
-        Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
     }
-    Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
     for (auto &output : outputs) {
-        Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
         output.setup();
-        Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
     }
+    debug("...Control setup ");
 }
 
 void Control::dispatch(const String &topicpath, const String &payload ) {

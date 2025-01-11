@@ -20,6 +20,7 @@ class IO {
     IO(float v, char const * const topicleaf, char const * const controlleaf);
     virtual void setup();
     void dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
+    void debug(const char* const where);
 };
 
 class IN : public IO {
@@ -28,27 +29,17 @@ class IN : public IO {
 
   IN(float v, String const * topicpath, char const * const controlleaf);  
   IN(float v, char const * const topicleaf, char const * const controlleaf);
- // Copy constructor from copilot
-  //IN(const IN &other) : IO(other.value, other.topicpath, other.controlleaf) { }
-  IN(const IN &other) {
-    Serial.print("IN copy " __FILE__); Serial.print(__LINE__);
-    Serial.print(other.value); 
-    if (other.topicpath) { Serial.print(*other.topicpath); } else { Serial.print("topicpath is null");} 
-    if (other.controlleaf) { Serial.println(*other.controlleaf); } else { Serial.println("controlleaf is null");} 
-    IO(other.value, other.topicpath, other.controlleaf);
-    Serial.print("IN copy" __FILE__); Serial.println(__LINE__);
+  IN(const IN &other);
+  // Copy assignment operator
+  IN& operator=(const IN &other) {
+      Serial.print("IN assignment __FILE__"); Serial.println(__LINE__);
+      if (this != &other) {
+          value = other.value;
+          topicpath = other.topicpath;
+          controlleaf = other.controlleaf;
+      }
+      return *this;
   }
-
-    // Copy assignment operator
-    IN& operator=(const IN &other) {
-        Serial.print("IN assignment __FILE__"); Serial.println(__LINE__);
-        if (this != &other) {
-            value = other.value;
-            topicpath = other.topicpath;
-            controlleaf = other.controlleaf;
-        }
-        return *this;
-    }
   bool dispatchPath(const String &topicpath, const String &payload); // For IN checks 
   virtual void setup();
 };
@@ -58,6 +49,7 @@ class OUT : public IO {
     OUT();
     OUT(float v, String const * topicpath, char const * const controlleaf);  
     OUT(float v, char const * const topicleaf, char const * const controlleaf);
+    OUT(const IN &other);
     void set(const float newvalue);
 };
 

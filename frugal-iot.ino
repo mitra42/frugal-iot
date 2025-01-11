@@ -108,9 +108,8 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
   Sensor_Soil* s5 = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS);
 #endif
 
-Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
-
 // Example definition of control - //TODO-25 move this, but make sure run in setup, not prior to it as need Mqtt
+
 Control* control_humidity = new Control(
   std::vector<IN> {
     IN(0.0, "humidity", "sensor_control_input"),
@@ -123,14 +122,12 @@ Control* control_humidity = new Control(
   std::vector<Control::TCallback> {
     hysterisisAction
   });
-  control_humidity->debug("frugal-iot.ino after instantiation");
 
-Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
+  control_humidity->debug("frugal-iot.ino after instantiation");
 
 #pragma GCC diagnostic pop
 
 Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuatorsand controls
-Serial.print("XXX25" __FILE__); Serial.println(__LINE__); delay(1000);
 
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
