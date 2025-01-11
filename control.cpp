@@ -144,7 +144,6 @@ void OUT::set(const float newvalue) {
 
 // ==== Control - base class for all controls 
 
-
 Control::Control(std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a)
     : Frugal_Base(), inputs(i), outputs(o), actions(a) {
       
@@ -164,7 +163,6 @@ Control::Control(std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a
 
     controls.push_back(this);
 }
-
 void Control::debug(const char* const blah) {
   Serial.print("===Control debug==="); Serial.println(blah);
   Serial.print("IN0"); Serial.println(inputs[0].value);
