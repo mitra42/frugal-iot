@@ -16,18 +16,17 @@
 #ifdef CONTROL_BLINKEN_WANT
 
 #if (!defined(CONTROL_BLINKEN_S))
-  error control_blinken does not have all requirements in _configuration.h: CONTROL_BLINKEN_S
+  // Setting default blink of 1 second, override in _local.h. 
+  #define CONTROL_BLINKEN_S 1
 #endif
 
 #include <Arduino.h>
 #include "control_blinken.h"
 #include "system_discovery.h"
 #include "system_mqtt.h"
-#include "actuator_ledbuiltin.h"
-
 
 namespace cBlinken {
-String* inputTopic; 
+const char* const inputTopic = "control_blinken_seconds";
 const char* outputTopic = "ledbuiltin"; // TODO-53 replace with string no need to parameterize
 
 unsigned long nextLoopTime = 0;
@@ -52,19 +51,20 @@ void inputReceived(const String &payload) {
 }
 
 // TODO-25 temporary patch till new control.cpp ready
-void dispatch(const String &topic, const String &payload) {
-  if (topic == *inputTopic) {
+void dispatchLeaf(const String &topicleaf, const String &payload) {
+  if (topicleaf == inputTopic) {
     inputReceived(payload);
   }
 }
 
 void setup() {
   set(CONTROL_BLINKEN_S); // default time            
-  Mqtt->subscribe("control_blinken_seconds");
+  Mqtt->subscribe(inputTopic);
 }
 
 void loop() {
   if (nextLoopTime <= millis()) {
+    value = !value;
     Mqtt->messageSend(outputTopic, !value, true, 1);
     nextLoopTime = millis() + value*1000;
   }

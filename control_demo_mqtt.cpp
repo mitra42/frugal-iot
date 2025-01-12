@@ -105,7 +105,7 @@ void dispatchLeaf(const String &topicleaf, const String &payload) {
 }
 // TODO-25 temporary patch till new control.cpp ready
 void dispatchPath(const String &topicpath, const String &payload) {
-  if (topicpath == *inputTopic) {
+  if (inputTopic && (topicpath == *inputTopic)) {
     inputReceived(payload);
   }  
 }
