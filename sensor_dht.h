@@ -6,8 +6,16 @@
 
 
 #ifndef SENSOR_DHT_PIN
-  #define SENSOR_DHT_PIN 4  // hard wired to a pin - 4 is D2 on the Lolin D1 but is somewhere else on C3 Pico
-#endif
+  #ifdef ESP8266_D1_MINI
+    #define SENSOR_DHT_PIN D4
+  #else 
+    #ifdef LOLIN_C3_PICO
+      #define SENSOR_DHT_PIN 6 // Currently untested but should be the same as D4 on ESP8266_D1_MINI
+    #else
+      #error No default pin for DHT sensor on your board
+    #endif
+  #endif 
+#endif // SENSOR_DHT_PIN
 
 #ifndef SENSOR_DHT_MS
   #define SENSOR_DHT_MS 60000

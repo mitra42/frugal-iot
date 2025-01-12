@@ -13,8 +13,12 @@ Frugal_Base::Frugal_Base() { }; // Intentionally nothing here
 void Frugal_Base::setup() { }; // TODO-25 what should go here - maybe nothing since subclasses will loop through list and no-action is a reasonable thing.
 
 void Frugal_Base::setupAll() {
-  Sensor::setupAll();
-  Actuator::setupAll();
+  #ifdef SENSOR_WANT
+    Sensor::setupAll();
+  #endif
+  #ifdef ACTUATOR_WANT
+    Actuator::setupAll();
+  #endif
   // TODO-25 calls system; sensor; ; control.setupAll
 }
 void Frugal_Base::loop() { Serial.println("XXX25 erroneously calling Frugal_Base::loop"); }; // TODO-25 what should go here - maybe nothing since subclasses will loop through list and calling thsi could just mean no loop() was needed in subclass
