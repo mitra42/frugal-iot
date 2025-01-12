@@ -175,55 +175,8 @@ void setup() {
       #endif
     )
   );
-  #ifdef SYSTEM_OTA_WANT
-    otaKey = new String( 
-    F(
-    // Can be overridden in _local.h
-    #ifdef SYSTEM_OTA_KEY
-      SYSTEM_OTA_KEY
-    #else
-      #ifdef ESP8266_D1_MINI
-        "ESP8266D1Mini"
-      #else
-        #ifdef LOLIN_C3_PICO
-          "LolinC3Pico"
-        #else
-          #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
-        #endif
-      #endif
-      // TO_ADD_SENSOR (note space at start of string)
-      #ifdef SENSOR_SHT85_WANT
-        "_sSht85"
-      #endif
-      #ifdef SENSOR_DHT_WANT
-        "_sDht"
-      #endif
-      #ifdef SENSOR_BATTERY_WANT
-        "_sBattery"
-      #endif
-      #ifdef SENSOR_SOIL_WANT
-        "_aSoil"
-      #endif
-      // TO_ADD_ACTUATOR
-      #ifdef ACTUATOR_RELAY_WANT
-        "_aRelay"
-      #endif
-      // TO_ADD_CONTROL
-      #ifdef CONTROL_BLINKEN_WANT
-        "_xBlinken"
-      #endif
-      #ifdef CONTROL_DEMO_MQTT_WANT
-        "_xDemoMqtt"
-      #endif
-    #endif // SYSTEM_OTA_KEY
-    )
-  );
-  #endif // SYSTEM_OTA_WANT
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
-    #ifdef SYSTEM_OTA_WANT
-      Serial.print(F("otaKey=")); Serial.println(*otaKey);
-    #endif
   #endif
   fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
 }

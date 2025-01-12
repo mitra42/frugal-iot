@@ -3,7 +3,6 @@
 
 namespace xDiscovery {
 extern String *topicPrefix;
-extern String *otaKey;
 void setup();
 void loop();
 } // namespace xDiscovery

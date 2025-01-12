@@ -22,7 +22,7 @@
 
 //Since I work on multiple nodes, I define each here, then uncomment exactly one and have its settings below. 
 #define BOARD1 "ESP8266 D1 mini with SHT sensor"
-// #define BOARD2 "ESP8266 D1 mini with DHT sensor"
+//#define BOARD2 "ESP8266 D1 mini with DHT sensor"
 //#define BOARD3 "ESP32 C3 Pico with Soil and Battery sensor"
 //#define SONOFF_R2 "Sonoff R2"
 
@@ -32,10 +32,14 @@
     #error should be using Lolin(Wemos) D1 Pico in the IDE, and looks like you are using a ESP32 board
   #endif
   #define ESP8266_D1_MINI // Board level - define - will only support boards devs are actually using, but intended to support board specific fixes
-  #define SYSTEM_WIFI_DEVICE "ESP8266-SHT" // SHT
+  #define SYSTEM_WIFI_DEVICE "ESP8266-SHT" // This is default for a short name that appears in the UX. e.g. could be "main pump" - wifi portal can override
   #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION BOARD1 // override automatically generated description for this device 
+  #define ACTUATOR_LEDBUILTIN_WANT // LED on board - usually wanted
   #define SENSOR_SHT_WANT
   #define SENSOR_SHT_MS 10000 // for development only
+  #define SYSTEM_OTA_WANT
+  #define SYSTEM_OTA_KEY "esp8266-sht"
+  //#define SYSTEM_OTA_SERVERPORTPATH "http://192.168.1.178:8080/ota_update/" // Source from laptop while developing not main server
 #endif //BOARD1
 #ifdef BOARD2
   #ifndef ESP8266
@@ -44,22 +48,29 @@
   #define SYSTEM_WIFI_DEVICE "ESP8266-DHT"
   #define ESP8266_D1_MINI // Board level - define - will only support boards devs are actually using, but intended to support board specific fixes
   #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION BOARD2 // override automatically generated description for this device
+  #define ACTUATOR_LEDBUILTIN_WANT // LED on board - usually wanted
   #define SENSOR_DHT_WANT
+  #define SENSOR_DHT_DEBUG
   #define SENSOR_DHT_MS 10000 // For debugging
+  #define SYSTEM_OTA_WANT
+  #define SYSTEM_OTA_KEY "esp8266-dht"
 #endif //BOARD2
 #ifdef BOARD3
   #ifndef ESP32
-    #error should be Lolin C3 Pico as board
+    #error Board 3 should be Lolin C3 Pico as board
   #endif
   #define LOLIN_C3_PICO
   #define SYSTEM_WIFI_DEVICE "ESP32Cpico"
   #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION BOARD3 // override automatically generated description for this device
+  #define ACTUATOR_LEDBUILTIN_WANT // LED on board - usually wanted
   #define SENSOR_SOIL_WANT
-  #define SENSOR_SOIL_MS 10000 // While debugging I want readings every 10 seconds
+  #define SENSOR_SOIL_MS 10000
   #define SENSOR_SOIL_DEBUG
   #define SENSOR_BATTERY_WANT
   #define SENSOR_BATTERY_DEBUG
   #define SENSOR_BATTERY_MS 15000 // While debugging I want readings every 15 seconds
+  // #define SYSTEM_OTA_WANT - no OTA on ESP32 yet  TODO-37
+  #define SYSTEM_OTA_KEY "esp32-soil"
 #endif //BOARD3
 #ifdef SONOFF_R2
   // See https://github.com/mitra42/frugal-iot/issues/108
@@ -82,10 +93,7 @@
 //#define CONTROL_BLINKEN_WANT
 //#define CONTROL_DEMO_MQTT_WANT
 
-// OTA is experimental - only works on ESP8266 and not yet ready for release
-#ifdef ESP8266_D1_MINI
-  // #define SYSTEM_OTA_WANT
-#endif
 
 // Can also define a default language
 // #define LANGUAGE_DEFAULT "de"
+

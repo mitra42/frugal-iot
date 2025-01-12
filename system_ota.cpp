@@ -1,12 +1,14 @@
 /* OTA client
-* Couldn't get these to work
+* 
+* Working from https://github.com/N4rcissist/OtaHelper/blob/main/src/OtaHelper.h
+*
+* Note - Couldn't get these to work
 * ESP32 Based on the example in https://github.com/espressif/arduino-esp32/blob/master/libraries/Update/examples/HTTPS_OTA_Update/HTTPS_OTA_Update.ino
 * ESP8266 based on example in https://www.instructables.com/Set-Up-an-ESP8266-Automatic-Update-Server/
 * 
-* Working from https://github.com/N4rcissist/OtaHelper/blob/main/src/OtaHelper.h
-* 
 * Configuration
-* Optional: SYSTEM_OTA_DEBUG SYSTEM_OTA_MS
+* Required: SYSTEM_OTA_KEY short string (defined by "org") for different boards
+* Optional: SYSTEM_OTA_DEBUG SYSTEM_OTA_MS SYSTEM_OTA_SERVERPORTPATH 
 * 
 */
 // TODO-37 carefully review whole file for bits copied from example but not needed
@@ -32,8 +34,13 @@
   #define SYSTEM_OTA_MS 3600000
 #endif // SYSTEM_OTA_MS
 #ifndef SYSTEM_OTA_VERSION
-  #define SYSTEM_OTA_VERSION "0.0.1"
+  #define SYSTEM_OTA_VERSION "0.0.0" // We dont use versions, we are using MD5
 #endif
+
+#ifndef SYSTEM_OTA_SERVERPORTPATH
+  #define SYSTEM_OTA_SERVERPORTPATH "http://naturalinnovation.org:8080/ota_update/" // Note trailing slash
+#endif
+
 namespace xOta {
 
 WiFiClient net; // Assumes system_wifi has already connected to access point - note this will not run if Wifi fails to connect and goes to portal mode
@@ -73,7 +80,8 @@ void updateAndReboot(bool sketch) {
 
   if (sketch) {
     // TODO-37 parameterize host:port 
-    String *url = new String(F("http://192.168.1.178:8080/ota_update/") + *xDiscovery::topicPrefix + *xDiscovery::otaKey);
+    // Note there is no correlation between the path here, and where its stored on the server which also pays attention to dev/project/node
+    String *url = new String(F(SYSTEM_OTA_SERVERPORTPATH) + *xDiscovery::topicPrefix + SYSTEM_OTA_KEY);
     #ifdef SYSTEM_OTA_DEBUG
       Serial.print("Attempt OTA from:"); Serial.println(*url);
     #endif
