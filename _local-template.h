@@ -80,6 +80,8 @@
   #define ITEAD_SONOFF
   #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION SONOFF_R2
   #define ACTUATOR_RELAY_WANT
+  #define SYSTEM_OTA_WANT
+  #define SYSTEM_OTA_KEY "sonoff-r2"
 #endif //SONOFF_R2
 
 // Wanted on all boards
