@@ -16,23 +16,23 @@
 #ifdef CONTROL_BLINKEN_WANT
 
 #if (!defined(CONTROL_BLINKEN_S))
-  error control_blinken does not have all requirements in _configuration.h: CONTROL_BLINKEN_S
+  // Setting default blink of 1 second, override in _local.h. 
+  #define CONTROL_BLINKEN_S 1
 #endif
 
 #include <Arduino.h>
 #include "control_blinken.h"
 #include "system_discovery.h"
 #include "system_mqtt.h"
-#include "actuator_ledbuiltin.h"
-
 
 namespace cBlinken {
+const char* const inputTopic = "control_blinken_seconds";
+const char* outputTopic = "ledbuiltin"; // TODO-53 replace with string no need to parameterize
 
 unsigned long nextLoopTime = 0;
 float value; // Time per blink (each phase)
-String *topic; 
 
-void set(float v) {
+void set(const float v) {
   if (value > v) { // May be waiting on long time, bring up
     nextLoopTime = millis();
   }
@@ -44,23 +44,28 @@ void set(float v) {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-void messageReceived(String &topic, String &payload) {
+void inputReceived(const String &payload) {
 #pragma GCC diagnostic pop
   float v = payload.toFloat(); // Copied to pin in the loop 
   set(v);
 }
 
+// TODO-25 temporary patch till new control.cpp ready
+void dispatchLeaf(const String &topicleaf, const String &payload) {
+  if (topicleaf == inputTopic) {
+    inputReceived(payload);
+  }
+}
+
 void setup() {
-  topic = new String(*xDiscovery::topicPrefix + F("control_blinken_s"));
   set(CONTROL_BLINKEN_S); // default time            
-  xMqtt::subscribe(*topic, *messageReceived);
+  Mqtt->subscribe(inputTopic);
 }
 
 void loop() {
   if (nextLoopTime <= millis()) {
-    // TODO should almost certainly be static, but check topicPrefix is valid at the first loop.
-    String* topic = new String(*xDiscovery::topicPrefix + ACTUATOR_LEDBUILTIN_TOPIC); // TODO cant be const const (as Message cant be)
-    xMqtt::messageSend(*topic, !value, true, 1);
+    value = !value;
+    Mqtt->messageSend(outputTopic, !value, true, 1);
     nextLoopTime = millis() + value*1000;
   }
 }

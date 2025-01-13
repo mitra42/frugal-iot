@@ -1,61 +1,58 @@
 /*
-  Sensor Analog
-  Read from a pin and return as sAnalog::Value\
-*/
-
-// TODO turn this into a template
-// TODO add the _ARRAY parameters as used in sensor_sht85.cpp so will read multiple analog inputs.
+ * Sensor Analog
+ * Read from a pin and send message
+ *
+ * See https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html for lots more on ESP ADCs
+ *
+ * Configuration options.
+ * Required: SENSOR_XYZ_WANT - compiled based on any of its subclasses
+ * Optional: SENSOR_ANALOG_REFERENCE for ESP8266 only  
+ *
+ */
 
 #include "_settings.h"  // Settings for what to include etc
+#include "sensor_analog.h" // defines SENSOR_ANALOG_WANT if needed
+
 #ifdef SENSOR_ANALOG_WANT
+
 #include <Arduino.h>
-#include "sensor_analog.h"
+#include "system_mqtt.h"
+#include "system_discovery.h" // 
 
-// TODO figure out how to handle multiple analog input pins 
-
-namespace sAnalog {
-
-#ifdef SENSOR_ANALOG_MS
-unsigned long nextLoopTime = 0;
-#endif // SENSOR_ANALOG_MS
-
-int value = 0;
-#ifdef SENSOR_ANALOG_SMOOTH
-unsigned long smoothedValue = 0;
-#endif
-
-void setup() {      
-  // pinMode(SENSOR_ANALOG_PIN, INPUT); // I don't think this is needed
+//TO_ADD_BOARD
+//  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/
+// TODO what are the values on ESP8266 or ESP32
+// TODO map between one set of REFERENCE values and the board specfic ones from the docs 
+// See https://github.com/mitra42/frugal-iot/issues/60
+// TODO Note this is not going to make it to the place its used in sensor_analog
+#ifndef SENSOR_ANALOG_REFERENCE
   #ifdef ESP8266_D1_MINI
-    analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
+    #define SENSOR_ANALOG_REFERENCE DEFAULT // TODO not clear if / where this is used 
   #else
-    #error analogReference is board specific, appears to be undefined on ESP32C3 
+    #ifndef LOLIN_C3_PICO
+      #error analogReference() is board dependent, review the docs and online and define 
+    #endif
   #endif
-  //value = 0;
+#endif //  SENSOR_ANALOG_REFERENCE
+
+Sensor_Analog::Sensor_Analog(const uint8_t p, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init) : Sensor_Uint16(smooth_init, topic_init, ms_init), pin(p) { };
+
+// Sensor_Uint16_t::act is good - sends with retain=false; qos=0;
+// Sensor_Uint16_t::set is good - does optional smooth, compares and calls act
+// Sensor_Uint16_t::loop is good - does periodic read and set
+
+// Note this is virtual, and subclassed in Sensor_Battery
+uint16_t Sensor_Analog::read() {
+  return analogRead(pin);
 }
 
-void readSensor() {
-  value = analogRead(SENSOR_ANALOG_PIN);
+void Sensor_Analog::setup() {
+  // initialize the analog pin as an input.
+  pinMode(pin, INPUT); // I don't think this is needed ?
+  #ifdef SENSOR_ANALOG_REFERENCE
+    analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
+  #endif 
 }
-
-void loop() {
-#ifdef SENSOR_ANALOG_MS
-  if (nextLoopTime <= millis()) {
-#endif // SENSOR_ANALOG_MS
-    readSensor();
-#ifdef SENSOR_ANALOG_SMOOTH // TODO maybe copy this to a system function
-    smoothedValue = smoothedValue - (smoothedValue >> SENSOR_ANALOG_SMOOTH) + value;
-#endif // SENSOR_ANALOG_SMOOTH
-#ifdef SENSOR_ANALOG_DEBUG
-        Serial.print(F("Analog:")); Serial.println(value);
-#ifdef SENSOR_ANALOG_SMOOTH
-        Serial.print(F("Smoothed Analog:")); Serial.println(smoothedValue);
-#endif // SENSOR_ANALOG_SMOOTH
-#endif // SENSOR_ANALOG_DEBUG
-#ifdef SENSOR_ANALOG_MS
-        nextLoopTime = millis() + SENSOR_ANALOG_MS;
-    }
-#endif // SENSOR_ANALOG_MS
-}
-} //namespace sAnalog
 #endif // SENSOR_ANALOG_WANT
+// TODO-57 need to do discovery
+

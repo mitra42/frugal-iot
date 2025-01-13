@@ -1,29 +1,24 @@
 #ifndef SENSOR_ANALOG_H
 #define SENSOR_ANALOG_H
 
-/* Configuration options
- * Required: SENSOR_ANALOG_PIN
- * Optional: SENSOR_ANALOG_MS SENSOR_ANALOG_REFERENCE SENSOR_ANALOG_SMOOTH
-*/
+/* Configuration options.
+ * Optional SENSOR_xxx_DEBUG 
+ */
+ #include "sensor.h"
+ #include "sensor_uint16.h"
 
+// Add new analog sensors to this statement.  #TO_ADD_SENSOR
+#if defined(SENSOR_ANALOG_EXAMPLE_DEBUG) || defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG) // TODO make this generic, but LED almost always wanted
+  #define SENSOR_ANALOG_DEBUG
+#endif 
 
-namespace sAnalog {
-//  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/
-// TODO what are the values on ESP8266 or ESP32
-// TODO map between one set of REFERENCE values and the board specfic ones from the docs 
-// See https://github.com/mitra42/frugal-iot/issues/60
-#ifndef SENSOR_ANALOG_REFERENCE
-  #ifdef ESP8266_D1_MINI
-    #define SENSOR_ANALOG_REFERENCE DEFAULT
-  #else
-    #error analogReference() is board dependent, review the docs and online and define 
-  #endif
-#endif //  SENSOR_ANALOG_REFERENCE
-#ifdef SENSOR_ANALOG_SMOOTH
-extern unsigned long smoothedValue;
-#endif
-extern int value;
-void setup();
-void loop();
-} // namespace sAnalog
+class Sensor_Analog : public Sensor_Uint16 {
+  public: 
+    uint8_t pin;
+    
+    //Sensor_Analog(const uint8_t p);
+    Sensor_Analog(const uint8_t pin, const uint8_t smooth, const char* topic, const unsigned long ms);
+    virtual void setup();
+    virtual uint16_t read();
+}; // Class Sensor_Analog
 #endif // SENSOR_ANALOG_H

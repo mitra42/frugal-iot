@@ -2,8 +2,7 @@
    Advertise in a way that allows a client to discover the nodes from knowing the project
  
    Periodically (SYSTEM_DISCOVERY_MS) send node name on project  e.g  "dev/Lotus/" = "node1"
-   When a client sends "?" to "dev/Lotus/"
-   Respond with a YAML string that describes this node and all sensors actuators
+  At startup send a YAML string that describes this node and all sensors actuators
 
   Required SYSTEM_DISCOVERY_MS 
   Required SYSTEM_DISCOVERY_ORGANIZATION
@@ -24,6 +23,33 @@
 #include "system_wifi.h"
 #include "system_mqtt.h"  // xMqtt
 #include "system_discovery.h"
+// TO_ADD_ACTUATOR
+#ifdef ACTUATOR_RELAY_WANT
+  #include "actuator_relay.h"
+#endif
+#ifdef ACTUATOR_LEDBUILTIN_WANT
+  #include "actuator_ledbuiltin.h"
+#endif
+// TO_ADD_SENSOR 
+#ifdef SENSOR_ANALOG_EXAMPLE_WANT
+  #include "sensor_analog_example.h"
+#endif
+#ifdef SENSOR_SOIL_WANT
+  #include "sensor_soil.h"
+#endif
+#ifdef SENSOR_BATTERY_WANT
+  #include "sensor_battery.h"
+#endif
+#ifdef SENSOR_DHT_WANT
+  #include "sensor_dht.h"
+#endif
+#ifdef SENSOR_SHT_WANT
+  #include "sensor_sht.h"
+#endif
+// TO_ADD_CONTROL
+#ifdef CONTROL_BLINKEN_WANT
+  #include "control_blinken.h"
+#endif
 #ifdef CONTROL_DEMO_MQTT_WANT
   #include "control_demo_mqtt.h"
 #endif
@@ -37,19 +63,22 @@ unsigned long nextLoopTime = 0;
 String *projectTopic;
 String *advertiseTopic;
 String *topicPrefix;
+#ifdef SYSTEM_OTA_WANT
+  String *otaKey;
+#endif
 
 String *advertisePayload;
 void quickAdvertise() {
-    xMqtt::messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
+    Mqtt->messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
 }
 
 //TODO-29 want retained upstream but not local - non trivial
 void fullAdvertise() {
-  xMqtt::messageSend(*advertiseTopic, *advertisePayload, true, 1);
+  Mqtt->messageSend(*advertiseTopic, *advertisePayload, true, 1);
 }
 /*
 // This is a previous idea that clients ask for the fullAdvertise, but since its retained at the broker that isn't needed. 
-void messageReceived(String &topic, String &payload) {
+void inputReceived(String &payload) {
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("Discovery message receieved:"));
   #endif // SYSTEM_DISCOVERY_DEBUG
@@ -73,14 +102,15 @@ void messageReceived(String &topic, String &payload) {
   #define nlNameColon F("\nname: ")
 #endif
 
+
 void setup() {
   // This line fails when board 'LOLIN C3 PICO' is chosen
   // projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
   //Serial.print(xxx); //TODO_C++EXPERT - for weird reason requires this and const char PROGMEM above  or get run time exception
-  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project + F("/"));
-  advertiseTopic = new String(*projectTopic + xWifi::clientid()); // e.g. "dev/Lotus Ponds/esp32-12345"
-  topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/Lotus Ponds/esp32-12345/" prefix of most topics
-    advertisePayload = new String( 
+  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project );
+  advertiseTopic = new String(*projectTopic + F("/") + xWifi::clientid()); // e.g. "dev/lotus/esp32-12345"
+  topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/lotus/esp32-12345/" prefix of most topics
+  advertisePayload = new String( 
     idcolon + xWifi::clientid() 
     + nlNameColon + xWifi::device_name
     + F("\ndescription: "
@@ -88,6 +118,7 @@ void setup() {
     #ifdef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
       SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
     #else
+      //TO_ADD_BOARD - only used if SYSTEM_DISCOVERY_DEVICE_DESCRIPTION undefined and displayed in UX.
       #ifdef ESP8266_D1_MINI
         "ESP8266 D1 Mini"
       #else
@@ -97,29 +128,41 @@ void setup() {
           #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
         #endif
       #endif
-      // TO-ADD-SENSOR (note space at start of string)
-      #ifdef SENSOR_SHT85_WANT
+      // TO_ADD_SENSOR (note space at start of string)
+      #ifdef SENSOR_SHT_WANT
         " SHTxx temp/humidity"
       #endif
       #ifdef SENSOR_DHT_WANT
         " DHT temp/humidity"
       #endif
-      // TO-ADD-ACTUATOR
+      #ifdef SENSOR_SOIL_WANT
+        " Soil moisture"
+      #endif
+      // TO_ADD_ACTUATOR
       #ifdef ACTUATOR_RELAY_WANT
         " Relay"
       #endif
     #endif
     // TODO-44 add location: <gsm coords>
     "\ntopics:" 
-      // For any module with a control, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO-ADD-NEW-CONTROL
+      // For any module with a control, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO_ADD_NEW_CONTROL
       #ifdef ACTUATOR_LEDBUILTIN_WANT
         ACTUATOR_LEDBUILTIN_ADVERTISEMENT
       #endif
       #ifdef ACTUATOR_RELAY_WANT
         ACTUATOR_RELAY_ADVERTISEMENT
       #endif
-      #ifdef SENSOR_SHT85_WANT
-        SENSOR_SHT85_ADVERTISEMENT
+      #ifdef SENSOR_ANALOG_EXAMPLE_WANT
+        SENSOR_ANALOG_EXAMPLE_ADVERTISEMENT
+      #endif
+      #ifdef SENSOR_SOIL_WANT
+        SENSOR_SOIL_ADVERTISEMENT
+      #endif
+      #ifdef SENSOR_BATTERY_WANT
+        SENSOR_BATTERY_ADVERTISEMENT
+      #endif
+      #ifdef SENSOR_SHT_WANT
+        SENSOR_SHT_ADVERTISEMENT
       #endif
       #ifdef SENSOR_DHT_WANT
         SENSOR_DHT_ADVERTISEMENT
@@ -135,8 +178,7 @@ void setup() {
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
   #endif
-    fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
-    // xMqtt::subscribe(*advertiseTopic, *messageReceived); // Commented out as don't see why need to receive this
+  fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
 }
 
 void loop() {

@@ -1,15 +1,17 @@
 /* MQTT client
-* Based on the example in https://github.com/256dpi/arduino-mqtt
 * 
 * Configuration
-* Required: SYSTEM_MQTT_MS SYSTEM_MQTT_PASSWORD
-* Optional: ESP8266 SYSTEM_MQTT_DEBUG SYSTEM_WIFI_WANT SYSTEM_MQTT_LOOPBACK
+* Required: SYSTEM_MQTT_MS SYSTEM_MQTT_PASSWORD //TODO-25 check
+* Optional: ESP8266 SYSTEM_MQTT_DEBUG SYSTEM_WIFI_WANT SYSTEM_MQTT_LOOPBACK //TODO-25 check
 * 
+* Note definitions
+* topicpath = full path /dev/project/node/topicleaf and usually String or String& or String*
+* topicleaf is the last component e.g. "temperature" and usually char*
+* "topic" is ambiguous and therefore wrong ! 
 */
 
 #include "_settings.h"
 
-#ifdef SYSTEM_MQTT_WANT
 #if (!defined(SYSTEM_MQTT_USER) || !defined(SYSTEM_MQTT_PASSWORD) || !defined(SYSTEM_MQTT_MS))
   error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS 
 #endif
@@ -28,139 +30,70 @@
 #ifdef SYSTEM_WIFI_WANT
   #include "system_wifi.h"   // xWifi
 #endif  //SYSTEM_WIFI_WANT
+#include <Arduino.h>
+#include "system_discovery.h"
+#include "system_mqtt.h"
+#include "actuator.h"
+//TODO-25 replace with control.h when ready
+  #ifdef CONTROL_BLINKEN_WANT
+    #include "control_blinken.h"
+  #endif
+  #ifdef CONTROL_DEMO_MQTT_WANT
+    #include "control_demo_mqtt.h"
+  #endif
+#include <forward_list>
 
-namespace xMqtt {
+Subscription::Subscription(const String* const tp) : topicpath(tp), payload(NULL) { }
+Subscription::Subscription(const String* const tp, String const* pl) : topicpath(tp), payload(pl) { }
 
-#ifdef SYSTEM_WIFI_WANT
-  WiFiClient net;
-  MQTTClient client; //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.
-#endif // SYSTEM_WIFI_WANT
+bool Subscription::operator==(const String& tp) {
+  return *topicpath == tp;
+}
+Message::Message(const String &tp, String const &pl, const bool r, const int q): Subscription(&tp, &pl), retain(r), qos(q) { }
 
-unsigned long nextLoopTime = 0;
+MqttManager* Mqtt; // Will get initialized by setup in frugalIot.ino
 
-// The subscription class manages a list of subscription topics & callbacks. 
-// It is not totally self contained as it knows how to call the client to subscribe and how to dispatch. 
-class Subscription {
-  public: 
-    static const Subscription *subscriptions;
-    const String* const topic; 
-    const MQTTClientCallbackSimple cb;
-    const Subscription* const next;
-    //Subscription() { topic = NULL; cb = NULL; next = NULL}
-    Subscription(const String &t, const MQTTClientCallbackSimple c, const Subscription* const n):topic(&t), cb(c), next(n) { };
 
-    static const Subscription *find(const String &t) {
-      const Subscription *i; 
-      for (i = subscriptions; i && (*i->topic != t); i = i->next) {
+void MqttManager::setup() {
+  // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
+  // by Arduino. You need to set the IP address directly.
+  client.begin(xWifi::mqtt_host.c_str(), net);
+  client.onMessage(xMqtt::MessageReceived);  // Called back from client.loop - this is a naked function that just calls into the instance
+
+  // Note WiFi should be connected by this point but will check here anyway
+  while (!connect()) {
+    #ifdef SYSTEM_MQTT_DEBUG
+      Serial.print(F("."));
+    #endif
+    delay(1000); // Block waiting for WiFi and MQTT to connect 
+  }
+}
+
+// Run every 10ms TODO-25 and TODO-23 this should be MUCH longer ideally
+MqttManager::MqttManager() : Frugal_Base(), nextLoopTime(0), ms(10) {
+  setup();
+}
+
+void MqttManager::loop() {
+  if (nextLoopTime <= millis()) {
+    // Automatically reconnect
+    if (!client.connected()) {
+      if (!connect()) { // Non blocking but skip client.loop. Note if fails to connect will set nextLoopTime in 1000 ms.
+        nextLoopTime = millis() + 1000; // If non-blocking then dont do any MQTT for a second then try connect again
       }
-      return i; // Found or not found case both return here
-    }
-    static void subscribe(const String &topic, const MQTTClientCallbackSimple cb) {
-      const Subscription* const existingSub = find(topic);
-      subscriptions = new Subscription(topic, cb, subscriptions);
-      if (!existingSub) { 
-        #ifdef SYSTEM_WIFI_WANT
-          if (!client.subscribe(topic)) {
-            #ifdef SYSTEM_MQTT_DEBUG
-              Serial.println(F("MQTT Subscription failed to ")); Serial.print(topic);
-            #endif // SYSTEM_MQTT_DEBUG
-          };
-        #endif // SYSTEM_WIFI_WANT
-      }
-      #ifdef SYSTEM_MQTT_DEBUG
-        Serial.print(F("Subscribing to: ")); Serial.println(topic);
-      #endif // SYSTEM_MQTT_DEBUG
-    }
-    static void dispatch(String &topic, String &payload) { // Can't be constants as passed to callback which isn't
-      const Subscription* sub;
-      for (sub = subscriptions; sub; sub = sub->next) {
-        if (*sub->topic == topic) {
-          #ifdef SYSTEM_MQTT_DEBUG
-            Serial.print(F("Dispatching: ")); Serial.println(topic);
-          #endif // SYSTEM_MQTT_DEBUG
-          sub->cb(topic, payload);
-        }
-        // debugging if needed to figure out why the comparisom above was mismatching
-        // else { Serial.println("No match "+*(sub->topic)+" "+topic); }
-      }
-    }
-    static void resubscribeAll() {
-      #ifdef SYSTEM_WIFI_WANT
+    } else {
+      messageSendQueued();
+      if (!client.loop()) {
         #ifdef SYSTEM_MQTT_DEBUG
-          Serial.print(F("Resubscribing: ")); 
+          Serial.print(F("MQTT client loop failed ")); Serial.println(client.lastError()); // lwmqtt_err
         #endif // SYSTEM_MQTT_DEBUG
-        const Subscription *sub;
-        for (sub = subscriptions; sub; sub = sub->next) {
-          if (!client.subscribe(*(sub->topic))) {
-            #ifdef SYSTEM_MQTT_DEBUG
-              Serial.print(F("MQTT resubscription failed to "));
-            #endif // SYSTEM_MQTT_DEBUG
-          }
-          #ifdef SYSTEM_MQTT_DEBUG
-            Serial.print(F(" ")); Serial.print(*(sub->topic));
-          #endif // SYSTEM_MQTT_DEBUG
-        }
-        #ifdef SYSTEM_MQTT_DEBUG
-          Serial.println();
-        #endif // SYSTEM_MQTT_DEBUG
-      #endif //SYSTEM_WIFI_WANT
+      }; // Do this at end of loop so some time before checks if connected
+      nextLoopTime = millis() + SYSTEM_MQTT_MS;
     }
-};
-const Subscription *Subscription::subscriptions = NULL;
+  }
+}
 
-// A data structure that represents a single MQTT message
-class Message {
-  public:
-    String * const topic; // cant be const const as goes to  messageReceived which isnt 
-    String * message; // cant be const as goes to  messageReceived which isnt and changed in retain
-    const bool retain;
-    const int qos;
-    Message * next; // Allows a chain of them in a queue - not const as queue rearranged
-    Message(String &t, String &m, const bool r, const int q): topic(&t), message(&m), retain(r), qos(q), next(NULL) {}; 
-};
-class MessageList {
-  public:
-    MessageList() {
-      top = NULL;
-    }
-    Message *find(const String &t) {
-      Message *i; 
-      for (i = top; i && (*i->topic != t); i = i->next) {
-      }
-      return i; // Found or not found case both return here
-    }
-    void push(Message *m) {
-      m->next = top;
-      top = m;
-    }
-    Message *shift() {
-      Message *i = top;
-      Message *j = NULL;
-      if (!i) return NULL;
-      for (;i->next;(j=i, i = i->next)) {}
-      if (j) { j->next = NULL; }
-      return i;
-    }
-    void retain(Message *m) {
-      Message *f = find(*m->topic);
-      if (f) {
-        f->message = m->message; 
-      } else {
-        push(m);
-      }
-    }
-  private:
-    Message *top;
-};
-
-// A data structure that retains the most recent payload for any topic that has been sent at least once.  
-// It is intended to retain this value on both outgoing and incoming messages so that it can operate in a disconnected network. 
-MessageList retained;
-// A list of messages waiting to be sent.
-MessageList queued;
-
-#ifdef SYSTEM_WIFI_WANT // Until we have BLE, compiling without WIFI means just work locally. 
-bool connect() {
+bool MqttManager::connect() {
   xWifi::checkConnected();  // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
   if (client.connected()) {
     return true;
@@ -174,20 +107,103 @@ bool connect() {
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.println(F("Connected"));
       #endif
-      Subscription::resubscribeAll();
+      resubscribeAll();
       return true;
     } else {
       return false;
     }
   }
 }
-#endif // SYSTEM_WIFI_WANT
+Subscription* MqttManager::find(const String &topicpath) {
+  for(Subscription& mi: items) {
+    if (mi == topicpath) {
+      return &mi;
+    }
+  }
+  return NULL;
+  /*
+  // TODO_C++_EXPERT I think following should work, but I've not used std::find or iterators on further_list before so not sure why this (copied from example I found) wont work
+  // error: conversion from 'std::_Fwd_list_iterator<Subscription>' to non-scalar type 'Subscription' requested
+    Subscription mi = std::find(items.begin(), items.end(), topicpath);
+    return mi == items.end() ? NULL : mi;
+  */
+}
 
-// Inside the receiver its not allowed to send messages, at least with qos != 0; 
-bool inReceived = false; 
+void MqttManager::subscribe(const String& topicpath) {
+  #ifdef SYSTEM_MQTT_DEBUG
+    Serial.print(F("Subscribing to: ")); Serial.println(topicpath);
+  #endif
+  Subscription* mi = find(topicpath);
+  if (mi) { // No existing subscription
+    if (mi->payload) { // If have retained previous data
+      messageReceived(*mi->topicpath, *mi->payload); // TODO-25 check for loops or wasted internal duplicates
+    }
+  } else { 
+    if (!client.subscribe(topicpath)) {
+      #ifdef SYSTEM_MQTT_DEBUG
+        Serial.println(F("MQTT Subscription failed to ")); Serial.print(topicpath);
+      #endif // SYSTEM_MQTT_DEBUG
+    }
+    items.emplace_front(&topicpath); // Should create a Subscription
+  }
+}
 
-// Note this is called both as a callback from client.onMessage and from messageSend if SYSTEM_MQTT_LOOPBACK
-void messageReceived(String &topic, String &payload) { // cant be constant as dispatch isnt
+// Short cut to allow subscribing based on an actuator or sensors own topic
+void MqttManager::subscribe(const char* topicleaf) {
+  const String * const topicpath = new String(*xDiscovery::topicPrefix + topicleaf);
+  subscribe(*topicpath);
+}
+void MqttManager::dispatch(const String &topicpath, const String &payload) {
+  if (topicpath.startsWith(*xDiscovery::topicPrefix)) {
+    String* const topicleaf = new String(topicpath);
+    topicleaf->remove(0, xDiscovery::topicPrefix->length());
+    //Sensor::dispatchAll(*topicleaf, payload);
+    #ifdef ACTUATOR_WANT
+      Actuator::dispatchAll(*topicleaf, payload);
+    #endif
+    //TODO-25 temporary hack till Control::dispatchAll ready
+      #ifdef CONTROL_DEMO_MQTT_WANT
+      cDemoMqtt::dispatchLeaf(*topicleaf, payload);
+      #endif
+    //TODO-25 temporary hack till Control::dispatchAll readu
+      #ifdef CONTROL_BLINKEN_WANT
+        cBlinken::dispatchLeaf(*topicleaf, payload);
+      #endif
+    }
+  //TODO-25 Control::dispatchAll(*topicpath, payload);
+  //TODO-25 temporary hack till Control::dispatchAll readu
+    #ifdef CONTROL_DEMO_MQTT_WANT
+      cDemoMqtt::dispatchPath(topicpath, payload);
+    #endif
+  //TODO-25 System::dispatchAll(*topicpath, payload)
+}
+void MqttManager::resubscribeAll() {
+  #ifdef SYSTEM_MQTT_DEBUG
+    Serial.print(F("Resubscribing: ")); 
+  #endif // SYSTEM_MQTT_DEBUG
+  for (Subscription mi : items) {
+    #ifdef SYSTEM_MQTT_DEBUG
+      Serial.print(*mi.topicpath); Serial.print(F(" "));
+    #endif // SYSTEM_MQTT_DEBUG
+    if (!client.subscribe(*(mi.topicpath))) {
+      #ifdef SYSTEM_MQTT_DEBUG
+        Serial.print(F("FAILED "));
+      #endif // SYSTEM_MQTT_DEBUG
+    }
+  }
+  #ifdef SYSTEM_MQTT_DEBUG
+    Serial.println();
+  #endif // SYSTEM_MQTT_DEBUG
+}
+
+void MqttManager::retainPayload(const String &topicpath, const String &payload) {
+  Subscription* mi = find(topicpath);
+  if (mi) {
+    mi->payload = new String(payload);
+  }
+}
+
+void MqttManager::messageReceived(const String &topic, const String &payload) { // cant be constant as dispatch isnt
   #ifdef SYSTEM_MQTT_DEBUG
     Serial.print(F("MQTT incoming: ")); Serial.print(topic); Serial.print(F(" - ")); Serial.println(payload);
   #endif
@@ -196,102 +212,75 @@ void messageReceived(String &topic, String &payload) { // cant be constant as di
   // unsubscribe as it may cause deadlocks when other things arrive while
   // sending and receiving acknowledgments. Instead, change a global variable,
   // or push to a queue and handle it in the loop after calling `client.loop()`.
-
-  Subscription::dispatch(topic, payload);
+  dispatch(topic, payload);
   inReceived = false;
-}
-void messageReceived(Message *m) {
-  messageReceived(*m->topic, *m->message);
-}
-void subscribe(String &topic, MQTTClientCallbackSimple cb) {
-  Subscription::subscribe(topic, cb);
-  // If we have retained a previous message for this topic then send to client
-  if (Message *r = retained.find(topic)) {
-    messageReceived(r);
-  }
 }
 
 // If retain is set, then the broker will keep a copy 
 // TODO implement qos on broker in this library
 // qos: 0 = send at most once; 1 = send at least once; 2 = send exactly once
 // These are intentionally required parameters rather than defaulting so the coder thinks about the desired behavior
-void messageSendInner(const Message* const m) {
-  #ifdef SYSTEM_WIFI_WANT
-    if (!client.publish(*m->topic, *m->message, m->retain, m->qos)) {
-      #ifdef SYSTEM_MQTT_DEBUG
-        Serial.print(F("Failed to publish")); Serial.print(*m->topic); Serial.print(F("=")); Serial.println(*m->message);
-      #endif // SYSTEM_MQTT_DEBUG
-    };
-  #endif // SYSTEM_WIFI_WANT
+
+// Send message to Mqtt client - used for both repeats and first time messages
+void MqttManager::messageSendInner(const String &topicpath, const String &payload, const bool retain, const int qos) {
+  if (!client.publish(topicpath, payload, retain, qos)) {
+    #ifdef SYSTEM_MQTT_DEBUG
+      Serial.print(F("Failed to publish ")); Serial.print(topicpath); Serial.print(F("=")); Serial.println(payload);
+    #endif // SYSTEM_MQTT_DEBUG
+  };
 }
-void messageSend(String &topic, String &payload, const bool retain, const int qos) {
+
+// Send or queue up a message 
+void MqttManager::messageSend(const String &topicpath, const String &payload, const bool retain, const int qos) {
   // TODO-21-sema also queue if WiFi is down and qos>0 - not worth doing till xWifi::connect is non-blocking
-  Message * const m = new Message(topic, payload, retain, qos);
+  #ifdef SYSTEM_MQTT_DEBUG
+    Serial.print(F("MQTT ")); Serial.print((inReceived && qos) ? F("queue ") : F("publish ")); Serial.print(topicpath); Serial.print(F(" - ")); Serial.println(payload);
+  #endif
   if (inReceived && qos) {
-    queued.push(m);
+    queued.emplace_front(topicpath, payload, retain, qos);
   } else {
-    messageSendInner(m);
+    messageSendInner(topicpath, payload, retain, qos);
   }
   // Whether send to net or queue, send loopback and do the retention stuff. 
-  #ifdef SYSTEM_MQTT_LOOPBACK
-    // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
-    if (m->retain) {
-      retained.retain(m); // Keep a copy of outgoing, so local subscribers will see 
-    }
-    messageReceived(m);
-  #endif // SYSTEM_MQTT_LOOPBACK
-}
-void messageSend(String &topic, const float &value, const int width, const bool retain, const int qos) {
-  String * const foo = new String(value, width);
-  messageSend(topic, *foo, retain, qos);
-
-}
-void messageSend(String &topic, const int value, const bool retain, const int qos) {
-  String * const foo = new String(value);
-  messageSend(topic, *foo, retain, qos);
+  if (retain) {
+    retainPayload(topicpath, payload); // Keep a copy of outgoing, so local subscribers will see 
+  }
+  // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
+  dispatch(topicpath, payload);
 }
 
-void messageSendQueued() {
-  const Message* m;
-  for (;!inReceived && (m = queued.shift()); messageSendInner(m)) {}
+void MqttManager::messageSend(const char* const topicleaf, const String &payload, const bool retain, const int qos) {
+  const String * const topicpath = new String(*xDiscovery::topicPrefix + topicleaf); // TODO can merge into next line
+  messageSend(*topicpath, payload, retain, qos);
 }
 
-void setup() {
-  #ifdef SYSTEM_WIFI_WANT // Until have BLE, no WIFI means local only
-    // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
-    // by Arduino. You need to set the IP address directly.
-    client.begin(xWifi::mqtt_host.c_str(), net);
-    client.onMessage(messageReceived);  // Called back from client.loop
-
-    // Note WiFi should be connected by this point but will check here anyway
-    while (!connect()) {
-      #ifdef SYSTEM_MQTT_DEBUG
-        Serial.print(F("."));
-      #endif
-      delay(1000); // Block waiting for WiFi and MQTT to connect 
-    }
-  #endif // SYSTEM_WIFI_WANT
+void MqttManager::messageSend(const String &topicpath, const float &value, const int width, const bool retain, const int qos) {
+  const String * const foo = new String(value, width);
+  messageSend(topicpath, *foo, retain, qos);
 }
-
-void loop() {
-  #ifdef SYSTEM_WIFI_WANT // Until have BLE, no WIFI means local only
-    if (nextLoopTime <= millis()) {
-      // Automatically reconnect
-      if (!client.connected()) {
-        if (!connect()) { // Non blocking but skip client.loop. Note if fails to connect will set nextLoopTime in 1000 ms.
-          nextLoopTime = millis() + 1000; // If non-blocking then dont do any MQTT for a second then try connect again
-        }
-      } else {
-        messageSendQueued();
-        if (!client.loop()) {
-          #ifdef SYSTEM_MQTT_DEBUG
-            Serial.print(F("MQTT client loop failed ")); Serial.println(client.lastError()); // lwmqtt_err
-          #endif // SYSTEM_MQTT_DEBUG
-        }; // Do this at end of loop so some time before checks if connected
-        nextLoopTime = millis() + SYSTEM_MQTT_MS;
-      }
-    }
-  #endif // SYSTEM_WIFI_WANT
+void MqttManager::messageSend(const char* const topicleaf, const float &value, const int width, const bool retain, const int qos) {
+  const String * const foo = new String(value, width);
+  messageSend(topicleaf, *foo, retain, qos);
 }
-} // Namespace xMqtt
-#endif //SYSTEM_MQTT_WANT
+void MqttManager::messageSend(const String &topicpath, const int value, const bool retain, const int qos) {
+  const String * const foo = new String(value);
+  messageSend(topicpath, *foo, retain, qos);
+}
+void MqttManager::messageSend(const char* const topicleaf, const int value, const bool retain, const int qos) {
+  const String * const foo = new String(value);
+  messageSend(topicleaf, *foo, retain, qos);
+}
+void MqttManager::messageSendQueued() {
+  while (!queued.empty()) {
+    Message &m = queued.front();
+    messageSendInner(*m.topicpath, *m.payload, m.retain, m.qos);
+    queued.pop_front();
+  }
+}
+namespace xMqtt {
+
+// Note intentionally outside class, passed as callback to Mqtt client
+void MessageReceived(String &topic, String &payload) { // cant be constant as dispatch isnt
+  Mqtt->messageReceived(topic, payload);
+}
+} // namespace xMqtt

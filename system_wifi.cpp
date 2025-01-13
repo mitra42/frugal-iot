@@ -149,10 +149,17 @@ void setup() {
   setupLanguages(); // Must come before any calls to WiFiSettings.<anything> 
 
   #ifdef SYSTEM_WIFI_SSID
-    Serial.println(F("Overriding WiFi SSID / Password for dev"));
+    Serial.println(F("Overriding WiFi SSID / Password for development"));
     spurt(F("/wifi-ssid"), SYSTEM_WIFI_SSID);
     spurt(F("/wifi-password"), SYSTEM_WIFI_PASSWORD);
   #endif // SYSTEM_WIFI_SSID
+
+  #ifndef SYSTEM_WIFI_DEVICE
+    #define SYSTEM_WIFI_DEVICE "device"
+  #endif
+  #ifndef SYSTEM_WIFI_PROJECT
+    #define SYSTEM_WIFI_PROJECT "project"
+  #endif
 
   // Custom configuration variables, these will read configured values if previously set and return default values if not.
   /*
@@ -161,12 +168,6 @@ void setup() {
     bool checkbox(String name, bool init = false, String label = name);
   */
 
-  #ifndef SYSTEM_WIFI_DEVICE
-    #define SYSTEM_WIFI_DEVICE "device"
-  #endif
-  #ifndef SYSTEM_WIFI_PROJECT
-    #define SYSTEM_WIFI_PROJECT "project"
-  #endif
   mqtt_host = WiFiSettings.string(F("mqtt_host"), 4,40, F(SYSTEM_MQTT_SERVER), T.MqttServer); 
   // TODO-29 turn discovery_project into a dropdown, use an ifdef for the ORGANIZATION in configuration.h not support by ESPWifi-Settings yet.
   discovery_project = WiFiSettings.string(F("discovery_project"), 3,20, F(SYSTEM_WIFI_PROJECT), T.Project); 
