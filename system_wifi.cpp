@@ -1,6 +1,8 @@
 /*
     Wifi Configuration and connection
     Based on the example from https://github.com/Juerd/ESP-WiFiSettings
+
+    Note language support is for text displayed in the portal, others like filenames and debug texts are intentionally left in Engish.
 */
 
 #include "_settings.h"  // Settings for what to include etc
@@ -125,6 +127,13 @@ void setupLanguages() {
       T.MqttServer = F("MQTT server");
       T.DeviceName = F("Gerätename");
       T.Project = F("Projekt");
+    }
+  #endif
+  #if defined LANGUAGE_ID || defined LANGUAGE_ALL
+    if (WiFiSettings.language == "id") {
+      T.MqttServer = F("MQTT server");
+      T.DeviceName = F("Nama Perangkat");
+      T.Project = F("Proyek");
     }
   #endif
   #if defined LANGUAGE_ID || defined LANGUAGE_ALL
