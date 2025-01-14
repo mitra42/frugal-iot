@@ -138,9 +138,22 @@ void setupLanguages() {
   #endif
   #if defined LANGUAGE_ID || defined LANGUAGE_ALL
     if (WiFiSettings.language == "id") {
-      T.MqttServer = F("MQTT server");
-      T.DeviceName = F("Nama Perangkat");
-      T.Project = F("Proyek");
+      _WSL_T.title = F("Konfigurasi");
+      _WSL_T.portal_wpa = F("Lindungi portal konfigurasi dengan kata sandi WiFi");
+      _WSL_T.portal_password = F("Kata sandi WiFi untuk portal konfigurasi");
+      _WSL_T.init = "default";
+      _WSL_T.wait = F("Tunggu...");
+      _WSL_T.bye = F("Selamat tinggal!");
+      _WSL_T.error_fs = F("Terjadi kesalahan saat menulis ke sistem berkas flash.");
+      _WSL_T.button_save = F("Simpan");
+      _WSL_T.button_restart = F("Mulai ulang perangkat");
+      _WSL_T.scanning_short = F("Memindai...");
+      _WSL_T.scanning_long = F("Memindai jaringan WiFi...");
+      _WSL_T.rescan = F("memindai ulang");
+      _WSL_T.dot1x = F("(tidak berfungsi: 802.1x tidak didukung)");
+      _WSL_T.ssid = F("Nama jaringan WiFi (SSID)");
+      _WSL_T.wifi_password = F("Kata sandi WiFi"); 
+      _WSL_T.bahasa = F("Bahasa");
     }
   #endif
 }
