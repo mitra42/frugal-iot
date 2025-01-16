@@ -14,7 +14,7 @@
 #ifdef CONTROL_WANT
 
 // TODO-ADD-CONTROL
-#if defined(CONTROL_XYZ_DEBUG) || defined(CONTROL_MPQ_DEBUG)
+#if defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_MPQ_DEBUG)
   #define CONTROL_DEBUG
 #endif
 
@@ -23,17 +23,17 @@
 IO::IO() {}
 
 IO::IO(float v, String const * tp = nullptr, char const * const cl = nullptr): value(v), topicpath(tp), controlleaf(cl) { 
-      debug("...IO string constructor ");
+      //debug("...IO string constructor ");
 };
 IO::IO(float v, char const * const tl = nullptr, char const * const cl = nullptr) 
   : IO(v, tl ? Mqtt->topicPath(tl) : nullptr, cl)
 {
-    debug("...IO char constructor ");
+    //debug("...IO char constructor ");
 };
 void IO::setup() {
-    debug("IO setup... ");
+    //debug("IO setup... ");
     if (controlleaf) Mqtt->subscribe(controlleaf);
-    debug("...IO setup ");
+    //debug("...IO setup ");
 }
 
 void IO::dispatchLeaf(const String &tl, const String &p) {
@@ -62,21 +62,21 @@ IN::IN(float v, String const * tp = nullptr, char const * const cl = nullptr): I
 */
 IN::IN(float v, String const * tp = nullptr, char const * const cl = nullptr)
   :   IO(v, tp, cl) {
-  debug("...IN string constructor ");
+  //debug("...IN string constructor ");
 }
 //IN::IN(float v, char const * const tl = nullptr, char const * const cl = nullptr): IO(v,tl,cl) {}
 IN::IN(float v, char const * const tl = nullptr, char const * const cl = nullptr)
   : IO(v,tl,cl) {
-  debug("...IN char constructor ");
+  //debug("...IN char constructor ");
 }
 
 IN::IN(const IN &other) : IO(other.value, other.topicpath, other.controlleaf) {
   //other.debug("IN copy constructor from:");
-  debug("IN copy constructor to:");
+  //debug("IN copy constructor to:");
 }
 
 void IN::setup() {
-  debug("IN setup:");
+  //debug("IN setup:");
   IO::setup();
   if (topicpath) Mqtt->subscribe(*topicpath);
 }
@@ -84,7 +84,9 @@ void IN::setup() {
 // Note also has dispatchLeaf via the superclass
 // Check incoming message, return true if value changed and should carry out actions
 bool IN::dispatchPath(const String &tp, const String &p) {
+  //Serial.print("XXX25 testing:");   Serial.print(tp);   Serial.print(" = "); Serial.println(*topicpath); 
   if (topicpath && (tp == *topicpath)) {
+    //Serial.print("XXX25 Incoming matched topic"); Serial.print(*topicpath); Serial.println(p);
     float v = p.toFloat();
     if (v != value) {
       value = v;
@@ -99,18 +101,18 @@ bool IN::dispatchPath(const String &tp, const String &p) {
 OUT::OUT() {};
 
 OUT::OUT(float v, String const * tp = NULL, char const * const cl = NULL) : IO(v,tp,cl) {
-   debug("OUT string constructor");
+   //debug("OUT string constructor");
 }
 
 OUT::OUT(float v, char const * const tl = NULL, char const * const cl = NULL) : IO(v,tl,cl) {
-   debug("OUT char constructor");
+   //debug("OUT char constructor");
 }
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
 // OUT::dispatchLeaf() - uses IO since wont be incoming topicpath, only a controlleaf
 
 OUT::OUT(const IN &other) : IO(other.value, other.topicpath, other.controlleaf) {
   //other.debug("OUT copy constructor from:");
-  debug("OUT copy constructor to:");
+  //debug("OUT copy constructor to:");
 }
 
 void OUT::set(const float newvalue) {
@@ -137,7 +139,7 @@ void Control::debug(const char* const where) {
 }
 
 void Control::setup() {
-    debug("Control setup... ");
+    //debug("Control setup... ");
     for (auto &input : inputs) {
         input.setup();
     }
@@ -150,6 +152,7 @@ void Control::setup() {
 void Control::dispatch(const String &topicpath, const String &payload ) {
     bool changed = false;
     String* tl = Mqtt->topicLeaf(topicpath);
+    //Serial.println("XXX25 Control::dispatch");
     for (auto &input : inputs) {
         if (tl) { // Will be nullptr if no match
             // Both inputs and outputs have possible 'control' and therefore dispatchLeaf
@@ -161,17 +164,19 @@ void Control::dispatch(const String &topicpath, const String &payload ) {
         }
     }
     for (auto &output : outputs) {
-        if (tl) { // Will be nullptr if no match
-            // Both inputs and outputs have possible 'control' and therefore dispatchLeaf
-            output.dispatchLeaf(*tl, payload); // TODO-25 Setting an output topic *should* but doesnt yet send a message to new outout.topic
-        }
+      if (tl) { // Will be nullptr if no match
+        // Both inputs and outputs have possible 'control' and therefore dispatchLeaf
+        output.dispatchLeaf(*tl, payload); // TODO-25 Setting an output topic *should* but doesnt yet send a message to new outout.topic
+      }
     }
-    if (changed) {
-        for (auto &action : actions) {
-            if (action) {
-                action(this); // Actions should call self.outputs[x].set(newvalue); and allow .set to check if changed and send message
-            }
+    if (changed) { 
+      //Serial.println("XXX25 inputs changed");
+      for (auto &action : actions) {
+        if (action) {
+          //Serial.println("XXX25 have action");
+          action(this); // Actions should call self.outputs[x].set(newvalue); and allow .set to check if changed and send message
         }
+      }
     }
 }
 void Control::setupAll() {
@@ -180,6 +185,7 @@ void Control::setupAll() {
   }
 }
 void Control::dispatchAll(const String &topicpath, const String &payload) {
+  //Serial.println("XXX25 Control::dispatchAll");
   for (Control* c: controls) {
     c->dispatch(topicpath, payload);
   }

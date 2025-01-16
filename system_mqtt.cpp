@@ -34,6 +34,7 @@
 #include "system_discovery.h"
 #include "system_mqtt.h"
 #include "actuator.h"
+#include "control.h"
 //TODO-25 replace with control.h when ready
   #ifdef CONTROL_BLINKEN_WANT
     #include "control_blinken.h"
@@ -184,7 +185,9 @@ void MqttManager::dispatch(const String &topicpath, const String &payload) {
         cBlinken::dispatchLeaf(*topicleaf, payload);
       #endif
     }
-  //TODO-25 Control::dispatchAll(*topicpath, payload);
+    #ifdef CONTROL_WANT
+      Control::dispatchAll(topicpath, payload);
+    #endif
   //TODO-25 temporary hack till Control::dispatchAll readu
     #ifdef CONTROL_DEMO_MQTT_WANT
       cDemoMqtt::dispatchPath(topicpath, payload);

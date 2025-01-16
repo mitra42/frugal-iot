@@ -70,7 +70,7 @@ class Control : public Frugal_Base {
 
 extern std::vector<Control*> controls;
 
-// TODO-25 make this auto-generated
+// TODO-25 make this auto-generated and move to control_hysterisis.h
 #define CONTROL_ADVERTISEMENT "\n  -\n    topic: control_input\n    name: Sensor Control Input\n    type: topic\n    options: float\n    display: dropdown\n    rw: rw" \
                                          "\n  -\n    topic: control_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: rw" \
                                          "\n  -\n    topic: control_hysterisis\n    name: Plus or Minus\n    type: float\n    min: 0\n    max: 20\n    display: slider\n    rw: rw" \

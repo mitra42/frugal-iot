@@ -54,7 +54,7 @@
 #endif
 
 
-// TODO-25 move this function
+// TODO-25 move this function by making it a class in control_hysterisis
 Control::TCallback hysterisisAction = [](Control* self) {
     const float hum = self->inputs[0].value;
     const float lim = self->inputs[1].value;
