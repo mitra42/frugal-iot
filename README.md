@@ -43,7 +43,7 @@ Our current test dev board is a ESP8266 Lolin D1 Mini with a SHT30 Temp & Humidi
 I expect to start testing other combinations of boards and sensors soon. 
 Instructions for other board/sensor combinations are welcome. 
 
-I also test on Lolin C3 Pico (ESP32-C3), and the code has been run on SONOFF R2 digital switches. 
+I also test on Lolin C3 Pico (ESP32-C3), and the code has been run on SONOFF R2 digital switches, and on the D1 Mini Pro (Green); 
 
 
 #### Arduino IDE basics - skip if you know what you are doing

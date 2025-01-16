@@ -49,6 +49,10 @@
 #ifdef SYSTEM_DISCOVERY_WANT
 #include "system_discovery.h"
 #endif
+#ifdef SYSTEM_OTA_WANT
+#include "system_ota.h"
+#endif
+
 
 // TODO-25 move this function
 Control::TCallback hysterisisAction = [](Control* self) {
@@ -78,6 +82,10 @@ void setup() {
 xWifi::setup();
 Mqtt = new MqttManager();
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+#ifdef SYSTEM_OTA_WANT
+  // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
+  xOta::setup();
+#endif
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -146,13 +154,15 @@ void loop() {
   Mqtt->loop();
   Frugal_Base::loopAll(); // Will replace all loops as developed - but starting with sensors, so positioned here.
 
-
-  #ifdef CONTROL_BLINKEN_WANT
-    cBlinken::loop();
-  #endif
-  #ifdef SYSTEM_DISCOVERY_WANT
-    xDiscovery::loop();
-  #endif
+#ifdef CONTROL_BLINKEN_WANT
+  cBlinken::loop();
+#endif
+#ifdef SYSTEM_DISCOVERY_WANT
+  xDiscovery::loop();
+#endif
+#ifdef SYSTEM_OTA_WANT
+  xOta::loop();
+#endif
 }
 
 

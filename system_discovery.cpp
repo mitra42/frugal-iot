@@ -66,6 +66,9 @@ unsigned long nextLoopTime = 0;
 String *projectTopic;
 String *advertiseTopic;
 String *topicPrefix;
+#ifdef SYSTEM_OTA_WANT
+  String *otaKey;
+#endif
 
 String *advertisePayload;
 void quickAdvertise() {
@@ -102,6 +105,7 @@ void inputReceived(String &payload) {
   #define nlNameColon F("\nname: ")
 #endif
 
+
 void setup() {
   // This line fails when board 'LOLIN C3 PICO' is chosen
   // projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
@@ -109,7 +113,7 @@ void setup() {
   projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project );
   advertiseTopic = new String(*projectTopic + F("/") + xWifi::clientid()); // e.g. "dev/lotus/esp32-12345"
   topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/lotus/esp32-12345/" prefix of most topics
-    advertisePayload = new String( 
+  advertisePayload = new String( 
     idcolon + xWifi::clientid() 
     + nlNameColon + xWifi::device_name
     + F("\ndescription: "
@@ -180,7 +184,7 @@ void setup() {
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
   #endif
-    fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
+  fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
 }
 
 void loop() {
