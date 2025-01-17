@@ -49,6 +49,9 @@
 #ifdef SYSTEM_OTA_WANT
 #include "system_ota.h"
 #endif
+#ifdef SYSTEM_FS_WANT
+#include "system_fs.h" //TODO-110 split into SYSTEM_SD and SYSTEM_SPIFFS
+#endif
 
 
 void setup() {
@@ -69,6 +72,15 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();
 #endif
+#ifdef SYSTEM_SD_WANT
+  System_SD* fs1 = new System_SD();
+  fs1->setup(); //TODO-110 at moment should printout dir
+#endif
+#ifdef SYSTEM_SPIFFS_WANT
+  System_SPIFFS* fs2 = new System_SPIFFS();
+  fs2->setup(); //TODO-110 at moment should printout dir
+#endif
+
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT

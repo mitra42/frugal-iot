@@ -42,5 +42,9 @@
   #define ACTUATOR_WANT
 #endif
 
+// TODO_ADD_SYSTEM
+#if defined(SYSTEM_SD_WANT) || defined(SYSTEM_SPIFFS_WANT)
+  #define SYSTEM_FS_WANT
+#endif
 
 #endif // _SETTINGS_H

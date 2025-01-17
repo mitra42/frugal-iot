@@ -50,7 +50,8 @@ void checkConnected() {
     connect();
   }
 }
-#ifdef SYSTEM_WIFI_SSID
+#ifdef SYSTEM_WIFI_SSID 
+// Note duplicated in system_fs 
 bool spurt(const String& fn, const String& content) {
     File f = ESPFS.open(fn, "w");
     if (!f) return false;
@@ -58,6 +59,14 @@ bool spurt(const String& fn, const String& content) {
     f.close();
     return w == content.length();
 }
+// TODO-110 just temporary while debugging SYSTEM_FS
+String slurp(const String& fn) {
+    File f = ESPFS.open(fn, "r");
+    String r = f.readString();
+    f.close();
+    return r;
+}
+
 #endif
 
 #ifdef SYSTEM_WIFI_PORTAL_RESTART
@@ -104,6 +113,7 @@ void setup() {
   #ifdef SYSTEM_WIFI_SSID
     Serial.println(F("Overriding WiFi SSID / Password for development"));
     spurt(F("/wifi-ssid"), SYSTEM_WIFI_SSID);
+    Serial.print("XXX110 in WiFi");Serial.println(slurp(F("/wifi-ssid")));
     spurt(F("/wifi-password"), SYSTEM_WIFI_PASSWORD);
   #endif // SYSTEM_WIFI_SSID
 

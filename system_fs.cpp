@@ -12,56 +12,94 @@
  */
 
 #include "_settings.h"
-#define SYSTEM_FS_DEBUG
 #include <Arduino.h>
 
 #ifdef SYSTEM_FS_WANT
+
+#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
+  #define SYSTEM_FS_DEBUG
+#endif
+
 #include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
-#include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
-#include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
+#ifdef SYSTEM_SD_WANT
+  #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
+  #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
+#endif
+#ifdef SYSTEM_SPIFFS_WANT
+#ifdef ESP32
+  #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
+  #include <SPIFFS.h>
+#elif ESP8266
+  #define ESPFS LittleFS // LittleFS defind in LittleFS.h
+  #include <LittleFS.h>
+#endif // ESP32||ESP8266
+#endif // SYSTEM_SPIFFS_WANT
 #include "system_fs.h"
 
 // May change for different boards
-#define SYSTEM_SD_CHIPSELECT D8   // SPI select pin used
+// #define SYSTEM_SD_CHIPSELECT D8   // SPI select pin used - note SS defined as 15 - not sure if that is D8
 
-class System_FS {
-  System_FS() ;
-  virtual void setup();
-  #ifdef SYSTEM_FS_DEBUG
-    String formatBytes(size_t bytes);
-  #endif
-};
 
-/*
-class System_SPIFFS {
-  void setup();
-}
-*/
-class System_SD {
-  System_SD();
-  void setup();
-};
-
+// Constructors
 System_FS::System_FS() { }
+
+// Basic file ops // 
+// This only includes the ones we need - 
+// TODO-110 feel free to add others from e.g. https://github.com/esp8266/Arduino/blob/master/libraries/SD/src/SD.h
+fs::File System_SD::open(const char *filename, const char *mode) { 
+  return SD.open(filename, mode);
+}
+fs::File System_SD::open(const String &filename, const char *mode ) { 
+  return SD.open(filename, mode);
+}
+
+fs::File System_SPIFFS::open(const char *filename, const char *mode) { 
+  return ESPFS.open(filename, mode);
+}
+fs::File System_SPIFFS::open(const String &filename, const char *mode) { 
+  return ESPFS.open(filename, mode);
+}
+#ifdef SYSTEM_SPIFFS_WANT
+// Copied from system_wifi.cpp which got it from ESP-WiFiSettings library
+bool System_FS::spurt(const String& filename, const String& content) {
+    File f = open(filename, "w"); // Virtual, knows what kind of FS
+    if (!f) return false;
+    auto w = f.print(content);
+    f.close();
+    return w == content.length();
+}
+String System_FS::slurp(const String& fn) {
+  File f = open(fn, "r"); // Virtual, knows what kind of FS
+  String r = f.readString();
+  f.close();
+  return r;
+}
+#endif //SYSTEM_SPIFFS_WANT
 
 #ifdef SYSTEM_FS_DEBUG
   String System_FS::formatBytes(size_t bytes) {
     if (bytes < 1024){
-      return String(bytes)+"B";
+      return String(bytes);
     } else if(bytes < (1024 * 1024)){
-      return String(bytes/1024.0)+"KB";
+      return String(bytes/1024.0)+"K";
     } else if(bytes < (1024 * 1024 * 1024)){
-      return String(bytes/1024.0/1024.0)+"MB";
+      return String(bytes/1024.0/1024.0)+"M";
     } else {
-      return String(bytes/1024.0/1024.0/1024.0)+"GB";
+      return String(bytes/1024.0/1024.0/1024.0)+"G";
     }
   }
 #endif //SYSTEM_FS_DEBUG
 
-#ifdef SYSTEM_FS_DEBUG
 
-void System_FS::printDir(const char* path, int numTabs=0) {  // e.g. "/" 
-  File dir = SD.open(path) // TODO call via System_FS virtual 
+#ifdef SYSTEM_FS_DEBUG
+void System_FS::printDirectory(const char* path, int numTabs) {  // e.g. "/" 
+  File dir = open(path); // TODO call via System_FS virtual 
+  if (!dir) {
+    Serial.println("Failed to open"); Serial.println(path);
+  }
+  printDirectory(dir, numTabs);
+}
+void System_FS::printDirectory(File dir, int numTabs) {  // e.g. "/" 
   while (true) {
     File entry = dir.openNextFile();
     if (!entry) {
@@ -72,17 +110,17 @@ void System_FS::printDir(const char* path, int numTabs=0) {  // e.g. "/"
     Serial.print(entry.name());
     if (entry.isDirectory()) {
       Serial.println("/");
-      printDirectory(entry, numTabs + 1);
+      printDirectory(entry, numTabs + 1); // TODO want the path not the name 
     } else {
       // files have sizes, directories do not
       Serial.print("\t\t");
-      Serial.print(entry.size(), DEC);   //TODO use formatBytes
+      Serial.print(formatBytes(entry.size()));   //TODO use formatBytes
       time_t cr = entry.getCreationTime();
       time_t lw = entry.getLastWrite();
       struct tm* tmstruct = localtime(&cr);
-      Serial.printf("\tCREATION: %d-%02d-%02d %02d:%02d:%02d", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
+      Serial.printf("\t%d-%02d-%02d %02d:%02d:%02d", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
       tmstruct = localtime(&lw);
-      Serial.printf("\tLAST WRITE: %d-%02d-%02d %02d:%02d:%02d\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
+      Serial.printf("\t%d-%02d-%02d %02d:%02d:%02d\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
     }
     entry.close();
   }
@@ -91,12 +129,43 @@ void System_FS::printDir(const char* path, int numTabs=0) {  // e.g. "/"
 #endif // SYSTEM_FS_DEBUG
 
 System_SD::System_SD() {}
+System_SPIFFS::System_SPIFFS() {}
 
 void System_SD::setup() {
-  if (!SD.begin(SS)) {
-    Serial.println("XXX initialization failed!");
-    return;
+  uint8_t pin = D4;
+  // Library is SS=D8=15 fails;  old sketch was 4 some online says 8 but that fatals. D4=GPIO0=2 worked on Lolin Relay with no solder bridge
+  Serial.print("SD initialization on CS pin "); Serial.print(pin);
+  if (!SD.begin(pin)) { // SS is defined in common.h as PIN_SPI_SS which is defined a pin 15 in https://github.com/esp8266/Arduino in variants/generic/common.h
+    Serial.println(" failed!");
+  } else {
+    Serial.println(" done.");
+    #ifdef SYSTEM_SD_DEBUG
+      printDirectory("/"); // For debugging
+    #endif
   }
-  Serial.println("XXX initialization done.");
+}
+void System_SPIFFS::setup() {
+  #ifdef SYSTEM_SPIFFS_DEBUG
+    #ifdef ESP32
+      Serial.print("SPIFFS ");
+    #elif ESP8266 
+      Serial.print("LittleFS ");
+    #endif
+  #endif
+
+  #ifdef ESP32
+    if (!ESPFS.begin(true)) {
+  #elif ESP8266 
+    if (!ESPFS.begin()) {
+  #endif
+      Serial.println("initialization failed!");
+  } else {
+    #ifdef SYSTEM_SPIFFS_DEBUG
+      Serial.println("initialization done.");
+    #endif
+    #ifdef SYSTEM_SPIFFS_DEBUG
+      printDirectory("/"); // For debugging
+    #endif
+  }
 }
 #endif //SYSTEM_FS_WANT
