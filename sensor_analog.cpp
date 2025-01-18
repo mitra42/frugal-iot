@@ -35,7 +35,7 @@
   #endif
 #endif //  SENSOR_ANALOG_REFERENCE
 
-Sensor_Analog::Sensor_Analog(const uint8_t p, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init) : Sensor_Uint16(smooth_init, topic_init, ms_init), pin(p) { };
+Sensor_Analog::Sensor_Analog(const uint8_t p, const uint8_t smooth_init, const char* const topic_init, const unsigned long ms_init) : Sensor_Uint16(smooth_init, topic_init, ms_init), pin(p) { };
 
 // Sensor_Uint16_t::act is good - sends with retain=false; qos=0;
 // Sensor_Uint16_t::set is good - does optional smooth, compares and calls act
@@ -54,5 +54,4 @@ void Sensor_Analog::setup() {
   #endif 
 }
 #endif // SENSOR_ANALOG_WANT
-// TODO-57 need to do discovery
 
