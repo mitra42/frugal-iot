@@ -1,8 +1,10 @@
 /* OTA client
 * 
-* Working from https://github.com/N4rcissist/OtaHelper/blob/main/src/OtaHelper.h
-*
-* Note - Couldn't get these to work
+* Please see https://github.com/mitra42/frugal-iot/blob/main/docs/ota.md and 
+* and https://github.com/mitra42/frugal-iot/issues/37
+* 
+* This is based on  https://github.com/N4rcissist/OtaHelper/blob/main/src/OtaHelper.h
+* Note - Couldn't I couldn't get other example code to work 
 * ESP32 Based on the example in https://github.com/espressif/arduino-esp32/blob/master/libraries/Update/examples/HTTPS_OTA_Update/HTTPS_OTA_Update.ino
 * ESP8266 based on example in https://www.instructables.com/Set-Up-an-ESP8266-Automatic-Update-Server/
 * 
@@ -11,7 +13,6 @@
 * Optional: SYSTEM_OTA_DEBUG SYSTEM_OTA_MS SYSTEM_OTA_SERVERPORTPATH 
 * 
 */
-// TODO-37 carefully review whole file for bits copied from example but not needed
 
 #include "_settings.h"
 #ifdef SYSTEM_OTA_WANT
