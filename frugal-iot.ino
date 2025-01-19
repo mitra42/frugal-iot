@@ -56,14 +56,14 @@
 
 // TODO-25 move this function by making it a class in control_hysterisis
 Control::TCallback hysterisisAction = [](Control* self) {
-    const float hum = self->inputs[0].value;
-    const float lim = self->inputs[1].value;
-    const float hysterisis = self->inputs[2].value;
+    const float hum = self->inputs[0]->floatValue();
+    const float lim = self->inputs[1]->floatValue();
+    const float hysterisis = self->inputs[2]->floatValue();
     if (hum > (lim + hysterisis)) {
-        self->outputs[0].set(1);
+        self->outputs[0]->set(1);
     }
     if (hum < (lim - hysterisis)) {
-        self->outputs[0].set(0);
+        self->outputs[0]->set(0);
     }
   // If  lim-histerisis < hum < lim+histerisis then don't change setting
 };
@@ -119,13 +119,15 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
 // Example definition of control - //TODO-25 move this, but make sure run in setup, not prior to it as need Mqtt
 
 Control* control_humidity = new Control(
-  std::vector<IN> {
-    IN(0.0, "humidity", "sensor_control_input"),
-    IN(50.0, "humidity_limit", nullptr),
-    IN(5.0, "hysterisis", nullptr) // Note nullptr needed in .ino but not .cpp files :-(
+  "humidity_control",
+  std::vector<IO*> {
+    new INfloat("humidity", 0.0, "humidity", true),
+    new INfloat("limit", 50.0, "humidity_limit", false),
+    new INfloat("hysterisis", 5.0, "hysterisis", false) // Note nullptr needed in .ino but not .cpp files :-(
     },
-  std::vector<OUT> {
-    OUT(0, "ledbuiltin", "sensor_control_output") // Default to control LED, controllable via "relay_control")
+  std::vector<IO*> {
+    // TODO-25B will be OUTbool
+    new OUTfloat("out", 0, "too_humid", true) // Default to control LED, controllable via "relay_control")
   },
   std::vector<Control::TCallback> {
     hysterisisAction

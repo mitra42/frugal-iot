@@ -2,7 +2,7 @@
  * Generic base class for controls
  *
  * It makes some assumptions - e.g. max 3 float inputs, which if wrong may require refactoring. 
- *
+ * 
  */
 
 #include "_settings.h"  // Settings for what to include etc
@@ -20,77 +20,96 @@
 
 // ========== IO - base class for IN and OUT ===== 
 
-IO::IO() {}
+// Not sure these are useful, since there are const members that need initializing
+//IO::IO() {}
+//IOfloat::IOfloat() : IO() {}
 
-IO::IO(float v, String const * tp = nullptr, char const * const cl = nullptr): value(v), topicpath(tp), controlleaf(cl) { 
+IO::IO(const char * const n, const char * const tl, const bool w): name(n), topicLeaf(tl), wireable(w), wiredPath(nullptr) { 
       //debug("...IO string constructor ");
 };
-IO::IO(float v, char const * const tl = nullptr, char const * const cl = nullptr) 
-  : IO(v, tl ? Mqtt->topicPath(tl) : nullptr, cl)
-{
-    //debug("...IO char constructor ");
+IOfloat::IOfloat(const char * const n, float v, const char * const tl, const bool w): IO(n, tl, w), value(v) { 
+      //debug("...IOfloat string constructor ");
 };
-void IO::setup() {
+float IOfloat::floatValue() {
+  return value;
+}
+void IO::setup(const char * const sensorname) {
     //debug("IO setup... ");
-    if (controlleaf) Mqtt->subscribe(controlleaf);
+    // Note topicLeaf subscribed to by IN, not by OUT
+    if (wireable) {
+      wireLeaf = new String("wire_" + *sensorname + "_" + *name); // Would be nice if this was a char* TODO-25B
+      Mqtt->subscribe(Mqtt->topicpath(wireLeaf));
+    }
     //debug("...IO setup ");
 }
 
 void IO::dispatchLeaf(const String &tl, const String &p) {
-
-  if (tl == controlleaf) {
-    if (p != *topicpath) {
-      topicpath = new String(p);
-      Mqtt->subscribe(*topicpath);
-      // Drop thru and return false;
+  if (tl == wireLeaf) {
+    if (p != *wiredPath) {
+      wiredPath = new String(p);
+      Mqtt->subscribe(*wiredPath);
     }
   }
+  return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
 }
 void IO::debug(const char* const where) {
     Serial.print(where); 
+    Serial.print(" topicLeaf="); Serial.print(topicLeaf ? *topicLeaf : "NULL"); 
+    Seria.print(" wireable"); Serial.print(wireable);
+    if (wireable) {
+      Serial.print(" wireLeaf"); Serial.print(wireLeaf);
+      Serial.print(" wiredPath="); Serial.print(wiredPath ? *wiredPath : "NULL"); 
+    }
+}
+void IOfloat::debug(const char* const where) {
+    IO::debug(where);
     Serial.print(" value="); Serial.print(value); 
-    Serial.print(" topicpath="); Serial.print(topicpath ? *topicpath : "NULL"); 
-    Serial.print(" controlleaf="); Serial.println(controlleaf ? controlleaf : "NULL");
 }
 
 // ========== IN for some topic we are monitoring and the most recent value ===== 
 
-IN::IN() {}
+INfloat::INfloat() {}
 
 /* Replaced with debug version below TODO-25
 IN::IN(float v, String const * tp = nullptr, char const * const cl = nullptr): IO(v,tp,cl) {}
 */
-IN::IN(float v, String const * tp = nullptr, char const * const cl = nullptr)
-  :   IO(v, tp, cl) {
+INfloat::INfloat(const char * const n, float v, const char * const tl = nullptr, const bool w)
+  :   IOfloat(n, v, tp, w) {
   //debug("...IN string constructor ");
 }
-//IN::IN(float v, char const * const tl = nullptr, char const * const cl = nullptr): IO(v,tl,cl) {}
-IN::IN(float v, char const * const tl = nullptr, char const * const cl = nullptr)
-  : IO(v,tl,cl) {
-  //debug("...IN char constructor ");
-}
 
-IN::IN(const IN &other) : IO(other.value, other.topicpath, other.controlleaf) {
+INfloat::INfloat(const INfloat &other) : IOfloat(other.name, other.value, other.topicLeaf, other.wireable) {
   //other.debug("IN copy constructor from:");
   //debug("IN copy constructor to:");
 }
 
-void IN::setup() {
+void INfloat::setup(const char * const sensorname) {
   //debug("IN setup:");
-  IO::setup();
-  if (topicpath) Mqtt->subscribe(*topicpath);
+  IOfloat::setup(sensorname);
+  if (topicLeaf) Mqtt->subscribe(*topicLeaf));
 }
 
-// Note also has dispatchLeaf via the superclass
-// Check incoming message, return true if value changed and should carry out actions
-bool IN::dispatchPath(const String &tp, const String &p) {
-  //Serial.print("XXX25 testing:");   Serial.print(tp);   Serial.print(" = "); Serial.println(*topicpath); 
-  if (topicpath && (tp == *topicpath)) {
-    //Serial.print("XXX25 Incoming matched topic"); Serial.print(*topicpath); Serial.println(p);
+bool INfloat::dispatchLeaf(const String &tl, const String &p) {
+  IOfloat::dispatchLeaf(tl, p); // Handle wireLeaf
+  if (tl == topicLeaf) {
     float v = p.toFloat();
     if (v != value) {
       value = v;
-      return true;
+      return true; // Need to rerun calcs
+    }
+  }
+  return false; // nothing changed
+}
+
+
+// Note also has dispatchLeaf via the superclass
+// Check incoming message, return true if value changed and should carry out actions
+bool INfloat::dispatchPath(const String &tp, const String &p) {
+  if (wiredPath && (tp == *wiredPath)) {
+    float v = p.toFloat();
+    if (v != value) {
+      value = v;
+      return true; // SHould rerun calculations
     }
   }
   return false; 
@@ -98,34 +117,39 @@ bool IN::dispatchPath(const String &tp, const String &p) {
 
 // ========== OUT for some topic we are potentially sending to ===== 
 
-OUT::OUT() {};
+OUTfloat::OUTfloat() {};
 
-OUT::OUT(float v, String const * tp = NULL, char const * const cl = NULL) : IO(v,tp,cl) {
-   //debug("OUT string constructor");
+/* Replaced with debug version below TODO-25
+OUTfloat::INfloat(float v, String const * tp = nullptr, char const * const cl = nullptr): IO(v,tp,cl) {}
+*/
+OUTfloat::OUTfloat(const char * const n, float v, const char * const tl = nullptr, const bool w)
+  :   IOfloat(n, v, tl, w) {
+  //debug("...IN char constructor ");
 }
 
-OUT::OUT(float v, char const * const tl = NULL, char const * const cl = NULL) : IO(v,tl,cl) {
-   //debug("OUT char constructor");
-}
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
-// OUT::dispatchLeaf() - uses IO since wont be incoming topicpath, only a controlleaf
+// OUT::dispatchLeaf() - uses IO since wont be incoming topicLeaf or wiredPath, only a wireLeaf
+// OUT::dispatchPath() - wont be called from Control::dispatchAll.
 
-OUT::OUT(const IN &other) : IO(other.value, other.topicpath, other.controlleaf) {
+OUTfloat::OUTfloat(const OUT &other) : IOfloat(other.name other.value, other.topicLeaf, other.wireable) {
   //other.debug("OUT copy constructor from:");
   //debug("OUT copy constructor to:");
 }
 
-void OUT::set(const float newvalue) {
+void OUTfloat::set(const float newvalue) {
   if (newvalue != value) {
     value = newvalue;
-    Mqtt->messageSend(*topicpath, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    Mqtt->messageSend(topicLeaf, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    if (wiredPath) {
+      Mqtt->messageSend(wiredPath, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    }
   }
 }
 
 // ==== Control - base class for all controls 
 
-Control::Control(std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a)
-    : Frugal_Base() , inputs(i), outputs(o), actions(a) {
+Control::Control(const char * const n, std::vector<IN> i, std::vector<OUT> o, std::vector<TCallback> a)
+    : Frugal_Base() , name(n), inputs(i), outputs(o), actions(a) {
     controls.push_back(this);
 }
 void Control::debug(const char* const where) {
@@ -141,24 +165,23 @@ void Control::debug(const char* const where) {
 void Control::setup() {
     //debug("Control setup... ");
     for (auto &input : inputs) {
-        input.setup();
+        input.setup(name);
     }
     for (auto &output : outputs) {
-        output.setup();
+        output.setup(name);
     }
     debug("...Control setup ");
 }
 
-void Control::dispatch(const String &topicpath, const String &payload ) {
+void Control::dispatch(const String &topicPath, const String &payload ) {
     bool changed = false;
-    String* tl = Mqtt->topicLeaf(topicpath);
-    //Serial.println("XXX25 Control::dispatch");
+    String* tl = Mqtt->topicLeaf(topicPath);
     for (auto &input : inputs) {
-        if (tl) { // Will be nullptr if no match
+        if (tl) { // Will be nullptr if no match i.e. path is not local
             // Both inputs and outputs have possible 'control' and therefore dispatchLeaf
             input.dispatchLeaf(*tl, payload); //  // Does not trigger any messages or actions - though data received in response to subscription will.
         }
-        // Only inputs are listening to potential topicpaths - i.e. other devices outputs
+        // Only inputs are listening to potential topicPaths - i.e. other devices outputs
         if (input.dispatchPath(topicpath, payload)) {
             changed = true; // Changed an input, do the actions
         }
@@ -170,24 +193,24 @@ void Control::dispatch(const String &topicpath, const String &payload ) {
       }
     }
     if (changed) { 
-      //Serial.println("XXX25 inputs changed");
       for (auto &action : actions) {
         if (action) {
-          //Serial.println("XXX25 have action");
           action(this); // Actions should call self.outputs[x].set(newvalue); and allow .set to check if changed and send message
         }
       }
     }
 }
+// Note Static
 void Control::setupAll() {
   for (Control* c: controls) {
     c->setup();
   }
 }
-void Control::dispatchAll(const String &topicpath, const String &payload) {
+// Note Static
+void Control::dispatchAll(const String &topicPath, const String &payload) {
   //Serial.println("XXX25 Control::dispatchAll");
   for (Control* c: controls) {
-    c->dispatch(topicpath, payload);
+    c->dispatch(topicPath, payload);
   }
 }
 
