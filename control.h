@@ -19,14 +19,15 @@ class IO {
     char const *name; // Name of this IO within the sensor, i.e. can duplicate across sensors
     char const *topicLeaf; // Topic always listens|sends to - null (unusual) if only listens on wire
     bool const wireable; // True if can wire this to/from others
-    const String *wireLeaf; // Topic listens for change to wiredTopic, will always be wire_<sensor.name>_<io.name>
+    char const *wireLeaf; // Topic listens for change to wiredTopic, will always be wire_<sensor.name>_<io.name>
     const String *wiredPath; // Topic also listening|sending to when wired
     IO();
     IO(const char * const n, const char * const tl = nullptr, const bool w = true);
     virtual void setup(const char * const sensorname);
-    void dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
+    virtual bool dispatchPath(const String &topicPath, const String &payload);
     #ifdef CONTROL_DEBUG
-      void debug(const char* const where);
+      virtual void debug(const char* const where);
     #endif
     virtual float floatValue(); // Can build these for other types and combos e.g. returning bool from a float etc
     virtual void set(const float newvalue); // Similarly - setting into types from variety of values
@@ -36,6 +37,7 @@ class IOfloat : public IO {
     float value;
     IOfloat(char const * const name, float v, char const * const topicLeaf = nullptr, const bool wireable = true);
     float floatValue();
+    void debug(const char* const where);
 };
 class INfloat : public IOfloat {
   public:
@@ -59,7 +61,7 @@ class INfloat : public IOfloat {
     */
     bool dispatchLeaf(const String &topicLeaf, const String &payload);
     bool dispatchPath(const String &topicPath, const String &payload);
-    virtual void setup();
+    virtual void setup(const char * const sensorname);
 };
 
 class OUTfloat : public IOfloat {
@@ -78,7 +80,7 @@ class Control : public Frugal_Base {
     std::vector<IO*> outputs; // Vector of outputs  // TODO-25B change to
     std::vector<TCallback> actions; // Vector of actions
 
-    Control(const char * const name, std::vector<IO*> i, std::vector<IO*> o, std::vector<TCallback> a);  // TODO-25B change to <OUT>
+    Control(const char * const name, std::vector<IO*> i, std::vector<IO*> o, std::vector<TCallback> a); 
     void setup();
     void dispatch(const String &topicPath, const String &payload);
     static void setupAll();
