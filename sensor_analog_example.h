@@ -17,7 +17,7 @@
 
 // TO_ADD_BOARD
 #ifndef SENSOR_ANALOG_EXAMPLE_PIN
-  #ifdef ESP8266_D1_MINI
+  #ifdef ESP8266_D1
     // Only one analog pin on D1 Mini
     #define SENSOR_ANALOG_EXAMPLE_PIN A0
   #else
