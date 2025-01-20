@@ -30,7 +30,7 @@ RX  |RX |
 D1  |10 | Always reads 0 on C3 - used by Relay shield
 D2  |8  | Always reads 0 on C3
 D3  |7  | Always reads 0 and seems connected to LED
-D4  |6  | SHT shield
+D4  |6  | DHT22 shield
 GND |GND|
 5V  |5V |
 
