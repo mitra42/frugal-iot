@@ -13,26 +13,26 @@ various combinations.
 Starting with the top lect of the board as looking down on the shield, and running down that side,
 and then down the right hand side.
 
- D1 | C3| used by
-----|---|--------
-RST |EN | 
-A0  |3  | Only analog on D1, so should be used by soil sensor
-    |   | Vbat when pads shorted 
-D0  |2  | Always reads 4095 on C3
-D5  |1  | Works on C3 for analog
-D6  |0  | Works on C3 for analog
-D7  |4  | Works on C3 for analog currently using for Soil but not fixed
-D8  |5  | Gets error message if used as analog on C3
-3V3 |3V3|
-    |   | Right hand side
-TX  |TX |
-RX  |RX |
-D1  |10 | Always reads 0 on C3 - used by Relay shield
-D2  |8  | Always reads 0 on C3
-D3  |7  | Always reads 0 and seems connected to LED
-D4  |6  | DHT22 shield
-GND |GND|
-5V  |5V |
+ D1 | C3| used by|
+|----|---|--------|
+|RST |EN | |
+|A0  |3  | Only analog on D1, so should be used by soil sensor|
+|    |   | Vbat when pads shorted |
+|D0  |2  | Analog always reads 4095 on C3|
+|D5  |1  | Works on C3 for analog|
+|D6  |0  | Works on C3 for analog|
+|D7  |4  | Works on C3 for analog currently using for Soil but not fixed|
+|D8  |5  | Gets error message if used as analog on C3|
+|3V3 |3V3| SHT shield |
+|    |   | Right hand side|
+|TX  |TX ||
+|RX  |RX ||
+|D1  |10 | Analog always reads 0 on C3 - used by Relay shield - used by SHTshield for I2C-SCL |
+|D2  |8  | Analog always reads 0 on C3|  used by SHT shield for I2C-SDA 
+|D3  |7  | Analog always reads 0 and seems connected to LED|
+|D4  |6  | DHT22 shield|
+|GND |GND||
+|5V  |5V |Soil Sensor|
 
 Open questions
 * which pins are C3 and D1 using for LED
