@@ -38,6 +38,10 @@ void Sensor_Uint16::set(const uint16_t newvalue) {
   if (changed(newvalue)) {
     value = vv;
     act();
+  #ifdef SENSOR_UINT16_DEBUG
+  } else {
+    Serial.print(topic); Serial.print(F(" unchanged ")); Serial.println(newvalue);
+  #endif // SENSOR_UINT16_DEBUG
   }
 }
 bool Sensor_Uint16::changed(const uint16_t newvalue) {

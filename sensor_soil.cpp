@@ -12,7 +12,6 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
 
 #include "_settings.h"  // Settings for what to include etc
 #ifdef SENSOR_SOIL_WANT
-#define SENSOR_SOIL_DEBUG // default to debugging for now
 
 #include <Arduino.h>
 #include "sensor_soil.h"

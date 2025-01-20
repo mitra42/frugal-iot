@@ -29,7 +29,6 @@
 #include <ESP8266httpUpdate.h>
 #endif
 
-#define SYSTEM_OTA_DEBUG
 #ifndef SYSTEM_OTA_MS
   // By default, check for updates once an hour
   #define SYSTEM_OTA_MS 3600000
