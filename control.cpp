@@ -24,7 +24,7 @@
 //IO::IO() {}
 //IOfloat::IOfloat() : IO() {}
 
-IO::IO(const char * const n, const char * const tl, const bool w): name(n), topicLeaf(tl), wireable(w), wiredPath(nullptr) { 
+IO::IO(const char * const n, const char * const tl, const bool w): name(n), topicLeaf(tl), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) { 
       //debug("...IO string constructor ");
 };
 IOfloat::IOfloat(const char * const n, float v, const char * const tl, const bool w): IO(n, tl, w), value(v) { 
@@ -52,22 +52,33 @@ void IO::setup(const char * const sensorname) {
 
 bool IO::dispatchLeaf(const String &tl, const String &p) {
   if (tl == wireLeaf) {
-    if (p != *wiredPath) {
+    if (!(wiredPath && (p == *wiredPath))) {
       wiredPath = new String(p);
       Mqtt->subscribe(*wiredPath);
     }
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
 }
-void IO::set(const float newvalue) {}
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+void IO::set(const float newvalue) {  
+#pragma GCC diagnostic pop
+  #ifdef CONTROL_DEBUG
+    Serial.println(F("IO::set should be subclassed"));
+  #endif
+}
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 bool IO::dispatchPath(const String &topicPath, const String &payload) {
+#pragma GCC diagnostic pop
   #ifdef CONTROL_DEBUG
     Serial.println(F("IO::dispatchPath should be subclassed"));
   #endif
   return false;
 }
+
 void IO::debug(const char* const where) {
+  // Note subclass needs to provide terminating println (usually after a type-dependent value)
     Serial.print(where); 
     Serial.print(" topicLeaf="); Serial.print(topicLeaf ? topicLeaf : "NULL"); 
     Serial.print(" wireable"); Serial.print(wireable);
@@ -79,7 +90,7 @@ void IO::debug(const char* const where) {
 #ifdef CONTROL_DEBUG
 void IOfloat::debug(const char* const where) {
     IO::debug(where);
-    Serial.print(" value="); Serial.print(value); 
+    Serial.print(" value="); Serial.println(value); 
 }
 #endif
 
@@ -189,8 +200,8 @@ void Control::setup() {
     for (auto &output : outputs) {
         output->setup(name);
     }
-    debug("...Control setup ");
-}
+    //debug("...Control setup ");
+  }
 
 void Control::dispatch(const String &topicPath, const String &payload ) {
     bool changed = false;
@@ -227,7 +238,6 @@ void Control::setupAll() {
 }
 // Note Static
 void Control::dispatchAll(const String &topicPath, const String &payload) {
-  //Serial.println("XXX25 Control::dispatchAll");
   for (Control* c: controls) {
     c->dispatch(topicPath, payload);
   }

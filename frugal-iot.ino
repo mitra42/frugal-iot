@@ -121,7 +121,7 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
 Control* control_humidity = new Control(
   "humidity_control",
   std::vector<IO*> {
-    new INfloat("humidity", 0.0, "humidity", true),
+    new INfloat("humiditynow", 0.0, "humiditynow", true),
     new INfloat("limit", 50.0, "humidity_limit", false),
     new INfloat("hysterisis", 5.0, "hysterisis", false) // Note nullptr needed in .ino but not .cpp files :-(
     },
