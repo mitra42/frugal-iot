@@ -12,6 +12,14 @@
 * Required: SYSTEM_OTA_KEY short string (defined by "org") for different boards
 * Optional: SYSTEM_OTA_DEBUG SYSTEM_OTA_MS SYSTEM_OTA_SERVERPORTPATH 
 * 
+* Notes for ESP32
+* https://github.com/espressif/arduino-esp32/blob/master/libraries/Update/examples/HTTPS_OTA_Update/HTTPS_OTA_Update.ino 
+* uses https://github.com/espressif/arduino-esp32/tree/master/libraries/Update/src/HttpsOTAUpdate.h and .cpp
+* See https://www.reddit.com/r/esp32/comments/qq41rm/is_there_a_way_to_do_ota_over_http_instead_of/ for using over HTTP  
+* but note https://github.com/espressif/esp-idf/blob/0f0068fff3ab159f082133aadfa9baf4fc0c7b8d/components/esp_https_ota/sdkconfig.rename#L4 CONFIG_ESP_HTTPS_OTA_ALLOW_HTTP but looks like need PlatformIO or Espressif-IDF to set this in sdkconfig.defaults
+* Strategy A: move ni.org to https - was going to do that anyway at some point
+* Strategy B: figure out how to break the HTTPS & OTA flash parts and write to that
+* Since have to do HTTPS at some point do that next .... 
 */
 
 #include "_settings.h"
