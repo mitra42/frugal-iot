@@ -43,6 +43,9 @@
 #ifdef CONTROL_DEMO_MQTT_WANT
 #include "control_demo_mqtt.h"
 #endif
+#ifdef CONTROL_WANT
+#include "control.h"
+#endif
 #ifdef SYSTEM_DISCOVERY_WANT
 #include "system_discovery.h"
 #endif
@@ -53,6 +56,20 @@
 #include "system_fs.h" //TODO-110 split into SYSTEM_SD and SYSTEM_SPIFFS
 #endif
 
+
+// TODO-25 move this function by making it a class in control_hysterisis
+Control::TCallback hysterisisAction = [](Control* self) {
+    const float hum = self->inputs[0]->floatValue();
+    const float lim = self->inputs[1]->floatValue();
+    const float hysterisis = self->inputs[2]->floatValue();
+    if (hum > (lim + hysterisis)) {
+        self->outputs[0]->set(1);
+    }
+    if (hum < (lim - hysterisis)) {
+        self->outputs[0]->set(0);
+    }
+  // If  lim-histerisis < hum < lim+histerisis then don't change setting
+};
 
 void setup() {
 #ifdef ANY_DEBUG
@@ -116,9 +133,29 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
     Sensor_Soil* s5c = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, SENSOR_SOIL_TOPIC "3", SENSOR_SOIL_MS);
   #endif
 #endif
+
+// Example definition of control - //TODO-25 move this, but make sure run in setup, not prior to it as need Mqtt
+
+Control* control_humidity = new Control(
+  "humidity_control",
+  std::vector<IO*> {
+    new INfloat("humiditynow", 0.0, "humiditynow", true),
+    new INfloat("limit", 50.0, "humidity_limit", false),
+    new INfloat("hysterisis", 5.0, "hysterisis", false) // Note nullptr needed in .ino but not .cpp files :-(
+    },
+  std::vector<IO*> {
+    // TODO-25B will be OUTbool
+    new OUTfloat("out", 0, "too_humid", true) // Default to control LED, controllable via "relay_control")
+  },
+  std::vector<Control::TCallback> {
+    hysterisisAction
+  });
+
+  control_humidity->debug("frugal-iot.ino after instantiation");
+
 #pragma GCC diagnostic pop
 
-Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuators
+Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuatorsand controls
 
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
