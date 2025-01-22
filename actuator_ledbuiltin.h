@@ -22,6 +22,8 @@
   #else // !LED_BUILTIN
     #ifdef BUILTIN_LED
       #define ACTUATOR_LEDBUILTIN_PIN BUILTIN_LED
+    #else
+      #error "No LED pin defined and no default specified"
     #endif // BUILTIN_LED
   #endif // LED_BUILTIN
 #endif // ACTUATOR_LEDBUILTIN_PIN

@@ -52,6 +52,10 @@
 
 
 void setup() {
+#ifdef LILYGOHIGROW
+  pinMode(POWER_CTRL, OUTPUT);
+  digitalWrite(POWER_CTRL, HIGH); // TODO-115 this is for power control - may need other board specific stuff somewhere
+#endif
 #ifdef ANY_DEBUG
   Serial.begin(SERIAL_BAUD);
   while (!Serial) { 
