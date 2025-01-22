@@ -156,7 +156,13 @@ void setup() {
         SENSOR_ANALOG_EXAMPLE_ADVERTISEMENT
       #endif
       #ifdef SENSOR_SOIL_WANT
-        SENSOR_SOIL_ADVERTISEMENT
+        SENSOR_SOIL_ADVERTISEMENT1
+        #ifdef SENSOR_SOIL_PIN2
+          SENSOR_SOIL_ADVERTISEMENT2
+        #endif
+        #ifdef SENSOR_SOIL_PIN3
+          SENSOR_SOIL_ADVERTISEMENT3
+        #endif        
       #endif
       #ifdef SENSOR_BATTERY_WANT
         SENSOR_BATTERY_ADVERTISEMENT
