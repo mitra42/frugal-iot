@@ -15,6 +15,7 @@ and then down the right hand side.
 
  D1 | C3| used by|
 |----|---|--------|
+|    |   | *Left side*|
 |RST |EN | |
 |A0  |3  | Only analog on D1, so should be used by soil sensor|
 |    |   | Vbat when pads shorted |
@@ -23,14 +24,14 @@ and then down the right hand side.
 |D6  |0  | Works on C3 for analog|
 |D7  |4  | Works on C3 for analog currently using for Soil but not fixed|
 |D8  |5  | Gets error message if used as analog on C3|
-|3V3 |3V3| SHT shield |
-|    |   | Right hand side|
+|3V3 |3V3| DHT/SHT shield |
+|    |   | *Right side*|
 |TX  |TX ||
 |RX  |RX ||
 |D1  |10 | Analog always reads 0 on C3 - used by Relay shield - used by SHTshield for I2C-SCL |
 |D2  |8  | Analog always reads 0 on C3|  used by SHT shield for I2C-SDA 
 |D3  |7  | Analog always reads 0 and seems connected to LED|
-|D4  |6  | DHT22 shield|
+|D4  |6  | Used for DHT library must be high at boot (pulled high by DHT card)
 |GND |GND||
 |5V  |5V |Soil Sensor|
 
