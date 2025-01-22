@@ -17,10 +17,6 @@
 #include "sensor_float.h"
 #include "system_mqtt.h"
 
-#if defined(SENSOR_XYZ_DEBUG) || defined(SENSOR_MPQ_DEBUG)  // TODO make this generic,
-  #define SENSOR_FLOAT_DEBUG
-#endif
-
 Sensor_Float::Sensor_Float(const char* topic_init, const unsigned long ms_init) : Sensor(topic_init, ms_init) { };
 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
