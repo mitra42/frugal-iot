@@ -37,7 +37,7 @@ void IO::setup(const char * const sensorname) {
     //debug("IO setup... ");
     // Note topicLeaf subscribed to by IN, not by OUT
     if (wireable) {
-              // Allocate a buffer large enough for the concatenated string
+      // wireLeaf = wire_<sensorname>_<name>
         size_t buffer_size = strlen(sensorname) + strlen(name) + 5;
         char* buffer = new char[buffer_size];
         strcpy(buffer, "wire_");
