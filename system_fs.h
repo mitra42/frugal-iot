@@ -21,6 +21,8 @@
   #define ESPFS LittleFS // LittleFS defind in LittleFS.h
   #include <LittleFS.h>
 #endif // ESP32||ESP8266
+#include "_base.h"
+#include "control.h"
 #endif // SYSTEM_SPIFFS_WANT
 
 
@@ -55,5 +57,13 @@ class System_SD : public System_FS {
     fs::File open(const String &filename, const char *mode);
 };
 
+class System_Logger : public Frugal_Base {
+  public:
+    const char * const name; // TODO maybe push this to Frugal_Base - also in Control
+    System_FS* fs; // Will be pointer to System_SD or System_SPIFFS
+    std::vector<IO*> inputs; // Vector of inputs
+    System_Logger(const char * const n, System_FS* f, std::vector<IO*> i);
+    void setup();
+};
 #endif //SYSTEM_FS_WANT
 #endif //SYSTEM_FS_H

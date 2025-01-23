@@ -9,6 +9,7 @@
  * The shield uses SPI bus pins: D5 = CLK, D6 = MISO, D7 = MOSI, D8 = CS
 
  * Reference: https://github.com/esp8266/Arduino/blob/master/libraries/SD/examples/listfiles/listfiles.ino
+
  */
 
 #include "_settings.h"
@@ -35,6 +36,8 @@
 #endif // ESP32||ESP8266
 #endif // SYSTEM_SPIFFS_WANT
 #include "system_fs.h"
+#include "_base.h"
+#include "control.h" // For IN - TODO-110 move IN to Frugal_base
 
 // May change for different boards
 // #define SYSTEM_SD_CHIPSELECT D8   // SPI select pin used - note SS defined as 15 - not sure if that is D8
@@ -168,4 +171,14 @@ void System_SPIFFS::setup() {
     #endif
   }
 }
+
+    System_Logger::System_Logger(const char * const n, System_FS* f, std::vector<IO*> i) : Frugal_Base(), name(n), fs(f), inputs(i) { }
+
+    void System_Logger::setup() {
+      fs->setup();
+      for (auto &input : inputs) {
+        input->setup(name);
+      }
+    }
+
 #endif //SYSTEM_FS_WANT

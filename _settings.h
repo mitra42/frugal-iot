@@ -63,6 +63,12 @@
 #endif
 
 // TODO_ADD_SYSTEM
+#if defined(SYSTEM_LOGGER_WANT)
+  #define SYSTEM_FS_WANT
+#endif
+#if defined(SYSTEM_LOGGER_DEBUG)
+  #define SYSTEM_FS_DEBUG
+#endif
 #if defined(SYSTEM_SD_WANT) || defined(SYSTEM_SPIFFS_WANT)
   #define SYSTEM_FS_WANT
 #endif

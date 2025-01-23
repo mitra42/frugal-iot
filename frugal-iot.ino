@@ -89,15 +89,6 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();
 #endif
-#ifdef SYSTEM_SD_WANT
-  System_SD* fs1 = new System_SD();
-  fs1->setup(); //TODO-110 at moment should printout dir
-#endif
-#ifdef SYSTEM_SPIFFS_WANT
-  System_SPIFFS* fs2 = new System_SPIFFS();
-  fs2->setup(); //TODO-110 at moment should printout dir
-#endif
-
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -154,6 +145,27 @@ Control* control_humidity = new Control(
   control_humidity->debug("frugal-iot.ino after instantiation");
 
 #pragma GCC diagnostic pop
+
+#ifdef SYSTEM_SD_WANT
+  System_SD* fs1 = new System_SD();
+  fs1->setup(); //TODO-110 at moment should printout dir
+#endif
+#ifdef SYSTEM_SPIFFS_WANT
+  System_SPIFFS* fs2 = new System_SPIFFS();
+  fs2->setup(); //TODO-110 at moment should printout dir
+#endif
+
+System_Logger* system_logger = new System_Logger(
+  "system_logger",
+  fs2, // TODO-110 Using spiffs for testing for now
+  std::vector<IO*> {
+    //IOfloat(char const * const name, float v, char const * const topicLeaf = nullptr, const bool wireable = true);
+    new INfloat("log1", 0.0, "log1", true),
+    new INfloat("log2", 0.0, "log2", true),
+    new INfloat("log3", 0.0, "log3", true)
+    });
+  control_humidity->debug("frugal-iot.ino after instantiation");
+
 
 Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuatorsand controls
 

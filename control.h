@@ -5,6 +5,9 @@
  *
  */
 
+#ifndef CONTROL_H
+#define CONTROL_H
+
 #include "_settings.h"  // Settings for what to include etc
 #include <Arduino.h>
 #include <vector>
@@ -14,6 +17,7 @@
   #define CONTROL_DEBUG
 #endif
 
+// TODO_25 move IO...OUT to _base.h and _base.cpp
 class IO {
   public:
     char const *name; // Name of this IO within the sensor, i.e. can duplicate across sensors
@@ -98,3 +102,4 @@ extern std::vector<Control*> controls;
                               "\n  -\n    topic: hysterisis\n    name: Plus or Minus\n    type: float\n    min: 0\n    max: 20\n    display: slider\n    rw: rw" \
                               "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: rw"
 
+#endif //CONTROL_H
