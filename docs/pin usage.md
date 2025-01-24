@@ -18,7 +18,7 @@ and then down the right hand side.
 |    |   | *Left side*|
 |RST |EN | |
 |A0  |3  | Only analog on D1, so should be used by soil sensor|
-|    |   | Vbat when pads shorted |
+|    |   | C3-pico Vbat when pads shorted |
 |D0  |2  | Analog always reads 4095 on C3|
 |D5  |1  | Works on C3 for analog|
 |D6  |0  | Works on C3 for analog|
@@ -30,7 +30,8 @@ and then down the right hand side.
 |RX  |RX ||
 |D1  |10 | Analog always reads 0 on C3 - used by Relay shield - used by SHTshield for I2C-SCL |
 |D2  |8  | Analog always reads 0 on C3|  used by SHT shield for I2C-SDA 
-|D3  |7  | Analog always reads 0 and seems connected to LED|
+|D3  |7  | Analog always reads 0|
+|    |   | C3-pico connected (via solder pad) to LED|
 |D4  |6  | Used for DHT library must be high at boot (pulled high by DHT card)
 |GND |GND||
 |5V  |5V |Soil Sensor|
