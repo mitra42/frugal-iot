@@ -38,7 +38,7 @@
 #endif
 
 #ifndef SYSTEM_OTA_SERVERPORTPATH
-  #define SYSTEM_OTA_SERVERPORTPATH "http://naturalinnovation.org:8080/ota_update/" // Note trailing slash
+  #define SYSTEM_OTA_SERVERPORTPATH "http://frugaliot.naturalinnovation.org/ota_update/" // Note trailing slash
 #endif
 
 namespace xOta {

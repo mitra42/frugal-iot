@@ -11,8 +11,8 @@
 #define SYSTEM_MQTT_USER SYSTEM_DISCOVERY_ORGANIZATION  // Edit if you use something other than the organization name for MQTT user
 // Specify the password for your organization on the MQTT server
 #define SYSTEM_MQTT_PASSWORD "public"
-// Where your MQTT server is - you can use naturalinnovation.org for testing, but talk to us if you are deploying live sites using it.
-#define SYSTEM_MQTT_SERVER "naturalinnovation.org"
+// Where your MQTT server is - you can use frugaliot.naturalinnovation.org for testing, but talk to us if you are deploying live sites using it.
+#define SYSTEM_MQTT_SERVER "frugaliot.naturalinnovation.org"
 
 // It can be slow developing by resting the portal each time, so if wanted define SSID and PASSWORD here, 
 // just don't forget to comment these out before release

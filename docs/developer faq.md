@@ -40,7 +40,7 @@ To add an Organization: Select
 * A password - typical password rules, no spaces e/.g. "mysecret!1234"
   * (at the moment this isn't very secret, we'll fix this as part of [issue#89[(https://github.com/mitra42/frugal-iot/issues/89)
   
-* On `naturalinnovation.org` (currently only mitra can do this - create an issue):
+* On `frugaliot.ovation.org` (currently only mitra can do this - create an issue):
   * `mosquitto_passwd -b /etc/mosquitto` <organization abbreviation> password
   * `service mosquitto restart`   # This might not be necessary, its unclear
 
