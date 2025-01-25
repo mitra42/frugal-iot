@@ -36,10 +36,12 @@
   #define SENSOR_SOIL_0 3000
 #endif
 #ifndef SENSOR_SOIL_100
-  #define SENSOR_SOIL_100 1300
+  #define SENSOR_SOIL_100 1000
 #endif
 
-#define SENSOR_SOIL_ADVERTISEMENT "\n  -\n    topic: " SENSOR_SOIL_TOPIC "\n    name: " SENSOR_SOIL_NAME "\n    type: int\n    display: bar\n    min: 0\n    max: 100\n    color: brown\n    rw: r"
+#define SENSOR_SOIL_ADVERTISEMENT1 "\n  -\n    topic: " SENSOR_SOIL_TOPIC "\n    name: " SENSOR_SOIL_NAME "\n    type: int\n    display: bar\n    min: 0\n    max: 100\n    color: brown\n    rw: r"
+#define SENSOR_SOIL_ADVERTISEMENT2 "\n  -\n    topic: " SENSOR_SOIL_TOPIC "2\n    name: " SENSOR_SOIL_NAME "2\n    type: int\n    display: bar\n    min: 0\n    max: 100\n    color: brown\n    rw: r"
+#define SENSOR_SOIL_ADVERTISEMENT3 "\n  -\n    topic: " SENSOR_SOIL_TOPIC "3\n    name: " SENSOR_SOIL_NAME "3\n    type: int\n    display: bar\n    min: 0\n    max: 100\n    color: brown\n    rw: r"
 
 class Sensor_Soil : public Sensor_Analog {
   public: 
