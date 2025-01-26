@@ -1,5 +1,5 @@
 /*
-  Base class for digital actuators 
+  Base class for pretty much everything - or should be ! 
 */
 
 #include "_settings.h"  // Settings for what to include etc
@@ -40,3 +40,4 @@ void Frugal_Base::dispatchAll(const String &topic, const String &payload) {
   //Sensor::dispatchAll(topic, payload); // there is no Sensor::dispatchAll as no incoming messages to sensors.
   // TODO-25 calls system; sensor; actuator; control.dispatchAll
 }; // Class FrugalBase
+

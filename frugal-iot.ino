@@ -49,6 +49,10 @@
 #ifdef SYSTEM_OTA_WANT
 #include "system_ota.h"
 #endif
+#ifdef SYSTEM_TIME_WANT
+#include "system_time.h"
+#endif
+
 
 
 void setup() {
@@ -68,6 +72,9 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #ifdef SYSTEM_OTA_WANT
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();
+#endif
+#ifdef SYSTEM_TIME_WANT // Synchronize time
+  xTime::setup();
 #endif
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
@@ -133,6 +140,9 @@ void loop() {
 #endif
 #ifdef SYSTEM_OTA_WANT
   xOta::loop();
+#endif
+#ifdef SYSTEM_TIME_WANT
+  xTime::loop();
 #endif
 }
 
