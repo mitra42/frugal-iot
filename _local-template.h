@@ -89,7 +89,6 @@
 
 // Optional devices that work on multiple boards
 //#define ACTUATOR_RELAY_WANT
-//#define SENSOR_ANALOG_EXAMPLE_WANT
 
 // Non physical devices e.g. controls
 //#define CONTROL_BLINKEN_WANT

@@ -31,8 +31,8 @@
   #include "actuator_ledbuiltin.h"
 #endif
 // TO_ADD_SENSOR 
-#ifdef SENSOR_ANALOG_EXAMPLE_WANT
-  #include "sensor_analog_example.h"
+#ifdef SENSOR_ANALOG_INSTANCES_WANT
+  #include "sensor_analog_instances.h"
 #endif
 #ifdef SENSOR_SOIL_WANT
   #include "sensor_soil.h"
@@ -152,8 +152,22 @@ void setup() {
       #ifdef ACTUATOR_RELAY_WANT
         ACTUATOR_RELAY_ADVERTISEMENT
       #endif
-      #ifdef SENSOR_ANALOG_EXAMPLE_WANT
-        SENSOR_ANALOG_EXAMPLE_ADVERTISEMENT
+      #ifdef SENSOR_ANALOG_INSTANCES_WANT
+        #ifdef SENSOR_ANALOG_ADVERTISEMENT_1
+          SENSOR_ANALOG_ADVERTISEMENT_1
+        #endif
+        #ifdef SENSOR_ANALOG_ADVERTISEMENT_2
+          SENSOR_ANALOG_ADVERTISEMENT_2
+        #endif
+        #ifdef SENSOR_ANALOG_ADVERTISEMENT_3
+          SENSOR_ANALOG_ADVERTISEMENT_3
+        #endif
+        #ifdef SENSOR_ANALOG_ADVERTISEMENT_4
+          SENSOR_ANALOG_ADVERTISEMENT_4
+        #endif
+        #ifdef SENSOR_ANALOG_ADVERTISEMENT_5
+          SENSOR_ANALOG_ADVERTISEMENT_5
+        #endif
       #endif
       #ifdef SENSOR_SOIL_WANT
         SENSOR_SOIL_ADVERTISEMENT1

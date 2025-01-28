@@ -22,8 +22,8 @@
 #endif
 
 // Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
-#ifdef SENSOR_ANALOG_EXAMPLE_WANT
-#include "sensor_analog_example.h"
+#ifdef SENSOR_ANALOG_INSTANCES_WANT
+#include "sensor_analog_instances.h"
 #endif
 #ifdef SENSOR_SOIL_WANT
 #include "sensor_soil.h"
@@ -94,9 +94,22 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
 //TODO-25 try adding these to a Sensor* Vector here instead of in constructor
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#ifdef SENSOR_ANALOG_EXAMPLE_WANT
-  Sensor_Analog* s3 = new Sensor_Analog(SENSOR_ANALOG_EXAMPLE_PIN, SENSOR_ANALOG_EXAMPLE_SMOOTH, SENSOR_ANALOG_EXAMPLE_TOPIC, SENSOR_ANALOG_EXAMPLE_MS);
+#ifdef SENSOR_ANALOG_INSTANCES_WANT
+  Sensor_Analog* s3 = new Sensor_Analog(SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, SENSOR_ANALOG_TOPIC_1, SENSOR_ANALOG_MS_1);
 #endif
+#ifdef SENSOR_ANALOG_PIN_2
+  Sensor_Analog* s3 = new Sensor_Analog(SENSOR_ANALOG_PIN_2, SENSOR_ANALOG_SMOOTH_2, SENSOR_ANALOG_TOPIC_2, SENSOR_ANALOG_MS_2);
+#endif
+#ifdef SENSOR_ANALOG_PIN_3
+  Sensor_Analog* s3 = new Sensor_Analog(SENSOR_ANALOG_PIN_3, SENSOR_ANALOG_SMOOTH_3, SENSOR_ANALOG_TOPIC_3, SENSOR_ANALOG_MS_3);
+#endif
+#ifdef SENSOR_ANALOG_PIN_4
+  Sensor_Analog* s3 = new Sensor_Analog(SENSOR_ANALOG_PIN_4, SENSOR_ANALOG_SMOOTH_4, SENSOR_ANALOG_TOPIC_4, SENSOR_ANALOG_MS_4);
+#endif
+#ifdef SENSOR_ANALOG_PIN_5
+  Sensor_Analog* s3 = new Sensor_Analog(SENSOR_ANALOG_PIN_5, SENSOR_ANALOG_SMOOTH_5, SENSOR_ANALOG_TOPIC_5, SENSOR_ANALOG_MS_5);
+#endif
+
 #ifdef SENSOR_BATTERY_WANT
   Sensor_Battery* s4 = new Sensor_Battery(SENSOR_BATTERY_PIN);  // TODO-57 will rarely be as simple as this
 #endif
