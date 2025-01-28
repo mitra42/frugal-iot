@@ -17,7 +17,7 @@ In your _locals.h file you'll need something like.
 #define SYSTEM_OTA_WANT   // Compile OTA support 
 #define SYSTEM_OTA_KEY "sonoff-r2"  // Tell the device which package to download
 #define SYSTEM_OTA_MS 3600000 // Optionally tell the device how often to check for updates - default is 1-hour (360000)
-#define SYSTEM_OTA_SERVERPORTPATH "http://naturalinnovation.org:8080/ota_update/" // Optionally tell the node somewhere else to look for updates
+#define SYSTEM_OTA_SERVERPORTPATH "https://frugaliot.naturalinnovation.org/ota_update/" // Optionally tell the node somewhere else to look for updates
 ```
 Note that a device built without OTA support will need manually flashing (via USB) with a OTA supporting version. 
 
@@ -58,8 +58,8 @@ For now - post a comment in the OTA topic, or email me, and I'll setup a secure 
 ### OTA and picking the right binary
 
 Each device, either at restart, or periodically (default once an hour), 
-will check the server, by default it will send a HTTP request for:
-`naturalinnovation:8080/ota_update/dev/lotus/esp8266-95a754/esp8266-sht`. 
+will check the server, by default it will send a HTTPS request for:
+`frugaliot.naturalinnovation/ota_update/dev/lotus/esp8266-95a754/esp8266-sht`. 
 
 The server finds an appropriate binary, either for that specific node, or for that type of node,
 (`esp8266-sht` in the example above).

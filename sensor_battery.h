@@ -10,8 +10,10 @@
 
 #ifdef LOLIN_C3_PICO
   #define SENSOR_BATTERY_PIN 3
+#elif defined(ESP8266)
+  #define SENSOR_BATTERY_PIN A0
 #else
-  #error Measuring battery voltage is board specific, only currently defined for Lolin C3 Pico
+  #error Measuring battery voltage is board specific, only currently defined for Lolin C3 Pico and ESP8266 where presuming on A0 as that is only A2D
 #endif
 
 #ifndef SENSOR_BATTERY_TOPIC
