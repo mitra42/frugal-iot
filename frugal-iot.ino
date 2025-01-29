@@ -52,6 +52,10 @@
 #ifdef SYSTEM_OTA_WANT
 #include "system_ota.h"
 #endif
+#ifdef SYSTEM_TIME_WANT
+#include "system_time.h"
+#endif
+
 
 
 // TODO-25 move this function by making it a class in control_hysterisis
@@ -86,6 +90,9 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();
 #endif
+#ifdef SYSTEM_TIME_WANT // Synchronize time
+  xTime::setup();
+#endif
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -113,7 +120,13 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
   Sensor_DHT* s2 = new Sensor_DHT(SENSOR_DHT_PIN, "temperature", "humidity", SENSOR_DHT_MS);
 #endif
 #ifdef SENSOR_SOIL_WANT
-  Sensor_Soil* s5 = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS);
+  Sensor_Soil* s5a = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS);
+  #ifdef SENSOR_SOIL_PIN2
+    Sensor_Soil* s5b = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN2, 0, SENSOR_SOIL_TOPIC "2", SENSOR_SOIL_MS);
+  #endif
+  #ifdef SENSOR_SOIL_PIN3
+    Sensor_Soil* s5c = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, SENSOR_SOIL_TOPIC "3", SENSOR_SOIL_MS);
+  #endif
 #endif
 
 // Example definition of control - //TODO-25 move this, but make sure run in setup, not prior to it as need Mqtt
@@ -164,6 +177,9 @@ void loop() {
 #endif
 #ifdef SYSTEM_OTA_WANT
   xOta::loop();
+#endif
+#ifdef SYSTEM_TIME_WANT
+  xTime::loop();
 #endif
 }
 

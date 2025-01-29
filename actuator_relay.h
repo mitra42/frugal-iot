@@ -6,12 +6,11 @@
 */
 #include "actuator_digital.h"
 
-#define ACTUATOR_RELAY_DEBUG
 #define ACTUATOR_RELAY_ADVERTISEMENT "\n  -\n    topic: relay\n    name: Relay\n    type: bool\n    display: toggle\n    rw: rw"
 
 #ifndef ACTUATOR_RELAY_PIN
   //TO_ADD_BOARD
-  #ifdef ESP8266_D1_MINI
+  #ifdef ESP8266_D1
     // Reasonable to assume using the Wemos Relay shield
     #define ACTUATOR_RELAY_PIN D1 // Default on Wemos relay shield for D1 mini or C3 Pico 
   #else 

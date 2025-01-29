@@ -6,11 +6,11 @@
 
 
 #ifndef SENSOR_DHT_PIN
-  #ifdef ESP8266_D1_MINI
+  #ifdef ESP8266_D1
     #define SENSOR_DHT_PIN D4
   #else 
     #ifdef LOLIN_C3_PICO
-      #define SENSOR_DHT_PIN 6 // Currently untested but should be the same as D4 on ESP8266_D1_MINI
+      #define SENSOR_DHT_PIN 6 // Currently untested but should be the same as D4 on ESP8266_D1
     #else
       #error No default pin for DHT sensor on your board
     #endif
