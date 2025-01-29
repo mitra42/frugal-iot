@@ -50,9 +50,6 @@
 #ifdef CONTROL_BLINKEN_WANT
   #include "control_blinken.h"
 #endif
-#ifdef CONTROL_DEMO_MQTT_WANT
-  #include "control_demo_mqtt.h"
-#endif
 #ifdef CONTROL_WANT
   #include "control.h"
 #endif
@@ -178,9 +175,6 @@ void setup() {
       #endif
       #ifdef CONTROL_BLINKEN_WANT
         CONTROL_BLINKEN_ADVERTISEMENT
-      #endif
-      #ifdef CONTROL_DEMO_MQTT_WANT
-        CONTROL_DEMO_MQTT_ADVERTISEMENT
       #endif
       #ifdef CONTROL_WANT // TODO-25 will move and make automated
         CONTROL_ADVERTISEMENT

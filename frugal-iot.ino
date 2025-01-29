@@ -40,9 +40,6 @@
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
 #endif
-#ifdef CONTROL_DEMO_MQTT_WANT
-#include "control_demo_mqtt.h"
-#endif
 #ifdef CONTROL_WANT
 #include "control.h"
 #endif
@@ -154,9 +151,6 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
 
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
-#endif
-#ifdef CONTROL_DEMO_MQTT_WANT
-  cDemoMqtt::setup(); // Must be after system_mqtt
 #endif
 
 #ifdef ANY_DEBUG

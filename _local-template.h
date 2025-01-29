@@ -93,7 +93,6 @@
 
 // Non physical devices e.g. controls
 //#define CONTROL_BLINKEN_WANT
-//#define CONTROL_DEMO_MQTT_WANT
 
 
 // Can also define a default language

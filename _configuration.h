@@ -11,11 +11,6 @@
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 
-// Demo controlling LED based on humidity level
-//#define CONTROL_DEMO_MQTT_WANT // Define in _local.h if want to test with this
-#define CONTROL_DEMO_MQTT_DEBUG
-#define CONTROL_DEMO_MQTT_HUMIDITY_MAX 75 // turn on LED above this humidity
-
 #define SYSTEM_WIFI_WANT // Will always want WiFi until have BLE &/or LoRa
 #define SYSTEM_WIFI_DEBUG
 #define SYSTEM_WIFI_PORTAL_RESTART 120000 // How long (ms) portal should wait before restarting - 2 mins probably about right
