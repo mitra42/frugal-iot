@@ -130,14 +130,13 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
 
 Control* control_humidity = new Control(
   "humidity_control",
-  std::vector<IO*> {
-    new INfloat("humiditynow", 0.0, "humiditynow", true),
-    new INfloat("limit", 50.0, "humidity_limit", false),
-    new INfloat("hysterisis", 5.0, "hysterisis", false) // Note nullptr needed in .ino but not .cpp files :-(
+  std::vector<IN*> {
+    new INfloat("humiditynow", 0.0, "humiditynow", 0, 100, "blue", true),
+    new INfloat("limit", 50.0, "humidity_limit", 0, 100, "red", false),
+    new INfloat("hysterisis", 5.0, "hysterisis", 0, 20, "purple", false) // Note nullptr needed in .ino but not .cpp files :-(
     },
-  std::vector<IO*> {
-    // TODO-25B will be OUTbool
-    new OUTfloat("out", 0, "too_humid", true) // Default to control LED, controllable via "relay_control")
+  std::vector<OUT*> {
+    new OUTbool("out", false, "too_humid", "blue", true), // Default to control LED, controllable via "relay_control")
   },
   std::vector<Control::TCallback> {
     hysterisisAction

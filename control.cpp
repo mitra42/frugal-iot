@@ -10,6 +10,7 @@
 #include <vector>
 #include "control.h"
 #include "system_mqtt.h"
+#include "misc.h"
 
 #ifdef CONTROL_WANT
 
@@ -22,17 +23,35 @@
 
 // Not sure these are useful, since there are const members that need initializing
 //IO::IO() {}
-//IOfloat::IOfloat() : IO() {}
+//IN::IN() {}
+//OUT::OUT() {}
 
-IO::IO(const char * const n, const char * const tl, const bool w): name(n), topicLeaf(tl), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) { 
+IO::IO(const char * const n, const char * const tl, const char* const c, const bool w): name(n), topicLeaf(tl), color(c), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) { 
       //debug("...IO string constructor ");
 };
-IOfloat::IOfloat(const char * const n, float v, const char * const tl, const bool w): IO(n, tl, w), value(v) { 
-      //debug("...IOfloat string constructor ");
-};
-float IOfloat::floatValue() {
+IN::IN(const char * const n, const char * const tl, const char * const c, const bool w): IO(n, tl, c, w) { };
+
+OUT::OUT(const char * const n, const char * const tl, const char * const c, const bool w): IO(n, tl, c, w) { };
+
+float INfloat::floatValue() {
   return value;
 }
+bool INfloat::boolValue() {
+  return value;
+}
+float OUTfloat::floatValue() {
+  return value;
+}
+bool OUTbool::boolValue() {
+  return value;
+}
+float OUTbool::floatValue() {
+  return value;
+}
+bool OUTfloat::boolValue() {
+  return value;
+}
+
 void IO::setup(const char * const sensorname) {
     //debug("IO setup... ");
     // Note topicLeaf subscribed to by IN, not by OUT
@@ -88,7 +107,15 @@ void IO::debug(const char* const where) {
     }
 }
 #ifdef CONTROL_DEBUG
-void IOfloat::debug(const char* const where) {
+void INfloat::debug(const char* const where) {
+    IO::debug(where);
+    Serial.print(" value="); Serial.println(value); 
+}
+void OUTfloat::debug(const char* const where) {
+    IO::debug(where);
+    Serial.print(" value="); Serial.println(value); 
+}
+void OUTbool::debug(const char* const where) {
     IO::debug(where);
     Serial.print(" value="); Serial.println(value); 
 }
@@ -101,24 +128,23 @@ void IOfloat::debug(const char* const where) {
 /* Replaced with debug version below TODO-25
 IN::IN(float v, String const * tp = nullptr, char const * const cl = nullptr): IO(v,tp,cl) {}
 */
-INfloat::INfloat(const char * const n, float v, const char * const tl, const bool w)
-  :   IOfloat(n, v, tl, w) {
+INfloat::INfloat(const char * const n, float v, const char * const tl, float mn, float mx, char const * const c, const bool w)
+  :   IN(n, tl, c, w), value(v), min(mn), max(mx) {
   //debug("...IN string constructor ");
 }
 
-INfloat::INfloat(const INfloat &other) : IOfloat(other.name, other.value, other.topicLeaf, other.wireable) {
-  //other.debug("IN copy constructor from:");
-  //debug("IN copy constructor to:");
+INfloat::INfloat(const INfloat &other) : IN(other.name, other.topicLeaf, other.color, other.wireable) {
+  value = other.value;
 }
 
 void INfloat::setup(const char * const sensorname) {
   //debug("IN setup:");
-  IOfloat::setup(sensorname);
+  IN::setup(sensorname);
   if (topicLeaf) Mqtt->subscribe(topicLeaf);
 }
 
 bool INfloat::dispatchLeaf(const String &tl, const String &p) {
-  IOfloat::dispatchLeaf(tl, p); // Handle wireLeaf
+  IN::dispatchLeaf(tl, p); // Handle wireLeaf
   if (tl == topicLeaf) {
     float v = p.toFloat();
     if (v != value) {
@@ -143,25 +169,43 @@ bool INfloat::dispatchPath(const String &tp, const String &p) {
   return false; 
 }
 
+const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %s\n    max: %s\n    color: %s\n    display: %s\n    rw: %s";
+const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s";
+const char* wireAdvertLine = "\n  -\n    topic: %s\n    name: %s%s\n    type: %s\n    options: %s\n    display: %s\n    rw: %s";
+String *INfloat::advertisement() {
+  String* ad = new String();
+  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
+  if (topicLeaf) {
+    *ad += StringF(valueAdvertLineFloat, topicLeaf, name, "float", min, max, color, "slider", "w");
+  }
+  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
+  if (wireLeaf) {
+    *ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "float", "dropdown", "w");
+  }
+  return ad;
+}
+
 // ========== OUT for some topic we are potentially sending to ===== 
 
 //OUTfloat::OUTfloat() {};
+//OUTbool::OUTbool() {};
 
-/* Replaced with debug version below TODO-25
-OUTfloat::INfloat(float v, String const * tp = nullptr, char const * const cl = nullptr): IO(v,tp,cl) {}
-*/
-OUTfloat::OUTfloat(const char * const n, float v, const char * const tl, const bool w)
-  :   IOfloat(n, v, tl, w) {
-  //debug("...IN char constructor ");
+OUTbool::OUTbool(const char * const n, bool v, const char * const tl, char const * const c, const bool w)
+  :   OUT(n, tl, c, w), value(v)  {
+}
+OUTfloat::OUTfloat(const char * const n, float v, const char * const tl, float mn, float mx, char const * const c, const bool w)
+  :   OUT(n, tl, c, w), value(v), min(mn), max(mx) {
 }
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
 // OUT::dispatchLeaf() - uses IO since wont be incoming topicLeaf or wiredPath, only a wireLeaf
 // OUT::dispatchPath() - wont be called from Control::dispatchAll.
 
-OUTfloat::OUTfloat(const OUTfloat &other) : IOfloat(other.name, other.value, other.topicLeaf, other.wireable) {
-  //other.debug("OUT copy constructor from:");
-  //debug("OUT copy constructor to:");
+OUTbool::OUTbool(const OUTbool &other) : OUT(other.name, other.topicLeaf, other.color, other.wireable) {
+  value = other.value;
+}
+OUTfloat::OUTfloat(const OUTfloat &other) : OUT(other.name, other.topicLeaf, other.color, other.wireable) {
+  value = other.value;
 }
 
 void OUTfloat::set(const float newvalue) {
@@ -173,10 +217,47 @@ void OUTfloat::set(const float newvalue) {
     }
   }
 }
+void OUTbool::set(const bool newvalue) {
+  if (newvalue != value) {
+    value = newvalue;
+    Mqtt->messageSend(topicLeaf, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    if (wiredPath) {
+      Mqtt->messageSend(*wiredPath, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    }
+  }
+}
+// "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
+String *OUTfloat::advertisement() {
+  String* ad = new String("");
+  // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
+  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
+  if (topicLeaf) {
+    *ad += StringF(valueAdvertLineFloat, topicLeaf, name, "float", min, max, color, "bar", "r");
+  }
+  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
+  if (wireLeaf) {
+    *ad += StringF(wireAdvertLine, wireLeaf, name, " wire to", "topic", "float", "dropdown", "w");
+  }
+  return ad;
+}
+// "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
+String *OUTbool::advertisement() {
+  String* ad = new String("");
+
+  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: bar\n    rw: w"
+  if (topicLeaf) {
+    *ad += StringF(valueAdvertLineBool, topicLeaf, name, "bool", color, "toggle", "r");
+  }
+  // e.g. "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
+  if (wireLeaf) {
+    *ad += StringF(wireAdvertLine, wireLeaf, name, " wire to", "topic", "bool", "dropdown", "w");
+  }
+  return ad;
+}
 
 // ==== Control - base class for all controls 
 
-Control::Control(const char * const n, std::vector<IO*> i, std::vector<IO*> o, std::vector<TCallback> a)
+Control::Control(const char * const n, std::vector<IN*> i, std::vector<OUT*> o, std::vector<TCallback> a)
     : Frugal_Base() , name(n), inputs(i), outputs(o), actions(a) {
     controls.push_back(this);
 }
@@ -230,6 +311,17 @@ void Control::dispatch(const String &topicPath, const String &payload ) {
       }
     }
 }
+String* Control::advertisement() {
+  String* ad = new String();
+  for (auto &input : inputs) {
+    *ad += *(input->advertisement());
+  }
+  for (auto &output : outputs) {
+    *ad += *(output->advertisement());
+  }
+  return ad;
+}
+
 // Note Static
 void Control::setupAll() {
   for (Control* c: controls) {
