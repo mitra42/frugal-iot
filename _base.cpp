@@ -1,5 +1,5 @@
 /*
-  Base class for digital actuators 
+  Base class for pretty much everything - or should be ! 
 */
 
 #include "_settings.h"  // Settings for what to include etc
@@ -43,3 +43,4 @@ void Frugal_Base::dispatch(const String &topic, const String &payload) { } // De
 void Frugal_Base::dispatchAll(const String &topic, const String &payload) { // Default does nothing - actuators and controls and some system will override
 #pragma GCC diagnostic pop
 }; // Class FrugalBase
+

@@ -55,7 +55,9 @@
 #ifdef SYSTEM_FS_WANT
 #include "system_fs.h" //TODO-110 split into SYSTEM_SD and SYSTEM_SPIFFS
 #endif
-
+#ifdef SYSTEM_TIME_WANT
+#include "system_time.h"
+#endif
 
 // TODO-25 move this function by making it a class in control_hysterisis
 Control::TCallback hysterisisAction = [](Control* self) {
@@ -88,6 +90,9 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #ifdef SYSTEM_OTA_WANT
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();
+#endif
+#ifdef SYSTEM_TIME_WANT // Synchronize time
+  xTime::setup();
 #endif
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
@@ -194,6 +199,9 @@ void loop() {
 #endif
 #ifdef SYSTEM_OTA_WANT
   xOta::loop();
+#endif
+#ifdef SYSTEM_TIME_WANT
+  xTime::loop();
 #endif
 }
 

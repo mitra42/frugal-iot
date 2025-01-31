@@ -31,6 +31,7 @@ and then down the right hand side.
 |D1,5|10 | Analog always reads 0 on C3 - used by Relay shield - used by SHTshield for I2C-SCL |
 |D2,4|8  | Analog always reads 0 on C3  used by SHT shield for I2C-SDA |
 |D3,0|7  | Analog reads 0 and seems connected to LED |
+|    |   | C3-pico connected (via solder pad) to LED|
 |D4,2,GPIO0|6  | Used for DHT library must be high at boot (pulled high by DHT card);SD shield default  |
 |GND |  |GND| |
 |5V  |  |5V |Soil Sensor|
