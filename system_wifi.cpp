@@ -27,7 +27,7 @@
 #else
     #error "This example only supports ESP32 and ESP8266"
 #endif 
-#include <WiFiSettings.h>  // https://github.com/Juerd/ESP-WiFiSettings
+#include "src/lib/WiFiSettings/WiFiSettings.h"  // https://github.com/Juerd/ESP-WiFiSettings
 
 namespace xWifi {
 
@@ -136,6 +136,7 @@ void setupLanguages() {
       T.Project = F("Proyek");
     }
   #endif
+  /*
   #if defined LANGUAGE_ID || defined LANGUAGE_ALL
     if (WiFiSettings.language == "id") {
       _WSL_T.title = F("Konfigurasi");
@@ -156,6 +157,7 @@ void setupLanguages() {
       _WSL_T.bahasa = F("Bahasa");
     }
   #endif
+*/
 }
 
 // Note this is blocking - so order is important, in particular it must complete this before trying xMqtt::setup

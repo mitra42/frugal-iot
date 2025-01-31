@@ -1,3 +1,9 @@
+/* This is a copy of ESP-WiFiSettings - that library is excellent but had 
+ * a number of limitations - including not supporting Indonesia. 
+ * At some point, the effort to get PR's included was too much so its 
+ * copied here, and future changes will be made here.
+ */
+
 #include "WiFiSettings.h"
 #ifdef ESP32
     #define ESPFS SPIFFS
@@ -25,7 +31,7 @@
 #include <DNSServer.h>
 #include <limits.h>
 #include <vector>
-#include <WiFiSettings_strings.h>
+#include "WiFiSettings_strings.h"
 
 WiFiSettingsLanguage::Texts _WSL_T;
 
