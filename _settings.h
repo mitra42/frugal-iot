@@ -12,7 +12,7 @@
 #include "_local.h"               // Will fail if user hasn't copied _local-template.h to _local.h and edited
 
 
-// TODO_ADD_SENSOR - add in appropriate line below depending on superclass
+// TO_ADD_SENSOR - add in appropriate line below depending on superclass
 #if defined(SENSOR_SHT_WANT) || defined(SENSOR_DHT_WANT)
   #define SENSOR_HT_WANT
 #endif
@@ -73,7 +73,7 @@
 
 
 
-// TODO_ADD_BOARD
+// TO_ADD_BOARD
 // shields compatible with D1 and its ESP8266 not C-pico which has same pin layout but different availability esp of analog
 #if defined(ESP8266_D1_MINI_PROv2) || defined (ESP8266_D1_MINI) || defined(ESP8266_D1_PRO_CLONE)
   #define ESP8266_D1

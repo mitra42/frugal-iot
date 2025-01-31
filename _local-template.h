@@ -69,7 +69,7 @@
   #define SENSOR_BATTERY_WANT
   #define SENSOR_BATTERY_DEBUG
   #define SENSOR_BATTERY_MS 15000 // While debugging I want readings every 15 seconds
-  // #define SYSTEM_OTA_WANT - no OTA on ESP32 yet  TODO-37
+  #define SYSTEM_OTA_WANT
   #define SYSTEM_OTA_KEY "esp32-soil"
 #endif //BOARD3
 #ifdef SONOFF_R2
