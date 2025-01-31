@@ -38,7 +38,8 @@
 #include "system_fs.h"
 #include "_base.h"
 #include "control.h" // For IN - TODO-110 move IN to Frugal_base
-
+#include "system_time.h" // For system_time.now
+#include "misc.h"
 // May change for different boards
 // #define SYSTEM_SD_CHIPSELECT D8   // SPI select pin used - note SS defined as 15 - not sure if that is D8
 
@@ -55,13 +56,25 @@ fs::File System_SD::open(const char *filename, const char *mode) {
 fs::File System_SD::open(const String &filename, const char *mode ) { 
   return SD.open(filename, mode);
 }
-
+boolean System_SD::exists(const char *filename) {
+  return SD.exists(filename);
+}
+boolean System_SD::exists(const String &filename) {
+  return SD.exists(filename);
+}
 fs::File System_SPIFFS::open(const char *filename, const char *mode) { 
   return ESPFS.open(filename, mode);
 }
 fs::File System_SPIFFS::open(const String &filename, const char *mode) { 
   return ESPFS.open(filename, mode);
 }
+boolean System_SPIFFS::exists(const char *filename) {
+  return ESPFS.exists(filename);
+}
+boolean System_SPIFFS::exists(const String &filename) {
+  return ESPFS.exists(filename);
+}
+
 #ifdef SYSTEM_SPIFFS_WANT
 // Copied from system_wifi.cpp which got it from ESP-WiFiSettings library
 bool System_FS::spurt(const String& filename, const String& content) {
@@ -172,13 +185,27 @@ void System_SPIFFS::setup() {
   }
 }
 
-    System_Logger::System_Logger(const char * const n, System_FS* f, std::vector<IO*> i) : Frugal_Base(), name(n), fs(f), inputs(i) { }
+System_Logger::System_Logger(const char * const n, System_FS* f, const char * const r, std::vector<IO*> i) : Frugal_Base(), name(n), fs(f), root(r), inputs(i) { }
 
-    void System_Logger::setup() {
-      fs->setup();
-      for (auto &input : inputs) {
-        input->setup(name);
-      }
-    }
+void System_Logger::setup() {
+  fs->setup();
+  for (auto &input : inputs) {
+    input->setup(name);
+  }
+}
+
+// Basis append for logger, there might be other sets of parameters needed = extend as required.
+void System_Logger::append(String &topicPath, String &payload) {
+  time_t _now = systemTime.now();
+  struct tm* tmstruct = localtime(&_now);
+  // TODO move to 2007-04-05T14:30Z
+
+  // Match logger: String line = StringF("%d,\"%s\"\n", _now, payload);
+  String line = StringF("%04d-%02d-$02d %02d:%02d:%02d,\"%s\"\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec, payload);  
+  String filepath = StringF("%s%s/%04d-%02d-%02d.csv", root, topicPath, (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday);
+  File f = fs->open(filepath,"a"); // Check it will do this recursively creating directories - it might not ! 
+  f.write(line.c_str()); // Will append because opened with "a"
+  f.close();
+}
 
 #endif //SYSTEM_FS_WANT

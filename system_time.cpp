@@ -38,8 +38,10 @@
 SystemTime::SystemTime() {}
 SystemTime::~SystemTime() {}
 
+// Last time synced with NTP in seconds
 time_t _lastSyncTime;
 
+// Callback when time sync swith NTP
 void NTPSyncTimeCallback(struct timeval* tv) {
   #ifdef SYSTEM_TIME_DEBUG
     Serial.println("Time: synced");
@@ -47,6 +49,7 @@ void NTPSyncTimeCallback(struct timeval* tv) {
   _lastSyncTime = (*tv).tv_sec;
 }
 
+// Initialize all the time stuff - set Timezone and start asynchronous sync with NTP 
 void SystemTime::init(const char* timeZone) {
   #ifdef SYSTEM_TIME_DEBUG
     Serial.println("Time: Init");
@@ -66,7 +69,7 @@ void SystemTime::init(const char* timeZone) {
     Serial.println("Time: Init done");
   #endif
 }
-
+// Sync the time with NTP
 void SystemTime::sync() {
   if (!getLocalTime(&_localTime)) {
     #ifdef SYSTEM_TIME_DEBUG
@@ -75,11 +78,13 @@ void SystemTime::sync() {
   }
 }
 
+//True if time has been successfully set (with NTP)
 bool SystemTime::isTimeSet() {
   time(&_now);
   return (_now > JAN_01_2024); 
 }
 
+//Return time in milliseconds since Epoch
 time_t SystemTime::now() {
   time(&_now);
   localtime_r(&_now, &_localTime);
@@ -102,6 +107,7 @@ namespace xTime {
       systemTime.sync();
   }
 
+  //TODO this is really only for debugging - but should have a periodic sync with NTP
   void loop() {
     if (nextLoopTime <= millis() ) {
       if (! systemTime.isTimeSet()) {

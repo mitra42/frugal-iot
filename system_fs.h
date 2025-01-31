@@ -30,10 +30,17 @@ class System_FS {
   public:
     System_FS() ;
     virtual void setup();
-    virtual fs::File open(const char *filename, const char *mode = "r");
-    virtual fs::File open(const String &filename, const char *mode = "r");
     bool spurt(const String& fn, const String& content);  // TODO-110 port to SD
     String slurp(const String& fn);  // TODO-110 port to SD
+
+    // --- these are just the underlying FS methods exposed
+    virtual fs::File open(const char *filename, const char *mode = "r");
+    virtual fs::File open(const String &filename, const char *mode = "r");
+    virtual boolean exists(const char *filename);
+    virtual boolean exists(const String &filename);
+
+    // Once you have a file you should be able to append(String&) and close(); independent of whether its SPIFFS LittleFS or SD
+
     #ifdef SYSTEM_FS_DEBUG
       String formatBytes(size_t bytes);
       void printDirectory(const char* path, int numTabs=0);
@@ -41,13 +48,15 @@ class System_FS {
     #endif
 };
 
-// TODO-11- maybe just merge SPIFFS (&LittleFS) & SD as interface looks same
 class System_SPIFFS : public System_FS {
   public:
     System_SPIFFS();
     void setup();
     fs::File open(const char *filename, const char *mode);
     fs::File open(const String &filename, const char *mode);
+    virtual boolean exists(const char *filename);
+    virtual boolean exists(const String &filename);
+
 };
 class System_SD : public System_FS {
   public:
@@ -55,15 +64,19 @@ class System_SD : public System_FS {
     void setup();
     fs::File open(const char *filename, const char *mode);
     fs::File open(const String &filename, const char *mode);
+    virtual boolean exists(const char *filename);
+    virtual boolean exists(const String &filename);
 };
 
 class System_Logger : public Frugal_Base {
   public:
     const char * const name; // TODO maybe push this to Frugal_Base - also in Control
     System_FS* fs; // Will be pointer to System_SD or System_SPIFFS
+    const char* const root; 
     std::vector<IO*> inputs; // Vector of inputs
-    System_Logger(const char * const n, System_FS* f, std::vector<IO*> i);
+    System_Logger(const char * const name, System_FS* fs, const char* const root, std::vector<IO*> i);
     void setup();
+    void append(String &topicPath, String &payload);
 };
 #endif //SYSTEM_FS_WANT
 #endif //SYSTEM_FS_H

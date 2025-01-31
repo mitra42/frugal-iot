@@ -163,6 +163,7 @@ Control* control_humidity = new Control(
 System_Logger* system_logger = new System_Logger(
   "system_logger",
   fs2, // TODO-110 Using spiffs for testing for now
+  "/",
   std::vector<IO*> {
     //IOfloat(char const * const name, float v, char const * const topicLeaf = nullptr, const bool wireable = true);
     new INfloat("log1", 0.0, "log1", true),
