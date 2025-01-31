@@ -44,6 +44,7 @@ class IN : public IO {
     virtual String* advertisement();
     virtual float floatValue();
     virtual bool boolValue();
+    virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
 };
 class OUT : public IO {
   public:
@@ -51,6 +52,8 @@ class OUT : public IO {
     virtual String* advertisement();
     virtual float floatValue();
     virtual bool boolValue();
+    virtual void sendWired();
+    virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
 };
 class INfloat : public IN {
   public:
@@ -96,6 +99,7 @@ class OUTfloat : public OUT {
     OUTfloat(const OUTfloat &other);
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();
+    void sendWired();
     void set(const float newvalue);
     void debug(const char* const where);
     String* advertisement();
@@ -109,6 +113,7 @@ class OUTbool : public OUT {
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();
     void set(const bool newvalue);
+    void sendWired();
     void debug(const char* const where);
     String* advertisement();
 };
@@ -117,24 +122,26 @@ class Control : public Frugal_Base {
   public:
     const char * const name;
     typedef std::function<void(Control*)> TCallback;
-    std::vector<IN*> inputs; // Vector of inputs // TODO-25B change to
-    std::vector<OUT*> outputs; // Vector of outputs  // TODO-25B change to
+    std::vector<IN*> inputs; // Vector of inputs
+    std::vector<OUT*> outputs; // Vector of outputs
     std::vector<TCallback> actions; // Vector of actions
 
     Control(const char * const name, std::vector<IN*> i, std::vector<OUT*> o, std::vector<TCallback> a); 
     void setup();
     void dispatch(const String &topicPath, const String &payload);
+    String* advertisement();
     static void setupAll();
+    static void loopAll();
     static void dispatchAll(const String &topicPath, const String &payload);
+    static String* advertisementAll();
     #ifdef CONTROL_DEBUG
       void debug(const char* const blah);
     #endif //CONTROL_DEBUG
-    String* advertisement();
 };
 
 extern std::vector<Control*> controls;
 
-// TODO-25 make this auto-generated and move to control_hysterisis.h
+// TODO-25 if auto-generation works remove this
 #define CONTROL_ADVERTISEMENT "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w" \
                               "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w" \
                               "\n  -\n    topic: hysterisis\n    name: Plus or Minus\n    type: float\n    min: 0\n    max: 20\n    display: slider\n    rw: w" \

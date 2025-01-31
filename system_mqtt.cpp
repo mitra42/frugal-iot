@@ -1,8 +1,8 @@
 /* MQTT client
 * 
 * Configuration
-* Required: SYSTEM_MQTT_MS SYSTEM_MQTT_PASSWORD //TODO-25 check
-* Optional: ESP8266 SYSTEM_MQTT_DEBUG SYSTEM_WIFI_WANT SYSTEM_MQTT_LOOPBACK //TODO-25 check
+* Required: SYSTEM_MQTT_MS SYSTM_MQTT_USER SYSTEM_MQTT_PASSWORD
+* Optional: ESP8266 SYSTEM_MQTT_DEBUG 
 * 
 * Note definitions
 * topicpath = full path /dev/project/node/topicleaf and usually String or String& or String*

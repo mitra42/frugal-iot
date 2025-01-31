@@ -181,6 +181,10 @@ void setup() {
       #endif
     )
   );
+  // TODO-25 check this works then delete the one above
+  #ifdef CONTROL_WANT
+    *advertisePayload += *(Control::advertisementAll());
+  #endif
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
   #endif

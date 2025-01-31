@@ -11,7 +11,7 @@
 
 Frugal_Base::Frugal_Base() { }; // Intentionally nothing here
 
-void Frugal_Base::setup() { }; // TODO-25 what should go here - maybe nothing since subclasses will loop through list and no-action is a reasonable thing.
+void Frugal_Base::setup() { }; // This will get called if no setup() in subclass 
 
 void Frugal_Base::setupAll() {
   #ifdef SENSOR_WANT // If there are any sensors
@@ -25,13 +25,14 @@ void Frugal_Base::setupAll() {
   #endif
   // TODO-25 calls system.setupAll
 }
-void Frugal_Base::loop() { Serial.println("XXX25 erroneously calling Frugal_Base::loop"); }; // TODO-25 what should go here - maybe nothing since subclasses will loop through list and calling thsi could just mean no loop() was needed in subclass
+void Frugal_Base::loop() { }; // This will get called if no loop() in subclass 
 
 void Frugal_Base::loopAll() {
   Sensor::loopAll();
+  Control::loopAll();
   //Actuator::loopAll(); // Currently no loops in Actuators
   //Control::loopAll(); // Currently no loops in Controls
-  // TODO-25 call system; control.loopAll
+  // TODO-25 call system;
 }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

@@ -69,11 +69,20 @@ void IO::setup(const char * const sensorname) {
     //debug("...IO setup ");
 }
 
-bool IO::dispatchLeaf(const String &tl, const String &p) {
+bool IN::dispatchLeaf(const String &tl, const String &p) {
   if (tl == wireLeaf) {
     if (!(wiredPath && (p == *wiredPath))) {
       wiredPath = new String(p);
       Mqtt->subscribe(*wiredPath);
+    }
+  }
+  return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
+}
+bool OUT::dispatchLeaf(const String &tl, const String &p) {
+  if (tl == wireLeaf) {
+    if (!(wiredPath && (p == *wiredPath))) {
+      wiredPath = new String(p);
+      sendWired(); // Destination changed, send current value
     }
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
@@ -125,12 +134,8 @@ void OUTbool::debug(const char* const where) {
 
 // INfloat::INfloat() {}
 
-/* Replaced with debug version below TODO-25
-IN::IN(float v, String const * tp = nullptr, char const * const cl = nullptr): IO(v,tp,cl) {}
-*/
 INfloat::INfloat(const char * const n, float v, const char * const tl, float mn, float mx, char const * const c, const bool w)
   :   IN(n, tl, c, w), value(v), min(mn), max(mx) {
-  //debug("...IN string constructor ");
 }
 
 INfloat::INfloat(const INfloat &other) : IN(other.name, other.topicLeaf, other.color, other.wireable) {
@@ -208,22 +213,30 @@ OUTfloat::OUTfloat(const OUTfloat &other) : OUT(other.name, other.topicLeaf, oth
   value = other.value;
 }
 
+// Called when either value, or wiredPath changes
+void OUTfloat::sendWired() {
+    if (wiredPath) {
+      Mqtt->messageSend(*wiredPath, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    }
+}
 void OUTfloat::set(const float newvalue) {
   if (newvalue != value) {
     value = newvalue;
     Mqtt->messageSend(topicLeaf, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    sendWired();
+  }
+}
+// Called when either value, or wiredPath changes
+void OUTbool::sendWired() {
     if (wiredPath) {
       Mqtt->messageSend(*wiredPath, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
     }
-  }
 }
 void OUTbool::set(const bool newvalue) {
   if (newvalue != value) {
     value = newvalue;
     Mqtt->messageSend(topicLeaf, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
-    if (wiredPath) {
-      Mqtt->messageSend(*wiredPath, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
-    }
+    sendWired();
   }
 }
 // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
@@ -283,7 +296,6 @@ void Control::setup() {
     }
     //debug("...Control setup ");
   }
-
 void Control::dispatch(const String &topicPath, const String &payload ) {
     bool changed = false;
     String* tl = Mqtt->topicLeaf(topicPath);
@@ -298,9 +310,9 @@ void Control::dispatch(const String &topicPath, const String &payload ) {
         }
     }
     for (auto &output : outputs) {
-      if (tl) { // Will be nullptr if no match
+      if (tl) { // Will be nullptr if no match i.e. path is not local
         // Both inputs and outputs have possible 'control' and therefore dispatchLeaf
-        output->dispatchLeaf(*tl, payload); // TODO-25 Setting an output topic *should* but doesnt yet send a message to new outout.topic
+        output->dispatchLeaf(*tl, payload); // Will send value if wiredPath changed
       }
     }
     if (changed) { 
@@ -311,6 +323,7 @@ void Control::dispatch(const String &topicPath, const String &payload ) {
       }
     }
 }
+// Ouput advertisement for control - all of IN and OUTs 
 String* Control::advertisement() {
   String* ad = new String();
   for (auto &input : inputs) {
@@ -329,10 +342,23 @@ void Control::setupAll() {
   }
 }
 // Note Static
+void Control::loopAll() {
+  for (Control* c: controls) {
+    c->loop();
+  }
+}
+// Note Static
 void Control::dispatchAll(const String &topicPath, const String &payload) {
   for (Control* c: controls) {
     c->dispatch(topicPath, payload);
   }
+}
+String* Control::advertisementAll() {
+  String* ad = new String();
+  for (Control* c: controls) {
+    *ad += *(c->advertisement());
+  }
+  return ad;
 }
 
 std::vector<Control*> controls;

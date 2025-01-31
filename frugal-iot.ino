@@ -126,7 +126,7 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
   #endif
 #endif
 
-// Example definition of control - //TODO-25 move this, but make sure run in setup, not prior to it as need Mqtt
+// Example definition of control - //TODO-25 move this to control_histerisis, but make sure run in setup, not prior to it as need Mqtt
 
 Control* control_humidity = new Control(
   "humidity_control",
