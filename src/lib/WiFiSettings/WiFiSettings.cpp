@@ -353,6 +353,7 @@ void WiFiSettingsClass::portal() {
             if (s == ssid) found = true;
         }
         if (!found && ssid.length()) {
+            // TODO-39 "not in range"  should be internationalized
             String opt = F("<option value='{ssid}' selected>{ssid} (&#x26a0; not in range)</option>");
             opt.replace("{ssid}", html_entities(ssid));
             http.sendContent(opt);
