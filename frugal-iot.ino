@@ -82,14 +82,7 @@ void setup() {
 // put setup code here, to run once:
 xWifi::setup();
 Mqtt = new MqttManager();
-xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
-#ifdef SYSTEM_OTA_WANT
-  // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
-  xOta::setup();
-#endif
-#ifdef SYSTEM_TIME_WANT // Synchronize time
-  xTime::setup();
-#endif
+
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -146,11 +139,24 @@ Control* control_humidity = new Control(
 
 #pragma GCC diagnostic pop
 
+xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+#ifdef SYSTEM_OTA_WANT
+  // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
+  xOta::setup();
+#endif
+#ifdef SYSTEM_TIME_WANT // Synchronize time
+  xTime::setup();
+#endif
+
+
+
 Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuatorsand controls
 
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
 #endif
+   // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
+  xDiscovery::fullAdvertise();
 
 #ifdef ANY_DEBUG
   Serial.println(F("FrugalIoT Starting Loop"));

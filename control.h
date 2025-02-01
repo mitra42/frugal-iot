@@ -141,10 +141,5 @@ class Control : public Frugal_Base {
 
 extern std::vector<Control*> controls;
 
-// TODO-25 if auto-generation works remove this
-#define CONTROL_ADVERTISEMENT "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w" \
-                              "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w" \
-                              "\n  -\n    topic: hysterisis\n    name: Plus or Minus\n    type: float\n    min: 0\n    max: 20\n    display: slider\n    rw: w" \
-                              "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
 
 #endif //CONTROL_H
