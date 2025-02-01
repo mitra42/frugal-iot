@@ -40,8 +40,8 @@
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
 #endif
-#ifdef CONTROL_DEMO_MQTT_WANT
-#include "control_demo_mqtt.h"
+#ifdef CONTROL_WANT
+#include "control.h"
 #endif
 #ifdef SYSTEM_DISCOVERY_WANT
 #include "system_discovery.h"
@@ -54,6 +54,20 @@
 #endif
 
 
+
+// TODO-25 move this function by making it a class in control_hysterisis
+Control::TCallback hysterisisAction = [](Control* self) {
+    const float hum = self->inputs[0]->floatValue();
+    const float lim = self->inputs[1]->floatValue();
+    const float hysterisis = self->inputs[2]->floatValue();
+    if (hum > (lim + hysterisis)) {
+        self->outputs[0]->set(1);
+    }
+    if (hum < (lim - hysterisis)) {
+        self->outputs[0]->set(0);
+    }
+  // If  lim-histerisis < hum < lim+histerisis then don't change setting
+};
 
 void setup() {
 #ifdef ANY_DEBUG
@@ -68,14 +82,7 @@ void setup() {
 // put setup code here, to run once:
 xWifi::setup();
 Mqtt = new MqttManager();
-xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
-#ifdef SYSTEM_OTA_WANT
-  // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
-  xOta::setup();
-#endif
-#ifdef SYSTEM_TIME_WANT // Synchronize time
-  xTime::setup();
-#endif
+
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -111,16 +118,45 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
     Sensor_Soil* s5c = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, SENSOR_SOIL_TOPIC "3", SENSOR_SOIL_MS);
   #endif
 #endif
+
+// Example definition of control - //TODO-25 move this to control_histerisis, but make sure run in setup, not prior to it as need Mqtt
+
+Control* control_humidity = new Control(
+  "humidity_control",
+  std::vector<IN*> {
+    new INfloat("humiditynow", 0.0, "humiditynow", 0, 100, "blue", true),
+    new INfloat("limit", 50.0, "humidity_limit", 0, 100, "red", false),
+    new INfloat("hysterisis", 5.0, "hysterisis", 0, 20, "purple", false) // Note nullptr needed in .ino but not .cpp files :-(
+    },
+  std::vector<OUT*> {
+    new OUTbool("out", false, "too_humid", "blue", true), // Default to control LED, controllable via "relay_control")
+  },
+  std::vector<Control::TCallback> {
+    hysterisisAction
+  });
+
+  control_humidity->debug("frugal-iot.ino after instantiation");
+
 #pragma GCC diagnostic pop
 
-Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuators
+xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+#ifdef SYSTEM_OTA_WANT
+  // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
+  xOta::setup();
+#endif
+#ifdef SYSTEM_TIME_WANT // Synchronize time
+  xTime::setup();
+#endif
+
+
+
+Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuatorsand controls
 
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
 #endif
-#ifdef CONTROL_DEMO_MQTT_WANT
-  cDemoMqtt::setup(); // Must be after system_mqtt
-#endif
+   // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
+  xDiscovery::fullAdvertise();
 
 #ifdef ANY_DEBUG
   Serial.println(F("FrugalIoT Starting Loop"));

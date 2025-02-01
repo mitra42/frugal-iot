@@ -58,7 +58,7 @@
 #endif
 
 // TO_ADD_CONTROL - there is not, yet, a class hierarchy - coming soon
-#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_DEMO_MQTT_DEBUG)
+#if defined(CONTROL_BLINKEN_DEBUG)
   #define CONTROL_DEBUG
 #endif
 

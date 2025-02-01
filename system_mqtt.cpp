@@ -1,8 +1,8 @@
 /* MQTT client
 * 
 * Configuration
-* Required: SYSTEM_MQTT_MS SYSTEM_MQTT_PASSWORD //TODO-25 check
-* Optional: ESP8266 SYSTEM_MQTT_DEBUG SYSTEM_WIFI_WANT SYSTEM_MQTT_LOOPBACK //TODO-25 check
+* Required: SYSTEM_MQTT_MS SYSTM_MQTT_USER SYSTEM_MQTT_PASSWORD
+* Optional: ESP8266 SYSTEM_MQTT_DEBUG 
 * 
 * Note definitions
 * topicpath = full path /dev/project/node/topicleaf and usually String or String& or String*
@@ -34,12 +34,10 @@
 #include "system_discovery.h"
 #include "system_mqtt.h"
 #include "actuator.h"
+#include "control.h"
 //TODO-25 replace with control.h when ready
   #ifdef CONTROL_BLINKEN_WANT
     #include "control_blinken.h"
-  #endif
-  #ifdef CONTROL_DEMO_MQTT_WANT
-    #include "control_demo_mqtt.h"
   #endif
 #include <forward_list>
 
@@ -148,6 +146,18 @@ void MqttManager::subscribe(const String& topicpath) {
   }
 }
 
+String* MqttManager::topicPath(char const * const topicleaf) { // TODO find other places do this and replace with call to TopicPath
+  return new String(*xDiscovery::topicPrefix + topicleaf);
+}
+String* MqttManager::topicLeaf(const String &topicpath) { // TODO find other places do this and replace with call to topicLeaf
+  if (topicpath.startsWith(*xDiscovery::topicPrefix)) {
+    String* const topicleaf = new String(topicpath);
+    topicleaf->remove(0, xDiscovery::topicPrefix->length());
+    return topicleaf;
+  } else {
+    return nullptr;
+  }
+}
 // Short cut to allow subscribing based on an actuator or sensors own topic
 void MqttManager::subscribe(const char* topicleaf) {
   const String * const topicpath = new String(*xDiscovery::topicPrefix + topicleaf);
@@ -157,23 +167,19 @@ void MqttManager::dispatch(const String &topicpath, const String &payload) {
   if (topicpath.startsWith(*xDiscovery::topicPrefix)) {
     String* const topicleaf = new String(topicpath);
     topicleaf->remove(0, xDiscovery::topicPrefix->length());
-    //Sensor::dispatchAll(*topicleaf, payload);
+    #ifdef SENSOR_WANT
+      //Sensor::dispatchAll(*topicleaf, payload); // None of the sensors have subscriptions
+    #endif
     #ifdef ACTUATOR_WANT
       Actuator::dispatchAll(*topicleaf, payload);
     #endif
-    //TODO-25 temporary hack till Control::dispatchAll ready
-      #ifdef CONTROL_DEMO_MQTT_WANT
-      cDemoMqtt::dispatchLeaf(*topicleaf, payload);
-      #endif
     //TODO-25 temporary hack till Control::dispatchAll readu
       #ifdef CONTROL_BLINKEN_WANT
         cBlinken::dispatchLeaf(*topicleaf, payload);
       #endif
     }
-  //TODO-25 Control::dispatchAll(*topicpath, payload);
-  //TODO-25 temporary hack till Control::dispatchAll readu
-    #ifdef CONTROL_DEMO_MQTT_WANT
-      cDemoMqtt::dispatchPath(topicpath, payload);
+    #ifdef CONTROL_WANT
+      Control::dispatchAll(topicpath, payload);
     #endif
   //TODO-25 System::dispatchAll(*topicpath, payload)
 }
@@ -248,6 +254,8 @@ void MqttManager::messageSend(const String &topicpath, const String &payload, co
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
   dispatch(topicpath, payload);
 }
+
+
 
 void MqttManager::messageSend(const char* const topicleaf, const String &payload, const bool retain, const int qos) {
   const String * const topicpath = new String(*xDiscovery::topicPrefix + topicleaf); // TODO can merge into next line
