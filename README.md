@@ -27,15 +27,15 @@ the quality of our documentation so happy to help!
 There are a few components of the environment - with separate repos
 
 * [Dev board](https://www.github.com/mitra42/frugal-iot) - programmed from the Arduino IDE in C++
-* MQTT Broker - currently off-the-shelf Mosquitto, with a development server running on naturalinnovation.org
+* MQTT Broker - currently off-the-shelf Mosquitto, with a development server running on frugaliot.naturalinnovation.org
 * [MQTT Logger](https://www.github.com/mitra42/frugal-iot-logger) logs MQTT messsages to files for later analysis and graphing.
 * [HTTP Management server](https://www.github.com/mitra42/frugal-iot-server) - programmed in Node/Javascript, tested on Macs and Linux and 
-  with a demo server at naturalinnovation.org:8080 which incorporates the `logger`
+  with a demo server at frugaliot.naturalinnovation.org:8080 which incorporates the `logger`
 * [HTTP/CSS/JS client](https://www.github.com/mitra42/frugal-iot-client). Its not dependent on any platform/framework, and uses Webcomponents 
   for its modularity so it should run in any modern browser (including most phones)
 * Stand alone server intended to run on sites with multiple sensors - not yet started, but it will probably be a Raspberry Pi unless we can shoe-horn it into a ESP32
 
-Because the demo servers on naturalinnovation.org, it is perfectly possible to develop the firmware without running your own servers, 
+Because the demo servers on `https://frugaliot.naturalinnovation.org`, it is perfectly possible to develop the firmware without running your own servers, 
 or to fork the client, and interact with the servers.  
 
 ### Test Harware/Firmware environment
@@ -43,7 +43,7 @@ Our current test dev board is a ESP8266 Lolin D1 Mini with a SHT30 Temp & Humidi
 I expect to start testing other combinations of boards and sensors soon. 
 Instructions for other board/sensor combinations are welcome. 
 
-I also test on Lolin C3 Pico (ESP32-C3), and the code has been run on SONOFF R2 digital switches. 
+I also test on Lolin C3 Pico (ESP32-C3), and the code has been run on SONOFF R2 digital switches, and on the D1 Mini Pro (Green); 
 
 
 #### Arduino IDE basics - skip if you know what you are doing
@@ -83,14 +83,13 @@ I also test on Lolin C3 Pico (ESP32-C3), and the code has been run on SONOFF R2 
     * Let us know by either (opening a Github issue)[https://github.com/mitra42/frugal-iot/issues/new/choose], or editing `html/server/config.yaml` and doing a Pull Request
   * Give your board a name and description
   * Click SAVE then RESTART
-* The device should now connect to the mqtt server at naturalinnovation.org
+* The device should now connect to the mqtt server at frugaliot.naturalinnovation.org
 
 If you get the configuration wrong, you'll need (for now - part of issue#22) to 
 * erase the settings - on Arduino IDE this is Tools->Erase->All Flash
 * recompile/flash.
 
-Open a browser to http://naturalinnovation:8080 
-- note this will move to a https address with its own domain name 
+Open a browser to https://frugaliot.naturalinnovation
 
 #### Other languages
 At the moment (Nov2024) - see [issue #42](https://github.com/mitra42/frugal-iot/issues/42), language support is being added. 
@@ -106,7 +105,7 @@ Unfortunately we haven't found a way to control the library compilation from the
 
 ### Server development
 
-Because of the demo servers on naturalinnovation.org, it is perfectly possible to develop the firmware without running your own servers.
+Because of the demo servers on frugaliot.naturalinnovation.org, it is perfectly possible to develop the firmware without running your own servers.
 But if you want to do server or client development ... see the README.md on each component's repository.
 
 

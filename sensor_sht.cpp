@@ -24,9 +24,6 @@
 
 #ifdef SENSOR_SHT_WANT
 
-#define SENSOR_SHT_DEBUG
-
-
 #include <Arduino.h>
 #include <SHT85.h>
 #include "sensor_sht.h"

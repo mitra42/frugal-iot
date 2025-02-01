@@ -11,10 +11,6 @@
 
 #ifdef SENSOR_UINT16_WANT
 
-#if defined(SENSOR_ANALOG_EXAMPLE_DEBUG) || defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG) // TODO make this generic, but LED almost always wanted
-  #define SENSOR_DEBUG
-#endif
-
 //Sensor_Uint16::Sensor_Uint16() : Sensor() {  };
 Sensor_Uint16::Sensor_Uint16(const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init)
   : Sensor(topic_init, ms_init), smooth(smooth_init) {}
@@ -33,15 +29,19 @@ void Sensor_Uint16::set(const uint16_t newvalue) {
   } else {
     vv = newvalue;
   }
-  #ifdef SENSOR_DEBUG
+  #ifdef SENSOR_UINT16_DEBUG
     Serial.print(topic);
     if (smooth) { Serial.print(F(" Smoothed")); }
     Serial.print(" "); Serial.println(vv);
-  #endif // SENSOR_DEBUG
+  #endif // SENSOR_UINT16_DEBUG
 
   if (changed(newvalue)) {
     value = vv;
     act();
+  #ifdef SENSOR_UINT16_DEBUG
+  } else {
+    Serial.print(topic); Serial.print(F(" unchanged ")); Serial.println(newvalue);
+  #endif // SENSOR_UINT16_DEBUG
   }
 }
 bool Sensor_Uint16::changed(const uint16_t newvalue) {

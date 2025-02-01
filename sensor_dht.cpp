@@ -35,6 +35,7 @@ Sensor_DHT::Sensor_DHT(const uint8_t pin_init, const char* topic_init, const cha
   : Sensor_HT(topic_init, topic2_init, ms_init), pin(pin_init) {
   dht = new DHTNEW(pin_init); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
   // dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/104
+  dht->powerUp();
 }
 
 #ifdef SENSOR_DHT_DEBUG
@@ -45,28 +46,28 @@ void printErrorCode(int chk) {
       Serial.print(F("OK,\t"));
       break;
     case DHTLIB_ERROR_CHECKSUM:
-      Serial.print(F("Checksum error,\t"));
+      Serial.println(F("Checksum error,\t"));
       break;
     case DHTLIB_ERROR_TIMEOUT_A:
-      Serial.print(F("Time out A error,\t"));
+      Serial.println(F("Time out A error,\t"));
       break;
     case DHTLIB_ERROR_TIMEOUT_B:
-      Serial.print(F("Time out B error,\t"));
+      Serial.println(F("Time out B error,\t"));
       break;
     case DHTLIB_ERROR_TIMEOUT_C:
-      Serial.print(F("Time out C error,\t"));
+      Serial.println(F("Time out C error,\t"));
       break;
     case DHTLIB_ERROR_TIMEOUT_D:
-      Serial.print(F("Time out D error,\t"));
+      Serial.println(F("Time out D error,\t"));
       break;
     case DHTLIB_ERROR_SENSOR_NOT_READY:
-      Serial.print(F("Sensor not ready,\t"));
+      Serial.println(F("Sensor not ready,\t"));
       break;
     case DHTLIB_ERROR_BIT_SHIFT:
-      Serial.print(F("Bit shift error,\t"));
+      Serial.println(F("Bit shift error,\t"));
       break;
     case DHTLIB_WAITING_FOR_READ:
-      Serial.print(F("Waiting for read,\t"));
+      Serial.println(F("Waiting for read,\t"));
       break;
     default:
       Serial.print(F("Unknown: "));
@@ -79,7 +80,7 @@ void printErrorCode(int chk) {
 
 void Sensor_DHT::readAndSet() {
   #ifdef SENSOR_DHT_DEBUG
-    Serial.print("DHT");
+    Serial.print("DHT on ");
     Serial.print(pin);
     Serial.print(F("   "));
   #endif

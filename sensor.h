@@ -14,7 +14,7 @@ class Sensor : public Frugal_Base {
     unsigned long nextLoopTime = 0;
 
     //Sensor();
-    Sensor(const char* topic, const unsigned long ms);
+    Sensor(const char* const topic, const unsigned long ms);
     virtual void setup();
     static void setupAll();
     virtual void readAndSet();
@@ -23,6 +23,6 @@ class Sensor : public Frugal_Base {
 }; // Class Sensor
 
 extern std::vector<Sensor*> sensors;
-void Sensor_debug(const char* msg);
+void Sensor_debug(const char* const msg);
 
 #endif // SENSOR_H

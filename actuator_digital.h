@@ -3,11 +3,6 @@
 
 #include "actuator.h" // Superclass
 
-// Add new digital actuators to this statement.  #TO_ADD_ACTUATOR
-#if defined(ACTUATOR_RELAY_DEBUG) || defined(ACTUATOR_LEDBUILTIN_DEBUG) // TODO make this generic, but LED almost always wanted
-#define ACTUATOR_DIGITAL_DEBUG
-#endif 
-
 class Actuator_Digital : Actuator {
   public: 
     uint8_t pin;

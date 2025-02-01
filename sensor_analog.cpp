@@ -26,7 +26,7 @@
 // See https://github.com/mitra42/frugal-iot/issues/60
 // TODO Note this is not going to make it to the place its used in sensor_analog
 #ifndef SENSOR_ANALOG_REFERENCE
-  #ifdef ESP8266_D1_MINI
+  #ifdef ESP8266_D1
     #define SENSOR_ANALOG_REFERENCE DEFAULT // TODO not clear if / where this is used 
   #else
     #ifndef LOLIN_C3_PICO

@@ -9,11 +9,6 @@
 #include "actuator.h"
 #include "system_mqtt.h"
 
-
-#if defined(ACTUATOR_DIGITAL_DEBUG) || defined(ACTUATOR_LEDBUILTIN) || defined(ACTUATOR_RELAY) // TODO make this generic, but LED almost always wanted
-  #define ACTUATOR_DEBUG
-#endif
-
 std::vector<Actuator*> actuators; // TODO_C++_EXPERT I wanted this to be a static inside class Actuator but compiler barfs on it.
 
 #ifdef ACTUATOR_DEBUG
