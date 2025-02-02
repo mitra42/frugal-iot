@@ -54,8 +54,22 @@ void connect() {
     // Use stored credentials to connect to your WiFi access point.
     // If no credentials are stored or if the access point is out of reach,
     // an access point will be started with a captive portal to configure WiFi.
-    WiFiSettings.connect();
-    // If WiFi connected, returns true, if WiFi fails then puts up portal and never returns - portal initiates reset 
+    if (!WiFiSettings.connect(false)) {
+        WiFiSettings.rescan(); 
+        int i;
+        for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { 
+          String pw = slurp("/wifi/" + WiFi.SSID(i));
+          if (pw.length()) {
+            Serial.print("Trying WiFi"); Serial.println(WiFi.SSID(i));
+            if (WiFiSettings.connectInner(WiFi.SSID(i), pw)) {
+              Serial.print("Connected to"); Serial.println(WiFi.SSID(i));
+              return;
+            }  
+          }
+        } 
+        // Tried any networks we know
+        WiFiSettings.portal();
+    }
 }
 // Blocking attempt at reconnecting - can be called by MQTT
 void checkConnected() {
@@ -66,6 +80,7 @@ void checkConnected() {
     connect();
   }
 }
+/*
 #ifdef SYSTEM_WIFI_SSID
 bool spurt(const String& fn, const String& content) {
     File f = ESPFS.open(fn, "w");
@@ -75,7 +90,7 @@ bool spurt(const String& fn, const String& content) {
     return w == content.length();
 }
 #endif
-
+*/
 #ifdef SYSTEM_WIFI_PORTAL_RESTART
 
 // A watchdog on the portal, that will reset after SYSTEM_WIFI_PORTAL_RESTART ms
@@ -87,10 +102,10 @@ void portalWatchdog() {
         Serial.println(F("WiFiSettings Rescanning"));
       #endif
     // Note this rescan wont be reflected in a any open portal as the HTML generated is static
-    const int num_networks = WiFi.scanNetworks();
+    WiFiSettings.rescan();
     int i;
-    for (i = 0; (i < num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { } // i will be ssid o num_networks if not found 
-    if (i != num_networks) { // we found it
+    for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { } // i will be ssid o num_networks if not found 
+    if (i != WiFiSettings.num_networks) { // we found it
       #ifdef SYSTEM_WIFI_DEBUG
         Serial.print(F("WiFiSettings portal timed out and restarting cos now see")); Serial.println(WiFiSettings.ssid);
       #endif

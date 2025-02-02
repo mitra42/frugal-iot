@@ -37,7 +37,6 @@ WiFiSettingsLanguage::Texts _WSL_T;
 
 #define Sprintf(f, ...) ({ char* s; asprintf(&s, f, __VA_ARGS__); String r = s; free(s); r; })
 
-namespace {  // Helpers
     String slurp(const String& fn) {
         File f = ESPFS.open(fn, "r");
         String r = f.readString();
@@ -52,6 +51,7 @@ namespace {  // Helpers
         f.close();
         return w == content.length();
     }
+namespace {  // Helpers
 
     String pwgen() {
         const char* passchars = "ABCEFGHJKLMNPRSTUXYZabcdefhkmnorstvxz23456789-#@?!";
@@ -237,11 +237,15 @@ void WiFiSettingsClass::heading(const String& contents, bool escape) {
     html("h2", contents, escape);
 }
 
+void WiFiSettingsClass::rescan() {
+  num_networks = WiFi.scanNetworks();
+  Serial.print(num_networks, DEC);
+  Serial.println(F(" WiFi networks found."));
+}
 
 void WiFiSettingsClass::portal() {
     WebServer http(80);
     DNSServer dns;
-    int num_networks = -1;
     begin();
 
     #ifdef ESP32
@@ -281,7 +285,7 @@ void WiFiSettingsClass::portal() {
     const char* headers[] = {"User-Agent"};
     http.collectHeaders(headers, sizeof(headers) / sizeof(char*));
 
-    http.on("/", HTTP_GET, [this, &http, &num_networks, &redirect]() {
+    http.on("/", HTTP_GET, [this, &http, &redirect]() {
         if (redirect()) return;
 
         String ua = http.header("User-Agent");
@@ -327,9 +331,7 @@ void WiFiSettingsClass::portal() {
 
         // Don't waste time scanning in captive portal detection (Apple)
         if (interactive) {
-            if (num_networks < 0) num_networks = WiFi.scanNetworks();
-            Serial.print(num_networks, DEC);
-            Serial.println(F(" WiFi networks found."));
+            if (num_networks < 0) rescan();
         }
 
         http.sendContent(F(
@@ -435,10 +437,10 @@ void WiFiSettingsClass::portal() {
         ESP.restart();
     });
 
-    http.on("/rescan", HTTP_GET, [this, &http, &num_networks]() {
+    http.on("/rescan", HTTP_GET, [this, &http]() {
         http.sendHeader("Location", "/");
         http.send(302, "text/plain", _WSL_T.wait);
-        num_networks = WiFi.scanNetworks();
+        rescan();
     });
 
     http.onNotFound([this, &http, &redirect]() {
@@ -470,7 +472,18 @@ bool WiFiSettingsClass::connect(bool portal, int wait_seconds) {
     Serial.print(F("Connecting to WiFi SSID "));
     Serial.print(ssid);
     if (onConnect) onConnect();
-
+    if (connectInner(ssid, pw, wait_seconds)) {
+      if (onSuccess) onSuccess();
+      return true;
+    } else {
+      if (onFailure) onFailure();
+      if (portal) this->portal(); // Note portal never returns - it only ever restarts
+      return false;
+    }
+}
+// Seperated out so can be called by external attempt to connect to other previously seen SSIDs
+bool WiFiSettingsClass::connectInner(String ssid, String pw, int wait_seconds) {
+    // Unclear why this brute multiple setHostname calls - should be documented?
     WiFi.setHostname(hostname.c_str());
     WiFi.begin(ssid.c_str(), pw.c_str());
     WiFi.setHostname(hostname.c_str());
@@ -482,18 +495,15 @@ bool WiFiSettingsClass::connect(bool portal, int wait_seconds) {
     unsigned long starttime = millis();
     while (WiFi.status() != WL_CONNECTED && (wait_seconds < 0 || (millis() - starttime) < (unsigned)wait_seconds * 1000)) {
         Serial.print(".");
-        delay(onWaitLoop ? onWaitLoop() : 100);
+        delay(onWaitLoop ? onWaitLoop() : 200);
     }
 
     if (WiFi.status() != WL_CONNECTED) {
         Serial.println(F(" failed."));
-        if (onFailure) onFailure();
-        if (portal) this->portal();
         return false;
     }
 
     Serial.println(WiFi.localIP().toString());
-    if (onSuccess) onSuccess();
     return true;
 }
 
@@ -544,6 +554,7 @@ WiFiSettingsClass::WiFiSettingsClass() {
     #else
         hostname = F("esp8266-");
     #endif
+    num_networks = -1; // Set here, instead of portal so that can scan prior to entering portal
 
     language = "en";
 }

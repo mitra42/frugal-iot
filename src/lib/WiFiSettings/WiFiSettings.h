@@ -4,6 +4,9 @@
 #include <Arduino.h>
 #include <functional>
 
+bool spurt(const String& fn, const String& content);
+String slurp(const String& fn);
+
 class WiFiSettingsClass {
     public:
         typedef std::function<void(void)> TCallback;
@@ -13,6 +16,7 @@ class WiFiSettingsClass {
         WiFiSettingsClass();
         void begin();
         bool connect(bool portal = true, int wait_seconds = 30);
+        bool connectInner(String ssid, String pw, int wait_seconds = 30);
         void portal();
         String string(const String& name, const String& init = "", const String& label = "");
         String string(const String& name, unsigned int max_length, const String& init = "", const String& label = "");
@@ -24,7 +28,9 @@ class WiFiSettingsClass {
         void heading(const String& contents, bool escape = true);
         void warning(const String& contents, bool escape = true);
         void info(const String& contents, bool escape = true);
+        void rescan();
 
+        int num_networks;
         String ssid;
         String hostname;
         String password;
