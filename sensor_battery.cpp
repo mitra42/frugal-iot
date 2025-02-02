@@ -19,7 +19,7 @@ Sensor_Battery::Sensor_Battery(const uint8_t pin_init) : Sensor_Analog(pin_init,
 #define VOLTAGE_DIVIDER 2 // Maybe board specific but everything I've seen is two equal resistors
 
 #ifdef ESP8266 // analogReadMilliVolts not available
-  #define ANALOG_READ_RANGE 256
+  #define ANALOG_READ_RANGE 1024
   #define VCC_MILLIVOLTS 3300
 
   // Note the ESP32 function returns uint32_t which makes no sense given max battery is 5000
