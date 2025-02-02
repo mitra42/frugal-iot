@@ -16,11 +16,18 @@
 
 Sensor_Battery::Sensor_Battery(const uint8_t pin_init) : Sensor_Analog(pin_init, 0, SENSOR_BATTERY_TOPIC, SENSOR_BATTERY_MS) { }
 
-#define VOLTAGE_DIVIDER 2 // Maybe board specific but everything I've seen is two equal resistors
+#ifdef ESP8266_D1_MINI_PROv2
+  #define VOLTAGE_DIVIDER 4.5 // (130+220+100)/100 i.e. 1V on A0 when 4.5 on batt 
+#else
+  #define VOLTAGE_DIVIDER 2 // Maybe board specific but most I see have 2 equal resistors
+#endif 
 
 #ifdef ESP8266 // analogReadMilliVolts not available
-  #define ANALOG_READ_RANGE 1024
-  #define VCC_MILLIVOLTS 3300
+
+  #define ANALOG_READ_RANGE 1024 // THis can be board/chip specific, 
+  #define VCC_MILLIVOLTS 1000 // Voltage at chip pin at which we get ANALOG_READ_RANGE
+  // Note that on some boards -  the voltage divider for the battery is different than for pin A0
+  // e.g. ESP8266_D1_MINI_PROv2 - batt = (130+220+100)/100 while A0 is just (220+100)/100
 
   // Note the ESP32 function returns uint32_t which makes no sense given max battery is 5000
   uint16_t analogReadMilliVolts(uint8_t pin) {
