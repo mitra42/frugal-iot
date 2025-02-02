@@ -53,7 +53,7 @@
 #include "system_time.h"
 #endif
 
-
+#ifdef CONTROL_WANT
 
 // TODO-25 move this function by making it a class in control_hysterisis
 Control::TCallback hysterisisAction = [](Control* self) {
@@ -68,7 +68,7 @@ Control::TCallback hysterisisAction = [](Control* self) {
     }
   // If  lim-histerisis < hum < lim+histerisis then don't change setting
 };
-
+#endif //CONTROL_WANT
 void setup() {
 #ifdef ANY_DEBUG
   Serial.begin(SERIAL_BAUD);
@@ -119,6 +119,7 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
   #endif
 #endif
 
+#ifdef CONTROL_WANT
 // Example definition of control - //TODO-25 move this to control_histerisis, but make sure run in setup, not prior to it as need Mqtt
 
 Control* control_humidity = new Control(
@@ -136,7 +137,7 @@ Control* control_humidity = new Control(
   });
 
   control_humidity->debug("frugal-iot.ino after instantiation");
-
+#endif //CONTROL_WANT
 #pragma GCC diagnostic pop
 
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
