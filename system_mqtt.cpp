@@ -233,6 +233,11 @@ void MqttManager::messageSendInner(const String &topicpath, const String &payloa
     #ifdef SYSTEM_MQTT_DEBUG
       Serial.print(F("Failed to publish ")); Serial.print(topicpath); Serial.print(F("=")); Serial.println(payload);
     #endif // SYSTEM_MQTT_DEBUG
+    if (qos > 0) {
+      // This doesn't work - if first publish failed, this does, and it loops
+      //Serial.print(F("Requeuing"));
+      //queued.emplace_front(topicpath, payload, retain, qos);
+    }
   };
 }
 
