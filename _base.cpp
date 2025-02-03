@@ -29,9 +29,10 @@ void Frugal_Base::loop() { }; // This will get called if no loop() in subclass
 
 void Frugal_Base::loopAll() {
   Sensor::loopAll();
-  Control::loopAll();
+  #ifdef CONTROL_WANT
+    Control::loopAll();
+  #endif
   //Actuator::loopAll(); // Currently no loops in Actuators
-  //Control::loopAll(); // Currently no loops in Controls
   // TODO-25 call system;
 }
 #pragma GCC diagnostic push
