@@ -50,26 +50,51 @@ String discovery_project;
 String device_name;
 
 // This is called - blocking - by xWiFi.setup, but can also be called if discover no longer connected
-void connect() {
-    // Use stored credentials to connect to your WiFi access point.
-    // If no credentials are stored or if the access point is out of reach,
-    // an access point will be started with a captive portal to configure WiFi.
-    if (!WiFiSettings.connect(false)) {
-        WiFiSettings.rescan(); 
-        int i;
-        for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { 
-          String pw = slurp("/wifi/" + WiFi.SSID(i));
+bool connect() {
+  // Replaces WiFiSettingsClass::connect
+    WiFiSettings.begin();
+    // Use last stored credentials (if any) to attempt connect to your WiFi access point.
+    WiFiSettings.ssid = slurp("/wifi-ssid");
+    String pw = slurp("/wifi-password");
+    if (WiFiSettings.onConnect) WiFiSettings.onConnect();
+    if (WiFiSettings.ssid.length()) {
+      if (WiFiSettings.connectInner(WiFiSettings.ssid, pw)) {
+        String filename = String("/wifi/" + WiFiSettings.ssid);
+        Serial.print("Saving password in"); Serial.println(filename);
+        spurt(filename, pw ); // Save password as a successfully connected network
+        if (WiFiSettings.onSuccess) WiFiSettings.onSuccess();
+        return true;
+      }
+    }
+    // On failure (or no credentials), scan, and try any that we've successfully connected to before.
+    WiFiSettings.rescan();  // Finishes with print of number of networks
+    int32_t minRSSI;
+    int i;
+    // Running thru strongest networks first
+    for (minRSSI = 0; minRSSI > -1000; minRSSI -= 5) {
+      // Serial.print("RSSI > "); Serial.println(minRSSI);
+      for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { 
+        if (WiFi.RSSI(i) > minRSSI) {
+          String filename = String("/wifi/" + WiFi.SSID(i)) ;
+          Serial.print(WiFi.SSID(i)); Serial.print(F(" ")); Serial.println(WiFi.RSSI(i));
+          String pw = slurp(filename);
           if (pw.length()) {
-            Serial.print("Trying WiFi"); Serial.println(WiFi.SSID(i));
+            Serial.println("Trying");
             if (WiFiSettings.connectInner(WiFi.SSID(i), pw)) {
               Serial.print("Connected to"); Serial.println(WiFi.SSID(i));
-              return;
-            }  
+              return true;
+            } 
+          } else {
+            Serial.println("Unknown");
           }
-        } 
-        // Tried any networks we know
-        WiFiSettings.portal();
+        }
+      } 
     }
+    // Tried any networks we know
+    // If no successful connection, access point will be started with a captive portal to configure WiFi.
+    if (WiFiSettings.onFailure) WiFiSettings.onFailure();
+    WiFiSettings.portal();
+    return false;
 }
 // Blocking attempt at reconnecting - can be called by MQTT
 void checkConnected() {
@@ -177,9 +202,24 @@ void setup() {
 
   #ifdef SYSTEM_WIFI_SSID
     Serial.println(F("Overriding WiFi SSID / Password for development"));
-    spurt(F("/wifi-ssid"), SYSTEM_WIFI_SSID);
-    spurt(F("/wifi-password"), SYSTEM_WIFI_PASSWORD);
+    spurt(F("/wifi-ssid"), F(SYSTEM_WIFI_SSID));
+    spurt(F("/wifi-password"), F(SYSTEM_WIFI_PASSWORD));
   #endif // SYSTEM_WIFI_SSID
+  #ifdef SYSTEM_WIFI_SSID_1
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_1), F(SYSTEM_WIFI_PASSWORD_1));
+  #endif // SYSTEM_WIFI_SSID
+  #ifdef SYSTEM_WIFI_SSID_2
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_2), F(SYSTEM_WIFI_PASSWORD_2));
+  #endif
+  #ifdef SYSTEM_WIFI_SSID_3
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_3), F(SYSTEM_WIFI_PASSWORD_3));
+  #endif
+  #ifdef SYSTEM_WIFI_SSID_4
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_4), F(SYSTEM_WIFI_PASSWORD_4));
+  #endif
+  #ifdef SYSTEM_WIFI_SSID_5
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_5), F(SYSTEM_WIFI_PASSWORD_5));
+  #endif
 
   #ifndef SYSTEM_WIFI_DEVICE
     #define SYSTEM_WIFI_DEVICE "device"

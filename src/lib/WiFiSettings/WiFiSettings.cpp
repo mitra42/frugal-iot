@@ -469,8 +469,6 @@ bool WiFiSettingsClass::connect(bool portal, int wait_seconds) {
         this->portal();
     }
 
-    Serial.print(F("Connecting to WiFi SSID "));
-    Serial.print(ssid);
     if (onConnect) onConnect();
     if (connectInner(ssid, pw, wait_seconds)) {
       if (onSuccess) onSuccess();
@@ -484,6 +482,8 @@ bool WiFiSettingsClass::connect(bool portal, int wait_seconds) {
 // Seperated out so can be called by external attempt to connect to other previously seen SSIDs
 bool WiFiSettingsClass::connectInner(String ssid, String pw, int wait_seconds) {
     // Unclear why this brute multiple setHostname calls - should be documented?
+    Serial.print(F("Connecting to WiFi SSID "));
+    Serial.print(ssid);
     WiFi.setHostname(hostname.c_str());
     WiFi.begin(ssid.c_str(), pw.c_str());
     WiFi.setHostname(hostname.c_str());
@@ -495,7 +495,7 @@ bool WiFiSettingsClass::connectInner(String ssid, String pw, int wait_seconds) {
     unsigned long starttime = millis();
     while (WiFi.status() != WL_CONNECTED && (wait_seconds < 0 || (millis() - starttime) < (unsigned)wait_seconds * 1000)) {
         Serial.print(".");
-        delay(onWaitLoop ? onWaitLoop() : 200);
+        delay(onWaitLoop ? onWaitLoop() : 300);
     }
 
     if (WiFi.status() != WL_CONNECTED) {
