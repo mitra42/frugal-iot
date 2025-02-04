@@ -129,7 +129,7 @@ void portalWatchdog() {
     // Note this rescan wont be reflected in a any open portal as the HTML generated is static
     WiFiSettings.rescan();
     int i;
-    for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { } // i will be ssid o num_networks if not found 
+    for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { } // i will be ssid of num_networks if not found 
     if (i != WiFiSettings.num_networks) { // we found it
       #ifdef SYSTEM_WIFI_DEBUG
         Serial.print(F("WiFiSettings portal timed out and restarting cos now see")); Serial.println(WiFiSettings.ssid);

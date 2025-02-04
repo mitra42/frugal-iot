@@ -30,7 +30,7 @@ class WiFiSettingsClass {
         void info(const String& contents, bool escape = true);
         void rescan();
 
-        int num_networks;
+        int16_t num_networks;
         String ssid;
         String hostname;
         String password;

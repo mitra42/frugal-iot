@@ -59,6 +59,7 @@ void MqttManager::setup() {
   client.onMessage(xMqtt::MessageReceived);  // Called back from client.loop - this is a naked function that just calls into the instance
 
   // Note WiFi should be connected by this point but will check here anyway
+  Serial.println(F("XXX MQTT Calling MqttManager::connect from setup"));
   while (!connect()) {
     #ifdef SYSTEM_MQTT_DEBUG
       Serial.print(F("."));
@@ -76,6 +77,7 @@ void MqttManager::loop() {
   if (nextLoopTime <= millis()) {
     // Automatically reconnect
     if (!client.connected()) {
+      Serial.println(F("XXX MQTT Calling MqttManager::connect from loop"));
       if (!connect()) { // Non blocking but skip client.loop. Note if fails to connect will set nextLoopTime in 1000 ms.
         nextLoopTime = millis() + 1000; // If non-blocking then dont do any MQTT for a second then try connect again
       }
