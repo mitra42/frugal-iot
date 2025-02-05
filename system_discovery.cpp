@@ -116,6 +116,9 @@ void fullAdvertise() {
         " Relay"
       #endif
     #endif
+    #ifdef SYSTEM_OTA_WANT
+      "\nota: " SYSTEM_OTA_KEY 
+    #endif
     // TODO-44 add location: <gsm coords>
     "\ntopics:" 
       // For any module with a control, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO_ADD_NEW_CONTROL
