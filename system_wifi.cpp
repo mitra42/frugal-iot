@@ -74,7 +74,7 @@ bool connect() {
     for (minRSSI = 0; minRSSI > -1000; minRSSI -= 5) {
       // Serial.print("RSSI > "); Serial.println(minRSSI);
       for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { 
-        if (WiFi.RSSI(i) > minRSSI) {
+        if ((WiFi.RSSI(i) > minRSSI) && (WiFi.RSSI(i) <= (minRSSI + 5))) {
           String filename = String("/wifi/" + WiFi.SSID(i)) ;
           Serial.print(WiFi.SSID(i)); Serial.print(F(" ")); Serial.println(WiFi.RSSI(i));
           String pw = slurp(filename);
