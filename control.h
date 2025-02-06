@@ -62,6 +62,7 @@ class INfloat : public IN {
     float max;
     INfloat(); 
     INfloat(char const * const name, float v, char const * const topicLeaf, float min, float max, char const * const color, const bool wireable);
+    INfloat(String name, float v, String topicLeaf, float min, float max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
@@ -96,6 +97,7 @@ class OUTfloat : public OUT {
     float max;
     OUTfloat();
     OUTfloat(char const * const name, float v, char const * const topicLeaf, float min, float max, char const * const color, const bool wireable);
+    OUTfloat(String name, float v, String topicLeaf, float min, float max, char const * const color, const bool wireable);
     OUTfloat(const OUTfloat &other);
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();
@@ -109,6 +111,7 @@ class OUTbool : public OUT {
     bool value;
     OUTbool();
     OUTbool(char const * const name, bool v, char const * const topicLeaf, char const * const color, const bool wireable);
+    OUTbool(String name, bool v, String topicLeaf, char const * const color, const bool wireable);
     OUTbool(const OUTbool &other);
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();
@@ -127,6 +130,7 @@ class Control : public Frugal_Base {
     std::vector<TCallback> actions; // Vector of actions
 
     Control(const char * const name, std::vector<IN*> i, std::vector<OUT*> o, std::vector<TCallback> a); 
+    Control(String name, std::vector<IN*> i, std::vector<OUT*> o, std::vector<TCallback> a); 
     void setup();
     void dispatch(const String &topicPath, const String &payload);
     String* advertisement();
