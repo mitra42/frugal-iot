@@ -57,14 +57,9 @@ void IO::setup(const char * const sensorname) {
     // Note topicLeaf subscribed to by IN, not by OUT
     if (wireable) {
       // wireLeaf = wire_<sensorname>_<name>
-        size_t buffer_size = strlen(sensorname) + strlen(name) + 5;
-        char* buffer = new char[buffer_size];
-        strcpy(buffer, "wire_");
-        strcat(buffer, sensorname);
-        strcat(buffer, "_");
-        strcat(buffer, name);
-        wireLeaf = buffer; // Assign buffer to wireLeaf
-        Mqtt->subscribe(wireLeaf);
+      wireLeaf = lprintf(strlen(sensorname) + strlen(name) + 6, "wire_%s_%s");
+      Mqtt->subscribe(wireLeaf);
+      Serial.println("XXX25 just checking string like wire_<sensorname>_<name> then delete this check");
     }
     //debug("...IO setup ");
 }
@@ -137,10 +132,6 @@ void OUTbool::debug(const char* const where) {
 INfloat::INfloat(const char * const n, float v, const char * const tl, float mn, float mx, char const * const c, const bool w)
   :   IN(n, tl, c, w), value(v), min(mn), max(mx) {
 }
-INfloat::INfloat(String n, float v, String tl, float mn, float mx, char const * const c, const bool w) :
-  INfloat(n.c_str(), v, tl.c_str(), mn, mx, c, w) {} // TODO-25 follow the chain down - make sure not using the char* when out of scope
-
-
 
 INfloat::INfloat(const INfloat &other) : IN(other.name, other.topicLeaf, other.color, other.wireable) {
   value = other.value;
@@ -202,15 +193,9 @@ String *INfloat::advertisement() {
 OUTbool::OUTbool(const char * const n, bool v, const char * const tl, char const * const c, const bool w)
   :   OUT(n, tl, c, w), value(v)  {
 }
-OUTbool::OUTbool(String n, bool v, String tl, char const * const c, const bool w)
-  : OUTbool(n.c_str(), v, tl.c_str(), c, w) {} // TODO-25 follow the chain down - make sure not using the char* when out of scope
-
 OUTfloat::OUTfloat(const char * const n, float v, const char * const tl, float mn, float mx, char const * const c, const bool w)
   :   OUT(n, tl, c, w), value(v), min(mn), max(mx) {
 }
-OUTfloat::OUTfloat(String n, float v, String tl, float mn, float mx, char const * const c, const bool w)
-  :   OUTfloat(n.c_str(), v, tl.c_str(), mn, mx, c, w) {} // TODO-25 follow the chain down - make sure not using the char* when out of scope
-
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
 // OUT::dispatchLeaf() - uses IO since wont be incoming topicLeaf or wiredPath, only a wireLeaf
@@ -284,8 +269,6 @@ Control::Control(const char * const n, std::vector<IN*> i, std::vector<OUT*> o, 
     : Frugal_Base() , name(n), inputs(i), outputs(o), actions(a) {
     controls.push_back(this);
 }
-Control::Control(String n, std::vector<IN*> i, std::vector<OUT*> o, std::vector<TCallback> a) : Control(n.c_str(), i, o, a) {}
-
 #ifdef CONTROL_DEBUG
 void Control::debug(const char* const where) {
   Serial.println(where);
@@ -308,6 +291,13 @@ void Control::setup() {
     }
     //debug("...Control setup ");
   }
+void Control::act() {
+  for (auto &action : actions) {
+    //if (action) {
+      action(this); // Actions should call self.outputs[x].set(newvalue); and allow .set to check if changed and send message
+    //}
+  }
+}
 void Control::dispatch(const String &topicPath, const String &payload ) {
     bool changed = false;
     String* tl = Mqtt->topicLeaf(topicPath);
@@ -328,11 +318,7 @@ void Control::dispatch(const String &topicPath, const String &payload ) {
       }
     }
     if (changed) { 
-      for (auto &action : actions) {
-        if (action) {
-          action(this); // Actions should call self.outputs[x].set(newvalue); and allow .set to check if changed and send message
-        }
-      }
+      act(); // Likely to be subclassed
     }
 }
 // Ouput advertisement for control - all of IN and OUTs 

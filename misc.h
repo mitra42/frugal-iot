@@ -7,5 +7,8 @@
 const String StringF(const char* format, ...);
 #endif 
 
+#if defined(CONTROL_WANT) || defined(CONTROL_HYSTERISIS_WANT)
+  const char* lprintf(size_t buffer_size, const char* format, ...);
+#endif
 
 #endif //MISC_H

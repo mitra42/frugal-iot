@@ -8,37 +8,38 @@
 
 
 #include <Arduino.h>
+#include "misc.h"
 #include "control_hysterisis.h"
 
 /* Will define ControlHysteris class here, then replace instantiation in frugal_iot.ino */
 
 // TODO-25 move this function into the class 
 
-Control::TCallback hysterisisAction = [](Control* self) {
-    const float hum = self->inputs[0]->floatValue();
-    const float lim = self->inputs[1]->floatValue();
-    const float hysterisis = self->inputs[2]->floatValue();
+void ControlHysterisis::act() {
+    const float hum = inputs[0]->floatValue();
+    const float lim = inputs[1]->floatValue();
+    const float hysterisis = inputs[2]->floatValue();
     if (hum > (lim + hysterisis)) {
-        self->outputs[0]->set(1);
+        outputs[0]->set(1);
     }
     if (hum < (lim - hysterisis)) {
-        self->outputs[0]->set(0);
+        outputs[0]->set(0);
     }
   // If  lim-histerisis < hum < lim+histerisis then don't change setting
 };
 
-ControlHysterisis::ControlHysterisis (String name, float now, float min, float max) : Control(
-  name + "_control",
+ControlHysterisis::ControlHysterisis (const char* const name, float now, float min, float max) : Control(
+  lprintf(strlen(name)+8, "%s_control", name),
   std::vector<IN*> {
-    new INfloat(name + "_now", now, name + "_now", min, max, "black", true),
-    new INfloat(name + "_limit", now, name + "_limit", min, max, "black", false),
-    new INfloat("hysterisis", max/4, "hysterisis", 0, max/2, "black", false)
+    new INfloat(lprintf(strlen(name)+4, "%s Now", name), now, lprintf(strlen(name)+4, "%s_now", name), min, max, "black", true),
+    new INfloat(lprintf(strlen(name)+6, "%s Limit", name), now, lprintf(strlen(name)+6, "%s_limit", name), min, max, "black", false),
+    new INfloat("Hysterisis", max/4, lprintf(strlen(name)+11, "%s_hysterisis", name), 0, max/2, "black", false)
   },
   std::vector<OUT*> {
-    new OUTbool(name + "_hysterisis_out", false, name + "_hysterisis_out", "black", true), 
+    new OUTbool(lprintf(strlen(name)+4, "%s Out", name), false, lprintf(strlen(name)+15, "%s_hysterisis_out", name), "black", true), 
   },
-  std::vector<Control::TCallback> {
-    hysterisisAction
-  }) {};
+  std::vector<Control::TCallback> {} // No action - its subclassed
+) {};
+
 #endif //CONTROL_HYSTERISIS_WANT
 
