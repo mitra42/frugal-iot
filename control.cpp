@@ -104,7 +104,7 @@ bool IO::dispatchPath(const String &topicPath, const String &payload) {
   #endif
   return false;
 }
-
+#ifdef CONTROL_DEBUG
 void IO::debug(const char* const where) {
   // Note subclass needs to provide terminating println (usually after a type-dependent value)
     Serial.print(where); 
@@ -115,7 +115,6 @@ void IO::debug(const char* const where) {
       Serial.print(" wiredPath="); Serial.print(wiredPath ? *wiredPath : "NULL"); 
     }
 }
-#ifdef CONTROL_DEBUG
 void INfloat::debug(const char* const where) {
     IO::debug(where);
     Serial.print(" value="); Serial.println(value); 

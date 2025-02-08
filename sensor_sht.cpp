@@ -31,8 +31,8 @@
 
 
 
-Sensor_SHT::Sensor_SHT(uint8_t address_init, TwoWire *wire, const char* topic_init, const char* topic2_init, const unsigned long ms_init) 
-  : Sensor_HT(topic_init, topic2_init, ms_init), address(address_init) {
+Sensor_SHT::Sensor_SHT(uint8_t address_init, TwoWire *wire, const char* topic_init, const char* topic2_init, const unsigned long ms_init, bool retain) 
+  : Sensor_HT(topic_init, topic2_init, ms_init,retain), address(address_init) {
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   Wire.begin(); // Appears to default to 4,5 which is correct for the Lolin D1 Mini SHT30 shield
   Wire.setClock(100000);
@@ -72,13 +72,13 @@ void Sensor_SHT::readAndSet() {
       if (temp != temperature) {
         temperature = temp;
         if (topic) {
-          Mqtt->messageSend(topic, temperature, 1, false, 0);  // topic, value, width, retain, qos
+          Mqtt->messageSend(topic, temperature, 1, retain, 0);  // topic, value, width, retain, qos
         }
       }
       if (humy != humidity) { // TODO may want to add some bounds (e.g a percentage)
         humidity = humy;
         if (topic2) {
-          Mqtt->messageSend(topic2, humidity, 1, false, 0);
+          Mqtt->messageSend(topic2, humidity, 1, retain, 0);
         }
       }
 
