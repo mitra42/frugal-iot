@@ -4,6 +4,10 @@
   Required from .h: ACTUATOR_LEDBUILTIN_PIN
   Optional:   ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_BRIGHTNESS
   Optional: BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
+
+  For reference the LED is on the following pins for boards we have been working with .... 
+  Sonoff: 13
+  
 */
 
 #include "_settings.h"  // Settings for what to include etc
