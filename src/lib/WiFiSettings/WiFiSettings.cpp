@@ -2,6 +2,8 @@
  * a number of limitations - including not supporting Indonesia. 
  * At some point, the effort to get PR's included was too much so its 
  * copied here, and future changes will be made here.
+ * At some point might want to reworkusing Async HttpServer as in https://github.com/ESPresense/AsyncWiFiSettings/blob/master/src/AsyncWiFiSettings.cpp
+ * which is based on the same package (ESP-WIFiSettigns) that this is.
  */
 
 #include "WiFiSettings.h"
@@ -249,27 +251,26 @@ void WiFiSettingsClass::rescan() {
 void WiFiSettingsClass::portal() {
     WebServer http(80);
     DNSServer dns;
-    begin();
+  begin();
 
-    #ifdef ESP32
-        WiFi.disconnect(true, true);    // reset state so .scanNetworks() works
-    #else
-        WiFi.disconnect(true);
-    #endif
+  #ifdef ESP32
+      WiFi.disconnect(true, true);    // reset state so .scanNetworks() works
+  #else
+      WiFi.disconnect(true);
+  #endif
 
     Serial.println(F("Starting access point for configuration portal."));
-    if (secure && password.length()) {
-        Serial.printf("SSID: '%s', Password: '%s'\n", hostname.c_str(), password.c_str());
-        WiFi.softAP(hostname.c_str(), password.c_str());
-    } else {
-        Serial.printf("SSID: '%s'\n", hostname.c_str());
-        WiFi.softAP(hostname.c_str());
-    }
-    delay(500);
+  if (secure && password.length()) {
+    Serial.printf("SSID: '%s', Password: '%s'\n", hostname.c_str(), password.c_str());
+    WiFi.softAP(hostname.c_str(), password.c_str());
+  } else {
+    Serial.printf("SSID: '%s'\n", hostname.c_str());
+    WiFi.softAP(hostname.c_str());
+  }
+  delay(500);
     dns.setTTL(0);
     dns.start(53, "*", WiFi.softAPIP());
-
-    if (onPortal) onPortal();
+    if (onPortal) onPortal(); // Not using this
     String ip = WiFi.softAPIP().toString();
     Serial.println(ip);
 
@@ -288,13 +289,15 @@ void WiFiSettingsClass::portal() {
     const char* headers[] = {"User-Agent"};
     http.collectHeaders(headers, sizeof(headers) / sizeof(char*));
 
+    // Draws the portal, note that while this is only setup once, 
+    // its a function and will be called and dynamically display current scan results each time
     http.on("/", HTTP_GET, [this, &http, &redirect]() {
         if (redirect()) return;
 
         String ua = http.header("User-Agent");
         bool interactive = !ua.startsWith(F("CaptiveNetworkSupport"));
 
-        if (interactive && onPortalView) onPortalView();
+        if (interactive && onPortalView) onPortalView(); // TODO-128 Not using this but could be way to know if user active
         if (onUserAgent) onUserAgent(ua);
 
         http.setContentLength(CONTENT_LENGTH_UNKNOWN);
@@ -450,19 +453,25 @@ void WiFiSettingsClass::portal() {
         if (redirect()) return;
         http.send(404, "text/plain", "404");
     });
-
     http.begin();
-    bool do_wdt_reset = true;
-    for (;;) {
-        http.handleClient();
-        dns.processNextRequest();
-        if (onPortalWaitLoop) onPortalWaitLoop();
-        if (do_wdt_reset && (esp_task_wdt_reset() != ESP_OK)) { // Only do it once or get endless error messages
-          do_wdt_reset = false;
-        }
-    }
+  #ifdef ESP32
+    bool do_wdt_reset = true; // Recors failure to do a esp_task_wdt_reset so only repeated once per portal else endless error messages on console
+  #endif
+  for (;;) {
+      http.handleClient(); // Look for incoming
+      dns.processNextRequest(); // For the captive process
+      if (onPortalWaitLoop && onPortalWaitLoop()) {
+        return; // Exit if scan and connect 
+      };
+      #ifdef ESP32
+      if (do_wdt_reset && (esp_task_wdt_reset() != ESP_OK)) {
+        do_wdt_reset = false;
+      }
+      #endif
+  }
 }
 
+/* Deprecated for version in sysetm_wifi.cpp 
 bool WiFiSettingsClass::connect(bool portal, int wait_seconds) {
     begin();
 
@@ -470,7 +479,7 @@ bool WiFiSettingsClass::connect(bool portal, int wait_seconds) {
     String pw = slurp("/wifi-password");
     if (ssid.length() == 0) {
         Serial.println(F("First contact!\n"));
-        this->portal();
+        this->portal(); // never exits except via restart
     }
 
     if (onConnect) onConnect();
@@ -483,6 +492,7 @@ bool WiFiSettingsClass::connect(bool portal, int wait_seconds) {
       return false;
     }
 }
+*/
 // Seperated out so can be called by external attempt to connect to other previously seen SSIDs
 bool WiFiSettingsClass::connectInner(String ssid, String pw, int wait_seconds) {
     // Unclear why this brute multiple setHostname calls - should be documented?
@@ -493,7 +503,11 @@ bool WiFiSettingsClass::connectInner(String ssid, String pw, int wait_seconds) {
     WiFi.setHostname(hostname.c_str());
     WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);  // arduino-esp32 #2537
     WiFi.setHostname(hostname.c_str());
-    WiFi.mode(WIFI_STA);  // arduino-esp32 #6278
+    #ifdef ESP32
+      WiFi.mode(WIFI_MODE_APSTA);  // arduino-esp32 #6278.  WIFI_MODE_STA is just station, AP is just Access Point
+    #else
+      WiFi.mode(WIFI_AP_STA);  // On ESP8266 WIFI_MODE_APSTA doesnt exist its WIFI_AP_STA or WIFI_STA
+    #endif
     WiFi.setHostname(hostname.c_str());
 
     unsigned long starttime = millis();

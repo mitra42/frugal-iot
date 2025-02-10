@@ -11,8 +11,9 @@
 */
 
 #include "_settings.h"
-#include "esp_task_wdt.h" // TODO-125
-
+#ifdef ESP32
+  #include "esp_task_wdt.h" // TODO-125
+#endif
 
 #if (!defined(SYSTEM_MQTT_USER) || !defined(SYSTEM_MQTT_PASSWORD) || !defined(SYSTEM_MQTT_MS))
   error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS 
@@ -66,7 +67,9 @@ void MqttManager::setup() {
     #ifdef SYSTEM_MQTT_DEBUG
       Serial.print(F("."));
     #endif
-    esp_task_wdt_reset();
+    #ifdef ESP32
+      esp_task_wdt_reset();
+    #endif
     delay(1000); // Block waiting for WiFi and MQTT to connect 
   }
 }
@@ -86,12 +89,14 @@ void MqttManager::loop() {
         nextLoopTime = millis() + 1000; // If non-blocking then dont do any MQTT for a second then try connect again
       }
       */
-      // TODO_25 alternate blocking version
+      // TODO_25 alternate blocking version - if good, merge with similar code in setup
       while (!connect()) {
         #ifdef SYSTEM_MQTT_DEBUG
           Serial.print(F("."));
         #endif
-        esp_task_wdt_reset();
+        #ifdef ESP32
+          esp_task_wdt_reset();
+        #endif
         delay(1000); // Block waiting for WiFi and MQTT to connect 
       }
     } else {
@@ -118,7 +123,7 @@ bool MqttManager::connect() {
     // Each organization needs a password in mosquitto_passwords which can be added by Mitra using mosquitto_passwd
     if (client.connect(xWifi::clientid().c_str(), SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD)) {
       #ifdef SYSTEM_MQTT_DEBUG
-        Serial.println(F("Connected"));
+        Serial.println(F(" Connected"));
       #endif
       resubscribeAll();
       return true;

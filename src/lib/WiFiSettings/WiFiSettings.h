@@ -10,6 +10,7 @@ String slurp(const String& fn);
 class WiFiSettingsClass {
     public:
         typedef std::function<void(void)> TCallback;
+        typedef std::function<bool(void)> TCallbackReturnsBool;
         typedef std::function<int(void)> TCallbackReturnsInt;
         typedef std::function<void(String&)> TCallbackString;
 
@@ -46,7 +47,7 @@ class WiFiSettingsClass {
         TCallbackString onUserAgent;
         TCallback onConfigSaved;
         TCallback onRestart;
-        TCallback onPortalWaitLoop;
+        TCallbackReturnsBool onPortalWaitLoop;
     private:
         bool begun;
 };
