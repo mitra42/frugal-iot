@@ -7,5 +7,9 @@
 const String StringF(const char* format, ...);
 #endif 
 
+// TODO-125 ifdef or moe somewhere
+void internal_watchdog_setup();
+void internal_watchdog_loop();
+
 
 #endif //MISC_H

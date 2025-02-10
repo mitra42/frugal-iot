@@ -6,6 +6,7 @@
 
 #include "_base.h" // Base for new class version
 #include "sensor.h" // Base class for sensors
+#include "misc.h" // 
 
 #ifdef SYSTEM_WIFI_WANT
 #include "system_wifi.h"
@@ -159,6 +160,9 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
    // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
   xDiscovery::fullAdvertise();
 
+  // TODO-125 want to ifdef this
+  internal_watchdog_setup();
+
 #ifdef ANY_DEBUG
   Serial.println(F("FrugalIoT Starting Loop"));
 #endif // ANY_DEBUG
@@ -181,6 +185,8 @@ void loop() {
 #ifdef SYSTEM_TIME_WANT
   xTime::loop();
 #endif
+  // TODO-125 probably want to ifdef this
+  internal_watchdog_loop();
 }
 
 
