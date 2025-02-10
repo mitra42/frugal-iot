@@ -23,6 +23,8 @@ const String StringF(const char* format, ...) {
 
 #if defined(CONTROL_WANT) || defined(CONTROL_HYSTERISIS_WANT)
   const char* lprintf(size_t buffer_size, const char* format, ...) {
+    // Be careful with this, there is no compile time checking that the number of args matches the format 
+    // and a mismatch will generate an Exception
     char* buffer = new char[buffer_size];
     va_list args;
     va_start(args, format);

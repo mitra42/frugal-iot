@@ -16,27 +16,30 @@
 // TODO-25 move this function into the class 
 
 void ControlHysterisis::act() {
-    const float hum = inputs[0]->floatValue();
-    const float lim = inputs[1]->floatValue();
-    const float hysterisis = inputs[2]->floatValue();
-    if (hum > (lim + hysterisis)) {
-        outputs[0]->set(1);
-    }
-    if (hum < (lim - hysterisis)) {
-        outputs[0]->set(0);
-    }
+  const float hum = inputs[0]->floatValue();
+  const float lim = inputs[1]->floatValue();
+  const float hysterisis = inputs[2]->floatValue();
+  #ifdef CONTROL_HYSTERISIS_DEBUG
+    Serial.print(F("hum=")); Serial.print(hum); Serial.print(F(" lim=")); Serial.print(lim); Serial.print(F(" hysterisis=")); Serial.print(hysterisis);
+  #endif
+  if (hum > (lim + hysterisis)) {
+      ((OUTbool*)outputs[0])->set(true);
+  }
+  if (hum < (lim - hysterisis)) {
+    ((OUTbool*)outputs[0])->set(false);
+  }
   // If  lim-histerisis < hum < lim+histerisis then don't change setting
 };
 
 ControlHysterisis::ControlHysterisis (const char* const name, float now, float min, float max) : Control(
-  lprintf(strlen(name)+8, "%s_control", name),
+  lprintf(strlen(name)+9, "%s_control", name),
   std::vector<IN*> {
-    new INfloat(lprintf(strlen(name)+4, "%s Now", name), now, lprintf(strlen(name)+4, "%s_now", name), min, max, "black", true),
-    new INfloat(lprintf(strlen(name)+6, "%s Limit", name), now, lprintf(strlen(name)+6, "%s_limit", name), min, max, "black", false),
-    new INfloat("Hysterisis", max/4, lprintf(strlen(name)+11, "%s_hysterisis", name), 0, max/2, "black", false)
+    new INfloat(lprintf(strlen(name)+5, "%s Now", name), now, lprintf(strlen(name)+5, "%s_now", name), min, max, "black", true),
+    new INfloat(lprintf(strlen(name)+7, "%s Limit", name), now, lprintf(strlen(name)+7, "%s_limit", name), min, max, "black", false),
+    new INfloat("Hysterisis", 0, lprintf(strlen(name)+12, "%s_hysterisis", name), 0, max/2, "black", false)
   },
   std::vector<OUT*> {
-    new OUTbool(lprintf(strlen(name)+4, "%s Out", name), false, lprintf(strlen(name)+15, "%s_hysterisis_out", name), "black", true), 
+    new OUTbool(lprintf(strlen(name)+5, "%s Out", name), false, lprintf(strlen(name)+16, "%s_hysterisis_out", name), "black", true), 
   },
   std::vector<Control::TCallback> {} // No action - its subclassed
 ) {};

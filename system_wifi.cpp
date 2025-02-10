@@ -80,7 +80,7 @@ bool scanConnectOneAndAll() {
       int i;
       for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { } // i will be ssid of num_networks if not found 
       if (i == WiFiSettings.num_networks) {
-        Serial.print(F("Configured network "); Serial.print(WiFiSettings.ssid); Serial.print(" not found");
+        Serial.print(F("Configured network ")); Serial.print(WiFiSettings.ssid); Serial.print(F(" not found"));
       } else {
         if (connect1()) { // See configured network, try it first
           return true;
@@ -96,7 +96,7 @@ bool scanConnectOneAndAll() {
       for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { 
         if ((WiFi.RSSI(i) > minRSSI) && (WiFi.RSSI(i) <= (minRSSI + 5))) {
           String filename = String("/wifi/" + WiFi.SSID(i)) ;
-          Serial.print(WiFi.SSID(i)); Serial.print(F(" ")); Serial.print(WiFi.RSSI(i)); Serial.print(F(" ");
+          Serial.print(WiFi.SSID(i)); Serial.print(F(" ")); Serial.print(WiFi.RSSI(i)); Serial.print(F(" "));
           String pw = slurp(filename);
           if (pw.length()) {
             if (WiFiSettings.connectInner(WiFi.SSID(i), pw)) {
