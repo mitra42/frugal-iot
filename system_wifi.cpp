@@ -66,6 +66,13 @@ bool connect() {
         return true;
       }
     }
+    //delay(5000); //TODO-125
+    #ifdef ESP32
+      WiFi.disconnect(true, true);    // reset state so .scanNetworks() works
+    #else
+        WiFi.disconnect(true);
+    #endif
+
     // On failure (or no credentials), scan, and try any that we've successfully connected to before.
     WiFiSettings.rescan();  // Finishes with print of number of networks
     int32_t minRSSI;
@@ -154,7 +161,7 @@ void setupLanguages() {
     WiFiSettings.language = LANGUAGE_DEFAULT; // This must happen BEFORE WiFiSettings.begin().
   #endif
   WiFiSettings.begin(); // WiFi has created variables - at this point any previous ssid and language are now set
-  Serial.print("XXX Language = "); Serial.println(WiFiSettings.language);
+  Serial.print(F("Language = ")); Serial.println(WiFiSettings.language);
   #if defined LANGUAGE_EN || defined LANGUAGE_ALL
     if (WiFiSettings.language == "en") {
       T.MqttServer = F("MQTT server");

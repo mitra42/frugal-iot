@@ -238,6 +238,9 @@ void WiFiSettingsClass::heading(const String& contents, bool escape) {
 }
 
 void WiFiSettingsClass::rescan() {
+  // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
+  //bool async = false, bool show_hidden = false, bool passive = false, uint32_t max_ms_per_chan = 300, uint8_t channel = 0, const char *ssid = nullptr, const uint8_t *bssid = nullptr
+
   num_networks = WiFi.scanNetworks();
   Serial.print(num_networks, DEC);
   Serial.println(F(" WiFi networks found."));
@@ -449,13 +452,14 @@ void WiFiSettingsClass::portal() {
     });
 
     http.begin();
-
+    bool do_wdt_reset = true;
     for (;;) {
         http.handleClient();
         dns.processNextRequest();
         if (onPortalWaitLoop) onPortalWaitLoop();
-        esp_task_wdt_reset();
-        delay(1);
+        if (do_wdt_reset && (esp_task_wdt_reset() != ESP_OK)) { // Only do it once or get endless error messages
+          do_wdt_reset = false;
+        }
     }
 }
 
