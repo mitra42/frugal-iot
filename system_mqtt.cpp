@@ -11,6 +11,8 @@
 */
 
 #include "_settings.h"
+#include "esp_task_wdt.h" // TODO-125
+
 
 #if (!defined(SYSTEM_MQTT_USER) || !defined(SYSTEM_MQTT_PASSWORD) || !defined(SYSTEM_MQTT_MS))
   error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS 
@@ -64,6 +66,7 @@ void MqttManager::setup() {
     #ifdef SYSTEM_MQTT_DEBUG
       Serial.print(F("."));
     #endif
+    esp_task_wdt_reset();
     delay(1000); // Block waiting for WiFi and MQTT to connect 
   }
 }
@@ -78,8 +81,18 @@ void MqttManager::loop() {
     // Automatically reconnect
     if (!client.connected()) {
       Serial.println(F("XXX MQTT Calling MqttManager::connect from loop"));
+      /*
       if (!connect()) { // Non blocking but skip client.loop. Note if fails to connect will set nextLoopTime in 1000 ms.
         nextLoopTime = millis() + 1000; // If non-blocking then dont do any MQTT for a second then try connect again
+      }
+      */
+      // TODO_25 alternate blocking version
+      while (!connect()) {
+        #ifdef SYSTEM_MQTT_DEBUG
+          Serial.print(F("."));
+        #endif
+        esp_task_wdt_reset();
+        delay(1000); // Block waiting for WiFi and MQTT to connect 
       }
     } else {
       messageSendQueued();
