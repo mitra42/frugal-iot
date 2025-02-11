@@ -151,8 +151,8 @@ bool spurt(const String& fn, const String& content) {
 // A watchdog on the portal, that will reset after SYSTEM_WIFI_PORTAL_RESTART ms
 // Adding ability to reset if wanted wifi appears. 
 bool portalWatchdog() {
-  static unsigned long OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART; // initialized first time this is called
-  if (OPWLrestart < millis()) {
+  static unsigned long lastWatchdog = millis(); // initialized first time this is called
+  if (millis() > lastWatchdog + (WiFi.softAPgetStationNum() ? SYSTEM_WIFI_PORTAL_RESTART : 15000)) {
     #ifdef SYSTEM_WIFI_DEBUG
       Serial.println(F("WiFiSettings Rescanning"));
     #endif
@@ -161,7 +161,8 @@ bool portalWatchdog() {
     if (scanConnectOneAndAll()) {
       return true; // Connected - exit portal
     }
-    OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART;
+    // If noone connected rescan every 15 seconds
+    lastWatchdog = millis();
   } 
   return false; 
 }
