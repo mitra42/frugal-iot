@@ -13,11 +13,11 @@
 //#include "WString.h" // Doesnt appear to be needed - was in sample code from Jonathan Semple
 
 const String StringF(const char* format, ...) {
-    char buffer[200];
+    char buffer[200]; // out of scope at end of this
     va_list args;
     va_start(args, format);
     vsnprintf(buffer, sizeof(buffer), format, args);
-    return String(buffer);
+    return String(buffer); // Make sure this is deleted
 }
 #endif 
 
@@ -38,7 +38,7 @@ const String StringF(const char* format, ...) {
 // - see https://github.com/mitra42/frugal-iot/issues/125
 
 #ifdef ESP32
-  #define TWDT_TIMEOUT_MS 3000 // three minutes - want to be long enough.
+  #define TWDT_TIMEOUT_MS 180000 // three minutes - want to be long enough.
 #endif
 #define SYSTEM_WATCHDOG_MEM_MS 10000 // 10 seconds, much too fast once tested 
 

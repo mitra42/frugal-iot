@@ -7,7 +7,7 @@
 
 class Sensor : public Frugal_Base {
   public:
-    const char* topic = NULL; // Topic to send to
+    const char* topic = NULL; // Topic to send to (leaf)
     const bool retain = false;
     const int qos = 0; // Default to no guarrantee of delivery
     unsigned long ms = 10000; // 10 second read 

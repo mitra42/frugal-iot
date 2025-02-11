@@ -185,22 +185,21 @@ void MqttManager::subscribe(const char* topicleaf) {
 }
 void MqttManager::dispatch(const String &topicpath, const String &payload) {
   if (topicpath.startsWith(*xDiscovery::topicPrefix)) {
-    String* const topicleaf = new String(topicpath);
-    topicleaf->remove(0, xDiscovery::topicPrefix->length());
+    const String topicleaf = topicpath.substring(xDiscovery::topicPrefix->length());
     #ifdef SENSOR_WANT
-      //Sensor::dispatchAll(*topicleaf, payload); // None of the sensors have subscriptions
+      //Sensor::dispatchAll(topicleaf, payload); // None of the sensors have subscriptions
     #endif
     #ifdef ACTUATOR_WANT
-      Actuator::dispatchAll(*topicleaf, payload);
+      Actuator::dispatchAll(topicleaf, payload);
     #endif
     //TODO-25 temporary hack till Control::dispatchAll readu
-      #ifdef CONTROL_BLINKEN_WANT
-        cBlinken::dispatchLeaf(*topicleaf, payload);
-      #endif
-    }
-    #ifdef CONTROL_WANT
-      Control::dispatchAll(topicpath, payload);
+    #ifdef CONTROL_BLINKEN_WANT
+      cBlinken::dispatchLeaf(topicleaf, payload);
     #endif
+  }
+  #ifdef CONTROL_WANT
+    Control::dispatchAll(topicpath, payload);
+  #endif
   //TODO-25 System::dispatchAll(*topicpath, payload)
 }
 void MqttManager::resubscribeAll() {
@@ -283,25 +282,25 @@ void MqttManager::messageSend(const String &topicpath, const String &payload, co
 
 
 void MqttManager::messageSend(const char* const topicleaf, const String &payload, const bool retain, const int qos) {
-  const String * const topicpath = new String(*xDiscovery::topicPrefix + topicleaf); // TODO can merge into next line
-  messageSend(*topicpath, payload, retain, qos);
+  const String topicpath = String(*xDiscovery::topicPrefix + topicleaf); // TODO can merge into next line
+  messageSend(topicpath, payload, retain, qos);
 }
 
 void MqttManager::messageSend(const String &topicpath, const float &value, const int width, const bool retain, const int qos) {
-  const String * const foo = new String(value, width);
-  messageSend(topicpath, *foo, retain, qos);
+  const String foo = String(value, width);
+  messageSend(topicpath, foo, retain, qos);
 }
 void MqttManager::messageSend(const char* const topicleaf, const float &value, const int width, const bool retain, const int qos) {
-  const String * const foo = new String(value, width);
-  messageSend(topicleaf, *foo, retain, qos);
+  const String foo = String(value, width); //TODO-125 repeat pattern on others
+  messageSend(topicleaf, foo, retain, qos);
 }
 void MqttManager::messageSend(const String &topicpath, const int value, const bool retain, const int qos) {
-  const String * const foo = new String(value);
-  messageSend(topicpath, *foo, retain, qos);
+  const String foo = String(value);
+  messageSend(topicpath, foo, retain, qos);
 }
 void MqttManager::messageSend(const char* const topicleaf, const int value, const bool retain, const int qos) {
-  const String * const foo = new String(value);
-  messageSend(topicleaf, *foo, retain, qos);
+  const String foo = String(value);
+  messageSend(topicleaf, foo, retain, qos);
 }
 void MqttManager::messageSendQueued() {
   while (!queued.empty()) {
