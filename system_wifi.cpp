@@ -49,53 +49,83 @@ String mqtt_host;
 String discovery_project;
 String device_name;
 
-// This is called - blocking - by xWiFi.setup, but can also be called if discover no longer connected
-bool connect() {
-  // Replaces WiFiSettingsClass::connect
-    WiFiSettings.begin();
-    // Use last stored credentials (if any) to attempt connect to your WiFi access point.
-    WiFiSettings.ssid = slurp("/wifi-ssid");
-    String pw = slurp("/wifi-password");
-    if (WiFiSettings.onConnect) WiFiSettings.onConnect();
+
+// Attempt to connect to main network as configured, if succeed save the id and password as a known network
+bool connect1() {
+  // Use last stored credentials (if any) to attempt connect to your WiFi access point.
+  // store for future use if successfull.
+  WiFiSettings.ssid = slurp("/wifi-ssid");
+  String pw = slurp("/wifi-password");
+  //if (WiFiSettings.onConnect) WiFiSettings.onConnect(); // FrugalIot isn't using this currently
+  if (WiFiSettings.ssid.length()) {
+    if (WiFiSettings.connectInner(WiFiSettings.ssid, pw)) {
+      String filename = String("/wifi/" + WiFiSettings.ssid);
+      //Serial.print("Saving password in"); Serial.println(filename);
+      spurt(filename, pw ); // Save password as a successfully connected network
+      //if (WiFiSettings.onSuccess) WiFiSettings.onSuccess(); // FrugalIot not using
+      return true;
+    }
+  }
+  return false;
+}
+bool scanConnectOneAndAll() {
+    //delay(5000); //TODO-125
+    #ifdef ESP32
+      WiFi.disconnect(true, true);    // reset state so .scanNetworks() works
+    #else
+        WiFi.disconnect(true);
+    #endif
+    WiFiSettings.rescan();  // Finishes with print of number of networks
     if (WiFiSettings.ssid.length()) {
-      if (WiFiSettings.connectInner(WiFiSettings.ssid, pw)) {
-        String filename = String("/wifi/" + WiFiSettings.ssid);
-        Serial.print("Saving password in"); Serial.println(filename);
-        spurt(filename, pw ); // Save password as a successfully connected network
-        if (WiFiSettings.onSuccess) WiFiSettings.onSuccess();
-        return true;
+      int i;
+      for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { } // i will be ssid of num_networks if not found 
+      if (i == WiFiSettings.num_networks) {
+        Serial.print(F("Configured network ")); Serial.print(WiFiSettings.ssid); Serial.print(F(" not found"));
+      } else {
+        if (connect1()) { // See configured network, try it first
+          return true;
+        }
       }
     }
     // On failure (or no credentials), scan, and try any that we've successfully connected to before.
-    WiFiSettings.rescan();  // Finishes with print of number of networks
     int32_t minRSSI;
-    int i;
     // Running thru strongest networks first
     for (minRSSI = 0; minRSSI > -1000; minRSSI -= 5) {
+      int i;
       // Serial.print("RSSI > "); Serial.println(minRSSI);
       for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { 
         if ((WiFi.RSSI(i) > minRSSI) && (WiFi.RSSI(i) <= (minRSSI + 5))) {
           String filename = String("/wifi/" + WiFi.SSID(i)) ;
-          Serial.print(WiFi.SSID(i)); Serial.print(F(" ")); Serial.println(WiFi.RSSI(i));
+          Serial.print(WiFi.SSID(i)); Serial.print(F(" ")); Serial.print(WiFi.RSSI(i)); Serial.print(F(" "));
           String pw = slurp(filename);
           if (pw.length()) {
-            Serial.println("Trying");
             if (WiFiSettings.connectInner(WiFi.SSID(i), pw)) {
-              Serial.print("Connected to"); Serial.println(WiFi.SSID(i));
+              Serial.print(F("Connected to ")); Serial.println(WiFi.SSID(i));
               return true;
             } 
           } else {
-            Serial.println("Unknown");
+            Serial.println(F("Unknown"));
           }
         }
       } 
     }
-    // Tried any networks we know
-    // If no successful connection, access point will be started with a captive portal to configure WiFi.
-    if (WiFiSettings.onFailure) WiFiSettings.onFailure();
-    WiFiSettings.portal();
     return false;
 }
+// This is called - blocking - by xWiFi.setup, but can also be called if discover no longer connected
+// Replaces WiFiSettingsClass::connect
+bool connect() {
+  WiFiSettings.begin();
+  if (scanConnectOneAndAll()) {
+    return true;
+  } else {
+    // Tried any networks we know
+    // If no successful connection, access point will be started with a captive portal to configure WiFi.
+    if (WiFiSettings.onFailure) WiFiSettings.onFailure(); // onFailure sets up portal watchdog 
+    WiFiSettings.portal(); // only returns if watchdog connects - if user configures it will reset instead
+    return true;
+  }
+}
+
 // Blocking attempt at reconnecting - can be called by MQTT
 void checkConnected() {
   if (WiFi.status() != WL_CONNECTED) {
@@ -120,26 +150,21 @@ bool spurt(const String& fn, const String& content) {
 
 // A watchdog on the portal, that will reset after SYSTEM_WIFI_PORTAL_RESTART ms
 // Adding ability to reset if wanted wifi appears. 
-void portalWatchdog() {
-  static unsigned long OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART; // initialized first time this is called
-  if (OPWLrestart < millis()) {
-      #ifdef SYSTEM_WIFI_DEBUG
-        Serial.println(F("WiFiSettings Rescanning"));
-      #endif
-    // Note this rescan wont be reflected in a any open portal as the HTML generated is static
-    WiFiSettings.rescan();
-    int i;
-    for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { } // i will be ssid of num_networks if not found 
-    if (i != WiFiSettings.num_networks) { // we found it
-      #ifdef SYSTEM_WIFI_DEBUG
-        Serial.print(F("WiFiSettings portal timed out and restarting cos now see")); Serial.println(WiFiSettings.ssid);
-      #endif
-      if (WiFiSettings.onRestart) { WiFiSettings.onRestart(); } // We aren't setting it here so should do nothing
-      ESP.restart();
-    } else {
-      OPWLrestart = millis() + SYSTEM_WIFI_PORTAL_RESTART;
+bool portalWatchdog() {
+  static unsigned long lastWatchdog = millis(); // initialized first time this is called
+  if (millis() > lastWatchdog + (WiFi.softAPgetStationNum() ? SYSTEM_WIFI_PORTAL_RESTART : 15000)) {
+    #ifdef SYSTEM_WIFI_DEBUG
+      Serial.println(F("WiFiSettings Rescanning"));
+    #endif
+    // Note this rescan wont be reflected in any any open portal as the HTML generated is static, 
+    // but will reflect if user reloads
+    if (scanConnectOneAndAll()) {
+      return true; // Connected - exit portal
     }
-  }
+    // If noone connected rescan every 15 seconds
+    lastWatchdog = millis();
+  } 
+  return false; 
 }
 #endif // SYSTEM_WIFI_PORTAL_RESTART
 
@@ -154,7 +179,7 @@ void setupLanguages() {
     WiFiSettings.language = LANGUAGE_DEFAULT; // This must happen BEFORE WiFiSettings.begin().
   #endif
   WiFiSettings.begin(); // WiFi has created variables - at this point any previous ssid and language are now set
-  Serial.print("XXX Language = "); Serial.println(WiFiSettings.language);
+  Serial.print(F("Language = ")); Serial.println(WiFiSettings.language);
   #if defined LANGUAGE_EN || defined LANGUAGE_ALL
     if (WiFiSettings.language == "en") {
       T.MqttServer = F("MQTT server");
@@ -205,6 +230,7 @@ void setup() {
     spurt(F("/wifi-ssid"), F(SYSTEM_WIFI_SSID));
     spurt(F("/wifi-password"), F(SYSTEM_WIFI_PASSWORD));
   #endif // SYSTEM_WIFI_SSID
+  // Store extra wifis - device should recognize any of them 
   #ifdef SYSTEM_WIFI_SSID_1
     spurt(F("/wifi/"  SYSTEM_WIFI_SSID_1), F(SYSTEM_WIFI_PASSWORD_1));
   #endif // SYSTEM_WIFI_SSID
@@ -220,6 +246,22 @@ void setup() {
   #ifdef SYSTEM_WIFI_SSID_5
     spurt(F("/wifi/"  SYSTEM_WIFI_SSID_5), F(SYSTEM_WIFI_PASSWORD_5));
   #endif
+  #ifdef SYSTEM_WIFI_SSID_6
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_6), F(SYSTEM_WIFI_PASSWORD_6));
+  #endif
+  #ifdef SYSTEM_WIFI_SSID_7
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_7), F(SYSTEM_WIFI_PASSWORD_7));
+  #endif
+  #ifdef SYSTEM_WIFI_SSID_8
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_8), F(SYSTEM_WIFI_PASSWORD_8));
+  #endif
+  #ifdef SYSTEM_WIFI_SSID_9
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_9), F(SYSTEM_WIFI_PASSWORD_9));
+  #endif
+  #ifdef SYSTEM_WIFI_SSID_10
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_10), F(SYSTEM_WIFI_PASSWORD_10));
+  #endif
+  // Feel free to extend if need more than 10! 
 
   #ifndef SYSTEM_WIFI_DEVICE
     #define SYSTEM_WIFI_DEVICE "device"
@@ -246,8 +288,8 @@ void setup() {
   #endif
 
   // Cases of connect and portal
-  // a: no SSID; portal run without attempting to connect - never resets
-  // b: SSID but connect fails, we have settings, so set a watchdog on portal
+  // a: no SSIDs (main or /wifi/) portal run without attempting to connect - never resets
+  // b: SSID(s) but connect fails, we have settings, so set a watchdog on portal
   // c: Something (e.g. MQTT) calls checkConnected, which calls connect - SSID will be set, so should attempt, and if fail - do portal with watchdog
   #ifdef SYSTEM_WIFI_PORTAL_RESTART
     WiFiSettings.onFailure = []() {

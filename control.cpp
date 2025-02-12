@@ -10,7 +10,7 @@
 #include <vector>
 #include "control.h"
 #include "system_mqtt.h"
-#include "misc.h"
+#include "misc.h" //TODO-125 move to wherever watchdog caller moves - maybe base.cpp ? 
 
 #ifdef CONTROL_WANT
 
@@ -53,20 +53,12 @@ bool OUTfloat::boolValue() {
 }
 
 void IO::setup(const char * const sensorname) {
-    //debug("IO setup... ");
     // Note topicLeaf subscribed to by IN, not by OUT
     if (wireable) {
-      // wireLeaf = wire_<sensorname>_<name>
-        size_t buffer_size = strlen(sensorname) + strlen(name) + 5;
-        char* buffer = new char[buffer_size];
-        strcpy(buffer, "wire_");
-        strcat(buffer, sensorname);
-        strcat(buffer, "_");
-        strcat(buffer, name);
-        wireLeaf = buffer; // Assign buffer to wireLeaf
-        Mqtt->subscribe(wireLeaf);
+      // wireLeaf = wire_<sensorname>_<topicLeaf>
+      wireLeaf = lprintf(strlen(sensorname) + strlen(topicLeaf) + 7, "wire_%s_%s", sensorname, topicLeaf);
+      Mqtt->subscribe(wireLeaf);
     }
-    //debug("...IO setup ");
 }
 
 bool IN::dispatchLeaf(const String &tl, const String &p) {
@@ -87,14 +79,24 @@ bool OUT::dispatchLeaf(const String &tl, const String &p) {
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
 }
+/*
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void IO::set(const float newvalue) {  
 #pragma GCC diagnostic pop
   #ifdef CONTROL_DEBUG
-    Serial.println(F("IO::set should be subclassed"));
+    Serial.print(F("IO::set float should be subclassed for ")); Serial.println(name);
   #endif
 }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+void IO::set(const bool newvalue) {  
+#pragma GCC diagnostic pop
+  #ifdef CONTROL_DEBUG
+    Serial.print(F("IO::set bool should be subclassed for ")); Serial.println(name);
+  #endif
+}
+*/
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 bool IO::dispatchPath(const String &topicPath, const String &payload) {
@@ -143,7 +145,6 @@ INfloat::INfloat(const INfloat &other) : IN(other.name, other.topicLeaf, other.c
 }
 
 void INfloat::setup(const char * const sensorname) {
-  //debug("IN setup:");
   IN::setup(sensorname);
   if (topicLeaf) Mqtt->subscribe(topicLeaf);
 }
@@ -220,6 +221,9 @@ void OUTfloat::sendWired() {
     }
 }
 void OUTfloat::set(const float newvalue) {
+  #ifdef CONTROL_HUMIDITY_DEBUG
+    Serial.print(F("Setting ")); Setting.print(topicLeaf); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+  #endif
   if (newvalue != value) {
     value = newvalue;
     Mqtt->messageSend(topicLeaf, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
@@ -233,6 +237,9 @@ void OUTbool::sendWired() {
     }
 }
 void OUTbool::set(const bool newvalue) {
+  #ifdef CONTROL_HUMIDITY_DEBUG
+    Serial.print(F("Setting ")); Setting.print(topicLeaf); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+  #endif
   if (newvalue != value) {
     value = newvalue;
     Mqtt->messageSend(topicLeaf, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
@@ -287,22 +294,30 @@ void Control::debug(const char* const where) {
 #endif
 
 void Control::setup() {
-    //debug("Control setup... ");
     for (auto &input : inputs) {
         input->setup(name);
     }
     for (auto &output : outputs) {
         output->setup(name);
     }
-    //debug("...Control setup ");
   }
+void Control::act() {
+  for (auto &action : actions) {
+    //if (action) {
+      action(this); // Actions should call self.outputs[x].set(newvalue); and allow .set to check if changed and send message
+    //}
+  }
+}
 void Control::dispatch(const String &topicPath, const String &payload ) {
     bool changed = false;
     String* tl = Mqtt->topicLeaf(topicPath);
     for (auto &input : inputs) {
         if (tl) { // Will be nullptr if no match i.e. path is not local
-            // Both inputs and outputs have possible 'control' and therefore dispatchLeaf
-            input->dispatchLeaf(*tl, payload); //  // Does not trigger any messages or actions - though data received in response to subscription will.
+            // inputs have possible 'control' and therefore dispatchLeaf
+            // And inputs also have possible values being set directly
+            if (input->dispatchLeaf(*tl, payload)) {
+              changed = true; //  // Does not trigger any messages or actions - though data received in response to subscription will.
+            }
         }
         // Only inputs are listening to potential topicPaths - i.e. other devices outputs
         if (input->dispatchPath(topicPath, payload)) {
@@ -311,16 +326,12 @@ void Control::dispatch(const String &topicPath, const String &payload ) {
     }
     for (auto &output : outputs) {
       if (tl) { // Will be nullptr if no match i.e. path is not local
-        // Both inputs and outputs have possible 'control' and therefore dispatchLeaf
+        // outputs have possible 'control' and therefore dispatchLeaf
         output->dispatchLeaf(*tl, payload); // Will send value if wiredPath changed
       }
     }
     if (changed) { 
-      for (auto &action : actions) {
-        if (action) {
-          action(this); // Actions should call self.outputs[x].set(newvalue); and allow .set to check if changed and send message
-        }
-      }
+      act(); // Likely to be subclassed
     }
 }
 // Ouput advertisement for control - all of IN and OUTs 

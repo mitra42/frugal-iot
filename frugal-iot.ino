@@ -6,6 +6,7 @@
 
 #include "_base.h" // Base for new class version
 #include "sensor.h" // Base class for sensors
+#include "misc.h" // 
 
 #ifdef SYSTEM_WIFI_WANT
 #include "system_wifi.h"
@@ -43,6 +44,9 @@
 #ifdef CONTROL_WANT
 #include "control.h"
 #endif
+#ifdef CONTROL_HYSTERISIS_WANT
+#include "control_hysterisis.h"
+#endif
 #ifdef SYSTEM_DISCOVERY_WANT
 #include "system_discovery.h"
 #endif
@@ -53,22 +57,6 @@
 #include "system_time.h"
 #endif
 
-#ifdef CONTROL_WANT
-
-// TODO-25 move this function by making it a class in control_hysterisis
-Control::TCallback hysterisisAction = [](Control* self) {
-    const float hum = self->inputs[0]->floatValue();
-    const float lim = self->inputs[1]->floatValue();
-    const float hysterisis = self->inputs[2]->floatValue();
-    if (hum > (lim + hysterisis)) {
-        self->outputs[0]->set(1);
-    }
-    if (hum < (lim - hysterisis)) {
-        self->outputs[0]->set(0);
-    }
-  // If  lim-histerisis < hum < lim+histerisis then don't change setting
-};
-#endif //CONTROL_WANT
 void setup() {
 #ifdef ANY_DEBUG
   Serial.begin(SERIAL_BAUD);
@@ -119,25 +107,12 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
   #endif
 #endif
 
-#ifdef CONTROL_WANT
+#ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control - //TODO-25 move this to control_histerisis, but make sure run in setup, not prior to it as need Mqtt
-
-Control* control_humidity = new Control(
-  "humidity_control",
-  std::vector<IN*> {
-    new INfloat("humiditynow", 0.0, "humiditynow", 0, 100, "blue", true),
-    new INfloat("limit", 50.0, "humidity_limit", 0, 100, "red", false),
-    new INfloat("hysterisis", 5.0, "hysterisis", 0, 20, "purple", false) // Note nullptr needed in .ino but not .cpp files :-(
-    },
-  std::vector<OUT*> {
-    new OUTbool("out", false, "too_humid", "blue", true), // Default to control LED, controllable via "relay_control")
-  },
-  std::vector<Control::TCallback> {
-    hysterisisAction
-  });
-
+  ControlHysterisis* control_humidity = new ControlHysterisis("humidity", 50, 0, 100);
   control_humidity->debug("frugal-iot.ino after instantiation");
-#endif //CONTROL_WANT
+#endif //CONTROL_HYSTERISIS_WANT
+
 #pragma GCC diagnostic pop
 
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
@@ -158,6 +133,9 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
 #endif
    // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
   xDiscovery::fullAdvertise();
+
+  // TODO-125 want to ifdef this
+  internal_watchdog_setup();
 
 #ifdef ANY_DEBUG
   Serial.println(F("FrugalIoT Starting Loop"));
@@ -181,6 +159,8 @@ void loop() {
 #ifdef SYSTEM_TIME_WANT
   xTime::loop();
 #endif
+  // TODO-125 probably want to ifdef this
+  internal_watchdog_loop();
 }
 
 

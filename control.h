@@ -35,7 +35,8 @@ class IO {
       virtual void debug(const char* const where);
     #endif
     virtual float floatValue(); // Can build these for other types and combos e.g. returning bool from a float etc
-    virtual void set(const float newvalue); // Similarly - setting into types from variety of values
+    //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
+    //virtual void set(const bool newvalue);
     virtual String* advertisement();
 };
 class IN : public IO {
@@ -50,6 +51,8 @@ class OUT : public IO {
   public:
     OUT(char const * const name, char const * const topicLeaf, char const *color, const bool wireable);
     virtual String* advertisement();
+    //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
+    //virtual void set(const bool newvalue);
     virtual float floatValue();
     virtual bool boolValue();
     virtual void sendWired();
@@ -129,6 +132,7 @@ class Control : public Frugal_Base {
     Control(const char * const name, std::vector<IN*> i, std::vector<OUT*> o, std::vector<TCallback> a); 
     void setup();
     void dispatch(const String &topicPath, const String &payload);
+    virtual void act();
     String* advertisement();
     static void setupAll();
     static void loopAll();
