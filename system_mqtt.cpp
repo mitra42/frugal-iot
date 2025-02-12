@@ -79,7 +79,7 @@ void MqttManager::loop() {
     if (!client.connected()) {
       Serial.println(F("XXX MQTT Calling MqttManager::connect from loop"));
       if (!connect()) { // Non blocking but skip client.loop. Note if fails to connect will set nextLoopTime in 1000 ms.
-        nextLoopTime = millis() + 3000; // If non-blocking then dont do any MQTT for a second then try connect again
+        nextLoopTime = millis() + 1000; // If non-blocking then dont do any MQTT for a second then try connect again
       }
     } else {
       messageSendQueued();
