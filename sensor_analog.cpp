@@ -47,6 +47,7 @@ uint16_t Sensor_Analog::read() {
 }
 
 void Sensor_Analog::setup() {
+
   // initialize the analog pin as an input.
   pinMode(pin, INPUT); // I don't think this is needed ?
   #ifdef SENSOR_ANALOG_REFERENCE

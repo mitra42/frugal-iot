@@ -62,7 +62,7 @@
   #define CONTROL_DEBUG
 #endif
 
-#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_WAN)
+#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_WANT)
   #define CONTROL_WANT
 #endif
 

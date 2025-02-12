@@ -42,7 +42,11 @@ ControlHysterisis::ControlHysterisis (const char* const name, float now, float m
     new OUTbool(lprintf(strlen(name)+5, "%s Out", name), false, lprintf(strlen(name)+16, "%s_hysterisis_out", name), "black", true), 
   },
   std::vector<Control::TCallback> {} // No action - its subclassed
-) {};
+) {
+  #ifdef CONTROL_HYSTERISIS_DEBUG
+    debug("ControlHysterisis after instantiation");
+  #endif
+};
 
 #endif //CONTROL_HYSTERISIS_WANT
 

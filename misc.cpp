@@ -66,7 +66,7 @@ void internal_watchdog_loop() {
   #endif
   if (millis() > (internal_watchdog_last + SYSTEM_WATCHDOG_MEM_MS)) {
     #ifdef ESP32 //TODO-128 should be able to find equivalent on ESP8266
-      Serial.print("XXX125 heap="); Serial.print(esp_get_free_heap_size()); 
+      Serial.print("heap="); Serial.print(esp_get_free_heap_size()); 
       Serial.print(" min heap="); Serial.println(esp_get_minimum_free_heap_size());
     #endif //ESP32
     internal_watchdog_last = millis(); 

@@ -39,24 +39,27 @@ class Message : public Subscription {
   public:
     const bool retain;
     const int qos;
-    Message(const String &tp, const String &pl, const bool r, const int q);
+    Message(const String &tp,const String &pl, const bool r, const int q);
 };
 class MqttManager : public Frugal_Base {
   public:
     WiFiClient net;
     MQTTClient client; //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.
     bool inReceived = false;
+    bool subscriptionsDone = false; // True when server has reported a session - so dont need to subscribe OR have resubscribed.
     unsigned long nextLoopTime; // TODO-25 may move into superclass
     unsigned long ms;
     MqttManager();
     void setup();
     void loop();
     bool connect();
+    void blockTillConnected();
+    bool connectOLD(); // TODO-125 remove when new connect() works
     Subscription* find(const String &topicpath);
     void subscribe(const String& topicpath);
     void subscribe(const char* topicleaf);
     void dispatch(const String &topicpath, const  String &payload);
-    void resubscribeAll();
+    bool resubscribeAll();
     void retainPayload(const String &topicpath, const String &payload);
     void messageReceived(const String &topic, const String &payload);
     void messageSendInner(const String &topicpath, const String &payload, const bool retain, const int qos);
@@ -72,8 +75,8 @@ class MqttManager : public Frugal_Base {
     String* topicLeaf(const String &topicpath);
   
   protected: // TODO - some of the other methods should probably be protected
-    std::forward_list<Subscription> items; // An item could be a retained message or a subscription - they overlap
-    std::forward_list<Message> queued; // An item could be a retained message or a subscription - they overlap
+    std::forward_list<Subscription> subscriptions;
+    std::forward_list<Message> queued;
 };
 
 namespace xMqtt {

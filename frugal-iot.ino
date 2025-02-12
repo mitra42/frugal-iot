@@ -69,8 +69,7 @@ void setup() {
 #endif // ANY_DEBUG
 // put setup code here, to run once:
 xWifi::setup();
-Mqtt = new MqttManager();
-
+Mqtt = new MqttManager(); // Connects to wifi and broker
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -110,12 +109,11 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control - //TODO-25 move this to control_histerisis, but make sure run in setup, not prior to it as need Mqtt
   ControlHysterisis* control_humidity = new ControlHysterisis("humidity", 50, 0, 100);
-  control_humidity->debug("frugal-iot.ino after instantiation");
 #endif //CONTROL_HYSTERISIS_WANT
-
 #pragma GCC diagnostic pop
 
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+
 #ifdef SYSTEM_OTA_WANT
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();

@@ -14,6 +14,7 @@ Frugal_Base::Frugal_Base() { }; // Intentionally nothing here
 void Frugal_Base::setup() { }; // This will get called if no setup() in subclass 
 
 void Frugal_Base::setupAll() {
+
   #ifdef SENSOR_WANT // If there are any sensors
     Sensor::setupAll();
   #endif
