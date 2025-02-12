@@ -230,6 +230,7 @@ void setup() {
     spurt(F("/wifi-ssid"), F(SYSTEM_WIFI_SSID));
     spurt(F("/wifi-password"), F(SYSTEM_WIFI_PASSWORD));
   #endif // SYSTEM_WIFI_SSID
+  // Store extra wifis - device should recognize any of them 
   #ifdef SYSTEM_WIFI_SSID_1
     spurt(F("/wifi/"  SYSTEM_WIFI_SSID_1), F(SYSTEM_WIFI_PASSWORD_1));
   #endif // SYSTEM_WIFI_SSID
@@ -245,6 +246,22 @@ void setup() {
   #ifdef SYSTEM_WIFI_SSID_5
     spurt(F("/wifi/"  SYSTEM_WIFI_SSID_5), F(SYSTEM_WIFI_PASSWORD_5));
   #endif
+  #ifdef SYSTEM_WIFI_SSID_6
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_6), F(SYSTEM_WIFI_PASSWORD_6));
+  #endif
+  #ifdef SYSTEM_WIFI_SSID_7
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_7), F(SYSTEM_WIFI_PASSWORD_7));
+  #endif
+  #ifdef SYSTEM_WIFI_SSID_8
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_8), F(SYSTEM_WIFI_PASSWORD_8));
+  #endif
+  #ifdef SYSTEM_WIFI_SSID_9
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_9), F(SYSTEM_WIFI_PASSWORD_9));
+  #endif
+  #ifdef SYSTEM_WIFI_SSID_10
+    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_10), F(SYSTEM_WIFI_PASSWORD_10));
+  #endif
+  // Feel free to extend if need more than 10! 
 
   #ifndef SYSTEM_WIFI_DEVICE
     #define SYSTEM_WIFI_DEVICE "device"
