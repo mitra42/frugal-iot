@@ -8,7 +8,7 @@ class Sensor_HT : public Sensor {
     const char* topic2; // Sensor::topic is typically "temperature" topic2 "humidity"
     float temperature;
     float humidity;
-    Sensor_HT(const char* topic, const char* topic2, const unsigned long ms);
+    Sensor_HT(const char* topic, const char* topic2, const unsigned long ms, bool retain);
     virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor
 };
 

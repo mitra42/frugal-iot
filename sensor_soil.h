@@ -47,7 +47,7 @@ class Sensor_Soil : public Sensor_Analog {
   public: 
     uint16_t map0;
     uint16_t map100;
-    Sensor_Soil(const uint16_t map0, const uint16_t map100, const uint8_t pin_init, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init);
+    Sensor_Soil(const uint16_t map0, const uint16_t map100, const uint8_t pin_init, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init, bool retain);
     virtual bool changed(uint16_t newvalue);
     virtual uint16_t read();
 };
