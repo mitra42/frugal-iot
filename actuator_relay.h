@@ -6,7 +6,7 @@
 */
 #include "actuator_digital.h"
 
-#define ACTUATOR_RELAY_ADVERTISEMENT "\n  -\n    topic: relay\n    name: Relay\n    type: bool\n    display: toggle\n    rw: rw"
+#define ACTUATOR_RELAY_ADVERTISEMENT "\n  -\n    topic: relay\n    name: Relay\n    type: bool\n    display: toggle\n    rw: w"
 
 #ifndef ACTUATOR_RELAY_PIN
   //TO_ADD_BOARD

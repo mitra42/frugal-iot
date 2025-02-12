@@ -186,7 +186,7 @@ String *INfloat::advertisement() {
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
   if (wireLeaf) {
-    *ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "float", "dropdown", "w");
+    *ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "float", "dropdown", "r");
   }
   return ad;
 }
