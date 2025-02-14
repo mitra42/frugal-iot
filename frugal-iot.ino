@@ -56,6 +56,10 @@
 #ifdef SYSTEM_TIME_WANT
 #include "system_time.h"
 #endif
+#ifdef LOCAL_DEV_WANT
+#include "local_dev.h"
+#endif
+
 
 void setup() {
 #ifdef ANY_DEBUG
@@ -123,7 +127,9 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
   xTime::setup();
 #endif
 
-
+#ifdef LOCAL_DEV_WANT
+  localDev::setup(); // Note has to be before Frugal_Base::setupAll()
+#endif
 
 Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuatorsand controls
 
@@ -135,6 +141,7 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
 
   // TODO-125 want to ifdef this
   internal_watchdog_setup();
+
 
 #ifdef ANY_DEBUG
   Serial.println(F("FrugalIoT Starting Loop"));
@@ -160,6 +167,10 @@ void loop() {
 #endif
   // TODO-125 probably want to ifdef this
   internal_watchdog_loop();
+
+#ifdef LOCAL_DEV_WANT
+  localDev::loop();
+#endif
 }
 
 
