@@ -155,7 +155,7 @@ void fullAdvertise() {
     )
   );
   #ifdef CONTROL_WANT
-    *advertisePayload += *(Control::advertisementAll());
+    *advertisePayload += (Control::advertisementAll());
   #endif
   Mqtt->messageSend(*advertiseTopic, *advertisePayload, true, 1);
 }

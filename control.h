@@ -37,12 +37,12 @@ class IO {
     virtual float floatValue(); // Can build these for other types and combos e.g. returning bool from a float etc
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
-    virtual String* advertisement();
+    virtual String advertisement();
 };
 class IN : public IO {
   public:
     IN(char const * const name, char const * const topicLeaf, char const *color, const bool wireable);
-    virtual String* advertisement();
+    virtual String advertisement();
     virtual float floatValue();
     virtual bool boolValue();
     virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
@@ -50,7 +50,7 @@ class IN : public IO {
 class OUT : public IO {
   public:
     OUT(char const * const name, char const * const topicLeaf, char const *color, const bool wireable);
-    virtual String* advertisement();
+    virtual String advertisement();
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
     virtual float floatValue();
@@ -88,7 +88,7 @@ class INfloat : public IN {
     bool dispatchPath(const String &topicPath, const String &payload);
     virtual void setup(const char * const sensorname);
     void debug(const char* const where);
-    String* advertisement();
+    String advertisement();
 
 };
 
@@ -105,7 +105,7 @@ class OUTfloat : public OUT {
     void sendWired();
     void set(const float newvalue);
     void debug(const char* const where);
-    String* advertisement();
+    String advertisement();
 };
 class OUTbool : public OUT {
   public:
@@ -118,7 +118,7 @@ class OUTbool : public OUT {
     void set(const bool newvalue);
     void sendWired();
     void debug(const char* const where);
-    String* advertisement();
+    String advertisement();
 };
 
 class Control : public Frugal_Base {
@@ -133,11 +133,11 @@ class Control : public Frugal_Base {
     void setup();
     void dispatch(const String &topicPath, const String &payload);
     virtual void act();
-    String* advertisement();
+    String advertisement();
     static void setupAll();
     static void loopAll();
     static void dispatchAll(const String &topicPath, const String &payload);
-    static String* advertisementAll();
+    static String advertisementAll();
     #ifdef CONTROL_DEBUG
       void debug(const char* const blah);
     #endif //CONTROL_DEBUG

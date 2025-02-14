@@ -17,7 +17,7 @@ const String StringF(const char* format, ...) {
     va_list args;
     va_start(args, format);
     vsnprintf(buffer, sizeof(buffer), format, args);
-    return String(buffer); // Make sure this is deleted
+    return String(buffer); // Note - string returned on stack so should be safe
 }
 #endif 
 
