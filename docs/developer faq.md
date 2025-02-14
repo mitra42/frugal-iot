@@ -46,7 +46,7 @@ To add an Organization: Select
 
 * Create a configuration file in [frugal-iot-server/config.d/organizations](https://github.com/mitra42/frugal-iot-server/tree/main/config.d/organizations)
   * use the existing dev.yaml as a template
-  * Submit a PR as usual (ask us if you dont know how to do this)
+  * The config.d file doesn't appear in the git because it may contain private passwords for the mqtt broker so for now if using `frugaliot.naturalinnovation.org` this means contacting Mitra to get it posted to the server. 
 * Edit your local.h.
   * Copy and edit a local.h from `_local-template.h` if you don't already have one.
   * edit the `SYSTEM_DISCOVERY_ORGANIZATION` parameter to be the organization abbreviation.
