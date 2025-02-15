@@ -326,10 +326,18 @@ void MqttManager::messageSend(const char* const topicleaf, const float &value, c
   messageSend(topicleaf, foo, retain, qos);
 }
 void MqttManager::messageSend(const String &topicpath, const int value, const bool retain, const int qos) {
-  const String foo = String(value);
+  const String foo = String(value); Serial.println(foo);
   messageSend(topicpath, foo, retain, qos);
 }
 void MqttManager::messageSend(const char* const topicleaf, const int value, const bool retain, const int qos) {
+  const String foo = String(value);
+  messageSend(topicleaf, foo, retain, qos);
+}
+void MqttManager::messageSend(const String &topicpath, const bool value, const bool retain, const int qos) {
+  const String foo = String(value); Serial.println(foo);
+  messageSend(topicpath, foo, retain, qos);
+}
+void MqttManager::messageSend(const char* const topicleaf, const bool value, const bool retain, const int qos) {
   const String foo = String(value);
   messageSend(topicleaf, foo, retain, qos);
 }

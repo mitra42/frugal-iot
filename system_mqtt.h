@@ -70,6 +70,8 @@ class MqttManager : public Frugal_Base {
     void messageSend(const char* topicleaf, const float &value, const int width, const bool retain, const int qos);
     void messageSend(const String &topicpath, const int value, const bool retain, const int qos);
     void messageSend(const char* topicleaf, const int value, const bool retain, const int qos);
+    void messageSend(const String &topicpath, const bool value, const bool retain, const int qos);
+    void messageSend(const char* topicleaf, const bool value, const bool retain, const int qos);
     void messageSendQueued();
     String* topicPath(char const * const topicleaf);
     String* topicLeaf(const String &topicpath);

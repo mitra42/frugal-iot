@@ -175,18 +175,18 @@ bool INfloat::dispatchPath(const String &tp, const String &p) {
   return false; 
 }
 const char* groupAdvertLine  = "\n  -\n    group: %s\n    name: %s";
-const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %.1f\n    max: %.1f\n    color: %s\n    display: %s\n    rw: %s";
-const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s";
-const char* wireAdvertLine = "\n  -\n    topic: %s\n    name: %s%s\n    type: %s\n    options: %s\n    display: %s\n    rw: %s";
-String INfloat::advertisement() {
+const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %.1f\n    max: %.1f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
+const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
+const char* wireAdvertLine = "\n  -\n    topic: %s\n    name: %s%s\n    type: %s\n    options: %s\n    display: %s\n    rw: %s\n    group: %s";
+String INfloat::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   if (topicLeaf) {
-    ad += StringF(valueAdvertLineFloat, topicLeaf, name, "float", min, max, color, "slider", "w");
+    ad += StringF(valueAdvertLineFloat, topicLeaf, name, "float", min, max, color, "slider", "w", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
   if (wireLeaf) {
-    ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "float", "dropdown", "r");
+    ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "float", "dropdown", "r", group);
   }
   return ad;
 }
@@ -233,7 +233,7 @@ void OUTfloat::set(const float newvalue) {
 // Called when either value, or wiredPath changes
 void OUTbool::sendWired() {
     if (wiredPath) {
-      Mqtt->messageSend(*wiredPath, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+      Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
     }
 }
 void OUTbool::set(const bool newvalue) {
@@ -242,35 +242,35 @@ void OUTbool::set(const bool newvalue) {
   #endif
   if (newvalue != value) {
     value = newvalue;
-    Mqtt->messageSend(topicLeaf, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    Mqtt->messageSend(topicLeaf, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
     sendWired();
   }
 }
 // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
-String OUTfloat::advertisement() {
+String OUTfloat::advertisement(const char * const group) {
   String ad = String();
-  // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
-  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
+  // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
+  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
   if (topicLeaf) {
-    ad += StringF(valueAdvertLineFloat, topicLeaf, name, "float", min, max, color, "bar", "r");
+    ad += StringF(valueAdvertLineFloat, topicLeaf, name, "float", min, max, color, "bar", "r", group);
   }
-  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
+  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w\n    group: %s"
   if (wireLeaf) {
-    ad += StringF(wireAdvertLine, wireLeaf, name, " wire to", "topic", "float", "dropdown", "w");
+    ad += StringF(wireAdvertLine, wireLeaf, name, " wire to", "topic", "float", "dropdown", "w", group);
   }
   return ad;
 }
 // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
-String OUTbool::advertisement() {
+String OUTbool::advertisement(const char * const group) {
   String ad = String();
 
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: bar\n    rw: w"
   if (topicLeaf) {
-    ad += StringF(valueAdvertLineBool, topicLeaf, name, "bool", color, "toggle", "r");
+    ad += StringF(valueAdvertLineBool, topicLeaf, name, "bool", color, "toggle", "r", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
   if (wireLeaf) {
-    ad += StringF(wireAdvertLine, wireLeaf, name, " wire to", "topic", "bool", "dropdown", "w");
+    ad += StringF(wireAdvertLine, wireLeaf, name, " wire to", "topic", "bool", "dropdown", "w", group);
   }
   return ad;
 }
@@ -338,10 +338,10 @@ void Control::dispatch(const String &topicPath, const String &payload ) {
 String Control::advertisement() {
   String ad = StringF(groupAdvertLine, name, name); // Wrap control in a group
   for (auto &input : inputs) {
-    ad += (input->advertisement());
+    ad += (input->advertisement(name));
   }
   for (auto &output : outputs) {
-    ad += (output->advertisement());
+    ad += (output->advertisement(name));
   }
   return ad;
 }
