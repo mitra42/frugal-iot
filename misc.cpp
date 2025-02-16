@@ -5,6 +5,9 @@
 #ifdef ESP32
   #include "esp_task_wdt.h" // TODO-125
 #endif
+#ifdef ESP8266
+#include "user_interface.h" // system_get_free_heap_size
+#endif
 
 #if defined(SYSTEM_TIME_WANT) || defined(CONTROL_WANT)
 #include <Arduino.h> // For String
@@ -65,9 +68,11 @@ void internal_watchdog_loop() {
     esp_task_wdt_reset();
   #endif
   if (millis() > (internal_watchdog_last + SYSTEM_WATCHDOG_MEM_MS)) {
-    #ifdef ESP32 //TODO-128 should be able to find equivalent on ESP8266
-      Serial.print("heap="); Serial.print(esp_get_free_heap_size()); 
-      Serial.print(" min heap="); Serial.println(esp_get_minimum_free_heap_size());
+    #ifdef ESP8266
+      Serial.print(F("heap=")); Serial.println(system_get_free_heap_size());  // https://www.esp8266.com/viewtopic.php?p=82839
+    #elif defined(ESP32) //TODO-128 should be able to find equivalent on ESP8266
+      Serial.print(F("heap=")); Serial.print(esp_get_free_heap_size()); 
+      Serial.print(F(" min heap=")); Serial.println(esp_get_minimum_free_heap_size());
     #endif //ESP32
     internal_watchdog_last = millis(); 
   }
