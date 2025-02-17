@@ -36,7 +36,6 @@ OUT::OUT(const char * const n, const char * const tl, const char * const c, cons
 float INfloat::floatValue() {
   return value;
 }
-
 bool INfloat::boolValue() {
   return value;
 }
