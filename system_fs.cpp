@@ -185,7 +185,7 @@ void System_SPIFFS::setup() {
   }
 }
 
-System_Logger::System_Logger(const char * const n, System_FS* f, const char * const r, std::vector<IO*> i) : Frugal_Base(), name(n), fs(f), root(r), inputs(i) { }
+System_Logger::System_Logger(const char * const n, System_FS* f, const char * const r, std::vector<IN*> i) : Frugal_Base(), name(n), fs(f), root(r), inputs(i) { }
 
 void System_Logger::setup() {
   fs->setup();
@@ -207,5 +207,27 @@ void System_Logger::append(String &topicPath, String &payload) {
   f.write(line.c_str()); // Will append because opened with "a"
   f.close();
 }
+
+
+// Ouput advertisement for control - all of IN and OUTs 
+String System_Logger::advertisement() {
+  String ad = StringF("\n  -\n    group: %s\n    name: %s", name, name); // Wrap control in a group
+  for (auto &input : inputs) {
+    ad += (input->advertisement(name));
+  }
+  for (auto &output : outputs) {
+    ad += (output->advertisement(name));
+  }
+  return ad;
+}
+String System_Logger::advertisementAll() {
+  String ad = String();
+  for (System_Logger* l: loggers) {
+    ad += (l->advertisement());
+  }
+  return ad;
+}
+
+std::vector<System_Logger*> loggers;
 
 #endif //SYSTEM_FS_WANT

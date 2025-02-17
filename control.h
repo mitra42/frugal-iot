@@ -145,5 +145,5 @@ class Control : public Frugal_Base {
 
 extern std::vector<Control*> controls;
 
-
+    
 #endif //CONTROL_H

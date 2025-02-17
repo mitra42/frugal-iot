@@ -129,7 +129,11 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
   fs2->setup(); //TODO-110 at moment should printout dir
 #endif
 
-System_Logger* system_logger = new System_Logger(
+
+xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+
+#ifdef SYSTEM_FS_WANT
+loggers.emplace_front( // Should automagically pass to System_Logger constructor
   "system_logger",
   fs2, // TODO-110 Using spiffs for testing for now
   "/",
@@ -139,10 +143,7 @@ System_Logger* system_logger = new System_Logger(
     new INfloat("log2", 0.0, "log2", true),
     new INfloat("log3", 0.0, "log3", true)
     });
-
-system_logger->debug("frugal-iot.ino after instantiation");
-
-xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+#endif // SYSTEM_FS_WANT
 
 #ifdef SYSTEM_OTA_WANT
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi

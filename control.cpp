@@ -334,6 +334,7 @@ void Control::dispatch(const String &topicPath, const String &payload ) {
       act(); // Likely to be subclassed
     }
 }
+
 // Ouput advertisement for control - all of IN and OUTs 
 String Control::advertisement() {
   String ad = StringF(groupAdvertLine, name, name); // Wrap control in a group
