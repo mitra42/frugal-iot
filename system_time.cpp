@@ -18,7 +18,6 @@
 #include "Arduino.h"
 #include <time.h>
 #include "esp_sntp.h" // Not available on ESP8266
-//#include "StringExtras.h" // TODO-118 put these somewhere central -  not sure where have such routines so far?
 #include "system_time.h"
 #include "misc.h" // for StringF
 
@@ -29,7 +28,7 @@
   #define SYSTEM_TIME_ZONE_ABBREV "GMT" // The typical way time is described locally 
 #endif
 #ifndef SYSTEM_TIME_MS
-  #define SYSTEM_TIME_MS 360000 // TODO-114 make this much longer e.g. 3600000 for once an hour
+  #define SYSTEM_TIME_MS 360000 
 #endif
 
 #define JAN_01_2024 1704070861L

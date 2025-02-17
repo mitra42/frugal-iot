@@ -17,13 +17,16 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
 #include "sensor_soil.h"
 #include "system_mqtt.h"
 
-Sensor_Soil::Sensor_Soil(const uint16_t map0_init, const uint16_t map100_init, const uint8_t pin_init, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init) 
-  : Sensor_Analog(pin_init, smooth_init, topic_init, ms_init), map0(map0_init), map100(map100_init) { }
+Sensor_Soil::Sensor_Soil(const uint16_t map0_init, const uint16_t map100_init, const uint8_t pin_init, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init, bool retain) 
+  : Sensor_Analog(pin_init, smooth_init, topic_init, ms_init, retain), map0(map0_init), map100(map100_init) { }
 
 #define SENSOR_SOIL_INVALIDVALUE 0xFFFF
 
 uint16_t Sensor_Soil::read() {
   const uint16_t x = analogRead(pin);
+  #ifdef SENSOR_SOIL_DEBUG
+    Serial.print("Soil sensor reading:"); Serial.println(x);
+  #endif
   if (x == 4095) { // 12 bit -1 i.e. 0xFFF
     return SENSOR_SOIL_INVALIDVALUE;
   }

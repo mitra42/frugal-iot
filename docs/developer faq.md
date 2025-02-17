@@ -15,7 +15,7 @@ Note this is a draft as of Sept 2024, structure might change as others give inpu
 * `system_xxx.h` and `.cpp` - define header & code for system utilities. 
 * `docs/*` documentation 
 
-Look at `actuator_blinken.h` and `actuator_blinken.c` for an example of using namespace note how the namespace name is the section followed by capitalized item e.g. `aBlinken` or `sClock`
+Look at `actuator_blinken.h` and `actuator_blinken.c` for an example of using subclassing & namespaces note how the namespace name is the section followed by capitalized item e.g. `aBlinken` or `sClock`
 
 ## Adding functionality
 
@@ -46,12 +46,20 @@ To add an Organization: Select
 
 * Create a configuration file in [frugal-iot-server/config.d/organizations](https://github.com/mitra42/frugal-iot-server/tree/main/config.d/organizations)
   * use the existing dev.yaml as a template
-  * Submit a PR as usual (ask us if you dont know how to do this)
+  * The config.d file doesn't appear in the git because it may contain private passwords for the mqtt broker so for now if using `frugaliot.naturalinnovation.org` this means contacting Mitra to get it posted to the server. 
 * Edit your local.h.
   * Copy and edit a local.h from `_local-template.h` if you don't already have one.
   * edit the `SYSTEM_DISCOVERY_ORGANIZATION` parameter to be the organization abbreviation.
 
 Note: A longer name, and a description are likely to be required for organizations in future.
+
+#### Adding a project
+
+This needs adding to the config file for the organization in `config.d`, this controls what gets logged about the project and also makes sure that the
+project shows up in the dropdown on `index.html`
+
+The config.d file doesn't appear in the git because it may contain private passwords for the mqtt broker so
+- for now if using `frugaliot.naturalinnovation.org` this means contacting Mitra to get it posted to the server. 
 
 ### Adding a sensor or actuator.
 
@@ -92,22 +100,6 @@ Add the following code at the different TO_ADD_SENSOR places
 ```
 #ifdef SENSOR_FOO_WANT
 #include "sensor_foo.h"
-#endif
-```
-There are two different approaches depending on hard coded instances or classes
-
-#### frugal_iot.ino for hard coded
-```
-#ifdef SENSOR_FOO_WANT
-  sFoo::setup();
-#endif
-```
-and if, and only if, there is a loop() function on the sensor or actuator
-note that most actuators do not have a loop as they respond to incoming MQTT
-and that
-```
-#ifdef SENSOR_FOO_WANT
-  sFoo::loop();
 #endif
 ```
 #### frugal_iot.ino for classes

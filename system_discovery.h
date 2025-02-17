@@ -3,6 +3,7 @@
 
 namespace xDiscovery {
 extern String *topicPrefix;
+void fullAdvertise();
 void setup();
 void loop();
 } // namespace xDiscovery

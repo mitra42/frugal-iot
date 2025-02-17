@@ -50,9 +50,6 @@
 #ifdef CONTROL_BLINKEN_WANT
   #include "control_blinken.h"
 #endif
-#ifdef CONTROL_DEMO_MQTT_WANT
-  #include "control_demo_mqtt.h"
-#endif
 #ifdef CONTROL_WANT
   #include "control.h"
 #endif
@@ -75,25 +72,6 @@ void quickAdvertise() {
     Mqtt->messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
 }
 
-//TODO-29 want retained upstream but not local - non trivial
-void fullAdvertise() {
-  Mqtt->messageSend(*advertiseTopic, *advertisePayload, true, 1);
-}
-/*
-// This is a previous idea that clients ask for the fullAdvertise, but since its retained at the broker that isn't needed. 
-void inputReceived(String &payload) {
-  #ifdef SYSTEM_DISCOVERY_DEBUG
-    Serial.print(F("Discovery message receieved:"));
-  #endif // SYSTEM_DISCOVERY_DEBUG
-  // topic can only be advertiseTopic so no need to test
-  if (payload[0] == '?') {
-    #ifdef SYSTEM_DISCOVERY_DEBUG
-      Serial.println(F("Request for advertisement"));
-    #endif
-    fullAdvertise();
-  }
-}
-*/
 
 //const char PROGMEM system_discovery_organization_slash[] = SYSTEM_DISCOVERY_ORGANIZATION "/";
 #ifdef ESP8266 // Runtime Exception if try and add char[] to String 
@@ -105,15 +83,9 @@ void inputReceived(String &payload) {
   #define nlNameColon F("\nname: ")
 #endif
 
-
-void setup() {
-  // This line fails when board 'LOLIN C3 PICO' is chosen
-  // projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
-  //Serial.print(xxx); //TODO_C++EXPERT - for weird reason requires this and const char PROGMEM above  or get run time exception
-  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project );
-  advertiseTopic = new String(*projectTopic + F("/") + xWifi::clientid()); // e.g. "dev/lotus/esp32-12345"
-  topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/lotus/esp32-12345/" prefix of most topics
-  advertisePayload = new String( 
+void fullAdvertise() {
+  // Note - this is intentionally not a global string as it can be quite big, better to create, send an free up
+  String* advertisePayload = new String( 
     idcolon + xWifi::clientid() 
     + nlNameColon + xWifi::device_name
     + F("\ndescription: "
@@ -124,12 +96,10 @@ void setup() {
       //TO_ADD_BOARD - only used if SYSTEM_DISCOVERY_DEVICE_DESCRIPTION undefined and displayed in UX.
       #ifdef ESP8266_D1
         "ESP8266 D1"
+      #elif defined(LOLIN_C3_PICO)
+        "Lolin C3 Pico"
       #else
-        #ifdef LOLIN_C3_PICO
-          "Lolin C3 Pico"
-        #else
-          #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
-        #endif
+        #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
       #endif
       // TO_ADD_SENSOR (note space at start of string)
       #ifdef SENSOR_SHT_WANT
@@ -145,6 +115,9 @@ void setup() {
       #ifdef ACTUATOR_RELAY_WANT
         " Relay"
       #endif
+    #endif
+    #ifdef SYSTEM_OTA_WANT
+      "\nota: " SYSTEM_OTA_KEY 
     #endif
     // TODO-44 add location: <gsm coords>
     "\ntopics:" 
@@ -179,18 +152,24 @@ void setup() {
       #ifdef CONTROL_BLINKEN_WANT
         CONTROL_BLINKEN_ADVERTISEMENT
       #endif
-      #ifdef CONTROL_DEMO_MQTT_WANT
-        CONTROL_DEMO_MQTT_ADVERTISEMENT
-      #endif
-      #ifdef CONTROL_WANT // TODO-25 will move and make automated
-        CONTROL_ADVERTISEMENT
-      #endif
     )
   );
+  #ifdef CONTROL_WANT
+    *advertisePayload += (Control::advertisementAll());
+  #endif
+  Mqtt->messageSend(*advertiseTopic, *advertisePayload, true, 1);
+}
+
+void setup() {
+  // This line fails when board 'LOLIN C3 PICO' is chosen
+  // projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
+  //Serial.print(xxx); //TODO_C++EXPERT - for weird reason requires this and const char PROGMEM above  or get run time exception
+  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project );
+  advertiseTopic = new String(*projectTopic + F("/") + xWifi::clientid()); // e.g. "dev/lotus/esp32-12345"
+  topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/lotus/esp32-12345/" prefix of most topics
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
   #endif
-  fullAdvertise(); // Tell broker what I've got at start (note, intentionally before quickAdvertise) 
 }
 
 void loop() {
