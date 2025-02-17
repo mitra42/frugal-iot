@@ -35,6 +35,7 @@ class IO {
       virtual void debug(const char* const where);
     #endif
     virtual float floatValue(); // Can build these for other types and combos e.g. returning bool from a float etc
+    virtual String* stringValue();
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
     virtual String advertisement(const char * const name);
@@ -45,6 +46,7 @@ class IN : public IO {
   virtual String advertisement(const char * const name);
     virtual float floatValue();
     virtual bool boolValue();
+    virtual String* stringValue();
     virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
 };
 class OUT : public IO {
@@ -55,6 +57,7 @@ class OUT : public IO {
     //virtual void set(const bool newvalue);
     virtual float floatValue();
     virtual bool boolValue();
+    virtual String* stringValue();
     virtual void sendWired();
     virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
 };
@@ -90,6 +93,23 @@ class INfloat : public IN {
     void debug(const char* const where);
     String advertisement(const char * const name);
 
+};
+class INstring : public IN {
+  public:
+    String* value;
+    INstring(); 
+    INstring(char const * const name, String* v, char const * const topicLeaf, char const * const color, const bool wireable);
+    INstring(const INstring &other);
+    //float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
+    //bool boolValue();
+    String* stringValue();
+    bool boolValue();
+    float floatValue();
+    bool dispatchLeaf(const String &topicLeaf, const String &payload);
+    bool dispatchPath(const String &topicPath, const String &payload);
+    virtual void setup(const char * const sensorname);
+    void debug(const char* const where);
+    String advertisement(const char * const name);
 };
 
 class OUTfloat : public OUT {
@@ -145,5 +165,5 @@ class Control : public Frugal_Base {
 
 extern std::vector<Control*> controls;
 
-
+    
 #endif //CONTROL_H

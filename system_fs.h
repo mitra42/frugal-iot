@@ -73,10 +73,14 @@ class System_Logger : public Frugal_Base {
     const char * const name; // TODO maybe push this to Frugal_Base - also in Control
     System_FS* fs; // Will be pointer to System_SD or System_SPIFFS
     const char* const root; 
-    std::vector<IO*> inputs; // Vector of inputs
-    System_Logger(const char * const name, System_FS* fs, const char* const root, std::vector<IO*> i);
+    std::vector<IN*> inputs; // Vector of inputs
+    System_Logger(const char * const name, System_FS* fs, const char* const root, std::vector<IN*> i);
+    String advertisement();
     void setup();
     void append(String &topicPath, String &payload);
+    static String advertisementAll();
 };
+extern std::vector<System_Logger*> loggers;
+
 #endif //SYSTEM_FS_WANT
 #endif //SYSTEM_FS_H

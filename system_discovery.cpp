@@ -53,6 +53,9 @@
 #ifdef CONTROL_WANT
   #include "control.h"
 #endif
+#ifdef SYSTEM_FS_WANT
+  #include "system_fs.h"
+#endif
 
 namespace xDiscovery {
 
@@ -153,6 +156,9 @@ void fullAdvertise() {
         CONTROL_BLINKEN_ADVERTISEMENT
       #endif
     )
+      #ifdef SYSTEM_FS_WANT
+      + System_Logger::advertisementAll()
+      #endif
   );
   #ifdef CONTROL_WANT
     *advertisePayload += (Control::advertisementAll());

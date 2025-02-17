@@ -25,16 +25,28 @@
 #ifdef SYSTEM_SD_WANT
   #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
   #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
+  #ifndef SYSTEM_SD_PIN
+    #ifdef ESP8266_D1
+      #define SYSTEM_SD_PIN D4
+    #elif defined(LOLIN_C3_PICO)
+      #define SYSTEM_SD_PIN 6
+    #else
+      #error No default pin for SD cards on your board
+    #endif
+  #endif
 #endif
+
 #ifdef SYSTEM_SPIFFS_WANT
-#ifdef ESP32
-  #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
-  #include <SPIFFS.h>
-#elif ESP8266
-  #define ESPFS LittleFS // LittleFS defind in LittleFS.h
-  #include <LittleFS.h>
-#endif // ESP32||ESP8266
+  #ifdef ESP32
+    #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
+    #include <SPIFFS.h>
+  #elif ESP8266
+    #define ESPFS LittleFS // LittleFS defind in LittleFS.h
+    #include <LittleFS.h>
+  #endif // ESP32||ESP8266
 #endif // SYSTEM_SPIFFS_WANT
+
+
 #include "system_fs.h"
 #include "_base.h"
 #include "control.h" // For IN - TODO-110 move IN to Frugal_base
@@ -130,13 +142,16 @@ void System_FS::printDirectory(File dir, int numTabs) {  // e.g. "/"
     } else {
       // files have sizes, directories do not
       Serial.print("\t\t");
-      Serial.print(formatBytes(entry.size()));   //TODO use formatBytes
-      time_t cr = entry.getCreationTime();
+      Serial.print(formatBytes(entry.size()));
+      #ifdef XXX110
+      // TODO=110 what happened these, pretty sure could compile previously
+      time_t cr = entry.GetCreationTime(); //TODO unclear which capitalization is correct for this and getLastWrite
       time_t lw = entry.getLastWrite();
       struct tm* tmstruct = localtime(&cr);
       Serial.printf("\t%d-%02d-%02d %02d:%02d:%02d", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
       tmstruct = localtime(&lw);
       Serial.printf("\t%d-%02d-%02d %02d:%02d:%02d\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
+      #endif
     }
     entry.close();
   }
@@ -148,7 +163,7 @@ System_SD::System_SD() {}
 System_SPIFFS::System_SPIFFS() {}
 
 void System_SD::setup() {
-  uint8_t pin = D4;
+  uint8_t pin = SYSTEM_SD_PIN;
   // Library is SS=D8=15 fails;  old sketch was 4 some online says 8 but that fatals. D4=GPIO0=2 worked on Lolin Relay with no solder bridge
   Serial.print("SD initialization on CS pin "); Serial.print(pin);
   if (!SD.begin(pin)) { // SS is defined in common.h as PIN_SPI_SS which is defined a pin 15 in https://github.com/esp8266/Arduino in variants/generic/common.h
@@ -185,7 +200,7 @@ void System_SPIFFS::setup() {
   }
 }
 
-System_Logger::System_Logger(const char * const n, System_FS* f, const char * const r, std::vector<IO*> i) : Frugal_Base(), name(n), fs(f), root(r), inputs(i) { }
+System_Logger::System_Logger(const char * const n, System_FS* f, const char * const r, std::vector<IN*> i) : Frugal_Base(), name(n), fs(f), root(r), inputs(i) { }
 
 void System_Logger::setup() {
   fs->setup();
@@ -203,9 +218,36 @@ void System_Logger::append(String &topicPath, String &payload) {
   // Match logger: String line = StringF("%d,\"%s\"\n", _now, payload);
   String line = StringF("%04d-%02d-$02d %02d:%02d:%02d,\"%s\"\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec, payload);  
   String filepath = StringF("%s%s/%04d-%02d-%02d.csv", root, topicPath, (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday);
+  // TODO-110 check errors
   File f = fs->open(filepath,"a"); // Check it will do this recursively creating directories - it might not ! 
-  f.write(line.c_str()); // Will append because opened with "a"
-  f.close();
+  if (!f) { 
+    Serial.print(F("Failed to open")); Serial.println(filepath);
+  } else {
+    uint8_t n = f.print(line); // Will append because opened with "a"
+    if (n != line.length()) {
+      Serial.print(F("Failed to write to:")); Serial.println(filepath);
+    }
+    f.close();
+  }
 }
+
+
+// Ouput advertisement for control - all of IN and OUTs 
+String System_Logger::advertisement() {
+  String ad = StringF("\n  -\n    group: %s\n    name: %s", name, name); // Wrap control in a group
+  for (auto &input : inputs) {
+    ad += (input->advertisement(name));
+  }
+  return ad;
+}
+String System_Logger::advertisementAll() {
+  String ad = String();
+  for (System_Logger* l: loggers) {
+    ad += (l->advertisement());
+  }
+  return ad;
+}
+
+std::vector<System_Logger*> loggers;
 
 #endif //SYSTEM_FS_WANT

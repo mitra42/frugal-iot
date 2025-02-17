@@ -58,12 +58,13 @@
 #endif
 
 // TO_ADD_CONTROL
-#if defined(CONTROL_BLINKEN_WANT) || defined(CONTROL_HYSTERISIS_WANT)
+#if defined(CONTROL_BLINKEN_WANT) || defined(CONTROL_HYSTERISIS_WANT) || defined(SYSTEM_FS_WANT)
   #define CONTROL_WANT
 #endif
-#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_DEBUG)
+#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_DEBUG) || defined(SYSTEM_FS_DEBUG)
   #define CONTROL_DEBUG
 #endif
+// TODO-110 when IO moved to base.cpp; SYSTEM_FS wont need CONTROL
 
 // TODO_ADD_SYSTEM
 #if defined(SYSTEM_LOGGER_WANT)
