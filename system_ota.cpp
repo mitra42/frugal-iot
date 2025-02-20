@@ -45,11 +45,7 @@
 #endif
 
 #ifndef SYSTEM_OTA_SERVERPORTPATH
-  #ifdef ESP32
-    #define SYSTEM_OTA_SERVERPORTPATH "https://frugaliot.naturalinnovation.org/ota_update/" // Note trailing slash
-  #else
-    #define SYSTEM_OTA_SERVERPORTPATH "http://frugaliot.naturalinnovation.org/ota_update/" // Note trailing slash
-  #endif
+  #define SYSTEM_OTA_SERVERPORTPATH "https://frugaliot.naturalinnovation.org/ota_update/" // Note trailing slash
 #endif
 
 #ifdef ESP32

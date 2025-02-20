@@ -8,7 +8,7 @@ extern String discovery_project;
 extern String device_name;
 
 void setup();
-void connect();
+bool connect();
 void checkConnected();
 String &clientid();
 //void loop();

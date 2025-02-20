@@ -6,6 +6,7 @@
 
 #include "_base.h" // Base for new class version
 #include "sensor.h" // Base class for sensors
+#include "misc.h" // 
 
 #ifdef SYSTEM_WIFI_WANT
 #include "system_wifi.h"
@@ -40,8 +41,11 @@
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
 #endif
-#ifdef CONTROL_DEMO_MQTT_WANT
-#include "control_demo_mqtt.h"
+#ifdef CONTROL_WANT
+#include "control.h"
+#endif
+#ifdef CONTROL_HYSTERISIS_WANT
+#include "control_hysterisis.h"
 #endif
 #ifdef SYSTEM_DISCOVERY_WANT
 #include "system_discovery.h"
@@ -52,7 +56,9 @@
 #ifdef SYSTEM_TIME_WANT
 #include "system_time.h"
 #endif
-
+#ifdef LOCAL_DEV_WANT
+#include "local_dev.h"
+#endif
 
 
 void setup() {
@@ -71,15 +77,7 @@ void setup() {
 #endif // ANY_DEBUG
 // put setup code here, to run once:
 xWifi::setup();
-Mqtt = new MqttManager();
-xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
-#ifdef SYSTEM_OTA_WANT
-  // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
-  xOta::setup();
-#endif
-#ifdef SYSTEM_TIME_WANT // Synchronize time
-  xTime::setup();
-#endif
+Mqtt = new MqttManager(); // Connects to wifi and broker
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -114,30 +112,53 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
   Sensor_Battery* s4 = new Sensor_Battery(SENSOR_BATTERY_PIN);  // TODO-57 will rarely be as simple as this
 #endif
 #ifdef SENSOR_SHT_WANT
-  Sensor_SHT* s1 = new Sensor_SHT(SENSOR_SHT_ADDRESS, &Wire, "temperature", "humidity", SENSOR_SHT_MS);
+  Sensor_SHT* s1 = new Sensor_SHT(SENSOR_SHT_ADDRESS, &Wire, "temperature", "humidity", SENSOR_SHT_MS, true);
 #endif
 #ifdef SENSOR_DHT_WANT
-  Sensor_DHT* s2 = new Sensor_DHT(SENSOR_DHT_PIN, "temperature", "humidity", SENSOR_DHT_MS);
+  Sensor_DHT* s2 = new Sensor_DHT(SENSOR_DHT_PIN, "temperature", "humidity", SENSOR_DHT_MS, true);
 #endif
 #ifdef SENSOR_SOIL_WANT
-  Sensor_Soil* s5a = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS);
+  Sensor_Soil* s5a = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS, true);
   #ifdef SENSOR_SOIL_PIN2
-    Sensor_Soil* s5b = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN2, 0, SENSOR_SOIL_TOPIC "2", SENSOR_SOIL_MS);
+    Sensor_Soil* s5b = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN2, 0, SENSOR_SOIL_TOPIC "2", SENSOR_SOIL_MS, true);
   #endif
   #ifdef SENSOR_SOIL_PIN3
-    Sensor_Soil* s5c = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, SENSOR_SOIL_TOPIC "3", SENSOR_SOIL_MS);
+    Sensor_Soil* s5c = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, SENSOR_SOIL_TOPIC "3", SENSOR_SOIL_MS, true);
   #endif
 #endif
+
+#ifdef CONTROL_HYSTERISIS_WANT
+// Example definition of control
+  ControlHysterisis* control_humidity = new ControlHysterisis("humidity", 50, 0, 100);
+#endif //CONTROL_HYSTERISIS_WANT
+
 #pragma GCC diagnostic pop
 
-Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuators
+xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+
+#ifdef SYSTEM_OTA_WANT
+  // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
+  xOta::setup();
+#endif
+#ifdef SYSTEM_TIME_WANT // Synchronize time
+  xTime::setup();
+#endif
+
+#ifdef LOCAL_DEV_WANT
+  localDev::setup(); // Note has to be before Frugal_Base::setupAll()
+#endif
+
+Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuatorsand controls
 
 #ifdef CONTROL_BLINKEN_WANT
   cBlinken::setup();
 #endif
-#ifdef CONTROL_DEMO_MQTT_WANT
-  cDemoMqtt::setup(); // Must be after system_mqtt
-#endif
+   // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
+  xDiscovery::fullAdvertise();
+
+  // TODO-125 want to ifdef this
+  internal_watchdog_setup();
+
 
 #ifdef ANY_DEBUG
   Serial.println(F("FrugalIoT Starting Loop"));
@@ -160,6 +181,12 @@ void loop() {
 #endif
 #ifdef SYSTEM_TIME_WANT
   xTime::loop();
+#endif
+  // TODO-125 probably want to ifdef this
+  internal_watchdog_loop();
+
+#ifdef LOCAL_DEV_WANT
+  localDev::loop();
 #endif
 }
 

@@ -91,10 +91,23 @@ If you get the configuration wrong, you'll need (for now - part of issue#22) to
 
 Open a browser to https://frugaliot.naturalinnovation
 
+#### Other languages
+At the moment (Nov2024) - see [issue #42](https://github.com/mitra42/frugal-iot/issues/42), language support is being added. 
+
+You can define `#define LANGUAGE_DEFAULT "de"` in `_local.h` to default to German. 
+And you can add `#define LANGUAGE_DE` to `_local.h` to *only* compile German (saving program space)
+You can add multiple lines to compile multiple languages.
+
+To only compile one language (which saves memory) go into Arduino/libraries/ESP-WiFiSettings/WiFiSettings_strings.h 
+and add one or more lines at the top like `#define LANGUAGE_DE`. 
+
+Unfortunately we haven't found a way to control the library compilation from the `_local.h` file.
+
 ### Server development
 
 Because of the demo servers on frugaliot.naturalinnovation.org, it is perfectly possible to develop the firmware without running your own servers.
 But if you want to do server or client development ... see the README.md on each component's repository.
+
 
 
 

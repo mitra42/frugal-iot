@@ -21,7 +21,7 @@ std::vector<Sensor*> sensors; // TODO_C++_EXPERT I wanted this to be a static in
   } // Allow Serial to stabilize
 #endif // SENSOR_DEBUG
 
-Sensor::Sensor(const char* const t, const unsigned long m) : Frugal_Base(), topic(t), ms(m) { 
+Sensor::Sensor(const char* const t, const unsigned long m, bool r) : Frugal_Base(), topic(t), ms(m), retain(r) { 
   sensors.push_back(this);
 }
 

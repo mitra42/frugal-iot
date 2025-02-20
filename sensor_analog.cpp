@@ -8,6 +8,8 @@
  * Required: SENSOR_XYZ_WANT - compiled based on any of its subclasses
  * Optional: SENSOR_ANALOG_REFERENCE for ESP8266 only  
  *
+ * TODO: There is a lot more clever stuff on https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html
+ * Its ESP32 specific, but looks like a range of capabilities that could be integrated.
  */
 
 #include "_settings.h"  // Settings for what to include etc
@@ -28,14 +30,13 @@
 #ifndef SENSOR_ANALOG_REFERENCE
   #ifdef ESP8266_D1
     #define SENSOR_ANALOG_REFERENCE DEFAULT // TODO not clear if / where this is used 
+  #elif defined(LOLIN_C3_PICO) || defined(ESP32_WROVER_DEV) || defined(ESP32) // It doesnt seem to be used on ESP32s 
   #else
-    #ifndef ESP32 // It doesnt seem to be used on ESP32s 
-      #error analogReference() is processor dependent, review the docs and online and define
-    #endif
+    #error analogReference() is processor dependent, review the docs and online and define
   #endif
 #endif //  SENSOR_ANALOG_REFERENCE
 
-Sensor_Analog::Sensor_Analog(const uint8_t p, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init) : Sensor_Uint16(smooth_init, topic_init, ms_init), pin(p) { };
+Sensor_Analog::Sensor_Analog(const uint8_t p, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init, bool r) : Sensor_Uint16(smooth_init, topic_init, ms_init, r), pin(p) { };
 
 // Sensor_Uint16_t::act is good - sends with retain=false; qos=0;
 // Sensor_Uint16_t::set is good - does optional smooth, compares and calls act
@@ -47,11 +48,15 @@ uint16_t Sensor_Analog::read() {
 }
 
 void Sensor_Analog::setup() {
+
   // initialize the analog pin as an input.
   pinMode(pin, INPUT); // I don't think this is needed ?
   #ifdef SENSOR_ANALOG_REFERENCE
     analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
   #endif 
+  #ifdef SENSOR_ANALOG_ATTENTUATION
+    analogSetAttentuation(SENSOR_ANALOG_ATTENTUATION)
+  #endif
 }
 #endif // SENSOR_ANALOG_WANT
 // TODO-57 need to do discovery

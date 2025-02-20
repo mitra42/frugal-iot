@@ -117,13 +117,13 @@ void sSHTxx::readSensor() {
       // Store new results and optionally if changed send on MQTT
       #ifdef SENSOR_SHT85_TOPIC_TEMPERATURE
       if (temp != temperature) {
-        xMqtt::messageSend(sSht85::topicT, temp, 1, false, 0);
+        xMqtt::messageSend(sSht85::topicT, temp, 1, true, 0);
       }
       #endif
       temperature = temp;
       #ifdef SENSOR_SHT85_TOPIC_HUMIDITY
         if (humy != humidity) { // TODO may want to add some bounds (e.g a percentage)
-          xMqtt::messageSend(sSht85::topicH, humy, 1, false, 0);
+          xMqtt::messageSend(sSht85::topicH, humy, 1, true, 0);
         }
       #endif
       humidity = humy;

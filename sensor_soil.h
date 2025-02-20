@@ -49,14 +49,14 @@
 #endif
 
 #define SENSOR_SOIL_ADVERTISEMENT1 "\n  -\n    topic: " SENSOR_SOIL_TOPIC "\n    name: " SENSOR_SOIL_NAME "\n    type: int\n    display: bar\n    min: 0\n    max: 100\n    color: brown\n    rw: r"
-#define SENSOR_SOIL_ADVERTISEMENT2 "\n  -\n    topic: " SENSOR_SOIL_TOPIC "2\n    name: " SENSOR_SOIL_NAME "2\n    type: int\n    display: bar\n    min: 0\n    max: 100\n    color: brown\n    rw: r"
-#define SENSOR_SOIL_ADVERTISEMENT3 "\n  -\n    topic: " SENSOR_SOIL_TOPIC "3\n    name: " SENSOR_SOIL_NAME "3\n    type: int\n    display: bar\n    min: 0\n    max: 100\n    color: brown\n    rw: r"
+#define SENSOR_SOIL_ADVERTISEMENT2 "\n  -\n    topic: " SENSOR_SOIL_TOPIC "2\n    name: " SENSOR_SOIL_NAME "2\n    type: int\n    display: bar\n    min: 0\n    max: 100\n    color: chocolate\n    rw: r"
+#define SENSOR_SOIL_ADVERTISEMENT3 "\n  -\n    topic: " SENSOR_SOIL_TOPIC "3\n    name: " SENSOR_SOIL_NAME "3\n    type: int\n    display: bar\n    min: 0\n    max: 100\n    color: burlywood\n    rw: r"
 
 class Sensor_Soil : public Sensor_Analog {
   public: 
     uint16_t map0;
     uint16_t map100;
-    Sensor_Soil(const uint16_t map0, const uint16_t map100, const uint8_t pin_init, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init);
+    Sensor_Soil(const uint16_t map0, const uint16_t map100, const uint8_t pin_init, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init, bool retain);
     virtual bool changed(uint16_t newvalue);
     virtual uint16_t read();
 };

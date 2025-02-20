@@ -8,11 +8,11 @@
 #ifndef _SETTINGS_H
 #define _SETTINGS_H
 
-#include "_configuration.h"      // Include (eventually) auto-generated file, defines _WANT and parameters for each module"
 #include "_local.h"               // Will fail if user hasn't copied _local-template.h to _local.h and edited
+#include "_configuration.h"      // Include (eventually) auto-generated file, defines _WANT and parameters for each module"
 
 
-// TODO_ADD_SENSOR - add in appropriate line below depending on superclass
+// TO_ADD_SENSOR - add in appropriate line below depending on superclass
 #if defined(SENSOR_SHT_WANT) || defined(SENSOR_DHT_WANT)
   #define SENSOR_HT_WANT
 #endif
@@ -57,9 +57,13 @@
   #define ACTUATOR_DEBUG
 #endif
 
-// TO_ADD_CONTROL - there is not, yet, a class hierarchy - coming soon
-#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_DEMO_MQTT_DEBUG)
+// TO_ADD_CONTROL
+#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_DEBUG)
   #define CONTROL_DEBUG
+#endif
+
+#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_WANT)
+  #define CONTROL_WANT
 #endif
 
 // TO_ADD_SYSTEM - there is no class hierarchy
@@ -73,7 +77,7 @@
 
 
 
-// TODO_ADD_BOARD
+// TO_ADD_BOARD
 // shields compatible with D1 and its ESP8266 not C-pico which has same pin layout but different availability esp of analog
 #if defined(ESP8266_D1_MINI_PROv2) || defined (ESP8266_D1_MINI) || defined(ESP8266_D1_PRO_CLONE)
   #define ESP8266_D1

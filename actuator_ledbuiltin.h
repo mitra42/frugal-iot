@@ -28,7 +28,7 @@
   #endif // LED_BUILTIN
 #endif // ACTUATOR_LEDBUILTIN_PIN
 
-#define ACTUATOR_LEDBUILTIN_ADVERTISEMENT "\n  -\n    topic: ledbuiltin\n    name: Built in LED\n    type: bool\n    color: orange\n    display: toggle\n    rw: rw"
+#define ACTUATOR_LEDBUILTIN_ADVERTISEMENT "\n  -\n    topic: ledbuiltin\n    name: Built in LED\n    type: bool\n    color: yellow\n    display: toggle\n    rw: w"
 
 
 class Actuator_Ledbuiltin : public Actuator_Digital {
