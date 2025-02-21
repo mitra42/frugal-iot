@@ -38,6 +38,9 @@
 #ifdef SENSOR_DHT_WANT
 #include "sensor_dht.h"
 #endif
+#ifdef SENSOR_BH1750_WANT
+#include "sensor_bh1750.h"
+#endif
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
 #endif
@@ -126,7 +129,9 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
     Sensor_Soil* s5c = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, SENSOR_SOIL_TOPIC "3", SENSOR_SOIL_MS, true);
   #endif
 #endif
-
+#ifdef SENSOR_BH1750_WANT
+  Sensor_BH1750* sb = new Sensor_BH1750(SENSOR_BH1750_TOPIC, SENSOR_BH1750_ADDRESS, SENSOR_BH1750_MS, true);
+#endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
   ControlHysterisis* control_humidity = new ControlHysterisis("humidity", 50, 0, 100);

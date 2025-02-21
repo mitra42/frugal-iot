@@ -46,6 +46,9 @@
 #ifdef SENSOR_SHT_WANT
   #include "sensor_sht.h"
 #endif
+#ifdef SENSOR_BH1750_WANT
+  #include "sensor_bh1750.h"
+#endif
 // TO_ADD_CONTROL
 #ifdef CONTROL_BLINKEN_WANT
   #include "control_blinken.h"
@@ -121,7 +124,7 @@ void fullAdvertise() {
     #endif
     // TODO-44 add location: <gsm coords>
     "\ntopics:" 
-      // For any module with a control, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO_ADD_NEW_CONTROL
+      // For any module with a UI, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO_ADD_NEW_CONTROL
       #ifdef ACTUATOR_LEDBUILTIN_WANT
         ACTUATOR_LEDBUILTIN_ADVERTISEMENT
       #endif
@@ -162,6 +165,9 @@ void fullAdvertise() {
       #endif
       #ifdef SENSOR_DHT_WANT
         SENSOR_DHT_ADVERTISEMENT
+      #endif
+      #ifdef SENSOR_BH1750_WANT
+        SENSOR_BH1750_ADVERTISEMENT
       #endif
       #ifdef CONTROL_BLINKEN_WANT
         CONTROL_BLINKEN_ADVERTISEMENT
