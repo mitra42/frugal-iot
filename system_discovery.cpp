@@ -155,6 +155,9 @@ void fullAdvertise() {
       #ifdef CONTROL_BLINKEN_WANT
         CONTROL_BLINKEN_ADVERTISEMENT
       #endif
+      #ifdef SYSTEM_FS_WANT
+        system_logger::loggers.advertisementAll();
+      #endif
     )
       #ifdef SYSTEM_FS_WANT
       + System_Logger::advertisementAll()
