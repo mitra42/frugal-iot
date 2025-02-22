@@ -23,6 +23,10 @@
   #endif
 #endif
 
+// TODO-115 note there could be conflicts with other use of I2C and the Wire.h header which I think is where "Wire" is defined
+#define I2C_SDA                 (25)
+#define I2C_SCL                 (26)
+
 class Sensor_BH1750 : public Sensor_Float {
   public:
     uint8_t pin;

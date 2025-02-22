@@ -17,10 +17,11 @@ Sensor_BH1750::Sensor_BH1750(const char* topic, uint8_t pin, const unsigned long
   }
 
 void Sensor_BH1750::setup() {
+  Wire.begin(I2C_SDA, I2C_SCL); // Note potential conflict with I2C on SHT.
   if (!lightmeter.begin()) {
-    Serial.println("Warning: Failed to initialize BH1750 light sensor!");
+    Serial.println("Warning: Failed to initialize BH1750 light sensor!"); delay(5000);
   } else {
-    Serial.println("BH1750 light sensor init succeeded");
+    Serial.println("BH1750 light sensor init succeeded"); delay(5000);
   }
 }
 float Sensor_BH1750::read() {
@@ -29,6 +30,9 @@ float Sensor_BH1750::read() {
   if (isnan(v)) {
       v = 0.0;
   }
+  #ifdef SENSOR_BH1750_DEBUG
+    Serial.println("BH1750:"); Serial.println(v);
+  #endif
   return v;
 }
 
