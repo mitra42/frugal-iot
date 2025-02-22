@@ -54,7 +54,7 @@
   #include "control.h"
 #endif
 #ifdef SYSTEM_FS_WANT
-  #include "system_fs.h"
+  #include "system_logger.h"
 #endif
 
 namespace xDiscovery {

@@ -54,7 +54,8 @@
 #include "system_ota.h"
 #endif
 #ifdef SYSTEM_FS_WANT
-#include "system_fs.h" //TODO-110 split into SYSTEM_SD and SYSTEM_SPIFFS
+#include "system_logger.h"
+#include "system_fs.h"
 #endif
 #ifdef SYSTEM_TIME_WANT
 #include "system_time.h"

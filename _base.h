@@ -11,7 +11,7 @@ class Frugal_Base {
     virtual void loop();
     static void loopAll();
     virtual void dispatch(const String &topic_msg, const String &payload);
-    static void dispatchAll(const String &topic, const String &payload);
+    static void dispatchAll(const String &topic, const String &payload); //TODO could be topicLeaf or topicPath - check and clarify
 }; // Class FrugalBase
 
 #endif // BASE_H

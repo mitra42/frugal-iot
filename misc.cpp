@@ -9,7 +9,7 @@
 #include "user_interface.h" // system_get_free_heap_size
 #endif
 
-#if defined(SYSTEM_TIME_WANT) || defined(CONTROL_WANT)
+#if defined(SYSTEM_TIME_WANT) || defined(CONTROL_WANT) || defined(SYSTEM_LOGGER_WANT)
 #include <Arduino.h> // For String
 //#include <stdio.h> // Doesnt appear to be needed - was in sample code from Jonathan Semple
 //#include <stdarg.h> // Doesnt appear to be needed - was in sample code from Jonathan Semple

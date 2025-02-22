@@ -382,6 +382,7 @@ void Control::act() {
   }
 }
 void Control::dispatch(const String &topicPath, const String &payload ) {
+    // Duplicate of input code in Control & System_Logger
     bool changed = false;
     String* tl = Mqtt->topicLeaf(topicPath);
     for (auto &input : inputs) {

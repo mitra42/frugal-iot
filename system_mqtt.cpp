@@ -38,6 +38,9 @@
 #include "system_mqtt.h"
 #include "actuator.h"
 #include "control.h"
+#ifdef SYSTEM_LOGGER_WANT
+  #include "system_logger.h"
+#endif
 //TODO-25 replace with control.h when ready
   #ifdef CONTROL_BLINKEN_WANT
     #include "control_blinken.h"
@@ -209,6 +212,7 @@ void MqttManager::subscribe(const char* topicleaf) {
   subscribe(*topicpath);
 }
 void MqttManager::dispatch(const String &topicpath, const String &payload) {
+  // TODO move this to _base.cpp
   if (topicpath.startsWith(*xDiscovery::topicPrefix)) {
     const String topicleaf = topicpath.substring(xDiscovery::topicPrefix->length());
     #ifdef SENSOR_WANT
@@ -217,13 +221,16 @@ void MqttManager::dispatch(const String &topicpath, const String &payload) {
     #ifdef ACTUATOR_WANT
       Actuator::dispatchAll(topicleaf, payload);
     #endif
-    //TODO-25 temporary hack till Control::dispatchAll readu
+    //TODO-25 temporary hack till cBlinken refactored as a Control
     #ifdef CONTROL_BLINKEN_WANT
       cBlinken::dispatchLeaf(topicleaf, payload);
     #endif
   }
   #ifdef CONTROL_WANT
     Control::dispatchAll(topicpath, payload);
+  #endif
+  #ifdef SYSTEM_LOGGER_WANT
+    System_Logger::dispatchAll(topicpath, payload);
   #endif
   //TODO-25 System::dispatchAll(*topicpath, payload)
 }

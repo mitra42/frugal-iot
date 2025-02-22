@@ -64,15 +64,15 @@ void Actuator::inputReceived(const String &payload) {
   Serial.println("XXX25 Actuator::inputReceived should be subclassed");
 }
 
-void Actuator::dispatch(const String &topic_msg, const String &payload) {
-  if (topic_msg == topic) {
+void Actuator::dispatch(const String &topicpath, const String &payload) {
+  if (topicpath == topic) {
     inputReceived(payload);
   }
 }
 
-void Actuator::dispatchAll(const String &topic_msg, const String &payload) {
+void Actuator::dispatchAll(const String &topicpath, const String &payload) {
   for (Actuator* a: actuators) {
-    a->dispatch(topic_msg, payload);
+    a->dispatch(topicpath, payload);
   }
 }
 #endif //ACTUATOR_WANT
