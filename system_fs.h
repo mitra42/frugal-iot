@@ -79,6 +79,7 @@ class System_Logger : public Frugal_Base {
     void setup();
     void append(String &topicPath, String &payload);
     static String advertisementAll();
+    static void setupAll();
 };
 extern std::vector<System_Logger*> loggers;
 

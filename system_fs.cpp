@@ -203,9 +203,15 @@ void System_SPIFFS::setup() {
 System_Logger::System_Logger(const char * const n, System_FS* f, const char * const r, std::vector<IN*> i) : Frugal_Base(), name(n), fs(f), root(r), inputs(i) { }
 
 void System_Logger::setup() {
+  Serial.println("XXX110 setting up logger");
   fs->setup();
   for (auto &input : inputs) {
     input->setup(name);
+  }
+}
+void System_Logger::setupAll() {
+  for (System_Logger* l: loggers) {
+    l->setup();
   }
 }
 

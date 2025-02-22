@@ -22,7 +22,7 @@
 #include "misc.h" // for StringF
 
 #ifndef SYSTEM_TIME_ZONE
-  #define SYSTEM_TIME_ZONE "GMT0BST,M3.5.0/1,M10.5.0"; // Get yours at https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv 
+  #define SYSTEM_TIME_ZONE "GMT0BST,M3.5.0/1,M10.5.0" // Get yours at https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv 
 #endif
 #ifndef SYSTEM_TIME_ZONE_ABBREV
   #define SYSTEM_TIME_ZONE_ABBREV "GMT" // The typical way time is described locally 

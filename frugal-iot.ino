@@ -143,6 +143,7 @@ loggers.push_back( new System_Logger( // Should automagically pass to System_Log
     new INstring("log2", nullptr, "log2", "black", true),
     new INstring("log3", nullptr, "log3", "black", true)
     }));
+
 #endif // SYSTEM_FS_WANT
 
 #ifdef SYSTEM_OTA_WANT

@@ -8,6 +8,9 @@
 #include "sensor.h"
 #include "actuator.h"
 #include "control.h"
+#ifdef SYSTEM_LOGGER_WANT
+  #include "system_fs.h" // TODO-110 will by system_logger.h
+#endif
 
 Frugal_Base::Frugal_Base() { }; // Intentionally nothing here
 
@@ -25,6 +28,7 @@ void Frugal_Base::setupAll() {
     Control::setupAll();
   #endif
   // TODO-25 calls system.setupAll
+  System_Logger::setupAll();
 }
 void Frugal_Base::loop() { }; // This will get called if no loop() in subclass 
 
