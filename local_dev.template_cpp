@@ -41,7 +41,7 @@ namespace localDev {
 void setup() {
 
 // And here is an example of instantiating a custom control using that function
-Control* control_custom = new Control(
+controls.push_back(new Control(
   "humidity_control",
   std::vector<IN*> {
     new INfloat("humiditynow", 0.0, "humiditynow", 0, 100, "blue", true),
@@ -53,7 +53,7 @@ Control* control_custom = new Control(
   },
   std::vector<Control::TCallback> {
     customAction
-  });
+  }));
 }
 
 // Put your loop here, but note if you use a subclass of Actuator, Sensor or Control 
