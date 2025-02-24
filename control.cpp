@@ -239,11 +239,7 @@ bool INstring::dispatchLeaf(const String &tl, const String &p) {
 // Check incoming message, return true if value changed and should carry out actions
 bool INstring::dispatchPath(const String &tp, const String &p) {
   if (wiredPath && (tp == *wiredPath)) {
-    if (p != *value) { // TODO pay some attention here, as want to compare strings, not pointers}
-      Serial.print(F("XXX110 INstring changed from:"));
-      Serial.print(*value);
-      Serial.print(F("to "));
-      Serial.println(p);
+    if (!value || (p != *value)) { // TODO pay some attention here, as want to compare strings, not pointers}
       value = new String(p);
       return true; // Need to rerun calcs
     }

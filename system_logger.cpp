@@ -32,14 +32,13 @@ void System_Logger::setupAll() {
 }
 
 // Basis append for logger, there might be other sets of parameters needed = extend as required.
-void System_Logger::append(String &topicPath, String &payload) {
+void System_Logger::append(const String &topicPath, const String &payload) {
   time_t _now = systemTime.now();
   struct tm* tmstruct = localtime(&_now);
   // TODO move to 2007-04-05T14:30Z
-
   // Match logger: String line = StringF("%d,\"%s\"\n", _now, payload);
-  String line = StringF("%04d-%02d-$02d %02d:%02d:%02d,\"%s\"\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec, payload);  
-  String filepath = StringF("%s%s/%04d-%02d-%02d.csv", root, topicPath, (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday);
+  String line = StringF("%04d-%02d-%02d %02d:%02d:%02d,\"%s\"\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec, payload);  
+  String filepath = StringF("%s%s/%04d-%02d-%02d.csv", root, topicPath.c_str(), (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday);
   // TODO-110 check errors
   File f = fs->open(filepath,"a"); // Check it will do this recursively creating directories - it might not ! 
   if (!f) { 
@@ -72,20 +71,23 @@ String System_Logger::advertisementAll() {
 
 void System_Logger::dispatch(const String &topicPath, const String &payload ) {
   // Duplicate of input code in Control & System_Logger
-  //bool changed = false;
+  bool changed = false;
   String* tl = Mqtt->topicLeaf(topicPath);
   for (auto &input : inputs) {
       if (tl) { // Will be nullptr if no match i.e. path is not local
           // inputs have possible 'control' and therefore dispatchLeaf
           // And inputs also have possible values being set directly
           if (input->dispatchLeaf(*tl, payload)) {
-            //changed = true; //  // Does not trigger any messages or actions - though data received in response to subscription will.
+            changed = true; // Does not trigger any messages or actions - though data received in response to subscription will.
           }
       }
       // Only inputs are listening to potential topicPaths - i.e. other devices outputs
       if (input->dispatchPath(topicPath, payload)) {
-          //changed = true; // Changed an input, do the actions
+          changed = true; // Changed an input, do the actions
       }
+  }
+  if (changed) { 
+    append(topicPath, payload);
   }
 }
 // ======= Static functions that work over all Loggers ========

@@ -15,7 +15,7 @@ class System_Logger : public Frugal_Base {
     System_Logger(const char * const name, System_FS* fs, const char* const root, std::vector<IN*> i);
     String advertisement();
     void setup();
-    void append(String &topicPath, String &payload);
+    void append(const String &topicPath, const String &payload);
     void dispatch(const String& topicPath, const String& payload);
     static String advertisementAll();
     static void setupAll();
