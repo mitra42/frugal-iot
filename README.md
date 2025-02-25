@@ -57,6 +57,7 @@ I also test on Lolin C3 Pico (ESP32-C3), and the code has been run on SONOFF R2 
   * Libraries only needed if you use specific sensors. 
     * SHT85 by Rob Tillaart; (SENSOR_SHT_WANT to enable SHT3X or SHT85 series sensors)
     * DHTNEW also by Rob Tillaart (SENSOR_DHT_WANT to enable)
+    * BH1750 from Christopher Laws (SENSOR_BH1750_WANT to enable)
     * If you add more sensors make sure to add any library requirement here (TO_ADD_SENSOR)
   * Libraries only needed if you use specific sensors. 
     * If you add more actuators make sure to add any library requirement here (TO_ADD_ACTUATOR)

@@ -22,9 +22,7 @@ void Actuator_debug(const char * msg) {
 }
 #endif // ACTUATOR_DEBUG
 
-Actuator::Actuator(const char* t) : Frugal_Base(), topic(t) { 
-  actuators.push_back(this);
-} //TODO I think there is a way to shortcut initialization rather than code in {} do on all constructors like this 
+Actuator::Actuator(const char* t) : Frugal_Base(), topic(t) { } 
 
 void Actuator::setup() {
   Mqtt->subscribe(topic);

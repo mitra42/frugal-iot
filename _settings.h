@@ -31,9 +31,12 @@
 #if defined(SENSOR_ANALOG_DEBUG) 
   #define SENSOR_UINT16_DEBUG
 #endif
-//#if defined(SENSOR_XYZ_DEBUG) || defined(SENSOR_MPQ_DEBUG)  // THere aren't any float sensors yet
-//  #define SENSOR_FLOAT_DEBUG
-//#endif
+#if defined(SENSOR_BH1750_WANT)
+  #define SENSOR_FLOAT_WANT
+#endif
+#if defined(SENSOR_BH1750_DEBUG)
+  #define SENSOR_FLOAT_DEBUG
+#endif
 #if defined(SENSOR_UINT16_WANT) || defined(SENSOR_FLOAT_WANT) || defined(SENSOR_HT_WANT) || defined(SENSOR_FLOAT_DEBUG)
   #define SENSOR_WANT
 #endif

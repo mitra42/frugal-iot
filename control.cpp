@@ -278,9 +278,8 @@ String OUTbool::advertisement(const char * const group) {
 // ==== Control - base class for all controls 
 
 Control::Control(const char * const n, std::vector<IN*> i, std::vector<OUT*> o, std::vector<TCallback> a)
-    : Frugal_Base() , name(n), inputs(i), outputs(o), actions(a) {
-    controls.push_back(this);
-}
+    : Frugal_Base() , name(n), inputs(i), outputs(o), actions(a) { }
+
 #ifdef CONTROL_DEBUG
 void Control::debug(const char* const where) {
   Serial.println(where);
