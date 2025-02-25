@@ -8,9 +8,17 @@
 
 #include "_settings.h"
 
-#if (!defined(SYSTEM_MQTT_USER) || !defined(SYSTEM_MQTT_PASSWORD) || !defined(SYSTEM_MQTT_MS))
-  error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS 
+#if (!defined(SYSTEM_MQTT_USER) || !defined(SYSTEM_MQTT_PASSWORD))
+  error system_discover does not have all requirements: SYSTEM_MQTT_USER SYSTEM_MQTT_PASSWORD 
 #endif
+#ifndef SYSTEM_MQTT_MS
+  #define SYSTEM_MQTT_MS (10) // Every 10 ms
+#endif
+#ifndef SYSTEM_MQTT_SERVER
+  // Where your MQTT server is - you can use frugaliot.naturalinnovation.org for testing, but talk to us if you are deploying live sites using it.
+  #define SYSTEM_MQTT_SERVER "frugaliot.naturalinnovation.org"
+#endif
+
 #if ESP8266 // Note ESP8266 and ESP32 are defined for respective chips - unclear if anything like that for other Arduinos
   #include <ESP8266WiFi.h>  // for WiFiClient
 #else
