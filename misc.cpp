@@ -51,13 +51,18 @@ void internal_watchdog_setup() {
   //Ref: https://forum.arduino.cc/t/esp32-ram-check/871248/2
   //https://iotassistant.io/esp32/enable-hardware-watchdog-timer-esp32-arduino-ide/
   // If the TWDT was not initialized automatically on startup, manually intialize it now
+
   #ifdef ESP32
-    esp_task_wdt_config_t twdt_config = {
-        .timeout_ms = TWDT_TIMEOUT_MS,
-        .idle_core_mask = (1 << CONFIG_FREERTOS_NUMBER_OF_CORES) - 1,    // Bitmask of all cores
-        .trigger_panic = true,
-    };
-    esp_task_wdt_init(&twdt_config);
+    #ifdef PLATFORMIO // defined automatically when using PLATFORMIO in Visual Studio
+      esp_task_wdt_init(TWDT_TIMEOUT_MS, true);
+    #else // Assuming ARDUINO-IDE which has different definition of esp_task_wdt_init - unsure which is older, which newer
+      esp_task_wdt_config_t twdt_config = {
+          .timeout_ms = TWDT_TIMEOUT_MS,
+          .idle_core_mask = (1 << CONFIG_FREERTOS_NUMBER_OF_CORES) - 1,    // Bitmask of all cores
+          .trigger_panic = true,
+      };
+      esp_task_wdt_init(&twdt_config);
+    #endif
     //esp_task_wdt_init(esp_task_wdt_config_t{ 3000, 0, false}); //enable panic so ESP32 restarts
     esp_task_wdt_add(NULL); //add current thread to WDT watch  
   #endif //ESP32
