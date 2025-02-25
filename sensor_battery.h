@@ -9,18 +9,20 @@
 #include "sensor_analog.h"
 
 #ifdef LOLIN_C3_PICO
-  #define SENSOR_BATTERY_PIN 3
+  #define SENSOR_BATTERY_PIN (3) // There is a solder jump to pin 3 - which - on D1 shields - is same as A0 on ESP8266
 #elif defined(ESP8266)
-  #define SENSOR_BATTERY_PIN A0
+  #define SENSOR_BATTERY_PIN A0 // Its the only analog pin so got to be here
+#elif defined(LILYGOHIGROW)
+  #define SENSOR_BATTERY_PIN (33)
 #else
-  #error Measuring battery voltage is board specific, only currently defined for Lolin C3 Pico and ESP8266 where presuming on A0 as that is only A2D
+  #error Measuring battery voltage is board specific, only currently defined for a few boards
 #endif
 
 #ifndef SENSOR_BATTERY_TOPIC
   #define SENSOR_BATTERY_TOPIC "battery"
 #endif
 #ifndef SENSOR_BATTERY_MS
-  #define SENSOR_BATTERY_MS 60000
+  #define SENSOR_BATTERY_MS (60000)
 #endif
 
 #define SENSOR_BATTERY_ADVERTISEMENT "\n  -\n    topic: " SENSOR_BATTERY_TOPIC "\n    name: Battery\n    type: int\n    display: bar\n    min: 3000\n    max: 5000\n    color: green\n    rw: r"
