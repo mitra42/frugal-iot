@@ -9,8 +9,6 @@
 #define _SETTINGS_H
 
 #include "_local.h"               // Will fail if user hasn't copied _local-template.h to _local.h and edited
-#include "_configuration.h"      // Include (eventually) auto-generated file, defines _WANT and parameters for each module"
-
 
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
 #if defined(SENSOR_SHT_WANT) || defined(SENSOR_DHT_WANT)
@@ -78,12 +76,26 @@
   #define ANY_DEBUG
 #endif 
 
-
-
 // TO_ADD_BOARD
 // shields compatible with D1 and its ESP8266 not C-pico which has same pin layout but different availability esp of analog
 #if defined(ESP8266_D1_MINI_PROv2) || defined (ESP8266_D1_MINI) || defined(ESP8266_D1_PRO_CLONE)
   #define ESP8266_D1
 #endif
 
-#endif // _SETTINGS_H
+// To specify a language (for the WiFi portal) #define all the ones you want, otherwise it supports the _ALL lsit which is currerntly EN, NL, DE, ID 
+#if \
+   !defined LANGUAGE_EN \
+&& !defined LANGUAGE_NL \
+&& !defined LANGUAGE_DE \
+&& !defined LANGUAGE_ID
+    #define LANGUAGE_ALL
+#endif
+
+#define SERIAL_DELAY 5000 // Necessary to avoid losing initial messsage in garbage, at least on ESP8266_D1_MINI
+
+// Always defined currently, but recommend defining in _locals.h in case that decision ever changes
+#define SYSTEM_DISCOVERY_WANT // Almost always set, will tell the MQTT server about the device so the Client can find it 
+#define SERIAL_BAUD 460800 // Generally find 460800 works well - reliability on all boards tested
+#define SYSTEM_WIFI_WANT  // currently always wanted - recommend defining in _locals.h in case that decision ever changes
+#define SYSTEM_MQTT_WANT // Given the dependence on MQTT can't imagine not "wanting" it
+ #endif // _SETTINGS_H

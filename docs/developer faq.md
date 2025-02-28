@@ -7,7 +7,7 @@ Note this is a draft as of Sept 2024, structure might change as others give inpu
 
 * `frugal-iot.ino`  - main sketch
 * `_configuraton.h`	- configuration defines, will be generated automatically at a later stage
-* `_settings.h`		- settings file that conditionally includes based on _configuration.h
+* `_settings.h`		- settings file that includes _locals and then adds some logically required dependencies
 * `_locals.h` 		- settings unique to you - i.e. not in GitHub, includes which sensors & actuators wanted
 * `actuator_xxx.h` and `.cpp`	- define a header and code for a specific actuator
 * `sensor_xxx.h` and `.cpp`	- define header and code for a specific sensor

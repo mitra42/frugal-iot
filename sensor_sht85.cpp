@@ -6,7 +6,6 @@
  * 
  * Tested on Lolin SHT30 shield on ESP8266 - not yet tested on other devices or processors
  * 
- * Configuration options example - these are all in _configuration.h
  * Required:
  * SENSOR_SHT85_DEVICE SHT30                  // Which kind of device, for now it presumes they are all the same.
  * SENSOR_SHT85_ADDRESS_ARRAY 0x45,0x44       // A list of device addresses
@@ -25,7 +24,7 @@
 #ifdef SENSOR_SHT85_WANT
 
 #if (!defined(SENSOR_SHT85_DEVICE) || !defined(SENSOR_SHT85_ADDRESS_ARRAY) || !defined(SENSOR_SHT85_COUNT) || !defined(SENSOR_SHT85_MS))
-  error sensor_sht85 does not have all requirements in _configuration.h: SENSOR_SHT85_DEVICE SENSOR_SHT85_ADDRESS_ARRAY SENSOR_SHT85_COUNT SENSOR_SHT85_MS 
+  error sensor_sht85 does not have all requirements in _locals.h: SENSOR_SHT85_DEVICE SENSOR_SHT85_ADDRESS_ARRAY SENSOR_SHT85_COUNT SENSOR_SHT85_MS 
 #endif
 
 
