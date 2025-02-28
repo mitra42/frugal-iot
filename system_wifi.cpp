@@ -15,6 +15,7 @@
   #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
 #include "system_wifi.h"
+#include "system_mqtt.h"
 
 
 // TODO find a way to store in eeprom rather than SPIFFS. 
@@ -28,6 +29,10 @@
     #error "This example only supports ESP32 and ESP8266"
 #endif 
 #include "src/lib/WiFiSettings/WiFiSettings.h"  // https://github.com/Juerd/ESP-WiFiSettings
+
+#ifndef SYSTEM_WIFI_PORTAL_RESTART
+  #define SYSTEM_WIFI_PORTAL_RESTART 120000 // How long (ms) portal should wait before restarting - 2 mins probably about right
+#endif
 
 namespace xWifi {
 
@@ -183,7 +188,7 @@ String &clientid() {
 }
 
 void setupLanguages() {
-  // TODO-39 need to make sure external for language is set prior to this - get defined from _local.h and LANGUAGE_ALL from configuration.h
+  // TODO-39 need to make sure external for language is set prior to this - get defined from _local.h and LANGUAGE_ALL from _locals.h
   #ifdef LANGUAGE_DEFAULT
     WiFiSettings.language = LANGUAGE_DEFAULT; // This must happen BEFORE WiFiSettings.begin().
   #endif
@@ -287,7 +292,7 @@ void setup() {
   */
 
   mqtt_host = WiFiSettings.string(F("mqtt_host"), 4,40, F(SYSTEM_MQTT_SERVER), T.MqttServer); 
-  // TODO-29 turn discovery_project into a dropdown, use an ifdef for the ORGANIZATION in configuration.h not support by ESPWifi-Settings yet.
+  // TODO-29 turn discovery_project into a dropdown, use an ifdef for the ORGANIZATION in _locals.h not support by ESPWifi-Settings yet.
   discovery_project = WiFiSettings.string(F("discovery_project"), 3,20, F(SYSTEM_WIFI_PROJECT), T.Project); 
   device_name = WiFiSettings.string(F("device_name"), 3,20, F(SYSTEM_WIFI_DEVICE), T.DeviceName); 
   #ifdef SYSTEM_WIFI_DEBUG

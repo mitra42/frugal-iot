@@ -8,7 +8,8 @@
 class Sensor_Float : public Sensor {
   public:
     float value; 
-    Sensor_Float(const char* topic, const unsigned long ms, bool retain);
+    uint8_t width;
+    Sensor_Float(const char* topic, uint8_t width, const unsigned long ms, bool retain);
     virtual void readAndSet();
     virtual float read();
     virtual void set(const float newvalue);

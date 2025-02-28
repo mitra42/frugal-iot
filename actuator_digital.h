@@ -3,7 +3,7 @@
 
 #include "actuator.h" // Superclass
 
-class Actuator_Digital : Actuator {
+class Actuator_Digital : public Actuator {
   public: 
     uint8_t pin;
     bool value;

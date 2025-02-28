@@ -57,6 +57,7 @@ I also test on Lolin C3 Pico (ESP32-C3), and the code has been run on SONOFF R2 
   * Libraries only needed if you use specific sensors. 
     * SHT85 by Rob Tillaart; (SENSOR_SHT_WANT to enable SHT3X or SHT85 series sensors)
     * DHTNEW also by Rob Tillaart (SENSOR_DHT_WANT to enable)
+    * BH1750 from Christopher Laws (SENSOR_BH1750_WANT to enable)
     * If you add more sensors make sure to add any library requirement here (TO_ADD_SENSOR)
   * Libraries only needed if you use specific sensors. 
     * If you add more actuators make sure to add any library requirement here (TO_ADD_ACTUATOR)
@@ -74,7 +75,6 @@ I also test on Lolin C3 Pico (ESP32-C3), and the code has been run on SONOFF R2 
 * Copy _local-template.h to _local.h. For now leave the ORGANIZATION as "dev" unless you talk to us. 
   Add the MQTT server, userid and password, if you aren't going to use `naturalinnovation.org` 
   Uncomment lines for any sensors you have on the board.
-* Check _configuration.h t - for now this is a good place to set how much debugging you want.  TODO maybe move to _local.h
 * Compile and Flash to your dev board
 * On a Wifi device such as a phone
   * Connect to the wifi node of the board which will have a SSID like esp8266-12345

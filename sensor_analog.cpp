@@ -30,11 +30,9 @@
 #ifndef SENSOR_ANALOG_REFERENCE
   #ifdef ESP8266_D1
     #define SENSOR_ANALOG_REFERENCE DEFAULT // TODO not clear if / where this is used 
-  #elif defined(LOLIN_C3_PICO)
-  #elif defined(ESP32_WROVER_DEV)
-    
+  #elif defined(LOLIN_C3_PICO) || defined(ESP32_WROVER_DEV) || defined(ESP32) // It doesnt seem to be used on ESP32s 
   #else
-      #error analogReference() is board dependent, review the docs and online and define 
+    #error analogReference() is processor dependent, review the docs and online and define
   #endif
 #endif //  SENSOR_ANALOG_REFERENCE
 

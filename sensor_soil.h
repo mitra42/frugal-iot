@@ -19,24 +19,33 @@
   //TO_ADD_BOARD
   #ifdef LOLIN_C3_PICO
     #error there is no default pin on C3-pico suggest 4, 0 or 1
-  #else
-    #ifdef ESP8266_D1
-      #define SENSOR_SOIL_PIN A0 // Which pin to read - this will be board specific
-    #else 
-      #error Sorry no default Analog pin for your board
-    #endif
+  #elif defined(ESP8266_D1)
+    #define SENSOR_SOIL_PIN A0 // Which pin to read - this will be board specific
+  #elif defined(LILYGOHIGROW)
+    #define SENSOR_SOIL_PIN 32
+  #else 
+    #error Sorry no default Analog pin for your board
   #endif
 #endif
+
 
 #ifndef SENSOR_SOIL_MS
   #define SENSOR_SOIL_MS 15000 // How often to read in MS
 #endif
 
 #ifndef SENSOR_SOIL_0
-  #define SENSOR_SOIL_0 3000
+  #if defined(LILYGOHIGROW)
+    #define SENSOR_SOIL_0 4095
+  #else
+    #define SENSOR_SOIL_0 3000
+  #endif
 #endif
 #ifndef SENSOR_SOIL_100
-  #define SENSOR_SOIL_100 1000
+  #if defined(LILYGOHIGROW)
+    #define SENSOR_SOIL_100 0
+  #else
+    #define SENSOR_SOIL_100 1000
+  #endif
 #endif
 
 #define SENSOR_SOIL_ADVERTISEMENT1 "\n  -\n    topic: " SENSOR_SOIL_TOPIC "\n    name: " SENSOR_SOIL_NAME "\n    type: int\n    display: bar\n    min: 0\n    max: 100\n    color: brown\n    rw: r"

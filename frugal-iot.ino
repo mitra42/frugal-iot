@@ -23,8 +23,8 @@
 #endif
 
 // Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
-#ifdef SENSOR_ANALOG_EXAMPLE_WANT
-#include "sensor_analog_example.h"
+#ifdef SENSOR_ANALOG_INSTANCES_WANT
+#include "sensor_analog_instances.h"
 #endif
 #ifdef SENSOR_SOIL_WANT
 #include "sensor_soil.h"
@@ -37,6 +37,9 @@
 #endif
 #ifdef SENSOR_DHT_WANT
 #include "sensor_dht.h"
+#endif
+#ifdef SENSOR_BH1750_WANT
+#include "sensor_bh1750.h"
 #endif
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
@@ -66,6 +69,10 @@
 
 
 void setup() {
+#ifdef LILYGOHIGROW
+  pinMode(POWER_CTRL, OUTPUT);
+  digitalWrite(POWER_CTRL, HIGH); // TODO-115 this is for power control - may need other board specific stuff somewhere
+#endif
 #ifdef ANY_DEBUG
   Serial.begin(SERIAL_BAUD);
   while (!Serial) { 
@@ -81,10 +88,10 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
-Actuator_Ledbuiltin* a1 = new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, "ledbuiltin");
+  actuators.push_back(new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, "ledbuiltin"));
 #endif
 #ifdef ACTUATOR_RELAY_WANT
-Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
+  actuators.push_back(new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay"));
 #endif
 
 // TODO_C++_EXPERT weird I have to assign to a vaiable even though constructor sticks in the "sensors" vector, else compiler complains, 
@@ -92,31 +99,46 @@ Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
 //TODO-25 try adding these to a Sensor* Vector here instead of in constructor
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#ifdef SENSOR_ANALOG_EXAMPLE_WANT
-  Sensor_Analog* s3 = new Sensor_Analog(SENSOR_ANALOG_EXAMPLE_PIN, SENSOR_ANALOG_EXAMPLE_SMOOTH, SENSOR_ANALOG_EXAMPLE_TOPIC, SENSOR_ANALOG_EXAMPLE_MS, true);
+#ifdef SENSOR_ANALOG_INSTANCES_WANT
+  sensors.push_back(new Sensor_Analog(SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, SENSOR_ANALOG_TOPIC_1, SENSOR_ANALOG_MS_1, true));
 #endif
-#ifdef SENSOR_BATTERY_WANT
-  Sensor_Battery* s4 = new Sensor_Battery(SENSOR_BATTERY_PIN);  // TODO-57 will rarely be as simple as this
+#ifdef SENSOR_ANALOG_PIN_2
+  sensors.push_back(new Sensor_Analog(SENSOR_ANALOG_PIN_2, SENSOR_ANALOG_SMOOTH_2, SENSOR_ANALOG_TOPIC_2, SENSOR_ANALOG_MS_2, true));
 #endif
-#ifdef SENSOR_SHT_WANT
-  Sensor_SHT* s1 = new Sensor_SHT(SENSOR_SHT_ADDRESS, &Wire, "temperature", "humidity", SENSOR_SHT_MS, true);
+#ifdef SENSOR_ANALOG_PIN_3
+  sensors.push_back(new Sensor_Analog(SENSOR_ANALOG_PIN_3, SENSOR_ANALOG_SMOOTH_3, SENSOR_ANALOG_TOPIC_3, SENSOR_ANALOG_MS_3, true));
 #endif
-#ifdef SENSOR_DHT_WANT
-  Sensor_DHT* s2 = new Sensor_DHT(SENSOR_DHT_PIN, "temperature", "humidity", SENSOR_DHT_MS, true);
+#ifdef SENSOR_ANALOG_PIN_4
+  sensors.push_back(Sensor_Analog(SENSOR_ANALOG_PIN_4, SENSOR_ANALOG_SMOOTH_4, SENSOR_ANALOG_TOPIC_4, SENSOR_ANALOG_MS_4, true));
 #endif
-#ifdef SENSOR_SOIL_WANT
-  Sensor_Soil* s5a = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS, true);
-  #ifdef SENSOR_SOIL_PIN2
-    Sensor_Soil* s5b = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN2, 0, SENSOR_SOIL_TOPIC "2", SENSOR_SOIL_MS, true);
-  #endif
-  #ifdef SENSOR_SOIL_PIN3
-    Sensor_Soil* s5c = new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, SENSOR_SOIL_TOPIC "3", SENSOR_SOIL_MS, true);
-  #endif
+#ifdef SENSOR_ANALOG_PIN_5
+  sensors.push_back(Sensor_Analog(SENSOR_ANALOG_PIN_5, SENSOR_ANALOG_SMOOTH_5, SENSOR_ANALOG_TOPIC_5, SENSOR_ANALOG_MS_5, true));
 #endif
 
+#ifdef SENSOR_BATTERY_WANT
+  sensors.push_back(new Sensor_Battery(SENSOR_BATTERY_PIN));  // TODO-57 will rarely be as simple as this
+#endif
+#ifdef SENSOR_SHT_WANT
+  sensors.push_back(new Sensor_SHT(SENSOR_SHT_ADDRESS, &Wire, "temperature", "humidity", SENSOR_SHT_MS, true));
+#endif
+#ifdef SENSOR_DHT_WANT
+  sensors.push_back(new Sensor_DHT(SENSOR_DHT_PIN, "temperature", "humidity", SENSOR_DHT_MS, true));
+#endif
+#ifdef SENSOR_SOIL_WANT
+  sensors.push_back(new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS, true));
+  #ifdef SENSOR_SOIL_PIN2
+    sensors.push_back(new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN2, 0, SENSOR_SOIL_TOPIC "2", SENSOR_SOIL_MS, true));
+  #endif
+  #ifdef SENSOR_SOIL_PIN3
+    sensors.push_back(new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, SENSOR_SOIL_TOPIC "3", SENSOR_SOIL_MS, true));
+  #endif
+#endif
+#ifdef SENSOR_BH1750_WANT
+  sensors.push_back(new Sensor_BH1750(SENSOR_BH1750_TOPIC, SENSOR_BH1750_ADDRESS, SENSOR_BH1750_MS, true));
+#endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
-  ControlHysterisis* control_humidity = new ControlHysterisis("humidity", 50, 0, 100);
+  controls.push_back(new ControlHysterisis("humidity", 50, 0, 100));
 #endif //CONTROL_HYSTERISIS_WANT
 
 #pragma GCC diagnostic pop

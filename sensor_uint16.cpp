@@ -31,8 +31,9 @@ void Sensor_Uint16::set(const uint16_t newvalue) {
   }
   #ifdef SENSOR_UINT16_DEBUG
     Serial.print(topic);
-    if (smooth) { Serial.print(F(" Smoothed")); }
-    Serial.print(" "); Serial.println(vv);
+    Serial.print(" "); Serial.println(newvalue);
+    if (smooth) { Serial.print(F(" Smoothed")); Serial.print(" "); Serial.println(vv); }
+    
   #endif // SENSOR_UINT16_DEBUG
 
   if (changed(newvalue)) {

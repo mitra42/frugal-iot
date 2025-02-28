@@ -1,6 +1,6 @@
 /* 
  * Copy this file to _local.h and edit it
- * Use it for local #ifdefs, for example that override global ones in _configuration.h 
+ * Use it for local #ifdefs, 
  * Its the place to list the configuration of your device e.g. defines like SENSOR_SHT_WANT 
  *
  * _local-template.h will be on github, but _local.h will not - so its a safer place for passwords etc.
@@ -89,7 +89,6 @@
 
 // Optional devices that work on multiple boards
 //#define ACTUATOR_RELAY_WANT
-//#define SENSOR_ANALOG_EXAMPLE_WANT
 
 // Non physical devices e.g. controls
 //#define CONTROL_BLINKEN_WANT

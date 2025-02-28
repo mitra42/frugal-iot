@@ -8,17 +8,17 @@
 #ifndef SENSOR_DHT_PIN
   #ifdef ESP8266_D1
     #define SENSOR_DHT_PIN D4
-  #else 
-    #ifdef LOLIN_C3_PICO
-      #define SENSOR_DHT_PIN 6 // Currently untested but should be the same as D4 on ESP8266_D1
-    #else
-      #error No default pin for DHT sensor on your board
-    #endif
-  #endif 
+  #elif defined(LOLIN_C3_PICO)
+    #define SENSOR_DHT_PIN 6 // Currently untested but should be the same as D4 on ESP8266_D1
+  #elif defined(LILYGOHIGROW)
+    #define SENSOR_DHT_PIN GPIO_NUM_16
+  #else
+    #error No default pin for DHT sensor on your board
+  #endif
 #endif // SENSOR_DHT_PIN
 
 #ifndef SENSOR_DHT_MS
-  #define SENSOR_DHT_MS 60000
+  #define SENSOR_DHT_MS 60000 // once a minute
 #endif
 
 #define SENSOR_DHT_ADVERTISEMENT "\n  -\n    topic: temperature\n    name: Temperature\n    type: float\n    display: bar\n    min: 0\n    max: 45\n    color: red\n    rw: r\n  -\n    topic: humidity\n    name: Humidity\n    type: float\n    display: bar\n    min: 0\n    max: 100\n    color: cornflowerblue\n    rw: r"

@@ -15,9 +15,12 @@
   #include "esp_task_wdt.h" // TODO-125
 #endif
 
-#if (!defined(SYSTEM_MQTT_USER) || !defined(SYSTEM_MQTT_PASSWORD) || !defined(SYSTEM_MQTT_MS))
-  error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS 
+#if (!defined(SYSTEM_MQTT_USER) || !defined(SYSTEM_MQTT_PASSWORD))
+  error system_discover does not have all requirements in _locals.h: SYSTEM_MQTT_USER SYSTEM_MQTT_PASSWORD 
 #endif
+
+#define SYSTEM_MQTT_LOOPBACK // If true dispatch the message locally as well - this is always the case currerntly 
+
 
 #if ESP8266 // Note ESP8266 and ESP32 are defined for respective chips - unclear if anything like that for other Arduinos
   #include <ESP8266WiFi.h>  // for WiFiClient
