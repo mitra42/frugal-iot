@@ -16,7 +16,7 @@
 #include "misc.h"
 #include "system_mqtt.h" // For Mqtt
 
-System_Logger::System_Logger(const char * const n, System_FS* f, const char * const r, std::vector<IN*> i) : Frugal_Base(), name(n), fs(f), root(r), inputs(i) { }
+System_Logger::System_Logger(const char * const n, System_FS* f, const char * const r, const uint8_t strategy, std::vector<IN*> i) : Frugal_Base(), name(n), fs(f), root(r), strategy(strategy), inputs(i) { }
 
 void System_Logger::setup() {
   Serial.println("XXX110 setting up logger");
@@ -35,10 +35,27 @@ void System_Logger::setupAll() {
 void System_Logger::append(const String &topicPath, const String &payload) {
   time_t _now = systemTime.now();
   struct tm* tmstruct = localtime(&_now);
+  String line;
+  String filepath;
   // TODO move to 2007-04-05T14:30Z
-  // Match logger: String line = StringF("%d,\"%s\"\n", _now, payload);
-  String line = StringF("%04d-%02d-%02d %02d:%02d:%02d,\"%s\"\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec, payload);  
-  String filepath = StringF("%s%s/%04d-%02d-%02d.csv", root, topicPath.c_str(), (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday);
+  if (strategy & 0x02) {
+    line = StringF("\"%s\",%04d-%02d-%02d %02d:%02d:%02d,\"%s\"\n", topicPath.c_str(), (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec, payload);  
+  } else {
+    line = StringF("%04d-%02d-%02d %02d:%02d:%02d,\"%s\"\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec, payload);  
+  }
+  if (strategy & 0x02) {
+    if (strategy & 0x01) { // 0x03
+      filepath = StringF("%s/%04d-%02d-%02d.csv", root, (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday);
+    } else { // 0x02
+      filepath = StringF("%s/log.csv", root);
+    }
+  } else {
+    if (strategy & 0x01) { // 0x01 - this is the one that matches the logger format exactly
+      filepath = StringF("%s%s/%04d-%02d-%02d.csv", root, topicPath.c_str(), (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday);
+    } else { // 0x00
+      filepath = StringF("%s%s.csv", root, topicPath.c_str());
+    }
+  }
   // TODO-110 check errors
   File f = fs->open(filepath,"a"); // Check it will do this recursively creating directories - it might not ! 
   if (!f) { 

@@ -160,6 +160,7 @@ loggers.push_back( new System_Logger( // Should automagically pass to System_Log
   "system_logger",
   fs2, // TODO-110 Using spiffs for testing for now
   "/",
+  0x02, // Single log.csv with topicPath, time, value
   std::vector<IN*> {
     //IOfloat(char const * const name, float v, char const * const topicLeaf = nullptr, const bool wireable = true);
     new INstring("log1", nullptr, "log1", "black", true),
