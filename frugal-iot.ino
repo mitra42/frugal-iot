@@ -1,11 +1,4 @@
 /* FRUGAL IOT PROJECT */
 /* This file is to allow compilation on both Arduino IDE, and PlatformIO */
 
-#include "src/main.h"
-
-void setup() {
-  main_setup();
-}
-void loop() {
-  main_loop();
-}
+/* The actual top level code is in main.cpp */

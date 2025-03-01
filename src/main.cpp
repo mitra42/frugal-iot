@@ -63,7 +63,6 @@
 #include "local_dev.h"
 #endif
 
-
 void setup() {
 #ifdef LILYGOHIGROW
   pinMode(POWER_CTRL, OUTPUT);
