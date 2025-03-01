@@ -35,7 +35,11 @@ void Actuator_Ledbuiltin::act() {
   // TO_ADD_BOARD if the board's built in LED is RGB then add to the definition in the next line
   #if defined(LOLIN_C3_PICO) 
     const uint8_t brightness = value ? ACTUATOR_LEDBUILTIN_BRIGHTNESS : 0;
-    rgbLedWrite(ACTUATOR_LEDBUILTIN_PIN,brightness,brightness,brightness);   // Note this is r,g,b (Neopixel is g r b on Lolin)
+    #ifdef PLATFORMIO
+      neopixelWrite(ACTUATOR_LEDBUILTIN_PIN,brightness,brightness,brightness);   // Note this is r,g,b (Neopixel is g r b on Lolin)
+    #else // neopixelWrite deprecated on Arduino IDE
+      rgbLedWrite(ACTUATOR_LEDBUILTIN_PIN,brightness,brightness,brightness);   // Note this is r,g,b (Neopixel is g r b on Lolin)
+    #endif
   #else // LOLIN_C3_PICO
     digitalWrite(ACTUATOR_LEDBUILTIN_PIN, value ? LOW : HIGH); // LED pin is inverted, at least on Lolin D1 Mini
   #endif // LOLIN_C3_PICO
