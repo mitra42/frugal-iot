@@ -6,7 +6,6 @@
  * 
  * Tested on Lolin SHT30 shield on ESP8266 - not yet tested on other devices or processors
  * 
- * Configuration options example - these are all in _configuration.h
  * Required:
  * SENSOR_SHT_DEVICE SHT30                  // Which kind of device, for now it presumes they are all the same.
  * SENSOR_SHT_ADDRESS                       // Device address

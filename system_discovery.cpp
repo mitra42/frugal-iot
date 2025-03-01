@@ -15,8 +15,12 @@
 
 #ifdef SYSTEM_DISCOVERY_WANT // Until have BLE, no WIFI means local only
 
-#if (!defined(SYSTEM_DISCOVERY_MS) || !defined(SYSTEM_DISCOVERY_ORGANIZATION))
-  #error system_discover does not have all requirements in _configuration.h: SYSTEM_DISCOVERY_MS SYSTEM_DISCOVERY_ORGANIZATION
+#if !defined(SYSTEM_DISCOVERY_ORGANIZATION)
+  #error system_discover does not have all requirements in _locals.h: SYSTEM_DISCOVERY_ORGANIZATION
+#endif
+
+#ifndef SYSTEM_DISCOVERY_MS
+  #define SYSTEM_DISCOVERY_MS (30000) // quick discovery every 30 seconds
 #endif
 
 #include <Arduino.h>

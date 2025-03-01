@@ -5,8 +5,6 @@
  * 
  * Testing using the Arduino KY-015 board with its DHT11 - connected to Lolin D1 Mini 
  * 
- * 
- * Configuration options example - these are all in _configuration.h
  * Required:
  * Optional: 
  * SENSOR_DHT_MS                 // How often to poll each sensor, for now we presume we poll them all this often
