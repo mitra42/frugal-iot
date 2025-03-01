@@ -28,7 +28,7 @@
 #else
     #error "This example only supports ESP32 and ESP8266"
 #endif 
-#include "src/lib/WiFiSettings/WiFiSettings.h"  // https://github.com/Juerd/ESP-WiFiSettings
+#include "WiFiSettings.h"  // adapted from https://github.com/Juerd/ESP-WiFiSettings
 
 #ifndef SYSTEM_WIFI_PORTAL_RESTART
   #define SYSTEM_WIFI_PORTAL_RESTART 120000 // How long (ms) portal should wait before restarting - 2 mins probably about right
