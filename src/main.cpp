@@ -56,6 +56,10 @@
 #ifdef SYSTEM_OTA_WANT
 #include "system_ota.h"
 #endif
+#ifdef SYSTEM_FS_WANT
+#include "system_logger.h" //TODO-110 should have SYSTEM_LOGGER_WANT
+#include "system_fs.h"
+#endif
 #ifdef SYSTEM_TIME_WANT
 #include "system_time.h"
 #endif
@@ -138,7 +142,32 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 
 #pragma GCC diagnostic pop
 
+#ifdef SYSTEM_SD_WANT
+  System_SD* fs1 = new System_SD();
+  fs1->setup(); //TODO-110 at moment should printout dir
+#endif
+#ifdef SYSTEM_SPIFFS_WANT
+  System_SPIFFS* fs2 = new System_SPIFFS();
+  fs2->setup(); //TODO-110 at moment should printout dir
+#endif
+
+
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+
+#ifdef SYSTEM_FS_WANT
+loggers.push_back( new System_Logger( // Should automagically pass to System_Logger constructor
+  "system_logger",
+  fs2, // TODO-110 Using spiffs for testing for now
+  "/",
+  0x02, // Single log.csv with topicPath, time, value
+  std::vector<IN*> {
+    //IOfloat(char const * const name, float v, char const * const topicLeaf = nullptr, const bool wireable = true);
+    new INstring("log1", nullptr, "log1", "black", true),
+    new INstring("log2", nullptr, "log2", "black", true),
+    new INstring("log3", nullptr, "log3", "black", true)
+    }));
+
+#endif // SYSTEM_FS_WANT
 
 #ifdef SYSTEM_OTA_WANT
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
