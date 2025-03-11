@@ -37,10 +37,4 @@ class Actuator_Ledbuiltin : public Actuator_Digital {
     virtual void act();
 };
 
-namespace aLedbuiltin {
-extern Actuator_Ledbuiltin actuator_ledbuiltin;
-
-void setup();
-void loop();
-} // namespace aLedbuiltin
 #endif // ACTUATOR_LEDBUILTIN_H
