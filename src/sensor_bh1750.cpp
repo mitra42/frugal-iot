@@ -31,7 +31,7 @@ float Sensor_BH1750::read() {
       v = 0.0;
   }
   #ifdef SENSOR_BH1750_DEBUG
-    Serial.println("BH1750:"); Serial.println(v);
+    Serial.print("BH1750:"); Serial.println(v);
   #endif
   return v;
 }

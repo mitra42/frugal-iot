@@ -1,5 +1,5 @@
-#ifndef SENSOR_BUTTON_WANT
-#define SENSOR_BUTTON_WANT
+#ifndef SENSOR_BUTTON_H
+#define SENSOR_BUTTON_H
 /* 
  * Frugal IoT button handler 
  * 

@@ -16,7 +16,8 @@
 
 
 Sensor_Button::Sensor_Button(uint8_t pin, const char* topicLeaf) :
-  Sensor(topicLeaf, 10, false), button(), pin(pin) {
+  Sensor(topicLeaf, 10, false), pin(pin) {
+  button = new Button2(pin);
   button->setClickHandler(Sensor_Button::clickHandler);
   button->setLongClickHandler(Sensor_Button::longClickHandler);
   button->setDoubleClickHandler(Sensor_Button::doubleClickHandler);
@@ -44,8 +45,8 @@ void Sensor_Button::tripleClickHandler(Button2& btn) {
 }
 void Sensor_Button::newSensor_Button(uint8_t pin, const char* topicLeaf) {
   Sensor_Button* sb = new Sensor_Button(pin, topicLeaf);
-  buttons.push_back(sb);
   sb->button->setID(buttons.size());
+  buttons.push_back(sb);
   sensors.push_back(sb);   
 }
 Sensor_Button* Sensor_Button::handler(Button2& button) {
