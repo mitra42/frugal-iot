@@ -5,6 +5,8 @@
  */
 
 #include "_settings.h"
+
+#ifdef SENSOR_BUTTON_WANT
 #include <Arduino.h>
 #include <vector>
 #include "sensor.h"
@@ -12,7 +14,6 @@
 #include "Button2.h" // https://github.com/LennartHennigs/Button2
 #include "system_mqtt.h"
 
-#ifdef SENSOR_BUTTON_WANT
 
 
 Sensor_Button::Sensor_Button(uint8_t pin, const char* topicLeaf) :
