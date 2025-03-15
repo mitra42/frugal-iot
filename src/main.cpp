@@ -85,7 +85,7 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
-  actuators.push_back(new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, "ledbuiltin"));
+  actuators.push_back(new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, "ledbuiltin", ACTUATOR_LEDBUILTIN_RGB, ACTUATOR_LEDBUILTIN_BRIGHTNESS));
 #endif
 #ifdef ACTUATOR_RELAY_WANT
   actuators.push_back(new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay"));

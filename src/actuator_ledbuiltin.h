@@ -3,6 +3,11 @@
 
 /* Configuration options
  * Optional: ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_PIN - defaults
+ * Optional: ACTUATOR_LEDBUILTIN_BRIGHTNESS
+ * Optional: BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
+
+ * For reference the LED is on the following pins for boards we have been working with .... 
+ * Sonoff: 13
 */
 
 #include "actuator_digital.h" // for class Actuator_Digital
@@ -19,22 +24,37 @@
 #ifndef ACTUATOR_LEDBUILTIN_PIN
   #ifdef LED_BUILTIN
     #define ACTUATOR_LEDBUILTIN_PIN LED_BUILTIN
-  #else // !LED_BUILTIN
-    #ifdef BUILTIN_LED
+  #elif defined(BUILTIN_LED)
       #define ACTUATOR_LEDBUILTIN_PIN BUILTIN_LED
-    #else
-      #error "No LED pin defined and no default specified"
-    #endif // BUILTIN_LED
-  #endif // LED_BUILTIN
+  #elif defined(LILYGOHIGROW)
+    #define ACTUATOR_LEDBUILTIN_PIN 18
+  #else 
+    #error "No ACTUATOR_LEDBUILTIN_PIN pin defined and no default known for this board"
+  #endif
 #endif // ACTUATOR_LEDBUILTIN_PIN
+
+// TODO-ADD-BOARD - add your board here
+#if defined(LOLIN_C3_PICO) || defined(LILYGOHIGROW)
+  #define ACTUATOR_LEDBUILTIN_RGB true
+#elif defined(SONOFF_R2) || defined(ESP8266_D1_MINI)
+  #define ACTUATOR_LEDBUILTIN_RGB false
+#else
+  #error "please define whether your LED is RGB or not"
+#endif // BOARDS
+
+#ifndef ACTUATOR_LEDBUILTIN_BRIGHTNESS
+  #define ACTUATOR_LEDBUILTIN_BRIGHTNESS 255
+#endif
 
 #define ACTUATOR_LEDBUILTIN_ADVERTISEMENT "\n  -\n    topic: ledbuiltin\n    name: Built in LED\n    type: bool\n    color: yellow\n    display: toggle\n    rw: w"
 
 
 class Actuator_Ledbuiltin : public Actuator_Digital {
   public: 
-    Actuator_Ledbuiltin(const uint8_t p, const char* topic);
+    Actuator_Ledbuiltin(const uint8_t p, const char* topic, bool rgb = false, uint8_t brightness = 255);
     virtual void act();
+    bool rgb; // If true then use RGB values
+    uint8_t brightness; // Brightness of LED  0-255
 };
 
 #endif // ACTUATOR_LEDBUILTIN_H
