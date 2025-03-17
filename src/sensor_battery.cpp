@@ -16,10 +16,14 @@
 
 Sensor_Battery::Sensor_Battery(const uint8_t pin_init) : Sensor_Analog(pin_init, 0, SENSOR_BATTERY_TOPIC, SENSOR_BATTERY_MS, true) { }
 
-#ifdef ESP8266_D1_MINI_PROv2
+#ifdef ESP8266_D1_MINI_PROv2 // Green D1 pro
   #define VOLTAGE_DIVIDER 4.5 // (130+220+100)/100 i.e. 1V on A0 when 4.5 on batt 
-#else
+#elif defined(LOLIN_C3_PICO)
   #define VOLTAGE_DIVIDER 2 // Maybe board specific but most I see have 2 equal resistors
+#elif defined(LILYGOHIGROW)
+  #define VOLTAGE_DIVIDER 6.6 // From LilyGo code, not testd yet
+#else
+  #error Voltage dividers are board specific - look at your schematic
 #endif 
 
 #ifdef ESP8266 // analogReadMilliVolts not available
@@ -48,7 +52,7 @@ Sensor_Battery::Sensor_Battery(const uint8_t pin_init) : Sensor_Analog(pin_init,
 
 uint16_t Sensor_Battery::read() {
   // Note - have tested this will do a float multiplication if VOLTAGE_DIVIDER is a float
-  return analogReadMilliVolts(pin) * VOLTAGE_DIVIDER; // Note this returns uiunt32_t which makes no sense given max value is 5*1000 = 5000
+    return analogReadMilliVolts(pin) * VOLTAGE_DIVIDER; // Note this returns uiunt32_t which makes no sense given max value is 5*1000 = 5000
 }
 
 #endif // SENSOR_BATTERY_WANT
