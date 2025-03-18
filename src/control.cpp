@@ -101,9 +101,8 @@ void IO::set(const bool newvalue) {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 bool IO::dispatchPath(const String &topicPath, const String &payload) {
 #pragma GCC diagnostic pop
-  #ifdef CONTROL_DEBUG
-    Serial.println(F("IO::dispatchPath should be subclassed"));
-  #endif
+  Serial.print(F("IO::dispatchPath should be subclassed"));  Serial.println(topicPath);
+
   return false;
 }
 
