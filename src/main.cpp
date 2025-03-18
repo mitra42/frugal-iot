@@ -79,7 +79,6 @@ void setup() {
   //Serial.setDebugOutput(true);  // Enable debug from wifi, also needed to enable output from printf
   Serial.println(F("FrugalIoT Starting"));
 #endif // ANY_DEBUG
-// put setup code here, to run once:
 xWifi::setup();
 Mqtt = new MqttManager(); // Connects to wifi and broker
 
