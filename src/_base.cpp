@@ -28,7 +28,9 @@ void Frugal_Base::setupAll() {
     Control::setupAll();
   #endif
   // TODO-25 calls system.setupAll
-  System_Logger::setupAll();
+  #ifdef SYSTEM_LOGGER
+    System_Logger::setupAll();
+  #endif
 }
 void Frugal_Base::loop() { }; // This will get called if no loop() in subclass 
 

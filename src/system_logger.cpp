@@ -33,14 +33,17 @@ void System_Logger::setupAll() {
 
 // Basis append for logger, there might be other sets of parameters needed = extend as required.
 void System_Logger::append(const String &topicPath, const String &payload) {
+  #ifdef SYSTEM_LOGGER_DEBUG
+    Serial.print("System_Logger::append "); Serial.print(topicPath); Serial.print(" "); Serial.println(payload);
+  #endif
   time_t _now = systemTime.now();
   struct tm* tmstruct = localtime(&_now);
   String line;
   String filepath;
   // TODO move to 2007-04-05T14:30Z
-  if (strategy & 0x02) {
+  if (strategy & 0x02) { // 0x02 or 0x03
     line = StringF("\"%s\",%04d-%02d-%02d %02d:%02d:%02d,\"%s\"\n", topicPath.c_str(), (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec, payload);  
-  } else {
+  } else { // 0x00 or 0x01
     line = StringF("%04d-%02d-%02d %02d:%02d:%02d,\"%s\"\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec, payload);  
   }
   if (strategy & 0x02) {
