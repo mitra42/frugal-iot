@@ -2,7 +2,12 @@
   Turn the built in LED on or off
 
   Required from .h: ACTUATOR_LEDBUILTIN_PIN
-  
+  Optional:   ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_BRIGHTNESS
+  Optional: BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
+
+  For reference the LED is on the following pins for boards we have been working with .... 
+  Sonoff: 13
+  LILYGOHIGROW: 18
 */
 
 #include "_settings.h"  // Settings for what to include etc
@@ -28,6 +33,7 @@ void Actuator_Ledbuiltin::act() {
   if (rgb) {
     const uint8_t b = value ? brightness : 0;
     #ifdef PLATFORMIO
+      Serial.print("Neopixel "); Serial.print(pin); Serial.print(" "); Serial.println(b);
       neopixelWrite(pin,b,b,b);   // Note this is r,g,b (Neopixel is g r b on Lolin)- esp32-hal-rgb-led.c
     #else // neopixelWrite deprecated on Arduino IDE
       rgbLedWrite(pin,b,b,b);   // Note this is r,g,b (Neopixel is g r b on Lolin)
