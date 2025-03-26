@@ -220,10 +220,6 @@ void MqttManager::dispatch(const String &topicpath, const String &payload) {
     #ifdef ACTUATOR_WANT
       Actuator::dispatchAll(topicleaf, payload);
     #endif
-    //TODO-25 temporary hack till Control::dispatchAll readu
-    #ifdef CONTROL_BLINKEN_WANT
-      cBlinken::dispatchLeaf(topicleaf, payload);
-    #endif
   }
   #ifdef CONTROL_WANT
     Control::dispatchAll(topicpath, payload);

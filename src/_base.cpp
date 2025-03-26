@@ -193,7 +193,7 @@ bool INfloat::dispatchLeaf(const String &tl, const String &p) {
 
 
 // Note also has dispatchLeaf via the superclass
-// Check incoming message, return true if value changed and should carry out actions
+// Check incoming message, return true if value changed and should call act() on the control
 bool INfloat::dispatchPath(const String &tp, const String &p) {
   if (wiredPath && (tp == *wiredPath)) {
     float v = p.toFloat();

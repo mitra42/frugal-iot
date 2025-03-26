@@ -24,8 +24,8 @@
 
 const char* groupAdvertLine  = "\n  -\n    group: %s\n    name: %s";
 
-Control::Control(const char * const n, std::vector<IN*> i, std::vector<OUT*> o, std::vector<TCallback> a)
-    : Frugal_Base() , name(n), inputs(i), outputs(o), actions(a) { }
+Control::Control(const char * const n, std::vector<IN*> i, std::vector<OUT*> o)
+    : Frugal_Base() , name(n), inputs(i), outputs(o) { }
 
 #ifdef CONTROL_DEBUG
 void Control::debug(const char* const where) {
@@ -47,12 +47,9 @@ void Control::setup() {
         output->setup(name);
     }
   }
+
 void Control::act() {
-  for (auto &action : actions) {
-    //if (action) {
-      action(this); // Actions should call self.outputs[x].set(newvalue); and allow .set to check if changed and send message
-    //}
-  }
+    // Default is to do nothing - though that will rarely be correct
 }
 void Control::dispatch(const String &topicPath, const String &payload ) {
     bool changed = false;
@@ -62,12 +59,12 @@ void Control::dispatch(const String &topicPath, const String &payload ) {
             // inputs have possible 'control' and therefore dispatchLeaf
             // And inputs also have possible values being set directly
             if (input->dispatchLeaf(*tl, payload)) {
-              changed = true; //  // Does not trigger any messages or actions - though data received in response to subscription will.
+              changed = true; // Changed an input, call act()
             }
         }
         // Only inputs are listening to potential topicPaths - i.e. other devices outputs
         if (input->dispatchPath(topicPath, payload)) {
-            changed = true; // Changed an input, do the actions
+            changed = true; // Changed an input, call act()
         }
     }
     for (auto &output : outputs) {

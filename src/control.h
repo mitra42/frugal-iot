@@ -20,12 +20,10 @@
 class Control : public Frugal_Base {
   public:
     const char * const name;
-    typedef std::function<void(Control*)> TCallback;
     std::vector<IN*> inputs; // Vector of inputs
     std::vector<OUT*> outputs; // Vector of outputs
-    std::vector<TCallback> actions; // Vector of actions
 
-    Control(const char * const name, std::vector<IN*> i, std::vector<OUT*> o, std::vector<TCallback> a); 
+    Control(const char * const name, std::vector<IN*> i, std::vector<OUT*> o); 
     void setup();
     void dispatch(const String &topicPath, const String &payload);
     virtual void act();

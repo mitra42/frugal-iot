@@ -22,53 +22,33 @@
 
 #include <Arduino.h>
 #include "control_blinken.h"
-#include "system_discovery.h"
-#include "system_mqtt.h"
+#include "control.h"
+#include "misc.h" // for lprintf
 
-namespace cBlinken {
-const char* const inputTopic = "control_blinken_seconds";
-const char* outputTopic = "ledbuiltin"; // TODO-53 replace with string no need to parameterize
-
-unsigned long nextLoopTime = 0;
-float value; // Time per blink (each phase)
-
-void set(const float v) {
-  if (value > v) { // May be waiting on long time, bring up
-    nextLoopTime = millis();
+ControlBlinken::ControlBlinken (const char* const name, float blinkSpeed) : Control(
+  lprintf(strlen(name)+9, "%s_control", name),
+  std::vector<IN*> {
+    new INfloat(lprintf(strlen(name)+6, "%s speed", name), blinkSpeed, lprintf(strlen(name)+7, "%s_speed", name), 0, 3600, "black", true),
+  },
+  std::vector<OUT*> {
+    new OUTbool(lprintf(strlen(name)+4, "%s Out", name), false, lprintf(strlen(name)+5, "%s_out", name), "black", true), 
   }
-  value = v;
+), blinkSpeed(blinkSpeed * 1000) {
   #ifdef CONTROL_BLINKEN_DEBUG
-    Serial.print(F("\nSetting Blink time (s) to:")); Serial.println(value);
-  #endif // CONTROL_BLINKEN_DEBUG
+    debug("ControlBlinken after instantiation");
+  #endif
+};
+
+void ControlBlinken::act() {
+  // If calling act, then we know blinkSpeed changed
+  blinkSpeed = inputs[0]->floatValue() * 1000;
+  nextBlinkTime = millis() + blinkSpeed; // Blink after new blink time
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void inputReceived(const String &payload) {
-#pragma GCC diagnostic pop
-  float v = payload.toFloat(); // Copied to pin in the loop 
-  set(v);
-}
-
-// TODO-25 temporary patch till new control.cpp ready
-void dispatchLeaf(const String &topicleaf, const String &payload) {
-  if (topicleaf == inputTopic) {
-    inputReceived(payload);
+void ControlBlinken::loop() {
+  if (nextBlinkTime <= millis()) {
+    ((OUTbool*)outputs[0])->set(!outputs[0]->boolValue()); // Will send message
+    nextBlinkTime = millis() + blinkSpeed;
   }
 }
-
-void setup() {
-  set(CONTROL_BLINKEN_S); // default time            
-  Mqtt->subscribe(inputTopic);
-}
-
-void loop() {
-  if (nextLoopTime <= millis()) {
-    value = !value;
-    Mqtt->messageSend(outputTopic, !value, true, 1);
-    nextLoopTime = millis() + value*1000;
-  }
-}
-
-} //namespace cBlinken
 #endif // CONTROL_BLINKEN_WANT
