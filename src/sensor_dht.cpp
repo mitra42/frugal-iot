@@ -78,7 +78,9 @@ void printErrorCode(int chk) {
 
 void Sensor_DHT::readAndSet() {
   #ifdef SENSOR_DHT_DEBUG
-    Serial.print("DHT on ");
+    Serial.print(F("DHT"));
+    Serial.print(dht->getType());
+    Serial.print(F(" on "));
     Serial.print(pin);
     Serial.print(F("   "));
   #endif
@@ -86,7 +88,6 @@ void Sensor_DHT::readAndSet() {
   int chk = dht->read();
   #ifdef SENSOR_DHT_DEBUG
     printErrorCode(chk);
-    //Serial.println(dht->getType());
   #endif
   if (!chk) { // Dont read if error
 
