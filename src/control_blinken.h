@@ -14,6 +14,6 @@
 namespace cBlinken {
 void setup();
 void loop();
-void dispatchLeaf(const String &topicleaf, const String &payload);
+void dispatchLeaf(const String &topicLeaf, const String &payload);
 } // namespace aBlinken
 #endif // CONTROL_BLINKEN_H

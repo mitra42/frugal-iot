@@ -21,8 +21,8 @@
 #include "system_discovery.h"
 
 
-Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t p, const char* topic, bool rgb, uint8_t brightness) :
-  Actuator_Digital(p, topic),
+Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t p, const char* topicLeaf, bool rgb, uint8_t brightness) :
+  Actuator_Digital(p, topicLeaf),
   rgb(rgb), brightness(brightness) { }
 
 void Actuator_Ledbuiltin::act() {

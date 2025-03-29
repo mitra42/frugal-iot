@@ -204,7 +204,7 @@ OUTfloat::OUTfloat(const char * const n, float v, const char * const tl, float m
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
 // OUT::dispatchLeaf() - uses IO since wont be incoming topicLeaf or wiredPath, only a wireLeaf
-// OUT::dispatchPath() - wont be called from Control::dispatchAll.
+// OUT::dispatchPath() - wont be called from Control::dispatchPathAll.
 
 OUTbool::OUTbool(const OUTbool &other) : OUT(other.name, other.topicLeaf, other.color, other.wireable) {
   value = other.value;
@@ -308,7 +308,7 @@ void Control::act() {
 }
 void Control::dispatch(const String &topicPath, const String &payload ) {
     bool changed = false;
-    String* tl = Mqtt->topicLeaf(topicPath);
+    String* tl = Mqtt->leaf(topicPath);
     for (auto &input : inputs) {
         if (tl) { // Will be nullptr if no match i.e. path is not local
             // inputs have possible 'control' and therefore dispatchLeaf
@@ -357,7 +357,7 @@ void Control::loopAll() {
   }
 }
 // Note Static
-void Control::dispatchAll(const String &topicPath, const String &payload) {
+void Control::dispatchPathAll(const String &topicPath, const String &payload) {
   for (Control* c: controls) {
     c->dispatch(topicPath, payload);
   }

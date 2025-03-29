@@ -14,7 +14,7 @@ class Sensor_Uint16 : public Sensor {
     uint8_t smooth = 0; 
 
     //Sensor_Uint16();
-    Sensor_Uint16(const uint8_t smooth, const char* topic, const unsigned long ms, bool retain);
+    Sensor_Uint16(const uint8_t smooth, const char* topicLeaf, const unsigned long ms, bool retain);
     virtual uint16_t read();
     virtual void set(const uint16_t newvalue);
     virtual bool changed(const uint16_t newvalue);

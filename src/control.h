@@ -29,7 +29,7 @@ class IO {
     IO();
     IO(const char * const n, const char * const tl, char const *color, const bool w = true);
     virtual void setup(const char * const sensorname);
-    virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload); // Just checks control
     virtual bool dispatchPath(const String &topicPath, const String &payload);
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const where);
@@ -45,7 +45,7 @@ class IN : public IO {
   virtual String advertisement(const char * const name);
     virtual float floatValue();
     virtual bool boolValue();
-    virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload); // Just checks control
 };
 class OUT : public IO {
   public:
@@ -56,7 +56,7 @@ class OUT : public IO {
     virtual float floatValue();
     virtual bool boolValue();
     virtual void sendWired();
-    virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload); // Just checks control
 };
 class INfloat : public IN {
   public:
@@ -136,7 +136,7 @@ class Control : public Frugal_Base {
     String advertisement();
     static void setupAll();
     static void loopAll();
-    static void dispatchAll(const String &topicPath, const String &payload);
+    static void dispatchPathAll(const String &topicPath, const String &payload);
     static String advertisementAll();
     #ifdef CONTROL_DEBUG
       void debug(const char* const blah);

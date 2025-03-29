@@ -7,20 +7,20 @@
 
 class Actuator : public Frugal_Base {
   public:
-    const char* topic = NULL; // Topic to receive on - this is the short (local) topic not fully qualified.
+    const char* topicLeaf = NULL; // Topic to receive on
     // unsigned long ms = 10000; // No loops in Actuators currently - uncomment and initialize to zero if have any
     // unsigned long nextLoopTime = 0; // No loops in Actuators currently - uncomment and initialize to zero if have any
 
     //Actuator();
-    Actuator(const char* topic);
+    Actuator(const char* topicLeaf);
     virtual void setup();
     static void setupAll();
     //virtual void readAndSet();
     //virtual void loop();
     //static void loopAll();
     virtual void inputReceived(const String &payload);
-    virtual void dispatch(const String &topic_msg, const String &payload);
-    static void dispatchAll(const String &topic_msg, const String &payload);
+    virtual void dispatchLeaf(const String &topic_msg, const String &payload);
+    static void dispatchLeafAll(const String &topicLeaf, const String &payload);
 }; // Class Actuator
 
 extern std::vector<Actuator*> actuators;

@@ -7,7 +7,7 @@ class Actuator_Digital : public Actuator {
   public: 
     uint8_t pin;
     bool value;
-    Actuator_Digital(const uint8_t p, const char* topic);
+    Actuator_Digital(const uint8_t p, const char* topicLeaf);
     virtual void act();
     virtual void set(const bool v);
     virtual void inputReceived(const String &payload);
