@@ -45,25 +45,10 @@ void ControlBlinken::act() {
   nextBlinkTime = millis() + blinkSpeed; // Blink after new blink time
 }
 
-<<<<<<< HEAD
 void ControlBlinken::loop() {
   if (nextBlinkTime <= millis()) {
     ((OUTbool*)outputs[0])->set(!outputs[0]->boolValue()); // Will send message
     nextBlinkTime = millis() + blinkSpeed;
-=======
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void inputReceived(const String &payload) {
-#pragma GCC diagnostic pop
-  float v = payload.toFloat(); // Copied to pin in the loop 
-  set(v);
-}
-
-// TODO-25 temporary patch till new control.cpp ready
-void dispatchLeaf(const String &topicLeaf, const String &payload) {
-  if (topicLeaf == inputTopic) {
-    inputReceived(payload);
->>>>>>> platformIO
   }
 }
 #endif // CONTROL_BLINKEN_WANT
