@@ -34,8 +34,8 @@ bool Sensor_Float::changed(const float newvalue) {
   return (newvalue == value);
 }
 void Sensor_Float::act() {
-    if (topic) {
-      Mqtt->messageSend(topic, value, width, retain, qos); // Note messageSend will convert value to String and expand topic
+    if (topicLeaf) {
+      Mqtt->messageSend(topicLeaf, value, width, retain, qos); // Note messageSend will convert value to String and expand topicLeaf
     }
 }
 void Sensor_Float::readAndSet() {

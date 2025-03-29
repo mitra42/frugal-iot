@@ -70,14 +70,14 @@ void Sensor_SHT::readAndSet() {
       // Store new results and optionally if changed send on MQTT
       if (temp != temperature) {
         temperature = temp;
-        if (topic) {
-          Mqtt->messageSend(topic, temperature, 1, retain, 0);  // topic, value, width, retain, qos
+        if (topicLeaf) {
+          Mqtt->messageSend(topicLeaf, temperature, 1, retain, 0);  // topicLeaf, value, width, retain, qos
         }
       }
       if (humy != humidity) { // TODO may want to add some bounds (e.g a percentage)
         humidity = humy;
-        if (topic2) {
-          Mqtt->messageSend(topic2, humidity, 1, retain, 0);
+        if (topicLeaf2) {
+          Mqtt->messageSend(topicLeaf2, humidity, 1, retain, 0);
         }
       }
 

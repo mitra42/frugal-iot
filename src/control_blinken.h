@@ -21,4 +21,12 @@ class ControlBlinken : public Control {
     void loop(); // Override in FrugalBase
 };
 
+<<<<<<< HEAD
+=======
+namespace cBlinken {
+void setup();
+void loop();
+void dispatchLeaf(const String &topicLeaf, const String &payload);
+} // namespace aBlinken
+>>>>>>> platformIO
 #endif // CONTROL_BLINKEN_H

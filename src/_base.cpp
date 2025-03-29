@@ -37,16 +37,6 @@ void Frugal_Base::loopAll() {
   #endif
   //Actuator::loopAll(); // Currently no loops in Actuators
   // TODO-25 call system;
-}
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void Frugal_Base::dispatch(const String &topic, const String &payload) { } // Default does nothing - actuators and controls and some system will override
-#pragma GCC diagnostic pop
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void Frugal_Base::dispatchAll(const String &topic, const String &payload) { // Default does nothing - actuators and controls and some system will override
-#pragma GCC diagnostic pop
 }; // Class FrugalBase
 
 // ========== IO - base class for IN and OUT ===== 

@@ -30,7 +30,7 @@ void Sensor_Uint16::set(const uint16_t newvalue) {
     vv = newvalue;
   }
   #ifdef SENSOR_UINT16_DEBUG
-    Serial.print(topic);
+    Serial.print(topicLeaf);
     Serial.print(" "); Serial.println(newvalue);
     if (smooth) { Serial.print(F(" Smoothed")); Serial.print(" "); Serial.println(vv); }
     
@@ -41,7 +41,7 @@ void Sensor_Uint16::set(const uint16_t newvalue) {
     act();
   #ifdef SENSOR_UINT16_DEBUG
   } else {
-    Serial.print(topic); Serial.print(F(" unchanged ")); Serial.println(newvalue);
+    Serial.print(topicLeaf); Serial.print(F(" unchanged ")); Serial.println(newvalue);
   #endif // SENSOR_UINT16_DEBUG
   }
 }
@@ -49,8 +49,8 @@ bool Sensor_Uint16::changed(const uint16_t newvalue) {
   return (newvalue != value);
 }
 void Sensor_Uint16::act() {
-    if (topic) {
-      Mqtt->messageSend(topic, value, retain, qos); // Note messageSend will convert value to String and expand topic
+    if (topicLeaf) {
+      Mqtt->messageSend(topicLeaf, value, retain, qos); // Note messageSend will convert value to String and expand topicLeaf
     }
 }
 void Sensor_Uint16::readAndSet() {
