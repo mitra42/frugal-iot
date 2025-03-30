@@ -7,6 +7,7 @@
 
 class Sensor : public Frugal_Base {
   public:
+    const char* name = nullptr; // Name of this Sensor (TODO not implemented for all sensors yet)
     const char* topicLeaf = NULL; // Topic to send to
     unsigned long ms = 10000; // 10 second read 
     const bool retain = false;

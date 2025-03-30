@@ -76,6 +76,10 @@
   #define ANY_DEBUG
 #endif 
 
+#if defined(SENSOR_MS5803_SPI) 
+  #define SENSOR_SPI_WANT
+#endif
+
 // TO_ADD_BOARD
 // shields compatible with D1 and its ESP8266 not C-pico which has same pin layout but different availability esp of analog
 #if defined(ESP8266_D1_MINI_PROv2) || defined (ESP8266_D1_MINI) || defined(ESP8266_D1_PRO_CLONE)

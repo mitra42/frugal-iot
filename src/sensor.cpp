@@ -21,6 +21,7 @@ std::vector<Sensor*> sensors; // TODO_C++_EXPERT I wanted this to be a static in
   } // Allow Serial to stabilize
 #endif // SENSOR_DEBUG
 
+// TODO-25 replace leaf by OUT(s) in the subclass
 Sensor::Sensor(const char* const leaf, const unsigned long m, bool r) : Frugal_Base(), topicLeaf(leaf), ms(m), retain(r) { }
 
 void Sensor::setup() { } // Default to do nothing
