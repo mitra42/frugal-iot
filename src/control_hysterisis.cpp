@@ -11,10 +11,6 @@
 #include "misc.h"
 #include "control_hysterisis.h"
 
-/* Will define ControlHysteris class here, then replace instantiation in frugal_iot.ino */
-
-// TODO-25 move this function into the class 
-
 void ControlHysterisis::act() {
   const float hum = inputs[0]->floatValue();
   const float lim = inputs[1]->floatValue();
@@ -40,8 +36,7 @@ ControlHysterisis::ControlHysterisis (const char* const name, float now, float m
   },
   std::vector<OUT*> {
     new OUTbool(lprintf(strlen(name)+5, "%s Out", name), false, lprintf(strlen(name)+16, "%s_hysterisis_out", name), "black", true), 
-  },
-  std::vector<Control::TCallback> {} // No action - its subclassed
+  }
 ) {
   #ifdef CONTROL_HYSTERISIS_DEBUG
     debug("ControlHysterisis after instantiation");

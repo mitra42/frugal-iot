@@ -20,14 +20,14 @@ void Actuator_Digital::act() {
 void Actuator_Digital::set(const bool v) {
   value = v;
   #ifdef ACTUATOR_DIGITAL_DEBUG
-    Serial.print(F("\nSetting ")); Serial.print(*topic); Serial.println(v ? F(" on") : F(" off"));
+    Serial.print(F("\nSetting ")); Serial.print(*topicLeaf); Serial.println(v ? F(" on") : F(" off"));
   #endif
   act();
 }
 void Actuator_Digital::inputReceived(const String &payload) {
   const bool v = payload.toInt(); // Copied to pin in the loop 
   #ifdef ACTUATOR_DIGITAL_DEBUG
-    Serial.print(*topic); Serial.print(F(" received ")); Serial.println(v);
+    Serial.print(*topicLeaf); Serial.print(F(" received ")); Serial.println(v);
   #endif
   set(v);
 }

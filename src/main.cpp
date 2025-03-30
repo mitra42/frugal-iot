@@ -135,6 +135,9 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 #ifdef SENSOR_BUTTON_WANT
   Sensor_Button::newSensor_Button(SENSOR_BUTTON_PIN, "button");
 #endif
+#ifdef CONTROL_BLINKEN_WANT
+  controls.push_back(new ControlBlinken("blinken", 5));
+#endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
   controls.push_back(new ControlHysterisis("humidity", 50, 0, 100));
@@ -158,9 +161,6 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 
 Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuatorsand controls
 
-#ifdef CONTROL_BLINKEN_WANT
-  cBlinken::setup();
-#endif
    // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
   xDiscovery::fullAdvertise();
 
@@ -178,9 +178,6 @@ void loop() {
   Mqtt->loop();
   Frugal_Base::loopAll(); // Will replace all loops as developed - but starting with sensors, so positioned here.
 
-#ifdef CONTROL_BLINKEN_WANT
-  cBlinken::loop();
-#endif
 #ifdef SYSTEM_DISCOVERY_WANT
   xDiscovery::loop();
 #endif

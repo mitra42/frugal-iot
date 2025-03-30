@@ -63,7 +63,7 @@
   #define CONTROL_DEBUG
 #endif
 
-#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_WANT)
+#if defined(CONTROL_BLINKEN_WANT) || defined(CONTROL_HYSTERISIS_WANT)
   #define CONTROL_WANT
 #endif
 

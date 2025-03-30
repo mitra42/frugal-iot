@@ -14,14 +14,14 @@ std::vector<Sensor*> sensors; // TODO_C++_EXPERT I wanted this to be a static in
   void Sensor_debug(const char * const msg) {
     Serial.print(msg); 
     for (Sensor* s: sensors) {
-      Serial.print(s->topic); Serial.print(F(" "));
+      Serial.print(s->topicLeaf); Serial.print(F(" "));
     }
     Serial.println();
     delay(1000);
   } // Allow Serial to stabilize
 #endif // SENSOR_DEBUG
 
-Sensor::Sensor(const char* const t, const unsigned long m, bool r) : Frugal_Base(), topic(t), ms(m), retain(r) { }
+Sensor::Sensor(const char* const leaf, const unsigned long m, bool r) : Frugal_Base(), topicLeaf(leaf), ms(m), retain(r) { }
 
 void Sensor::setup() { } // Default to do nothing
 
@@ -51,10 +51,10 @@ void Sensor::loopAll() {
 /*
 At this point no dispatching for sensors as none have INCOMING messages
 
-void Sensor::dispatch() {String &topic, String &payload }
-void Sensor::dispatchAll() {
+void Sensor::dispatchLeaf() {String &topicLeaf, String &payload }
+void Sensor::dispatchLeafAll() {
   for (Sensor* s: sensors) {
-    s->dispatch();
+    s->dispatchLeaf();
   }
 }
 */

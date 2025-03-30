@@ -53,7 +53,7 @@ to be able to upload directly to a directory and get a fast turnaround to the de
 
 This requires implementing some security on the server, which will also protect different organization's data.
 
-For now - post a comment in the OTA topic, or email me, and I'll setup a secure way to get new binaries from you. 
+For now - post a comment in the OTA issue, or email me, and I'll setup a secure way to get new binaries from you. 
 
 ### OTA and picking the right binary
 

@@ -36,7 +36,7 @@
 // TODO-ADD-BOARD - add your board here
 #if defined(LOLIN_C3_PICO) || defined(LILYGOHIGROW)
   #define ACTUATOR_LEDBUILTIN_RGB true
-#elif defined(SONOFF_R2) || defined(ESP8266_D1_MINI)
+#elif defined(SONOFF_R2) || defined(ESP8266_D1)
   #define ACTUATOR_LEDBUILTIN_RGB false
 #else
   #error "please define whether your LED is RGB or not"
@@ -51,7 +51,7 @@
 
 class Actuator_Ledbuiltin : public Actuator_Digital {
   public: 
-    Actuator_Ledbuiltin(const uint8_t p, const char* topic, bool rgb = false, uint8_t brightness = 255);
+    Actuator_Ledbuiltin(const uint8_t p, const char* topicLeaf, bool rgb = false, uint8_t brightness = 255);
     virtual void act();
     bool rgb; // If true then use RGB values
     uint8_t brightness; // Brightness of LED  0-255
