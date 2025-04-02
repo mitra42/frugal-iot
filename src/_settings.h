@@ -77,7 +77,7 @@
 #endif 
 
 #if defined(SENSOR_MS5803_SPI) 
-  #define SENSOR_SPI_WANT
+  #define SYSTEM_SPI_WANT
 #endif
 
 // TO_ADD_BOARD

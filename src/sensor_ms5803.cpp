@@ -14,7 +14,7 @@
   #include <Wire.h>
 #endif
 #include "sensor_ms5803.h"
-#include "sensor_spi.h"
+#include "system_spi.h"
 
 #define SENSOR_MS5803_DEBUG
 
@@ -35,21 +35,23 @@
   // TODO-132 add to mqtt
   // TODO-132 need to use a slower clock when at distance
 // Instantiate with  sensors.push_back(new Sensor_ms5803())
-Sensor_ms5803::Sensor_ms5803(const char* name) : 
-  Sensor_spi(name, SENSOR_MS5803_SPI, SPI_CLOCK_DIV2, 10000, false)
+Sensor_ms5803::Sensor_ms5803(const char* name, uint8_t cs) : 
+  Sensor(nullptr, 10000, false), 
+  spi(cs, 1000000)
 {
+  Sensor::name = name;
   pressure = new OUTfloat("pressure", 0, "pressure", 0, 99, "blue", false);
   temperature = new OUTfloat("temperature", 0, "temperature", 0, 99, "red", false);
 }
 
 void Sensor_ms5803::setup() {
   pressure->setup(name);
-  initialize();
-  Sensor_spi::send(SENSOR_CMD_RESET);
+  spi.initialize();
+  spi.send(SENSOR_CMD_RESET);
   // These sensors have coefficient values stored in ROM that are used to convert the raw temp/pressure data into degrees and mbars.
 	// Read sensor coefficients - these will be used to convert sensor data into pressure and temp data
   for (int i = 0; i < 8; i++ ){
-    sensorCoefficients[ i ] = read16(SENSOR_CMD_COEFFICIENT0 + ( i * 2 ));  // read coefficients
+    sensorCoefficients[ i ] = spi.read16(SENSOR_CMD_COEFFICIENT0 + ( i * 2 ));  // read coefficients
     #ifdef SENSOR_MS5803_DEBUG
       Serial.print("Coefficient = ");
       Serial.println(sensorCoefficients[ i ]);
@@ -106,15 +108,13 @@ uint8_t Sensor_ms5803::ms5803CRC4() {
 
 
 void Sensor_ms5803::readAndSet() {
-  send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D2); 
+  spi.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D2); 
   delay(100); // Wait for conversion to complete
-  uint32_t D2 = read(SENSOR_CMD_ADC_READ, 3);  // uncompensated temperature
+  uint32_t D2 = spi.read(SENSOR_CMD_ADC_READ, 3);  // uncompensated temperature
   // TODO-132 need to do the math to get the temperature
-  send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D1);
+  spi.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D1);
   delay(100); // Wait for conversion to complete //TODO note that vic320 had shorter delays
-  uint32_t D1 = read(SENSOR_CMD_ADC_READ, 3); // uncompensated pressure
-  // TODO-132 need to do the math to get the pressure
-  // TODO-132 need to send the pressure to the OUTfloat
+  uint32_t D1 = spi.read(SENSOR_CMD_ADC_READ, 3); // uncompensated pressure
 
   // calculate 1st order pressure and temperature correction factors (MS5803 1st order algorithm). 
   float deltaTemp = D2 - sensorCoefficients[5] * pow( 2, 8 );
