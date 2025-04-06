@@ -173,9 +173,6 @@ void fullAdvertise() {
       #ifdef SENSOR_BH1750_WANT
         SENSOR_BH1750_ADVERTISEMENT
       #endif
-      #ifdef CONTROL_BLINKEN_WANT
-        CONTROL_BLINKEN_ADVERTISEMENT
-      #endif
     )
   );
   #ifdef CONTROL_WANT
