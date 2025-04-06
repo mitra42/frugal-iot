@@ -44,6 +44,9 @@
 #ifdef SENSOR_BUTTON_WANT
 #include "sensor_button.h"
 #endif
+#ifdef SENSOR_MS5803_WANT
+#include "sensor_ms5803.h"
+#endif
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
 #endif
@@ -131,6 +134,9 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 #endif
 #ifdef SENSOR_BH1750_WANT
   sensors.push_back(new Sensor_BH1750(SENSOR_BH1750_TOPIC, SENSOR_BH1750_ADDRESS, SENSOR_BH1750_MS, true));
+#endif
+#ifdef SENSOR_MS5803_WANT
+  sensors.push_back(new Sensor_ms5803("pressure"));
 #endif
 #ifdef SENSOR_BUTTON_WANT
   Sensor_Button::newSensor_Button(SENSOR_BUTTON_PIN, "button");

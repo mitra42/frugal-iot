@@ -5,6 +5,10 @@
  * Some code is inspired from https://github.com/vic320/Arduino-MS5803-14BA which does SPI but 
  * does not appear to be supported any more, and is not available from the Platform IO platform.
  * 
+ * https://www.te.com/commerce/DocumentDelivery/DDEController?Action=showdoc&DocId=Data+Sheet%7FMS5803-14BA%7FB3%7Fpdf%7FEnglish%7FENG_DS_MS5803-14BA_B3.pdf%7FCAT-BLPS0013 is useful
+ * For SPI: Wire PS low; SDI-MISO; SDO-MOSI; SCK-SCLK; AD/CS-SS
+ * For I2C: Wire PS high; SDA-SDA; SCL-SCL; CSB=high for Address 0x76; CSB=low for Address 0x77
+ * Note that PS and CSB are external pins or jumpers on the dev board 
  */
 
  #include "_settings.h"  // Settings for what to include etc
@@ -12,9 +16,16 @@
 #include <Arduino.h>
 #ifdef SENSOR_MS5803_I2C
   #include <Wire.h>
+  //TODO-132 add system_i2c.h
 #endif
+
 #include "sensor_ms5803.h"
+#ifdef SENSOR_MS5803_SPI
 #include "system_spi.h"
+#elif defined(SENSOR_MS5803_I2C)
+#include "system_i2c.h"
+#endif
+
 
 #define SENSOR_MS5803_DEBUG
 
@@ -35,9 +46,13 @@
   // TODO-132 add to mqtt
   // TODO-132 need to use a slower clock when at distance
 // Instantiate with  sensors.push_back(new Sensor_ms5803())
-Sensor_ms5803::Sensor_ms5803(const char* name, uint8_t cs) : 
+Sensor_ms5803::Sensor_ms5803(const char* name) : 
   Sensor(nullptr, 10000, false), 
-  spi(cs, 1000000)
+  #ifdef SENSOR_MS5803_SPI
+    interface(SENSOR_MS5803_SPI, SPI_CLOCK_DIV64) // uses default pins
+  #elif defined(SENSOR_MS5803_I2C)
+    interface(SENSOR_MS5803_I2C)
+  #endif
 {
   Sensor::name = name;
   pressure = new OUTfloat("pressure", 0, "pressure", 0, 99, "blue", false);
@@ -45,13 +60,19 @@ Sensor_ms5803::Sensor_ms5803(const char* name, uint8_t cs) :
 }
 
 void Sensor_ms5803::setup() {
+  #ifdef SENSOR_MS5803_DEBUG
+    Serial.println("MS5803 Setup");
+  #endif
   pressure->setup(name);
-  spi.initialize();
-  spi.send(SENSOR_CMD_RESET);
+  delay(100); // TODO XXX unsure if needed
+  interface.initialize();
+  delay(100); // TODO XXX unsure if needed
+  interface.send(SENSOR_CMD_RESET);
   // These sensors have coefficient values stored in ROM that are used to convert the raw temp/pressure data into degrees and mbars.
 	// Read sensor coefficients - these will be used to convert sensor data into pressure and temp data
+  delay(100); // TODO XXX unsure if needed
   for (int i = 0; i < 8; i++ ){
-    sensorCoefficients[ i ] = spi.read16(SENSOR_CMD_COEFFICIENT0 + ( i * 2 ));  // read coefficients
+    sensorCoefficients[ i ] = interface.read16(SENSOR_CMD_COEFFICIENT0 + ( i * 2 ));  // read coefficients
     #ifdef SENSOR_MS5803_DEBUG
       Serial.print("Coefficient = ");
       Serial.println(sensorCoefficients[ i ]);
@@ -108,23 +129,34 @@ uint8_t Sensor_ms5803::ms5803CRC4() {
 
 
 void Sensor_ms5803::readAndSet() {
-  spi.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D2); 
+  interface.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D2); 
   delay(100); // Wait for conversion to complete
-  uint32_t D2 = spi.read(SENSOR_CMD_ADC_READ, 3);  // uncompensated temperature
+  uint32_t D2 = interface.read(SENSOR_CMD_ADC_READ, 3);  // uncompensated temperature
   // TODO-132 need to do the math to get the temperature
-  spi.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D1);
+  interface.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D1);
   delay(100); // Wait for conversion to complete //TODO note that vic320 had shorter delays
-  uint32_t D1 = spi.read(SENSOR_CMD_ADC_READ, 3); // uncompensated pressure
-
+  uint32_t D1 = interface.read(SENSOR_CMD_ADC_READ, 3); // uncompensated pressure
   // calculate 1st order pressure and temperature correction factors (MS5803 1st order algorithm). 
   float deltaTemp = D2 - sensorCoefficients[5] * pow( 2, 8 );
   float sensorOffset = sensorCoefficients[2] * pow( 2, 16 ) + ( deltaTemp * sensorCoefficients[4] ) / pow( 2, 7 );
   float sensitivity = sensorCoefficients[1] * pow( 2, 15 ) + ( deltaTemp * sensorCoefficients[3] ) / pow( 2, 8 );
+  #ifdef SENSOR_MS5803_DEBUG
+    Serial.print(F("D1 = "));
+    Serial.println(D1);
+    Serial.print(F("D2 = "));
+    Serial.println(D2);
+    Serial.print(F("deltaTemp = "));
+    Serial.println(deltaTemp);
+    Serial.print(F("sensorOffset = "));
+    Serial.println(sensorOffset);
+    Serial.print(F("sensitivity = "));
+    Serial.println(sensitivity);
+  #endif
     
   // calculate 2nd order pressure and temperature (MS5803 2st order algorithm)
   // will send to mqtt
-  temperature->set(( 2000 + (deltaTemp * sensorCoefficients[6] ) / pow( 2, 23 ) ) / 100); 
-  pressure->set(( ( ( ( D1 * sensitivity ) / pow( 2, 21 ) - sensorOffset) / pow( 2, 15 ) ) / 10 ));  
+  temperature->set(( 2000 + (deltaTemp * sensorCoefficients[6] ) / pow( 2, 23 ) ) / 100);  // in degrees C
+  pressure->set(( ( ( ( D1 * sensitivity ) / pow( 2, 21 ) - sensorOffset) / pow( 2, 15 ) ) / 10 ));   // in mBars
 }
 
 #endif // SENSOR_MS5803_WANT
