@@ -28,7 +28,7 @@ public:
   uint8_t pin;
   DHTNEW *dht; 
 
-  Sensor_DHT(const uint8_t pin, const char* topic, const char* topic2, const unsigned long ms, bool retain);
+  Sensor_DHT(const uint8_t pin, const char* topicLeaf, const char* topicLeaf2, const unsigned long ms, bool retain);
   virtual void readAndSet(); // Combines function of set(read()) since reads two values from sensor
 };
 

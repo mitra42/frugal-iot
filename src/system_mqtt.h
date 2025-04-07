@@ -37,11 +37,11 @@
 class Subscription {
   // This is both a subscription and a record of a message for retention purposes
   public:
-    const String* topicpath;
+    const String* topicPath;
     String const* payload;    // Retained payload
     Subscription(const String* tp);
     Subscription(const String* tp, String const * payload);
-    bool operator==(const String& topicpath);
+    bool operator==(const String& topicPath);
 };
 class Message : public Subscription {
   public:
@@ -63,26 +63,26 @@ class MqttManager : public Frugal_Base {
     bool connect();
     void blockTillConnected();
     bool connectOLD(); // TODO-125 remove when new connect() works
-    Subscription* find(const String &topicpath);
-    void subscribe(const String& topicpath);
-    void subscribe(const char* topicleaf);
-    void dispatch(const String &topicpath, const  String &payload);
+    Subscription* find(const String &topicPath);
+    void subscribe(const String& topicPath);
+    void subscribe(const char* topicLeaf);
+    void dispatch(const String &topicPath, const  String &payload);
     bool resubscribeAll();
-    void retainPayload(const String &topicpath, const String &payload);
-    void messageReceived(const String &topic, const String &payload);
-    void messageSendInner(const String &topicpath, const String &payload, const bool retain, const int qos);
+    void retainPayload(const String &topicPath, const String &payload);
+    void messageReceived(const String &topicPath, const String &payload);
+    void messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos);
     // Note, there are many of messageSend to make sensor code simple and not duplicate conversions.
-    void messageSend(const String &topicpath, const String &payload, const bool retain, const int qos);
-    void messageSend(const char* topicleaf, const String &payload, const bool retain, const int qos);
-    void messageSend(const String &topicpath, const float &value, const int width, const bool retain, const int qos);
-    void messageSend(const char* topicleaf, const float &value, const int width, const bool retain, const int qos);
-    void messageSend(const String &topicpath, const int value, const bool retain, const int qos);
-    void messageSend(const char* topicleaf, const int value, const bool retain, const int qos);
-    void messageSend(const String &topicpath, const bool value, const bool retain, const int qos);
-    void messageSend(const char* topicleaf, const bool value, const bool retain, const int qos);
+    void messageSend(const String &topicPath, const String &payload, const bool retain, const int qos);
+    void messageSend(const char* topicLeaf, const String &payload, const bool retain, const int qos);
+    void messageSend(const String &topicPath, const float &value, const int width, const bool retain, const int qos);
+    void messageSend(const char* topicLeaf, const float &value, const int width, const bool retain, const int qos);
+    void messageSend(const String &topicPath, const int value, const bool retain, const int qos);
+    void messageSend(const char* topicLeaf, const int value, const bool retain, const int qos);
+    void messageSend(const String &topicPath, const bool value, const bool retain, const int qos);
+    void messageSend(const char* topicLeaf, const bool value, const bool retain, const int qos);
     void messageSendQueued();
-    String* topicPath(char const * const topicleaf);
-    String* topicLeaf(const String &topicpath);
+    String* path(char const * const topicLeaf);
+    String* leaf(const String &topicPath);
   
   protected: // TODO - some of the other methods should probably be protected
     std::forward_list<Subscription> subscriptions;
@@ -90,7 +90,7 @@ class MqttManager : public Frugal_Base {
 };
 
 namespace xMqtt {
-  void MessageReceived(String &topic, String &payload);
+  void MessageReceived(String &topicPath, String &payload);
   void setup();
   void loop();
 } // namespace xMqtt

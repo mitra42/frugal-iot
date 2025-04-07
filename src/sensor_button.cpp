@@ -27,7 +27,7 @@ Sensor_Button::Sensor_Button(uint8_t pin, const char* topicLeaf) :
 
 // Unclear how would use an "OUT" as its not dependent on a change
 void Sensor_Button::clickHandlerInner(clickType type) {
-  Mqtt->messageSend(topic, type, retain, qos);
+  Mqtt->messageSend(topicLeaf, type, retain, qos);
 }
 void Sensor_Button::clickHandler(Button2& btn) {
   handler(btn)->clickHandlerInner(single_click);

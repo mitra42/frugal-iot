@@ -9,7 +9,6 @@
 #include "user_interface.h" // system_get_free_heap_size
 #endif
 
-#if defined(SYSTEM_TIME_WANT) || defined(CONTROL_WANT) || defined(SYSTEM_LOGGER_WANT)
 #include <Arduino.h> // For String
 //#include <stdio.h> // Doesnt appear to be needed - was in sample code from Jonathan Semple
 //#include <stdarg.h> // Doesnt appear to be needed - was in sample code from Jonathan Semple
@@ -22,19 +21,16 @@ const String StringF(const char* format, ...) {
     vsnprintf(buffer, sizeof(buffer), format, args);
     return String(buffer); // Note - string returned on stack so should be safe
 }
-#endif 
 
-#if defined(CONTROL_WANT) || defined(CONTROL_HYSTERISIS_WANT)
-  const char* lprintf(size_t buffer_size, const char* format, ...) {
-    // Be careful with this, there is no compile time checking that the number of args matches the format 
-    // and a mismatch will generate an Exception
-    char* buffer = new char[buffer_size];
-    va_list args;
-    va_start(args, format);
-    vsnprintf(buffer, buffer_size, format, args);
-    return buffer; // This buffer should stay in scope - and must be explicitly freed up by delete() if not wanted.
-  }
-#endif 
+const char* lprintf(size_t buffer_size, const char* format, ...) {
+  // Be careful with this, there is no compile time checking that the number of args matches the format 
+  // and a mismatch will generate an Exception
+  char* buffer = new char[buffer_size];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buffer, buffer_size, format, args);
+  return buffer; // This buffer should stay in scope - and must be explicitly freed up by delete() if not wanted.
+}
 
 // TODO-125
 // This pair of functions is intended to debug the freezes being seen on ESP32's 

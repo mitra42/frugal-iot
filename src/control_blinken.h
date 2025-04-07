@@ -4,16 +4,19 @@
 /*  Demo blinking led on board
  *
  * Configuration options
- * Optional: CONTROL_BLINKEN_S CONTROL_BLINKEN_DEBUG
+ * Optional: CONTROL_BLINKEN_DEBUG
 */
 
-// #define CONTROL_BLINKEN_WANT // Define in _local.h if want to test with this
-#define CONTROL_BLINKEN_ADVERTISEMENT "\n  -\n    topic: control_blinken_seconds\n    name: Blink period (s)\n    type: int\n    min: 1\n    max: 60\n    display: slider\n    rw: w"
+#include "control.h"
 
+class ControlBlinken : public Control {
+  public:
+    unsigned long nextBlinkTime = 0;
+    unsigned long blinkOn = 0; // in milliseconds (converted from seconds in act)
+    unsigned long blinkOff = 0; // in milliseconds (converted from seconds in act)
+    ControlBlinken(const char* const name, float secsOn, float secsOff);
+    void act(); // Override in Control
+    void loop(); // Override in FrugalBase
+};
 
-namespace cBlinken {
-void setup();
-void loop();
-void dispatchLeaf(const String &topicleaf, const String &payload);
-} // namespace aBlinken
 #endif // CONTROL_BLINKEN_H

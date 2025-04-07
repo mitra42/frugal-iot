@@ -82,6 +82,9 @@
 #if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
   #define SYSTEM_FS_DEBUG
 #endif
+#if defined(CONTROL_BLINKEN_WANT) || defined(CONTROL_HYSTERISIS_WANT)
+  #define CONTROL_WANT
+#endif
 
 // TO_ADD_SYSTEM - there is no class hierarchy
 #if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_FS_DEBUG)

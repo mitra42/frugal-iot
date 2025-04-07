@@ -15,17 +15,17 @@ std::vector<Actuator*> actuators; // TODO_C++_EXPERT I wanted this to be a stati
 void Actuator_debug(const char * msg) {
   Serial.print(msg); 
   for (Actuator* a: actuators) {
-    Serial.print(a->topic); Serial.print(" ");
+    Serial.print(a->topicLeaf); Serial.print(" ");
   }
   Serial.println();
   delay(1000); // Allow Serial to stabilize
 }
 #endif // ACTUATOR_DEBUG
 
-Actuator::Actuator(const char* t) : Frugal_Base(), topic(t) { } 
+Actuator::Actuator(const char* leaf) : Frugal_Base(), topicLeaf(leaf) { } 
 
 void Actuator::setup() {
-  Mqtt->subscribe(topic);
+  Mqtt->subscribe(topicLeaf);
 } 
 
 void Actuator::setupAll() {
@@ -62,15 +62,15 @@ void Actuator::inputReceived(const String &payload) {
   Serial.println("XXX25 Actuator::inputReceived should be subclassed");
 }
 
-void Actuator::dispatch(const String &topicpath, const String &payload) {
-  if (topicpath == topic) {
+void Actuator::dispatchLeaf(const String &leaf, const String &payload) {
+  if (leaf == topicLeaf) {
     inputReceived(payload);
   }
 }
 
-void Actuator::dispatchAll(const String &topicpath, const String &payload) {
+void Actuator::dispatchLeafAll(const String &topicLeaf, const String &payload) {
   for (Actuator* a: actuators) {
-    a->dispatch(topicpath, payload);
+    a->dispatchLeaf(topicLeaf, payload);
   }
 }
 #endif //ACTUATOR_WANT
