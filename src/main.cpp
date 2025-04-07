@@ -142,7 +142,7 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
   Sensor_Button::newSensor_Button(SENSOR_BUTTON_PIN, "button");
 #endif
 #ifdef CONTROL_BLINKEN_WANT
-  controls.push_back(new ControlBlinken("blinken", 5));
+  controls.push_back(new ControlBlinken("blinken", 5, 2));
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
