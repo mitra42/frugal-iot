@@ -214,10 +214,10 @@ void MqttManager::subscribe(const char* topicLeaf) {
   const String * const topicPath = new String(*xDiscovery::topicPrefix + topicLeaf);
   subscribe(*topicPath);
 }
-void MqttManager::dispatch(const String &topicpath, const String &payload) {
+void MqttManager::dispatch(const String &topicPath, const String &payload) {
   // TODO move this to _base.cpp
-  if (topicpath.startsWith(*xDiscovery::topicPrefix)) {
-    const String topicleaf = topicpath.substring(xDiscovery::topicPrefix->length());
+  if (topicPath.startsWith(*xDiscovery::topicPrefix)) {
+    const String topicLeaf = topicPath.substring(xDiscovery::topicPrefix->length());
     #ifdef SENSOR_WANT
       //Sensor::dispatchLeafAll(topicLeaf, payload); // None of the sensors have subscriptions
     #endif
@@ -225,6 +225,7 @@ void MqttManager::dispatch(const String &topicpath, const String &payload) {
       Actuator::dispatchLeafAll(topicLeaf, payload);
     #endif
   }
+ 
   #ifdef CONTROL_WANT
     Control::dispatchPathAll(topicPath, payload);
   #endif
