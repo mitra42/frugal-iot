@@ -18,7 +18,7 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
 #include "system_mqtt.h"
 
 Sensor_Soil::Sensor_Soil(const uint16_t map0_init, const uint16_t map100_init, const uint8_t pin_init, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init, bool retain) 
-  : Sensor_Analog(pin_init, smooth_init, topic_init, ms_init, retain), map0(map0_init), map100(map100_init) { }
+  : Sensor_Analog("soil", pin_init, smooth_init, topic_init, 0, 100, ms_init, retain), map0(map0_init), map100(map100_init) { }
 
 #define SENSOR_SOIL_INVALIDVALUE 0xFFFF
 

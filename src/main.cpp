@@ -96,7 +96,7 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #ifdef SENSOR_ANALOG_INSTANCES_WANT
-  sensors.push_back(new Sensor_Analog(SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, SENSOR_ANALOG_TOPIC_1, SENSOR_ANALOG_MS_1, true));
+  sensors.push_back(new Sensor_Analog("analog1", SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, SENSOR_ANALOG_TOPIC_1, 0, 5000, SENSOR_ANALOG_MS_1, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_2
   sensors.push_back(new Sensor_Analog(SENSOR_ANALOG_PIN_2, SENSOR_ANALOG_SMOOTH_2, SENSOR_ANALOG_TOPIC_2, SENSOR_ANALOG_MS_2, true));
