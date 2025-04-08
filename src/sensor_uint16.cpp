@@ -13,7 +13,10 @@
 
 //Sensor_Uint16::Sensor_Uint16() : Sensor() {  };
 Sensor_Uint16::Sensor_Uint16(const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init, bool retain)
-  : Sensor(topic_init, ms_init, retain), smooth(smooth_init) {}
+  : Sensor(topic_init, ms_init, retain), smooth(smooth_init) {
+    output = new OUTuint16("XXX25", 0, topic_init, 0, 65535, "black", false);
+  }
+
     
 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable

@@ -71,6 +71,15 @@ bool OUTfloat::boolValue() {
 uint16_t OUTfloat::uint16Value() {
   return value;
 }
+float OUTuint16::floatValue() {
+  return value;
+}
+bool OUTuint16::boolValue() {
+  return value;
+}
+uint16_t OUTuint16::uint16Value() {
+  return value;
+}
 float OUTbool::floatValue() {
   return value;
 }
