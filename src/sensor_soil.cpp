@@ -33,8 +33,8 @@ uint16_t Sensor_Soil::read() {
   // TODO-85 will want to be able to calibrate this somehow and remember calibration
   return map(x, map0, map100, 0, 100);
 }
-bool Sensor_Soil::changed(uint16_t newvalue) {
-  return (newvalue != SENSOR_SOIL_INVALIDVALUE) && (newvalue != value);
+bool Sensor_Soil::valid(uint16_t newvalue) {
+  return (newvalue != SENSOR_SOIL_INVALIDVALUE);
 }
 
 

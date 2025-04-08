@@ -38,8 +38,8 @@
 
 Sensor_Analog::Sensor_Analog(const uint8_t p, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init, bool r) : Sensor_Uint16(smooth_init, topic_init, ms_init, r), pin(p) { };
 
-// Sensor_Uint16_t::act is good - sends with retain=false; qos=0;
-// Sensor_Uint16_t::set is good - does optional smooth, compares and calls act
+// Sensor_Uint16_t::act is obsolete
+// Sensor_Uint16_t::set is good - does optional smooth, compares and sends
 // Sensor_Uint16_t::loop is good - does periodic read and set
 
 // Note this is virtual, and subclassed in Sensor_Battery

@@ -19,40 +19,41 @@ Sensor_Uint16::Sensor_Uint16(const uint8_t smooth_init, const char* topic_init, 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16
 uint16_t Sensor_Uint16::read() { Serial.println("Sensor_Uint16::read must be subclassed"); return -1; }
-
+bool Sensor_Uint16::valid(uint16_t newvalue) {
+  return true; // Default to true, will be subclassed e.g. for sensor_soil
+}
 void Sensor_Uint16::set(const uint16_t newvalue) {
 
   // Can be copy/adapted to Sensor_Float if needed
-  uint16_t vv;
-  if (smooth) {
-    vv = value - (value >> smooth) + newvalue;
-  } else {
-    vv = newvalue;
-  }
-  #ifdef SENSOR_UINT16_DEBUG
-    Serial.print(topicLeaf);
-    Serial.print(" "); Serial.println(newvalue);
-    if (smooth) { Serial.print(F(" Smoothed")); Serial.print(" "); Serial.println(vv); }
-    
-  #endif // SENSOR_UINT16_DEBUG
+  if (valid(newvalue)) {
+    uint16_t vv;
+    if (smooth) {
+      vv = output->value - (output->value >> smooth) + newvalue;
+    } else {
+      vv = newvalue;
+    }
+    #ifdef SENSOR_UINT16_DEBUG
+      Serial.print(topicLeaf);
+      Serial.print(" "); Serial.println(newvalue);
+      if (smooth) { Serial.print(F(" Smoothed")); Serial.print(" "); Serial.println(vv); }
+      
+    #endif // SENSOR_UINT16_DEBUG
 
-  if (changed(newvalue)) {
-    value = vv;
-    act();
-  #ifdef SENSOR_UINT16_DEBUG
-  } else {
-    Serial.print(topicLeaf); Serial.print(F(" unchanged ")); Serial.println(newvalue);
-  #endif // SENSOR_UINT16_DEBUG
+    output->set(vv); // Set the value in the OUT object and send
   }
 }
+/*
 bool Sensor_Uint16::changed(const uint16_t newvalue) {
-  return (newvalue != value);
+  return (newvalue != output->value);
 }
+*/
+/*
 void Sensor_Uint16::act() {
     if (topicLeaf) {
-      Mqtt->messageSend(topicLeaf, value, retain, qos); // Note messageSend will convert value to String and expand topicLeaf
+      Mqtt->messageSend(topicLeaf, output->value, retain, qos); // Note messageSend will convert value to String and expand topicLeaf
     }
 }
+*/
 void Sensor_Uint16::readAndSet() {
     set(read()); // Will also send message via act()
 }

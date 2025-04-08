@@ -59,16 +59,25 @@ float INfloat::floatValue() {
 bool INfloat::boolValue() {
   return value;
 }
+uint16_t INfloat::uint16Value() {
+  return value;
+}
 float OUTfloat::floatValue() {
   return value;
 }
-bool OUTbool::boolValue() {
+bool OUTfloat::boolValue() {
+  return value;
+}
+uint16_t OUTfloat::uint16Value() {
   return value;
 }
 float OUTbool::floatValue() {
   return value;
 }
-bool OUTfloat::boolValue() {
+bool OUTbool::boolValue() {
+  return value;
+}
+uint16_t OUTbool::uint16Value() {
   return value;
 }
 
@@ -142,6 +151,10 @@ void INfloat::debug(const char* const where) {
     IO::debug(where);
     Serial.print(" value="); Serial.println(value); 
 }
+void INuint16::debug(const char* const where) {
+  IO::debug(where);
+  Serial.print(" value="); Serial.println(value); 
+}
 void OUTfloat::debug(const char* const where) {
     IO::debug(where);
     Serial.print(" value="); Serial.println(value); 
@@ -149,6 +162,10 @@ void OUTfloat::debug(const char* const where) {
 void OUTbool::debug(const char* const where) {
     IO::debug(where);
     Serial.print(" value="); Serial.println(value); 
+}
+void OUTuint16::debug(const char* const where) {
+  IO::debug(where);
+  Serial.print(" value="); Serial.println(value); 
 }
 #endif
 
@@ -163,8 +180,19 @@ INfloat::INfloat(const char * const n, float v, const char * const tl, float mn,
 INfloat::INfloat(const INfloat &other) : IN(other.name, other.topicLeaf, other.color, other.wireable) {
   value = other.value;
 }
+INuint16::INuint16(const char * const n, uint16_t v, const char * const tl, uint16_t mn, uint16_t mx, char const * const c, const bool w)
+  :   IN(n, tl, c, w), value(v), min(mn), max(mx) {
+}
+
+INuint16::INuint16(const INuint16 &other) : IN(other.name, other.topicLeaf, other.color, other.wireable) {
+  value = other.value;
+}
 
 void INfloat::setup(const char * const sensorname) {
+  IN::setup(sensorname);
+  if (topicLeaf) Mqtt->subscribe(topicLeaf);
+}
+void INuint16::setup(const char * const sensorname) {
   IN::setup(sensorname);
   if (topicLeaf) Mqtt->subscribe(topicLeaf);
 }
@@ -180,6 +208,17 @@ bool INfloat::dispatchLeaf(const String &tl, const String &p) {
   }
   return false; // nothing changed
 }
+bool INuint16::dispatchLeaf(const String &tl, const String &p) {
+  IN::dispatchLeaf(tl, p); // Handle wireLeaf
+  if (tl == topicLeaf) {
+    uint16_t v = p.toInt();
+    if (v != value) {
+      value = v;
+      return true; // Need to rerun calcs
+    }
+  }
+  return false; // nothing changed
+}
 
 
 // Note also has dispatchLeaf via the superclass
@@ -187,6 +226,16 @@ bool INfloat::dispatchLeaf(const String &tl, const String &p) {
 bool INfloat::dispatchPath(const String &tp, const String &p) {
   if (wiredPath && (tp == *wiredPath)) {
     float v = p.toFloat();
+    if (v != value) {
+      value = v;
+      return true; // SHould rerun calculations
+    }
+  }
+  return false; 
+}
+bool INuint16::dispatchPath(const String &tp, const String &p) {
+  if (wiredPath && (tp == *wiredPath)) {
+    uint16_t v = p.toInt();
     if (v != value) {
       value = v;
       return true; // SHould rerun calculations
@@ -209,6 +258,18 @@ String INfloat::advertisement(const char * const group) {
   }
   return ad;
 }
+String INuint16::advertisement(const char * const group) {
+  String ad = String();
+  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
+  if (topicLeaf) {
+    ad += StringF(valueAdvertLineFloat, topicLeaf, name, "int", min, max, color, "slider", "w", group);
+  }
+  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
+  if (wireLeaf) {
+    ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "int", "dropdown", "r", group);
+  }
+  return ad;
+}
 
 // ========== OUT for some topic we are potentially sending to ===== 
 
@@ -221,6 +282,9 @@ OUTbool::OUTbool(const char * const n, bool v, const char * const tl, char const
 OUTfloat::OUTfloat(const char * const n, float v, const char * const tl, float mn, float mx, char const * const c, const bool w)
   :   OUT(n, tl, c, w), value(v), min(mn), max(mx) {
 }
+OUTuint16::OUTuint16(const char * const n, uint16_t v, const char * const tl, uint16_t mn, uint16_t mx, char const * const c, const bool w)
+  :   OUT(n, tl, c, w), value(v), min(mn), max(mx) {
+}
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
 // OUT::dispatchLeaf() - uses IO since wont be incoming topicLeaf or wiredPath, only a wireLeaf
@@ -230,6 +294,9 @@ OUTbool::OUTbool(const OUTbool &other) : OUT(other.name, other.topicLeaf, other.
   value = other.value;
 }
 OUTfloat::OUTfloat(const OUTfloat &other) : OUT(other.name, other.topicLeaf, other.color, other.wireable) {
+  value = other.value;
+}
+OUTuint16::OUTuint16(const OUTuint16 &other) : OUT(other.name, other.topicLeaf, other.color, other.wireable) {
   value = other.value;
 }
 
@@ -250,9 +317,25 @@ void OUTfloat::set(const float newvalue) {
   }
 }
 // Called when either value, or wiredPath changes
+void OUTuint16::sendWired() {
+  if (wiredPath) {
+    Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+  }
+}
+void OUTuint16::set(const uint16_t newvalue) {
+  #ifdef CONTROL_HUMIDITY_DEBUG
+    Serial.print(F("Setting ")); Setting.print(topicLeaf); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+  #endif
+  if (newvalue != value) {
+    value = newvalue;
+    Mqtt->messageSend(topicLeaf, value, true, 1 ); 
+    sendWired();
+  }
+}
+// Called when either value, or wiredPath changes
 void OUTbool::sendWired() {
     if (wiredPath) {
-      Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+      Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
     }
 }
 void OUTbool::set(const bool newvalue) {
@@ -276,6 +359,20 @@ String OUTfloat::advertisement(const char * const group) {
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w\n    group: %s"
   if (wireLeaf) {
     ad += StringF(wireAdvertLine, wireLeaf, name, " wire to", "topic", "float", "dropdown", "w", group);
+  }
+  return ad;
+}
+// "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
+String OUTuint16::advertisement(const char * const group) {
+  String ad = String();
+  // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
+  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
+  if (topicLeaf) {
+    ad += StringF(valueAdvertLineFloat, topicLeaf, name, "int", min, max, color, "bar", "r", group);
+  }
+  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w\n    group: %s"
+  if (wireLeaf) {
+    ad += StringF(wireAdvertLine, wireLeaf, name, " wire to", "topic", "int", "dropdown", "w", group);
   }
   return ad;
 }
