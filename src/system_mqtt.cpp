@@ -230,7 +230,7 @@ void MqttManager::dispatch(const String &topicPath, const String &payload) {
     Control::dispatchPathAll(topicPath, payload);
   #endif
   #ifdef SYSTEM_LOGGER_WANT
-    System_Logger::dispatchAll(topicpath, payload);
+    System_Logger::dispatchAll(topicPath, payload);
   #endif
   //TODO-25 System::dispatchPathAll(*topicPath, payload)
 }

@@ -92,7 +92,7 @@ String System_Logger::advertisementAll() {
 void System_Logger::dispatch(const String &topicPath, const String &payload ) {
   // Duplicate of input code in Control & System_Logger
   bool changed = false;
-  String* tl = Mqtt->topicLeaf(topicPath);
+  String* tl = Mqtt->leaf(topicPath);
   for (auto &input : inputs) {
       if (tl) { // Will be nullptr if no match i.e. path is not local
           // inputs have possible 'control' and therefore dispatchLeaf

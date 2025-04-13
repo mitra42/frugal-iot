@@ -77,6 +77,15 @@ float OUTbool::floatValue() {
 bool OUTfloat::boolValue() {
   return value;
 }
+String* INstring::stringValue() {
+  return value; // Note pointer, not copied
+}
+float INstring::floatValue() {
+  return value->toFloat(); 
+}
+bool INstring::boolValue() { 
+  return *value == "1"; // TODO-121 may need more options
+}
 
 void IO::setup(const char * const sensorname) {
     // Note topicLeaf subscribed to by IN, not by OUT
@@ -148,6 +157,10 @@ void INfloat::debug(const char* const where) {
     IO::debug(where);
     Serial.print(" value="); Serial.println(value); 
 }
+void INstring::debug(const char* const where) {
+  IO::debug(where);
+  Serial.print(F(" value=")); Serial.println(*value); 
+}
 void OUTfloat::debug(const char* const where) {
     IO::debug(where);
     Serial.print(" value="); Serial.println(value); 
@@ -200,6 +213,7 @@ bool INfloat::dispatchPath(const String &tp, const String &p) {
   }
   return false; 
 }
+const char* valueAdvertLineText = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %.1f\n    max: %.1f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* wireAdvertLine = "\n  -\n    topic: %s\n    name: %s%s\n    type: %s\n    options: %s\n    display: %s\n    rw: %s\n    group: %s";
@@ -215,6 +229,59 @@ String INfloat::advertisement(const char * const group) {
   }
   return ad;
 }
+INstring::INstring(const char * const n, String* v, const char * const tl, char const * const c, const bool w)
+  :   IN(n, tl, c, w), value(v) {
+}
+
+INstring::INstring(const INstring &other) : IN(other.name, other.topicLeaf, other.color, other.wireable) {
+  value = new String(*(other.value));
+}
+
+void INstring::setup(const char * const sensorname) {
+  IN::setup(sensorname);
+  if (topicLeaf) Mqtt->subscribe(topicLeaf);
+}
+
+bool INstring::dispatchLeaf(const String &tl, const String &p) {
+  IN::dispatchLeaf(tl, p); // Handle wireLeaf
+  if (tl == topicLeaf) {
+    if (p != *value) { // TODO pay some attention here, as want to compare strings, not pointers}
+      Serial.print(F("XXX110 INstring changed from:"));
+      Serial.print(*value);
+      Serial.print(F("to "));
+      Serial.println(p);
+      value = new String(p);
+      return true; // Need to rerun calcs
+    }
+  }
+  return false; // nothing changed
+}
+
+
+// Note also has dispatchLeaf via the superclass
+// Check incoming message, return true if value changed and should carry out actions
+bool INstring::dispatchPath(const String &tp, const String &p) {
+  if (wiredPath && (tp == *wiredPath)) {
+    if (!value || (p != *value)) { // TODO pay some attention here, as want to compare strings, not pointers}
+      value = new String(p);
+      return true; // Need to rerun calcs
+    }
+  }
+  return false; 
+}
+String INstring::advertisement(const char * const group) {
+  String ad = String();
+  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
+  if (topicLeaf) {
+    ad += StringF(valueAdvertLineText, topicLeaf, name, "text", color, "slider", "w", group);
+  }
+  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
+  if (wireLeaf) {
+    ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "text", "dropdown", "r", group);
+  }
+  return ad;
+}
+
 
 // ========== OUT for some topic we are potentially sending to ===== 
 

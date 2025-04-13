@@ -85,6 +85,23 @@ class INfloat : public IN {
     String advertisement(const char * const name);
 
 };
+class INstring : public IN {
+  public:
+    String* value;
+    INstring(); 
+    INstring(char const * const name, String* v, char const * const topicLeaf, char const * const color, const bool wireable);
+    INstring(const INstring &other);
+    //float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
+    //bool boolValue();
+    String* stringValue();
+    bool boolValue();
+    float floatValue();
+    bool dispatchLeaf(const String &topicLeaf, const String &payload);
+    bool dispatchPath(const String &topicPath, const String &payload);
+    virtual void setup(const char * const sensorname);
+    void debug(const char* const where);
+    String advertisement(const char * const name);
+};
 
 class OUTfloat : public OUT {
   public:
