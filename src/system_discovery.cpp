@@ -177,7 +177,7 @@ void fullAdvertise() {
         SENSOR_BH1750_ADVERTISEMENT
       #endif
     )
-      #ifdef SYSTEM_FS_WANT
+      #ifdef SYSTEM_LOGGER_WANT
       + System_Logger::advertisementAll()
       #endif
   );

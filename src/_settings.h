@@ -69,7 +69,6 @@
 
 // TODO_ADD_SYSTEM
 #if defined(SYSTEM_LOGGER_WANT)
-  #define SYSTEM_TIME_WANT
   #define SYSTEM_FS_WANT
 #endif
 #if defined(SYSTEM_LOGGER_DEBUG)

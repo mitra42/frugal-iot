@@ -27,9 +27,12 @@
   #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
   #ifndef SYSTEM_SD_PIN
     #ifdef ESP8266_D1
-      #define SYSTEM_SD_PIN D4
+      #define SYSTEM_SD_PIN D4 // Default pin on the shield - if override theres a solder bridge to change
     #elif defined(LOLIN_C3_PICO)
-      #define SYSTEM_SD_PIN 6
+      #define SYSTEM_SD_SCK 1
+      #define SYSTEM_SD_MISO 0
+      #define SYSTEM_SD_MOSI 4
+      #define SYSTEM_SD_PIN 6 // Default pin on the shield - if override theres a solder bridge to change
     #else
       #error No default pin for SD cards on your board
     #endif
@@ -49,7 +52,6 @@
 
 #include "system_fs.h"
 #include "_base.h"
-#include "system_time.h" // For system_time.now
 #include "misc.h" // For StringF
 // May change for different boards
 // #define SYSTEM_SD_CHIPSELECT D8   // SPI select pin used - note SS defined as 15 - not sure if that is D8
@@ -126,6 +128,7 @@ void System_FS::printDirectory(const char* path, int numTabs) {  // e.g. "/"
   }
   printDirectory(dir, numTabs);
 }
+
 void System_FS::printDirectory(File dir, int numTabs) {  // e.g. "/" 
   while (true) {
     File entry = dir.openNextFile();
@@ -142,15 +145,16 @@ void System_FS::printDirectory(File dir, int numTabs) {  // e.g. "/"
       // files have sizes, directories do not
       Serial.print("\t\t");
       Serial.print(formatBytes(entry.size()));
-      #ifdef XXX110
-      // TODO=110 what happened these, pretty sure could compile previously
-      time_t cr = entry.GetCreationTime(); //TODO unclear which capitalization is correct for this and getLastWrite
+      struct tm* tmstruct;
+      #ifdef ESP8266
+        // For some strange reason this is missing on ESP32 FS.h
+        time_t cr = entry.getCreationTime(); //TODO unclear which capitalization is correct for this and getLastWrite
+        tmstruct = localtime(&cr);
+        Serial.printf("\t%d-%02d-%02d %02d:%02d:%02d", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
+      #endif
       time_t lw = entry.getLastWrite();
-      struct tm* tmstruct = localtime(&cr);
-      Serial.printf("\t%d-%02d-%02d %02d:%02d:%02d", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
       tmstruct = localtime(&lw);
       Serial.printf("\t%d-%02d-%02d %02d:%02d:%02d\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
-      #endif
     }
     entry.close();
   }
@@ -164,8 +168,11 @@ System_SPIFFS::System_SPIFFS() {}
 void System_SD::setup() {
   uint8_t pin = SYSTEM_SD_PIN;
   // Library is SS=D8=15 fails;  old sketch was 4 some online says 8 but that fatals. D4=GPIO0=2 worked on Lolin Relay with no solder bridge
-  Serial.print("SD initialization on CS pin "); Serial.print(pin);
-  if (!SD.begin(pin)) { // SS is defined in common.h as PIN_SPI_SS which is defined a pin 15 in https://github.com/esp8266/Arduino in variants/generic/common.h
+  Serial.println("SD initialization on CS pin "); Serial.print(pin);
+  #ifdef SYSTEM_SD_SCK // esp on LOLIN_C3_PICO default pins are wrong - not those used on the shield 
+    SPI.begin(SYSTEM_SD_SCK, SYSTEM_SD_MISO, SYSTEM_SD_MOSI, pin); // SCK, MISO, MOSI, pin
+  #endif 
+  if (!SD.begin(pin)) { 
     Serial.println(" failed!");
   } else {
     Serial.println(" done.");

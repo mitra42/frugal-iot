@@ -12,7 +12,9 @@
 #ifdef SYSTEM_LOGGER_WANT
 #include "system_logger.h"
 #include "control.h" // For IN - TODO-110 move IN to Frugal_base
-#include "system_time.h" // For system_time.now
+#ifdef SYSTEM_TIME_WANT
+  #include "system_time.h" // For system_time.now
+#endif
 #include "misc.h"
 #include "system_mqtt.h" // For Mqtt
 
@@ -36,8 +38,10 @@ void System_Logger::append(const String &topicPath, const String &payload) {
   #ifdef SYSTEM_LOGGER_DEBUG
     Serial.print("System_Logger::append "); Serial.print(topicPath); Serial.print(" "); Serial.println(payload);
   #endif
-  time_t _now = systemTime.now();
-  struct tm* tmstruct = localtime(&_now);
+  #ifdef SYSTEM_TIME_WANT
+    time_t _now = systemTime.now(); 
+    struct tm* tmstruct = localtime(&_now);
+  #endif
   String line;
   String filepath;
   // TODO move to 2007-04-05T14:30Z

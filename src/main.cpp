@@ -161,7 +161,7 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
 
-#ifdef SYSTEM_FS_WANT
+#ifdef SYSTEM_LOGGER_WANT
 loggers.push_back( new System_Logger( // Should automagically pass to System_Logger constructor
   "system_logger",
   fs2, // TODO-110 Using spiffs for testing for now
@@ -174,7 +174,7 @@ loggers.push_back( new System_Logger( // Should automagically pass to System_Log
     new INstring("log3", nullptr, "log3", "black", true)
     }));
 
-#endif // SYSTEM_FS_WANT
+#endif // SYSTEM_LOGGER_WANT
 
 #ifdef SYSTEM_OTA_WANT
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
