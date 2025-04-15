@@ -7,17 +7,18 @@
  * Required: SYSTEM_TIME_ZONE e.g. "GMT0BST,M3.5.0/1,M10.5.0" (technically optional but we are going to default it to GMT if you do not define it!)
  * Optional: SYSTEM_TIME_MS time in milliseconds to report time on serial port - usually very lomg e.g. 3600000
  * Optional: SYSTEM_TIME_DEBUG 
+ * 
+ * Time currently fails on ESP8266
  */
 
 #include "_settings.h"
 
 #ifdef SYSTEM_TIME_WANT
-#ifndef ESP32 // For now it only works on ESP32
-  #error system_time only works on ESP32 for now
-#endif
 #include "Arduino.h"
 #include <time.h>
-#include "esp_sntp.h" // Not available on ESP8266
+#ifdef ESP32
+  #include "esp_sntp.h" // Not available on ESP8266 but only used for sntp_set_time_sync_notification_cb which is not really needed
+#endif
 #include "system_time.h"
 #include "misc.h" // for StringF
 
@@ -54,7 +55,9 @@ void SystemTime::init(const char* timeZone) {
     Serial.println("Time: Init");
   #endif
   timezone = timeZone;
-  sntp_set_time_sync_notification_cb(NTPSyncTimeCallback);
+  #ifdef ESP32
+    sntp_set_time_sync_notification_cb(NTPSyncTimeCallback);
+  #endif
 
   configTime(0, 0, "pool.ntp.org");
   #ifdef SYSTEM_TIME_DEBUG
@@ -116,6 +119,7 @@ namespace xTime {
           Serial.print("Local time = "); Serial.println(systemTime.dateTime().c_str());
       }
       nextLoopTime = millis() + SYSTEM_TIME_MS;
+      configTime(0, 0, "foo","bar","bax");
     }
   }
 } // namespace xTime
