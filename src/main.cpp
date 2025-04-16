@@ -84,7 +84,8 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
-  actuators.push_back(new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, "ledbuiltin", ACTUATOR_LEDBUILTIN_RGB, ACTUATOR_LEDBUILTIN_BRIGHTNESS));
+  Actuator_Ledbuiltin* aLedBuiltin = new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, "ledbuiltin", ACTUATOR_LEDBUILTIN_RGB, ACTUATOR_LEDBUILTIN_BRIGHTNESS);
+  actuators.push_back(aLedBuiltin);
 #endif
 #ifdef ACTUATOR_RELAY_WANT
   actuators.push_back(new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay"));
@@ -136,7 +137,9 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
   Sensor_Button::newSensor_Button(SENSOR_BUTTON_PIN, "button");
 #endif
 #ifdef CONTROL_BLINKEN_WANT
-  controls.push_back(new ControlBlinken("blinken", 5, 2));
+  Control* cb = new ControlBlinken("blinken", 5, 2);
+  controls.push_back(cb);
+  cb->outputs[0]->wiredPath = Mqtt->path(aLedBuiltin->topicLeaf); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
