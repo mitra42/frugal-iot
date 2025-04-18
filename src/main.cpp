@@ -136,6 +136,9 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 #ifdef SENSOR_BUTTON_WANT
   Sensor_Button::newSensor_Button(SENSOR_BUTTON_PIN, "button");
 #endif
+
+xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+
 #ifdef CONTROL_BLINKEN_WANT
   Control* cb = new ControlBlinken("blinken", 5, 2);
   controls.push_back(cb);
@@ -148,7 +151,6 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 
 #pragma GCC diagnostic pop
 
-xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
 
 #ifdef SYSTEM_OTA_WANT
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
