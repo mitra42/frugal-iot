@@ -53,6 +53,7 @@ IN::IN(const char * const n, const char * const tl, const char * const c, const 
 
 OUT::OUT(const char * const n, const char * const tl, const char * const c, const bool w): IO(n, tl, c, w) { };
 
+# TO_ADD_INxxx 
 float INfloat::floatValue() {
   return value;
 }
@@ -62,6 +63,7 @@ bool INfloat::boolValue() {
 uint16_t INfloat::uint16Value() {
   return value;
 }
+# TO_ADD_OUTxxx
 float OUTfloat::floatValue() {
   return value;
 }
@@ -156,6 +158,7 @@ void IO::debug(const char* const where) {
       Serial.print(" wiredPath="); Serial.print(wiredPath ? *wiredPath : "NULL"); 
     }
 }
+# TO_ADD_INxxx
 void INfloat::debug(const char* const where) {
     IO::debug(where);
     Serial.print(" value="); Serial.println(value); 
@@ -164,6 +167,7 @@ void INuint16::debug(const char* const where) {
   IO::debug(where);
   Serial.print(" value="); Serial.println(value); 
 }
+# TO_ADD_OUTxxx
 void OUTfloat::debug(const char* const where) {
     IO::debug(where);
     Serial.print(" value="); Serial.println(value); 
@@ -181,7 +185,7 @@ void OUTuint16::debug(const char* const where) {
 // ========== IN for some topic we are monitoring and the most recent value ===== 
 
 // INfloat::INfloat() {}
-
+# TO_ADD_INxxx
 INfloat::INfloat(const char * const n, float v, const char * const tl, float mn, float mx, char const * const c, const bool w)
   :   IN(n, tl, c, w), value(v), min(mn), max(mx) {
 }
@@ -197,6 +201,7 @@ INuint16::INuint16(const INuint16 &other) : IN(other.name, other.topicLeaf, othe
   value = other.value;
 }
 
+# TO_ADD_INxxx
 void INfloat::setup(const char * const sensorname) {
   IN::setup(sensorname);
   if (topicLeaf) Mqtt->subscribe(topicLeaf);
@@ -205,7 +210,7 @@ void INuint16::setup(const char * const sensorname) {
   IN::setup(sensorname);
   if (topicLeaf) Mqtt->subscribe(topicLeaf);
 }
-
+# TO_ADD_INxxx
 bool INfloat::dispatchLeaf(const String &tl, const String &p) {
   IN::dispatchLeaf(tl, p); // Handle wireLeaf
   if (tl == topicLeaf) {
@@ -229,7 +234,7 @@ bool INuint16::dispatchLeaf(const String &tl, const String &p) {
   return false; // nothing changed
 }
 
-
+# TO_ADD_INxxx
 // Note also has dispatchLeaf via the superclass
 // Check incoming message, return true if value changed and should call act() on the control
 bool INfloat::dispatchPath(const String &tp, const String &p) {
@@ -252,9 +257,11 @@ bool INuint16::dispatchPath(const String &tp, const String &p) {
   }
   return false; 
 }
+# TO_ADD_INxxx TO_ADD_OUTxxx
 const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %.1f\n    max: %.1f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* wireAdvertLine = "\n  -\n    topic: %s\n    name: %s%s\n    type: %s\n    options: %s\n    display: %s\n    rw: %s\n    group: %s";
+# TO_ADD_INxxx
 String INfloat::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
@@ -284,7 +291,7 @@ String INuint16::advertisement(const char * const group) {
 
 //OUTfloat::OUTfloat() {};
 //OUTbool::OUTbool() {};
-
+# TO_ADD_OUTxxx
 OUTbool::OUTbool(const char * const n, bool v, const char * const tl, char const * const c, const bool w)
   :   OUT(n, tl, c, w), value(v)  {
 }
@@ -299,6 +306,7 @@ OUTuint16::OUTuint16(const char * const n, uint16_t v, const char * const tl, ui
 // OUT::dispatchLeaf() - uses IO since wont be incoming topicLeaf or wiredPath, only a wireLeaf
 // OUT::dispatchPath() - wont be called from Control::dispatchAll.
 
+# TO_ADD_OUTxxx
 OUTbool::OUTbool(const OUTbool &other) : OUT(other.name, other.topicLeaf, other.color, other.wireable) {
   value = other.value;
 }
@@ -309,12 +317,24 @@ OUTuint16::OUTuint16(const OUTuint16 &other) : OUT(other.name, other.topicLeaf, 
   value = other.value;
 }
 
+# TO_ADD_OUTxxx
 // Called when either value, or wiredPath changes
 void OUTfloat::sendWired() {
     if (wiredPath) {
       Mqtt->messageSend(*wiredPath, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
     }
 }
+void OUTuint16::sendWired() {
+  if (wiredPath) {
+    Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+  }
+}
+void OUTbool::sendWired() {
+  if (wiredPath) {
+    Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
+  }
+}
+# TO-ADD-OUTxxx
 void OUTfloat::set(const float newvalue) {
   #ifdef CONTROL_HUMIDITY_DEBUG
     Serial.print(F("Setting ")); Setting.print(topicLeaf); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
@@ -323,12 +343,6 @@ void OUTfloat::set(const float newvalue) {
     value = newvalue;
     Mqtt->messageSend(topicLeaf, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
     sendWired();
-  }
-}
-// Called when either value, or wiredPath changes
-void OUTuint16::sendWired() {
-  if (wiredPath) {
-    Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
   }
 }
 void OUTuint16::set(const uint16_t newvalue) {
@@ -341,12 +355,6 @@ void OUTuint16::set(const uint16_t newvalue) {
     sendWired();
   }
 }
-// Called when either value, or wiredPath changes
-void OUTbool::sendWired() {
-    if (wiredPath) {
-      Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
-    }
-}
 void OUTbool::set(const bool newvalue) {
   #ifdef CONTROL_HUMIDITY_DEBUG
     Serial.print(F("Setting ")); Setting.print(topicLeaf); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
@@ -357,6 +365,8 @@ void OUTbool::set(const bool newvalue) {
     sendWired();
   }
 }
+
+#TO-ADD-OUTxxx
 // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
 String OUTfloat::advertisement(const char * const group) {
   String ad = String();
