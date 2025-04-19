@@ -43,7 +43,6 @@ void ControlBlinken::act() {
 
 void ControlBlinken::loop() {
   if (nextBlinkTime <= millis()) {
-    Serial.print("XXX "); Serial.print(__FILE__); Serial.println(__LINE__);
     bool next = !outputs[0]->boolValue();
     ((OUTbool*)outputs[0])->set(next); // Will send message
     nextBlinkTime = millis() + (next ? blinkOn : blinkOff);
