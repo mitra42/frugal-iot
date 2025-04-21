@@ -22,63 +22,43 @@
 #endif
 #define SYSTEM_MQTT_SERVER "frugaliot.naturalinnovation.org"
 
-// It can be slow developing by resting the portal each time, so if wanted define SSID and PASSWORD here, 
-// just don't forget to comment these out before release
-//#define SYSTEM_WIFI_SSID "myhomewifi"
-//#define SYSTEM_WIFI_PASSWORD "somesecretpassword"
-#define SYSTEM_WIFI_PROJECT "lotus"
+// Define the name of the project - just one word, all lower case.
+  #define SYSTEM_WIFI_PROJECT "lotus"
+
 // If you define SSID and PASSWORD it will always connect to this - overriding whatever is set in the portal - this is NOT what you usually want.
-// generally 
-  // SSID_1 through SSID_9 define WiFi networks it will try if they show up in the scan, 
-  // it will also remember any it successfully connects to after entering in the portal (Tools->Erase All Flash in arduino IDE to delete)
-  #define SYSTEM_WIFI_SSID_1 "myhomewifi"
-  #define SYSTEM_WIFI_PASSWORD_1 "blahblah"
-  #define SYSTEM_WIFI_SSID_2 "cafe"
-  #define SYSTEM_WIFI_PASSWORD_2 "12345678"
+  //#define SYSTEM_WIFI_SSID "myhomewifi"
+  //#define SYSTEM_WIFI_PASSWORD "somesecretpassword"
+
+// instead define the possible WiFi here.
+// SSID_1 through SSID_9 define WiFi networks it will try if they show up in the scan, 
+// it will also remember any it successfully connects to after entering in the portal (Tools->Erase All Flash in arduino IDE to delete)
+    #define SYSTEM_WIFI_SSID_1 "myhomewifi"
+    #define SYSTEM_WIFI_PASSWORD_1 "blahblah"
+    #define SYSTEM_WIFI_SSID_2 "cafe"
+    #define SYSTEM_WIFI_PASSWORD_2 "12345678"
 
 // How often to check for software updates - 300000 is good for dev, comment out to get default of an hour
-#define SYSTEM_OTA_MS 300000 // 5 minute updates
+// #define SYSTEM_OTA_MS 300000 // 5 minute updates
 
 //Since I work on multiple nodes, I define each here, then uncomment exactly one and have its settings below. 
-#define BOARD1 "ESP8266 D1 mini with SHT sensor"
+#define SHT30 "ESP8266 with SHT sensor"
 //#define BOARD2 "ESP32 C3 Pico with Soil and Battery sensor"
 //#define SONOFF_R2 "Sonoff R2"
 //#define LILYGOHIGROW1 "Lilygo HiGrow"
 //#define BOARDCOMPILECHECK "Check all code compiles"
 
 // Note that on ESP that ESP32 or ESP8266 will be defined - should define other chips names here if its not ESP32 or ESP8266
-#ifdef BOARD1
+#ifdef SHT30
   #ifndef ESP8266
     #error should be using Lolin(Wemos) D1 Pico in the IDE, and looks like you are using a ESP32 board
   #endif
-  #define ESP8266_D1_MINI // Board level - define - will only support boards devs are actually using, but intended to support board specific fixes
+  #define ESP8266_D1_PRO_CLONE // Board level - define - will only support boards devs are actually using, but intended to support board specific fixes
   #define SYSTEM_WIFI_DEVICE "ESP8266-SHT" // This is default for a short name that appears in the UX. e.g. could be "main pump" - wifi portal can override
-  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION BOARD1 // override automatically generated description for this device 
-  #define ACTUATOR_LEDBUILTIN_WANT // LED on board - usually wanted
+  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION SHT30 // override automatically generated description for this device 
   #define SENSOR_SHT_WANT
-  #define SENSOR_SHT_MS 10000 // for development only
   #define SYSTEM_OTA_WANT
   #define SYSTEM_OTA_KEY "esp8266-sht"
-#endif //BOARD1
-
-#ifdef BOARD2
-  #ifndef ESP32
-    #error Board 3 should be Lolin C3 Pico as board
-  #endif
-  #define LOLIN_C3_PICO
-  #define SYSTEM_WIFI_DEVICE "ESP32Cpico"
-  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION BOARD3 // override automatically generated description for this device
-  #define ACTUATOR_LEDBUILTIN_WANT // LED on board - usually wanted
-  #define SENSOR_SOIL_WANT
-  #define SENSOR_SOIL_MS 10000
-  #define SENSOR_SOIL_DEBUG
-  #define SENSOR_BATTERY_WANT
-  #define SENSOR_BATTERY_DEBUG
-  #define SENSOR_BATTERY_MS 15000 // While debugging I want readings every 15 seconds
-  #define SYSTEM_OTA_WANT
-  #define SYSTEM_OTA_KEY "esp32-soil"
-#endif //BOARD2
-
+#endif //SHT30
 
 #ifdef SONOFF_R2
   // See https://github.com/mitra42/frugal-iot/issues/108
@@ -88,9 +68,11 @@
   #define ITEAD_SONOFF
   #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION SONOFF_R2
   #define ACTUATOR_RELAY_WANT
+  #define SYSTEM_WIFI_PROJECT "lotus" // Replce with your project
+  #define ACTUATOR_LED_WANT
+  #define SYSTEM_WIFI_DEVICE "Sonoff switch"
   #define SYSTEM_OTA_WANT
   #define SYSTEM_OTA_KEY "sonoff-r2"
-  #define SYSTEM_WIFI_PROJECT "lotus"
 #endif
 
 #ifdef LILYGOHIGROW1
