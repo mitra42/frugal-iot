@@ -17,13 +17,18 @@
 #include "sensor_loadcell.h"
 
 #ifndef SENSOR_LOADCELL_DOUT_PIN
-  #define SENSOR_LOADCELL_DOUT_PIN 3 // TODO-134 check pin numbers
+  #ifdef ESP8266_D1
+    #define SENSOR_LOADCELL_DOUT_PIN D5 // TODO-134 check pin numbers
+  #elif defined(ESP32)
+    #define SENSOR_LOADCELL_DOUT_PIN 1 // TODO-134 check pin numbers
+  #endif
 #endif
 #ifndef SENSOR_LOADCELL_SCK_PIN
-  #define SENSOR_LOADCELL_SCK_PIN 2 // TODO-134 check pin numbers
-#endif
-#ifndef SENSOR_LOADCELL_MS
-  #define SENSOR_LOADCELL_MS 3600000 // 1 Minute
+  #ifdef ESP8266_D1
+    #define SENSOR_LOADCELL_SCK_PIN D0
+  #elif defined(ESP32)
+    #define SENSOR_LOADCELL_SCK_PIN 0
+  #endif
 #endif
 #ifndef SENSOR_LOADCELL_OFFSET
   #define SENSOR_LOADCELL_OFFSET 0 // check this
@@ -45,24 +50,46 @@ Sensor_LoadCell::Sensor_LoadCell(const char* name, const unsigned long ms, const
 }
 // This may also get set by a button or a message
 void Sensor_LoadCell::tare() {
-    hx711->tare(); // Presume empty load cell
-    offset = hx711->get_offset(); // Get and save the offset value 
-}
+  Serial.print(__FILE__); Serial.println(__LINE__);
+    hx711->tare(10); // Presume empty load cell   reading 10 tines for accuracy
+    Serial.print(__FILE__); Serial.println(__LINE__);
+  offset = hx711->get_offset(); // Get and save the offset value 
+    Serial.print(__FILE__); Serial.println(__LINE__);
+  }
 void Sensor_LoadCell::setup() {
-    hx711->begin(SENSOR_LOADCELL_DOUT_PIN, SENSOR_LOADCELL_SCK_PIN); // TODO-134 check pin numbers
-    hx711->reset(); // Set to initial state -do this because we dont know it was power cycled when dev board power cycles
-    if (hx711->get_tare()) {
-      if (offset) {
-        hx711->set_offset(offset); // TODO-134 check this is correct
-      } else {
-        tare();
-      }
+  #ifdef SENSOR_LOADCELL_DEBUG
+    Serial.println(F("Sensor_LoadCell::setup()"));
+  #endif
+  hx711->begin(SENSOR_LOADCELL_DOUT_PIN, SENSOR_LOADCELL_SCK_PIN); // TODO-134 check pin numbers
+  hx711->reset(); // Set to initial state -do this because we dont know it was power cycled when dev board power cycles
+  if (!hx711->get_tare()) { // Check if an offset has been set
+    if (offset) {
+      #ifdef SENSOR_LOADCELL_DEBUG
+        Serial.print(F("Sensor_LoadCell::setup() - tare not set - using")); Serial.println(offset);
+      #endif    
+      hx711->set_offset(offset); // TODO-134 check this is correct
+    } else {
+      #ifdef SENSOR_LOADCELL_DEBUG
+        Serial.println(F("LoadCell: Checking tare - presumes nothing loaded"));
+      #endif
+      tare();
+      #ifdef SENSOR_LOADCELL_DEBUG
+        Serial.print(F("LoadCell: Offset=")); Serial.println(hx711->get_offset());
+      #endif
     }
-    hx711->set_scale(scale); // TODO-134 
-    hx711->set_median_mode(); // Use median so doesn't read e.g. 0.5kg if 1kg load added mid-cycle
+  }
+#ifdef SENSOR_LOADCELL_DEBUG
+  Serial.print(F("LoadCell: Scale=")); Serial.println(scale);
+#endif
+hx711->set_scale(scale); // TODO-134 
+  hx711->set_median_mode(); // Use median so doesn't read e.g. 0.5kg if 1kg load added mid-cycle
 }
 float Sensor_LoadCell::read() {
-    return hx711->get_units(SENSOR_LOADCELL_TIMES); 
+  float v = hx711->get_units(SENSOR_LOADCELL_TIMES); 
+  #ifdef SENSOR_LOADCELL_DEBUG
+    Serial.print(F("LoadCell: read()=")); Serial.println(v);
+  #endif
+  return v;
 }
 // TODO-134 this looks wrong - I think weight should be float
 void Sensor_LoadCell::calibrate(uint16_t weight) {

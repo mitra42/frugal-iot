@@ -9,6 +9,10 @@
 #include "sensor_float.h"
 #include <HX711.h> // https://registry.platformio.org/libraries/robtillaart/HX711
 
+#ifndef SENSOR_LOADCELL_MS
+  #define SENSOR_LOADCELL_MS 3600000 // 1 Minute
+#endif
+
 class Sensor_LoadCell : public Sensor_Float {
   public:
     Sensor_LoadCell(const char* name, const unsigned long ms, const bool retain);

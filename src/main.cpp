@@ -44,6 +44,9 @@
 #ifdef SENSOR_BUTTON_WANT
 #include "sensor_button.h"
 #endif
+#ifdef SENSOR_LOADCELL_WANT
+#include "sensor_loadcell.h"
+#endif
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
 #endif
@@ -133,7 +136,11 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
   sensors.push_back(new Sensor_BH1750(SENSOR_BH1750_TOPIC, SENSOR_BH1750_ADDRESS, SENSOR_BH1750_MS, true));
 #endif
 #ifdef SENSOR_BUTTON_WANT
+  // TODO - check but I think this is intentionally not pushed to "sensors"
   Sensor_Button::newSensor_Button(SENSOR_BUTTON_PIN, "button");
+#endif
+#ifdef SENSOR_LOADCELL_WANT
+  sensors.push_back(new Sensor_LoadCell("loadcell", SENSOR_LOADCELL_MS, true));
 #endif
 #ifdef CONTROL_BLINKEN_WANT
   controls.push_back(new ControlBlinken("blinken", 5, 2));
