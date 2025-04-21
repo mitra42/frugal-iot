@@ -20,6 +20,8 @@ class Sensor : public Frugal_Base {
     virtual void readAndSet();
     virtual void loop();
     static void loopAll();
+    virtual String advertisement();
+    static String advertisementAll();
 }; // Class Sensor
 
 extern std::vector<Sensor*> sensors;

@@ -3,6 +3,10 @@
 
 #include <Arduino.h>
 
+extern const char* valueAdvertLineFloat;
+extern const char* valueAdvertLineBool;
+extern const char* wireAdvertLine;
+
 class Frugal_Base {
   public:
     Frugal_Base();

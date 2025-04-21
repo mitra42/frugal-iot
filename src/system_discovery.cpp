@@ -53,6 +53,9 @@
 #ifdef SENSOR_BH1750_WANT
   #include "sensor_bh1750.h"
 #endif
+#ifdef SENSOR_WANT
+  #include "sensor.h"
+#endif
 // TO_ADD_CONTROL
 #ifdef CONTROL_BLINKEN_WANT
   #include "control_blinken.h"
@@ -175,6 +178,9 @@ void fullAdvertise() {
       #endif
     )
   );
+  #ifdef SENSOR_WANT
+    *advertisePayload += (Sensor::advertisementAll());
+  #endif
   #ifdef CONTROL_WANT
     *advertisePayload += (Control::advertisementAll());
   #endif

@@ -20,6 +20,7 @@ class Sensor_LoadCell : public Sensor_Float {
     void tare();
     void setup();
     void calibrate(uint16_t weight);
+    String advertisement();
   private:
     HX711 *hx711;
     int32_t offset;

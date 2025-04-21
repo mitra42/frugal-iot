@@ -48,6 +48,20 @@ void Sensor::loopAll() {
     s->loop();
   }
 }
+
+String Sensor::advertisement() {
+  return ""; // Default is to do nothing - as sensors all have different inputs/outputs and some still use old structure
+}
+
+String Sensor::advertisementAll() {
+  String ad = String();
+  for (Sensor* s: sensors) {
+    ad += (s->advertisement());
+  }
+  return ad;
+}
+
+
 /*
 At this point no dispatching for sensors as none have INCOMING messages
 

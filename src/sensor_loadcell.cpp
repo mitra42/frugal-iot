@@ -15,6 +15,7 @@
 #include <Arduino.h>
 #include <HX711.h> // https://registry.platformio.org/libraries/robtillaart/HX711
 #include "sensor_loadcell.h"
+#include "misc.h" // StringF
 
 #ifndef SENSOR_LOADCELL_DOUT_PIN
   #ifdef ESP8266_D1
@@ -39,6 +40,16 @@
 #ifndef SENSOR_LOADCELL_TIMES
   #define SENSOR_LOADCELL_TIMES 10 // TODO_134 check how much different numbers of reading effect accuracy
 #endif
+#ifndef SENSOR_LOADCELL_MAX
+  #define SENSOR_LOADCELL_MAX 2000 // TODO-134 should probably be a required paramter
+#endif
+
+// TODO-134 max should be a setable value depending on the load cell - so probably use sprintf etc 
+//"\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %.1f\n    max: %.1f\n    color: %s\n    display: %s\n    rw: %s\n"; // group: %s
+String Sensor_LoadCell::advertisement() {
+  return StringF(valueAdvertLineFloat, 
+    topicLeaf, topicLeaf, "float", 0, SENSOR_LOADCELL_MAX, "green", "bar", "r");
+}
 
 //TODO-134 need to tell it the size of the load cell
 //TODO-25 name != topicLeaf 
