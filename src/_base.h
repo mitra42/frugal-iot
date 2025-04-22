@@ -7,6 +7,12 @@ extern const char* valueAdvertLineFloat;
 extern const char* valueAdvertLineBool;
 extern const char* wireAdvertLine;
 
+// TO-ADD-INXXX TO-ADD-OUTXXX
+enum IOtype { 
+  BOOL, UINT16, FLOAT, COLOR
+};
+
+
 class Frugal_Base {
   public:
     Frugal_Base();
@@ -36,6 +42,7 @@ class IO {
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
     virtual String advertisement(const char * const name);
+    void wireTo(String* topicPath);
 };
 class IN : public IO {
   public:
@@ -134,9 +141,9 @@ class INcolor : public IN {
     INcolor(); 
     INcolor(char const * const name, uint8_t r, uint8_t g, uint8_t b,  char const * const topicLeaf, const bool wireable);
     INcolor(const INcolor &other);
-    //float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
-    //bool boolValue();
-    //uint16_t uint16Value();
+    float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
+    bool boolValue();
+    uint16_t uint16Value();
     bool convertAndSet(const String &payload);
     void debug(const char* const where);
     String advertisement(const char * const name);

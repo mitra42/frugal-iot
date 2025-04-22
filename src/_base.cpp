@@ -54,6 +54,12 @@ IN::IN(const char * const n, const char * const tl, const char * const color, co
 
 OUT::OUT(const char * const n, const char * const tl, const char * const color, const bool w): IO(n, tl, color, w) { };
 
+
+void IO::wireTo(String* topicPath) {
+  wiredPath = topicPath;
+  Mqtt->subscribe(*wiredPath);
+}
+
 // TO_ADD_INxxx 
 float INfloat::floatValue() {
   return value;
@@ -64,6 +70,15 @@ bool INfloat::boolValue() {
 uint16_t INfloat::uint16Value() {
   return value;
 }
+float INuint16::floatValue() {
+  return value;
+}
+bool INuint16::boolValue() {
+  return value;
+}
+uint16_t INuint16::uint16Value() {
+  return value;
+}
 float INbool::floatValue() {
   return value;
 }
@@ -72,6 +87,15 @@ bool INbool::boolValue() {
 }
 uint16_t INbool::uint16Value() {
   return value;
+}
+float INcolor::floatValue() {
+  return 0;
+}
+bool INcolor::boolValue() {
+  return 0;
+}
+uint16_t INcolor::uint16Value() {
+  return 0;
 }
 
 // TO_ADD_OUTxxx
@@ -119,8 +143,7 @@ void IN::setup(const char * const sensorname) {
 bool IN::dispatchLeaf(const String &tl, const String &p) {
   if (tl == wireLeaf) {
     if (!(wiredPath && (p == *wiredPath))) {
-      wiredPath = new String(p);
-      Mqtt->subscribe(*wiredPath);
+      wireTo(new String(p));
     }
   }
   if (tl == topicLeaf) {

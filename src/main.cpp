@@ -50,6 +50,9 @@
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
 #endif
+#ifdef CONTROL_GSHEETS_WANT
+#include "control_gsheets.h"
+#endif
 #ifdef CONTROL_WANT
 #include "control.h"
 #endif
@@ -68,6 +71,7 @@
 #ifdef LOCAL_DEV_WANT
 #include "local_dev.h"
 #endif
+
 void setup() {
 #ifdef LILYGOHIGROW
   pinMode(POWER_CTRL, OUTPUT);
@@ -119,7 +123,8 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
   sensors.push_back(new Sensor_Battery(SENSOR_BATTERY_PIN));  // TODO-57 will rarely be as simple as this
 #endif
 #ifdef SENSOR_SHT_WANT
-  sensors.push_back(new Sensor_SHT("sht", SENSOR_SHT_ADDRESS, &Wire, SENSOR_SHT_MS, true));
+  Sensor_SHT* ss = new Sensor_SHT("sht", SENSOR_SHT_ADDRESS, &Wire, SENSOR_SHT_MS, true);
+sensors.push_back(ss);
 #endif
 #ifdef SENSOR_DHT_WANT
   sensors.push_back(new Sensor_DHT("dht", SENSOR_DHT_PIN, SENSOR_DHT_MS, true));
@@ -149,13 +154,17 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #ifdef CONTROL_BLINKEN_WANT
   Control* cb = new ControlBlinken("blinken", 5, 2);
   controls.push_back(cb);
-  cb->outputs[0]->wiredPath = Mqtt->path(aLedBuiltin->input->topicLeaf); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
+  cb->outputs[0]->wireTo(Mqtt->path(aLedBuiltin->input->topicLeaf)); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
   controls.push_back(new ControlHysterisis("humidity", 50, 0, 100));
 #endif //CONTROL_HYSTERISIS_WANT
-
+#ifdef CONTROL_GSHEETS_WANT
+  Control_Gsheets* cg =   new Control_Gsheets("gsheets demo");
+  controls.push_back(cg);
+  cg->track(UINT16, Mqtt->path(ss->temperature->topicLeaf));
+#endif
 #pragma GCC diagnostic pop
 
 
