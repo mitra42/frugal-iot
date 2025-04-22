@@ -21,14 +21,14 @@ void Sensor::setupAll() {
   }
 }
 
-// TODO_C++_EXPERT - unclear why this is needed, all objects in "sensors" will be subclasses either Sensor_Uint16 or Sensor_Float each of which has a readAndSet method.
+// Can either sublass read(), and set() or subclass readAndSet() - use latter if more than one result e.g. in sensor_HT
 void Sensor::readAndSet() {
   Serial.println(F("XXX25 Shouldnt be calling Sensor::readAndSet - should be a subclass"));
 }
 
 void Sensor::loop() {
   if (nextLoopTime <= millis()) {
-    readAndSet(); // Will also send message via act()
+    readAndSet(); // Will also send message via act() in old style sensors, or via output->set() in new style.
     nextLoopTime = millis() + ms;
   }
 }

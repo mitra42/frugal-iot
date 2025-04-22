@@ -7,14 +7,13 @@
 
 class Sensor_Float : public Sensor {
   public:
-    float value; 
+    OUTfloat* output;
     uint8_t width;
-    Sensor_Float(const char* name, const char* topicLeaf, uint8_t width, const unsigned long ms, bool retain);
+    // TODO-25 need to pass retain & qos down to OUTfloat which needs to use them.
+    Sensor_Float(const char* name, const char* topicLeaf, uint8_t width, float min, float max, const char* color, const unsigned long ms, bool retain);
     virtual void readAndSet();
     virtual float read();
     virtual void set(const float newvalue);
-    virtual bool changed(const float newvalue);
-    virtual void act();
-    const char* topicLeaf;
+    virtual String advertisement();
 };
 #endif // SENSOR_FLOAT_H

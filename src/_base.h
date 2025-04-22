@@ -114,16 +114,17 @@ class INuint16 : public IN {
 class OUTfloat : public OUT {
   public:
     float value;
+    uint8_t width;
     float min;
     float max;
     OUTfloat();
-    OUTfloat(char const * const name, float v, char const * const topicLeaf, float min, float max, char const * const color, const bool wireable);
+    OUTfloat(char const * const name, float v, char const * const topicLeaf, uint8_t width, float min, float max, char const * const color, const bool wireable);
     OUTfloat(const OUTfloat &other);
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();
     uint16_t uint16Value();
     void sendWired();
-    void set(const float newvalue);
+    void set(const float newvalue); // Set and send if changed
     void debug(const char* const where);
     String advertisement(const char * const name);
 };

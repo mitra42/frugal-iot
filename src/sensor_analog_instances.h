@@ -40,7 +40,5 @@
   #define SENSOR_ANALOG_MS_1 900000 // How often to read in MS - default to 15 minutes if not overridden
 #endif
 
-#define SENSOR_ANALOG_ADVERTISEMENT_1 "\n  -\n    topic: " SENSOR_ANALOG_TOPIC_1 "\n    name: " SENSOR_ANALOG_NAME_1 "\n    type: int\n    display: bar\n    min: 0\n    max: 6000\n    color: purple\n    rw: r"
-
 #endif // SENSOR_ANALOG_INSTANCES_WANT
 #endif // SENSOR_ANALOG_INSTANCES_H

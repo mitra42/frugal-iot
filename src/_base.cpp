@@ -46,12 +46,12 @@ void Frugal_Base::loopAll() {
 //IN::IN() {}
 //OUT::OUT() {}
 
-IO::IO(const char * const n, const char * const tl, const char* const c, const bool w): name(n), topicLeaf(tl), color(c), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) { 
+IO::IO(const char * const n, const char * const tl, const char* const color, const bool w): name(n), topicLeaf(tl), color(color), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) { 
       //debug("...IO string constructor ");
 };
-IN::IN(const char * const n, const char * const tl, const char * const c, const bool w): IO(n, tl, c, w) { };
+IN::IN(const char * const n, const char * const tl, const char * const color, const bool w): IO(n, tl, color, w) { };
 
-OUT::OUT(const char * const n, const char * const tl, const char * const c, const bool w): IO(n, tl, c, w) { };
+OUT::OUT(const char * const n, const char * const tl, const char * const color, const bool w): IO(n, tl, color, w) { };
 
 // TO_ADD_INxxx 
 float INfloat::floatValue() {
@@ -292,14 +292,14 @@ String INuint16::advertisement(const char * const group) {
 //OUTfloat::OUTfloat() {};
 //OUTbool::OUTbool() {};
 // TO_ADD_OUTxxx
-OUTbool::OUTbool(const char * const n, bool v, const char * const tl, char const * const c, const bool w)
-  :   OUT(n, tl, c, w), value(v)  {
+OUTbool::OUTbool(const char * const n, bool v, const char * const tl, char const * const color, const bool w)
+  :   OUT(n, tl, color, w), value(v)  {
 }
-OUTfloat::OUTfloat(const char * const n, float v, const char * const tl, float mn, float mx, char const * const c, const bool w)
-  :   OUT(n, tl, c, w), value(v), min(mn), max(mx) {
+OUTfloat::OUTfloat(const char * const n, float v, const char * const tl, uint8_t width, float mn, float mx, char const * const color, const bool w)
+  :   OUT(n, tl, color, w), value(v), width(width), min(mn), max(mx) {
 }
-OUTuint16::OUTuint16(const char * const n, uint16_t v, const char * const tl, uint16_t mn, uint16_t mx, char const * const c, const bool w)
-  :   OUT(n, tl, c, w), value(v), min(mn), max(mx) {
+OUTuint16::OUTuint16(const char * const n, uint16_t v, const char * const tl, uint16_t mn, uint16_t mx, char const * const color, const bool w)
+  :   OUT(n, tl, color, w), value(v), min(mn), max(mx) {
 }
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
@@ -312,6 +312,9 @@ OUTbool::OUTbool(const OUTbool &other) : OUT(other.name, other.topicLeaf, other.
 }
 OUTfloat::OUTfloat(const OUTfloat &other) : OUT(other.name, other.topicLeaf, other.color, other.wireable) {
   value = other.value;
+  width = other.width;
+  min = other.min;
+  max = other.max;
 }
 OUTuint16::OUTuint16(const OUTuint16 &other) : OUT(other.name, other.topicLeaf, other.color, other.wireable) {
   value = other.value;
@@ -321,7 +324,7 @@ OUTuint16::OUTuint16(const OUTuint16 &other) : OUT(other.name, other.topicLeaf, 
 // Called when either value, or wiredPath changes
 void OUTfloat::sendWired() {
     if (wiredPath) {
-      Mqtt->messageSend(*wiredPath, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+      Mqtt->messageSend(*wiredPath, value, width, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
     }
 }
 void OUTuint16::sendWired() {

@@ -17,29 +17,24 @@
 #include "sensor_float.h"
 #include "system_mqtt.h"
 
-Sensor_Float::Sensor_Float(const char* name, const char* topicLeaf, uint8_t width, const unsigned long ms_init, bool retain) 
-: Sensor(name, ms_init, retain), topicLeaf(topicLeaf), width(width) { };
+Sensor_Float::Sensor_Float(const char* name, const char* topicLeaf, uint8_t width, float min, float max, const char* color, const unsigned long ms_init, bool retain) 
+: Sensor(name, ms_init, retain),
+  output(new OUTfloat(name, 0, topicLeaf, width, min, max, color, false)),
+  width(width) { };
 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16 and sensor_ht
 float Sensor_Float::read() { Serial.println("Sensor_Float::read must be subclassed"); return -1; }
 
 void Sensor_Float::set(const float newvalue) {
-  if (changed(newvalue)) {
-    value = newvalue;
-    act();
-  }
+  output->set(newvalue);
 }
-// TODO_C++_EXPERT is there a (pretty!) way to do these next two pairs of textually similar as one definition or a macro or something. 
-bool Sensor_Float::changed(const float newvalue) {
-  return (newvalue == value);
-}
-void Sensor_Float::act() {
-    if (topicLeaf) {
-      Mqtt->messageSend(topicLeaf, value, width, retain, qos); // Note messageSend will convert value to String and expand topicLeaf
-    }
-}
+// Can either sublass read(), and set() or subclass readAndSet() - use latter if more than one result e.g. in sensor_HT
 void Sensor_Float::readAndSet() {
-    set(read()); // Will also send message via act()
+  set(read()); // Will also send message via output->set() in new style.
 }
+String Sensor_Float::advertisement() {
+  return output->advertisement(name); // Note using name of sensor not name of output (which is usually the same)
+}
+    
 #endif // SENSOR_FLOAT_WANT

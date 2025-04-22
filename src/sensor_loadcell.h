@@ -15,12 +15,11 @@
 
 class Sensor_LoadCell : public Sensor_Float {
   public:
-    Sensor_LoadCell(const char* name, const char* topicLeaf, const unsigned long ms, const bool retain);
+    Sensor_LoadCell(const char* name, const char* topicLeaf, float max, const char* color, const unsigned long ms, const bool retain);
     float read();
     void tare();
     void setup();
     void calibrate(uint16_t weight);
-    String advertisement();
   private:
     HX711 *hx711;
     int32_t offset;

@@ -34,24 +34,12 @@
 #ifdef ACTUATOR_LEDBUILTIN_WANT
   #include "actuator_ledbuiltin.h"
 #endif
-// TO_ADD_SENSOR 
-#ifdef SENSOR_ANALOG_INSTANCES_WANT
-  #include "sensor_analog_instances.h"
-#endif
-#ifdef SENSOR_SOIL_WANT
-  #include "sensor_soil.h"
-#endif
-#ifdef SENSOR_BATTERY_WANT
-  #include "sensor_battery.h"
-#endif
+// TO_ADD_SENSOR  but only if using old style rather than OUTxxx
 #ifdef SENSOR_DHT_WANT
   #include "sensor_dht.h"
 #endif
 #ifdef SENSOR_SHT_WANT
   #include "sensor_sht.h"
-#endif
-#ifdef SENSOR_BH1750_WANT
-  #include "sensor_bh1750.h"
 #endif
 #ifdef SENSOR_WANT
   #include "sensor.h"
@@ -118,9 +106,6 @@ void fullAdvertise() {
       #ifdef SENSOR_DHT_WANT
         " DHT temp/humidity"
       #endif
-      #ifdef SENSOR_SOIL_WANT
-        " Soil moisture"
-      #endif
       // TO_ADD_ACTUATOR
       #ifdef ACTUATOR_RELAY_WANT
         " Relay"
@@ -133,48 +118,10 @@ void fullAdvertise() {
     "\ntopics:" 
       // For any module with a UI, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO_ADD_NEW_CONTROL
       #ifdef ACTUATOR_LEDBUILTIN_WANT
-        ACTUATOR_LEDBUILTIN_ADVERTISEMENT
+        ACTUATOR_LEDBUILTIN_ADVERTISEMENT //TODO-25 use INxxx and its advertisement
       #endif
       #ifdef ACTUATOR_RELAY_WANT
-        ACTUATOR_RELAY_ADVERTISEMENT
-      #endif
-      #ifdef SENSOR_ANALOG_INSTANCES_WANT
-        #ifdef SENSOR_ANALOG_ADVERTISEMENT_1
-          SENSOR_ANALOG_ADVERTISEMENT_1
-        #endif
-        #ifdef SENSOR_ANALOG_ADVERTISEMENT_2
-          SENSOR_ANALOG_ADVERTISEMENT_2
-        #endif
-        #ifdef SENSOR_ANALOG_ADVERTISEMENT_3
-          SENSOR_ANALOG_ADVERTISEMENT_3
-        #endif
-        #ifdef SENSOR_ANALOG_ADVERTISEMENT_4
-          SENSOR_ANALOG_ADVERTISEMENT_4
-        #endif
-        #ifdef SENSOR_ANALOG_ADVERTISEMENT_5
-          SENSOR_ANALOG_ADVERTISEMENT_5
-        #endif
-      #endif
-      #ifdef SENSOR_SOIL_WANT
-        SENSOR_SOIL_ADVERTISEMENT1
-        #ifdef SENSOR_SOIL_PIN2
-          SENSOR_SOIL_ADVERTISEMENT2
-        #endif
-        #ifdef SENSOR_SOIL_PIN3
-          SENSOR_SOIL_ADVERTISEMENT3
-        #endif        
-      #endif
-      #ifdef SENSOR_BATTERY_WANT
-        SENSOR_BATTERY_ADVERTISEMENT
-      #endif
-      #ifdef SENSOR_SHT_WANT
-        SENSOR_SHT_ADVERTISEMENT
-      #endif
-      #ifdef SENSOR_DHT_WANT
-        SENSOR_DHT_ADVERTISEMENT
-      #endif
-      #ifdef SENSOR_BH1750_WANT
-        SENSOR_BH1750_ADVERTISEMENT
+        ACTUATOR_RELAY_ADVERTISEMENT //TODO-25 use INxxx and its advertisement
       #endif
     )
   );

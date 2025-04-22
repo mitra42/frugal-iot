@@ -44,17 +44,9 @@
   #define SENSOR_LOADCELL_MAX 2000 // TODO-134 should probably be a required paramter
 #endif
 
-// TODO-134 max should be a setable value depending on the load cell - so probably use sprintf etc 
-//"\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %.1f\n    max: %.1f\n    color: %s\n    display: %s\n    rw: %s\n"; // group: %s
-String Sensor_LoadCell::advertisement() {
-  return StringF(valueAdvertLineFloat, 
-    topicLeaf, topicLeaf, "float", 0, SENSOR_LOADCELL_MAX, "green", "bar", "r");
-}
-
 //TODO-134 need to tell it the size of the load cell
-//TODO-25 name != topicLeaf 
-Sensor_LoadCell::Sensor_LoadCell(const char* name, const char* topicLeaf, const unsigned long ms, const bool retain)
-  : Sensor_Float(name, topicLeaf, 3, ms, retain), 
+Sensor_LoadCell::Sensor_LoadCell(const char* name, const char* topicLeaf, float max, const char* color, const unsigned long ms, const bool retain)
+  : Sensor_Float(name, topicLeaf, 3, 0, max, color, ms, retain), 
     offset(SENSOR_LOADCELL_OFFSET), 
     scale(SENSOR_LOADCELL_SCALE) {
   hx711 = new HX711();

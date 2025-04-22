@@ -12,9 +12,9 @@
 #ifdef SENSOR_UINT16_WANT
 
 //Sensor_Uint16::Sensor_Uint16() : Sensor() {  };
-Sensor_Uint16::Sensor_Uint16(const char* name, const uint8_t smooth_init, const char* topicLeaf, uint16_t min, uint16_t max, const unsigned long ms_init, bool retain)
-  : Sensor(name, ms_init, retain), topicLeaf(topicLeaf), smooth(smooth_init) {
-    output = new OUTuint16(name, 0, name, min, max, "black", false);
+Sensor_Uint16::Sensor_Uint16(const char* name, const uint8_t smooth_init, const char* topicLeaf, uint16_t min, uint16_t max, const char* color, const unsigned long ms_init, bool retain)
+  : Sensor(name, ms_init, retain), smooth(smooth_init) {
+    output = new OUTuint16(name, 0, topicLeaf, min, max, color, false); //TODO-25-22apr pass color
   }
     
 
@@ -58,5 +58,8 @@ void Sensor_Uint16::act() {
 */
 void Sensor_Uint16::readAndSet() {
     set(read()); // Will also send message via act()
+}
+String Sensor_Uint16::advertisement() {
+  return output->advertisement(name); // Note using name of sensor not name of output (which is usually the same)
 }
 #endif //SENSOR_UINT16_WANT

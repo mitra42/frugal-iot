@@ -36,8 +36,8 @@
   #endif
 #endif //  SENSOR_ANALOG_REFERENCE
 
-Sensor_Analog::Sensor_Analog(const char* name, const uint8_t p, const uint8_t smooth_init, const char* topicLeaf, uint16_t min, uint16_t max, const unsigned long ms_init, bool r) 
-: Sensor_Uint16(name, smooth_init, topicLeaf, min, max, ms_init, r), pin(p) { };
+Sensor_Analog::Sensor_Analog(const char* name, const uint8_t p, const uint8_t smooth_init, const char* topicLeaf, uint16_t min, uint16_t max, const char* color, const unsigned long ms_init, bool r) 
+: Sensor_Uint16(name, smooth_init, topicLeaf, min, max, color, ms_init, r), pin(p) { };
 
 // Sensor_Uint16_t::act is obsolete
 // Sensor_Uint16_t::set is good - does optional smooth, compares and sends
