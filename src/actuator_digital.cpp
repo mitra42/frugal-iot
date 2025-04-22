@@ -12,31 +12,43 @@
 #include "actuator.h"
 #include "actuator_digital.h" // defines ACUATOR_DIGITAL_DEBUG
 
-Actuator_Digital::Actuator_Digital(const uint8_t p, const char* t): Actuator(t), pin(p) {};
+Actuator_Digital::Actuator_Digital(const char* name, const uint8_t pin, const char* leaf, const char* color)
+: Actuator(name), 
+  pin(pin),
+  input(new INbool(name, false, leaf, color, false))
+{};
 
 void Actuator_Digital::act() {
-  digitalWrite(pin, value ? HIGH : LOW); // Relay pin on Wemos shield is NOT inverted
+  digitalWrite(pin, input->value ? HIGH : LOW); // Relay pin on Wemos shield is NOT inverted
 }
 void Actuator_Digital::set(const bool v) {
-  value = v;
   #ifdef ACTUATOR_DIGITAL_DEBUG
     Serial.print(F("\nSetting ")); Serial.print(*topicLeaf); Serial.println(v ? F(" on") : F(" off"));
   #endif
   act();
 }
+// TODO-25-22apr - rework - check what input does, then act on it here
 void Actuator_Digital::inputReceived(const String &payload) {
-  const bool v = payload.toInt(); // Copied to pin in the loop 
   #ifdef ACTUATOR_DIGITAL_DEBUG
-    Serial.print(*topicLeaf); Serial.print(F(" received ")); Serial.println(v);
+    Serial.print(*topicLeaf); Serial.print(F(" received ")); Serial.println(input->value);
   #endif
-  set(v);
+  set(input->value); // Call set to do the action
 }
 
 void Actuator_Digital::setup() {
-  Actuator::setup(); //TODO-25 is this right way to call superclass
+  Actuator::setup();
   // initialize the digital pin as an output.
   pinMode(pin, OUTPUT);
+  input->setup(name);
+}
+void Actuator_Digital::dispatchLeaf(const String &leaf, const String &payload) {
+  if (input->dispatchLeaf(leaf, payload)) { // True if changed
+    inputReceived(payload);
+  }
 }
 
+String Actuator_Digital::advertisement() {
+  return input->advertisement(name); // Note using name of actuator not name of input (which is usually the same)
+}
 
 #endif // ACTUATOR_DIGITAL_WANT

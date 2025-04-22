@@ -91,7 +91,7 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
   actuators.push_back(aLedBuiltin);
 #endif
 #ifdef ACTUATOR_RELAY_WANT
-  actuators.push_back(new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay"));
+  actuators.push_back(new Actuator_Digital("relay", ACTUATOR_RELAY_PIN, "relay", "purple"));
 #endif
 
 // TODO_C++_EXPERT weird I have to assign to a vaiable even though constructor sticks in the "sensors" vector, else compiler complains, 
@@ -149,7 +149,7 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #ifdef CONTROL_BLINKEN_WANT
   Control* cb = new ControlBlinken("blinken", 5, 2);
   controls.push_back(cb);
-  cb->outputs[0]->wiredPath = Mqtt->path(aLedBuiltin->topicLeaf); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
+  cb->outputs[0]->wiredPath = Mqtt->path(aLedBuiltin->input->topicLeaf); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control

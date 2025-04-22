@@ -116,15 +116,11 @@ void fullAdvertise() {
     #endif
     // TODO-44 add location: <gsm coords>
     "\ntopics:" 
-      // For any module with a UI, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO_ADD_NEW_CONTROL
-      #ifdef ACTUATOR_LEDBUILTIN_WANT
-        ACTUATOR_LEDBUILTIN_ADVERTISEMENT //TODO-25 use INxxx and its advertisement
-      #endif
-      #ifdef ACTUATOR_RELAY_WANT
-        ACTUATOR_RELAY_ADVERTISEMENT //TODO-25 use INxxx and its advertisement
-      #endif
     )
   );
+  #ifdef ACTUATOR_WANT
+    *advertisePayload += (Actuator::advertisementAll());
+  #endif
   #ifdef SENSOR_WANT
     *advertisePayload += (Sensor::advertisementAll());
   #endif

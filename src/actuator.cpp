@@ -22,11 +22,9 @@ void Actuator_debug(const char * msg) {
 }
 #endif // ACTUATOR_DEBUG
 
-Actuator::Actuator(const char* leaf) : Frugal_Base(), topicLeaf(leaf) { } 
+Actuator::Actuator(const char* name) : Frugal_Base(), name(name) { } 
 
-void Actuator::setup() {
-  Mqtt->subscribe(topicLeaf);
-} 
+void Actuator::setup() { } // does nothing - always subclassed.
 
 void Actuator::setupAll() {
   for (Actuator* a: actuators) {
@@ -62,10 +60,8 @@ void Actuator::inputReceived(const String &payload) {
   Serial.println("XXX25 Actuator::inputReceived should be subclassed");
 }
 
-void Actuator::dispatchLeaf(const String &leaf, const String &payload) {
-  if (leaf == topicLeaf) {
-    inputReceived(payload);
-  }
+void Actuator::dispatchLeaf(const String &topic, const String &payload) {
+  Serial.println("XXX25 Actuator::dispatchLeaf should be subclassed");
 }
 
 void Actuator::dispatchLeafAll(const String &topicLeaf, const String &payload) {
@@ -73,5 +69,18 @@ void Actuator::dispatchLeafAll(const String &topicLeaf, const String &payload) {
     a->dispatchLeaf(topicLeaf, payload);
   }
 }
+
+String Actuator::advertisement() {
+  return ""; // Default is to do nothing - as actuators all have different inputs/outputs
+}
+
+String Actuator::advertisementAll() {
+  String ad = String();
+  for (Actuator* a: actuators) {
+    ad += (a->advertisement());
+  }
+  return ad;
+}
+
 #endif //ACTUATOR_WANT
 

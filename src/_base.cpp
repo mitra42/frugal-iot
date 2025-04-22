@@ -64,6 +64,16 @@ bool INfloat::boolValue() {
 uint16_t INfloat::uint16Value() {
   return value;
 }
+float INbool::floatValue() {
+  return value;
+}
+bool INbool::boolValue() {
+  return value;
+}
+uint16_t INbool::uint16Value() {
+  return value;
+}
+
 // TO_ADD_OUTxxx
 float OUTfloat::floatValue() {
   return value;
@@ -190,6 +200,10 @@ void INcolor::debug(const char* const where) {
   Serial.print("g="); Serial.print(g); 
   Serial.print("b="); Serial.print(b); 
 }
+void INbool::debug(const char* const where) {
+  IO::debug(where);
+  Serial.print(" value="); Serial.println(value); 
+}
 // TO_ADD_OUTxxx
 void OUTfloat::debug(const char* const where) {
     IO::debug(where);
@@ -223,6 +237,15 @@ INuint16::INuint16(const char * const n, uint16_t v, const char * const tl, uint
 INuint16::INuint16(const INuint16 &other) : IN(other.name, other.topicLeaf, other.color, other.wireable) {
   value = other.value;
 }
+
+INbool::INbool(const char * const name, bool value, const char * const leaf, char const * const color, const bool wireable)
+  :   IN(name, leaf, color, wireable), value(value) {
+}
+
+INbool::INbool(const INuint16 &other) 
+: IN(other.name, other.topicLeaf, other.color, other.wireable) {
+  value = other.value;
+}
 INcolor::INcolor(const char * const n, uint8_t r, uint8_t g, uint8_t b, const char * const tl, const bool w)
   :   IN(n, tl, nullptr, w), r(r), g(g), b(b) {
 }
@@ -244,6 +267,14 @@ bool INfloat::convertAndSet(const String &p) {
 }
 bool INuint16::convertAndSet(const String &p) {
   uint16_t v = p.toInt();
+  if (v != value) {
+    value = v;
+    return true; // Need to rerun calcs
+  }
+  return false; // nothing changed
+}
+bool INbool::convertAndSet(const String &payload) {
+  const bool v = payload.toInt();
   if (v != value) {
     value = v;
     return true; // Need to rerun calcs
@@ -299,6 +330,18 @@ String INuint16::advertisement(const char * const group) {
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
   if (wireLeaf) {
     ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "int", "dropdown", "r", group);
+  }
+  return ad;
+}
+String INbool::advertisement(const char * const group) {
+  String ad = String();
+  // e.g. "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
+  if (topicLeaf) {
+    ad += StringF(valueAdvertLineBool, topicLeaf, name, "bool", color, "toggle", "w", group);
+  }
+  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
+  if (wireLeaf) {
+    ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "bool", "dropdown", "r", group);
   }
   return ad;
 }

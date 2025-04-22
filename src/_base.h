@@ -112,6 +112,20 @@ class INuint16 : public IN {
     String advertisement(const char * const name);
 
 };
+class INbool : public IN {
+  public:
+    bool value;
+    //INbool(); 
+    INbool(char const * const name, bool value, char const * const topicLeaf, char const * const color, const bool wireable);
+    INbool(const INuint16 &other);
+    float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
+    bool boolValue();
+    uint16_t uint16Value();
+    bool convertAndSet(const String &payload);
+    void debug(const char* const where);
+    String advertisement(const char * const name);
+};
+
 class INcolor : public IN {
   public:
     uint8_t r;

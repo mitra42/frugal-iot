@@ -40,7 +40,7 @@ void Sensor::loopAll() {
 }
 
 String Sensor::advertisement() {
-  return ""; // Default is to do nothing - as sensors all have different inputs/outputs and some still use old structure
+  return ""; // Default is to do nothing 
 }
 
 String Sensor::advertisementAll() {
