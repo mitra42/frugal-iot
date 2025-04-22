@@ -12,8 +12,8 @@
 #ifdef SENSOR_UINT16_WANT
 
 //Sensor_Uint16::Sensor_Uint16() : Sensor() {  };
-Sensor_Uint16::Sensor_Uint16(const char* name, const uint8_t smooth_init, const char* topic_init, uint16_t min, uint16_t max, const unsigned long ms_init, bool retain)
-  : Sensor(topic_init, ms_init, retain), smooth(smooth_init) {
+Sensor_Uint16::Sensor_Uint16(const char* name, const uint8_t smooth_init, const char* topicLeaf, uint16_t min, uint16_t max, const unsigned long ms_init, bool retain)
+  : Sensor(name, ms_init, retain), topicLeaf(topicLeaf), smooth(smooth_init) {
     output = new OUTuint16(name, 0, name, min, max, "black", false);
   }
     

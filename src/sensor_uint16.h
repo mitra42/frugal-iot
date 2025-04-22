@@ -22,5 +22,7 @@ class Sensor_Uint16 : public Sensor {
     //virtual void act();
     virtual void readAndSet();
     virtual bool valid(uint16_t newvalue);
+  private:
+    const char* topicLeaf; 
 };
 #endif // SENSOR_UINT16_H

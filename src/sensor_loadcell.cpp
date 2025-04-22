@@ -53,8 +53,8 @@ String Sensor_LoadCell::advertisement() {
 
 //TODO-134 need to tell it the size of the load cell
 //TODO-25 name != topicLeaf 
-Sensor_LoadCell::Sensor_LoadCell(const char* name, const unsigned long ms, const bool retain)
-  : Sensor_Float(name, 3, ms, retain), 
+Sensor_LoadCell::Sensor_LoadCell(const char* name, const char* topicLeaf, const unsigned long ms, const bool retain)
+  : Sensor_Float(name, topicLeaf, 3, ms, retain), 
     offset(SENSOR_LOADCELL_OFFSET), 
     scale(SENSOR_LOADCELL_SCALE) {
   hx711 = new HX711();

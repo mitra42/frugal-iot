@@ -10,18 +10,8 @@
 
 std::vector<Sensor*> sensors; // TODO_C++_EXPERT I wanted this to be a static inside class Sensor but compiler barfs on it.
 
-#ifdef SENSOR_DEBUG
-  void Sensor_debug(const char * const msg) {
-    Serial.print(msg); 
-    for (Sensor* s: sensors) {
-      Serial.print(s->topicLeaf); Serial.print(F(" "));
-    }
-    Serial.println();
-    delay(1000);
-  } // Allow Serial to stabilize
-#endif // SENSOR_DEBUG
 
-Sensor::Sensor(const char* const leaf, const unsigned long m, bool r) : Frugal_Base(), topicLeaf(leaf), ms(m), retain(r) { }
+Sensor::Sensor(const char* const name, const unsigned long m, bool r) : Frugal_Base(), name(name), ms(m), retain(r) { }
 
 void Sensor::setup() { } // Default to do nothing
 

@@ -119,10 +119,10 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
   sensors.push_back(new Sensor_Battery(SENSOR_BATTERY_PIN));  // TODO-57 will rarely be as simple as this
 #endif
 #ifdef SENSOR_SHT_WANT
-  sensors.push_back(new Sensor_SHT(SENSOR_SHT_ADDRESS, &Wire, "temperature", "humidity", SENSOR_SHT_MS, true));
+  sensors.push_back(new Sensor_SHT("sht", SENSOR_SHT_ADDRESS, &Wire, "temperature", "humidity", SENSOR_SHT_MS, true));
 #endif
 #ifdef SENSOR_DHT_WANT
-  sensors.push_back(new Sensor_DHT(SENSOR_DHT_PIN, "temperature", "humidity", SENSOR_DHT_MS, true));
+  sensors.push_back(new Sensor_DHT("dht", SENSOR_DHT_PIN, "temperature", "humidity", SENSOR_DHT_MS, true));
 #endif
 #ifdef SENSOR_SOIL_WANT
   sensors.push_back(new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, SENSOR_SOIL_MS, true));
@@ -134,14 +134,14 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
   #endif
 #endif
 #ifdef SENSOR_BH1750_WANT
-  sensors.push_back(new Sensor_BH1750(SENSOR_BH1750_TOPIC, SENSOR_BH1750_ADDRESS, SENSOR_BH1750_MS, true));
+  sensors.push_back(new Sensor_BH1750("light", SENSOR_BH1750_TOPIC, SENSOR_BH1750_ADDRESS, SENSOR_BH1750_MS, true));
 #endif
 #ifdef SENSOR_BUTTON_WANT
-  // TODO - check but I think this is intentionally not pushed to "sensors"
-  Sensor_Button::newSensor_Button(SENSOR_BUTTON_PIN, "button");
+  // Pushed to sensors by newSensor_Button
+  Sensor_Button::newSensor_Button("button", "button", SENSOR_BUTTON_PIN);
 #endif
 #ifdef SENSOR_LOADCELL_WANT
-  sensors.push_back(new Sensor_LoadCell("loadcell", SENSOR_LOADCELL_MS, true));
+  sensors.push_back(new Sensor_LoadCell("loadcell", "loadcell", SENSOR_LOADCELL_MS, true));
 #endif
 
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics

@@ -9,11 +9,12 @@ class Sensor_Float : public Sensor {
   public:
     float value; 
     uint8_t width;
-    Sensor_Float(const char* topicLeaf, uint8_t width, const unsigned long ms, bool retain);
+    Sensor_Float(const char* name, const char* topicLeaf, uint8_t width, const unsigned long ms, bool retain);
     virtual void readAndSet();
     virtual float read();
     virtual void set(const float newvalue);
     virtual bool changed(const float newvalue);
     virtual void act();
+    const char* topicLeaf;
 };
 #endif // SENSOR_FLOAT_H
