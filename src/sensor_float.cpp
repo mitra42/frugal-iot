@@ -17,7 +17,8 @@
 #include "sensor_float.h"
 #include "system_mqtt.h"
 
-Sensor_Float::Sensor_Float(const char* topic_init, uint8_t width, const unsigned long ms_init, bool retain) : Sensor(topic_init, ms_init, retain), width(width) { };
+Sensor_Float::Sensor_Float(const char* name, const char* topicLeaf, uint8_t width, const unsigned long ms_init, bool retain) 
+: Sensor(name, ms_init, retain), topicLeaf(topicLeaf), width(width) { };
 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16 and sensor_ht

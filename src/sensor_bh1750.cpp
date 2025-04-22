@@ -12,8 +12,8 @@
 #include <BH1750.h>             //https://github.com/claws/BH1750
 
 
-Sensor_BH1750::Sensor_BH1750(const char* topicLeaf, uint8_t pin, const unsigned long ms, bool retain)
-  : Sensor_Float(topicLeaf, 3, ms, retain), pin(pin), lightmeter(pin) {
+Sensor_BH1750::Sensor_BH1750( const char* name, const char* topicLeaf, uint8_t pin, const unsigned long ms, bool retain)
+  : Sensor_Float(name, topicLeaf, 3, ms, retain), pin(pin), lightmeter(pin) {
   }
 
 void Sensor_BH1750::setup() {
