@@ -29,7 +29,7 @@
 #if defined(SENSOR_ANALOG_DEBUG) 
   #define SENSOR_UINT16_DEBUG
 #endif
-#if defined(SENSOR_BH1750_WANT)
+#if defined(SENSOR_BH1750_WANT) || defined(SENSOR_LOADCELL_WANT)
   #define SENSOR_FLOAT_WANT
 #endif
 #if defined(SENSOR_BH1750_DEBUG)

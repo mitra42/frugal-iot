@@ -7,12 +7,12 @@
 
 class Actuator : public Frugal_Base {
   public:
-    const char* topicLeaf = NULL; // Topic to receive on
+    const char* name = NULL; // Name of actuator
     // unsigned long ms = 10000; // No loops in Actuators currently - uncomment and initialize to zero if have any
     // unsigned long nextLoopTime = 0; // No loops in Actuators currently - uncomment and initialize to zero if have any
 
     //Actuator();
-    Actuator(const char* topicLeaf);
+    Actuator(const char* name);
     virtual void setup();
     static void setupAll();
     //virtual void readAndSet();
@@ -21,6 +21,8 @@ class Actuator : public Frugal_Base {
     virtual void inputReceived(const String &payload);
     virtual void dispatchLeaf(const String &topic_msg, const String &payload);
     static void dispatchLeafAll(const String &topicLeaf, const String &payload);
+    virtual String advertisement();
+    static String advertisementAll();
 }; // Class Actuator
 
 extern std::vector<Actuator*> actuators;

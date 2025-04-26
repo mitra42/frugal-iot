@@ -46,8 +46,6 @@
   #define ACTUATOR_LEDBUILTIN_BRIGHTNESS 255
 #endif
 
-#define ACTUATOR_LEDBUILTIN_ADVERTISEMENT "\n  -\n    topic: ledbuiltin\n    name: Built in LED\n    type: bool\n    color: yellow\n    display: toggle\n    rw: w"
-
 
 class Actuator_Ledbuiltin : public Actuator_Digital {
   public: 

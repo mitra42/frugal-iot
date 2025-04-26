@@ -21,14 +21,12 @@
   #define SENSOR_DHT_MS 60000 // once a minute
 #endif
 
-#define SENSOR_DHT_ADVERTISEMENT "\n  -\n    topic: temperature\n    name: Temperature\n    type: float\n    display: bar\n    min: 0\n    max: 45\n    color: red\n    rw: r\n  -\n    topic: humidity\n    name: Humidity\n    type: float\n    display: bar\n    min: 0\n    max: 100\n    color: cornflowerblue\n    rw: r"
-
 class Sensor_DHT : public Sensor_HT {
 public:
   uint8_t pin;
   DHTNEW *dht; 
 
-  Sensor_DHT(const uint8_t pin, const char* topicLeaf, const char* topicLeaf2, const unsigned long ms, bool retain);
+  Sensor_DHT(const char* name, const uint8_t pin, const unsigned long ms, bool retain);
   virtual void readAndSet(); // Combines function of set(read()) since reads two values from sensor
 };
 

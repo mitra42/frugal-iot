@@ -107,6 +107,7 @@ void Control::dispatchPathAll(const String &topicPath, const String &payload) {
     c->dispatch(topicPath, payload);
   }
 }
+// Note Sensor::advertisementAll almost same as Control::advertisementAll so if change one, change the other
 String Control::advertisementAll() {
   String ad = String();
   for (Control* c: controls) {

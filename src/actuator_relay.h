@@ -6,8 +6,6 @@
 */
 #include "actuator_digital.h"
 
-#define ACTUATOR_RELAY_ADVERTISEMENT "\n  -\n    topic: relay\n    name: Relay\n    type: bool\n    color: green\n    display: toggle\n    rw: w"
-
 #ifndef ACTUATOR_RELAY_PIN
   //TO_ADD_BOARD
   #ifdef ESP8266_D1

@@ -6,12 +6,15 @@
 class Actuator_Digital : public Actuator {
   public: 
     uint8_t pin;
-    bool value;
-    Actuator_Digital(const uint8_t p, const char* topicLeaf);
+    INbool* input;
+    
+    Actuator_Digital(const char* name, const uint8_t pin, const char* leaf, const char* color);
     virtual void act();
     virtual void set(const bool v);
     virtual void inputReceived(const String &payload);
     virtual void setup();
+    String advertisement();
+    void dispatchLeaf(const String &leaf, const String &payload);
 }; // Class Actuator_Digital
 
 #endif // ACTUATOR_DIGITAL_H

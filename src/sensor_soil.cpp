@@ -17,8 +17,8 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
 #include "sensor_soil.h"
 #include "system_mqtt.h"
 
-Sensor_Soil::Sensor_Soil(const uint16_t map0_init, const uint16_t map100_init, const uint8_t pin_init, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init, bool retain) 
-  : Sensor_Analog(pin_init, smooth_init, topic_init, ms_init, retain), map0(map0_init), map100(map100_init) { }
+Sensor_Soil::Sensor_Soil(const uint16_t map0_init, const uint16_t map100_init, const uint8_t pin_init, const uint8_t smooth_init, const char* topicLeaf, const char* color, const unsigned long ms_init, bool retain) 
+  : Sensor_Analog("soil", pin_init, smooth_init, topicLeaf, 0, 100, color, ms_init, retain), map0(map0_init), map100(map100_init) { }
 
 #define SENSOR_SOIL_INVALIDVALUE 0xFFFF
 
@@ -33,8 +33,8 @@ uint16_t Sensor_Soil::read() {
   // TODO-85 will want to be able to calibrate this somehow and remember calibration
   return map(x, map0, map100, 0, 100);
 }
-bool Sensor_Soil::changed(uint16_t newvalue) {
-  return (newvalue != SENSOR_SOIL_INVALIDVALUE) && (newvalue != value);
+bool Sensor_Soil::valid(uint16_t newvalue) {
+  return (newvalue != SENSOR_SOIL_INVALIDVALUE);
 }
 
 

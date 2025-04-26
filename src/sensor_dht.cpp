@@ -29,11 +29,11 @@
 #include "sensor_dht.h"
 #include "system_mqtt.h"                // Library for sending messages
 
-Sensor_DHT::Sensor_DHT(const uint8_t pin_init, const char* topic_init, const char* topic2_init, const unsigned long ms_init, bool retain) 
-  : Sensor_HT(topic_init, topic2_init, ms_init, retain), pin(pin_init) {
+Sensor_DHT::Sensor_DHT(const char* name, const uint8_t pin_init, const unsigned long ms_init, bool retain) 
+  : Sensor_HT(name, ms_init, retain), pin(pin_init) {
   dht = new DHTNEW(pin_init); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
   // dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/104
-  dht->powerUp();
+  dht->powerUp(); //TODO-POWER think about when do this
 }
 
 #ifdef SENSOR_DHT_DEBUG
@@ -102,19 +102,7 @@ void Sensor_DHT::readAndSet() {
       Serial.println(F("%"));
     #endif
 
-    // Store new results and optionally if changed send on MQTT
-    if (temp != temperature) {
-      temperature = temp;
-      if (topicLeaf) {
-        Mqtt->messageSend(topicLeaf, temperature, 1, retain, 1);  // topicLeaf, value, width, retain, qos
-      }
-    }
-    if (humy != humidity) { // TODO may want to add some bounds (e.g a percentage)
-      humidity = humy;
-      if (topicLeaf2) {
-        Mqtt->messageSend(topicLeaf2, humidity, 1, retain, 1);
-      }
-    }
+    set(temp, humy); // Will also send message via output->set()
   }
 }
 

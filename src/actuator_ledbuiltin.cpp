@@ -21,8 +21,8 @@
 #include "system_discovery.h"
 
 
-Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t p, const char* topicLeaf, bool rgb, uint8_t brightness) :
-  Actuator_Digital(p, topicLeaf),
+Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, const char* topicLeaf, bool rgb, uint8_t brightness) :
+  Actuator_Digital("led", pin, topicLeaf, "yellow"),
   rgb(rgb), brightness(brightness) { }
 
 void Actuator_Ledbuiltin::act() {
@@ -35,7 +35,7 @@ void Actuator_Ledbuiltin::act() {
       // Fix this if encounter a ESP8266 board with RGB LED
       Serial.println(F("Do not have code for RGB LED on ESP8266")); 
     #else
-      const uint8_t b = value ? brightness : 0;
+      const uint8_t b = input->value ? brightness : 0;
       #ifdef PLATFORMIO
         Serial.print("Neopixel "); Serial.print(pin); Serial.print(" "); Serial.println(b);
         neopixelWrite(pin,b,b,b);   // Note this is r,g,b (Neopixel is g r b on Lolin)- esp32-hal-rgb-led.c
@@ -44,7 +44,7 @@ void Actuator_Ledbuiltin::act() {
       #endif
     #endif
   } else { // just digital LED
-    digitalWrite(ACTUATOR_LEDBUILTIN_PIN, value ? LOW : HIGH); // LED pin is inverted, at least on Lolin D1 Mini
+    digitalWrite(ACTUATOR_LEDBUILTIN_PIN, input->value ? LOW : HIGH); // LED pin is inverted, at least on Lolin D1 Mini
   }
 }
 #endif // ACTUATOR_LEDBUILTIN_WANT

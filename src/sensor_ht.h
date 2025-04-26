@@ -5,11 +5,12 @@
 
 class Sensor_HT : public Sensor {
   public:
-    const char* topicLeaf2; // Sensor::topicLeaf is typically "temperature" topicLeaf2 "humidity"
-    float temperature;
-    float humidity;
-    Sensor_HT(const char* topicLeaf, const char* topicLeaf2, const unsigned long ms, bool retain);
+    OUTfloat* temperature;
+    OUTfloat* humidity;
+    Sensor_HT(const char* name, const unsigned long ms, bool retain);
     virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor
+    void set(const float temp, const float humy);
+    virtual String advertisement();
 };
 
 
