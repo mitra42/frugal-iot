@@ -19,7 +19,6 @@
 #include <Arduino.h>
 #ifdef SENSOR_MS5803_I2C
   #include <Wire.h>
-  //TODO-132 add system_i2c.h
 #endif
 
 #include "sensor_ms5803.h"
@@ -50,14 +49,13 @@
   // TODO-132 need to use a slower clock when at distance
 // Instantiate with  sensors.push_back(new Sensor_ms5803())
 Sensor_ms5803::Sensor_ms5803(const char* name) : 
-  Sensor(nullptr, 10000, false), 
+  Sensor(name, 10000, false), 
   #ifdef SENSOR_MS5803_SPI
     interface(SENSOR_MS5803_SPI, SPI_CLOCK_DIV64) // uses default pins
   #elif defined(SENSOR_MS5803_I2C)
     interface(SENSOR_MS5803_I2C)
   #endif
 {
-  Sensor::name = name;
   pressure = new OUTfloat("pressure", 0, "pressure", 0, 99, "blue", false);
   temperature = new OUTfloat("temperature", 0, "temperature", 0, 99, "red", false);
 }
@@ -70,7 +68,7 @@ void Sensor_ms5803::setup() {
   delay(100); // TODO XXX unsure if needed
   interface.initialize();
   delay(100); // TODO XXX unsure if needed
-  interface.send(SENSOR_CMD_RESET);
+  interface.send8(SENSOR_CMD_RESET);
   // These sensors have coefficient values stored in ROM that are used to convert the raw temp/pressure data into degrees and mbars.
 	// Read sensor coefficients - these will be used to convert sensor data into pressure and temp data
   delay(100); // TODO XXX unsure if needed
@@ -132,11 +130,11 @@ uint8_t Sensor_ms5803::ms5803CRC4() {
 
 
 void Sensor_ms5803::readAndSet() {
-  interface.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D2); 
+  interface.send8(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D2); 
   delay(100); // Wait for conversion to complete
   uint32_t D2 = interface.read(SENSOR_CMD_ADC_READ, 3);  // uncompensated temperature
   // TODO-132 need to do the math to get the temperature
-  interface.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D1);
+  interface.send8(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D1);
   delay(100); // Wait for conversion to complete //TODO note that vic320 had shorter delays
   uint32_t D1 = interface.read(SENSOR_CMD_ADC_READ, 3); // uncompensated pressure
   // calculate 1st order pressure and temperature correction factors (MS5803 1st order algorithm). 

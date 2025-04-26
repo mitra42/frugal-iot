@@ -6,9 +6,11 @@
 class System_I2C {
   public:
     uint8_t addr;
+    uint8_t busyWhen; // Mask indicating when the device is busy - reads will wait for this to clear
     System_I2C(uint8_t addr);
     void initialize();
-    void send(uint8_t cmd);  
+    void send8(uint8_t cmd);  
+    void send(uint8_t* buf, uint8_t bytes);  
     uint32_t read(uint8_t cmd, uint8_t bytes);
     uint16_t read16(uint8_t cmd);
 };
