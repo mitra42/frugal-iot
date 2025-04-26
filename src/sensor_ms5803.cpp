@@ -11,7 +11,10 @@
  * Note that PS and CSB are external pins or jumpers on the dev board 
  */
 
- #include "_settings.h"  // Settings for what to include etc
+
+// ====== NOTE THIS IS NOT YET WORKING - NEEDS TESTING ======
+
+#include "_settings.h"  // Settings for what to include etc
 #ifdef SENSOR_MS5803_WANT
 #include <Arduino.h>
 #ifdef SENSOR_MS5803_I2C
