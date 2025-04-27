@@ -20,7 +20,6 @@
 #include <Arduino.h>
 #include "sensor_ensaht.h"
 #include "system_i2c.h"
-#endif
 
 #ifndef SENSOR_ENSAHT_AHTI2C
   #define SENSOR_ENSAHT_AHTI2C 0x38 // AHT default I2C address (alternate is 0x38)
@@ -133,5 +132,5 @@ void Sensor_ensaht::readAndSet() {
 }
 
 
-#define SENSOR_MS5803_DEBUG
 
+#endif // SENSOR_ENSAHT_WANT
