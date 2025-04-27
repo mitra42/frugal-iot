@@ -45,14 +45,20 @@
 #ifndef ACTUATOR_LEDBUILTIN_BRIGHTNESS
   #define ACTUATOR_LEDBUILTIN_BRIGHTNESS 255
 #endif
+#ifndef ACTUATOR_LEDBUILTIN_COLOR
+  #define ACTUATOR_LEDBUILTIN_COLOR "0x00FF00" // White
+#endif
+
 
 
 class Actuator_Ledbuiltin : public Actuator_Digital {
   public: 
-    Actuator_Ledbuiltin(const uint8_t p, const char* topicLeaf, bool rgb = false, uint8_t brightness = 255);
+    Actuator_Ledbuiltin(const uint8_t p, const char* topicLeaf, uint8_t brightness = 255, const char* color = "0xFFFFFF");
     virtual void act();
-    bool rgb; // If true then use RGB values
     uint8_t brightness; // Brightness of LED  0-255
+    #ifdef ACTUATOR_LEDBUILTIN_RGB
+      INcolor* color;
+    #endif
 };
 
 #endif // ACTUATOR_LEDBUILTIN_H

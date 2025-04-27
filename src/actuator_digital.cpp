@@ -23,14 +23,14 @@ void Actuator_Digital::act() {
 }
 void Actuator_Digital::set(const bool v) {
   #ifdef ACTUATOR_DIGITAL_DEBUG
-    Serial.print(F("\nSetting ")); Serial.print(*topicLeaf); Serial.println(v ? F(" on") : F(" off"));
+    Serial.print(F("\nSetting ")); Serial.print(name); Serial.println(v ? F(" on") : F(" off"));
   #endif
   act();
 }
 // TODO-25-22apr - rework - check what input does, then act on it here
 void Actuator_Digital::inputReceived(const String &payload) {
   #ifdef ACTUATOR_DIGITAL_DEBUG
-    Serial.print(*topicLeaf); Serial.print(F(" received ")); Serial.println(input->value);
+    Serial.print(name); Serial.print(F(" received ")); Serial.println(input->value);
   #endif
   set(input->value); // Call set to do the action
 }
