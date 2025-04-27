@@ -197,7 +197,7 @@ void MqttManager::subscribe(const String& topicPath) {
 String* MqttManager::path(char const * const topicLeaf) { // TODO find other places do this and replace with call to TopicPath
   return new String(*xDiscovery::topicPrefix + topicLeaf);
 }
-String* MqttManager::leaf(const String &topicPath) { // TODO find other places do this and replace with call to topicLeaf
+String* MqttManager::leaf(const String &topicPath) { 
   if (topicPath.startsWith(*xDiscovery::topicPrefix)) {
     String* const topicLeaf = new String(topicPath);
     topicLeaf->remove(0, xDiscovery::topicPrefix->length());
@@ -208,7 +208,7 @@ String* MqttManager::leaf(const String &topicPath) { // TODO find other places d
 }
 // Short cut to allow subscribing based on an actuator or sensors own topic
 void MqttManager::subscribe(const char* topicLeaf) {
-  const String * const topicPath = new String(*xDiscovery::topicPrefix + topicLeaf);
+  const String * const topicPath = path(topicLeaf);
   subscribe(*topicPath);
 }
 void MqttManager::dispatch(const String &topicPath, const String &payload) {
@@ -310,7 +310,7 @@ void MqttManager::messageSend(const String &topicPath, const String &payload, co
 }
 
 
-
+// Be careful if change this to avoid either out-of-scope or memory leaksx xxxxxx
 void MqttManager::messageSend(const char* const topicLeaf, const String &payload, const bool retain, const int qos) {
   const String topicPath = String(*xDiscovery::topicPrefix + topicLeaf); // TODO can merge into next line
   messageSend(topicPath, payload, retain, qos);
