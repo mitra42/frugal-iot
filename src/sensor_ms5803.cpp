@@ -68,12 +68,13 @@ void Sensor_ms5803::setup() {
   delay(100); // TODO XXX unsure if needed
   interface.initialize();
   delay(100); // TODO XXX unsure if needed
-  interface.send8(SENSOR_CMD_RESET);
+  interface.send(SENSOR_CMD_RESET);
   // These sensors have coefficient values stored in ROM that are used to convert the raw temp/pressure data into degrees and mbars.
 	// Read sensor coefficients - these will be used to convert sensor data into pressure and temp data
   delay(100); // TODO XXX unsure if needed
   for (int i = 0; i < 8; i++ ){
-    sensorCoefficients[ i ] = interface.read16(SENSOR_CMD_COEFFICIENT0 + ( i * 2 ));  // read coefficients
+    interface.send(SENSOR_CMD_COEFFICIENT0 + ( i * 2 ));  // read coefficients    
+    sensorCoefficients[ i ] = (uint16_t)interface.read(2);  // read coefficients
     #ifdef SENSOR_MS5803_DEBUG
       Serial.print("Coefficient = ");
       Serial.println(sensorCoefficients[ i ]);
@@ -130,13 +131,15 @@ uint8_t Sensor_ms5803::ms5803CRC4() {
 
 
 void Sensor_ms5803::readAndSet() {
-  interface.send8(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D2); 
+  interface.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D2); 
   delay(100); // Wait for conversion to complete
-  uint32_t D2 = interface.read(SENSOR_CMD_ADC_READ, 3);  // uncompensated temperature
+  interface.send(SENSOR_CMD_ADC_READ); // read the ADC value
+  uint32_t D2 = interface.read(3);  // uncompensated temperature
   // TODO-132 need to do the math to get the temperature
-  interface.send8(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D1);
+  interface.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D1);
   delay(100); // Wait for conversion to complete //TODO note that vic320 had shorter delays
-  uint32_t D1 = interface.read(SENSOR_CMD_ADC_READ, 3); // uncompensated pressure
+  interface.send(SENSOR_CMD_ADC_READ); // read the ADC value
+  uint32_t D1 = interface.read(3); // uncompensated pressure
   // calculate 1st order pressure and temperature correction factors (MS5803 1st order algorithm). 
   float deltaTemp = D2 - sensorCoefficients[5] * pow( 2, 8 );
   float sensorOffset = sensorCoefficients[2] * pow( 2, 16 ) + ( deltaTemp * sensorCoefficients[4] ) / pow( 2, 7 );

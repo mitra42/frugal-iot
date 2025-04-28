@@ -79,7 +79,7 @@
 #if defined(SENSOR_MS5803_SPI) 
   #define SYSTEM_SPI_WANT
 #endif
-#if defined(SENSOR_MS5803_I2C) 
+#if defined(SENSOR_MS5803_I2C) || defined(SENSOR_ENSAHT_WANT)
   #define SYSTEM_I2C_WANT
 #endif
 #if defined(SENSOR_MS5803_DEBUG) 
