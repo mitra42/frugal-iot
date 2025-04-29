@@ -7,7 +7,7 @@
 
 class Sensor : public Frugal_Base {
   public:
-    const char* name = NULL; //  name for debugging etc
+    const char* name = nullptr; // Name of this Sensor (TODO not implemented for all sensors yet)
     unsigned long ms = 10000; // 10 second read 
     const bool retain = false;
     const int qos = 0; // Default to no guarrantee of delivery
