@@ -27,7 +27,7 @@ void Sensor::readAndSet() {
 
 void Sensor::loop() {
   if (nextLoopTime <= millis()) {
-    readAndSet(); // Will also send message via act() in old style sensors, or via output->set() in new style.
+    readAndSet(); // Will also send message via output->set()
     nextLoopTime = millis() + ms;
   }
 }

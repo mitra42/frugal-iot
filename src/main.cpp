@@ -214,7 +214,6 @@ void loop() {
 #ifdef SYSTEM_TIME_WANT
   xTime::loop();
 #endif
-  // TODO-125 probably want to ifdef this
   internal_watchdog_loop();
 
 #ifdef LOCAL_DEV_WANT
