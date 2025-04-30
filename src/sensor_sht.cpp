@@ -67,7 +67,7 @@ void Sensor_SHT::readAndSet() {
         Serial.println(F("%"));
       #endif
 
-      ste(temp, humy); // Set the values in the OUT object and send
+      set(temp, humy); // Set the values in the OUT object and send
 
       // Note only request more Data if was dataReady
       sht->requestData(); // Request next one
