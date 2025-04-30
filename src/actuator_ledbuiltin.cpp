@@ -23,9 +23,15 @@
 
 Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, const char* topicLeaf, uint8_t brightness, const char* color) :
   Actuator_Digital("led", pin, topicLeaf, "yellow"),
-  color(new INcolor("color", color, "color", color)), //TODO-131 color of UX should reflect color of LED
+  #ifdef ACTUATOR_LEDBUILTIN_RGB
+    color(new INcolor("color", color, "color", color)), //TODO-131 color of UX should reflect color of LED
+  #endif
   brightness(brightness) 
-  { }
+  { 
+    #ifdef ACTUATOR_LEDBUILTIN_DEBUG
+      Serial.print(F("Ledbuiltin pin=")); Serial.println(pin); 
+    #endif
+  }
 
 void Actuator_Ledbuiltin::act() {
   #ifdef RGB_BUILTIN // Lolon C3 doesnt have RGB_BUILTIN defined so digitalWrite doesnt work correctly
@@ -59,7 +65,12 @@ void Actuator_Ledbuiltin::act() {
       #endif
     #endif
   #else // !ACTUATOR_LEDBUILTIN_RGB
-    digitalWrite(ACTUATOR_LEDBUILTIN_PIN, input->value ? LOW : HIGH); // LED pin is inverted, at least on Lolin D1 Mini
-  #endif
+    Serial.print("XXX S2 mini led val = "); Serial.println(input->value);
+    #ifdef ACTUATOR_LEDBUILTIN_INVERT
+      digitalWrite(ACTUATOR_LEDBUILTIN_PIN, input->value ? LOW : HIGH); // LED pin is inverted, at least on Lolin D1 Mini
+    #else
+      digitalWrite(ACTUATOR_LEDBUILTIN_PIN, input->value ? HIGH : LOW); // LED pin is not inverted, e.g. on Lolin S3 mini
+    #endif
+  #endif 
 }
 #endif // ACTUATOR_LEDBUILTIN_WANT

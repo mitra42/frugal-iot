@@ -17,7 +17,7 @@
 
 #ifndef SENSOR_SOIL_PIN
   //TO_ADD_BOARD
-  #ifdef LOLIN_C3_PICO
+  #if defined(LOLIN_C3_PICO)
     #error there is no default pin on C3-pico suggest 4, 0 or 1
   #elif defined(ESP8266_D1)
     #define SENSOR_SOIL_PIN A0 // Which pin to read - this will be board specific

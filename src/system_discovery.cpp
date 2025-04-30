@@ -81,6 +81,8 @@ void fullAdvertise() {
         "ESP8266 D1"
       #elif defined(LOLIN_C3_PICO)
         "Lolin C3 Pico"
+      #elif defined(LOLIN_S2_MINI)
+        "Lolin S2 Mini"
       #else
         #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
       #endif

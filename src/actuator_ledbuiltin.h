@@ -35,9 +35,11 @@
 
 // TODO-ADD-BOARD - add your board here
 #if defined(LOLIN_C3_PICO) || defined(LILYGOHIGROW)
-  #define ACTUATOR_LEDBUILTIN_RGB true
-#elif defined(SONOFF_R2) || defined(ESP8266_D1)
-  #define ACTUATOR_LEDBUILTIN_RGB false
+  #define ACTUATOR_LEDBUILTIN_RGB
+#elif defined(SONOFF_R2) || defined(ESP8266_D1) 
+  #define ACTUATOR_LEDBUILTIN_INVERT
+#elif defined(LOLIN_S2_MINI)
+  // Not defined LED is digital and not inverted
 #else
   #error "please define whether your LED is RGB or not"
 #endif // BOARDS
