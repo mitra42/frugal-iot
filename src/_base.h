@@ -140,11 +140,13 @@ class INcolor : public IN {
     uint8_t b;
     INcolor(); 
     INcolor(char const * const name, uint8_t r, uint8_t g, uint8_t b,  char const * const topicLeaf, const bool wireable);
+    INcolor(char const * const name, char const * const color,  char const * const topicLeaf, const bool wireable);
     INcolor(const INcolor &other);
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
     uint16_t uint16Value();
     bool convertAndSet(const String &payload);
+    bool convertAndSet(const char* payload); // Used when setting in constructor etc
     void debug(const char* const where);
     String advertisement(const char * const name);
 };

@@ -27,26 +27,11 @@
 #include "system_wifi.h"
 #include "system_mqtt.h"  // xMqtt
 #include "system_discovery.h"
-// TO_ADD_ACTUATOR
-#ifdef ACTUATOR_RELAY_WANT
-  #include "actuator_relay.h"
-#endif
-#ifdef ACTUATOR_LEDBUILTIN_WANT
-  #include "actuator_ledbuiltin.h"
-#endif
-// TO_ADD_SENSOR  but only if using old style rather than OUTxxx
-#ifdef SENSOR_DHT_WANT
-  #include "sensor_dht.h"
-#endif
-#ifdef SENSOR_SHT_WANT
-  #include "sensor_sht.h"
+#ifdef ACTUATOR_WANT
+  #include "actuator.h"
 #endif
 #ifdef SENSOR_WANT
   #include "sensor.h"
-#endif
-// TO_ADD_CONTROL
-#ifdef CONTROL_BLINKEN_WANT
-  #include "control_blinken.h"
 #endif
 #ifdef CONTROL_WANT
   #include "control.h"
@@ -96,6 +81,8 @@ void fullAdvertise() {
         "ESP8266 D1"
       #elif defined(LOLIN_C3_PICO)
         "Lolin C3 Pico"
+      #elif defined(LOLIN_S2_MINI)
+        "Lolin S2 Mini"
       #else
         #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
       #endif

@@ -15,7 +15,7 @@
 #include "sensor_battery.h"
 
 Sensor_Battery::Sensor_Battery(const uint8_t pin_init) 
-: Sensor_Analog("battery", pin_init, 0, SENSOR_BATTERY_TOPIC, 0, 4500, SENSOR_BATTERY_MS, true) { }
+: Sensor_Analog("battery", pin_init, 0, SENSOR_BATTERY_TOPIC, 0, 4500, "green", SENSOR_BATTERY_MS, true) { }
 
 #ifdef ESP8266_D1_MINI_PROv2 // Green D1 pro
   #define VOLTAGE_DIVIDER 4.5 // (130+220+100)/100 i.e. 1V on A0 when 4.5 on batt 

@@ -11,17 +11,6 @@
 
 std::vector<Actuator*> actuators; // TODO_C++_EXPERT I wanted this to be a static inside class Actuator but compiler barfs on it.
 
-#ifdef ACTUATOR_DEBUG
-void Actuator_debug(const char * msg) {
-  Serial.print(msg); 
-  for (Actuator* a: actuators) {
-    Serial.print(a->topicLeaf); Serial.print(" ");
-  }
-  Serial.println();
-  delay(1000); // Allow Serial to stabilize
-}
-#endif // ACTUATOR_DEBUG
-
 Actuator::Actuator(const char* name) : Frugal_Base(), name(name) { } 
 
 void Actuator::setup() { } // does nothing - always subclassed.

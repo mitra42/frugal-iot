@@ -44,6 +44,9 @@
 #ifdef SENSOR_BUTTON_WANT
 #include "sensor_button.h"
 #endif
+#ifdef SENSOR_MS5803_WANT
+#include "sensor_ms5803.h"
+#endif
 #ifdef SENSOR_LOADCELL_WANT
 #include "sensor_loadcell.h"
 #endif
@@ -91,7 +94,7 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
-  Actuator_Ledbuiltin* aLedBuiltin = new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, "ledbuiltin", ACTUATOR_LEDBUILTIN_RGB, ACTUATOR_LEDBUILTIN_BRIGHTNESS);
+  Actuator_Ledbuiltin* aLedBuiltin = new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, "ledbuiltin", ACTUATOR_LEDBUILTIN_BRIGHTNESS, ACTUATOR_LEDBUILTIN_COLOR);
   actuators.push_back(aLedBuiltin);
 #endif
 #ifdef ACTUATOR_RELAY_WANT
@@ -140,6 +143,9 @@ sensors.push_back(ss);
 #endif
 #ifdef SENSOR_BH1750_WANT
   sensors.push_back(new Sensor_BH1750("light", SENSOR_BH1750_TOPIC, SENSOR_BH1750_ADDRESS, SENSOR_BH1750_MS, true));
+#endif
+#ifdef SENSOR_MS5803_WANT
+  sensors.push_back(new Sensor_ms5803("pressure"));
 #endif
 #ifdef SENSOR_BUTTON_WANT
   // Pushed to sensors by newSensor_Button

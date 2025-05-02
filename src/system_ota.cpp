@@ -207,7 +207,7 @@ char* getOTApath() {
     return url;
 }
 
-void setup() {
+void setup() { // TODO-25 - put this in a class and call from base etc
   const char* const url = getOTApath();
   // Note this must run after WiFi has connected  and ideally before MQTT or Discovery except it needs xDiscovery::topicPrefix
   Serial.print("Attempt OTA from:"); Serial.println(url);

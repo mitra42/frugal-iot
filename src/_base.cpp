@@ -61,6 +61,18 @@ void IO::wireTo(String* topicPath) {
 }
 
 // TO_ADD_INxxx 
+float IN::floatValue() {
+  Serial.println(F("IN::floatValue should be subclassed"));
+  return 0.0; 
+}
+bool IN::boolValue() {
+  Serial.println(F("IN::boolValue should be subclassed"));
+  return false; 
+}
+uint16_t IN::uint16Value() {
+  Serial.println(F("IN::uint16Value should be subclassed"));
+  return 0;
+}
 float INfloat::floatValue() {
   return value;
 }
@@ -218,10 +230,10 @@ void INuint16::debug(const char* const where) {
 }
 void INcolor::debug(const char* const where) {
   IO::debug(where);
-  //TODO-131 should probably be hex
-  Serial.print("r="); Serial.print(r); 
-  Serial.print("g="); Serial.print(g); 
-  Serial.print("b="); Serial.print(b); 
+  // TODO-131 should be xx not x for "0" 
+  Serial.print("r="); Serial.print(r, HEX); 
+  Serial.print("g="); Serial.print(g, HEX); 
+  Serial.print("b="); Serial.print(b, HEX); 
 }
 void INbool::debug(const char* const where) {
   IO::debug(where);
@@ -272,6 +284,10 @@ INbool::INbool(const INuint16 &other)
 INcolor::INcolor(const char * const n, uint8_t r, uint8_t g, uint8_t b, const char * const tl, const bool w)
   :   IN(n, tl, nullptr, w), r(r), g(g), b(b) {
 }
+INcolor::INcolor(const char * const n, const char* color, const char * const tl, const bool w)
+  :   IN(n, tl, nullptr, w) {
+    convertAndSet(color);
+}
 
 INcolor::INcolor(const INcolor &other) : IN(other.name, other.topicLeaf, other.color, other.wireable) {
   r = other.r;
@@ -305,9 +321,9 @@ bool INbool::convertAndSet(const String &payload) {
   return false; // nothing changed
 }
 bool INcolor::convertAndSet(const String &p) {
-  Serial.print("XXX131 p = "); Serial.println(p);
-  
-  const char *p1 = p.c_str();
+  return convertAndSet(p.c_str());
+}
+bool INcolor::convertAndSet(const char* p1) {
   if (p1[0] == '0' && p1[1] == 'x') {
     p1 += 2; // Skip 0x
   }
@@ -315,9 +331,6 @@ bool INcolor::convertAndSet(const String &p) {
   uint8_t r = (rgb >> 16) & 0xFF;
   uint8_t g = (rgb >> 8) & 0xFF;
   uint8_t b = rgb & 0xFF;
-  Serial.print("XXX131 r="); Serial.print(r);
-  Serial.print(" g="); Serial.print(g);
-  Serial.print(" b="); Serial.println(b);
   if ((r != this->r) || (g != this->g) || (b != this->b)) {
     this->r = r;
     this->g = g;
