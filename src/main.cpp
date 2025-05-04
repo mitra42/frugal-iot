@@ -153,13 +153,13 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
 
 #ifdef CONTROL_BLINKEN_WANT
-  Control* cb = new ControlBlinken("blinken", 5, 2);
+  Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
   controls.push_back(cb);
   cb->outputs[0]->wiredPath = Mqtt->path(aLedBuiltin->input->topicLeaf); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
-  controls.push_back(new ControlHysterisis("humidity", 50, 0, 100));
+  controls.push_back(new ControlHysterisis("humidity", "Humidity control", 50, 0, 100));
 #endif //CONTROL_HYSTERISIS_WANT
 
 #pragma GCC diagnostic pop

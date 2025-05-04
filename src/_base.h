@@ -172,7 +172,7 @@ class OUTbool : public OUT {
   public:
     bool value;
     OUTbool();
-    OUTbool(char const * const name, bool v, char const * const topicLeaf, char const * const color, const bool wireable);
+    OUTbool(char const * const sensorId, char const * const id, char const * const name, bool v, char const * const color, const bool wireable);
     OUTbool(const OUTbool &other);
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();

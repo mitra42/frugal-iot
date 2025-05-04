@@ -54,8 +54,6 @@ IN::IN(const char * const n, const char * const tl, const char * const color, co
 
 OUT::OUT(const char* sensorId, const char * const id, const char * const name, const char * const color, const bool w)
 : IO(sensorId, id, name, color, w) { };
-// TODO-130 deprecated below
-OUT::OUT(const char * const n, const char * const tl, const char * const color, const bool w): IO(n, tl, color, w) { };
 
 // TO_ADD_INxxx 
 float IN::floatValue() {
@@ -378,8 +376,8 @@ String INcolor::advertisement(const char * const group) {
 //OUTfloat::OUTfloat() {};
 //OUTbool::OUTbool() {};
 // TO_ADD_OUTxxx
-OUTbool::OUTbool(const char * const n, bool v, const char * const tl, char const * const color, const bool w)
-  :   OUT(n, tl, color, w), value(v)  {
+OUTbool::OUTbool(const char * const sensorId, const char* const id, const char * const name, bool v, char const * const color, const bool w)
+  :   OUT(sensorId, id, name, color, w), value(v)  {
 }
 OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const char * const name,  float v, uint8_t width, float mn, float mx, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v), width(width), min(mn), max(mx) { 
