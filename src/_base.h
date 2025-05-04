@@ -18,14 +18,18 @@ class Frugal_Base {
 
 class IO {
   public:
-    char const *name; // Name of this IO within the sensor, i.e. can duplicate across sensors
+    // Note that topicLeaf = sensorId / id
+    char const *sensorId; // Sensor this IO belongs to
+    char const *id; // System readable id
+    char const *name; // Human readable name of this IO within the sensor, i.e. can duplicate across sensors
     char const *topicLeaf; // Topic always listens|sends to - null (unusual) if only listens on wire
     char const *color; // String passed to UX
     bool const wireable; // True if can wire this to/from others
     char const *wireLeaf; // Topic listens for change to wiredTopic, will always be wire_<sensor.name>_<io.name>
     const String *wiredPath; // Topic also listening|sending to when wired
     IO();
-    IO(const char * const n, const char * const tl, char const *color, const bool w = true);
+    IO(const char * const n, const char * const tl, char const *color, const bool w = true); //TODO-130 deprecate
+    IO(const char * const sensorId, const char * const id, const char * const name, char const *color, const bool w = true);
     virtual void setup(const char * const sensorname);
     virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
     virtual bool dispatchPath(const String &topicPath, const String &payload);
@@ -52,6 +56,8 @@ class IN : public IO {
 };
 class OUT : public IO {
   public:
+    OUT(char const * const sensorId, char const * const id, char const * const name, char const *color, const bool wireable);
+    // TODO-130 deprecated below
     OUT(char const * const name, char const * const topicLeaf, char const *color, const bool wireable);
     virtual String advertisement(const char * const name);
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
@@ -152,7 +158,7 @@ class OUTfloat : public OUT {
     float min;
     float max;
     OUTfloat();
-    OUTfloat(char const * const name, float v, char const * const topicLeaf, uint8_t width, float min, float max, char const * const color, const bool wireable);
+    OUTfloat(char const * const sensorId, char const * const id, char const * const name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     OUTfloat(const OUTfloat &other);
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();

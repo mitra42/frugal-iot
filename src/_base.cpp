@@ -42,16 +42,19 @@ void Frugal_Base::loopAll() {
 
 // ========== IO - base class for IN and OUT ===== 
 
-// Not sure these are useful, since there are const members that need initializing
-//IO::IO() {}
-//IN::IN() {}
-//OUT::OUT() {}
 
-IO::IO(const char * const n, const char * const tl, const char* const color, const bool w): name(n), topicLeaf(tl), color(color), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) { 
-      //debug("...IO string constructor ");
-};
+IO::IO(const char * const sensorId, const char * const id, const char * const name, const char* const color, const bool w)
+: sensorId(sensorId), id(id), name(name), topicLeaf(lprintf(strlen(sensorId)+strlen(id)+2, "%s/%s", sensorId, id)), color(color), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) 
+{};
+// TODO-130 deprecated below
+IO::IO(const char * const n, const char * const tl, const char* const color, const bool w)
+: sensorId(nullptr), name(n), topicLeaf(tl), color(color), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) { };
+
 IN::IN(const char * const n, const char * const tl, const char * const color, const bool w): IO(n, tl, color, w) { };
 
+OUT::OUT(const char* sensorId, const char * const id, const char * const name, const char * const color, const bool w)
+: IO(sensorId, id, name, color, w) { };
+// TODO-130 deprecated below
 OUT::OUT(const char * const n, const char * const tl, const char * const color, const bool w): IO(n, tl, color, w) { };
 
 // TO_ADD_INxxx 
@@ -317,6 +320,7 @@ bool INcolor::convertAndSet(const char* p1) {
   return false; // nothing changed
 }
 // TO_ADD_INxxx TO_ADD_OUTxxx
+// TODO-130 change valueAdvertLineXxx to topic: %s/%s
 const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %.1f\n    max: %.1f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
@@ -378,8 +382,8 @@ String INcolor::advertisement(const char * const group) {
 OUTbool::OUTbool(const char * const n, bool v, const char * const tl, char const * const color, const bool w)
   :   OUT(n, tl, color, w), value(v)  {
 }
-OUTfloat::OUTfloat(const char * const n, float v, const char * const tl, uint8_t width, float mn, float mx, char const * const color, const bool w)
-  :   OUT(n, tl, color, w), value(v), width(width), min(mn), max(mx) {
+OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const char * const name,  float v, uint8_t width, float mn, float mx, char const * const color, const bool w)
+  :   OUT(sensorId, id, name, color, w), value(v), width(width), min(mn), max(mx) { 
 }
 OUTuint16::OUTuint16(const char * const n, uint16_t v, const char * const tl, uint16_t mn, uint16_t mx, char const * const color, const bool w)
   :   OUT(n, tl, color, w), value(v), min(mn), max(mx) {
@@ -405,6 +409,7 @@ OUTuint16::OUTuint16(const OUTuint16 &other) : OUT(other.name, other.topicLeaf, 
 
 // TO_ADD_OUTxxx
 // Called when either value, or wiredPath changes
+// TODO-130 should be defined path etc
 void OUTfloat::sendWired() {
     if (wiredPath) {
       Mqtt->messageSend(*wiredPath, value, width, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
@@ -496,3 +501,12 @@ String OUTbool::advertisement(const char * const group) {
   return ad;
 }
 
+void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }
+String IO::advertisement(const char * const group) { shouldBeDefined(); return String(); }
+float IO::floatValue() { shouldBeDefined(); return 0.0; }
+bool IO::dispatchLeaf(const String &tl, const String &p) { shouldBeDefined(); return false; }
+String OUT::advertisement(const char * const group) { shouldBeDefined(); return String(); }
+float OUT::floatValue() { shouldBeDefined(); return 0.0; }
+bool OUT::boolValue() { shouldBeDefined(); return false; }
+uint16_t OUT::uint16Value() { shouldBeDefined(); return 0; }
+void OUT::sendWired() { shouldBeDefined(); }
