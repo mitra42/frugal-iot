@@ -17,9 +17,9 @@
 #include "sensor_float.h"
 #include "system_mqtt.h"
 
-Sensor_Float::Sensor_Float(const char* name, const char* topicLeaf, uint8_t width, float min, float max, const char* color, const unsigned long ms_init, bool retain) 
-: Sensor(name, ms_init, retain),
-  output(new OUTfloat(name, 0, topicLeaf, width, min, max, color, false)),
+Sensor_Float::Sensor_Float(const char* const id, const char* name, uint8_t width, float min, float max, const char* color, const unsigned long ms_init, bool retain) 
+: Sensor(id, name, ms_init, retain),
+  output(new OUTfloat(id, id, name, 0, width, min, max, color, false)), // Note id same as sensor id
   width(width) { };
 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable

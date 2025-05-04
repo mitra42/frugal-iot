@@ -32,7 +32,7 @@
     //float temp = 0;   // Stores actual temp in degrees C.
 
     uint8_t CRC4(uint16_t n_prom[]);
-    Sensor_ms5803(const char* name);
+    Sensor_ms5803(const char* const id, const char* name);
     ~Sensor_ms5803(); //TODO-132
     void setup(); 
     uint8_t ms5803CRC4();

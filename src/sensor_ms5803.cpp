@@ -49,8 +49,8 @@
   // TODO-132 add to mqtt
   // TODO-132 need to use a slower clock when at distance
 // Instantiate with  sensors.push_back(new Sensor_ms5803())
-Sensor_ms5803::Sensor_ms5803(const char* name) : 
-  Sensor(nullptr, 10000, false), 
+Sensor_ms5803::Sensor_ms5803(const char* const id, const char* name) : 
+  Sensor(id, name, 10000, false),
   #ifdef SENSOR_MS5803_SPI
     interface(SENSOR_MS5803_SPI, SPI_CLOCK_DIV64) // uses default pins
   #elif defined(SENSOR_MS5803_I2C)
@@ -58,8 +58,8 @@ Sensor_ms5803::Sensor_ms5803(const char* name) :
   #endif
 {
   Sensor::name = name;
-  pressure = new OUTfloat("pressure", 0, "pressure", 0, 99, "blue", false);
-  temperature = new OUTfloat("temperature", 0, "temperature", 0, 99, "red", false);
+  pressure = new OUTfloat(id, "pressure", "Pressure", 0, 1, 0, 99, "blue", false);
+  temperature = new OUTfloat(id, "temperature", "Temperature", 0, 1, 0, 99, "red", false);
 }
 
 void Sensor_ms5803::setup() {
