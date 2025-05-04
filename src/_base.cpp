@@ -320,7 +320,6 @@ bool INcolor::convertAndSet(const char* p1) {
   return false; // nothing changed
 }
 // TO_ADD_INxxx TO_ADD_OUTxxx
-// TODO-130 change valueAdvertLineXxx to topic: %s/%s
 const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %.1f\n    max: %.1f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
@@ -385,8 +384,8 @@ OUTbool::OUTbool(const char * const n, bool v, const char * const tl, char const
 OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const char * const name,  float v, uint8_t width, float mn, float mx, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v), width(width), min(mn), max(mx) { 
 }
-OUTuint16::OUTuint16(const char * const n, uint16_t v, const char * const tl, uint16_t mn, uint16_t mx, char const * const color, const bool w)
-  :   OUT(n, tl, color, w), value(v), min(mn), max(mx) {
+OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const char * const name,  uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool w)
+  :   OUT(sensorId, id, name, color, w), value(v), min(mn), max(mx) {
 }
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
@@ -409,10 +408,9 @@ OUTuint16::OUTuint16(const OUTuint16 &other) : OUT(other.name, other.topicLeaf, 
 
 // TO_ADD_OUTxxx
 // Called when either value, or wiredPath changes
-// TODO-130 should be defined path etc
 void OUTfloat::sendWired() {
     if (wiredPath) {
-      Mqtt->messageSend(*wiredPath, value, width, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+      Mqtt->messageSend(*wiredPath, value, width, true, 1 ); // TODO note retain and qos=1 
     }
 }
 void OUTuint16::sendWired() {

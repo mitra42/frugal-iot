@@ -12,9 +12,9 @@
 #ifdef SENSOR_UINT16_WANT
 
 //Sensor_Uint16::Sensor_Uint16() : Sensor() {  };
-Sensor_Uint16::Sensor_Uint16(const char* name, const uint8_t smooth_init, const char* topicLeaf, uint16_t min, uint16_t max, const char* color, const unsigned long ms_init, bool retain)
-  : Sensor(name, ms_init, retain), smooth(smooth_init) {
-    output = new OUTuint16(name, 0, topicLeaf, min, max, color, false); //TODO-25-22apr pass color
+Sensor_Uint16::Sensor_Uint16(const char* const id, const char* name, const uint8_t smooth_init, uint16_t min, uint16_t max, const char* color, const unsigned long ms_init, bool retain)
+  : Sensor(id, name, ms_init, retain), smooth(smooth_init) {
+    output = new OUTuint16(id, id, name, 0, min, max, color, false); //TODO-25-22apr pass color
   }
     
 

@@ -188,7 +188,7 @@ class OUTuint16 : public OUT {
     uint16_t min;
     uint16_t max;
     OUTuint16();
-    OUTuint16(char const * const name, uint16_t v, char const * const topicLeaf, uint16_t mn, uint16_t mx, char const * const color, const bool wireable);
+    OUTuint16(char const * const sensorId, char const * const id, char const * const name, uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool wireable);
     OUTuint16(const OUTuint16 &other);
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();

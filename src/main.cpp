@@ -103,19 +103,19 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #ifdef SENSOR_ANALOG_INSTANCES_WANT
-  sensors.push_back(new Sensor_Analog("analog1", SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, SENSOR_ANALOG_TOPIC_1, 0, 5000, SENSOR_ANALOG_COLOR_1, SENSOR_ANALOG_MS_1, true));
+  sensors.push_back(new Sensor_Analog("analog1", "Analog 1", SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, 0, 5000, SENSOR_ANALOG_COLOR_1, SENSOR_ANALOG_MS_1, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_2
-  sensors.push_back(new Sensor_Analog(SENSOR_ANALOG_PIN_2, SENSOR_ANALOG_SMOOTH_2, SENSOR_ANALOG_TOPIC_2, SENSOR_ANALOG_COLOR_2, SENSOR_ANALOG_MS_2, true));
+  sensors.push_back(new Sensor_Analog("analog2", "Analog 2", SENSOR_ANALOG_PIN_2, SENSOR_ANALOG_SMOOTH_2, SENSOR_ANALOG_COLOR_2, SENSOR_ANALOG_MS_2, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_3
-  sensors.push_back(new Sensor_Analog(SENSOR_ANALOG_PIN_3, SENSOR_ANALOG_SMOOTH_3, SENSOR_ANALOG_TOPIC_3, SENSOR_ANALOG_COLOR_3, SENSOR_ANALOG_MS_3, true));
+  sensors.push_back(new Sensor_Analog("analog3", "Analog 3", SENSOR_ANALOG_PIN_3, SENSOR_ANALOG_SMOOTH_3, SENSOR_ANALOG_COLOR_3, SENSOR_ANALOG_MS_3, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_4
-  sensors.push_back(Sensor_Analog(SENSOR_ANALOG_PIN_4, SENSOR_ANALOG_SMOOTH_4, SENSOR_ANALOG_TOPIC_4, SENSOR_ANALOG_COLOR_4, SENSOR_ANALOG_MS_4, true));
+  sensors.push_back(Sensor_Analog("analog4", "Analog 4", SENSOR_ANALOG_PIN_4, SENSOR_ANALOG_SMOOTH_4, SENSOR_ANALOG_COLOR_4, SENSOR_ANALOG_MS_4, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_5
-  sensors.push_back(Sensor_Analog(SENSOR_ANALOG_PIN_5, SENSOR_ANALOG_SMOOTH_5, SENSOR_ANALOG_TOPIC_5, SENSOR_ANALOG_COLOR_5, SENSOR_ANALOG_MS_5, true));
+  sensors.push_back(Sensor_Analog("analog5", "Analog 5", SENSOR_ANALOG_PIN_5, SENSOR_ANALOG_SMOOTH_5, SENSOR_ANALOG_COLOR_5, SENSOR_ANALOG_MS_5, true));
 #endif
 
 #ifdef SENSOR_BATTERY_WANT
@@ -128,12 +128,12 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
   sensors.push_back(new Sensor_DHT("DHT", SENSOR_DHT_PIN, SENSOR_DHT_MS, true));
 #endif
 #ifdef SENSOR_SOIL_WANT
-  sensors.push_back(new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, SENSOR_SOIL_TOPIC, "brown", SENSOR_SOIL_MS, true));
+  sensors.push_back(new Sensor_Soil("soil1", "Soil 1", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, "brown", SENSOR_SOIL_MS, true));
   #ifdef SENSOR_SOIL_PIN2
-    sensors.push_back(new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN2, 0, SENSOR_SOIL_TOPIC "2", "brown", SENSOR_SOIL_MS, true));
+    sensors.push_back(new Sensor_Soil("soil2", "Soil 2", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN2, 0, "brown", SENSOR_SOIL_MS, true));
   #endif
   #ifdef SENSOR_SOIL_PIN3
-    sensors.push_back(new Sensor_Soil(SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, SENSOR_SOIL_TOPIC "3", "brown", SENSOR_SOIL_MS, true));
+    sensors.push_back(new Sensor_Soil("soil3", "Soil 3", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, "brown", SENSOR_SOIL_MS, true));
   #endif
 #endif
 #ifdef SENSOR_BH1750_WANT
