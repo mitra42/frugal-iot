@@ -33,6 +33,19 @@ Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, 
     #endif
   }
 
+void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload) {
+  if (topicActuatorId == id) {
+    if (
+      #ifdef ACTUATOR_LEDBUILTIN_RGB
+        color->dispatchLeaf(leaf, payload) ||
+      #endif
+      input->dispatchLeaf(leaf, payload)
+    ) { // True if changed
+      inputReceived(payload);
+    }
+  }
+}
+  
 void Actuator_Ledbuiltin::act() {
   #ifdef RGB_BUILTIN // Lolon C3 doesnt have RGB_BUILTIN defined so digitalWrite doesnt work correctly
     #error Unclear to me if boards with RGB_BUILTIN should use the neopixelwrie or digitalWrite (with latter doing a neopixelwrite) - I dont have a board to play with that does this.

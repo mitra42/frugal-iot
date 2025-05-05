@@ -220,11 +220,11 @@ void MqttManager::dispatch(const String &topicPath, const String &payload) {
       //Sensor::dispatchLeafAll(topicTwig, payload); // None of the sensors have subscriptions
     #endif
     #ifdef ACTUATOR_WANT
-      Actuator::dispatchLeafAll(topicTwig, payload);
+      Actuator::dispatchTwigAll(topicTwig, payload); // Just matches twigs
     #endif
   }
   #ifdef CONTROL_WANT
-    Control::dispatchPathAll(topicPath, payload);
+    Control::dispatchPathAll(topicPath, payload);  // Matches both paths and twigs
   #endif
   //TODO-25 System::dispatchPathAll(*topicPath, payload)
 }

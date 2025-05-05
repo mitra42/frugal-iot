@@ -28,7 +28,7 @@ void ControlHysterisis::act() {
 };
 
 ControlHysterisis::ControlHysterisis (const char* const id, const char * const name, float now, float min, float max) 
-: Control(lprintf(strlen(name)+9, "%s_control", name),
+: Control(id, name,
   std::vector<IN*> {
     new INfloat(id, "now", "Now", now, min, max, "black", true),
     new INfloat(id, "limit", "Limit", now, min, max, "black", true),

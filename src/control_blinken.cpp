@@ -16,10 +16,9 @@
 #include <Arduino.h>
 #include "control_blinken.h"
 #include "control.h"
-#include "misc.h" // for lprintf
 
 ControlBlinken::ControlBlinken (const char* const id, const char * const name, float secsOn, float secsOff) 
-: Control(lprintf(strlen(name)+9, "%s_control", name),
+: Control(id, name,
   std::vector<IN*> {
     new INfloat(id, "time on", "Time On", secsOn, 0, 3600, "black", true),
     new INfloat(id, "time off", "Time Off", secsOff, 0, 3600, "black", true),

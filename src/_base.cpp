@@ -138,14 +138,14 @@ void IN::setup(const char * const sensorname) {
   IO::setup(sensorname);
   if (topicTwig) Mqtt->subscribe(topicTwig);
 }
-bool IN::dispatchLeaf(const String &twig, const String &p) {
-  if (twig == wireLeaf) { //TODO-130 rework to use "set"
+bool IN::dispatchLeaf(const String &leaf, const String &p) {
+  if (leaf == wireLeaf) { //TODO-130 rework to use "set"
     if (!(wiredPath && (p == *wiredPath))) {
       wiredPath = new String(p);
       Mqtt->subscribe(*wiredPath);
     }
   }
-  if (twig == topicTwig) {
+  if (leaf == id) {
     return convertAndSet(p); // Virtual - depends on type of INxxx
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
@@ -158,8 +158,8 @@ bool IN::dispatchPath(const String &tp, const String &p) {
   return false; // nothing changed
 }
 
-bool OUT::dispatchLeaf(const String &twig, const String &p) {
-  if (twig == wireLeaf) {
+bool OUT::dispatchLeaf(const String &leaf, const String &p) {
+  if (leaf == wireLeaf) {
     if (!(wiredPath && (p == *wiredPath))) {
       wiredPath = new String(p);
       sendWired(); // Destination changed, send current value
@@ -400,7 +400,6 @@ OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const ch
 }
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
-// OUT::dispatchLeaf() - uses IO since wont be incoming topicTwig or wiredPath, only a wireLeaf
 // OUT::dispatchPath() - wont be called from Control::dispatchAll.
 
 // TO_ADD_OUTxxx

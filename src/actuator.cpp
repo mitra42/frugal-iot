@@ -49,13 +49,20 @@ void Actuator::inputReceived(const String &payload) {
   Serial.println("XXX25 Actuator::inputReceived should be subclassed");
 }
 
-void Actuator::dispatchLeaf(const String &topic, const String &payload) {
-  Serial.println("XXX25 Actuator::dispatchLeaf should be subclassed");
+void Actuator::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload) {
+  Serial.println("XXX25 Actuator::dispatchTwig should be subclassed");
 }
 
-void Actuator::dispatchLeafAll(const String &topicTwig, const String &payload) {
-  for (Actuator* a: actuators) {
-    a->dispatchLeaf(topicTwig, payload);
+void Actuator::dispatchTwigAll(const String &topicTwig, const String &payload) {
+  uint8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
+  if (slashPos != -1) {
+    String topicActuatorId = topicTwig.substring(0, slashPos);       // Extract the part before the slash
+    String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
+    for (Actuator* a: actuators) {
+      a->dispatchTwig(topicActuatorId, topicLeaf, payload);
+    }
+  } else {
+    Serial.println("No slash found in topic: " + topicTwig);
   }
 }
 

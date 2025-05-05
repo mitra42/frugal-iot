@@ -30,7 +30,7 @@ class IO {
     IO();
     IO(const char * const sensorId, const char * const id, const char * const name, char const *color, const bool w = true);
     virtual void setup(const char * const sensorname);
-    virtual bool dispatchLeaf(const String &topicTwig, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload); // Just checks control
     virtual bool dispatchPath(const String &topicPath, const String &payload);
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const where);
@@ -49,7 +49,7 @@ class IN : public IO {
     virtual bool boolValue();
     virtual uint16_t uint16Value();
     virtual bool convertAndSet(const String &payload);
-    virtual bool dispatchLeaf(const String &topicTwig, const String &payload);
+    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload);
     virtual bool dispatchPath(const String &topicpath, const String &payload); 
     void setup(const char*);
 };
@@ -66,7 +66,7 @@ class OUT : public IO {
     virtual bool boolValue();
     virtual uint16_t uint16Value();
     virtual void sendWired();
-    virtual bool dispatchLeaf(const String &topicT, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &leaf, const String &payload); // Just checks control
 };
 
 // TO-ADD-INxxx

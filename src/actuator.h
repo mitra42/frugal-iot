@@ -7,7 +7,8 @@
 
 class Actuator : public Frugal_Base {
   public:
-    const char* name = NULL; // Name of actuator
+    const char* id = nullptr; // Name of actuator
+    const char* name = nullptr; // Name of actuator
     // unsigned long ms = 10000; // No loops in Actuators currently - uncomment and initialize to zero if have any
     // unsigned long nextLoopTime = 0; // No loops in Actuators currently - uncomment and initialize to zero if have any
 
@@ -19,8 +20,8 @@ class Actuator : public Frugal_Base {
     //virtual void loop();
     //static void loopAll();
     virtual void inputReceived(const String &payload);
-    virtual void dispatchLeaf(const String &topic_msg, const String &payload);
-    static void dispatchLeafAll(const String &topicTwig, const String &payload);
+    virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload);
+    static void dispatchTwigAll(const String &topicTwig, const String &payload);
     virtual String advertisement();
     static String advertisementAll();
 }; // Class Actuator

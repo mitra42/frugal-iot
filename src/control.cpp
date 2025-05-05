@@ -24,8 +24,8 @@
 
 const char* groupAdvertLine  = "\n  -\n    group: %s\n    name: %s";
 
-Control::Control(const char * const n, std::vector<IN*> i, std::vector<OUT*> o)
-    : Frugal_Base() , name(n), inputs(i), outputs(o) { }
+Control::Control(const char * const id, const char* const name, std::vector<IN*> i, std::vector<OUT*> o)
+    : Frugal_Base() , id(id), name(name), inputs(i), outputs(o) { }
 
 #ifdef CONTROL_DEBUG
 void Control::debug(const char* const where) {
@@ -54,24 +54,30 @@ void Control::act() {
 void Control::dispatch(const String &topicPath, const String &payload ) {
     bool changed = false;
     String* twig = Mqtt->twig(topicPath);
-    for (auto &input : inputs) {
-        if (twig) { // Will be nullptr if no match i.e. path is not local
-            // inputs have possible 'control' and therefore dispatchLeaf
-            // And inputs also have possible values being set directly
-            if (input->dispatchLeaf(*twig, payload)) {
-              changed = true; // Changed an input, call act()
-            }
+    if (twig) { // Will be nullptr if no match i.e. path is not local
+      // inputs have possible 'control' and therefore dispatchLeaf //TODO-130 until do "set"
+      // And inputs also have possible values being set directly
+      uint8_t slashPos = twig->indexOf('/'); // Find the position of the slash
+      if (slashPos != -1) {
+        String topicControlId = twig->substring(0, slashPos);       // Extract the part before the slash
+        String leaf = twig->substring(slashPos + 1);      // Extract the part after the slash
+        for (auto &input : inputs) {
+          if (input->dispatchLeaf(leaf, payload)) {
+            changed = true; // Changed an input, call act()
+          }
         }
+        for (auto &output : outputs) {
+          // outputs have possible 'control' and therefore dispatchLeaf 
+          //TODO-130 rework to use set
+          output->dispatchLeaf(leaf, payload); // Will send value if wiredPath changed
+        }
+      }
+    }
+    for (auto &input : inputs) {
         // Only inputs are listening to potential topicPaths - i.e. other devices outputs
         if (input->dispatchPath(topicPath, payload)) {
             changed = true; // Changed an input, call act()
         }
-    }
-    for (auto &output : outputs) {
-      if (twig) { // Will be nullptr if no match i.e. path is not local
-        // outputs have possible 'control' and therefore dispatchLeaf
-        output->dispatchLeaf(*twig, payload); // Will send value if wiredPath changed
-      }
     }
     if (changed) { 
       act(); // Likely to be subclassed
