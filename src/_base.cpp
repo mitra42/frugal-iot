@@ -50,11 +50,21 @@ IO::IO(const char * const sensorId, const char * const id, const char * const na
 IO::IO(const char * const n, const char * const tl, const char* const color, const bool w)
 : sensorId(nullptr), name(n), topicLeaf(tl), color(color), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) { };
 
-IN::IN(const char * const n, const char * const tl, const char * const color, const bool w): IO(n, tl, color, w) { };
+IN::IN(const char* sensorId, const char * const id, const char * const name, const char * const color, const bool w)
+: IO(sensorId, id, name, color, w) { };
 
 OUT::OUT(const char* sensorId, const char * const id, const char * const name, const char * const color, const bool w)
 : IO(sensorId, id, name, color, w) { };
 
+float INuint16::floatValue() {
+  return value;
+}
+bool INuint16::boolValue() {
+  return value;
+}
+uint16_t INuint16::uint16Value() {
+  return value;
+}
 // TO_ADD_INxxx 
 float IN::floatValue() {
   Serial.println(F("IN::floatValue should be subclassed"));
@@ -116,6 +126,7 @@ uint16_t OUTbool::uint16Value() {
   return value;
 }
 
+// TODO-130 rework
 void IO::setup(const char * const sensorname) {
     // Note topicLeaf subscribed to by IN, not by OUT
     if (wireable) {
@@ -125,6 +136,7 @@ void IO::setup(const char * const sensorname) {
     }
 }
 
+// TODO-130 rework this
 void IN::setup(const char * const sensorname) {
   IO::setup(sensorname);
   if (topicLeaf) Mqtt->subscribe(topicLeaf);
@@ -236,38 +248,41 @@ void OUTuint16::debug(const char* const where) {
 
 // INfloat::INfloat() {}
 // TO_ADD_INxxx
-INfloat::INfloat(const char * const n, float v, const char * const tl, float mn, float mx, char const * const c, const bool w)
-  :   IN(n, tl, c, w), value(v), min(mn), max(mx) {
+INfloat::INfloat(const char * const sensorId, const char * const id, const char* const name, float v, float mn, float mx, char const * const c, const bool w)
+  :   IN(sensorId, id, name, c, w), value(v), min(mn), max(mx) {
 }
 
-INfloat::INfloat(const INfloat &other) : IN(other.name, other.topicLeaf, other.color, other.wireable) {
+INfloat::INfloat(const INfloat &other) 
+: IN(other.sensorId, other.id, other.name, other.color, other.wireable) {
   value = other.value;
 }
-INuint16::INuint16(const char * const n, uint16_t v, const char * const tl, uint16_t mn, uint16_t mx, char const * const c, const bool w)
-  :   IN(n, tl, c, w), value(v), min(mn), max(mx) {
+INuint16::INuint16(const char * const sensorId, const char * const id, const char* const name, uint16_t v, uint16_t mn, uint16_t mx, char const * const c, const bool w)
+  :   IN(sensorId, id, name, c, w), value(v), min(mn), max(mx) {
 }
 
-INuint16::INuint16(const INuint16 &other) : IN(other.name, other.topicLeaf, other.color, other.wireable) {
+INuint16::INuint16(const INuint16 &other) 
+: IN(other.sensorId, other.id, other.name, other.color, other.wireable) {
   value = other.value;
 }
 
-INbool::INbool(const char * const name, bool value, const char * const leaf, char const * const color, const bool wireable)
-  :   IN(name, leaf, color, wireable), value(value) {
+INbool::INbool(const char * const sensorId, const char * const id, const char* const name, bool value, char const * const color, const bool wireable)
+  :   IN(sensorId, id, name, color, wireable), value(value) {
 }
 
 INbool::INbool(const INuint16 &other) 
-: IN(other.name, other.topicLeaf, other.color, other.wireable) {
+: IN(other.sensorId, other.id, other.topicLeaf, other.color, other.wireable) {
   value = other.value;
 }
-INcolor::INcolor(const char * const n, uint8_t r, uint8_t g, uint8_t b, const char * const tl, const bool w)
-  :   IN(n, tl, nullptr, w), r(r), g(g), b(b) {
+INcolor::INcolor(const char * const sensorId, const char * const id, const char* const name, uint8_t r, uint8_t g, uint8_t b, const bool w)
+  :   IN(sensorId, id, name, nullptr, w), r(r), g(g), b(b) {
 }
-INcolor::INcolor(const char * const n, const char* color, const char * const tl, const bool w)
-  :   IN(n, tl, nullptr, w) {
+INcolor::INcolor(const char * const sensorId, const char * const id, const char* const name, const char* color, const bool w)
+  :   IN(sensorId, id, name, nullptr, w) {
     convertAndSet(color);
 }
 
-INcolor::INcolor(const INcolor &other) : IN(other.name, other.topicLeaf, other.color, other.wireable) {
+INcolor::INcolor(const INcolor &other) 
+: IN(other.sensorId, other.id, other.name, other.color, other.wireable) {
   r = other.r;
   g = other.g;
   b = other.b;
@@ -323,6 +338,7 @@ const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type:
 const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* wireAdvertLine = "\n  -\n    topic: %s\n    name: %s%s\n    type: %s\n    options: %s\n    display: %s\n    rw: %s\n    group: %s";
 // TO_ADD_INxxx
+//  TODO-130 rework the wire stuff
 String INfloat::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
@@ -391,16 +407,19 @@ OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const ch
 // OUT::dispatchPath() - wont be called from Control::dispatchAll.
 
 // TO_ADD_OUTxxx
-OUTbool::OUTbool(const OUTbool &other) : OUT(other.name, other.topicLeaf, other.color, other.wireable) {
+OUTbool::OUTbool(const OUTbool &other) 
+: OUT(other.sensorId, other.id, other.name, other.color, other.wireable) {
   value = other.value;
 }
-OUTfloat::OUTfloat(const OUTfloat &other) : OUT(other.name, other.topicLeaf, other.color, other.wireable) {
+OUTfloat::OUTfloat(const OUTfloat &other) 
+: OUT(other.sensorId, other.id, other.name, other.color, other.wireable) {
   value = other.value;
   width = other.width;
   min = other.min;
   max = other.max;
 }
-OUTuint16::OUTuint16(const OUTuint16 &other) : OUT(other.name, other.topicLeaf, other.color, other.wireable) {
+OUTuint16::OUTuint16(const OUTuint16 &other) 
+: OUT(other.sensorId, other.id, other.name, other.color, other.wireable) {
   value = other.value;
 }
 
@@ -506,3 +525,5 @@ float OUT::floatValue() { shouldBeDefined(); return 0.0; }
 bool OUT::boolValue() { shouldBeDefined(); return false; }
 uint16_t OUT::uint16Value() { shouldBeDefined(); return 0; }
 void OUT::sendWired() { shouldBeDefined(); }
+bool IN::convertAndSet(const String &payload) { shouldBeDefined(); return false;}
+String IN::advertisement(const char * const name) { shouldBeDefined(); return String(); }

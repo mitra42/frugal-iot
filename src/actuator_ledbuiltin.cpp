@@ -21,10 +21,10 @@
 #include "system_discovery.h"
 
 
-Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, const char* topicLeaf, uint8_t brightness, const char* color) :
-  Actuator_Digital("led", pin, topicLeaf, "yellow"),
+Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, const char* color) :
+  Actuator_Digital("on", "On/Off", pin,  "yellow"),
   #ifdef ACTUATOR_LEDBUILTIN_RGB
-    color(new INcolor("color", color, "color", color)), //TODO-131 color of UX should reflect color of LED
+    color(new INcolor("led", "color", "LED color", color, false)), //TODO-131 color of UX should reflect color of LED
   #endif
   brightness(brightness) 
   { 

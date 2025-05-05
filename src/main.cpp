@@ -90,11 +90,11 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
-  Actuator_Ledbuiltin* aLedBuiltin = new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, "ledbuiltin", ACTUATOR_LEDBUILTIN_BRIGHTNESS, ACTUATOR_LEDBUILTIN_COLOR);
+  Actuator_Ledbuiltin* aLedBuiltin = new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, ACTUATOR_LEDBUILTIN_BRIGHTNESS, ACTUATOR_LEDBUILTIN_COLOR);
   actuators.push_back(aLedBuiltin);
 #endif
 #ifdef ACTUATOR_RELAY_WANT
-  actuators.push_back(new Actuator_Digital("relay", ACTUATOR_RELAY_PIN, "relay", "purple"));
+  actuators.push_back(new Actuator_Digital("relay", "Relay", ACTUATOR_RELAY_PIN, "purple"));
 #endif
 
 // TODO_C++_EXPERT weird I have to assign to a vaiable even though constructor sticks in the "sensors" vector, else compiler complains, 

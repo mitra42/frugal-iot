@@ -43,7 +43,7 @@ class IO {
 };
 class IN : public IO {
   public:
-    IN(char const * const name, char const * const topicLeaf, char const *color, const bool wireable);
+    IN(char const * const sensorId, char const * const id, char const * const name, char const *color, const bool wireable);
     virtual String advertisement(const char * const name);
     // TO-ADD-INxxx
     virtual float floatValue();
@@ -77,7 +77,7 @@ class INfloat : public IN {
     float min;
     float max;
     INfloat(); 
-    INfloat(char const * const name, float v, char const * const topicLeaf, float min, float max, char const * const color, const bool wireable);
+    INfloat(char const * const sensorId, char const * const id, char const * const name, float v, float min, float max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
@@ -107,8 +107,8 @@ class INuint16 : public IN {
     uint16_t value;
     uint16_t min;
     uint16_t max;
-    INuint16(); 
-    INuint16(char const * const name, uint16_t v, char const * const topicLeaf, uint16_t min, uint16_t max, char const * const color, const bool wireable);
+    //INuint16(); 
+    INuint16(char const * const sensorId, char const * const id, char const * const name, uint16_t v, uint16_t min, uint16_t max, char const * const color, const bool wireable);
     INuint16(const INuint16 &other);
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
@@ -122,7 +122,7 @@ class INbool : public IN {
   public:
     bool value;
     //INbool(); 
-    INbool(char const * const name, bool value, char const * const topicLeaf, char const * const color, const bool wireable);
+    INbool(char const * const sensorId, char const * const id, char const * const name, bool value, char const * const color, const bool wireable);
     INbool(const INuint16 &other);
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
@@ -138,8 +138,8 @@ class INcolor : public IN {
     uint8_t g;
     uint8_t b;
     INcolor(); 
-    INcolor(char const * const name, uint8_t r, uint8_t g, uint8_t b,  char const * const topicLeaf, const bool wireable);
-    INcolor(char const * const name, char const * const color,  char const * const topicLeaf, const bool wireable);
+    INcolor(char const * const sensorId, char const * const id, char const * const name, uint8_t r, uint8_t g, uint8_t b, const bool wireable);
+    INcolor(char const * const sensorId, char const * const id, char const * const name, char const * const color, const bool wireable);
     INcolor(const INcolor &other);
     //float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     //bool boolValue();
