@@ -30,7 +30,7 @@
 
 
 // TODO-130 add alternative constructor with id e.g. sht1, sht2 etc
-Sensor_SHT::Sensor_SHT(const char* name, uint8_t address_init, TwoWire *wire, const unsigned long ms_init, bool retain) 
+Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, const unsigned long ms_init, bool retain) 
   : Sensor_HT("sht", name, ms_init, retain), 
     address(address_init) {
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 

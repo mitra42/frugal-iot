@@ -7,7 +7,7 @@ class Sensor_HT : public Sensor {
   public:
     OUTfloat* temperature;
     OUTfloat* humidity;
-    Sensor_HT(const char* const id, const char* name, const unsigned long ms, bool retain);
+    Sensor_HT(const char* const id, const char * const name, const unsigned long ms, bool retain);
     virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor
     void set(const float temp, const float humy);
     virtual String advertisement();

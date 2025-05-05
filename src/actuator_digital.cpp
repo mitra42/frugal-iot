@@ -12,7 +12,7 @@
 #include "actuator.h"
 #include "actuator_digital.h" // defines ACUATOR_DIGITAL_DEBUG
 
-Actuator_Digital::Actuator_Digital(const char* name, const uint8_t pin, const char* leaf, const char* color)
+Actuator_Digital::Actuator_Digital(const char * const name, const uint8_t pin, const char* leaf, const char* color)
 : Actuator(name), 
   pin(pin),
   input(new INbool(name, false, leaf, color, false))

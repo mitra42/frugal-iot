@@ -27,7 +27,7 @@ void ControlHysterisis::act() {
   // If  lim-histerisis < hum < lim+histerisis then don't change setting
 };
 
-ControlHysterisis::ControlHysterisis (const char* const id, const char* name, float now, float min, float max) 
+ControlHysterisis::ControlHysterisis (const char* const id, const char * const name, float now, float min, float max) 
 : Control(lprintf(strlen(name)+9, "%s_control", name),
   std::vector<IN*> {
     new INfloat(lprintf(strlen(name)+5, "%s Now", name), now, lprintf(strlen(name)+5, "%s_now", name), min, max, "black", true),

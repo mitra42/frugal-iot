@@ -11,7 +11,7 @@
 
 std::vector<Actuator*> actuators; // TODO_C++_EXPERT I wanted this to be a static inside class Actuator but compiler barfs on it.
 
-Actuator::Actuator(const char* name) : Frugal_Base(), name(name) { } 
+Actuator::Actuator(const char * const name) : Frugal_Base(), name(name) { } 
 
 void Actuator::setup() { } // does nothing - always subclassed.
 

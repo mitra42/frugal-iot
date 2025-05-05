@@ -30,7 +30,7 @@
 #include "system_mqtt.h"                // Library for sending messages
 
 // TODO-130 add alternative constructor with id e.g. dht1, dht2 etc
-Sensor_DHT::Sensor_DHT(const char* name, const uint8_t pin_init, const unsigned long ms_init, bool retain) 
+Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, const unsigned long ms_init, bool retain) 
   : Sensor_HT("dht", name, ms_init, retain), 
    pin(pin_init) {
   dht = new DHTNEW(pin_init); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples

@@ -6,7 +6,7 @@
 
 class ControlHysterisis : public Control {
   public:
-    ControlHysterisis(const char* const id, const char* name, float now, float min, float max);
+    ControlHysterisis(const char* const id, const char * const name, float now, float min, float max);
     void act();
 };
 #endif //CONTROL_HYSTERISIS_WANT

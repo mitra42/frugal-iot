@@ -17,7 +17,7 @@
 #include "sensor_float.h"
 #include "system_mqtt.h"
 
-Sensor_Float::Sensor_Float(const char* const id, const char* name, uint8_t width, float min, float max, const char* color, const unsigned long ms_init, bool retain) 
+Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, const unsigned long ms_init, bool retain) 
 : Sensor(id, name, ms_init, retain),
   output(new OUTfloat(id, id, name, 0, width, min, max, color, false)), // Note id same as sensor id
   width(width) { };

@@ -45,7 +45,7 @@
 #endif
 
 //TODO-134 need to tell it the size of the load cell
-Sensor_LoadCell::Sensor_LoadCell(const char* const id, const char* name, float max, const char* color, const unsigned long ms, const bool retain)
+Sensor_LoadCell::Sensor_LoadCell(const char* const id, const char * const name, float max, const char* color, const unsigned long ms, const bool retain)
   : Sensor_Float(id, name, 3, 0, max, color, ms, retain), 
     offset(SENSOR_LOADCELL_OFFSET), 
     scale(SENSOR_LOADCELL_SCALE) {

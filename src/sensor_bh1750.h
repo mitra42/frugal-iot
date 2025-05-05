@@ -33,7 +33,7 @@ class Sensor_BH1750 : public Sensor_Float {
   public:
     uint8_t pin;
     BH1750 lightmeter;
-    Sensor_BH1750(const char* const id, const char* name, uint8_t pin, const unsigned long ms, bool retain);
+    Sensor_BH1750(const char* const id, const char * const name, uint8_t pin, const unsigned long ms, bool retain);
     void setup();
     virtual float read();
 };

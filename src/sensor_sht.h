@@ -19,7 +19,7 @@ class Sensor_SHT : public Sensor_HT {
 public:
   uint8_t address;
   SENSOR_SHT_DEVICE *sht; 
-  Sensor_SHT(const char* name, uint8_t address, TwoWire *wire, const unsigned long ms, bool retain);
+  Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, const unsigned long ms, bool retain);
   virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor
 };
 
