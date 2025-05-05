@@ -28,7 +28,7 @@
  
  class Sensor_Button : public Sensor {
     public:
-      Sensor_Button( const char * const name, const char* topicLeaf, uint8_t pin);
+      Sensor_Button( const char * const name, const char* topicTwig, uint8_t pin);
       void setup();
       void loop();
       void clickHandlerInner(clickType type);
@@ -36,12 +36,12 @@
       static void longClickHandler(Button2& btn);
       static void doubleClickHandler(Button2& btn);
       static void tripleClickHandler(Button2& btn);
-      static void newSensor_Button(const char * const name, const char* topicLeaf, uint8_t pin);
+      static void newSensor_Button(const char * const name, const char* topicTwig, uint8_t pin);
       static Sensor_Button* handler(Button2& button);
     private:
       Button2* button;
       uint8_t pin;
-      const char* topicLeaf;
+      const char* topicTwig;
  };
  
  extern std::vector<Sensor_Button*> buttons;

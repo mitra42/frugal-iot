@@ -53,12 +53,12 @@ void Control::act() {
 }
 void Control::dispatch(const String &topicPath, const String &payload ) {
     bool changed = false;
-    String* tl = Mqtt->leaf(topicPath);
+    String* twig = Mqtt->twig(topicPath);
     for (auto &input : inputs) {
-        if (tl) { // Will be nullptr if no match i.e. path is not local
+        if (twig) { // Will be nullptr if no match i.e. path is not local
             // inputs have possible 'control' and therefore dispatchLeaf
             // And inputs also have possible values being set directly
-            if (input->dispatchLeaf(*tl, payload)) {
+            if (input->dispatchLeaf(*twig, payload)) {
               changed = true; // Changed an input, call act()
             }
         }
@@ -68,9 +68,9 @@ void Control::dispatch(const String &topicPath, const String &payload ) {
         }
     }
     for (auto &output : outputs) {
-      if (tl) { // Will be nullptr if no match i.e. path is not local
+      if (twig) { // Will be nullptr if no match i.e. path is not local
         // outputs have possible 'control' and therefore dispatchLeaf
-        output->dispatchLeaf(*tl, payload); // Will send value if wiredPath changed
+        output->dispatchLeaf(*twig, payload); // Will send value if wiredPath changed
       }
     }
     if (changed) { 

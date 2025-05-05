@@ -53,9 +53,9 @@ void Actuator::dispatchLeaf(const String &topic, const String &payload) {
   Serial.println("XXX25 Actuator::dispatchLeaf should be subclassed");
 }
 
-void Actuator::dispatchLeafAll(const String &topicLeaf, const String &payload) {
+void Actuator::dispatchLeafAll(const String &topicTwig, const String &payload) {
   for (Actuator* a: actuators) {
-    a->dispatchLeaf(topicLeaf, payload);
+    a->dispatchLeaf(topicTwig, payload);
   }
 }
 

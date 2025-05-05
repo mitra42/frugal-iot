@@ -18,20 +18,19 @@ class Frugal_Base {
 
 class IO {
   public:
-    // Note that topicLeaf = sensorId / id
+    // Note that topicTwig = sensorId / id
     char const *sensorId; // Sensor this IO belongs to
     char const *id; // System readable id
     char const *name; // Human readable name of this IO within the sensor, i.e. can duplicate across sensors
-    char const *topicLeaf; // Topic always listens|sends to - null (unusual) if only listens on wire
+    char const *topicTwig; // Topic always listens|sends to - null (unusual) if only listens on wire
     char const *color; // String passed to UX
     bool const wireable; // True if can wire this to/from others
     char const *wireLeaf; // Topic listens for change to wiredTopic, will always be wire_<sensor.name>_<io.name>
     const String *wiredPath; // Topic also listening|sending to when wired
     IO();
-    IO(const char * const n, const char * const tl, char const *color, const bool w = true); //TODO-130 deprecate
     IO(const char * const sensorId, const char * const id, const char * const name, char const *color, const bool w = true);
     virtual void setup(const char * const sensorname);
-    virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &topicTwig, const String &payload); // Just checks control
     virtual bool dispatchPath(const String &topicPath, const String &payload);
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const where);
@@ -50,7 +49,7 @@ class IN : public IO {
     virtual bool boolValue();
     virtual uint16_t uint16Value();
     virtual bool convertAndSet(const String &payload);
-    virtual bool dispatchLeaf(const String &topicleaf, const String &payload);
+    virtual bool dispatchLeaf(const String &topicTwig, const String &payload);
     virtual bool dispatchPath(const String &topicpath, const String &payload); 
     void setup(const char*);
 };
@@ -58,7 +57,7 @@ class OUT : public IO {
   public:
     OUT(char const * const sensorId, char const * const id, char const * const name, char const *color, const bool wireable);
     // TODO-130 deprecated below
-    OUT(char const * const name, char const * const topicLeaf, char const *color, const bool wireable);
+    OUT(char const * const name, char const * const topicTwig, char const *color, const bool wireable);
     virtual String advertisement(const char * const name);
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
@@ -67,7 +66,7 @@ class OUT : public IO {
     virtual bool boolValue();
     virtual uint16_t uint16Value();
     virtual void sendWired();
-    virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &topicT, const String &payload); // Just checks control
 };
 
 // TO-ADD-INxxx
@@ -91,7 +90,7 @@ class INfloat : public IN {
           value = other.value;
           name = other.name;
           wireable = other.wireable
-          topicLeaf = other.topicLeaf;
+          topicTwig = other.topicTwig;
           wireLeaf = other.wireLeaf;
           wiredPath = other.wiredPath;
       }

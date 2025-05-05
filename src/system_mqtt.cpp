@@ -5,8 +5,10 @@
 * Optional: ESP8266 SYSTEM_MQTT_DEBUG 
 * 
 * Note definitions
-* topicPath = full path /dev/project/node/topicLeaf and usually String or String& or String*
-* topicLeaf is the last component e.g. "temperature" and usually char*
+* topicPath = full path /dev/project/node/sensor/leaf and usually String or String& or String*
+* topicPrefix = /dev/project/node/ (note trailng slash)
+* topicTwig (or Twig) is the components after the topicPrefix typically sensor/io and usually char*
+* topicLeaf (or Leaf) is the last component e.g. "temperature" and usually char* (deprecated in favor of topicTwig) its "id" in any IO
 * "topic" is ambiguous and therefore wrong ! 
 */
 
@@ -194,31 +196,31 @@ void MqttManager::subscribe(const String& topicPath) {
   }
 }
 
-String* MqttManager::path(char const * const topicLeaf) { // TODO find other places do this and replace with call to TopicPath
-  return new String(*xDiscovery::topicPrefix + topicLeaf);
+String* MqttManager::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
+  return new String(*xDiscovery::topicPrefix + topicTwig);
 }
-String* MqttManager::leaf(const String &topicPath) { 
+String* MqttManager::twig(const String &topicPath) { 
   if (topicPath.startsWith(*xDiscovery::topicPrefix)) {
-    String* const topicLeaf = new String(topicPath);
-    topicLeaf->remove(0, xDiscovery::topicPrefix->length());
-    return topicLeaf;
+    String* const topicTwig = new String(topicPath);
+    topicTwig->remove(0, xDiscovery::topicPrefix->length());
+    return topicTwig;
   } else {
     return nullptr;
   }
 }
 // Short cut to allow subscribing based on an actuator or sensors own topic
-void MqttManager::subscribe(const char* topicLeaf) {
-  const String * const topicPath = path(topicLeaf);
+void MqttManager::subscribe(const char* topicTwig) {
+  const String * const topicPath = path(topicTwig);
   subscribe(*topicPath);
 }
 void MqttManager::dispatch(const String &topicPath, const String &payload) {
   if (topicPath.startsWith(*xDiscovery::topicPrefix)) {
-    const String topicLeaf = topicPath.substring(xDiscovery::topicPrefix->length());
+    const String topicTwig = topicPath.substring(xDiscovery::topicPrefix->length());
     #ifdef SENSOR_WANT
-      //Sensor::dispatchLeafAll(topicLeaf, payload); // None of the sensors have subscriptions
+      //Sensor::dispatchLeafAll(topicTwig, payload); // None of the sensors have subscriptions
     #endif
     #ifdef ACTUATOR_WANT
-      Actuator::dispatchLeafAll(topicLeaf, payload);
+      Actuator::dispatchLeafAll(topicTwig, payload);
     #endif
   }
   #ifdef CONTROL_WANT
@@ -311,8 +313,8 @@ void MqttManager::messageSend(const String &topicPath, const String &payload, co
 
 
 // Be careful if change this to avoid either out-of-scope or memory leaksx xxxxxx
-void MqttManager::messageSend(const char* const topicLeaf, const String &payload, const bool retain, const int qos) {
-  const String topicPath = String(*xDiscovery::topicPrefix + topicLeaf); // TODO can merge into next line
+void MqttManager::messageSend(const char* const topicTwig, const String &payload, const bool retain, const int qos) {
+  const String topicPath = String(*xDiscovery::topicPrefix + topicTwig); // TODO can merge into next line
   messageSend(topicPath, payload, retain, qos);
 }
 
@@ -320,25 +322,25 @@ void MqttManager::messageSend(const String &topicPath, const float &value, const
   const String foo = String(value, width);
   messageSend(topicPath, foo, retain, qos);
 }
-void MqttManager::messageSend(const char* const topicLeaf, const float &value, const int width, const bool retain, const int qos) {
+void MqttManager::messageSend(const char* const topicTwig, const float &value, const int width, const bool retain, const int qos) {
   const String foo = String(value, width);
-  messageSend(topicLeaf, foo, retain, qos);
+  messageSend(topicTwig, foo, retain, qos);
 }
 void MqttManager::messageSend(const String &topicPath, const int value, const bool retain, const int qos) {
   const String foo = String(value); Serial.println(foo);
   messageSend(topicPath, foo, retain, qos);
 }
-void MqttManager::messageSend(const char* const topicLeaf, const int value, const bool retain, const int qos) {
+void MqttManager::messageSend(const char* const topicTwig, const int value, const bool retain, const int qos) {
   const String foo = String(value);
-  messageSend(topicLeaf, foo, retain, qos);
+  messageSend(topicTwig, foo, retain, qos);
 }
 void MqttManager::messageSend(const String &topicPath, const bool value, const bool retain, const int qos) {
   const String foo = String(value); Serial.println(foo);
   messageSend(topicPath, foo, retain, qos);
 }
-void MqttManager::messageSend(const char* const topicLeaf, const bool value, const bool retain, const int qos) {
+void MqttManager::messageSend(const char* const topicTwig, const bool value, const bool retain, const int qos) {
   const String foo = String(value);
-  messageSend(topicLeaf, foo, retain, qos);
+  messageSend(topicTwig, foo, retain, qos);
 }
 void MqttManager::messageSendQueued() {
   // TODO-125 should probably check connected each time go around loop and only pop if sendInner succeeds

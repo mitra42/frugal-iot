@@ -16,8 +16,8 @@
 
 
 
-Sensor_Button::Sensor_Button(const char * const name, const char* topicLeaf, uint8_t pin) :
-  Sensor(name, 10, false), pin(pin), topicLeaf(topicLeaf) {
+Sensor_Button::Sensor_Button(const char * const name, const char* topicTwig, uint8_t pin) :
+  Sensor(name, 10, false), pin(pin), topicTwig(topicTwig) {
   button = new Button2(pin);
   button->setClickHandler(Sensor_Button::clickHandler);
   button->setLongClickHandler(Sensor_Button::longClickHandler);
@@ -27,7 +27,7 @@ Sensor_Button::Sensor_Button(const char * const name, const char* topicLeaf, uin
 
 // Unclear how would use an "OUT" as its not dependent on a change
 void Sensor_Button::clickHandlerInner(clickType type) {
-  Mqtt->messageSend(topicLeaf, type, retain, qos);
+  Mqtt->messageSend(topicTwig, type, retain, qos);
 }
 void Sensor_Button::clickHandler(Button2& btn) {
   handler(btn)->clickHandlerInner(single_click);
@@ -44,8 +44,8 @@ void Sensor_Button::doubleClickHandler(Button2& btn) {
 void Sensor_Button::tripleClickHandler(Button2& btn) {
   handler(btn)->clickHandlerInner(triple_click);
 }
-void Sensor_Button::newSensor_Button(const char * const name, const char* topicLeaf, uint8_t pin) {
-  Sensor_Button* sb = new Sensor_Button(name, topicLeaf, pin);
+void Sensor_Button::newSensor_Button(const char * const name, const char* topicTwig, uint8_t pin) {
+  Sensor_Button* sb = new Sensor_Button(name, topicTwig, pin);
   sb->button->setID(buttons.size());
   buttons.push_back(sb);
   sensors.push_back(sb);   

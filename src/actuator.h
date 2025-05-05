@@ -20,7 +20,7 @@ class Actuator : public Frugal_Base {
     //static void loopAll();
     virtual void inputReceived(const String &payload);
     virtual void dispatchLeaf(const String &topic_msg, const String &payload);
-    static void dispatchLeafAll(const String &topicLeaf, const String &payload);
+    static void dispatchLeafAll(const String &topicTwig, const String &payload);
     virtual String advertisement();
     static String advertisementAll();
 }; // Class Actuator

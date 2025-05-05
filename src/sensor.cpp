@@ -55,7 +55,7 @@ String Sensor::advertisementAll() {
 /*
 At this point no dispatching for sensors as none have INCOMING messages
 
-void Sensor::dispatchLeaf() {String &topicLeaf, String &payload }
+void Sensor::dispatchLeaf() {String &topicTwig, String &payload }
 void Sensor::dispatchLeafAll() {
   for (Sensor* s: sensors) {
     s->dispatchLeaf();

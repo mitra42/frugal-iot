@@ -44,11 +44,8 @@ void Frugal_Base::loopAll() {
 
 
 IO::IO(const char * const sensorId, const char * const id, const char * const name, const char* const color, const bool w)
-: sensorId(sensorId), id(id), name(name), topicLeaf(lprintf(strlen(sensorId)+strlen(id)+2, "%s/%s", sensorId, id)), color(color), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) 
+: sensorId(sensorId), id(id), name(name), topicTwig(lprintf(strlen(sensorId)+strlen(id)+2, "%s/%s", sensorId, id)), color(color), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) 
 {};
-// TODO-130 deprecated below
-IO::IO(const char * const n, const char * const tl, const char* const color, const bool w)
-: sensorId(nullptr), name(n), topicLeaf(tl), color(color), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) { };
 
 IN::IN(const char* sensorId, const char * const id, const char * const name, const char * const color, const bool w)
 : IO(sensorId, id, name, color, w) { };
@@ -128,10 +125,10 @@ uint16_t OUTbool::uint16Value() {
 
 // TODO-130 rework
 void IO::setup(const char * const sensorname) {
-    // Note topicLeaf subscribed to by IN, not by OUT
-    if (wireable) {
-      // wireLeaf = wire_<sensorname>_<topicLeaf>
-      wireLeaf = lprintf(strlen(sensorname) + strlen(topicLeaf) + 7, "wire_%s_%s", sensorname, topicLeaf);
+    // Note topicTwig subscribed to by IN, not by OUT
+    if (wireable) { // TODO-130 rework to use "set"
+      // wireLeaf = wire_<sensorname>_<topicTwig>
+      wireLeaf = lprintf(strlen(sensorname) + strlen(topicTwig) + 7, "wire_%s_%s", sensorname, topicTwig);
       Mqtt->subscribe(wireLeaf);
     }
 }
@@ -139,16 +136,16 @@ void IO::setup(const char * const sensorname) {
 // TODO-130 rework this
 void IN::setup(const char * const sensorname) {
   IO::setup(sensorname);
-  if (topicLeaf) Mqtt->subscribe(topicLeaf);
+  if (topicTwig) Mqtt->subscribe(topicTwig);
 }
-bool IN::dispatchLeaf(const String &tl, const String &p) {
-  if (tl == wireLeaf) {
+bool IN::dispatchLeaf(const String &twig, const String &p) {
+  if (twig == wireLeaf) { //TODO-130 rework to use "set"
     if (!(wiredPath && (p == *wiredPath))) {
       wiredPath = new String(p);
       Mqtt->subscribe(*wiredPath);
     }
   }
-  if (tl == topicLeaf) {
+  if (twig == topicTwig) {
     return convertAndSet(p); // Virtual - depends on type of INxxx
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
@@ -161,8 +158,8 @@ bool IN::dispatchPath(const String &tp, const String &p) {
   return false; // nothing changed
 }
 
-bool OUT::dispatchLeaf(const String &tl, const String &p) {
-  if (tl == wireLeaf) {
+bool OUT::dispatchLeaf(const String &twig, const String &p) {
+  if (twig == wireLeaf) {
     if (!(wiredPath && (p == *wiredPath))) {
       wiredPath = new String(p);
       sendWired(); // Destination changed, send current value
@@ -202,7 +199,7 @@ bool IO::dispatchPath(const String &topicPath, const String &payload) {
 void IO::debug(const char* const where) {
   // Note subclass needs to provide terminating println (usually after a type-dependent value)
     Serial.print(where); 
-    Serial.print(" topicLeaf="); Serial.print(topicLeaf ? topicLeaf : "NULL"); 
+    Serial.print(" topicTwig="); Serial.print(topicTwig ? topicTwig : "NULL"); 
     Serial.print(" wireable"); Serial.print(wireable);
     if (wireable) {
       Serial.print(" wireLeaf"); Serial.print(wireLeaf);
@@ -270,7 +267,7 @@ INbool::INbool(const char * const sensorId, const char * const id, const char* c
 }
 
 INbool::INbool(const INuint16 &other) 
-: IN(other.sensorId, other.id, other.topicLeaf, other.color, other.wireable) {
+: IN(other.sensorId, other.id, other.topicTwig, other.color, other.wireable) {
   value = other.value;
 }
 INcolor::INcolor(const char * const sensorId, const char * const id, const char* const name, uint8_t r, uint8_t g, uint8_t b, const bool w)
@@ -342,8 +339,8 @@ const char* wireAdvertLine = "\n  -\n    topic: %s\n    name: %s%s\n    type: %s
 String INfloat::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
-  if (topicLeaf) {
-    ad += StringF(valueAdvertLineFloat, topicLeaf, name, "float", min, max, color, "slider", "w", group);
+  if (topicTwig) {
+    ad += StringF(valueAdvertLineFloat, topicTwig, name, "float", min, max, color, "slider", "w", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
   if (wireLeaf) {
@@ -354,8 +351,8 @@ String INfloat::advertisement(const char * const group) {
 String INuint16::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
-  if (topicLeaf) {
-    ad += StringF(valueAdvertLineFloat, topicLeaf, name, "int", min, max, color, "slider", "w", group);
+  if (topicTwig) {
+    ad += StringF(valueAdvertLineFloat, topicTwig, name, "int", min, max, color, "slider", "w", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
   if (wireLeaf) {
@@ -366,8 +363,8 @@ String INuint16::advertisement(const char * const group) {
 String INbool::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
-  if (topicLeaf) {
-    ad += StringF(valueAdvertLineBool, topicLeaf, name, "bool", color, "toggle", "w", group);
+  if (topicTwig) {
+    ad += StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "w", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
   if (wireLeaf) {
@@ -378,8 +375,8 @@ String INbool::advertisement(const char * const group) {
 String INcolor::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
-  if (topicLeaf) {
-    ad += StringF(valueAdvertLineColor, topicLeaf, name, "color", color, "wheel", "w", group);
+  if (topicTwig) {
+    ad += StringF(valueAdvertLineColor, topicTwig, name, "color", color, "wheel", "w", group);
   }
   if (wireLeaf) {
     ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "color", "dropdown", "r", group);
@@ -403,7 +400,7 @@ OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const ch
 }
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
-// OUT::dispatchLeaf() - uses IO since wont be incoming topicLeaf or wiredPath, only a wireLeaf
+// OUT::dispatchLeaf() - uses IO since wont be incoming topicTwig or wiredPath, only a wireLeaf
 // OUT::dispatchPath() - wont be called from Control::dispatchAll.
 
 // TO_ADD_OUTxxx
@@ -443,31 +440,31 @@ void OUTbool::sendWired() {
 // TO-ADD-OUTxxx
 void OUTfloat::set(const float newvalue) {
   #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicLeaf); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
   #endif
   if (newvalue != value) {
     value = newvalue;
-    Mqtt->messageSend(topicLeaf, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    Mqtt->messageSend(topicTwig, value, 1, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
     sendWired();
   }
 }
 void OUTuint16::set(const uint16_t newvalue) {
   #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicLeaf); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
   #endif
   if (newvalue != value) {
     value = newvalue;
-    Mqtt->messageSend(topicLeaf, value, true, 1 ); 
+    Mqtt->messageSend(topicTwig, value, true, 1 ); 
     sendWired();
   }
 }
 void OUTbool::set(const bool newvalue) {
   #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicLeaf); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
   #endif
   if (newvalue != value) {
     value = newvalue;
-    Mqtt->messageSend(topicLeaf, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    Mqtt->messageSend(topicTwig, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
     sendWired();
   }
 }
@@ -478,8 +475,8 @@ String OUTfloat::advertisement(const char * const group) {
   String ad = String();
   // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
-  if (topicLeaf) {
-    ad += StringF(valueAdvertLineFloat, topicLeaf, name, "float", min, max, color, "bar", "r", group);
+  if (topicTwig) {
+    ad += StringF(valueAdvertLineFloat, topicTwig, name, "float", min, max, color, "bar", "r", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w\n    group: %s"
   if (wireLeaf) {
@@ -492,8 +489,8 @@ String OUTuint16::advertisement(const char * const group) {
   String ad = String();
   // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
-  if (topicLeaf) {
-    ad += StringF(valueAdvertLineFloat, topicLeaf, name, "int", min, max, color, "bar", "r", group);
+  if (topicTwig) {
+    ad += StringF(valueAdvertLineFloat, topicTwig, name, "int", min, max, color, "bar", "r", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w\n    group: %s"
   if (wireLeaf) {
@@ -506,8 +503,8 @@ String OUTbool::advertisement(const char * const group) {
   String ad = String();
 
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: bar\n    rw: w"
-  if (topicLeaf) {
-    ad += StringF(valueAdvertLineBool, topicLeaf, name, "bool", color, "toggle", "r", group);
+  if (topicTwig) {
+    ad += StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "r", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
   if (wireLeaf) {
@@ -519,7 +516,7 @@ String OUTbool::advertisement(const char * const group) {
 void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }
 String IO::advertisement(const char * const group) { shouldBeDefined(); return String(); }
 float IO::floatValue() { shouldBeDefined(); return 0.0; }
-bool IO::dispatchLeaf(const String &tl, const String &p) { shouldBeDefined(); return false; }
+bool IO::dispatchLeaf(const String &twig, const String &p) { shouldBeDefined(); return false; }
 String OUT::advertisement(const char * const group) { shouldBeDefined(); return String(); }
 float OUT::floatValue() { shouldBeDefined(); return 0.0; }
 bool OUT::boolValue() { shouldBeDefined(); return false; }

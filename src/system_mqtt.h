@@ -65,7 +65,7 @@ class MqttManager : public Frugal_Base {
     bool connectOLD(); // TODO-125 remove when new connect() works
     Subscription* find(const String &topicPath);
     void subscribe(const String& topicPath);
-    void subscribe(const char* topicLeaf);
+    void subscribe(const char* topicTwig);
     void dispatch(const String &topicPath, const  String &payload);
     bool resubscribeAll();
     void retainPayload(const String &topicPath, const String &payload);
@@ -73,16 +73,16 @@ class MqttManager : public Frugal_Base {
     void messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos);
     // Note, there are many of messageSend to make sensor code simple and not duplicate conversions.
     void messageSend(const String &topicPath, const String &payload, const bool retain, const int qos);
-    void messageSend(const char* topicLeaf, const String &payload, const bool retain, const int qos);
+    void messageSend(const char* topicTwig, const String &payload, const bool retain, const int qos);
     void messageSend(const String &topicPath, const float &value, const int width, const bool retain, const int qos);
-    void messageSend(const char* topicLeaf, const float &value, const int width, const bool retain, const int qos);
+    void messageSend(const char* topicTwig, const float &value, const int width, const bool retain, const int qos);
     void messageSend(const String &topicPath, const int value, const bool retain, const int qos);
-    void messageSend(const char* topicLeaf, const int value, const bool retain, const int qos);
+    void messageSend(const char* topicTwig, const int value, const bool retain, const int qos);
     void messageSend(const String &topicPath, const bool value, const bool retain, const int qos);
-    void messageSend(const char* topicLeaf, const bool value, const bool retain, const int qos);
+    void messageSend(const char* topicTwig, const bool value, const bool retain, const int qos);
     void messageSendQueued();
-    String* path(char const * const topicLeaf);
-    String* leaf(const String &topicPath);
+    String* path(char const * const topicTwig);
+    String* twig(const String &topicPath);
   
   protected: // TODO - some of the other methods should probably be protected
     std::forward_list<Subscription> subscriptions;
