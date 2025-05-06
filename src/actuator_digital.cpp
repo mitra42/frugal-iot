@@ -13,9 +13,9 @@
 #include "actuator_digital.h" // defines ACUATOR_DIGITAL_DEBUG
 
 Actuator_Digital::Actuator_Digital(const char * const id, const char * const name, const uint8_t pin, const char* color)
-: Actuator(name), 
+: Actuator(id, name), 
   pin(pin),
-  input(new INbool(id, id, name, false, color, false))
+  input(new INbool(id, "on", name, false, color, false))
 {};
 
 void Actuator_Digital::act() {

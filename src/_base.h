@@ -55,8 +55,6 @@ class IN : public IO {
 class OUT : public IO {
   public:
     OUT(char const * const sensorId, char const * const id, char const * const name, char const *color, const bool wireable);
-    // TODO-130 deprecated below
-    OUT(char const * const name, char const * const topicTwig, char const *color, const bool wireable);
     virtual String advertisement(const char * const name);
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);

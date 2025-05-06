@@ -144,7 +144,7 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 #endif
 #ifdef SENSOR_BUTTON_WANT
   // Pushed to sensors by newSensor_Button
-  Sensor_Button::newSensor_Button("button", "button", SENSOR_BUTTON_PIN);
+  Sensor_Button::newSensor_Button("button", "Button", SENSOR_BUTTON_PIN, "purple");
 #endif
 #ifdef SENSOR_LOADCELL_WANT
   sensors.push_back(new Sensor_LoadCell("loadcell", "Load Cell", 2000, "pink", SENSOR_LOADCELL_MS, true));
@@ -155,7 +155,7 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #ifdef CONTROL_BLINKEN_WANT
   Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
   controls.push_back(cb);
-  // TODO-130 make function an dredo wirepath
+  // TODO Make function an dredo wirepath
   cb->outputs[0]->wiredPath = Mqtt->path(aLedBuiltin->input->topicTwig); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT

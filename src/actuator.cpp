@@ -11,12 +11,13 @@
 
 std::vector<Actuator*> actuators; // TODO_C++_EXPERT I wanted this to be a static inside class Actuator but compiler barfs on it.
 
-Actuator::Actuator(const char * const name) : Frugal_Base(), name(name) { } 
+Actuator::Actuator(const char * const id, const char * const name) : Frugal_Base(), id(id), name(name) { } 
 
 void Actuator::setup() { } // does nothing - always subclassed.
 
 void Actuator::setupAll() {
   for (Actuator* a: actuators) {
+    Serial.print("Setting up Actuator:"); Serial.print(a->name); Serial.print(" id="); Serial.println(a->id);
     a->setup();
   }
 }
@@ -54,11 +55,13 @@ void Actuator::dispatchTwig(const String &topicActuatorId, const String &topicLe
 }
 
 void Actuator::dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet) {
+  Serial.print("XXX " __FILE__); Serial.println(__LINE__); delay(100);
   uint8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
   if (slashPos != -1) {
     String topicActuatorId = topicTwig.substring(0, slashPos);       // Extract the part before the slash
     String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
     for (Actuator* a: actuators) {
+      Serial.print("XXX " __FILE__); Serial.print(a->id); Serial.println(__LINE__); delay(100);
       a->dispatchTwig(topicActuatorId, topicLeaf, payload, isSet);
     }
   } else {

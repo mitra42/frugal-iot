@@ -20,8 +20,8 @@
 ControlBlinken::ControlBlinken (const char* const id, const char * const name, float secsOn, float secsOff) 
 : Control(id, name,
   std::vector<IN*> {
-    new INfloat(id, "time on", "Time On", secsOn, 0, 3600, "black", true),
-    new INfloat(id, "time off", "Time Off", secsOff, 0, 3600, "black", true),
+    new INfloat(id, "timeon", "Time On", secsOn, 0, 3600, "black", true),
+    new INfloat(id, "timeoff", "Time Off", secsOff, 0, 3600, "black", true),
   },
   std::vector<OUT*> {
     new OUTbool(id, "out", name, false, "black", true), 

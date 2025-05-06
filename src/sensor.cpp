@@ -17,6 +17,7 @@ void Sensor::setup() { } // Default to do nothing
 
 void Sensor::setupAll() {
   for (Sensor* s: sensors) {
+    Serial.print("Setting up sensor:"); Serial.println(s->id);
     s->setup();
   }
 }

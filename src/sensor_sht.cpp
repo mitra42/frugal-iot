@@ -29,7 +29,7 @@
 #include "system_mqtt.h"                // Library for sending messages
 
 
-// TODO-130 add alternative constructor with id e.g. sht1, sht2 etc
+// TODO Add alternative constructor with id e.g. sht1, sht2 etc
 Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, const unsigned long ms_init, bool retain) 
   : Sensor_HT("sht", name, ms_init, retain), 
     address(address_init) {

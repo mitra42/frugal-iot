@@ -136,7 +136,7 @@ void IN::setup(const char * const sensorname) {
 // Options eg: sht/temp set/sht/temp/wire set/sht/temp set/sht/temp/max
 bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (isSet) { // e.g : set/sht/temp/wire set/sht/temp set/sht/temp/max
-    if (leaf.endsWith("/wire")) { //TODO-130 check advertiseent does this correctly
+    if (leaf.endsWith("/wire")) {
       if (!(wiredPath && (p == *wiredPath))) {
         wiredPath = new String(p);
         Mqtt->subscribe(*wiredPath);
@@ -159,7 +159,7 @@ bool IN::dispatchPath(const String &tp, const String &p) {
 
 bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (isSet) { // e.g : set/sht/temp/wire set/sht/temp set/sht/temp/max
-    if (leaf.endsWith("/wire")) { //TODO-130 check advertiseent does this correctly
+    if (leaf.endsWith("/wire")) {
       if (!(wiredPath && (p == *wiredPath))) {
         wiredPath = new String(p);
         sendWired(); // Destination changed, send current value
@@ -332,12 +332,12 @@ bool INcolor::convertAndSet(const char* p1) {
   return false; // nothing changed
 }
 // TO_ADD_INxxx TO_ADD_OUTxxx
+const char* valueAdvertLineUint16 = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %d\n    max: %d\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %.1f\n    max: %.1f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* wireAdvertLine = "\n  -\n    topic: set/%s/wire\n    name: %s%s\n    type: %s\n    options: %s\n    display: %s\n    rw: %s\n    group: %s";
 // TO_ADD_INxxx
-//  TODO-130 rework the wire stuff
 String INfloat::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
@@ -491,7 +491,7 @@ String OUTuint16::advertisement(const char * const group) {
   // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
   if (topicTwig) {
-    ad += StringF(valueAdvertLineFloat, topicTwig, name, "int", min, max, color, "bar", "r", group);
+    ad += StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "bar", "r", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w\n    group: %s"
   if (wireable) {

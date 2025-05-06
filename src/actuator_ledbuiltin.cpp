@@ -22,7 +22,7 @@
 
 
 Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, const char* color) :
-  Actuator_Digital("on", "On/Off", pin,  "yellow"),
+  Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow"),
   #ifdef ACTUATOR_LEDBUILTIN_RGB
     color(new INcolor("led", "color", "LED color", color, false)), //TODO-131 color of UX should reflect color of LED
   #endif

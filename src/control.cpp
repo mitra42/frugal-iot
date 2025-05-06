@@ -52,7 +52,6 @@ void Control::act() {
     // Default is to do nothing - though that will rarely be correct
 }
 void Control::dispatchTwig(const String &topicControlId, const String &leaf, const String &payload, bool isSet) {
-  // TODO-130 rework to hand "set/"
     bool changed = false;
     if (topicControlId == id) {
       for (auto &input : inputs) {
@@ -98,6 +97,7 @@ String Control::advertisement() {
 // Note Static
 void Control::setupAll() {
   for (Control* c: controls) {
+    Serial.print("Setting up Control:"); Serial.println(c->id);
     c->setup();
   }
 }

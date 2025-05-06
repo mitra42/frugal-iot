@@ -69,16 +69,9 @@ void MqttManager::setup() {
   // client.setClockSource(XXX); // TODO-23 See https://github.com/256dpi/arduino-mqtt will need for power management
   client.onMessage(xMqtt::MessageReceived);  // Called back from client.loop - this is a naked function that just calls into the instance
   blockTillConnected();
-  #ifdef SYSTEM_MQTT_SUBSCRIBE_ALL
-    // This is new & experimental - bulk subscribe to everything for this node - may cause loops?. 
-    client.subscribe(StringF("%s/#",xDiscovery::topicPrefix)); // Subscribe to all topics for this node
-  #else
-    // Subscribe to all `set` for this node - not needed if subscribe to all above.
-    client.subscribe(xDiscovery::topicPrefix + "/set/#"); 
-  #endif
 }
 // Run every 10ms TODO-25 and TODO-23 this should be MUCH longer ideally
-MqttManager::MqttManager() : Frugal_Base(), nextLoopTime(0), ms(10) {
+MqttManager::MqttManager() : Frugal_Base(), client(1024,128), nextLoopTime(0), ms(10) {
   setup();
 }
 
@@ -261,11 +254,16 @@ void MqttManager::messageReceived(const String &topicPath, const String &payload
 void MqttManager::messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos) {
   if (!client.publish(topicPath, payload, retain, qos)) {
     #ifdef SYSTEM_MQTT_DEBUG
-      Serial.print(F("Failed to publish ")); 
+      Serial.print(F("Failed to publish qos=")); Serial.print(qos);
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
-      Serial.print(client.lastError());
-      Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
-      
+      Serial.print(topicPath); Serial.print(F("=")); Serial.print(payload);
+      switch (client.lastError()) {
+        case -1:
+          Serial.print("MQTT Buffer too small, message length~"); Serial.println(topicPath.length() + payload.length());
+          break;
+        default: 
+          Serial.print(client.lastError());
+      }
     #endif // SYSTEM_MQTT_DEBUG
     if (qos > 0) {
       // This doesn't work - if first publish failed, this does, and it loops

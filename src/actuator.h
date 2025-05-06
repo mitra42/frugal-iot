@@ -13,7 +13,7 @@ class Actuator : public Frugal_Base {
     // unsigned long nextLoopTime = 0; // No loops in Actuators currently - uncomment and initialize to zero if have any
 
     //Actuator();
-    Actuator(const char * const name);
+    Actuator(const char * const id, const char * const name);
     virtual void setup();
     static void setupAll();
     //virtual void readAndSet();
