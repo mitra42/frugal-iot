@@ -162,4 +162,15 @@ void Sensor_ms5803::readAndSet() {
   pressure->set(( ( ( ( D1 * sensitivity ) / pow( 2, 21 ) - sensorOffset) / pow( 2, 15 ) ) / 10 ));   // in mBars
 }
 
+void Sensor_ms5803::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+  if (topicSensorId == id) {
+    if (
+      pressure->dispatchLeaf(leaf, payload, isSet) ||
+      temperature->dispatchLeaf(leaf, payload, isSet)
+    ) { // True if changed
+      inputReceived(payload);
+    }
+  }
+}
+
 #endif // SENSOR_MS5803_WANT

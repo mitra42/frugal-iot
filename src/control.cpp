@@ -51,28 +51,28 @@ void Control::setup() {
 void Control::act() {
     // Default is to do nothing - though that will rarely be correct
 }
-void Control::dispatch(const String &topicPath, const String &payload ) {
+void Control::dispatchTwig(const String &topicControlId, const String &leaf, const String &payload, bool isSet) {
+  // TODO-130 rework to hand "set/"
     bool changed = false;
-    String* twig = Mqtt->twig(topicPath);
-    if (twig) { // Will be nullptr if no match i.e. path is not local
-      // inputs have possible 'control' and therefore dispatchLeaf //TODO-130 until do "set"
-      // And inputs also have possible values being set directly
-      uint8_t slashPos = twig->indexOf('/'); // Find the position of the slash
-      if (slashPos != -1) {
-        String topicControlId = twig->substring(0, slashPos);       // Extract the part before the slash
-        String leaf = twig->substring(slashPos + 1);      // Extract the part after the slash
-        for (auto &input : inputs) {
-          if (input->dispatchLeaf(leaf, payload)) {
-            changed = true; // Changed an input, call act()
-          }
-        }
-        for (auto &output : outputs) {
-          // outputs have possible 'control' and therefore dispatchLeaf 
-          //TODO-130 rework to use set
-          output->dispatchLeaf(leaf, payload); // Will send value if wiredPath changed
+    if (topicControlId == id) {
+      for (auto &input : inputs) {
+        if (input->dispatchLeaf(leaf, payload, isSet)) {
+          changed = true; // Changed an input, call act()
         }
       }
+      for (auto &output : outputs) {
+        if (output->dispatchLeaf(leaf, payload, isSet)) { // Will send value if wiredPath changed
+          changed = true; // Shouldnt happen - changing outputs shouldnt cause process, but here for completeness.
+        }; 
+      }
     }
+    if (changed) { 
+      act(); // Likely to be subclassed
+    }
+}
+
+void Control::dispatchPath(const String &topicPath, const String &payload ) {
+    bool changed = false;
     for (auto &input : inputs) {
         // Only inputs are listening to potential topicPaths - i.e. other devices outputs
         if (input->dispatchPath(topicPath, payload)) {
@@ -108,9 +108,23 @@ void Control::loopAll() {
   }
 }
 // Note Static
+void Control::dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet) {
+  uint8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
+  if (slashPos != -1) {
+    String topicControlId = topicTwig.substring(0, slashPos);       // Extract the part before the slash
+    String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
+    for (Control* a: controls) {
+      a->dispatchTwig(topicControlId, topicLeaf, payload, isSet);
+    }
+  } else {
+    Serial.println("No slash found in topic: " + topicTwig);
+  }
+}
+
+
 void Control::dispatchPathAll(const String &topicPath, const String &payload) {
   for (Control* c: controls) {
-    c->dispatch(topicPath, payload);
+    c->dispatchPath(topicPath, payload);
   }
 }
 // Note Sensor::advertisementAll almost same as Control::advertisementAll so if change one, change the other

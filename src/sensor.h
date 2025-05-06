@@ -21,8 +21,11 @@ class Sensor : public Frugal_Base {
     virtual void readAndSet();
     virtual void loop();
     static void loopAll();
+    void inputReceived(const String &payload) {}; // Does nothing in sensors (may change in future)
     virtual String advertisement();
     static String advertisementAll();
+    virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
+    static void dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet);
 }; // Class Sensor
 
 extern std::vector<Sensor*> sensors;

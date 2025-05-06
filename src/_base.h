@@ -25,12 +25,11 @@ class IO {
     char const *topicTwig; // Topic always listens|sends to - null (unusual) if only listens on wire
     char const *color; // String passed to UX
     bool const wireable; // True if can wire this to/from others
-    char const *wireLeaf; // Topic listens for change to wiredTopic, will always be wire_<sensor.name>_<io.name>
     const String *wiredPath; // Topic also listening|sending to when wired
     IO();
     IO(const char * const sensorId, const char * const id, const char * const name, char const *color, const bool w = true);
     virtual void setup(const char * const sensorname);
-    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet); // Just checks control
     virtual bool dispatchPath(const String &topicPath, const String &payload);
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const where);
@@ -49,7 +48,7 @@ class IN : public IO {
     virtual bool boolValue();
     virtual uint16_t uint16Value();
     virtual bool convertAndSet(const String &payload);
-    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload);
+    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet);
     virtual bool dispatchPath(const String &topicpath, const String &payload); 
     void setup(const char*);
 };
@@ -66,7 +65,7 @@ class OUT : public IO {
     virtual bool boolValue();
     virtual uint16_t uint16Value();
     virtual void sendWired();
-    virtual bool dispatchLeaf(const String &leaf, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &leaf, const String &payload, bool isSet); // Just checks control
 };
 
 // TO-ADD-INxxx
@@ -91,7 +90,6 @@ class INfloat : public IN {
           name = other.name;
           wireable = other.wireable
           topicTwig = other.topicTwig;
-          wireLeaf = other.wireLeaf;
           wiredPath = other.wiredPath;
       }
       return *this;

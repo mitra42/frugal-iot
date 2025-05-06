@@ -34,6 +34,8 @@
 #include <forward_list>
 #include "_base.h"
 
+#define SYSTEM_MQTT_SUBSCRIBE_ALL // If true subscribe to all topics for this node - may cause loops ?
+
 class Subscription {
   // This is both a subscription and a record of a message for retention purposes
   public:
@@ -60,9 +62,8 @@ class MqttManager : public Frugal_Base {
     MqttManager();
     void setup();
     void loop();
-    bool connect();
-    void blockTillConnected();
-    bool connectOLD(); // TODO-125 remove when new connect() works
+    bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
+    void blockTillConnected(); // Connect to MQTT, loop until succeed
     Subscription* find(const String &topicPath);
     void subscribe(const String& topicPath);
     void subscribe(const char* topicTwig);

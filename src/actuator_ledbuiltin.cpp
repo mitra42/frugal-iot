@@ -33,13 +33,13 @@ Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, 
     #endif
   }
 
-void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload) {
+void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
   if (topicActuatorId == id) {
     if (
       #ifdef ACTUATOR_LEDBUILTIN_RGB
-        color->dispatchLeaf(leaf, payload) ||
+        color->dispatchLeaf(leaf, payload, isSet) ||
       #endif
-      input->dispatchLeaf(leaf, payload)
+      input->dispatchLeaf(leaf, payload, isSet)
     ) { // True if changed
       inputReceived(payload);
     }

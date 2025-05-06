@@ -23,7 +23,6 @@
 
 #define SYSTEM_MQTT_LOOPBACK // If true dispatch the message locally as well - this is always the case currerntly 
 
-
 #if ESP8266 // Note ESP8266 and ESP32 are defined for respective chips - unclear if anything like that for other Arduinos
   #include <ESP8266WiFi.h>  // for WiFiClient
 #else
@@ -31,6 +30,7 @@
 #endif
 
 #include <MQTT.h>
+#include "misc.h" // For StringF
 
 // If configred not to use Wifi (or in future BLE) then will just operate locally, sending MQTT between components on this node, but 
 // not elsewhere.
@@ -42,6 +42,7 @@
 #include "system_discovery.h"
 #include "system_mqtt.h"
 #include "actuator.h"
+#include "sensor.h"
 #include "control.h"
 //TODO-25 replace with control.h when ready
   #ifdef CONTROL_BLINKEN_WANT
@@ -68,8 +69,14 @@ void MqttManager::setup() {
   // client.setClockSource(XXX); // TODO-23 See https://github.com/256dpi/arduino-mqtt will need for power management
   client.onMessage(xMqtt::MessageReceived);  // Called back from client.loop - this is a naked function that just calls into the instance
   blockTillConnected();
+  #ifdef SYSTEM_MQTT_SUBSCRIBE_ALL
+    // This is new & experimental - bulk subscribe to everything for this node - may cause loops?. 
+    client.subscribe(StringF("%s/#",xDiscovery::topicPrefix)); // Subscribe to all topics for this node
+  #else
+    // Subscribe to all `set` for this node - not needed if subscribe to all above.
+    client.subscribe(xDiscovery::topicPrefix + "/set/#"); 
+  #endif
 }
-
 // Run every 10ms TODO-25 and TODO-23 this should be MUCH longer ideally
 MqttManager::MqttManager() : Frugal_Base(), nextLoopTime(0), ms(10) {
   setup();
@@ -91,7 +98,7 @@ void MqttManager::loop() {
   }
 }
 
-/* Use setup when calling from setup */
+/* Connect to MQTT broker and - if necessary - resubscribe to all topics */
 bool MqttManager::connect() {
   xWifi::checkConnected();  // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
   if (!client.connected()) {
@@ -127,6 +134,7 @@ bool MqttManager::connect() {
   return true;
 }
 
+/* Connect to MQTT, loop until succeed */
 void MqttManager::blockTillConnected() {
   while (!connect()) {
     #ifdef ESP32
@@ -136,30 +144,6 @@ void MqttManager::blockTillConnected() {
   }
 }
 
-bool MqttManager::connectOLD() {
-  xWifi::checkConnected();  // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
-  if (client.connected()) {
-    return true;
-  } else {
-    #ifdef SYSTEM_MQTT_DEBUG
-      Serial.print(F("\nMQTT connecting: to ")); Serial.print(xWifi::mqtt_host.c_str());
-    #endif 
-   
-    // Each organization needs a password in mosquitto_passwords which can be added by Mitra using mosquitto_passwd
-    if (client.connect(xWifi::clientid().c_str(), SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD)) {
-      #ifdef SYSTEM_MQTT_DEBUG
-        Serial.println(F(" Connected"));
-      #endif
-      resubscribeAll();
-      return true;
-    } else {
-      Serial.print(F(" Fail "));
-      // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116
-      Serial.print(client.returnCode());
-      return false;
-    }
-  }
-}
 Subscription* MqttManager::find(const String &topicPath) {
   for(Subscription& mi: subscriptions) {
     if (mi == topicPath) {
@@ -167,12 +151,6 @@ Subscription* MqttManager::find(const String &topicPath) {
     }
   }
   return NULL;
-  /*
-  // TODO_C++_EXPERT I think following should work, but I've not used std::find or iterators on further_list before so not sure why this (copied from example I found) wont work
-  // error: conversion from 'std::_Fwd_list_iterator<Subscription>' to non-scalar type 'Subscription' requested
-    Subscription mi = std::find(subscriptions.begin(), subscriptions.end(), topicPath);
-    return mi == subscriptions.end() ? NULL : mi;
-  */
 }
 
 void MqttManager::subscribe(const String& topicPath) {
@@ -214,19 +192,26 @@ void MqttManager::subscribe(const char* topicTwig) {
   subscribe(*topicPath);
 }
 void MqttManager::dispatch(const String &topicPath, const String &payload) {
-  if (topicPath.startsWith(*xDiscovery::topicPrefix)) {
-    const String topicTwig = topicPath.substring(xDiscovery::topicPrefix->length());
+  if (topicPath.startsWith(*xDiscovery::topicPrefix)) { // includes trailing slash
+    String topicTwig = topicPath.substring(xDiscovery::topicPrefix->length()); 
+    bool isSet;
+    if (topicTwig.startsWith("set/")) {
+      isSet = true;
+      topicTwig.remove(0, 4); // Remove set/ from start
+    }
     #ifdef SENSOR_WANT
-      //Sensor::dispatchLeafAll(topicTwig, payload); // None of the sensors have subscriptions
+      Sensor::dispatchTwigAll(topicTwig, payload, isSet); // None of the sensors have subscriptions
     #endif
     #ifdef ACTUATOR_WANT
-      Actuator::dispatchTwigAll(topicTwig, payload); // Just matches twigs
+      Actuator::dispatchTwigAll(topicTwig, payload, isSet); // Just matches twigs
+    #endif
+    #ifdef CONTROL_WANT
+      Control::dispatchTwigAll(topicTwig, payload, isSet); // Just matches twigs
     #endif
   }
   #ifdef CONTROL_WANT
-    Control::dispatchPathAll(topicPath, payload);  // Matches both paths and twigs
+    Control::dispatchPathAll(topicPath, payload);  // Matches just paths. Twigs and sets handle above
   #endif
-  //TODO-25 System::dispatchPathAll(*topicPath, payload)
 }
 bool MqttManager::resubscribeAll() {
   // TODO-125 may put a flag on subscriptions then only resubscribe those not done

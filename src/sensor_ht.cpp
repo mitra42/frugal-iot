@@ -28,5 +28,15 @@ void Sensor_HT::set(const float temp, const float humy) {
 String Sensor_HT::advertisement() {
   return temperature->advertisement(name) + humidity->advertisement(name); // Note using name of sensor not name of output (which is usually the same)
 }
+void Sensor_HT::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+  if (topicSensorId == id) {
+    if (
+      temperature->dispatchLeaf(leaf, payload, isSet) ||
+      humidity->dispatchLeaf(leaf, payload, isSet)
+    ) {
+      inputReceived(payload);
+    }
+  }
+}
 
 #endif // SENSOR_HT_WANT

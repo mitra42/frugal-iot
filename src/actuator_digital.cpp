@@ -41,9 +41,9 @@ void Actuator_Digital::setup() {
   pinMode(pin, OUTPUT);
   input->setup(name);
 }
-void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload) {
+void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
   if (topicActuatorId == id) {
-    if (input->dispatchLeaf(leaf, payload)) { // True if changed
+    if (input->dispatchLeaf(leaf, payload, isSet)) { // True if changed
       inputReceived(payload);
     }
   }

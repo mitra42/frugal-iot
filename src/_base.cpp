@@ -44,7 +44,7 @@ void Frugal_Base::loopAll() {
 
 
 IO::IO(const char * const sensorId, const char * const id, const char * const name, const char* const color, const bool w)
-: sensorId(sensorId), id(id), name(name), topicTwig(lprintf(strlen(sensorId)+strlen(id)+2, "%s/%s", sensorId, id)), color(color), wireable(w), wireLeaf(nullptr), wiredPath(nullptr) 
+: sensorId(sensorId), id(id), name(name), topicTwig(lprintf(strlen(sensorId)+strlen(id)+2, "%s/%s", sensorId, id)), color(color), wireable(w), wiredPath(nullptr) 
 {};
 
 IN::IN(const char* sensorId, const char * const id, const char * const name, const char * const color, const bool w)
@@ -123,29 +123,28 @@ uint16_t OUTbool::uint16Value() {
   return value;
 }
 
-// TODO-130 rework
 void IO::setup(const char * const sensorname) {
     // Note topicTwig subscribed to by IN, not by OUT
-    if (wireable) { // TODO-130 rework to use "set"
-      // wireLeaf = wire_<sensorname>_<topicTwig>
-      wireLeaf = lprintf(strlen(sensorname) + strlen(topicTwig) + 7, "wire_%s_%s", sensorname, topicTwig);
-      Mqtt->subscribe(wireLeaf);
-    }
 }
 
-// TODO-130 rework this
 void IN::setup(const char * const sensorname) {
   IO::setup(sensorname);
-  if (topicTwig) Mqtt->subscribe(topicTwig);
+  #ifndef SYSTEM_MQTT_SUBSCRIBE_ALL
+    if (topicTwig) Mqtt->subscribe(topicTwig);
+  #endif
 }
-bool IN::dispatchLeaf(const String &leaf, const String &p) {
-  if (leaf == wireLeaf) { //TODO-130 rework to use "set"
-    if (!(wiredPath && (p == *wiredPath))) {
-      wiredPath = new String(p);
-      Mqtt->subscribe(*wiredPath);
+// Options eg: sht/temp set/sht/temp/wire set/sht/temp set/sht/temp/max
+bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+  if (isSet) { // e.g : set/sht/temp/wire set/sht/temp set/sht/temp/max
+    if (leaf.endsWith("/wire")) { //TODO-130 check advertiseent does this correctly
+      if (!(wiredPath && (p == *wiredPath))) {
+        wiredPath = new String(p);
+        Mqtt->subscribe(*wiredPath);
+      }
     }
   }
-  if (leaf == id) {
+  // For now recognizing both xxx/leaf and set/xxx/leaf or setting TODO-130 change UX
+  if (leaf == id) { // e.g. sht/temp set/sht/temp
     return convertAndSet(p); // Virtual - depends on type of INxxx
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
@@ -158,15 +157,19 @@ bool IN::dispatchPath(const String &tp, const String &p) {
   return false; // nothing changed
 }
 
-bool OUT::dispatchLeaf(const String &leaf, const String &p) {
-  if (leaf == wireLeaf) {
-    if (!(wiredPath && (p == *wiredPath))) {
-      wiredPath = new String(p);
-      sendWired(); // Destination changed, send current value
+bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+  if (isSet) { // e.g : set/sht/temp/wire set/sht/temp set/sht/temp/max
+    if (leaf.endsWith("/wire")) { //TODO-130 check advertiseent does this correctly
+      if (!(wiredPath && (p == *wiredPath))) {
+        wiredPath = new String(p);
+        sendWired(); // Destination changed, send current value
+      }
     }
   }
+  // Note intentionally can't set output values directly with e.g. set/sht/temp or sht/temp
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
 }
+
 /*
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -202,7 +205,6 @@ void IO::debug(const char* const where) {
     Serial.print(" topicTwig="); Serial.print(topicTwig ? topicTwig : "NULL"); 
     Serial.print(" wireable"); Serial.print(wireable);
     if (wireable) {
-      Serial.print(" wireLeaf"); Serial.print(wireLeaf);
       Serial.print(" wiredPath="); Serial.print(wiredPath ? *wiredPath : "NULL"); 
     }
 }
@@ -333,7 +335,7 @@ bool INcolor::convertAndSet(const char* p1) {
 const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %.1f\n    max: %.1f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
-const char* wireAdvertLine = "\n  -\n    topic: %s\n    name: %s%s\n    type: %s\n    options: %s\n    display: %s\n    rw: %s\n    group: %s";
+const char* wireAdvertLine = "\n  -\n    topic: set/%s/wire\n    name: %s%s\n    type: %s\n    options: %s\n    display: %s\n    rw: %s\n    group: %s";
 // TO_ADD_INxxx
 //  TODO-130 rework the wire stuff
 String INfloat::advertisement(const char * const group) {
@@ -343,8 +345,8 @@ String INfloat::advertisement(const char * const group) {
     ad += StringF(valueAdvertLineFloat, topicTwig, name, "float", min, max, color, "slider", "w", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
-  if (wireLeaf) {
-    ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "float", "dropdown", "r", group);
+  if (wireable) {
+    ad += StringF(wireAdvertLine, topicTwig, name, " wire from", "topic", "float", "dropdown", "r", group);
   }
   return ad;
 }
@@ -355,8 +357,8 @@ String INuint16::advertisement(const char * const group) {
     ad += StringF(valueAdvertLineFloat, topicTwig, name, "int", min, max, color, "slider", "w", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
-  if (wireLeaf) {
-    ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "int", "dropdown", "r", group);
+  if (wireable) {
+    ad += StringF(wireAdvertLine, topicTwig, name, " wire from", "topic", "int", "dropdown", "r", group);
   }
   return ad;
 }
@@ -367,8 +369,8 @@ String INbool::advertisement(const char * const group) {
     ad += StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "w", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
-  if (wireLeaf) {
-    ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "bool", "dropdown", "r", group);
+  if (wireable) {
+    ad += StringF(wireAdvertLine, topicTwig, name, " wire from", "topic", "bool", "dropdown", "r", group);
   }
   return ad;
 }
@@ -378,8 +380,8 @@ String INcolor::advertisement(const char * const group) {
   if (topicTwig) {
     ad += StringF(valueAdvertLineColor, topicTwig, name, "color", color, "wheel", "w", group);
   }
-  if (wireLeaf) {
-    ad += StringF(wireAdvertLine, wireLeaf, name, " wire from", "topic", "color", "dropdown", "r", group);
+  if (wireable) {
+    ad += StringF(wireAdvertLine, topicTwig, name, " wire from", "topic", "color", "dropdown", "r", group);
   }
   return ad;
 }
@@ -478,8 +480,8 @@ String OUTfloat::advertisement(const char * const group) {
     ad += StringF(valueAdvertLineFloat, topicTwig, name, "float", min, max, color, "bar", "r", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w\n    group: %s"
-  if (wireLeaf) {
-    ad += StringF(wireAdvertLine, wireLeaf, name, " wire to", "topic", "float", "dropdown", "w", group);
+  if (wireable) {
+    ad += StringF(wireAdvertLine, topicTwig, name, " wire to", "topic", "float", "dropdown", "w", group);
   }
   return ad;
 }
@@ -492,8 +494,8 @@ String OUTuint16::advertisement(const char * const group) {
     ad += StringF(valueAdvertLineFloat, topicTwig, name, "int", min, max, color, "bar", "r", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w\n    group: %s"
-  if (wireLeaf) {
-    ad += StringF(wireAdvertLine, wireLeaf, name, " wire to", "topic", "int", "dropdown", "w", group);
+  if (wireable) {
+    ad += StringF(wireAdvertLine, topicTwig, name, " wire to", "topic", "int", "dropdown", "w", group);
   }
   return ad;
 }
@@ -506,16 +508,18 @@ String OUTbool::advertisement(const char * const group) {
     ad += StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "r", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
-  if (wireLeaf) {
-    ad += StringF(wireAdvertLine, wireLeaf, name, " wire to", "topic", "bool", "dropdown", "w", group);
+  if (wireable) {
+    ad += StringF(wireAdvertLine, topicTwig, name, " wire to", "topic", "bool", "dropdown", "w", group);
   }
   return ad;
 }
 
+
+// These are mostly to stop the compiler complaining about missing vtables
 void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }
 String IO::advertisement(const char * const group) { shouldBeDefined(); return String(); }
 float IO::floatValue() { shouldBeDefined(); return 0.0; }
-bool IO::dispatchLeaf(const String &twig, const String &p) { shouldBeDefined(); return false; }
+bool IO::dispatchLeaf(const String &twig, const String &p, bool isSet) { shouldBeDefined(); return false; }
 String OUT::advertisement(const char * const group) { shouldBeDefined(); return String(); }
 float OUT::floatValue() { shouldBeDefined(); return 0.0; }
 bool OUT::boolValue() { shouldBeDefined(); return false; }

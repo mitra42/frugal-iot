@@ -59,6 +59,8 @@ void Sensor_Analog::setup() {
     analogSetAttentuation(SENSOR_ANALOG_ATTENTUATION)
   #endif
 }
+// SensorAnalog::dispatchTwig is not needed
+
 #endif // SENSOR_ANALOG_WANT
 // TODO-57 need to do discovery
 

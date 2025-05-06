@@ -11,6 +11,7 @@ class Sensor_HT : public Sensor {
     virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor
     void set(const float temp, const float humy);
     virtual String advertisement();
+    virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
 };
 
 

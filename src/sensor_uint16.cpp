@@ -62,4 +62,11 @@ void Sensor_Uint16::readAndSet() {
 String Sensor_Uint16::advertisement() {
   return output->advertisement(name); // Note using name of sensor not name of output (which is usually the same)
 }
+void Sensor_Uint16::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+  if (topicSensorId == id) {
+    if (output->dispatchLeaf(leaf, payload, isSet)) { // True if changed
+      inputReceived(payload);
+    }
+  }
+}
 #endif //SENSOR_UINT16_WANT

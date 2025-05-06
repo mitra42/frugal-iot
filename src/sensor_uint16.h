@@ -21,5 +21,6 @@ class Sensor_Uint16 : public Sensor {
     virtual void readAndSet();
     virtual bool valid(uint16_t newvalue);
     virtual String advertisement();
+    void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
 };
 #endif // SENSOR_UINT16_H

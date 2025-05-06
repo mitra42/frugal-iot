@@ -15,5 +15,6 @@ class Sensor_Float : public Sensor {
     virtual float read();
     virtual void set(const float newvalue);
     virtual String advertisement();
+    virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
 };
 #endif // SENSOR_FLOAT_H

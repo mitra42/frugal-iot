@@ -14,7 +14,7 @@ class Actuator_Digital : public Actuator {
     virtual void inputReceived(const String &payload);
     virtual void setup();
     String advertisement();
-    void dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload);
+    void dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet);
 }; // Class Actuator_Digital
 
 #endif // ACTUATOR_DIGITAL_H

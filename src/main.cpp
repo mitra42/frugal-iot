@@ -155,6 +155,7 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #ifdef CONTROL_BLINKEN_WANT
   Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
   controls.push_back(cb);
+  // TODO-130 make function an dredo wirepath
   cb->outputs[0]->wiredPath = Mqtt->path(aLedBuiltin->input->topicTwig); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT

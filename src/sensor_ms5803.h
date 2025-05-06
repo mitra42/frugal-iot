@@ -37,6 +37,7 @@
     void setup(); 
     uint8_t ms5803CRC4();
     void readAndSet(); // Override in Sensor
+    void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
  };
  
  

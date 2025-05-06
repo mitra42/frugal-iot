@@ -36,5 +36,12 @@ void Sensor_Float::readAndSet() {
 String Sensor_Float::advertisement() {
   return output->advertisement(name); // Note using name of sensor not name of output (which is usually the same)
 }
-    
+void Sensor_Float::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+  if (topicSensorId == id) {
+    if (output->dispatchLeaf(leaf, payload, isSet)) { // True if changed
+      inputReceived(payload);
+    }
+  }
+}
+
 #endif // SENSOR_FLOAT_WANT
