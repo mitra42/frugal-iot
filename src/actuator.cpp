@@ -55,13 +55,11 @@ void Actuator::dispatchTwig(const String &topicActuatorId, const String &topicLe
 }
 
 void Actuator::dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet) {
-  Serial.print("XXX " __FILE__); Serial.println(__LINE__); delay(100);
   uint8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
   if (slashPos != -1) {
     String topicActuatorId = topicTwig.substring(0, slashPos);       // Extract the part before the slash
     String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
     for (Actuator* a: actuators) {
-      Serial.print("XXX " __FILE__); Serial.print(a->id); Serial.println(__LINE__); delay(100);
       a->dispatchTwig(topicActuatorId, topicLeaf, payload, isSet);
     }
   } else {
