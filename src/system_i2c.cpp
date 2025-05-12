@@ -24,19 +24,22 @@ void System_I2C::send(uint8_t cmd) {
   Wire.endTransmission();
 }
 // Send buffer to I2C - arbitrary length
-void System_I2C::send(uint8_t &buf, bytes) {
+bool System_I2C::send(uint8_t* buf, uint8_t bytes) {
   // TODO-101 check for failure in write
   Wire.beginTransmission(addr);
   for (uint8_t i = 0; i < bytes; i++) {
-    Wire.write(buf[i]);
+    if (Wire.write(buf[i]) != 1) {
+      return false;
+    }
   }
   Wire.endTransmission();
+  return true;
 }
 // Read buffer from I2C - arbitrary length
-void read(uint8_t* buf, uint8_t bytes) {
+bool System_I2C::read(uint8_t* buf, uint8_t bytes) {
   Wire.requestFrom(addr, bytes);
   for (uint8_t i = 0; i < bytes; i++) {
-    buf[i] = Wire.read();
+    buf[i] = Wire.read(); // TODO allow for failure and return true or false.
   }
   #ifdef SYSTEM_I2C_DEBUG
     Serial.print("I2C read");
@@ -45,10 +48,10 @@ void read(uint8_t* buf, uint8_t bytes) {
     }
     Serial.println();
   #endif
-  return buf;
+  return true;
 }
 // Read from I2C - up to 4 bytes into a uint32_t
-uint32_t read(uint8_t bytes) {
+uint32_t System_I2C::read(uint8_t bytes) {
   Wire.requestFrom(addr, bytes);
   uint32_t result = 0;
   for (uint8_t i = 0; i < bytes; i++) {
@@ -56,7 +59,7 @@ uint32_t read(uint8_t bytes) {
     result |= Wire.read();
   }
   #ifdef SYSTEM_I2C_DEBUG
-    Serial.print("I2C read");  Serial.println(result); 
+    Serial.print(F()"I2C read"));  Serial.println(result); 
   #endif
   return result;
 }
@@ -64,9 +67,12 @@ uint32_t read(uint8_t bytes) {
 // Now various combinations used by different sensors - some will be in the sensor classes instead.
 // TODO-101 rewrite ms803 to use this
 
-uint8_t send1read1(uint8_t cmd) {
+uint8_t System_I2C::send1read1(uint8_t cmd) {
   send(cmd);
   return read(1);
 }
-
+bool System_I2C::sendAndRead(uint8_t* sendBuffer, uint8_t sendLength, uint8_t* rcvBuffer,uint8_t rcvLength) {
+  send(sendBuffer, sendLength); // TODO allow for failure here - if fails dont try the read just return false
+  return read(rcvBuffer, rcvLength);
+}
 #endif //SYSTEM_I2C_WANT

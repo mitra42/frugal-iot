@@ -9,15 +9,16 @@
 
 class Sensor_ensaht : public Sensor {
   public:
-    //OUTfloat* pressure;  
-    //OUTfloat* temperature;
-    System_I2C aht; // I2C object for AHT
-    System_I2C ens; // I2C object for ENS
+    OUTfloat* humidity;  
+    OUTfloat* temperature;
+    System_I2C* aht; // I2C object for AHT
+    //System_I2C* ens; // I2C object for ENS
 
-    Sensor_ensaht(const char* name);
-    ~Sensor_ensaht; //TODO-101
+    Sensor_ensaht(const char* const id, const char* const name);
+    ~Sensor_ensaht(); //TODO-101
     void setup(); 
     void readAndSet();
+    uint8_t spinTillReady();
  };
  
 #endif // SENSOR_ENSAHT_WANT

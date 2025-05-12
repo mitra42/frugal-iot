@@ -8,9 +8,11 @@ class System_I2C {
     uint8_t addr;
     System_I2C(uint8_t addr);
     void initialize();
-    void send8(uint8_t cmd);  
-    void send(uint8_t* buf, uint8_t bytes);  
-    uint32_t read(uint8_t cmd, uint8_t bytes);
-    uint16_t read16(uint8_t cmd);
+    void send(uint8_t cmd);  
+    bool send(uint8_t* buf, uint8_t bytes);  
+    bool read(uint8_t* buf, uint8_t bytes);
+    uint32_t read(uint8_t bytes); // bytes <= 4
+    uint8_t send1read1(uint8_t cmd);
+    bool sendAndRead(uint8_t* sendBuffer, uint8_t sendLength, uint8_t* rcvBuffer,uint8_t rcvLength);
 };
 #endif // SYSTEM_I2C_H
