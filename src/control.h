@@ -19,17 +19,20 @@
 
 class Control : public Frugal_Base {
   public:
-    const char * const name;
+    const char * const id; // ID of control
+    const char * const name; // User friendly name of control
     std::vector<IN*> inputs; // Vector of inputs
     std::vector<OUT*> outputs; // Vector of outputs
 
-    Control(const char * const name, std::vector<IN*> i, std::vector<OUT*> o); 
+    Control(const char * const id, const char * const name, std::vector<IN*> i, std::vector<OUT*> o); 
     void setup();
-    void dispatch(const String &topicPath, const String &payload);
     virtual void act();
     String advertisement();
     static void setupAll();
     static void loopAll();
+    void dispatchTwig(const String &topicControlId, const String &topicLeaf, const String &payload, bool isSet);
+    void dispatchPath(const String &topicPath, const String &payload);
+    static void dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet);
     static void dispatchPathAll(const String &topicPath, const String &payload);
     static String advertisementAll();
     #ifdef CONTROL_DEBUG

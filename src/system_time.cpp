@@ -92,7 +92,7 @@ time_t SystemTime::lastSync() { return _lastSyncTime; }
 
 SystemTime systemTime;
 
-namespace xTime {
+namespace xTime {  //TODO-25 - put this in a class and call from base etc
 
   unsigned long nextLoopTime = 0;
 

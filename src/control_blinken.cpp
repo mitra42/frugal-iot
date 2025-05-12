@@ -16,16 +16,15 @@
 #include <Arduino.h>
 #include "control_blinken.h"
 #include "control.h"
-#include "misc.h" // for lprintf
 
-ControlBlinken::ControlBlinken (const char* const name, float secsOn, float secsOff) : Control(
-  lprintf(strlen(name)+9, "%s_control", name),
+ControlBlinken::ControlBlinken (const char* const id, const char * const name, float secsOn, float secsOff) 
+: Control(id, name,
   std::vector<IN*> {
-    new INfloat(lprintf(strlen(name)+9, "%s time on", name), secsOn, lprintf(strlen(name)+4, "%s_on", name), 0, 3600, "black", true),
-    new INfloat(lprintf(strlen(name)+10, "%s time off", name), secsOff, lprintf(strlen(name)+5, "%s_off", name), 0, 3600, "black", true),
+    new INfloat(id, "timeon", "Time On", secsOn, 0, 3600, "black", true),
+    new INfloat(id, "timeoff", "Time Off", secsOff, 0, 3600, "black", true),
   },
   std::vector<OUT*> {
-    new OUTbool(lprintf(strlen(name)+5, "%s Out", name), false, lprintf(strlen(name)+5, "%s_out", name), "black", true), 
+    new OUTbool(id, "out", name, false, "black", true), 
   }
 ), blinkOn(secsOn * 1000), blinkOff(secsOff * 1000) {
   #ifdef CONTROL_BLINKEN_DEBUG

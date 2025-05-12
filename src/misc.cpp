@@ -22,6 +22,7 @@ const String StringF(const char* format, ...) {
     return String(buffer); // Note - string returned on stack so should be safe
 }
 
+// Typical usage.   lprintf(strlen(a)+strlen(b)+2, "%s %s", a, b) note how add 1 for length
 const char* lprintf(size_t buffer_size, const char* format, ...) {
   // Be careful with this, there is no compile time checking that the number of args matches the format 
   // and a mismatch will generate an Exception
