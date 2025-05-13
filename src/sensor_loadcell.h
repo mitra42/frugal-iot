@@ -15,7 +15,7 @@
 
 class Sensor_LoadCell : public Sensor_Float {
   public:
-    Sensor_LoadCell(const char* name, const char* topicLeaf, float max, const char* color, const unsigned long ms, const bool retain);
+    Sensor_LoadCell(const char* const id, const char * const name, float max, const char* color, const unsigned long ms, const bool retain);
     float read();
     void tare();
     void setup();

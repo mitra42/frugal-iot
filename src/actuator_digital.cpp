@@ -12,10 +12,10 @@
 #include "actuator.h"
 #include "actuator_digital.h" // defines ACUATOR_DIGITAL_DEBUG
 
-Actuator_Digital::Actuator_Digital(const char* name, const uint8_t pin, const char* leaf, const char* color)
-: Actuator(name), 
+Actuator_Digital::Actuator_Digital(const char * const id, const char * const name, const uint8_t pin, const char* color)
+: Actuator(id, name), 
   pin(pin),
-  input(new INbool(name, false, leaf, color, false))
+  input(new INbool(id, "on", name, false, color, false))
 {};
 
 void Actuator_Digital::act() {
@@ -23,14 +23,14 @@ void Actuator_Digital::act() {
 }
 void Actuator_Digital::set(const bool v) {
   #ifdef ACTUATOR_DIGITAL_DEBUG
-    Serial.print(F("\nSetting ")); Serial.print(*topicLeaf); Serial.println(v ? F(" on") : F(" off"));
+    Serial.print(F("\nSetting ")); Serial.print(name); Serial.println(v ? F(" on") : F(" off"));
   #endif
   act();
 }
 // TODO-25-22apr - rework - check what input does, then act on it here
 void Actuator_Digital::inputReceived(const String &payload) {
   #ifdef ACTUATOR_DIGITAL_DEBUG
-    Serial.print(*topicLeaf); Serial.print(F(" received ")); Serial.println(input->value);
+    Serial.print(name); Serial.print(F(" received ")); Serial.println(input->value);
   #endif
   set(input->value); // Call set to do the action
 }
@@ -41,9 +41,11 @@ void Actuator_Digital::setup() {
   pinMode(pin, OUTPUT);
   input->setup(name);
 }
-void Actuator_Digital::dispatchLeaf(const String &leaf, const String &payload) {
-  if (input->dispatchLeaf(leaf, payload)) { // True if changed
-    inputReceived(payload);
+void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
+  if (topicActuatorId == id) {
+    if (input->dispatchLeaf(leaf, payload, isSet)) { // True if changed
+      inputReceived(payload);
+    }
   }
 }
 

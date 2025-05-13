@@ -24,16 +24,18 @@ class Frugal_Base {
 
 class IO {
   public:
-    char const *name; // Name of this IO within the sensor, i.e. can duplicate across sensors
-    char const *topicLeaf; // Topic always listens|sends to - null (unusual) if only listens on wire
+    // Note that topicTwig = sensorId / id
+    char const *sensorId; // Sensor this IO belongs to
+    char const *id; // System readable id
+    char const *name; // Human readable name of this IO within the sensor, i.e. can duplicate across sensors
+    char const *topicTwig; // Topic always listens|sends to - null (unusual) if only listens on wire
     char const *color; // String passed to UX
     bool const wireable; // True if can wire this to/from others
-    char const *wireLeaf; // Topic listens for change to wiredTopic, will always be wire_<sensor.name>_<io.name>
     const String *wiredPath; // Topic also listening|sending to when wired
     IO();
-    IO(const char * const n, const char * const tl, char const *color, const bool w = true);
+    IO(const char * const sensorId, const char * const id, const char * const name, char const *color, const bool w = true);
     virtual void setup(const char * const sensorname);
-    virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet); // Just checks control
     virtual bool dispatchPath(const String &topicPath, const String &payload);
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const where);
@@ -46,20 +48,20 @@ class IO {
 };
 class IN : public IO {
   public:
-    IN(char const * const name, char const * const topicLeaf, char const *color, const bool wireable);
+    IN(char const * const sensorId, char const * const id, char const * const name, char const *color, const bool wireable);
     virtual String advertisement(const char * const name);
     // TO-ADD-INxxx
     virtual float floatValue();
     virtual bool boolValue();
     virtual uint16_t uint16Value();
     virtual bool convertAndSet(const String &payload);
-    virtual bool dispatchLeaf(const String &topicleaf, const String &payload);
+    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet);
     virtual bool dispatchPath(const String &topicpath, const String &payload); 
     void setup(const char*);
 };
 class OUT : public IO {
   public:
-    OUT(char const * const name, char const * const topicLeaf, char const *color, const bool wireable);
+    OUT(char const * const sensorId, char const * const id, char const * const name, char const *color, const bool wireable);
     virtual String advertisement(const char * const name);
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
@@ -68,7 +70,7 @@ class OUT : public IO {
     virtual bool boolValue();
     virtual uint16_t uint16Value();
     virtual void sendWired();
-    virtual bool dispatchLeaf(const String &topicleaf, const String &payload); // Just checks control
+    virtual bool dispatchLeaf(const String &leaf, const String &payload, bool isSet); // Just checks control
 };
 
 // TO-ADD-INxxx
@@ -78,7 +80,7 @@ class INfloat : public IN {
     float min;
     float max;
     INfloat(); 
-    INfloat(char const * const name, float v, char const * const topicLeaf, float min, float max, char const * const color, const bool wireable);
+    INfloat(char const * const sensorId, char const * const id, char const * const name, float v, float min, float max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
@@ -92,8 +94,7 @@ class INfloat : public IN {
           value = other.value;
           name = other.name;
           wireable = other.wireable
-          topicLeaf = other.topicLeaf;
-          wireLeaf = other.wireLeaf;
+          topicTwig = other.topicTwig;
           wiredPath = other.wiredPath;
       }
       return *this;
@@ -108,8 +109,8 @@ class INuint16 : public IN {
     uint16_t value;
     uint16_t min;
     uint16_t max;
-    INuint16(); 
-    INuint16(char const * const name, uint16_t v, char const * const topicLeaf, uint16_t min, uint16_t max, char const * const color, const bool wireable);
+    //INuint16(); 
+    INuint16(char const * const sensorId, char const * const id, char const * const name, uint16_t v, uint16_t min, uint16_t max, char const * const color, const bool wireable);
     INuint16(const INuint16 &other);
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
@@ -123,7 +124,7 @@ class INbool : public IN {
   public:
     bool value;
     //INbool(); 
-    INbool(char const * const name, bool value, char const * const topicLeaf, char const * const color, const bool wireable);
+    INbool(char const * const sensorId, char const * const id, char const * const name, bool value, char const * const color, const bool wireable);
     INbool(const INuint16 &other);
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
@@ -139,12 +140,14 @@ class INcolor : public IN {
     uint8_t g;
     uint8_t b;
     INcolor(); 
-    INcolor(char const * const name, uint8_t r, uint8_t g, uint8_t b,  char const * const topicLeaf, const bool wireable);
+    INcolor(char const * const sensorId, char const * const id, char const * const name, uint8_t r, uint8_t g, uint8_t b, const bool wireable);
+    INcolor(char const * const sensorId, char const * const id, char const * const name, char const * const color, const bool wireable);
     INcolor(const INcolor &other);
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
     uint16_t uint16Value();
     bool convertAndSet(const String &payload);
+    bool convertAndSet(const char* payload); // Used when setting in constructor etc
     void debug(const char* const where);
     String advertisement(const char * const name);
 };
@@ -157,7 +160,7 @@ class OUTfloat : public OUT {
     float min;
     float max;
     OUTfloat();
-    OUTfloat(char const * const name, float v, char const * const topicLeaf, uint8_t width, float min, float max, char const * const color, const bool wireable);
+    OUTfloat(char const * const sensorId, char const * const id, char const * const name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     OUTfloat(const OUTfloat &other);
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();
@@ -171,7 +174,7 @@ class OUTbool : public OUT {
   public:
     bool value;
     OUTbool();
-    OUTbool(char const * const name, bool v, char const * const topicLeaf, char const * const color, const bool wireable);
+    OUTbool(char const * const sensorId, char const * const id, char const * const name, bool v, char const * const color, const bool wireable);
     OUTbool(const OUTbool &other);
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();
@@ -187,7 +190,7 @@ class OUTuint16 : public OUT {
     uint16_t min;
     uint16_t max;
     OUTuint16();
-    OUTuint16(char const * const name, uint16_t v, char const * const topicLeaf, uint16_t mn, uint16_t mx, char const * const color, const bool wireable);
+    OUTuint16(char const * const sensorId, char const * const id, char const * const name, uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool wireable);
     OUTuint16(const OUTuint16 &other);
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();

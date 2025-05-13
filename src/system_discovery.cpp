@@ -81,6 +81,8 @@ void fullAdvertise() {
         "ESP8266 D1"
       #elif defined(LOLIN_C3_PICO)
         "Lolin C3 Pico"
+      #elif defined(LOLIN_S2_MINI)
+        "Lolin S2 Mini"
       #else
         #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
       #endif
@@ -124,6 +126,13 @@ void setup() {
   topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/lotus/esp32-12345/" prefix of most topics
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
+  #endif
+  #ifdef SYSTEM_MQTT_SUBSCRIBE_ALL
+    // This is new & experimental - bulk subscribe to everything for this node - may cause loops?. 
+    Mqtt->subscribe("#"); // Subscribe to all topics for this node
+  #else
+    // Subscribe to all `set` for this node - not needed if subscribe to all above.
+    Mqtt->subscribe("set/#"); 
   #endif
 }
 

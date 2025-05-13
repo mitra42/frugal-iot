@@ -10,12 +10,14 @@
 
 std::vector<Sensor*> sensors; // TODO_C++_EXPERT I wanted this to be a static inside class Sensor but compiler barfs on it.
 
-Sensor::Sensor(const char* const name, const unsigned long m, bool r) : Frugal_Base(), name(name), ms(m), retain(r) { }
+Sensor::Sensor(const char* const id, const char* const name, const unsigned long m, bool r) 
+: Frugal_Base(), id(id), name(name), ms(m), retain(r) { }
 
 void Sensor::setup() { } // Default to do nothing
 
 void Sensor::setupAll() {
   for (Sensor* s: sensors) {
+    Serial.print("Setting up sensor:"); Serial.println(s->id);
     s->setup();
   }
 }
@@ -50,14 +52,19 @@ String Sensor::advertisementAll() {
   return ad;
 }
 
+void Sensor::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
+  // Default on sensors is to do nothing
+}
 
-/*
-At this point no dispatching for sensors as none have INCOMING messages
-
-void Sensor::dispatchLeaf() {String &topicLeaf, String &payload }
-void Sensor::dispatchLeafAll() {
-  for (Sensor* s: sensors) {
-    s->dispatchLeaf();
+void Sensor::dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet) {
+  uint8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
+  if (slashPos != -1) {
+    String topicSensorId = topicTwig.substring(0, slashPos);       // Extract the part before the slash
+    String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
+    for (Sensor* a: sensors) {
+      a->dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
+    }
+  } else {
+    Serial.println("No slash found in topic: " + topicTwig);
   }
 }
-*/
