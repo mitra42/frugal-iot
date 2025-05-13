@@ -34,6 +34,11 @@ void Sensor::loop() {
   }
 }
 
+void Sensor::readAndSetAll() {
+  for (Sensor* s: sensors) {
+    s->readAndSet();
+  }
+}
 void Sensor::loopAll() {
   for (Sensor* s: sensors) {
     s->loop();

@@ -32,7 +32,9 @@ void Frugal_Base::setupAll() {
 void Frugal_Base::loop() { }; // This will get called if no loop() in subclass 
 
 void Frugal_Base::loopAll() {
-  Sensor::loopAll();
+  #ifdef SENSOR_WANT
+    Sensor::loopAll();
+  #endif
   #ifdef CONTROL_WANT
     Control::loopAll();
   #endif

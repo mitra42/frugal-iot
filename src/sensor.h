@@ -19,6 +19,7 @@ class Sensor : public Frugal_Base {
     virtual void setup();
     static void setupAll();
     virtual void readAndSet();
+    static void readAndSetAll();
     virtual void loop();
     static void loopAll();
     void inputReceived(const String &payload) {}; // Does nothing in sensors (may change in future)
