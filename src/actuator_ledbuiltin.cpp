@@ -41,7 +41,7 @@ void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const Stri
       #endif
       input->dispatchLeaf(leaf, payload, isSet)
     ) { // True if changed
-      inputReceived(payload);
+      act();
     }
   }
 }
