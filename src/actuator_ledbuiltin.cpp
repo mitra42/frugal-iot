@@ -21,12 +21,12 @@
 #include "system_discovery.h"
 
 
-Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, const char* color) :
+Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, const char* colorInit) :
   Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow"),
   #ifdef ACTUATOR_LEDBUILTIN_RGB
-    color(new INcolor("led", "color", "LED color", color, false)), //TODO-131 color of UX should reflect color of LED
+    color(new INcolor("led", "color", "LED color", colorInit, false)), //TODO-131 color of UX should reflect color of LED
   #endif
-    brightness(new INuint16("led", "brightness", "Brightness", brightness, 0, 255, color, false))
+    brightness(new INuint16("led", "brightness", "Brightness", brightness, 0, 255, colorInit, false))
   { 
     #ifdef ACTUATOR_LEDBUILTIN_DEBUG
       Serial.print(F("Ledbuiltin pin=")); Serial.println(pin); 
@@ -94,7 +94,8 @@ String Actuator_Ledbuiltin::advertisement() {
       color->advertisement(name) + 
     #endif
     brightness->advertisement(name) + 
-    Actuator_Digital.advertisement(name); // Note using name of sensor not name of output (which is usually the same)
+    Actuator_Digital::advertisement() // Note using name of sensor not name of output (which is usually the same)
+  );
 }
 
 #endif // ACTUATOR_LEDBUILTIN_WANT

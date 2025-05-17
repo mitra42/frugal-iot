@@ -274,9 +274,10 @@ INbool::INbool(const INuint16 &other)
 }
 INcolor::INcolor(const char * const sensorId, const char * const id, const char* const name, uint8_t r, uint8_t g, uint8_t b, const bool w)
   :   IN(sensorId, id, name, nullptr, w), r(r), g(g), b(b) {
+    //TODO-130 this will fail as IN needs color set for discovery. 
 }
 INcolor::INcolor(const char * const sensorId, const char * const id, const char* const name, const char* color, const bool w)
-  :   IN(sensorId, id, name, nullptr, w) {
+  :   IN(sensorId, id, name, color, w) {
     convertAndSet(color);
 }
 
@@ -354,7 +355,7 @@ String INuint16::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   if (topicTwig) {
-    ad += StringF(valueAdvertLineFloat, topicTwig, name, "int", min, max, color, "slider", "w", group);
+    ad += StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "slider", "w", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
   if (wireable) {

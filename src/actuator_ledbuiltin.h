@@ -62,7 +62,7 @@ class Actuator_Ledbuiltin : public Actuator_Digital {
       INcolor* color;
     #endif
     void dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet);
-    String Actuator_Ledbuiltin::advertisement();
+    String advertisement();
 };
 
 #endif // ACTUATOR_LEDBUILTIN_H
