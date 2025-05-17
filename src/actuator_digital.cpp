@@ -27,13 +27,6 @@ void Actuator_Digital::set(const bool v) {
   #endif
   act();
 }
-// TODO-25-22apr - rework - check what input does, then act on it here
-void Actuator_Digital::inputReceived(const String &payload) {
-  #ifdef ACTUATOR_DIGITAL_DEBUG
-    Serial.print(name); Serial.print(F(" received ")); Serial.println(input->value);
-  #endif
-  set(input->value); // Call set to do the action
-}
 
 void Actuator_Digital::setup() {
   Actuator::setup();
@@ -44,7 +37,7 @@ void Actuator_Digital::setup() {
 void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
   if (topicActuatorId == id) {
     if (input->dispatchLeaf(leaf, payload, isSet)) { // True if changed
-      inputReceived(payload);
+      act();
     }
   }
 }

@@ -34,7 +34,7 @@ void Sensor_HT::dispatchTwig(const String &topicSensorId, const String &leaf, co
       temperature->dispatchLeaf(leaf, payload, isSet) ||
       humidity->dispatchLeaf(leaf, payload, isSet)
     ) {
-      inputReceived(payload);
+      // Nothing to do on Sensor
     }
   }
 }

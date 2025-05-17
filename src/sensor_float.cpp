@@ -39,7 +39,7 @@ String Sensor_Float::advertisement() {
 void Sensor_Float::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     if (output->dispatchLeaf(leaf, payload, isSet)) { // True if changed
-      inputReceived(payload);
+      // Nothing to do on Sensor
     }
   }
 }

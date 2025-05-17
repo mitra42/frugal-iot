@@ -42,7 +42,7 @@ void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const Stri
       brightness->dispatchLeaf(leaf, payload, isSet) ||
       input->dispatchLeaf(leaf, payload, isSet)
     ) { // True if changed
-      inputReceived(payload);
+      act();
     }
   }
 }

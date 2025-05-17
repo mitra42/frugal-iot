@@ -43,12 +43,6 @@ void Actuator::loopAll() {
 }
 */
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void Actuator::inputReceived(const String &payload) {
-#pragma GCC diagnostic pop
-  Serial.println("XXX25 Actuator::inputReceived should be subclassed");
-}
 
 void Actuator::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {
   Serial.println("XXX25 Actuator::dispatchTwig should be subclassed");
