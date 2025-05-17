@@ -26,7 +26,7 @@ Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, 
   #ifdef ACTUATOR_LEDBUILTIN_RGB
     color(new INcolor("led", "color", "LED color", color, false)), //TODO-131 color of UX should reflect color of LED
   #endif
-  brightness(brightness) 
+    brightness(new INuint16("led", "brightness", "Brightness", brightness, 0, 255, color, false))
   { 
     #ifdef ACTUATOR_LEDBUILTIN_DEBUG
       Serial.print(F("Ledbuiltin pin=")); Serial.println(pin); 
@@ -39,6 +39,7 @@ void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const Stri
       #ifdef ACTUATOR_LEDBUILTIN_RGB
         color->dispatchLeaf(leaf, payload, isSet) ||
       #endif
+      brightness->dispatchLeaf(leaf, payload, isSet) ||
       input->dispatchLeaf(leaf, payload, isSet)
     ) { // True if changed
       inputReceived(payload);
@@ -56,7 +57,7 @@ void Actuator_Ledbuiltin::act() {
       Serial.println(F("Do not have code for RGB LED on ESP8266")); 
     #else
     // TODO-131 should set brightness based on input message 
-    const uint16_t m = input->value ? brightness : 0;
+    const uint16_t m = input->value ? brightness->uint16Value() : 0;
     uint8_t r, g, b;
     if (m == 0xFF) {
         r = color->r;
@@ -86,4 +87,14 @@ void Actuator_Ledbuiltin::act() {
     #endif
   #endif 
 }
+
+String Actuator_Ledbuiltin::advertisement() {
+  return ( 
+    #ifdef ACTUATOR_LEDBUILTIN_RGB
+      color->advertisement(name) + 
+    #endif
+    brightness->advertisement(name) + 
+    Actuator_Digital.advertisement(name); // Note using name of sensor not name of output (which is usually the same)
+}
+
 #endif // ACTUATOR_LEDBUILTIN_WANT
