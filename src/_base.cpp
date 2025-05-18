@@ -129,9 +129,7 @@ void IO::setup(const char * const sensorname) {
 
 void IN::setup(const char * const sensorname) {
   IO::setup(sensorname);
-  #ifndef SYSTEM_MQTT_SUBSCRIBE_ALL
-    if (topicTwig) Mqtt->subscribe(topicTwig);
-  #endif
+  // No longer subscribes since subscribe to node/set/<sensor>/leaf
 }
 // Options eg: sht/temp set/sht/temp/wire set/sht/temp set/sht/temp/max
 bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {

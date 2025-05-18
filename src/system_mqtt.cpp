@@ -191,16 +191,18 @@ void MqttManager::dispatch(const String &topicPath, const String &payload) {
     if (topicTwig.startsWith("set/")) {
       isSet = true;
       topicTwig.remove(0, 4); // Remove set/ from start
+      // At the moment it looks like all dispatchTwig are isSet, because control subscribes to full path for its wired.
+      #ifdef SENSOR_WANT
+        Sensor::dispatchTwigAll(topicTwig, payload, isSet); // None of the sensors have subscriptions
+      #endif
+      #ifdef ACTUATOR_WANT
+        Actuator::dispatchTwigAll(topicTwig, payload, isSet); // Just matches twigs
+      #endif
+      #ifdef CONTROL_WANT
+        // note called for isSet and !isSet
+        Control::dispatchTwigAll(topicTwig, payload, isSet); // Just matches twigs
+      #endif
     }
-    #ifdef SENSOR_WANT
-      Sensor::dispatchTwigAll(topicTwig, payload, isSet); // None of the sensors have subscriptions
-    #endif
-    #ifdef ACTUATOR_WANT
-      Actuator::dispatchTwigAll(topicTwig, payload, isSet); // Just matches twigs
-    #endif
-    #ifdef CONTROL_WANT
-      Control::dispatchTwigAll(topicTwig, payload, isSet); // Just matches twigs
-    #endif
   }
   #ifdef CONTROL_WANT
     Control::dispatchPathAll(topicPath, payload);  // Matches just paths. Twigs and sets handle above

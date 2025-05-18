@@ -127,13 +127,8 @@ void setup() {
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
   #endif
-  #ifdef SYSTEM_MQTT_SUBSCRIBE_ALL
-    // This is new & experimental - bulk subscribe to everything for this node - may cause loops?. 
-    Mqtt->subscribe("#"); // Subscribe to all topics for this node
-  #else
-    // Subscribe to all `set` for this node - not needed if subscribe to all above.
-    Mqtt->subscribe("set/#"); 
-  #endif
+  // Subscribe to all `set` for this node - not needed if subscribe to all above.
+  Mqtt->subscribe("set/#"); 
 }
 
 void loop() {
