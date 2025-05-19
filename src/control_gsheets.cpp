@@ -13,26 +13,26 @@
 #include "control_gsheets.h"
 
 Control_Gsheets::Control_Gsheets(const char* name)
-  : Control(name,  std::vector<IN*> {},   std::vector<OUT*> {})
+  : Control("gsheets", name,  std::vector<IN*> {},   std::vector<OUT*> {})
   {}
 
-IN* INxxx(IOtype t) {
+IN* INxxx(IOtype t, const char* sensorId) {
   switch (t) {
     // TO-ADD-INXXX
     case BOOL:
-      return new INbool(nullptr, 0, nullptr, nullptr, true);
+      return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
     case UINT16:
-      return new INuint16(nullptr, 0, nullptr, 0, 0, nullptr, true);
+      return new INuint16(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
     case FLOAT:
-      return new INfloat(nullptr, 0, nullptr, 0, 0, nullptr, true);
+      return new INfloat(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
     case COLOR:
-      return new INcolor(nullptr, 0, 0, 0, nullptr, true);
+      return new INcolor(sensorId, nullptr, nullptr, 0, 0, 0, true);
     default:
       return nullptr;
   }
 }
 void Control_Gsheets::track(IOtype t, String* topicPath) {
-  IN* i = INxxx(t); 
+  IN* i = INxxx(t, id); 
   i->wireTo(topicPath); // Does a subscription
   inputs.push_back(i);
 }

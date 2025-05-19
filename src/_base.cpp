@@ -90,15 +90,6 @@ bool INfloat::boolValue() {
 uint16_t INfloat::uint16Value() {
   return value;
 }
-float INuint16::floatValue() {
-  return value;
-}
-bool INuint16::boolValue() {
-  return value;
-}
-uint16_t INuint16::uint16Value() {
-  return value;
-}
 float INbool::floatValue() {
   return value;
 }
