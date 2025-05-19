@@ -5,6 +5,9 @@
  * The load cell is a xKg load cell with a ??? output. 
  * The HX711 chip amplifies the signal and converts it to a digital value
  * 
+ * Cableing - to go in Docs 
+ *  
+ * 
  * TODO_134 TODO_POWER see https://registry.platformio.org/libraries/robtillaart/HX711 notes on power management
  * TODO_134 note there are two different HX711 chips, A & N - see notes in HX711 library
  */
@@ -21,14 +24,14 @@
   #ifdef ESP8266_D1
     #define SENSOR_LOADCELL_DOUT_PIN D5 // TODO-134 check pin numbers
   #elif defined(ESP32)
-    #define SENSOR_LOADCELL_DOUT_PIN 1 // TODO-134 check pin numbers
+    #define SENSOR_LOADCELL_DOUT_PIN 0 // TODO-134 check pin numbers
   #endif
 #endif
 #ifndef SENSOR_LOADCELL_SCK_PIN
   #ifdef ESP8266_D1
     #define SENSOR_LOADCELL_SCK_PIN D0
   #elif defined(ESP32)
-    #define SENSOR_LOADCELL_SCK_PIN 0
+    #define SENSOR_LOADCELL_SCK_PIN 1
   #endif
 #endif
 #ifndef SENSOR_LOADCELL_OFFSET
@@ -45,8 +48,8 @@
 #endif
 
 //TODO-134 need to tell it the size of the load cell
-Sensor_LoadCell::Sensor_LoadCell(const char* name, const char* topicLeaf, float max, const char* color, const unsigned long ms, const bool retain)
-  : Sensor_Float(name, topicLeaf, 3, 0, max, color, ms, retain), 
+Sensor_LoadCell::Sensor_LoadCell(const char* const id, const char * const name, float max, const char* color, const unsigned long ms, const bool retain)
+  : Sensor_Float(id, name, 3, 0, max, color, ms, retain), 
     offset(SENSOR_LOADCELL_OFFSET), 
     scale(SENSOR_LOADCELL_SCALE) {
   hx711 = new HX711();

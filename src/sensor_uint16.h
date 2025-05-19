@@ -15,11 +15,12 @@ class Sensor_Uint16 : public Sensor {
     uint8_t smooth = 0; 
 
     //Sensor_Uint16();
-    Sensor_Uint16(const char* name, const uint8_t smooth, const char* topicLeaf, uint16_t min, uint16_t max, const char* color, const unsigned long ms, bool retain);
+    Sensor_Uint16(const char* const id, const char * const name, const uint8_t smooth, uint16_t min, uint16_t max, const char* color, const unsigned long ms, bool retain);
     virtual uint16_t read();
     virtual void set(const uint16_t newvalue);
     virtual void readAndSet();
     virtual bool valid(uint16_t newvalue);
     virtual String advertisement();
+    void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
 };
 #endif // SENSOR_UINT16_H

@@ -55,12 +55,13 @@
 
 class Actuator_Ledbuiltin : public Actuator_Digital {
   public: 
-    Actuator_Ledbuiltin(const uint8_t p, const char* topicLeaf, uint8_t brightness = 255, const char* color = "0xFFFFFF");
+    Actuator_Ledbuiltin(const uint8_t p, uint8_t brightness = 255, const char* color = "0xFFFFFF");
     virtual void act();
     uint8_t brightness; // Brightness of LED  0-255
     #ifdef ACTUATOR_LEDBUILTIN_RGB
       INcolor* color;
     #endif
+    void dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet);
 };
 
 #endif // ACTUATOR_LEDBUILTIN_H

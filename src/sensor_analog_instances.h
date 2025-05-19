@@ -11,12 +11,6 @@
 
 #include "sensor_analog.h"
 
-#ifndef SENSOR_ANALOG_TOPIC_1
-  #define SENSOR_ANALOG_TOPIC_1 "analog1"
-#endif
-#ifndef SENSOR_ANALOG_NAME_1
-  #define SENSOR_ANALOG_NAME_1 "Analog1"
-#endif
 
 // TO_ADD_BOARD
 #ifndef SENSOR_ANALOG_PIN_1
@@ -38,6 +32,10 @@
 //TODO-23 for power management will rethink individual timers
 #ifndef SENSOR_ANALOG_MS_1
   #define SENSOR_ANALOG_MS_1 900000 // How often to read in MS - default to 15 minutes if not overridden
+#endif
+
+#ifndef SENSOR_ANALOG_COLOR_1
+  #define SENSOR_ANALOG_COLOR_1 "0x87643"
 #endif
 
 #endif // SENSOR_ANALOG_INSTANCES_WANT

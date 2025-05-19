@@ -28,7 +28,8 @@
  
  class Sensor_Button : public Sensor {
     public:
-      Sensor_Button( const char* name, const char* topicLeaf, uint8_t pin);
+      Sensor_Button( const char * const id, const char * const name, uint8_t pin, const char * const color);
+      OUTuint16* output; // TODO convert to an enum 
       void setup();
       void loop();
       void clickHandlerInner(clickType type);
@@ -36,12 +37,11 @@
       static void longClickHandler(Button2& btn);
       static void doubleClickHandler(Button2& btn);
       static void tripleClickHandler(Button2& btn);
-      static void newSensor_Button(const char* name, const char* topicLeaf, uint8_t pin);
+      static void newSensor_Button(const char * const id, const char * const name, uint8_t pin, const char* color);
       static Sensor_Button* handler(Button2& button);
     private:
       Button2* button;
       uint8_t pin;
-      const char* topicLeaf;
  };
  
  extern std::vector<Sensor_Button*> buttons;

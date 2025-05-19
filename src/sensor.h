@@ -7,14 +7,15 @@
 
 class Sensor : public Frugal_Base {
   public:
-    const char* name = nullptr; // Name of this Sensor (TODO not implemented for all sensors yet)
+    const char* id = nullptr; // System readable id
+    const char* name = nullptr; // Human readable name of sensor (changeable in UX)
     unsigned long ms = 10000; // 10 second read 
     const bool retain = false;
     const int qos = 0; // Default to no guarrantee of delivery
     unsigned long nextLoopTime = 0;
 
     //Sensor();
-    Sensor(const char* const name, const unsigned long ms, bool retain);
+    Sensor(const char* id, const char* const name, const unsigned long ms, bool retain);
     virtual void setup();
     static void setupAll();
     virtual void readAndSet();
@@ -22,6 +23,8 @@ class Sensor : public Frugal_Base {
     static void loopAll();
     virtual String advertisement();
     static String advertisementAll();
+    virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
+    static void dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet);
 }; // Class Sensor
 
 extern std::vector<Sensor*> sensors;

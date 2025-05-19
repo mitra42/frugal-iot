@@ -17,9 +17,9 @@
 #include "sensor_float.h"
 #include "system_mqtt.h"
 
-Sensor_Float::Sensor_Float(const char* name, const char* topicLeaf, uint8_t width, float min, float max, const char* color, const unsigned long ms_init, bool retain) 
-: Sensor(name, ms_init, retain),
-  output(new OUTfloat(name, 0, topicLeaf, width, min, max, color, false)),
+Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, const unsigned long ms_init, bool retain) 
+: Sensor(id, name, ms_init, retain),
+  output(new OUTfloat(id, id, name, 0, width, min, max, color, false)), // Note id same as sensor id
   width(width) { };
 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
@@ -36,5 +36,12 @@ void Sensor_Float::readAndSet() {
 String Sensor_Float::advertisement() {
   return output->advertisement(name); // Note using name of sensor not name of output (which is usually the same)
 }
-    
+void Sensor_Float::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+  if (topicSensorId == id) {
+    if (output->dispatchLeaf(leaf, payload, isSet)) { // True if changed
+      // Nothing to do on Sensor
+    }
+  }
+}
+
 #endif // SENSOR_FLOAT_WANT

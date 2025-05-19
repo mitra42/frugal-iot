@@ -24,7 +24,7 @@
 #else
   #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
-#include <MQTT.h>
+#include <MQTT.h> // https://github.com/256dpi/arduino-mqtt
 // If configred not to use Wifi (or in future BLE) then will just operate locally, sending MQTT between components on this node, but 
 // not elsewhere.
 // TODO-49 add support for BLE if it makes sense for MQTT
@@ -33,6 +33,8 @@
 #include "system_discovery.h"
 #include <forward_list>
 #include "_base.h"
+
+#define SYSTEM_MQTT_SUBSCRIBE_ALL // If true subscribe to all topics for this node - may cause loops ?
 
 class Subscription {
   // This is both a subscription and a record of a message for retention purposes
@@ -60,12 +62,11 @@ class MqttManager : public Frugal_Base {
     MqttManager();
     void setup();
     void loop();
-    bool connect();
-    void blockTillConnected();
-    bool connectOLD(); // TODO-125 remove when new connect() works
+    bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
+    void blockTillConnected(); // Connect to MQTT, loop until succeed
     Subscription* find(const String &topicPath);
     void subscribe(const String& topicPath);
-    void subscribe(const char* topicLeaf);
+    void subscribe(const char* topicTwig);
     void dispatch(const String &topicPath, const  String &payload);
     bool resubscribeAll();
     void retainPayload(const String &topicPath, const String &payload);
@@ -73,16 +74,16 @@ class MqttManager : public Frugal_Base {
     void messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos);
     // Note, there are many of messageSend to make sensor code simple and not duplicate conversions.
     void messageSend(const String &topicPath, const String &payload, const bool retain, const int qos);
-    void messageSend(const char* topicLeaf, const String &payload, const bool retain, const int qos);
+    void messageSend(const char* topicTwig, const String &payload, const bool retain, const int qos);
     void messageSend(const String &topicPath, const float &value, const int width, const bool retain, const int qos);
-    void messageSend(const char* topicLeaf, const float &value, const int width, const bool retain, const int qos);
+    void messageSend(const char* topicTwig, const float &value, const int width, const bool retain, const int qos);
     void messageSend(const String &topicPath, const int value, const bool retain, const int qos);
-    void messageSend(const char* topicLeaf, const int value, const bool retain, const int qos);
+    void messageSend(const char* topicTwig, const int value, const bool retain, const int qos);
     void messageSend(const String &topicPath, const bool value, const bool retain, const int qos);
-    void messageSend(const char* topicLeaf, const bool value, const bool retain, const int qos);
+    void messageSend(const char* topicTwig, const bool value, const bool retain, const int qos);
     void messageSendQueued();
-    String* path(char const * const topicLeaf);
-    String* leaf(const String &topicPath);
+    String* path(char const * const topicTwig);
+    String* twig(const String &topicPath);
   
   protected: // TODO - some of the other methods should probably be protected
     std::forward_list<Subscription> subscriptions;

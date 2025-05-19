@@ -21,10 +21,10 @@
 #include "system_discovery.h"
 
 
-Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, const char* topicLeaf, uint8_t brightness, const char* color) :
-  Actuator_Digital("led", pin, topicLeaf, "yellow"),
+Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, const char* color) :
+  Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow"),
   #ifdef ACTUATOR_LEDBUILTIN_RGB
-    color(new INcolor("color", color, "color", color)), //TODO-131 color of UX should reflect color of LED
+    color(new INcolor("led", "color", "LED color", color, false)), //TODO-131 color of UX should reflect color of LED
   #endif
   brightness(brightness) 
   { 
@@ -33,6 +33,19 @@ Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, const char* topicLea
     #endif
   }
 
+void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
+  if (topicActuatorId == id) {
+    if (
+      #ifdef ACTUATOR_LEDBUILTIN_RGB
+        color->dispatchLeaf(leaf, payload, isSet) ||
+      #endif
+      input->dispatchLeaf(leaf, payload, isSet)
+    ) { // True if changed
+      act();
+    }
+  }
+}
+  
 void Actuator_Ledbuiltin::act() {
   #ifdef RGB_BUILTIN // Lolon C3 doesnt have RGB_BUILTIN defined so digitalWrite doesnt work correctly
     #error Unclear to me if boards with RGB_BUILTIN should use the neopixelwrie or digitalWrite (with latter doing a neopixelwrite) - I dont have a board to play with that does this.

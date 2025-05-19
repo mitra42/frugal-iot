@@ -8,13 +8,12 @@ class Actuator_Digital : public Actuator {
     uint8_t pin;
     INbool* input;
     
-    Actuator_Digital(const char* name, const uint8_t pin, const char* leaf, const char* color);
+    Actuator_Digital(const char * const id, const char * const name, const uint8_t pin, const char* color);
     virtual void act();
     virtual void set(const bool v);
-    virtual void inputReceived(const String &payload);
     virtual void setup();
     String advertisement();
-    void dispatchLeaf(const String &leaf, const String &payload);
+    void dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet);
 }; // Class Actuator_Digital
 
 #endif // ACTUATOR_DIGITAL_H
