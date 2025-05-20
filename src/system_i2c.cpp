@@ -2,7 +2,6 @@
  * Support for generic I2C interface
  * Note that some senors use I2C via other included libraries
  * 
- * NOTE THIS IS UNTESTED - IT MAY NOT WORK !!!!!! 
  */
 #include "_settings.h"
 #ifdef SYSTEM_I2C_WANT
