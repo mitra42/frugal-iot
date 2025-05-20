@@ -17,7 +17,7 @@ void System_I2C::initialize() {
 
 // The raw send and write. 
 // Send a single byte
-void System_I2C::send(uint8_t cmd) {
+  void System_I2C::send(uint8_t cmd) {
   // TODO-101 check for failure in write
   Wire.beginTransmission(addr);
   Wire.write(cmd);
@@ -32,7 +32,7 @@ bool System_I2C::send(uint8_t* buf, uint8_t bytes) {
       return false;
     }
   }
-  Wire.endTransmission();
+  Wire.endTransmission(); //TODO-101 want to return this value, but need to check others dont rely on inverse (1 = success)
   return true;
 }
 // Read buffer from I2C - arbitrary length
@@ -67,12 +67,20 @@ uint32_t System_I2C::read(uint8_t bytes) {
 // Now various combinations used by different sensors - some will be in the sensor classes instead.
 // TODO-101 rewrite ms803 to use this
 
+// Send 1 byte, read N
 uint8_t System_I2C::send1read1(uint8_t cmd) {
   send(cmd);
   return read(1);
 }
+// Send N bytes, read M
 bool System_I2C::sendAndRead(uint8_t* sendBuffer, uint8_t sendLength, uint8_t* rcvBuffer,uint8_t rcvLength) {
   send(sendBuffer, sendLength); // TODO allow for failure here - if fails dont try the read just return false
   return read(rcvBuffer, rcvLength);
 }
+// Send 1 byte, read N
+bool System_I2C::sendAndRead(uint8_t cmd, uint8_t* rcvBuffer,uint8_t rcvLength) {
+  send(cmd); // TODO allow for failure here - if fails dont try the read just return false
+  return read(rcvBuffer, rcvLength);
+}
+
 #endif //SYSTEM_I2C_WANT
