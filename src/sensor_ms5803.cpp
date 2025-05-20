@@ -169,8 +169,8 @@ void Sensor_ms5803::dispatchTwig(const String &topicSensorId, const String &leaf
     if (
       pressure->dispatchLeaf(leaf, payload, isSet) ||
       temperature->dispatchLeaf(leaf, payload, isSet)
-    ) { // True if changed
-      inputReceived(payload);
+    ) { // True if changed 
+      // Nothing to do on Sensor
     }
   }
 }

@@ -19,7 +19,6 @@ class Actuator : public Frugal_Base {
     //virtual void readAndSet();
     //virtual void loop();
     //static void loopAll();
-    virtual void inputReceived(const String &payload);
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);
     static void dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet);
     virtual String advertisement();
