@@ -528,6 +528,25 @@ String OUTbool::advertisement(const char * const group) {
   return ad;
 }
 
+/* 
+//Not used - built for gsheets where followed by a "wireto"
+IN* IN::INxxx(IOtype t, const char* sensorId) {
+  switch (t) {
+    // TO-ADD-INXXX
+    case BOOL:
+      return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
+    case UINT16:
+      return new INuint16(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
+    case FLOAT:
+      return new INfloat(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
+    case COLOR:
+      return new INcolor(sensorId, nullptr, nullptr, 0, 0, 0, true);
+    default:
+      return nullptr;
+  }
+}
+*/
+
 
 // These are mostly to stop the compiler complaining about missing vtables
 void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }

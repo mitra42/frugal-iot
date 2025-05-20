@@ -20,7 +20,7 @@ class SystemTime {
 
 extern SystemTime systemTime;
 
-namespace xTime {
+namespace xTime { // TODO move these into the FrugalBase etc setup and loop and make methods of SystemTime
   void setup();
   void loop();
 }
