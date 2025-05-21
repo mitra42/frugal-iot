@@ -268,8 +268,6 @@ void MqttManager::messageSendInner(const String &topicPath, const String &payloa
         default: 
           Serial.print(F(" err=")); Serial.println(client.lastError());
       }
-      // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
-      Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
     #endif // SYSTEM_MQTT_DEBUG
     if (qos > 0) {
       // This doesn't work - if first publish failed, this does, and it loops
