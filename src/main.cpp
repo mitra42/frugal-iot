@@ -179,7 +179,7 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #ifdef CONTROL_GSHEETS_WANT
   Control_Gsheets* cg =   new Control_Gsheets("gsheets demo");
   controls.push_back(cg);
-  cg->track(UINT16, Mqtt->path(ss->temperature->topicLeaf));
+  cg->track(UINT16, Mqtt->path(ss->temperature->topicTwig));
 #endif
 #pragma GCC diagnostic pop
 
