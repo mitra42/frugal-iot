@@ -22,7 +22,6 @@ class Sensor : public Frugal_Base {
     static void readAndSetAll();
     virtual void loop();
     static void loopAll();
-    void inputReceived(const String &payload) {}; // Does nothing in sensors (may change in future)
     virtual String advertisement();
     static String advertisementAll();
     virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);

@@ -23,6 +23,8 @@ void System_SPI::initialize() {
   SPI.setBitOrder( MSBFIRST ); // Maybe needs to be parameter if its ever not MSBFIRST
   SPI.setClockDivider( clock );
 }
+// TODO-101 have problem that interface commonality SPI/I2C presumes send and read seperable, while
+// for SPI looks like send cmd and leave cs low while reading
 void System_SPI::send(uint8_t cmd) {
     // This is set for MS5803, parameterize if it is different for other systems
     SPI.setDataMode( SPI_MODE3 );
@@ -32,7 +34,7 @@ void System_SPI::send(uint8_t cmd) {
     digitalWrite( cs, HIGH );
     delay( 5 );
 }
-uint32_t System_SPI::read(uint8_t cmd, uint8_t bytes) {
+uint32_t System_SPI::send1readN(uint8_t cmd, uint8_t bytes) {
     SPI.setDataMode( SPI_MODE3 );
     digitalWrite( cs, LOW );
     SPI.transfer( cmd );
