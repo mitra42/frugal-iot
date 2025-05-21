@@ -66,13 +66,13 @@ Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name)
 { // TODO-101 try movign some of these into part above
   aht = new System_I2C(SENSOR_ENSAHT_AHTI2C);
   // AHT21
-  temperature = new OUTfloat(id, "temperature", "Temperature", 0, 0, 0, 99, "red", false);
-  humidity = new OUTfloat(id, "humidity", "Humidity", 0, 0, 0, 99, "blue", false);
+  temperature = new OUTfloat(id, "temperature", "Temperature", 0, 0, 0, 455, "red", false);
+  humidity = new OUTfloat(id, "humidity", "Humidity", 0, 0, 0, 100, "blue", false);
   // ENS160
   ens = new System_I2C(SENSOR_ENSAHT_ENSI2C); // I2C object at this address
   aqi = new OUTuint16(id, "aqi", "AQI", 0, 0, 255, "purple", false); // TODO-101 set min/max
   tvoc = new OUTuint16(id, "tvoc", "TVOC", 0, 0, 99, "green", false); // TODO-101 set min/max
-  eco2 = new OUTuint16(id, "co2", "eCO2", 0, 0, 99, "brown", false); // TODO-101 set min/max
+  eco2 = new OUTuint16(id, "co2", "eCO2", 0, 300, 900, "brown", false); // TODO-101 set min/max
   aqi500 = new OUTuint16(id, "aqi500", "AQI500", 0, 0, 99, "brown", false); // Only valid on ENS161  // TODO-101 set min/max
 }
 
@@ -266,7 +266,7 @@ void Sensor_ensaht::dispatchTwig(const String &topicSensorId, const String &leaf
       eco2->dispatchLeaf(leaf, payload, isSet) ||
       aqi500->dispatchLeaf(leaf, payload, isSet)
     ) { // True if changed
-      inputReceived(payload);
+      // Nothing to do on sensor
     }
   }
 }
