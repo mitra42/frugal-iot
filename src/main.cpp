@@ -50,6 +50,9 @@
 #ifdef SENSOR_LOADCELL_WANT
 #include "sensor_loadcell.h"
 #endif
+#ifdef SENSOR_ENSAHT_WANT
+#include "sensor_ens160aht21.h"
+#endif
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
 #endif
@@ -153,6 +156,9 @@ sensors.push_back(ss);
 #endif
 #ifdef SENSOR_LOADCELL_WANT
   sensors.push_back(new Sensor_LoadCell("loadcell", "Load Cell", 2000, "pink", SENSOR_LOADCELL_MS, true));
+#endif
+#ifdef SENSOR_ENSAHT_WANT
+  sensors.push_back(new Sensor_ensaht("ensaht","ENS AHT"));
 #endif
 
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics

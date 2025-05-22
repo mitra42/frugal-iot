@@ -35,10 +35,10 @@
 #if defined(SENSOR_BH1750_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
-#if defined(SENSOR_UINT16_WANT) || defined(SENSOR_FLOAT_WANT) || defined(SENSOR_HT_WANT) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_MS5803_WANT)
+#if defined(SENSOR_UINT16_WANT) || defined(SENSOR_FLOAT_WANT) || defined(SENSOR_HT_WANT) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_MS5803_WANT) || defined(SENSOR_ENSAHT_WANT)
   #define SENSOR_WANT
 #endif
-#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG)
+#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)
   #define SENSOR_DEBUG
 #endif
 
@@ -79,7 +79,7 @@
 #if defined(SENSOR_MS5803_SPI) 
   #define SYSTEM_SPI_WANT
 #endif
-#if defined(SENSOR_MS5803_I2C) 
+#if defined(SENSOR_MS5803_I2C) || defined(SENSOR_ENSAHT_WANT)
   #define SYSTEM_I2C_WANT
 #endif
 #if defined(SENSOR_MS5803_DEBUG) 
