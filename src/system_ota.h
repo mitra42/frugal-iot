@@ -5,7 +5,7 @@
 
 namespace xOta {
 void setup();
-void loop();
+void infrequently();
 } // namespace xOta
 
 #endif // SYSTEM_OTA_H

@@ -18,8 +18,9 @@ class Frugal_Base {
     Frugal_Base();
     virtual void setup();
     static void setupAll();
-    virtual void loop();
-    static void loopAll();
+    virtual void frequently();
+    virtual void periodically();
+    virtual void infrequently();
 }; // Class FrugalBase
 
 class IO {

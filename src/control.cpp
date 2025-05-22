@@ -102,9 +102,9 @@ void Control::setupAll() {
   }
 }
 // Note Static
-void Control::loopAll() {
+void Control::periodicallyAll() {
   for (Control* c: controls) {
-    c->loop();
+    c->periodically();
   }
 }
 // Note Static

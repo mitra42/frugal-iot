@@ -22,7 +22,7 @@ extern SystemTime systemTime;
 
 namespace xTime { // TODO move these into the FrugalBase etc setup and loop and make methods of SystemTime
   void setup();
-  void loop();
+  void infrequently();
 }
 
 #endif //SYSTEM_TIME_H

@@ -214,7 +214,7 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
 
 // This is stuff done multiple times per period
 void frequently() {
-  Mqtt->loop(); // 
+  Mqtt->frequently(); // 
   #ifdef LOCAL_DEV_WANT
     localDev::frequently();
   #endif
@@ -224,10 +224,10 @@ void frequently() {
 // These are things done one time per period - where a period is the time set in SYSTEM_POWER_MS
 void periodically() {
   #ifdef SENSOR_WANT
-    Sensor::readAndSetAll(); // TODO-23 check none of the sensors subclass Loop to do something other than readAndSet
+    Sensor::periodicallyAll(); // TODO-23 check none of the sensors subclass Loop to do something other than readAndSet
   #endif
   #ifdef CONTROL_WANT
-    Control::loopAll(); // TODO-23 this is not going to work for most control loops (only Blinken currently) which will have a timeframe
+    Control::periodicallyAll(); // TODO-23 this is not going to work for most control loops (only Blinken currently) which will have a timeframe
   #endif
   // No actuator time dependent at this point
   #ifdef LOCAL_DEV_WANT
@@ -237,13 +237,13 @@ void periodically() {
 // These are things done occasionally - maybe once over multiple periods (HIGH MEDIUM) or each period (LOW)
 void infrequently() {
   #ifdef SYSTEM_DISCOVERY_WANT
-    xDiscovery::loop();
+    xDiscovery::infrequently();
   #endif
   #ifdef SYSTEM_OTA_WANT
-    xOta::loop(); // TODO-23 default time should be less than one period
+    xOta::infrequently(); // TODO-23 default time should be less than one period
   #endif
   #ifdef SYSTEM_TIME_WANT
-    xTime::loop();
+    xTime::infrequently();
   #endif
   #ifdef LOCAL_DEV_WANT
     localDev::infrequently();

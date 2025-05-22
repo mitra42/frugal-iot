@@ -5,7 +5,7 @@ namespace xDiscovery {
 extern String *topicPrefix;
 void fullAdvertise();
 void setup();
-void loop();
+void infrequently();
 } // namespace xDiscovery
 
 #endif // SYSTEM_DISCOVERY_H

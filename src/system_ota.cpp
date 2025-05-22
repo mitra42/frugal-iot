@@ -222,7 +222,7 @@ void setup() { // TODO-25 - put this in a class and call from base etc
   g_OTAMgr.checkForUpdate();
 }
 
-void loop() {
+void infrequently() {
   // Note wont operate on first loop (see initialization of nextLoopTime)
   if (nextLoopTime <= millis() ) {
     g_OTAMgr.checkForUpdate();

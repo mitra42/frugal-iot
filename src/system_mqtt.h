@@ -61,7 +61,7 @@ class MqttManager : public Frugal_Base {
     unsigned long ms;
     MqttManager();
     void setup();
-    void loop();
+    void frequently();
     bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
     void blockTillConnected(); // Connect to MQTT, loop until succeed
     Subscription* find(const String &topicPath);
@@ -93,7 +93,7 @@ class MqttManager : public Frugal_Base {
 namespace xMqtt {
   void MessageReceived(String &topicPath, String &payload);
   void setup();
-  void loop();
+  void frequently();
 } // namespace xMqtt
 
 extern MqttManager* Mqtt; // Will get initialized by setup in frugalIot.ino

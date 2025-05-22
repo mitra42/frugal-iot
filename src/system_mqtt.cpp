@@ -75,7 +75,7 @@ MqttManager::MqttManager() : Frugal_Base(), client(1024,128), nextLoopTime(0), m
   setup();
 }
 
-void MqttManager::loop() {
+void MqttManager::frequently() {
   if (nextLoopTime <= millis()) {
     // Automatically reconnect
     blockTillConnected(); // TODO-125 maybe make non blocking and queue messages while down

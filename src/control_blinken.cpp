@@ -40,7 +40,7 @@ void ControlBlinken::act() {
   nextBlinkTime = millis() + (outputs[0]->boolValue() ? blinkOn : blinkOff) ; // Blink after new blink time
 }
 
-void ControlBlinken::loop() {
+void ControlBlinken::periodically() {
   if (nextBlinkTime <= millis()) {
     bool next = !outputs[0]->boolValue();
     ((OUTbool*)outputs[0])->set(next); // Will send message

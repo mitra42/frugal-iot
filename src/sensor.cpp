@@ -27,21 +27,9 @@ void Sensor::readAndSet() {
   Serial.println(F("XXX25 Shouldnt be calling Sensor::readAndSet - should be a subclass"));
 }
 
-void Sensor::loop() {
-  if (nextLoopTime <= millis()) {
-    readAndSet(); // Will also send message via output->set()
-    nextLoopTime = millis() + ms;
-  }
-}
-
-void Sensor::readAndSetAll() {
+void Sensor::periodicallyAll() {
   for (Sensor* s: sensors) {
     s->readAndSet();
-  }
-}
-void Sensor::loopAll() {
-  for (Sensor* s: sensors) {
-    s->loop();
   }
 }
 

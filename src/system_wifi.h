@@ -11,6 +11,5 @@ void setup();
 bool connect();
 void checkConnected();
 String &clientid();
-//void loop();
 } // namespace xWifi
 #endif // SYSTEM_WIFI_H

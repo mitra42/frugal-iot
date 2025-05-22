@@ -101,7 +101,7 @@ namespace xTime {  //TODO-25 - put this in a class and call from base etc
       systemTime.sync();
   }
 
-  void loop() {
+  void infrequently() {
     if (nextLoopTime <= millis() ) {
       if (! systemTime.isTimeSet()) {
           Serial.print("Time since boot"); Serial.println(systemTime.now());

@@ -29,18 +29,10 @@ void Frugal_Base::setupAll() {
   #endif
   // TODO-25 calls system.setupAll
 }
-void Frugal_Base::loop() { }; // This will get called if no loop() in subclass 
+void Frugal_Base::infrequently() { }; // This will get called if no loop() in subclass 
+void Frugal_Base::frequently() { }; // This will get called if no loop() in subclass 
+void Frugal_Base::periodically() { }; // This will get called if no loop() in subclass 
 
-void Frugal_Base::loopAll() {
-  #ifdef SENSOR_WANT
-    Sensor::loopAll();
-  #endif
-  #ifdef CONTROL_WANT
-    Control::loopAll();
-  #endif
-  //Actuator::loopAll(); // Currently no loops in Actuators
-  // TODO-25 call system;
-}; // Class FrugalBase
 
 // ========== IO - base class for IN and OUT ===== 
 

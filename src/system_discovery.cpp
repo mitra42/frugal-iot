@@ -136,7 +136,7 @@ void setup() {
   #endif
 }
 
-void loop() {
+void infrequently() {
     if (nextLoopTime <= millis()) {
         quickAdvertise(); // Send info about this node to server (on timer)
         nextLoopTime = millis() + SYSTEM_DISCOVERY_MS;
