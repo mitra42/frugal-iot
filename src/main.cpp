@@ -174,9 +174,9 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
   controls.push_back(new ControlHysterisis("humidity", "Humidity control", 50, 0, 100));
 #endif //CONTROL_HYSTERISIS_WANT
 #ifdef CONTROL_GSHEETS_WANT
-  Control_Gsheets* cg =   new Control_Gsheets("gsheets demo");
+  Control_Gsheets* cg =   new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);
   controls.push_back(cg);
-  cg->track(UINT16, Mqtt->path(ss->temperature->topicTwig));
+  cg->track("temperature", Mqtt->path(ss->temperature->topicTwig));
 #endif
 #pragma GCC diagnostic pop
 

@@ -54,6 +54,7 @@ class IN : public IO {
     virtual float floatValue();
     virtual bool boolValue();
     virtual uint16_t uint16Value();
+    virtual String StringValue();
     virtual bool convertAndSet(const String &payload);
     virtual bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet);
     virtual bool dispatchPath(const String &topicpath, const String &payload); 
@@ -77,14 +78,16 @@ class OUT : public IO {
 class INfloat : public IN {
   public:
     float value;
+    uint8_t width;
     float min;
     float max;
     INfloat(); 
-    INfloat(char const * const sensorId, char const * const id, char const * const name, float v, float min, float max, char const * const color, const bool wireable);
+    INfloat(char const * const sensorId, char const * const id, char const * const name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
     uint16_t uint16Value();
+    String StringValue();
 
     // Copy assignment operator
     /*
@@ -115,6 +118,7 @@ class INuint16 : public IN {
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
     uint16_t uint16Value();
+    String StringValue();
     bool convertAndSet(const String &payload);
     void debug(const char* const where);
     String advertisement(const char * const name);
@@ -129,6 +133,7 @@ class INbool : public IN {
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
     uint16_t uint16Value();
+    String StringValue();
     bool convertAndSet(const String &payload);
     void debug(const char* const where);
     String advertisement(const char * const name);
@@ -146,6 +151,23 @@ class INcolor : public IN {
     float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue();
     uint16_t uint16Value();
+    String StringValue();
+    bool convertAndSet(const String &payload);
+    bool convertAndSet(const char* payload); // Used when setting in constructor etc
+    void debug(const char* const where);
+    String advertisement(const char * const name);
+};
+
+class INtext : public IN {
+  public:
+    String* value;  // dont know the type of this value  and shouldnt care
+    INtext();
+    INtext(const char * const sensorId, const char * const id, const char* const name, String* value, const char* const color, const bool wireable);
+    INtext(const INtext &other);
+    float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
+    bool boolValue();
+    uint16_t uint16Value();
+    String StringValue();
     bool convertAndSet(const String &payload);
     bool convertAndSet(const char* payload); // Used when setting in constructor etc
     void debug(const char* const where);
@@ -165,6 +187,7 @@ class OUTfloat : public OUT {
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();
     uint16_t uint16Value();
+    String StringValue();
     void sendWired();
     void set(const float newvalue); // Set and send if changed
     void debug(const char* const where);
@@ -179,6 +202,7 @@ class OUTbool : public OUT {
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();
     uint16_t uint16Value();
+    String StringValue();
     void set(const bool newvalue);
     void sendWired();
     void debug(const char* const where);
@@ -195,6 +219,7 @@ class OUTuint16 : public OUT {
     float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue();
     uint16_t uint16Value();
+    String StringValue();
     void set(const uint16_t newvalue);
     void sendWired();
     void debug(const char* const where);
