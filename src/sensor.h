@@ -7,22 +7,26 @@
 
 class Sensor : public Frugal_Base {
   public:
-    const char* topicLeaf = NULL; // Topic to send to
+    const char* id = nullptr; // System readable id
+    const char* name = nullptr; // Human readable name of sensor (changeable in UX)
     unsigned long ms = 10000; // 10 second read 
     const bool retain = false;
     const int qos = 0; // Default to no guarrantee of delivery
     unsigned long nextLoopTime = 0;
 
     //Sensor();
-    Sensor(const char* const topicLeaf, const unsigned long ms, bool retain);
+    Sensor(const char* id, const char* const name, const unsigned long ms, bool retain);
     virtual void setup();
     static void setupAll();
     virtual void readAndSet();
     virtual void loop();
     static void loopAll();
+    virtual String advertisement();
+    static String advertisementAll();
+    virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
+    static void dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet);
 }; // Class Sensor
 
 extern std::vector<Sensor*> sensors;
-void Sensor_debug(const char* const msg);
 
 #endif // SENSOR_H

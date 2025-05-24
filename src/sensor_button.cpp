@@ -16,8 +16,9 @@
 
 
 
-Sensor_Button::Sensor_Button(uint8_t pin, const char* topicLeaf) :
-  Sensor(topicLeaf, 10, false), pin(pin) {
+Sensor_Button::Sensor_Button(const char * const id, const char * const name, uint8_t pin, const char* const color) :
+  Sensor(id, name, 10, false), pin(pin) {
+  output = new OUTuint16(id, "out", name, empty, single_click, empty, color, false); // TODO convert this into a OUTenum - hard part is UX
   button = new Button2(pin);
   button->setClickHandler(Sensor_Button::clickHandler);
   button->setLongClickHandler(Sensor_Button::longClickHandler);
@@ -27,7 +28,7 @@ Sensor_Button::Sensor_Button(uint8_t pin, const char* topicLeaf) :
 
 // Unclear how would use an "OUT" as its not dependent on a change
 void Sensor_Button::clickHandlerInner(clickType type) {
-  Mqtt->messageSend(topicLeaf, type, retain, qos);
+  output->set(type);
 }
 void Sensor_Button::clickHandler(Button2& btn) {
   handler(btn)->clickHandlerInner(single_click);
@@ -44,8 +45,8 @@ void Sensor_Button::doubleClickHandler(Button2& btn) {
 void Sensor_Button::tripleClickHandler(Button2& btn) {
   handler(btn)->clickHandlerInner(triple_click);
 }
-void Sensor_Button::newSensor_Button(uint8_t pin, const char* topicLeaf) {
-  Sensor_Button* sb = new Sensor_Button(pin, topicLeaf);
+void Sensor_Button::newSensor_Button(const char * const id, const char * const name, uint8_t pin, const char* const color) {
+  Sensor_Button* sb = new Sensor_Button(id, name, pin, color);
   sb->button->setID(buttons.size());
   buttons.push_back(sb);
   sensors.push_back(sb);   

@@ -27,35 +27,11 @@
 #include "system_wifi.h"
 #include "system_mqtt.h"  // xMqtt
 #include "system_discovery.h"
-// TO_ADD_ACTUATOR
-#ifdef ACTUATOR_RELAY_WANT
-  #include "actuator_relay.h"
+#ifdef ACTUATOR_WANT
+  #include "actuator.h"
 #endif
-#ifdef ACTUATOR_LEDBUILTIN_WANT
-  #include "actuator_ledbuiltin.h"
-#endif
-// TO_ADD_SENSOR 
-#ifdef SENSOR_ANALOG_INSTANCES_WANT
-  #include "sensor_analog_instances.h"
-#endif
-#ifdef SENSOR_SOIL_WANT
-  #include "sensor_soil.h"
-#endif
-#ifdef SENSOR_BATTERY_WANT
-  #include "sensor_battery.h"
-#endif
-#ifdef SENSOR_DHT_WANT
-  #include "sensor_dht.h"
-#endif
-#ifdef SENSOR_SHT_WANT
-  #include "sensor_sht.h"
-#endif
-#ifdef SENSOR_BH1750_WANT
-  #include "sensor_bh1750.h"
-#endif
-// TO_ADD_CONTROL
-#ifdef CONTROL_BLINKEN_WANT
-  #include "control_blinken.h"
+#ifdef SENSOR_WANT
+  #include "sensor.h"
 #endif
 #ifdef CONTROL_WANT
   #include "control.h"
@@ -108,6 +84,8 @@ void fullAdvertise() {
         "ESP8266 D1"
       #elif defined(LOLIN_C3_PICO)
         "Lolin C3 Pico"
+      #elif defined(LOLIN_S2_MINI)
+        "Lolin S2 Mini"
       #else
         #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
       #endif
@@ -117,9 +95,6 @@ void fullAdvertise() {
       #endif
       #ifdef SENSOR_DHT_WANT
         " DHT temp/humidity"
-      #endif
-      #ifdef SENSOR_SOIL_WANT
-        " Soil moisture"
       #endif
       // TO_ADD_ACTUATOR
       #ifdef ACTUATOR_RELAY_WANT
@@ -131,56 +106,17 @@ void fullAdvertise() {
     #endif
     // TODO-44 add location: <gsm coords>
     "\ntopics:" 
-      // For any module with a UI, add it here.  TO_ADD_SENSOR TO_ADD_ACTUATOR TO_ADD_NEW_CONTROL
-      #ifdef ACTUATOR_LEDBUILTIN_WANT
-        ACTUATOR_LEDBUILTIN_ADVERTISEMENT
-      #endif
-      #ifdef ACTUATOR_RELAY_WANT
-        ACTUATOR_RELAY_ADVERTISEMENT
-      #endif
-      #ifdef SENSOR_ANALOG_INSTANCES_WANT
-        #ifdef SENSOR_ANALOG_ADVERTISEMENT_1
-          SENSOR_ANALOG_ADVERTISEMENT_1
-        #endif
-        #ifdef SENSOR_ANALOG_ADVERTISEMENT_2
-          SENSOR_ANALOG_ADVERTISEMENT_2
-        #endif
-        #ifdef SENSOR_ANALOG_ADVERTISEMENT_3
-          SENSOR_ANALOG_ADVERTISEMENT_3
-        #endif
-        #ifdef SENSOR_ANALOG_ADVERTISEMENT_4
-          SENSOR_ANALOG_ADVERTISEMENT_4
-        #endif
-        #ifdef SENSOR_ANALOG_ADVERTISEMENT_5
-          SENSOR_ANALOG_ADVERTISEMENT_5
-        #endif
-      #endif
-      #ifdef SENSOR_SOIL_WANT
-        SENSOR_SOIL_ADVERTISEMENT1
-        #ifdef SENSOR_SOIL_PIN2
-          SENSOR_SOIL_ADVERTISEMENT2
-        #endif
-        #ifdef SENSOR_SOIL_PIN3
-          SENSOR_SOIL_ADVERTISEMENT3
-        #endif        
-      #endif
-      #ifdef SENSOR_BATTERY_WANT
-        SENSOR_BATTERY_ADVERTISEMENT
-      #endif
-      #ifdef SENSOR_SHT_WANT
-        SENSOR_SHT_ADVERTISEMENT
-      #endif
-      #ifdef SENSOR_DHT_WANT
-        SENSOR_DHT_ADVERTISEMENT
-      #endif
-      #ifdef SENSOR_BH1750_WANT
-        SENSOR_BH1750_ADVERTISEMENT
-      #endif
     )
       #ifdef SYSTEM_LOGGER_WANT
       + System_Logger::advertisementAll()
       #endif
   );
+  #ifdef ACTUATOR_WANT
+    *advertisePayload += (Actuator::advertisementAll());
+  #endif
+  #ifdef SENSOR_WANT
+    *advertisePayload += (Sensor::advertisementAll());
+  #endif
   #ifdef CONTROL_WANT
     *advertisePayload += (Control::advertisementAll());
   #endif
@@ -196,6 +132,13 @@ void setup() {
   topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/lotus/esp32-12345/" prefix of most topics
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
+  #endif
+  #ifdef SYSTEM_MQTT_SUBSCRIBE_ALL
+    // This is new & experimental - bulk subscribe to everything for this node - may cause loops?. 
+    Mqtt->subscribe("#"); // Subscribe to all topics for this node
+  #else
+    // Subscribe to all `set` for this node - not needed if subscribe to all above.
+    Mqtt->subscribe("set/#"); 
   #endif
 }
 

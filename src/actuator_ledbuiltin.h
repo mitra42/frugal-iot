@@ -35,9 +35,11 @@
 
 // TODO-ADD-BOARD - add your board here
 #if defined(LOLIN_C3_PICO) || defined(LILYGOHIGROW)
-  #define ACTUATOR_LEDBUILTIN_RGB true
-#elif defined(SONOFF_R2) || defined(ESP8266_D1)
-  #define ACTUATOR_LEDBUILTIN_RGB false
+  #define ACTUATOR_LEDBUILTIN_RGB
+#elif defined(SONOFF_R2) || defined(ESP8266_D1) 
+  #define ACTUATOR_LEDBUILTIN_INVERT
+#elif defined(LOLIN_S2_MINI)
+  // Not defined LED is digital and not inverted
 #else
   #error "please define whether your LED is RGB or not"
 #endif // BOARDS
@@ -45,16 +47,21 @@
 #ifndef ACTUATOR_LEDBUILTIN_BRIGHTNESS
   #define ACTUATOR_LEDBUILTIN_BRIGHTNESS 255
 #endif
+#ifndef ACTUATOR_LEDBUILTIN_COLOR
+  #define ACTUATOR_LEDBUILTIN_COLOR "0x00FF00" // White
+#endif
 
-#define ACTUATOR_LEDBUILTIN_ADVERTISEMENT "\n  -\n    topic: ledbuiltin\n    name: Built in LED\n    type: bool\n    color: yellow\n    display: toggle\n    rw: w"
 
 
 class Actuator_Ledbuiltin : public Actuator_Digital {
   public: 
-    Actuator_Ledbuiltin(const uint8_t p, const char* topicLeaf, bool rgb = false, uint8_t brightness = 255);
+    Actuator_Ledbuiltin(const uint8_t p, uint8_t brightness = 255, const char* color = "0xFFFFFF");
     virtual void act();
-    bool rgb; // If true then use RGB values
     uint8_t brightness; // Brightness of LED  0-255
+    #ifdef ACTUATOR_LEDBUILTIN_RGB
+      INcolor* color;
+    #endif
+    void dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet);
 };
 
 #endif // ACTUATOR_LEDBUILTIN_H

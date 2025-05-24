@@ -9,19 +9,17 @@
   #define SENSOR_SHT_DEVICE SHT30 // e.g. The Lolin SHT30 shield
 #endif
 #ifndef SENSOR_SHT_ADDRESS
-  #define SENSOR_SHT_ADDRESS 0x45 // 0x44 is also common
+  #define SENSOR_SHT_ADDRESS 0x44 // 0x45 is the D1 shield 0x44 is also common TODO build this into OTA Key as requires two binaries
 #endif
 #ifndef SENSOR_SHT_MS
   #define SENSOR_SHT_MS 60000
 #endif
 
-#define SENSOR_SHT_ADVERTISEMENT "\n  -\n    topic: temperature\n    name: Temperature\n    type: float\n    display: bar\n    min: 0\n    max: 45\n    color: red\n    rw: r\n  -\n    topic: humidity\n    name: Humidity\n    type: float\n    display: bar\n    min: 0\n    max: 100\n    color: cornflowerblue\n    rw: r"
-
 class Sensor_SHT : public Sensor_HT {
 public:
   uint8_t address;
   SENSOR_SHT_DEVICE *sht; 
-  Sensor_SHT(uint8_t address, TwoWire *wire, const char* topicLeaf, const char* topicLeaf2, const unsigned long ms, bool retain);
+  Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, const unsigned long ms, bool retain);
   virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor
 };
 

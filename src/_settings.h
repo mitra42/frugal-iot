@@ -29,16 +29,16 @@
 #if defined(SENSOR_ANALOG_DEBUG) 
   #define SENSOR_UINT16_DEBUG
 #endif
-#if defined(SENSOR_BH1750_WANT)
+#if defined(SENSOR_BH1750_WANT) || defined(SENSOR_LOADCELL_WANT)
   #define SENSOR_FLOAT_WANT
 #endif
 #if defined(SENSOR_BH1750_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
-#if defined(SENSOR_UINT16_WANT) || defined(SENSOR_FLOAT_WANT) || defined(SENSOR_HT_WANT) || defined(SENSOR_FLOAT_DEBUG)
+#if defined(SENSOR_UINT16_WANT) || defined(SENSOR_FLOAT_WANT) || defined(SENSOR_HT_WANT) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_MS5803_WANT) || defined(SENSOR_ENSAHT_WANT)
   #define SENSOR_WANT
 #endif
-#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG)
+#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)
   #define SENSOR_DEBUG
 #endif
 
@@ -93,6 +93,16 @@
 #if defined(SENSOR_DEBUG) || defined(ACTUATOR_DEBUG) || defined(CONTROL_DEBUG) || defined(SYSTEM_DEBUG)
   #define ANY_DEBUG
 #endif 
+
+#if defined(SENSOR_MS5803_SPI) 
+  #define SYSTEM_SPI_WANT
+#endif
+#if defined(SENSOR_MS5803_I2C) || defined(SENSOR_ENSAHT_WANT)
+  #define SYSTEM_I2C_WANT
+#endif
+#if defined(SENSOR_MS5803_DEBUG) 
+  #define SYSTEM_SPI_DEBUG
+#endif
 
 // TO_ADD_BOARD
 // shields compatible with D1 and its ESP8266 not C-pico which has same pin layout but different availability esp of analog

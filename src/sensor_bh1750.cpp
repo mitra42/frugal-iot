@@ -11,9 +11,9 @@
 
 #include <BH1750.h>             //https://github.com/claws/BH1750
 
-
-Sensor_BH1750::Sensor_BH1750(const char* topicLeaf, uint8_t pin, const unsigned long ms, bool retain)
-  : Sensor_Float(topicLeaf, 3, ms, retain), pin(pin), lightmeter(pin) {
+// Practical range of lux unknown - apparantly can go from 0.001 to 65k 
+Sensor_BH1750::Sensor_BH1750( const char* const id, const char * const name, uint8_t pin, const unsigned long ms, bool retain)
+  : Sensor_Float(id, name, 3, 0, 65000, "yellow", ms, retain), pin(pin), lightmeter(pin) {
   }
 
 void Sensor_BH1750::setup() {

@@ -30,16 +30,17 @@
 #ifndef SENSOR_ANALOG_REFERENCE
   #ifdef ESP8266_D1
     #define SENSOR_ANALOG_REFERENCE DEFAULT // TODO not clear if / where this is used 
-  #elif defined(LOLIN_C3_PICO) || defined(ESP32_WROVER_DEV) || defined(ESP32) // It doesnt seem to be used on ESP32s 
+  #elif defined(ESP32) // It doesnt seem to be used on ESP32s 
   #else
     #error analogReference() is processor dependent, review the docs and online and define
   #endif
 #endif //  SENSOR_ANALOG_REFERENCE
 
-Sensor_Analog::Sensor_Analog(const uint8_t p, const uint8_t smooth_init, const char* topic_init, const unsigned long ms_init, bool r) : Sensor_Uint16(smooth_init, topic_init, ms_init, r), pin(p) { };
+Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, const uint8_t p, const uint8_t smooth_init, const uint16_t min, const uint16_t max, const char* color, const unsigned long ms_init, bool r) 
+: Sensor_Uint16(id, name, smooth_init, min, max, color, ms_init, r), pin(p) { };
 
-// Sensor_Uint16_t::act is good - sends with retain=false; qos=0;
-// Sensor_Uint16_t::set is good - does optional smooth, compares and calls act
+// Sensor_Uint16_t::act is obsolete
+// Sensor_Uint16_t::set is good - does optional smooth, compares and sends
 // Sensor_Uint16_t::loop is good - does periodic read and set
 
 // Note this is virtual, and subclassed in Sensor_Battery
@@ -58,6 +59,7 @@ void Sensor_Analog::setup() {
     analogSetAttentuation(SENSOR_ANALOG_ATTENTUATION)
   #endif
 }
+// SensorAnalog::dispatchTwig is not needed
+
 #endif // SENSOR_ANALOG_WANT
-// TODO-57 need to do discovery
 

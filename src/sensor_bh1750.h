@@ -5,11 +5,12 @@
 #include "sensor_float.h"
 #include <BH1750.h>
 
-#ifndef SENSOR_BH1750_TOPIC
-  #define SENSOR_BH1750_TOPIC "lux"
+#ifndef SENSOR_BH1750_ID
+  #define SENSOR_BH1750_ID "lux"
 #endif
-// TODO-115 practical range of lux unknown - apparantly can go from 0.001 to 65k
-#define SENSOR_BH1750_ADVERTISEMENT "\n  -\n    topic: " SENSOR_BH1750_TOPIC "\n    name: Light\n    type: int\n    display: bar\n    min: 0\n    max: 65000\n    color: yellow\n    rw: r"
+#ifndef SENSOR_BH1750_NAME
+  #define SENSOR_BH1750_NAME "Lux"
+#endif
 
 #ifndef SENSOR_BH1750_MS
   #define SENSOR_BH1750_MS 10000
@@ -19,7 +20,8 @@
   #ifdef LILYGOHIGROW
     #define SENSOR_BH1750_ADDRESS (0x23)  // This may be a generally useful default ?
   #else
-    #error Need to define SENSOR_BH1750_ADDRESS 
+    #define SENSOR_BH1750_ADDRESS 0x23  // This may be a generally useful default ?
+    // #error Need to define SENSOR_BH1750_ADDRESS 
   #endif
 #endif
 
@@ -31,7 +33,7 @@ class Sensor_BH1750 : public Sensor_Float {
   public:
     uint8_t pin;
     BH1750 lightmeter;
-    Sensor_BH1750(const char* topicLeaf, uint8_t pin, const unsigned long ms, bool retain);
+    Sensor_BH1750(const char* const id, const char * const name, uint8_t pin, const unsigned long ms, bool retain);
     void setup();
     virtual float read();
 };

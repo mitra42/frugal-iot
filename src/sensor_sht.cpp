@@ -29,9 +29,10 @@
 #include "system_mqtt.h"                // Library for sending messages
 
 
-
-Sensor_SHT::Sensor_SHT(uint8_t address_init, TwoWire *wire, const char* topic_init, const char* topic2_init, const unsigned long ms_init, bool retain) 
-  : Sensor_HT(topic_init, topic2_init, ms_init,retain), address(address_init) {
+// TODO Add alternative constructor with id e.g. sht1, sht2 etc
+Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, const unsigned long ms_init, bool retain) 
+  : Sensor_HT("sht", name, ms_init, retain), 
+    address(address_init) {
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   Wire.begin(); // Appears to default to 4,5 which is correct for the Lolin D1 Mini SHT30 shield
   Wire.setClock(100000);
@@ -67,19 +68,7 @@ void Sensor_SHT::readAndSet() {
         Serial.println(F("%"));
       #endif
 
-      // Store new results and optionally if changed send on MQTT
-      if (temp != temperature) {
-        temperature = temp;
-        if (topicLeaf) {
-          Mqtt->messageSend(topicLeaf, temperature, 1, retain, 0);  // topicLeaf, value, width, retain, qos
-        }
-      }
-      if (humy != humidity) { // TODO may want to add some bounds (e.g a percentage)
-        humidity = humy;
-        if (topicLeaf2) {
-          Mqtt->messageSend(topicLeaf2, humidity, 1, retain, 0);
-        }
-      }
+      set(temp, humy); // Set the values in the OUT object and send
 
       // Note only request more Data if was dataReady
       sht->requestData(); // Request next one

@@ -106,6 +106,7 @@ Add the following code at the different TO_ADD_SENSOR places
 create an instance of the class, setup or loop is handled by the class's code.
 ```
 #ifdef ACTUATOR_RELAY_WANT
+// TODO-25-22apr this is no longer correct ! 
 Actuator_Digital* a2 = new Actuator_Digital(ACTUATOR_RELAY_PIN, "relay");
 #endif
 ```
