@@ -94,6 +94,7 @@ time_t SystemTime::now() {
 }
 
 String SystemTime::dateTime() {
+  // Note String is on stack so safe but not for long term use
   return StringF("%02d/%02d/%02d %02d:%02d:%02d %s", _localTime.tm_mday, _localTime.tm_mon + 1, _localTime.tm_year > 100 ? _localTime.tm_year - 100 : _localTime.tm_year, _localTime.tm_hour, _localTime.tm_min, _localTime.tm_sec, SYSTEM_TIME_ZONE_ABBREV);
 }
 time_t SystemTime::lastSync() { return _lastSyncTime; }

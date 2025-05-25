@@ -57,6 +57,10 @@ OUT::OUT(const char* sensorId, const char * const id, const char * const name, c
 void IO::wireTo(String* topicPath) {
   wiredPath = topicPath;
   Mqtt->subscribe(*wiredPath);
+
+void IO::wireTo(String* topicPath) {
+  wiredPath = topicPath;
+  Mqtt->subscribe(*wiredPath);
 }
 // TO_ADD_INxxx 
 float IN::floatValue() {
@@ -89,6 +93,24 @@ String INuint16::StringValue() {
   return String(value);
 }
 
+String IN::StringValue() {
+  Serial.println(F("IN::uint16Value should be subclassed"));
+  return String();
+}
+
+float INuint16::floatValue() {
+  return value;
+}
+bool INuint16::boolValue() {
+  return value;
+}
+uint16_t INuint16::uint16Value() {
+  return value;
+}
+String INuint16::StringValue() {
+  return String(value);
+}
+
 float INfloat::floatValue() {
   return value;
 }
@@ -102,6 +124,10 @@ String INfloat::StringValue() {
   return String(value, (int)width);
 }
 
+String INfloat::StringValue() {
+  return String(value, (int)width);
+}
+
 float INbool::floatValue() {
   return value;
 }
@@ -110,6 +136,33 @@ bool INbool::boolValue() {
 }
 uint16_t INbool::uint16Value() {
   return value;
+}
+String INbool::StringValue() {
+  return value ? "true" : "false";
+}
+float INcolor::floatValue() {
+  return 0;
+}
+bool INcolor::boolValue() {
+  return 0;
+}
+uint16_t INcolor::uint16Value() {
+  return 0;
+}
+String INcolor::StringValue() {
+  return ""; // TODO-136 convert
+}
+float INtext::floatValue() {
+  return 0; // TODO-136 convert
+}
+bool INtext::boolValue() {
+  return 0; // TODO-136 convert
+}
+uint16_t INtext::uint16Value() {
+  return 0; // TODO-136 convert
+}
+String INtext::StringValue() {
+  return *value;
 }
 String INbool::StringValue() {
   return value ? "true" : "false";
@@ -151,6 +204,9 @@ uint16_t OUTfloat::uint16Value() {
 String OUTfloat::StringValue() {
   return String(value, (int)width);
 }
+String OUTfloat::StringValue() {
+  return String(value, (int)width);
+}
 float OUTuint16::floatValue() {
   return value;
 }
@@ -163,6 +219,9 @@ uint16_t OUTuint16::uint16Value() {
 String OUTuint16::StringValue() {
   return String(value);
 }
+String OUTuint16::StringValue() {
+  return String(value);
+}
 float OUTbool::floatValue() {
   return value;
 }
@@ -171,6 +230,9 @@ bool OUTbool::boolValue() {
 }
 uint16_t OUTbool::uint16Value() {
   return value;
+}
+String OUTbool::StringValue() {
+  return value ? "true" : "false";
 }
 String OUTbool::StringValue() {
   return value ? "true" : "false";
@@ -191,6 +253,7 @@ bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (isSet) { // e.g : set/sht/temp/wire set/sht/temp set/sht/temp/max
     if (leaf.endsWith("/wire")) {
       if (!(wiredPath && (p == *wiredPath))) {
+        wireTo(new String(p));
         wireTo(new String(p));
       }
     }
@@ -305,8 +368,15 @@ void OUTuint16::debug(const char* const where) {
 // TO_ADD_INxxx
 INfloat::INfloat(const char * const sensorId, const char * const id, const char* const name, float v, uint8_t width, float mn, float mx, char const * const c, const bool w)
   :   IN(sensorId, id, name, c, w), value(v), width(width), min(mn), max(mx) {
+INfloat::INfloat(const char * const sensorId, const char * const id, const char* const name, float v, uint8_t width, float mn, float mx, char const * const c, const bool w)
+  :   IN(sensorId, id, name, c, w), value(v), width(width), min(mn), max(mx) {
 }
 
+INfloat::INfloat(const INfloat &other)
+: IN(other.sensorId, other.id, other.name, other.color, other.wireable), 
+  value(other.value),
+  width(other.width)
+{ }
 INfloat::INfloat(const INfloat &other)
 : IN(other.sensorId, other.id, other.name, other.color, other.wireable), 
   value(other.value),
@@ -404,6 +474,14 @@ bool INtext::convertAndSet(const String &payload) {
   return false; // nothing changed
 }
 
+bool INtext::convertAndSet(const String &payload) {
+  if (!(value && payload == *value)) {
+    value = new String(payload); // TODO possibly memory leak for old string 
+    return true; // Need to rerun calcs
+  }
+  return false; // nothing changed
+}
+
 // TO_ADD_INxxx TO_ADD_OUTxxx
 const char* valueAdvertLineUint16 = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %d\n    max: %d\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
 const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %*f\n    max: %*f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
@@ -429,6 +507,7 @@ String INuint16::advertisement(const char * const group) {
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   if (topicTwig) {
     ad += StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "slider", "w", group);
+    ad += StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "slider", "w", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
   if (wireable) {
@@ -445,6 +524,18 @@ String INbool::advertisement(const char * const group) {
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
   if (wireable) {
     ad += StringF(wireAdvertLine, topicTwig, name, " wire from", "topic", "bool", "dropdown", "r", group);
+  }
+  return ad;
+}
+String INtext::advertisement(const char * const group) {
+  String ad = String();
+  // e.g. "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
+  if (topicTwig) {
+    ad += StringF(valueAdvertLineText, topicTwig, name, "text", color, "text", "w", group);
+  }
+  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
+  if (wireable) {
+    ad += StringF(wireAdvertLine, topicTwig, name, " wire from", "topic", "text", "dropdown", "r", group);
   }
   return ad;
 }
@@ -564,6 +655,7 @@ String OUTfloat::advertisement(const char * const group) {
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
   if (topicTwig) {
     ad += StringF(valueAdvertLineFloat, topicTwig, name, "float", width, min, width, max, color, "bar", "r", group);
+    ad += StringF(valueAdvertLineFloat, topicTwig, name, "float", width, min, width, max, color, "bar", "r", group);
   }
   // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w\n    group: %s"
   if (wireable) {
@@ -599,6 +691,25 @@ String OUTbool::advertisement(const char * const group) {
   }
   return ad;
 }
+
+/* 
+//Not used - built for gsheets where followed by a "wireto"
+IN* IN::INxxx(IOtype t, const char* sensorId) {
+  switch (t) {
+    // TO-ADD-INXXX
+    case BOOL:
+      return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
+    case UINT16:
+      return new INuint16(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
+    case FLOAT:
+      return new INfloat(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
+    case COLOR:
+      return new INcolor(sensorId, nullptr, nullptr, 0, 0, 0, true);
+    default:
+      return nullptr;
+  }
+}
+*/
 
 /* 
 //Not used - built for gsheets where followed by a "wireto"
