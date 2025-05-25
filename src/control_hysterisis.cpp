@@ -32,10 +32,10 @@ ControlHysterisis::ControlHysterisis (const char* const id, const char * const n
   std::vector<IN*> {
     new INfloat(id, "now", "Now", now, width, min, max, "black", true),
     new INfloat(id, "limit", "Limit", now, width, min, max, "black", true),
-    new INfloat(id, "hysterisis", "Hysterisis", 0, width, 0, max/2, "black", false),
+    new INfloat(id, "hysterisis", "Hysterisis", 0, width, 0, max/2, "black", false)
   },
   std::vector<OUT*> {
-    new OUTbool(id, "out", "Out", false, "black", true), 
+    new OUTbool(id, "out", "Out", false, "black", true)
   }
 ) {
   #ifdef CONTROL_HYSTERISIS_DEBUG

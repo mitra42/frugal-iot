@@ -171,7 +171,7 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
-  controls.push_back(new ControlHysterisis("humidity", "Humidity control", 50, 0, 100));
+  controls.push_back(new ControlHysterisis("humidity", "Humidity control", 50, 1, 0, 100));
 #endif //CONTROL_HYSTERISIS_WANT
 #ifdef CONTROL_GSHEETS_WANT
   Control_Gsheets* cg =   new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);
