@@ -44,9 +44,6 @@
 #include "actuator.h"
 #include "sensor.h"
 #include "control.h"
-#ifdef SYSTEM_LOGGER_WANT
-  #include "system_logger.h"
-#endif
 //TODO-25 replace with control.h when ready
   #ifdef CONTROL_BLINKEN_WANT
     #include "control_blinken.h"
@@ -209,9 +206,6 @@ void MqttManager::dispatch(const String &topicPath, const String &payload) {
  
   #ifdef CONTROL_WANT
     Control::dispatchPathAll(topicPath, payload);  // Matches just paths. Twigs and sets handle above
-  #endif
-  #ifdef SYSTEM_LOGGER_WANT
-    System_Logger::dispatchAll(topicPath, payload);
   #endif
   //TODO-25 System::dispatchPathAll(*topicPath, payload)
 }

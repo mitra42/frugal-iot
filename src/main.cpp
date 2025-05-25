@@ -71,8 +71,8 @@
 #ifdef SYSTEM_OTA_WANT
 #include "system_ota.h"
 #endif
-#ifdef SYSTEM_FS_WANT
-#include "system_logger.h" //TODO-110 should have SYSTEM_LOGGER_WANT
+#ifdef CONTROL_LOGGERFS_WANT
+#include "control_logger_fs.h"
 #include "system_fs.h"
 #endif
 #ifdef SYSTEM_TIME_WANT
@@ -182,7 +182,6 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
   controls.push_back(cg);
   cg->track("temperature", Mqtt->path(ss->temperature->topicTwig));
 #endif
-#pragma GCC diagnostic pop
 
 #ifdef SYSTEM_SD_WANT
   System_SD* fs1 = new System_SD();
@@ -193,23 +192,26 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
   fs2->setup(); //TODO-110 at moment should printout dir
 #endif
 
-
-xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
-
-#ifdef SYSTEM_LOGGER_WANT
-loggers.push_back( new System_Logger( // Should automagically pass to System_Logger constructor
-  "system_logger",
+#ifdef CONTROL_LOGGERFS_WANT
+controls.push_back( new Control_LoggerFS(
+  "Logger",
   fs2, // TODO-110 Using spiffs for testing for now
   "/",
   0x02, // Single log.csv with topicPath, time, value
   std::vector<IN*> {
-    //IOfloat(char const * const name, float v, char const * const topicLeaf = nullptr, const bool wireable = true);
-    new INstring("log1", nullptr, "log1", "black", true),
-    new INstring("log2", nullptr, "log2", "black", true),
-    new INstring("log3", nullptr, "log3", "black", true)
+    //INtext(const char * const sensorId, const char * const id, const char* const name, String* value, const char* const color, const bool wireable)
+    new INtext("Logger", "log1", "log1", nullptr, "black", true),
+    new INtext("Logger", "log2", "log2", nullptr, "black", true),
+    new INtext("Logger", "log3", "log3", nullptr, "black", true)
     }));
+#endif // CONTROL_LOGGERFS_WANT
 
-#endif // SYSTEM_LOGGER_WANT
+#pragma GCC diagnostic pop
+
+
+
+xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
+
 
 #ifdef SYSTEM_OTA_WANT
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi

@@ -36,8 +36,8 @@
 #ifdef CONTROL_WANT
   #include "control.h"
 #endif
-#ifdef SYSTEM_FS_WANT
-  #include "system_logger.h"
+#ifdef CONTROL_LOGGERFS_WANT
+  #include "control_logger_fs.h"
 #endif
 
 namespace xDiscovery {
@@ -107,9 +107,6 @@ void fullAdvertise() {
     // TODO-44 add location: <gsm coords>
     "\ntopics:" 
     )
-      #ifdef SYSTEM_LOGGER_WANT
-      + System_Logger::advertisementAll()
-      #endif
   );
   #ifdef ACTUATOR_WANT
     *advertisePayload += (Actuator::advertisementAll());

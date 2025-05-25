@@ -9,34 +9,29 @@
 #include "_settings.h"
 #include <Arduino.h>
 
-#ifdef SYSTEM_LOGGER_WANT
-#include "system_logger.h"
-#include "control.h" // For IN - TODO-110 move IN to Frugal_base
+#ifdef CONTROL_LOGGERFS_WANT
+#include "control_logger_fs.h"
+#include "control_logger.h"
 #ifdef SYSTEM_TIME_WANT
   #include "system_time.h" // For system_time.now
 #endif
 #include "misc.h"
 #include "system_mqtt.h" // For Mqtt
 
-System_Logger::System_Logger(const char * const n, System_FS* f, const char * const r, const uint8_t strategy, std::vector<IN*> i) : Frugal_Base(), name(n), fs(f), root(r), strategy(strategy), inputs(i) { }
+Control_LoggerFS::Control_LoggerFS(const char * const name, System_FS* f, const char * const r, const uint8_t strategy, std::vector<IN*> i) 
+: Control_Logger("loggerfs",name, i), 
+  fs(f), root(r), strategy(strategy), needAppend(false)
+{}
 
-void System_Logger::setup() {
-  Serial.println("XXX110 setting up logger");
+void Control_LoggerFS::setup() {
   fs->setup();
-  for (auto &input : inputs) {
-    input->setup(name);
-  }
-}
-void System_Logger::setupAll() {
-  for (System_Logger* l: loggers) {
-    l->setup();
-  }
+  Control::setup(); // Call base class setup
 }
 
 // Basis append for logger, there might be other sets of parameters needed = extend as required.
-void System_Logger::append(const String &topicPath, const String &payload) {
+void Control_LoggerFS::append(const String &topicPath, const String &payload) {
   #ifdef SYSTEM_LOGGER_DEBUG
-    Serial.print("System_Logger::append "); Serial.print(topicPath); Serial.print(" "); Serial.println(payload);
+    Serial.print("Control_Logger::append "); Serial.print(topicPath); Serial.print(" "); Serial.println(payload);
   #endif
   #ifdef SYSTEM_TIME_WANT
     time_t _now = systemTime.now(); 
@@ -76,52 +71,16 @@ void System_Logger::append(const String &topicPath, const String &payload) {
   }
 }
 
-
-// Ouput advertisement for control - all of IN and OUTs 
-String System_Logger::advertisement() {
-  String ad = StringF("\n  -\n    group: %s\n    name: %s", name, name); // Wrap control in a group
-  for (auto &input : inputs) {
-    ad += (input->advertisement(name));
-  }
-  return ad;
-}
-String System_Logger::advertisementAll() {
-  String ad = String();
-  for (System_Logger* l: loggers) {
-    ad += (l->advertisement());
-  }
-  return ad;
+void Control_LoggerFS::act() {
+  needAppend = true; // Set flag to append
 }
 
-void System_Logger::dispatch(const String &topicPath, const String &payload ) {
-  // Duplicate of input code in Control & System_Logger
-  bool changed = false;
-  String* tl = Mqtt->leaf(topicPath);
-  for (auto &input : inputs) {
-      if (tl) { // Will be nullptr if no match i.e. path is not local
-          // inputs have possible 'control' and therefore dispatchLeaf
-          // And inputs also have possible values being set directly
-          if (input->dispatchLeaf(*tl, payload)) {
-            changed = true; // Does not trigger any messages or actions - though data received in response to subscription will.
-          }
-      }
-      // Only inputs are listening to potential topicPaths - i.e. other devices outputs
-      if (input->dispatchPath(topicPath, payload)) {
-          changed = true; // Changed an input, do the actions
-      }
-  }
-  if (changed) { 
-    append(topicPath, payload);
-  }
-}
-// ======= Static functions that work over all Loggers ========
-// Note Static
-void System_Logger::dispatchAll(const String &topicPath, const String &payload) {
-  for (System_Logger* l: loggers) {
-    l->dispatch(topicPath, payload);
+void Control_LoggerFS::dispatchPath(const String &topicPath, const String &payload ) {
+  Control::dispatchPath(topicPath, payload); // Call base class dispatchPath
+  if (needAppend) { // If we need to append
+    needAppend = false; // Reset flag
+    append(topicPath, payload);  // Normally we would subclass act() BUT need topicPath & payload
   }
 }
 
-std::vector<System_Logger*> loggers;
-
-#endif //SYSTEM_LOGGER_WANT
+#endif //CONTROL_LOGGER_WANT
