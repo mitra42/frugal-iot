@@ -185,6 +185,7 @@ void MqttManager::subscribe(const char* topicTwig) {
   subscribe(*topicPath);
 }
 void MqttManager::dispatch(const String &topicPath, const String &payload) {
+  // TODO move this to _base.cpp
   if (topicPath.startsWith(*xDiscovery::topicPrefix)) { // includes trailing slash
     String topicTwig = topicPath.substring(xDiscovery::topicPrefix->length()); 
     bool isSet;
@@ -202,9 +203,11 @@ void MqttManager::dispatch(const String &topicPath, const String &payload) {
       Control::dispatchTwigAll(topicTwig, payload, isSet); // Just matches twigs
     #endif
   }
+ 
   #ifdef CONTROL_WANT
     Control::dispatchPathAll(topicPath, payload);  // Matches just paths. Twigs and sets handle above
   #endif
+  //TODO-25 System::dispatchPathAll(*topicPath, payload)
 }
 bool MqttManager::resubscribeAll() {
   // TODO-125 may put a flag on subscriptions then only resubscribe those not done

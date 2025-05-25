@@ -53,10 +53,12 @@ IN::IN(const char* sensorId, const char * const id, const char * const name, con
 OUT::OUT(const char* sensorId, const char * const id, const char * const name, const char * const color, const bool w)
 : IO(sensorId, id, name, color, w) { };
 
-
 void IO::wireTo(String* topicPath) {
   wiredPath = topicPath;
   Mqtt->subscribe(*wiredPath);
+}
+void IO::wireTo(IO* io) {
+  wireTo(Mqtt->path(io->topicTwig)); // Subscribe to the twig of the IO
 }
 // TO_ADD_INxxx 
 float IN::floatValue() {
@@ -192,6 +194,7 @@ bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     if (leaf.endsWith("/wire")) {
       if (!(wiredPath && (p == *wiredPath))) {
         wireTo(new String(p));
+        wireTo(new String(p));
       }
     }
   }
@@ -278,11 +281,11 @@ void INcolor::debug(const char* const where) {
 }
 void INtext::debug(const char* const where) {
   IO::debug(where);
-  Serial.print(" value="); Serial.println(value); 
+  Serial.print(" value="); Serial.println(*value); 
 }
 void INbool::debug(const char* const where) {
   IO::debug(where);
-  Serial.print(" value="); Serial.println(value); 
+  Serial.print(F(" value=")); Serial.println(value); 
 }
 // TO_ADD_OUTxxx
 void OUTfloat::debug(const char* const where) {
@@ -349,7 +352,7 @@ INtext::INtext(const char * const sensorId, const char * const id, const char* c
 
 INtext::INtext(const INtext &other) : 
   IN(other.sensorId, other.id, other.name, other.color, other.wireable),
-  value(other.value) {
+  value(new String(*other.value)) {
 }
 
 // TO_ADD_INxxx
@@ -599,6 +602,25 @@ String OUTbool::advertisement(const char * const group) {
   }
   return ad;
 }
+
+/* 
+//Not used - built for gsheets where followed by a "wireto"
+IN* IN::INxxx(IOtype t, const char* sensorId) {
+  switch (t) {
+    // TO-ADD-INXXX
+    case BOOL:
+      return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
+    case UINT16:
+      return new INuint16(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
+    case FLOAT:
+      return new INfloat(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
+    case COLOR:
+      return new INcolor(sensorId, nullptr, nullptr, 0, 0, 0, true);
+    default:
+      return nullptr;
+  }
+}
+*/
 
 /* 
 //Not used - built for gsheets where followed by a "wireto"

@@ -71,6 +71,10 @@
 #ifdef SYSTEM_OTA_WANT
 #include "system_ota.h"
 #endif
+#ifdef CONTROL_LOGGERFS_WANT
+#include "control_logger_fs.h"
+#include "system_fs.h"
+#endif
 #ifdef SYSTEM_TIME_WANT
 #include "system_time.h"
 #endif
@@ -178,7 +182,38 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
   controls.push_back(cg);
   cg->track("temperature", Mqtt->path(ss->temperature->topicTwig));
 #endif
+
+#ifdef SYSTEM_SD_WANT
+  System_SD* fs1 = new System_SD();
+  fs1->setup(); //TODO-110 at moment should printout dir
+#endif
+#ifdef SYSTEM_SPIFFS_WANT
+  System_SPIFFS* fs2 = new System_SPIFFS();
+  fs2->setup(); //TODO-110 at moment should printout dir
+#endif
+
+#ifdef CONTROL_LOGGERFS_WANT
+Control_Logger* clfs = new Control_LoggerFS(
+  "Logger",
+  fs2, // TODO-110 Using spiffs for testing for now
+  "/",
+  0x02, // Single log.csv with topicPath, time, value
+  std::vector<IN*> {
+    //INtext(const char * const sensorId, const char * const id, const char* const name, String* value, const char* const color, const bool wireable)
+    new INtext("Logger", "log1", "log1", nullptr, "black", true),
+    new INtext("Logger", "log2", "log2", nullptr, "black", true),
+    new INtext("Logger", "log3", "log3", nullptr, "black", true)
+    });
+  controls.push_back(clfs);
+  clfs->inputs[0]->wireTo(ss->temperature);
+
+#endif // CONTROL_LOGGERFS_WANT
+
 #pragma GCC diagnostic pop
+
+
+
+xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
 
 
 #ifdef SYSTEM_OTA_WANT

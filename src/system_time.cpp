@@ -7,16 +7,18 @@
  * Required: SYSTEM_TIME_ZONE e.g. "GMT0BST,M3.5.0/1,M10.5.0" (technically optional but we are going to default it to GMT if you do not define it!)
  * Optional: SYSTEM_TIME_MS time in milliseconds to report time on serial port - usually very lomg e.g. 3600000
  * Optional: SYSTEM_TIME_DEBUG 
+ * 
+ * Time currently fails on ESP8266
  */
 
 #include "_settings.h"
 
 #ifdef SYSTEM_TIME_WANT
-#ifndef ESP32 // For now it only works on ESP32
-  #error system_time only works on ESP32 for now
+#include "Arduino.h"
+#include <time.h>
+#ifdef ESP32
+  #include "esp_sntp.h" // Not available on ESP8266 but only used for sntp_set_time_sync_notification_cb which is not really needed
 #endif
-#include <Arduino.h>
-#include "esp_sntp.h" // Not available on ESP8266
 #include "system_time.h"
 #include "misc.h" // for StringF
 
@@ -36,8 +38,10 @@
 SystemTime::SystemTime() {}
 SystemTime::~SystemTime() {}
 
+// Last time synced with NTP in seconds
 time_t _lastSyncTime;
 
+// Callback when time sync swith NTP
 void NTPSyncTimeCallback(struct timeval* tv) {
   #ifdef SYSTEM_TIME_DEBUG
     Serial.println("Time: synced");
@@ -45,26 +49,30 @@ void NTPSyncTimeCallback(struct timeval* tv) {
   _lastSyncTime = (*tv).tv_sec;
 }
 
+// Initialize all the time stuff - set Timezone and start asynchronous sync with NTP 
 void SystemTime::init(const char* timeZone) {
   #ifdef SYSTEM_TIME_DEBUG
     Serial.println("Time: Init");
   #endif
   timezone = timeZone;
-  sntp_set_time_sync_notification_cb(NTPSyncTimeCallback);
+  #ifdef ESP32
+    sntp_set_time_sync_notification_cb(NTPSyncTimeCallback);
+  #endif
 
   configTime(0, 0, "pool.ntp.org");
   #ifdef SYSTEM_TIME_DEBUG
-    Serial.println("Time: Sync");
+    Serial.println(F("Time: Sync"));
   #endif
   sync();
 
   setenv("TZ", timezone, 1);
   tzset();
   #ifdef SYSTEM_TIME_DEBUG
-    Serial.println("Time: Init done");
+    Serial.print(F("Time: Init done: "));
+    Serial.println(dateTime());
   #endif
 }
-
+// Sync the time with NTP
 void SystemTime::sync() {
   if (!getLocalTime(&_localTime)) {
     #ifdef SYSTEM_TIME_DEBUG
@@ -73,11 +81,13 @@ void SystemTime::sync() {
   }
 }
 
+//True if time has been successfully set (with NTP)
 bool SystemTime::isTimeSet() {
   time(&_now);
   return (_now > JAN_01_2024); 
 }
 
+//Return time in milliseconds since Epoch
 time_t SystemTime::now() {
   time(&_now);
   localtime_r(&_now, &_localTime);
@@ -101,6 +111,7 @@ namespace xTime {  //TODO-25 - put this in a class and call from base etc
       systemTime.sync();
   }
 
+  //TODO this is really only for debugging - but should have a periodic sync with NTP
   void loop() {
     if (nextLoopTime <= millis() ) {
       if (! systemTime.isTimeSet()) {
@@ -110,6 +121,7 @@ namespace xTime {  //TODO-25 - put this in a class and call from base etc
           Serial.print("Local time = "); Serial.println(systemTime.dateTime().c_str());
       }
       nextLoopTime = millis() + SYSTEM_TIME_MS;
+      configTime(0, 0, "foo","bar","bax");
     }
   }
 } // namespace xTime

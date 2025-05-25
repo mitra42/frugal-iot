@@ -141,6 +141,7 @@ void checkConnected() {
   }
 }
 /*
+// Note duplicated in system_fs 
 #ifdef SYSTEM_WIFI_SSID
 bool spurt(const String& fn, const String& content) {
     File f = ESPFS.open(fn, "w");
@@ -149,6 +150,14 @@ bool spurt(const String& fn, const String& content) {
     f.close();
     return w == content.length();
 }
+// TODO-110 just temporary while debugging SYSTEM_FS
+String slurp(const String& fn) {
+    File f = ESPFS.open(fn, "r");
+    String r = f.readString();
+    f.close();
+    return r;
+}
+
 #endif
 */
 #ifdef SYSTEM_WIFI_PORTAL_RESTART

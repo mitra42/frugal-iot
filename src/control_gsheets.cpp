@@ -12,14 +12,17 @@
 #ifdef CONTROL_GSHEETS_WANT
 
 #include "system_time.h"
-#include <HTTPClient.h>
+#ifdef ESP8266
+  #include <ESP8266HTTPClient.h> // For ESP8266
+#else // ESP32  
+  #include <HTTPClient.h>
+#endif
 #include <Arduino.h> // For String
-#include "control.h"
 #include "control_gsheets.h"
 #include "misc.h" // For StringF
 
 Control_Gsheets::Control_Gsheets(const char* name, String* googleSheetsUrl)
-  : Control("gsheets", name,  std::vector<IN*> {},   std::vector<OUT*> {}), url(googleSheetsUrl)
+  : Control_Logger("gsheets", name), url(googleSheetsUrl)
   {}
 Control_Gsheets::Control_Gsheets(const char* name, const char* const googleSheetsUrl)
   : Control_Gsheets(name,  new String(googleSheetsUrl))

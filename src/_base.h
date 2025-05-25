@@ -7,11 +7,13 @@ extern const char* valueAdvertLineFloat;
 extern const char* valueAdvertLineBool;
 extern const char* wireAdvertLine;
 
+// Not used yet
+/*
 // TO-ADD-INXXX TO-ADD-OUTXXX
 enum IOtype { 
-  BOOL, UINT16, FLOAT, COLOR
+  BOOL, UINT16, FLOAT, COLOR, TEXT
 };
-
+*/
 
 class Frugal_Base {
   public:
@@ -45,6 +47,7 @@ class IO {
     //virtual void set(const bool newvalue);
     virtual String advertisement(const char * const name);
     void wireTo(String* topicPath);
+    void wireTo(IO* io);
 };
 class IN : public IO {
   public:

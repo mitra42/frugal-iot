@@ -71,6 +71,7 @@ void Control::dispatchTwig(const String &topicControlId, const String &leaf, con
 }
 
 void Control::dispatchPath(const String &topicPath, const String &payload ) {
+  //Serial.print("XXX" __FILE__); Serial.print(__LINE__); Serial.print(" Control::dispatchPath: topicPath: "); Serial.println(topicPath);
     bool changed = false;
     for (auto &input : inputs) {
         // Only inputs are listening to potential topicPaths - i.e. other devices outputs
@@ -82,6 +83,7 @@ void Control::dispatchPath(const String &topicPath, const String &payload ) {
       act(); // Likely to be subclassed
     }
 }
+
 // Ouput advertisement for control - all of IN and OUTs 
 String Control::advertisement() {
   String ad = StringF(groupAdvertLine, name, name); // Wrap control in a group
@@ -141,7 +143,7 @@ std::vector<Control*> controls;
 
 /*
 // Example for blinken  - TODO-25 note needs a loop for timing
-long unsigned lastblink; // Note local variable in same contex as control_blinken
+long unsigned lastblink; // Note local variable in same context as control_blinken
 IN cb_in1 = [1,"blinkspeed",NULL];
 OUT cb_out1 = [0, "ledbuiltin", NULL];
 IN* cb_ins[3] = [cb_in1, NULL, NULL];
