@@ -12,7 +12,11 @@
 #ifdef CONTROL_GSHEETS_WANT
 
 #include "system_time.h"
-#include <HTTPClient.h>
+#ifdef ESP8266
+  #include <ESP8266HTTPClient.h> // For ESP8266
+#else // ESP32  
+  #include <HTTPClient.h>
+#endif
 #include <Arduino.h> // For String
 #include "control_gsheets.h"
 #include "misc.h" // For StringF
