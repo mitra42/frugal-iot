@@ -61,14 +61,15 @@ void SystemTime::init(const char* timeZone) {
 
   configTime(0, 0, "pool.ntp.org");
   #ifdef SYSTEM_TIME_DEBUG
-    Serial.println("Time: Sync");
+    Serial.println(F("Time: Sync"));
   #endif
   sync();
 
   setenv("TZ", timezone, 1);
   tzset();
   #ifdef SYSTEM_TIME_DEBUG
-    Serial.println("Time: Init done");
+    Serial.print(F("Time: Init done: "));
+    Serial.println(dateTime());
   #endif
 }
 // Sync the time with NTP

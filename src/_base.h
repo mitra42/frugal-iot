@@ -47,6 +47,7 @@ class IO {
     //virtual void set(const bool newvalue);
     virtual String advertisement(const char * const name);
     void wireTo(String* topicPath);
+    void wireTo(IO* io);
 };
 class IN : public IO {
   public:

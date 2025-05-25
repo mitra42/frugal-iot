@@ -4,6 +4,11 @@
  * Configuration:
  * Required:
  * Optional: 
+ * Status:  This works for its current requirement, i.e. 
+ *   Can be programatically or via the UI to any message
+ *   Can write to SPIFFS or SD in a number of formats
+ * 
+ * TODO: See https://github.com/mitra42/frugal-iot/issues/110
  */
 
 #include "_settings.h"
@@ -30,7 +35,7 @@ void Control_LoggerFS::setup() {
 
 // Basis append for logger, there might be other sets of parameters needed = extend as required.
 void Control_LoggerFS::append(const String &topicPath, const String &payload) {
-  #ifdef SYSTEM_LOGGER_DEBUG
+  #ifdef CONTROL_LOGGERFS_DEBUG
     Serial.print("Control_Logger::append "); Serial.print(topicPath); Serial.print(" "); Serial.println(payload);
   #endif
   #ifdef SYSTEM_TIME_WANT

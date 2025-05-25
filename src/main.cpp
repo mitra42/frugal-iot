@@ -193,7 +193,7 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #endif
 
 #ifdef CONTROL_LOGGERFS_WANT
-controls.push_back( new Control_LoggerFS(
+Control_Logger* clfs = new Control_LoggerFS(
   "Logger",
   fs2, // TODO-110 Using spiffs for testing for now
   "/",
@@ -203,7 +203,10 @@ controls.push_back( new Control_LoggerFS(
     new INtext("Logger", "log1", "log1", nullptr, "black", true),
     new INtext("Logger", "log2", "log2", nullptr, "black", true),
     new INtext("Logger", "log3", "log3", nullptr, "black", true)
-    }));
+    });
+  controls.push_back(clfs);
+  clfs->inputs[0]->wireTo(ss->temperature);
+
 #endif // CONTROL_LOGGERFS_WANT
 
 #pragma GCC diagnostic pop

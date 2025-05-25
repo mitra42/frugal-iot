@@ -57,6 +57,9 @@ void IO::wireTo(String* topicPath) {
   wiredPath = topicPath;
   Mqtt->subscribe(*wiredPath);
 }
+void IO::wireTo(IO* io) {
+  wireTo(Mqtt->path(io->topicTwig)); // Subscribe to the twig of the IO
+}
 // TO_ADD_INxxx 
 float IN::floatValue() {
   Serial.println(F("IN::floatValue should be subclassed"));
