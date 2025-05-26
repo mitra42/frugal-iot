@@ -109,12 +109,7 @@ namespace xTime {  //TODO-25 - put this in a class and call from base etc
       systemTime.sync();
   }
 
-<<<<<<< HEAD
   void infrequently() {
-=======
-  //TODO this is really only for debugging - but should have a periodic sync with NTP
-  void loop() {
->>>>>>> main
     if (nextLoopTime <= millis() ) {
       if (! systemTime.isTimeSet()) {
           Serial.print("Time since boot"); Serial.println(systemTime.now());

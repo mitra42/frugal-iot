@@ -75,10 +75,6 @@
 #include "control_logger_fs.h"
 #include "system_fs.h"
 #endif
-#ifdef CONTROL_LOGGERFS_WANT
-#include "control_logger_fs.h"
-#include "system_fs.h"
-#endif
 
 #include "system_power.h"
 

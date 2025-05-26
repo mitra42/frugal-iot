@@ -8,7 +8,14 @@
 
 // This will replace loop() and then parts will be put into 
 
+#include "_settings.h"
 #include "system_power.h"
+#if !defined(SYSTEM_POWER_MODE_HIGH) && !defined(SYSTEM_POWER_MODE_MEDIUM) && !defined(SYSTEM_POWER_MODE_LOW)
+  #define SYSTEM_POWER_MODE_HIGH // Default to high power mode if none defined
+#endif
+#ifndef SYSTEM_POWER_MS
+  #define SYSTEM_POWER_MS 10000 // Default to 10 seconds
+#endif
 
 System_Power* powerController;
 
@@ -72,5 +79,6 @@ bool System_Power::maybeSleep() {
   }
   return false;
 }
+
 
 
