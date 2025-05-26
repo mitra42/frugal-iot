@@ -48,17 +48,22 @@
 //#define BOARDCOMPILECHECK "Check all code compiles"
 
 // Note that on ESP that ESP32 or ESP8266 will be defined - should define other chips names here if its not ESP32 or ESP8266
-#ifdef SHT30
-  #ifndef ESP8266
-    #error should be using Lolin(Wemos) D1 Pico in the IDE, and looks like you are using a ESP32 board
-  #endif
-  #define ESP8266_D1_PRO_CLONE // Board level - define - will only support boards devs are actually using, but intended to support board specific fixes
-  #define SYSTEM_WIFI_DEVICE "ESP8266-SHT" // This is default for a short name that appears in the UX. e.g. could be "main pump" - wifi portal can override
-  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION SHT30 // override automatically generated description for this device 
+#ifdef DEVSHT30
+  #ifdef ESP8266
+    #define ESP8266_D1_MINI_PROv2
+    #define SYSTEM_OTA_KEY "esp8266sht30"
+  #elif defined(ESP32)
+    #define LOLIN_C3_PICO
+    #define SYSTEM_OTA_KEY "esp32sht30"
+    #endif
+  #define SYSTEM_WIFI_DEVICE "SHT30"
+  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION SHT30
+  #define ACTUATOR_LEDBUILTIN_WANT // LED on board - usually wanted
   #define SENSOR_SHT_WANT
   #define SYSTEM_OTA_WANT
-  #define SYSTEM_OTA_KEY "esp8266-sht"
+  #define SYSTEM_WIFI_PROJECT "lotus"
 #endif //SHT30
+
 
 #ifdef SONOFF_R2
   // See https://github.com/mitra42/frugal-iot/issues/108

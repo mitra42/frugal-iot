@@ -71,6 +71,7 @@ void Control::dispatchTwig(const String &topicControlId, const String &leaf, con
 }
 
 void Control::dispatchPath(const String &topicPath, const String &payload ) {
+  //Serial.print("XXX" __FILE__); Serial.print(__LINE__); Serial.print(" Control::dispatchPath: topicPath: "); Serial.println(topicPath);
     bool changed = false;
     for (auto &input : inputs) {
         // Only inputs are listening to potential topicPaths - i.e. other devices outputs
@@ -82,6 +83,7 @@ void Control::dispatchPath(const String &topicPath, const String &payload ) {
       act(); // Likely to be subclassed
     }
 }
+
 // Ouput advertisement for control - all of IN and OUTs 
 String Control::advertisement() {
   String ad = StringF(groupAdvertLine, name, name); // Wrap control in a group

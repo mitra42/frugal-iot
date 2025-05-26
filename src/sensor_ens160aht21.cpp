@@ -106,7 +106,11 @@ void Sensor_ensaht::setupAHT() {
   if (!aht->send(cmd, 3)) {  // See note on Adafruit about Calibratye not working on newer AHT20s
     Serial.println(F("AHT calibrate failed")); // TODO not sure how to handle the error - maybe fail out completely.
   };
-  uint8_t status = AHTspinTillReady();
+  #ifdef SENSOR_ENSAHT_DEBUG
+    uint8_t status = 
+  #endif
+  AHTspinTillReady();
+  
   #ifdef SENSOR_ENSAHT_DEBUG
     Serial.print(F("AHT status (wanting & 0x08): "));
     Serial.println(status, HEX); 
@@ -186,11 +190,12 @@ void Sensor_ensaht::readAndSetAHT() {
   uint8_t cmd[3] = { AHTX0_CMD_TRIGGER, 0x33, 0x00 }; //TODO-101 0x33 should be a defined constant
   uint8_t data[6];
   uint8_t status;
+  // Strange - appear to be doing this twice 
   aht->send(cmd, 3);
   AHTspinTillReady();
   status = aht->read(data, 6);
-  if (!aht->sendAndRead(cmd, 3, data, 6)) {
-    Serial.print(F("AHT fail to read"));
+  if (!status) {
+    Serial.print(F("AHT fail to read")); // Do this even if not debugging
   }
   // From the Adafruit library
   // ((uint32_t)rx[1] << 12) | ((uint32_t)rx[2] << 4) | (rx[3] >> 4); // From KO105 agrees

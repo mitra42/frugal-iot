@@ -1,6 +1,9 @@
 #ifndef SYSTEM_TIME_H
 #define SYSTEM_TIME_H
 
+#include <time.h>
+#include <Arduino.h> // For String
+
 class SystemTime {
     public:
         SystemTime();

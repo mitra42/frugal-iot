@@ -34,8 +34,6 @@
 #include <forward_list>
 #include "_base.h"
 
-#define SYSTEM_MQTT_SUBSCRIBE_ALL // If true subscribe to all topics for this node - may cause loops ?
-
 class Subscription {
   // This is both a subscription and a record of a message for retention purposes
   public:
