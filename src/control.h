@@ -31,7 +31,7 @@ class Control : public Frugal_Base {
     static void setupAll();
     static void loopAll();
     void dispatchTwig(const String &topicControlId, const String &topicLeaf, const String &payload, bool isSet);
-    void dispatchPath(const String &topicPath, const String &payload);
+    virtual void dispatchPath(const String &topicPath, const String &payload);
     static void dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet);
     static void dispatchPathAll(const String &topicPath, const String &payload);
     static String advertisementAll();
@@ -42,5 +42,5 @@ class Control : public Frugal_Base {
 
 extern std::vector<Control*> controls;
 
-
+    
 #endif //CONTROL_H

@@ -50,8 +50,14 @@
 #ifdef SENSOR_LOADCELL_WANT
 #include "sensor_loadcell.h"
 #endif
+#ifdef SENSOR_ENSAHT_WANT
+#include "sensor_ens160aht21.h"
+#endif
 #ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
+#endif
+#ifdef CONTROL_GSHEETS_WANT
+#include "control_gsheets.h"
 #endif
 #ifdef CONTROL_WANT
 #include "control.h"
@@ -65,12 +71,17 @@
 #ifdef SYSTEM_OTA_WANT
 #include "system_ota.h"
 #endif
+#ifdef CONTROL_LOGGERFS_WANT
+#include "control_logger_fs.h"
+#include "system_fs.h"
+#endif
 #ifdef SYSTEM_TIME_WANT
 #include "system_time.h"
 #endif
 #ifdef LOCAL_DEV_WANT
 #include "local_dev.h"
 #endif
+
 void setup() {
 #ifdef LILYGOHIGROW
   pinMode(POWER_CTRL, OUTPUT);
@@ -122,7 +133,8 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
   sensors.push_back(new Sensor_Battery(SENSOR_BATTERY_PIN));  // TODO-57 will rarely be as simple as this
 #endif
 #ifdef SENSOR_SHT_WANT
-  sensors.push_back(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, SENSOR_SHT_MS, true));
+  Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, SENSOR_SHT_MS, true);
+sensors.push_back(ss);
 #endif
 #ifdef SENSOR_DHT_WANT
   sensors.push_back(new Sensor_DHT("DHT", SENSOR_DHT_PIN, SENSOR_DHT_MS, true));
@@ -149,6 +161,9 @@ Mqtt = new MqttManager(); // Connects to wifi and broker
 #ifdef SENSOR_LOADCELL_WANT
   sensors.push_back(new Sensor_LoadCell("loadcell", "Load Cell", 2000, "pink", SENSOR_LOADCELL_MS, true));
 #endif
+#ifdef SENSOR_ENSAHT_WANT
+  sensors.push_back(new Sensor_ensaht("ensaht","ENS AHT"));
+#endif
 
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
 
@@ -156,14 +171,49 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
   Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
   controls.push_back(cb);
   // TODO Make function an dredo wirepath
-  cb->outputs[0]->wiredPath = Mqtt->path(aLedBuiltin->input->topicTwig); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
+  cb->outputs[0]->wireTo(Mqtt->path(aLedBuiltin->input->topicTwig)); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
-  controls.push_back(new ControlHysterisis("humidity", "Humidity control", 50, 0, 100));
+  controls.push_back(new ControlHysterisis("humidity", "Humidity control", 50, 1, 0, 100));
 #endif //CONTROL_HYSTERISIS_WANT
+#ifdef CONTROL_GSHEETS_WANT
+  Control_Gsheets* cg =   new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);
+  controls.push_back(cg);
+  cg->track("temperature", Mqtt->path(ss->temperature->topicTwig));
+#endif
+
+#ifdef SYSTEM_SD_WANT
+  System_SD* fs1 = new System_SD();
+  fs1->setup(); //TODO-110 at moment should printout dir
+#endif
+#ifdef SYSTEM_SPIFFS_WANT
+  System_SPIFFS* fs2 = new System_SPIFFS();
+  fs2->setup(); //TODO-110 at moment should printout dir
+#endif
+
+#ifdef CONTROL_LOGGERFS_WANT
+Control_Logger* clfs = new Control_LoggerFS(
+  "Logger",
+  fs2, // TODO-110 Using spiffs for testing for now
+  "/",
+  0x02, // Single log.csv with topicPath, time, value
+  std::vector<IN*> {
+    //INtext(const char * const sensorId, const char * const id, const char* const name, String* value, const char* const color, const bool wireable)
+    new INtext("Logger", "log1", "log1", nullptr, "black", true),
+    new INtext("Logger", "log2", "log2", nullptr, "black", true),
+    new INtext("Logger", "log3", "log3", nullptr, "black", true)
+    });
+  controls.push_back(clfs);
+  clfs->inputs[0]->wireTo(ss->temperature);
+
+#endif // CONTROL_LOGGERFS_WANT
 
 #pragma GCC diagnostic pop
+
+
+
+xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
 
 
 #ifdef SYSTEM_OTA_WANT
