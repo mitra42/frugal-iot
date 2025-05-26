@@ -35,10 +35,10 @@
 #if defined(SENSOR_BH1750_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
-#if defined(SENSOR_UINT16_WANT) || defined(SENSOR_FLOAT_WANT) || defined(SENSOR_HT_WANT) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_MS5803_WANT)
+#if defined(SENSOR_UINT16_WANT) || defined(SENSOR_FLOAT_WANT) || defined(SENSOR_HT_WANT) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_MS5803_WANT) || defined(SENSOR_ENSAHT_WANT)
   #define SENSOR_WANT
 #endif
-#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG)
+#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)
   #define SENSOR_DEBUG
 #endif
 
@@ -59,14 +59,34 @@
 #endif
 
 // TO_ADD_CONTROL
-#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_DEBUG)
-  #define CONTROL_DEBUG
-#endif
+// TODO-110 when IO moved to base.cpp; SYSTEM_FS wont need CONTROL
 
-#if defined(CONTROL_BLINKEN_WANT) || defined(CONTROL_HYSTERISIS_WANT)
+// TODO_ADD_SYSTEM
+#if defined(SYSTEM_LOGGER_WANT)
+  #define SYSTEM_FS_WANT
+#endif
+#if defined(SYSTEM_LOGGER_DEBUG)
+  #define SYSTEM_TIME_DEBUG
+  #define SYSTEM_FS_DEBUG
+#endif
+#if defined(SYSTEM_SD_WANT) || defined(SYSTEM_SPIFFS_WANT)
+  #define SYSTEM_FS_WANT
+#endif
+#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
+  #define SYSTEM_FS_DEBUG
+#endif
+#if defined(CONTROL_LOGGERFS_WANT) || defined(CONTROL_GSHEETS_WANT)
+  #define CONTROL_LOGGER_WANT 
+#endif
+#if defined(CONTROL_LOGGERFS_DEBUG) || defined(CONTROL_GSHEETS_DEBUG)
+  #define CONTROL_LOGGER_DEBUG 
+#endif
+#if defined(CONTROL_BLINKEN_WANT) || defined(CONTROL_HYSTERISIS_WANT) || defined(CONTROL_LOGGER_WANT)
   #define CONTROL_WANT
 #endif
-
+#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_LOGGER_DEBUG) 
+  #define CONTROL_DEBUG
+#endif
 // TO_ADD_SYSTEM - there is no class hierarchy
 #if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG)
   #define SYSTEM_DEBUG
@@ -79,13 +99,15 @@
 #if defined(SENSOR_MS5803_SPI) 
   #define SYSTEM_SPI_WANT
 #endif
-#if defined(SENSOR_MS5803_I2C) 
+#if defined(SENSOR_MS5803_I2C) || defined(SENSOR_ENSAHT_WANT)
   #define SYSTEM_I2C_WANT
 #endif
 #if defined(SENSOR_MS5803_DEBUG) 
   #define SYSTEM_SPI_DEBUG
 #endif
-
+#if defined(CONTROL_GSHEETS_WANT)
+  #define SYSTEM_TIME_WANT
+#endif
 // TO_ADD_BOARD
 // shields compatible with D1 and its ESP8266 not C-pico which has same pin layout but different availability esp of analog
 #if defined(ESP8266_D1_MINI_PROv2) || defined (ESP8266_D1_MINI) || defined(ESP8266_D1_PRO_CLONE)

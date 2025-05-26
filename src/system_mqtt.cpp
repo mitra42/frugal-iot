@@ -185,6 +185,7 @@ void MqttManager::subscribe(const char* topicTwig) {
   subscribe(*topicPath);
 }
 void MqttManager::dispatch(const String &topicPath, const String &payload) {
+  // TODO move this to _base.cpp
   if (topicPath.startsWith(*xDiscovery::topicPrefix)) { // includes trailing slash
     String topicTwig = topicPath.substring(xDiscovery::topicPrefix->length()); 
     bool isSet;
@@ -204,9 +205,11 @@ void MqttManager::dispatch(const String &topicPath, const String &payload) {
       #endif
     }
   }
+ 
   #ifdef CONTROL_WANT
     Control::dispatchPathAll(topicPath, payload);  // Matches just paths. Twigs and sets handle above
   #endif
+  //TODO-25 System::dispatchPathAll(*topicPath, payload)
 }
 bool MqttManager::resubscribeAll() {
   // TODO-125 may put a flag on subscriptions then only resubscribe those not done
@@ -256,15 +259,19 @@ void MqttManager::messageReceived(const String &topicPath, const String &payload
 void MqttManager::messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos) {
   if (!client.publish(topicPath, payload, retain, qos)) {
     #ifdef SYSTEM_MQTT_DEBUG
-      Serial.print(F("Failed to publish qos=")); Serial.print(qos);
+      Serial.print(F("Failed to publish: ")); Serial.print(topicPath); Serial.print(F("=")); Serial.print(payload); 
+      Serial.print(" qos="); Serial.print(qos);
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
-      Serial.print(topicPath); Serial.print(F("=")); Serial.print(payload);
+      
       switch (client.lastError()) {
         case -1:
-          Serial.print("MQTT Buffer too small, message length~"); Serial.println(topicPath.length() + payload.length());
+          Serial.print(F(" MQTT Buffer too small, message length~")); Serial.println(topicPath.length() + payload.length());
+          break;
+        case -9:
+          Serial.println(F(" Missing or Wrong packet"));
           break;
         default: 
-          Serial.print(client.lastError());
+          Serial.print(F(" err=")); Serial.println(client.lastError());
       }
     #endif // SYSTEM_MQTT_DEBUG
     if (qos > 0) {
