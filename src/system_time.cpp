@@ -7,8 +7,6 @@
  * Required: SYSTEM_TIME_ZONE e.g. "GMT0BST,M3.5.0/1,M10.5.0" (technically optional but we are going to default it to GMT if you do not define it!)
  * Optional: SYSTEM_TIME_MS time in milliseconds to report time on serial port - usually very lomg e.g. 3600000
  * Optional: SYSTEM_TIME_DEBUG 
- * 
- * Time currently fails on ESP8266
  */
 
 #include "_settings.h"

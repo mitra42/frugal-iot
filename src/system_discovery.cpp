@@ -36,9 +36,6 @@
 #ifdef CONTROL_WANT
   #include "control.h"
 #endif
-#ifdef CONTROL_LOGGERFS_WANT
-  #include "control_logger_fs.h"
-#endif
 
 namespace xDiscovery {
 
