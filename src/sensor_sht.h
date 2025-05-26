@@ -9,7 +9,8 @@
   #define SENSOR_SHT_DEVICE SHT30 // e.g. The Lolin SHT30 shield
 #endif
 #ifndef SENSOR_SHT_ADDRESS
-  #define SENSOR_SHT_ADDRESS 0x44 // 0x45 is the D1 shield 0x44 is also common TODO build this into OTA Key as requires two binaries
+  // TODO build address this into OTA Key as requires two binaries
+  #define SENSOR_SHT_ADDRESS 0x44 // Either 0x44 (small cheap ones we use or Deeley) 0x45 (D1 shield)
 #endif
 #ifndef SENSOR_SHT_MS
   #define SENSOR_SHT_MS 60000
