@@ -406,22 +406,17 @@ bool INtext::convertAndSet(const String &payload) {
 }
 
 // TO_ADD_INxxx TO_ADD_OUTxxx
-const char* valueAdvertLineUint16 = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %d\n    max: %d\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
-const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %*f\n    max: %*f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
-const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
-const char* valueAdvertLineText = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
-const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
-const char* wireAdvertLine = "\n  -\n    topic: set/%s/wire\n    name: %s%s\n    type: %s\n    options: %s\n    display: %s\n    rw: %s\n    group: %s";
+const char* valueAdvertLineUint16 = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %d\n    max: %d\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
+const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %*f\n    max: %*f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
+const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
+const char* valueAdvertLineText = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
+const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
 // TO_ADD_INxxx
 String INfloat::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   if (topicTwig) {
-    ad += StringF(valueAdvertLineFloat, topicTwig, name, "float", width, min, width, max, color, "slider", "w", group);
-  }
-  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
-  if (wireable) {
-    ad += StringF(wireAdvertLine, topicTwig, name, " wire from", "topic", "float", "dropdown", "r", group);
+    ad += StringF(valueAdvertLineFloat, topicTwig, name, "float", width, min, width, max, color, "slider", "w", group, wireable, wiredPath ? *wiredPath : "NULL");
   }
   return ad;
 }
@@ -429,11 +424,7 @@ String INuint16::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   if (topicTwig) {
-    ad += StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "slider", "w", group);
-  }
-  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
-  if (wireable) {
-    ad += StringF(wireAdvertLine, topicTwig, name, " wire from", "topic", "int", "dropdown", "r", group);
+    ad += StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "slider", "w", group, wireable, wiredPath ? *wiredPath : "NULL");
   }
   return ad;
 }
@@ -441,11 +432,7 @@ String INbool::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
   if (topicTwig) {
-    ad += StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "w", group);
-  }
-  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
-  if (wireable) {
-    ad += StringF(wireAdvertLine, topicTwig, name, " wire from", "topic", "bool", "dropdown", "r", group);
+    ad += StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "w", group, wireable, wiredPath ? *wiredPath : "NULL");
   }
   return ad;
 }
@@ -453,11 +440,7 @@ String INtext::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
   if (topicTwig) {
-    ad += StringF(valueAdvertLineText, topicTwig, name, "text", color, "text", "w", group);
-  }
-  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w"
-  if (wireable) {
-    ad += StringF(wireAdvertLine, topicTwig, name, " wire from", "topic", "text", "dropdown", "r", group);
+    ad += StringF(valueAdvertLineText, topicTwig, name, "text", color, "text", "w", group, wireable, wiredPath ? *wiredPath : "NULL");
   }
   return ad;
 }
@@ -465,10 +448,7 @@ String INcolor::advertisement(const char * const group) {
   String ad = String();
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   if (topicTwig) {
-    ad += StringF(valueAdvertLineColor, topicTwig, name, "color", color, "wheel", "w", group);
-  }
-  if (wireable) {
-    ad += StringF(wireAdvertLine, topicTwig, name, " wire from", "topic", "color", "dropdown", "r", group);
+    ad += StringF(valueAdvertLineColor, topicTwig, name, "color", color, "wheel", "w", group, wireable, wiredPath ? *wiredPath : "NULL");
   }
   return ad;
 }
@@ -564,11 +544,7 @@ String OUTfloat::advertisement(const char * const group) {
   // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
   if (topicTwig) {
-    ad += StringF(valueAdvertLineFloat, topicTwig, name, "float", width, min, width, max, color, "bar", "r", group);
-  }
-  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w\n    group: %s"
-  if (wireable) {
-    ad += StringF(wireAdvertLine, topicTwig, name, " wire to", "topic", "float", "dropdown", "w", group);
+    ad += StringF(valueAdvertLineFloat, topicTwig, name, "float", width, min, width, max, color, "bar", "r", group, wireable, wiredPath ? *wiredPath : "NULL");
   }
   return ad;
 }
@@ -578,11 +554,7 @@ String OUTuint16::advertisement(const char * const group) {
   // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
   if (topicTwig) {
-    ad += StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "bar", "r", group);
-  }
-  // e.g. "\n  -\n    topic: wire_humidity_control_humiditynow\n    name: Humidity Now\n    type: topic\n    options: float\n    display: dropdown\n    rw: w\n    group: %s"
-  if (wireable) {
-    ad += StringF(wireAdvertLine, topicTwig, name, " wire to", "topic", "int", "dropdown", "w", group);
+    ad += StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "bar", "r", group, wireable, wiredPath ? *wiredPath : "NULL");
   }
   return ad;
 }
@@ -592,11 +564,7 @@ String OUTbool::advertisement(const char * const group) {
 
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: bar\n    rw: w"
   if (topicTwig) {
-    ad += StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "r", group);
-  }
-  // e.g. "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
-  if (wireable) {
-    ad += StringF(wireAdvertLine, topicTwig, name, " wire to", "topic", "bool", "dropdown", "w", group);
+    ad += StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "r", group, wireable, wiredPath ? *wiredPath : "NULL");
   }
   return ad;
 }
