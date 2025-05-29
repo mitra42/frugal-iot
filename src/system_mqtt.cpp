@@ -87,7 +87,7 @@ void MqttManager::frequently() {
         Serial.print(F("MQTT client loop failed ")); Serial.println(client.lastError()); // lwmqtt_err
       #endif // SYSTEM_MQTT_DEBUG
     }; // Do this at end of loop so some time before checks if connected
-    nextLoopTime = millis() + SYSTEM_MQTT_MS;
+    nextLoopTime = millis() + SYSTEM_MQTT_MS; // Not sleepSafeMillis as this is frequent
   }
 }
 

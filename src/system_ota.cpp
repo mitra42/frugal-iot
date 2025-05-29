@@ -35,6 +35,7 @@
 #else
     #error OTA only defined so far for ESP8266 and ESP32 
 #endif
+#include "system_power.h" // For sleepSafemillis()
 
 #ifndef SYSTEM_OTA_MS
   // By default, check for updates once an hour
@@ -196,7 +197,7 @@ OTAMgr g_OTAMgr; // Instantiate a single instance - there is only ever one
 
 namespace xOta {
 
-unsigned long nextLoopTime = SYSTEM_OTA_MS; // Dont activate on first loop - as happens in Setup
+unsigned long nextLoopTime = SYSTEM_OTA_MS; // Dont activate on first loop - as happens in Setup  sleepSafeMillis()
 char* getOTApath() {
     // Note there is no correlation between the path here, and where its stored on the server which also pays attention to dev/project/node
     const size_t buffer_size = strlen(SYSTEM_OTA_SERVERPORTPATH) + xDiscovery::topicPrefix->length() + strlen(SYSTEM_OTA_KEY) ;
@@ -218,15 +219,15 @@ void setup() { // TODO-25 - put this in a class and call from base etc
     g_OTAMgr.init(url, SYSTEM_OTA_VERSION, nullptr);
   #endif
 
-  // Blocks while does update
+  // Blocks while does update //TODO-23 double dipping, here and infrequently called from main setup
   g_OTAMgr.checkForUpdate();
 }
 
 void infrequently() {
   // Note wont operate on first loop (see initialization of nextLoopTime)
-  if (nextLoopTime <= millis() ) {
+  if (nextLoopTime <= powerController->sleepSafeMillis() ) {
     g_OTAMgr.checkForUpdate();
-    nextLoopTime = millis() + SYSTEM_OTA_MS;
+    nextLoopTime = powerController->sleepSafeMillis() + SYSTEM_OTA_MS;
   }
 }
 

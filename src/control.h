@@ -34,6 +34,7 @@ class Control : public Frugal_Base {
     static void dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet);
     static void dispatchPathAll(const String &topicPath, const String &payload);
     static String advertisementAll();
+    static void periodicallyAll();
     #ifdef CONTROL_DEBUG
       void debug(const char* const blah);
     #endif //CONTROL_DEBUG

@@ -19,6 +19,8 @@
 #endif
 #include "system_time.h"
 #include "misc.h" // for StringF
+#include "system_power.h" // For sleepSafemillis()
+
 
 #ifndef SYSTEM_TIME_ZONE
   #define SYSTEM_TIME_ZONE "GMT0BST,M3.5.0/1,M10.5.0" // Get yours at https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv 
@@ -102,7 +104,7 @@ SystemTime systemTime;
 
 namespace xTime {  //TODO-25 - put this in a class and call from base etc
 
-  unsigned long nextLoopTime = 0;
+  unsigned long nextLoopTime = 0; // sleepSafeMillis
 
   void setup() {
       systemTime.init(SYSTEM_TIME_ZONE);
@@ -110,14 +112,14 @@ namespace xTime {  //TODO-25 - put this in a class and call from base etc
   }
 
   void infrequently() {
-    if (nextLoopTime <= millis() ) {
+    if (nextLoopTime <= (powerController->sleepSafeMillis() ) {
       if (! systemTime.isTimeSet()) {
           Serial.print("Time since boot"); Serial.println(systemTime.now());
       } else {
           systemTime.now();
           Serial.print("Local time = "); Serial.println(systemTime.dateTime().c_str());
       }
-      nextLoopTime = millis() + SYSTEM_TIME_MS;
+      nextLoopTime = (powerController->sleepSafeMillis() + SYSTEM_TIME_MS;
       configTime(0, 0, "foo","bar","bax");
     }
   }

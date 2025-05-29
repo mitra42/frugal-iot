@@ -510,7 +510,7 @@ bool WiFiSettingsClass::connectInner(String ssid, String pw, int wait_seconds) {
     #endif
     WiFi.setHostname(hostname.c_str());
 
-    unsigned long starttime = millis();
+    unsigned long starttime = millis(); // not sleepSafeMillis - and thats probably ok
     while (WiFi.status() != WL_CONNECTED && (wait_seconds < 0 || (millis() - starttime) < (unsigned)wait_seconds * 1000)) {
         Serial.print(".");
         delay(onWaitLoop ? onWaitLoop() : 300);

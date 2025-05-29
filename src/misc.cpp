@@ -8,6 +8,7 @@
 #ifdef ESP8266
 #include "user_interface.h" // system_get_free_heap_size
 #endif
+#include "system_power.h" // For sleepSafemillis()
 
 #include <Arduino.h> // For String
 //#include <stdio.h> // Doesnt appear to be needed - was in sample code from Jonathan Semple
@@ -42,7 +43,7 @@ const char* lprintf(size_t buffer_size, const char* format, ...) {
 #endif
 #define SYSTEM_WATCHDOG_MEM_MS 10000 // 10 seconds, much too fast once tested 
 
-long unsigned internal_watchdog_last = 0;
+long unsigned internal_watchdog_last = 0; // Will be sleepSafeMillis 
 
 void internal_watchdog_setup() {
   //Ref: https://forum.arduino.cc/t/esp32-ram-check/871248/2
@@ -69,13 +70,13 @@ void internal_watchdog_loop() {
   #ifdef ESP32
     esp_task_wdt_reset();
   #endif
-  if (millis() > (internal_watchdog_last + SYSTEM_WATCHDOG_MEM_MS)) {
+  if (powerController->sleepSafeMillis() > (internal_watchdog_last + SYSTEM_WATCHDOG_MEM_MS)) {
     #ifdef ESP8266
       Serial.print(F("heap=")); Serial.println(system_get_free_heap_size());  // https://www.esp8266.com/viewtopic.php?p=82839
     #elif defined(ESP32) //TODO-128 should be able to find equivalent on ESP8266
       Serial.print(F("heap=")); Serial.print(esp_get_free_heap_size()); 
       Serial.print(F(" min heap=")); Serial.println(esp_get_minimum_free_heap_size());
     #endif //ESP32
-    internal_watchdog_last = millis(); 
+    internal_watchdog_last = powerController->sleepSafeMillis(); 
   }
 }

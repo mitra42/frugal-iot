@@ -7,6 +7,7 @@
 #include "_base.h" // Base for new class version
 #include "sensor.h" // Base class for sensors
 #include "misc.h" // 
+#include "main.h"
 
 #ifdef SYSTEM_WIFI_WANT
 #include "system_wifi.h"
@@ -240,7 +241,11 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
   // TODO-125 want to ifdef this
   internal_watchdog_setup();
 
-
+#ifdef SYSTEM_POWER_MODE_LOW
+  // If in low power mode then need to do these on return from sleep, but take care not doing twice (in setup and here)
+  periodically();
+  infrequently();
+#endif
 #ifdef ANY_DEBUG
   Serial.println(F("FrugalIoT Starting Loop"));
 #endif // ANY_DEBUG
@@ -289,7 +294,11 @@ void infrequently() {
 void loop() {
   frequently(); // Do things like MQTT which run frequently with their own clock
   if (powerController->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_HIGH
-    periodically();
-    infrequently(); // Do things that keep their own track of time
+    #ifndef SYSTEM_POWER_MODE_LOW
+      // If not in low power mode then do the periodic and infrequent stuff
+      // In low power mode we do this in setup and then go to sleep after repeating frequently()
+      periodically();  // Do things that happen once per cycle
+      infrequently();  // Do things that keep their own track of time
+    #endif   
   }
 }

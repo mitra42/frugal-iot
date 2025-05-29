@@ -16,6 +16,7 @@
 #include <Arduino.h>
 #include "control_blinken.h"
 #include "control.h"
+#include "system_power.h" // For sleepSafemillis()
 
 ControlBlinken::ControlBlinken (const char* const id, const char * const name, float secsOn, float secsOff) 
 : Control(id, name,
@@ -37,14 +38,14 @@ void ControlBlinken::act() {
   // If calling act, then we know blinkSpeed changed
   blinkOn = inputs[0]->floatValue() * 1000;
   blinkOff = inputs[1]->floatValue() * 1000;
-  nextBlinkTime = millis() + (outputs[0]->boolValue() ? blinkOn : blinkOff) ; // Blink after new blink time
+  nextBlinkTime = powerController->sleepSafeMillis() + (outputs[0]->boolValue() ? blinkOn : blinkOff) ; // Blink after new blink time
 }
 
-void ControlBlinken::periodically() {
-  if (nextBlinkTime <= millis()) {
+void ControlBlinken::frequently() {
+  if (nextBlinkTime <= powerController->sleepSafeMillis()) {
     bool next = !outputs[0]->boolValue();
     ((OUTbool*)outputs[0])->set(next); // Will send message
-    nextBlinkTime = millis() + (next ? blinkOn : blinkOff);
+    nextBlinkTime = powerController->sleepSafeMillis() + (next ? blinkOn : blinkOff);
   }
 }
 #endif // CONTROL_BLINKEN_WANT

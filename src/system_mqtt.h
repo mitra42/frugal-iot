@@ -55,7 +55,7 @@ class MqttManager : public Frugal_Base {
     MQTTClient client; //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.
     bool inReceived = false;
     bool subscriptionsDone = false; // True when server has reported a session - so dont need to subscribe OR have resubscribed.
-    unsigned long nextLoopTime; // TODO-25 may move into superclass
+    unsigned long nextLoopTime; // Not sleepSafeMillis as frequent.
     unsigned long ms;
     MqttManager();
     void setup();
