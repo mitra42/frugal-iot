@@ -220,11 +220,11 @@ Control_Logger* clfs = new Control_LoggerFS(
 #endif // CONTROL_LOGGERFS_WANT
 
 #ifdef SYSTEM_OLED_WANT
-  System_OLED* oled = new System_OLED();
+  oled = new System_OLED();
   oled->setup();
 #endif // SYSTEM_OLED_WANT
 #ifdef SYSTEM_LORA_WANT
-  System_LoRa* lora = new System_LoRa();
+  lora = new System_LoRa();
   lora->setup();
 #endif // SYSTEM_LORA_WANT
 
@@ -254,22 +254,7 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
 
   // TODO-125 want to ifdef this
   internal_watchdog_setup();
-
-// TODO-137 (LoRa) amd TODO-149 (oled)
-  #ifdef SYSTEM_LORA_DEBUG
-    Serial.println(F("LoRa Debugging Enabled"));
-  #endif // SYSTEM_LORA_DEBUG
-  #ifdef SYSTEM_OLED_DEBUG
-    Serial.println(F("OLED Debugging Enabled"));
-  #endif // SYSTEM_OLED_DEBUG
-  #ifdef SYSTEM_LORA_SENDER_TEST
-    oled.print("LORA SENDER ");
-    Serial.println(F("LoRa Sender Starting"));
-  #elif defined(SYSTEM_LORA_RECEIVER_TEST)
-    oled.print("OLED RECEIVER ");
-    Serial.println(F("OLED Receiver Starting"));
-  #endif
-#ifdef SYSTEM_POWER_MODE_LOW
+  #ifdef SYSTEM_POWER_MODE_LOW
   // If in low power mode then need to do these on return from sleep, but take care not doing twice (in setup and here)
   periodically();
   infrequently();

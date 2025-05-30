@@ -8,7 +8,7 @@
 #include "_base.h"
 
 #if !defined(SYSTEM_POWER_MODE_HIGH) && !defined(SYSTEM_POWER_MODE_MEDIUM) && !defined(SYSTEM_POWER_MODE_LOW)
-  #define SYSTEM_POWER_MODE_MEDIUM // Default to high power mode if none defined
+  #define SYSTEM_POWER_MODE_HIGH // Default to high power mode if none defined
 #endif
 // SYSTEM_POWER_MS is how often to run perioically(). 
 #ifndef SYSTEM_POWER_MS

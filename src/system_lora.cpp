@@ -8,8 +8,10 @@
 
 #ifdef SYSTEM_LORA_WANT
 #include "system_lora.h"
+#include <SPI.h>
+#include <LoRa.h> // LoRa library for ESP32
 
-#if definded(TTGO_LORA_SX127X_V1)
+#if defined(TTGO_LORA_SX127X_V1)
   #define LORA_SCK 5
   #define LORA_MISO 19
   #define LORA_MOSI 27
@@ -28,31 +30,42 @@
 #endif
 
 // TODO note that each board only does specific bands: 
-// SX1278 does 433MHz 144-148MHz suitable for Asia
-// SX1276 does 868MHz (where?);  915MHz (NAmerica and Australia); 923MHz (where?);
+// SX1278 does BAND 433MHz (Europe) 144-148MHz suitable for Asia
+// SX1276 does 868MHz (Europe);  915MHz (NAmerica, SAmerica & Australia); 923MHz (Australia and Asia);
+// Code says: 433E6 for Asia; 866E6 for Europe (unclear if 868 or 433); 915E6 (NAmerica); 
 
-
-
-//433E6 for Asia
-//866E6 for Europe
-//915E6 for North America
-#define BAND 915E6
-  /* Bob Rader added in comment https://randomnerdtutorials.com/ttgo-lora32-sx1276-arduino-ide/#comment-426149
-#define Band 433E6 // Set Band or Frequency in Hz
+/* Bob Rader added in comment https://randomnerdtutorials.com/ttgo-lora32-sx1276-arduino-ide/#comment-426149
 #define SF 10 // Set Spreading Factor
 #define BW 125E3 // Set Bandwidth
 #define CR 5 // Set Coding Rate
 #define Preamble 255 // Set Preamble
 #define SyncWd 0x12 // Set Sync Word
+
+Not currently used in this code
 */
 
-
+System_LoRa* lora;
 
 System_LoRa::System_LoRa() : Frugal_Base() {
     // Constructor code here, if needed
 }
 void System_LoRa::setup() {
     // Setup code for LoRa system
+      //SPI LoRa pins
+  SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
+  //setup LoRa transceiver module
+  LoRa.setPins(LORA_CS, LORA_RST, LORA_IRQ); 
+  if (!LoRa.begin(SYSTEM_LORA_BAND)) {
+    Serial.println("❌ Starting LoRa failed!");
+  }
+  /* Bob Rader added in comment https://randomnerdtutorials.com/ttgo-lora32-sx1276-arduino-ide/#comment-426149
+    LoRa.setSpreadingFactor(SF); // 6-12
+    LoRa.setSignalBandwidth(BW); // 7.8E3, 10.4E3, 15.6E3, 20.8E3, 31.25E3,
+    // 41.7E3, 62.5E3, 125E3, & 250E3
+    LoRa.setCodingRate4(CR); // 5 or 8
+    LoRa.setPreambleLength(Preamble); // 5 to 65535
+    LoRa.setSyncWord(SyncWd); // byte val to use as sync word
+  */
 }
 void System_LoRa::infrequent() {
     // Code for infrequent tasks, e.g., every 10 seconds

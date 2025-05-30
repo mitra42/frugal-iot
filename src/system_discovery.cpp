@@ -87,8 +87,10 @@ void fullAdvertise() {
         "Lolin C3 Pico"
       #elif defined(LOLIN_S2_MINI)
         "Lolin S2 Mini"
+      #elif defined(TTGO_LORA_SX127X)
+        "TTGO Lora SX127X" 
       #else
-        #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
+        #error undefined board in system_discovery.cpp #TO_ADD_BOARD
       #endif
       // TO_ADD_SENSOR (note space at start of string)
       #ifdef SENSOR_SHT_WANT

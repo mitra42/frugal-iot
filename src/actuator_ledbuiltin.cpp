@@ -43,6 +43,7 @@ void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const Stri
     ) { // True if changed
       act();
     }
+    Actuator_Digital::dispatchTwig(topicActuatorId, leaf, payload, isSet); // Call parent to handle other leaves
   }
 }
   

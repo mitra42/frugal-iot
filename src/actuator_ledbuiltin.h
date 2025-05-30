@@ -38,7 +38,7 @@
   #define ACTUATOR_LEDBUILTIN_RGB
 #elif defined(SONOFF_R2) || defined(ESP8266_D1) 
   #define ACTUATOR_LEDBUILTIN_INVERT
-#elif defined(LOLIN_S2_MINI)
+#elif defined(LOLIN_S2_MINI) || defined(TTGO_LORA_SX127X) 
   // Not defined LED is digital and not inverted
 #else
   #error "please define whether your LED is RGB or not"
@@ -54,6 +54,7 @@
 
 
 class Actuator_Ledbuiltin : public Actuator_Digital {
+  // Actuator_Digital value is on/off for LED
   public: 
     Actuator_Ledbuiltin(const uint8_t p, uint8_t brightness = 255, const char* color = "0xFFFFFF");
     virtual void act();
