@@ -81,6 +81,12 @@
 #ifdef LOCAL_DEV_WANT
 #include "local_dev.h"
 #endif
+#ifdef SYSTEM_LORA_WANT
+#include "system_lora.h"
+#endif
+#ifdef SYSTEM_OLED_WANT
+#include "system_oled.h"
+#endif
 
 void setup() {
 #ifdef LILYGOHIGROW
@@ -193,6 +199,7 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #endif
 
 #ifdef CONTROL_LOGGERFS_WANT
+// Must be after sensor_sht for default wiring below
 Control_Logger* clfs = new Control_LoggerFS(
   "Logger",
   fs2, // TODO-110 Using spiffs for testing for now
@@ -205,12 +212,19 @@ Control_Logger* clfs = new Control_LoggerFS(
     new INtext("Logger", "log3", "log3", nullptr, "black", true)
     });
   controls.push_back(clfs);
-  clfs->inputs[0]->wireTo(ss->temperature);
-
+  clfs->inputs[0]->wireTo(ss->temperature); // TODO this is default wiring - should remove.
 #endif // CONTROL_LOGGERFS_WANT
 
-#pragma GCC diagnostic pop
+#ifdef SYSTEM_OLED_WANT
+  System_OLED* oled = new System_OLED();
+  oled->setup();
+#endif // SYSTEM_OLED_WANT
+#ifdef SYSTEM_LORA_WANT
+  System_LoRa* lora = new System_LoRa();
+  lora->setup();
+#endif // SYSTEM_LORA_WANT
 
+#pragma GCC diagnostic pop
 
 
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
@@ -236,8 +250,22 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
   // TODO-125 want to ifdef this
   internal_watchdog_setup();
 
+// TODO-137 (LoRa) amd TODO-149 (oled)
+  #ifdef SYSTEM_LORA_DEBUG
+    Serial.println(F("LoRa Debugging Enabled"));
+  #endif // SYSTEM_LORA_DEBUG
+  #ifdef SYSTEM_OLED_DEBUG
+    Serial.println(F("OLED Debugging Enabled"));
+  #endif // SYSTEM_OLED_DEBUG
+  #ifdef SYSTEM_LORA_SENDER_TEST
+    oled.print("LORA SENDER ");
+    Serial.println(F("LoRa Sender Starting"));
+  #elif defined(SYSTEM_LORA_RECEIVER_TEST)
+    oled.print("OLED RECEIVER ");
+    Serial.println(F("OLED Receiver Starting"));
+  #endif
 
-#ifdef ANY_DEBUG
+#ifdef ANY_DEBUG  
   Serial.println(F("FrugalIoT Starting Loop"));
 #endif // ANY_DEBUG
 

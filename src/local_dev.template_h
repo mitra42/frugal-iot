@@ -5,10 +5,13 @@
 #include "_base.h"
 
 namespace localDev {
-extern Actuator_Ledbuiltin actuator_ledbuiltin;
 
 void setup();
 void loop();
+// loop will soon be replaced with following ...
+//void frequently();
+//void perioically();
+//void infrequently();
 } // namespace localDev
 
 #endif //LOCAL_DEV_H
