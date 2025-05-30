@@ -36,7 +36,7 @@ class Control : public Frugal_Base {
     static void dispatchPathAll(const String &topicPath, const String &payload);
     static String advertisementAll();
     #ifdef CONTROL_DEBUG
-      void debug(const char* const blah);
+      virtual void debug(const char* const blah);
     #endif //CONTROL_DEBUG
 };
 
