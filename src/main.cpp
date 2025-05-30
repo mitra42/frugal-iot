@@ -7,6 +7,7 @@
 #include "_base.h" // Base for new class version
 #include "sensor.h" // Base class for sensors
 #include "misc.h" // 
+#include "main.h"
 
 #ifdef SYSTEM_WIFI_WANT
 #include "system_wifi.h"
@@ -75,6 +76,9 @@
 #include "control_logger_fs.h"
 #include "system_fs.h"
 #endif
+
+#include "system_power.h"
+
 #ifdef SYSTEM_TIME_WANT
 #include "system_time.h"
 #endif
@@ -234,6 +238,7 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();
 #endif
+  powerController = new System_Power();
 #ifdef SYSTEM_TIME_WANT // Synchronize time
   xTime::setup();
 #endif
@@ -264,32 +269,64 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
     oled.print("OLED RECEIVER ");
     Serial.println(F("OLED Receiver Starting"));
   #endif
-
+#ifdef SYSTEM_POWER_MODE_LOW
+  // If in low power mode then need to do these on return from sleep, but take care not doing twice (in setup and here)
+  periodically();
+  infrequently();
+#endif
 #ifdef ANY_DEBUG  
   Serial.println(F("FrugalIoT Starting Loop"));
 #endif // ANY_DEBUG
 
 }
 
-void loop() {
-  Mqtt->loop();
-  Frugal_Base::loopAll(); // Will replace all loops as developed - but starting with sensors, so positioned here.
-
-#ifdef SYSTEM_DISCOVERY_WANT
-  xDiscovery::loop();
-#endif
-#ifdef SYSTEM_OTA_WANT
-  xOta::loop();
-#endif
-#ifdef SYSTEM_TIME_WANT
-  xTime::loop();
-#endif
-  // TODO-125 probably want to ifdef this
-  internal_watchdog_loop();
-
-#ifdef LOCAL_DEV_WANT
-  localDev::loop();
-#endif
+// This is stuff done multiple times per period
+void frequently() {
+  Mqtt->frequently(); // 
+  #ifdef LOCAL_DEV_WANT
+    localDev::frequently();
+  #endif
+  // TODO-23 will want something here for buttons as well
 }
 
+// These are things done one time per period - where a period is the time set in SYSTEM_POWER_MS
+void periodically() {
+  #ifdef SENSOR_WANT
+    Sensor::periodicallyAll(); // TODO-23 check none of the sensors subclass Loop to do something other than readAndSet
+  #endif
+  #ifdef CONTROL_WANT
+    Control::periodicallyAll(); // TODO-23 this is not going to work for most control loops (only Blinken currently) which will have a timeframe
+  #endif
+  // No actuator time dependent at this point
+  #ifdef LOCAL_DEV_WANT
+    localDev::periodically();
+  #endif
+}
+// These are things done occasionally - maybe once over multiple periods (HIGH MEDIUM) or each period (LOW)
+void infrequently() {
+  #ifdef SYSTEM_DISCOVERY_WANT
+    xDiscovery::infrequently();
+  #endif
+  #ifdef SYSTEM_OTA_WANT
+    xOta::infrequently(); // TODO-23 default time should be less than one period
+  #endif
+  #ifdef SYSTEM_TIME_WANT
+    xTime::infrequently();
+  #endif
+  #ifdef LOCAL_DEV_WANT
+    localDev::infrequently();
+  #endif
+  internal_watchdog_loop(); // TODO-23 think about this, probably ok as will be awake less than period
+}
 
+void loop() {
+  frequently(); // Do things like MQTT which run frequently with their own clock
+  if (powerController->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_HIGH
+    #ifndef SYSTEM_POWER_MODE_LOW
+      // If not in low power mode then do the periodic and infrequent stuff
+      // In low power mode we do this in setup and then go to sleep after repeating frequently()
+      periodically();  // Do things that happen once per cycle
+      infrequently();  // Do things that keep their own track of time
+    #endif   
+  }
+}

@@ -57,7 +57,7 @@ Sensor_Button* Sensor_Button::handler(Button2& button) {
 void Sensor_Button::setup() {
   button->begin(pin);
 }
-void Sensor_Button::loop() {
+void Sensor_Button::frequently() {
   button->loop();
 }
 

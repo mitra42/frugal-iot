@@ -29,16 +29,10 @@ void Frugal_Base::setupAll() {
   #endif
   // TODO-25 calls system.setupAll
 }
-void Frugal_Base::loop() { }; // This will get called if no loop() in subclass 
+void Frugal_Base::infrequently() { }; // This will get called if no loop() in subclass 
+void Frugal_Base::frequently() { }; // This will get called if no loop() in subclass 
+void Frugal_Base::periodically() { }; // This will get called if no loop() in subclass 
 
-void Frugal_Base::loopAll() {
-  Sensor::loopAll();
-  #ifdef CONTROL_WANT
-    Control::loopAll();
-  #endif
-  //Actuator::loopAll(); // Currently no loops in Actuators
-  // TODO-25 call system;
-}; // Class FrugalBase
 
 // ========== IO - base class for IN and OUT ===== 
 
@@ -191,8 +185,7 @@ bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (isSet) { // e.g : set/sht/temp/wire set/sht/temp set/sht/temp/max
     if (leaf.endsWith("/wire")) {
       if (!(wiredPath && (p == *wiredPath))) {
-        wireTo(new String(p));
-        wireTo(new String(p));
+              wireTo(new String(p));
       }
     }
   }

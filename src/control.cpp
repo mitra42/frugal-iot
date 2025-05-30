@@ -104,9 +104,9 @@ void Control::setupAll() {
   }
 }
 // Note Static
-void Control::loopAll() {
+void Control::periodicallyAll() {
   for (Control* c: controls) {
-    c->loop();
+    c->periodically();
   }
 }
 // Note Static
@@ -141,20 +141,4 @@ String Control::advertisementAll() {
 std::vector<Control*> controls;
 
 
-/*
-// Example for blinken  - TODO-25 note needs a loop for timing
-long unsigned lastblink; // Note local variable in same context as control_blinken
-IN cb_in1 = [1,"blinkspeed",NULL];
-OUT cb_out1 = [0, "ledbuiltin", NULL];
-IN* cb_ins[3] = [cb_in1, NULL, NULL];
-OUT* cb_outs[3] = [cb_out1, NULL, NULL];
-Tcallback blink(Control* self) {
-  if (lastblink + (self->inputs[0].value*1000)) < millis() { 
-    self->outputs[0].set(!!self->outputs[0].value);
-    lastblink = millis();
-  }
-}
-Tcallback cb_acts[3] = [xxx, NULL, NULL]
-Control* control_blinken = new Control_3xx3x3(cb_ins, cb_outs, cb_acts)
-*/
 #endif //CONTROL_WANT

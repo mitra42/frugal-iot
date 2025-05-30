@@ -16,7 +16,7 @@ class ControlBlinken : public Control {
     unsigned long blinkOff = 0; // in milliseconds (converted from seconds in act)
     ControlBlinken(const char* const id, const char* const name, float secsOn, float secsOff);
     void act(); // Override in Control
-    void loop(); // Override in FrugalBase
+    void frequently(); // Override in FrugalBase
 };
 
 #endif // CONTROL_BLINKEN_H

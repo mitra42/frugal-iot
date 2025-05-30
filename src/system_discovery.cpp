@@ -9,6 +9,8 @@
   Optional SYSTEM_DISCOVERY_DEBUG
   Optional *_WANT and *ADVERTISEMENT for each sensor and actuator
 
+  TODO make this into a class ! 
+
 */
 
 #include "_settings.h"
@@ -36,10 +38,12 @@
 #ifdef CONTROL_WANT
   #include "control.h"
 #endif
+#include "system_power.h" // For sleepSafemillis()
+
 
 namespace xDiscovery {
 
-unsigned long nextLoopTime = 0;
+unsigned long nextLoopTime = 0; // sleepSafeMillis
 
 //TODO Optimization - should these be String & instead of String *
 // projectTopic - gets 30592; 332252 *projectTopic 30584 / 332220
@@ -131,10 +135,10 @@ void setup() {
   Mqtt->subscribe("set/#"); 
 }
 
-void loop() {
-    if (nextLoopTime <= millis()) {
+void infrequently() {  //TODO-23 double dipping, here and infrequently called from main setup
+    if (nextLoopTime <= (powerController->sleepSafeMillis())) {
         quickAdvertise(); // Send info about this node to server (on timer)
-        nextLoopTime = millis() + SYSTEM_DISCOVERY_MS;
+        nextLoopTime = powerController->sleepSafeMillis() + SYSTEM_DISCOVERY_MS;
     }
 }
 

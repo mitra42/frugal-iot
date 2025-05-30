@@ -41,7 +41,7 @@ Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, cons
 
 // Sensor_Uint16_t::act is obsolete
 // Sensor_Uint16_t::set is good - does optional smooth, compares and sends
-// Sensor_Uint16_t::loop is good - does periodic read and set
+// Sensor_Uint16_t::periodic is good - does periodic read and set
 
 // Note this is virtual, and subclassed in Sensor_Battery
 uint16_t Sensor_Analog::read() {

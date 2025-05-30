@@ -16,7 +16,7 @@
 #endif
 #include "system_wifi.h"
 #include "system_mqtt.h"
-
+#include "system_power.h" // For sleepSafemillis()
 
 // TODO find a way to store in eeprom rather than SPIFFS. 
 #ifdef ESP32
@@ -165,8 +165,9 @@ String slurp(const String& fn) {
 // A watchdog on the portal, that will reset after SYSTEM_WIFI_PORTAL_RESTART ms
 // Adding ability to reset if wanted wifi appears. 
 bool portalWatchdog() {
-  static unsigned long lastWatchdog = millis(); // initialized first time this is called
-  if (millis() > lastWatchdog + (WiFi.softAPgetStationNum() ? SYSTEM_WIFI_PORTAL_RESTART : 15000)) {
+  // TODO-23 think about sleep and the portal
+  static unsigned long lastWatchdog = powerController->sleepSafeMillis(); // initialized first time this is called
+  if (powerController->sleepSafeMillis() > lastWatchdog + (WiFi.softAPgetStationNum() ? SYSTEM_WIFI_PORTAL_RESTART : 15000)) {
     #ifdef SYSTEM_WIFI_DEBUG
       Serial.println(F("WiFiSettings Rescanning"));
     #endif
@@ -176,7 +177,7 @@ bool portalWatchdog() {
       return true; // Connected - exit portal
     }
     // If noone connected rescan every 15 seconds
-    lastWatchdog = millis();
+    lastWatchdog = powerController->sleepSafeMillis();
   } 
   return false; 
 }

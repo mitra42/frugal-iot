@@ -7,11 +7,9 @@
 namespace localDev {
 
 void setup();
-void loop();
-// loop will soon be replaced with following ...
-//void frequently();
-//void perioically();
-//void infrequently();
+void frequently();
+void periodically();
+void infrequently();
 } // namespace localDev
 
 #endif //LOCAL_DEV_H
