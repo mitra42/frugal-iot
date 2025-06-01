@@ -82,7 +82,9 @@ class MqttManager : public Frugal_Base {
     void messageSendQueued();
     String* path(char const * const topicTwig);
     String* twig(const String &topicPath);
-  
+    bool prepareForLightSleep();
+    bool recoverFromLightSleep();
+
   protected: // TODO - some of the other methods should probably be protected
     std::forward_list<Subscription> subscriptions;
     std::forward_list<Message> queued;

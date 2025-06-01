@@ -17,6 +17,13 @@
 #include "system_wifi.h"
 #include "system_mqtt.h"
 #include "system_power.h" // For sleepSafemillis()
+#include <esp_wifi.h> // For esp_wifi_stop / start
+#if ESP8266
+  #include <ESP8266WiFi.h>  // for WiFiClient
+#else
+  #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
+#endif
+
 
 // TODO find a way to store in eeprom rather than SPIFFS. 
 #ifdef ESP32
@@ -121,6 +128,7 @@ bool scanConnectOneAndAll() {
 bool connect() {
   WiFiSettings.begin();
   if (scanConnectOneAndAll()) {
+    WiFi.setAutoReconnect(true); // Stay connected if lose it - doesnt seem to work at least on TTGO
     return true;
   } else {
     // Tried any networks we know
@@ -135,7 +143,7 @@ bool connect() {
 void checkConnected() {
   if (WiFi.status() != WL_CONNECTED) {
     #ifdef SYSTEM_WIFI_DEBUG
-      Serial.println(F("WiFi not connected, forcing reconnect"));
+      Serial.printf("WiFi status=%d not connected, forcing reconnect\n", WiFi.status());
     #endif
     connect();
   }
@@ -320,6 +328,35 @@ void setup() {
     Serial.println(clientid());
   #endif // SYSTEM_WIFI_DEBUG
   connect();
+}
+
+bool reconnectWiFi() { // Try hard to reconnect WiFi
+  if (WiFi.status() == WL_DISCONNECTED) {
+    if (!WiFi.reconnect()) { Serial.println("Failed to reconnect to WiFi"); return 0; }; 
+    unsigned long starttime = millis();
+    while (WiFi.status() != WL_CONNECTED && ((millis() - starttime) < 3000)) {
+        Serial.print(WiFi.status());
+        delay(20); // Short delay as expect to be fast
+    }
+  }
+  connect(); // Scan and more complicate connection - even AP portal if fail
+  return WiFi.status() == WL_CONNECTED;
+}
+
+bool prepareForLightSleep() {
+   return (esp_wifi_stop() == ESP_OK); // Suggested to reduce dropping WiFi connection
+}
+bool recoverFromLightSleep() {
+  if (esp_wifi_start() != ESP_OK) {
+    Serial.println(F("Failed to restart esp_wifi"));
+    return 0;
+  }
+   // Spin till its started
+  while (WiFi.status() == WL_NO_SHIELD) {
+     /*Serial.print("w");*/ 
+     delay(100); 
+  } 
+  return reconnectWiFi(); // Quick connect if possible - otherwise scan and connect
 }
 
 } // namespace xWifi

@@ -11,6 +11,9 @@
 
 #include "_settings.h"
 #include "system_power.h"
+#include "system_oled.h"
+// TODO may not need all these once WiFi debugged and code moved to other files
+#include "system_mqtt.h"
 
 System_Power* powerController;
 
@@ -61,9 +64,16 @@ void System_Power::recoverFromDeepSleep() {
   #endif
 }
 void System_Power::prepareForLightSleep() {
+  #ifdef SYSTEM_OLED_WANT
+    oled->display.setCursor(0,40);
+    oled->display.print("Peparing for Light Sleep");      
+    oled->display.display();
+  #endif
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println("Power Management: preparing for Light Sleep");
+    // Serial.print("Millis ="); Serial.println(millis()); // Tested and confirms preserved
   #endif
+  xWifi::prepareForLightSleep(); 
   // TODO-23 will loop through sensors and actuators here are some pointers found elsewhere...
   // WIFI 
   // see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/power_management.html for how to keep WiFi alive during sleep
@@ -73,9 +83,22 @@ void System_Power::prepareForLightSleep() {
   // SPI.end();
 }
 void System_Power::recoverFromLightSleep() {
+  // Just used for status loops
+  uint8_t wait_seconds = 10; // TODO Should be less
+  unsigned long starttime = millis(); // not sleepSafeMillis - and thats probably ok
+
+  #ifdef SYSTEM_OLED_WANT
+    oled->display.setCursor(0,40);
+    oled->display.print("Recovering from Light Sleep");  
+    oled->display.display();
+  #endif
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println("Power Management: recovering from Light Sleep");
+    // Serial.print("Millis ="); Serial.println(millis());   // Tested and confirned preserved
   #endif
+  if (xWifi::recoverFromLightSleep()) {
+    Mqtt->recoverFromLightSleep(); // New or old session
+  } 
   // TODO-23 will loop through sensors and actuators here are some pointers found elsewhere...
 }
 
@@ -103,7 +126,7 @@ bool System_Power::maybeSleep() {
       esp_sleep_enable_timer_wakeup(SYSTEM_POWER_SLEEP_US);
       esp_light_sleep_start();
       nextSleepTime = millis() + SYSTEM_POWER_WAKE_MS; // TODO-23 check logic when know how millis works in light sleep
-      millis_offset += SYSTEM_POWER_SLEEP_MS;
+      // Note millis preserved during lightSleep
       recoverFromLightSleep();
       return true;
     #elif defined(SYSTEM_POWER_MODE_HIGH)

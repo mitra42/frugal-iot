@@ -86,13 +86,16 @@ void internal_watchdog_loop() {
   #ifdef ESP32
     esp_task_wdt_reset();
   #endif
+  // TODO move this to infrequent() on something
   if (powerController->sleepSafeMillis() > (internal_watchdog_last + SYSTEM_WATCHDOG_MEM_MS)) {
-    #ifdef ESP8266
-      Serial.print(F("heap=")); Serial.println(system_get_free_heap_size());  // https://www.esp8266.com/viewtopic.php?p=82839
-    #elif defined(ESP32) //TODO-128 should be able to find equivalent on ESP8266
-      Serial.print(F("heap=")); Serial.print(esp_get_free_heap_size()); 
-      Serial.print(F(" min heap=")); Serial.println(esp_get_minimum_free_heap_size());
-    #endif //ESP32
+    #ifdef SYSTEM_MEMORY_DEBUG
+      #ifdef ESP8266
+        Serial.print(F("heap=")); Serial.println(system_get_free_heap_size());  // https://www.esp8266.com/viewtopic.php?p=82839
+      #elif defined(ESP32) //TODO-128 should be able to find equivalent on ESP8266
+        Serial.print(F("heap=")); Serial.print(esp_get_free_heap_size()); 
+        Serial.print(F(" min heap=")); Serial.println(esp_get_minimum_free_heap_size());
+      #endif //ESP32
+    #endif
     internal_watchdog_last = powerController->sleepSafeMillis(); 
   }
 }

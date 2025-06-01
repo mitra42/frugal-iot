@@ -109,13 +109,13 @@ bool MqttManager::connect() {
       if (!client.sessionPresent()) {
         subscriptionsDone = false; // No session so will need to redo subscriptions
       } else {
-        Serial.print(F(" Session present "));
+        Serial.println(F(" Session present "));
       }
     }
   }
   /* Have a connection - new or old */
   if (!subscriptionsDone) { // Client has reported existence of a session
-    /* State connected but broker doesnt no subscriptions */
+    /* State connected but broker doesnt know subscriptions */
     if (resubscribeAll()) { 
       subscriptionsDone = true;
     } else {
@@ -342,6 +342,12 @@ void MqttManager::messageSendQueued() {
     queued.pop_front();
     //TODO-125 prob need to delete message popped
   }
+}
+bool MqttManager::prepareForLightSleep() {
+  return true;
+}
+bool MqttManager::recoverFromLightSleep() {
+  return connect();
 }
 namespace xMqtt {
 
