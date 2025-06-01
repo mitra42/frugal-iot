@@ -79,7 +79,6 @@ void Actuator_Ledbuiltin::act() {
       #endif
     #endif
   #else // !ACTUATOR_LEDBUILTIN_RGB
-    Serial.print("XXX S2 mini led val = "); Serial.println(input->value);
     #ifdef ACTUATOR_LEDBUILTIN_INVERT
       digitalWrite(ACTUATOR_LEDBUILTIN_PIN, input->value ? LOW : HIGH); // LED pin is inverted, at least on Lolin D1 Mini
     #else

@@ -26,7 +26,7 @@ namespace localDev {
 // Note if you use a subclass of Actuator, Sensor or Control, then the instance's setup() will be called as part of the Frugal_Base::setupAll() as called by frugal_iot.cpp 
 void setup() {
   // And here is an example of instantiating a custom control using that function
-  controls.push_back(new ControlHysterisis("humidity", "Humidity control", 50, 0, 100));
+  controls.push_back(new ControlHysterisis("control", "Control", 50, 0, 100));
 }
 
 // These are three kinds of loop function

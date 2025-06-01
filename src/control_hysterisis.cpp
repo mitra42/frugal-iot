@@ -11,19 +11,31 @@
 #include "misc.h"
 #include "control_hysterisis.h"
 
+void ControlHysterisis::debug(const char* const where) {
+  Serial.printf("%s: ",where);
+  Serial.printf(" now=%f ", inputs[0]->floatValue());
+  if (((INfloat*)inputs[0])->wiredPath) { Serial.print(*(((INfloat*)inputs[0])->wiredPath)); }
+  Serial.printf(" limit=%f ", inputs[1]->floatValue());
+  if (((INfloat*)inputs[1])->wiredPath) { Serial.print(*(((INfloat*)inputs[1])->wiredPath)); }
+  Serial.printf(" hysterisis=%f ", inputs[2]->floatValue());
+  if (((INfloat*)inputs[2])->wiredPath) { Serial.print(*(((INfloat*)inputs[2])->wiredPath)); }
+  Serial.printf( " out=%d ", outputs[0]->boolValue());
+  if (((INfloat*)outputs[0])->wiredPath) { Serial.print(*(((INfloat*)outputs[0])->wiredPath)); }
+  Serial.println();
+}
 void ControlHysterisis::act() {
-  const float hum = inputs[0]->floatValue();
+  const float now = inputs[0]->floatValue();
   const float lim = inputs[1]->floatValue();
   const float hysterisis = inputs[2]->floatValue();
-  #ifdef CONTROL_HYSTERISIS_DEBUG
-    Serial.print(F("hum=")); Serial.print(hum); Serial.print(F(" lim=")); Serial.print(lim); Serial.print(F(" hysterisis=")); Serial.print(hysterisis);
-  #endif
-  if (hum > (lim + hysterisis)) {
+  if (now > (lim + hysterisis)) {
       ((OUTbool*)outputs[0])->set(true);
   }
-  if (hum < (lim - hysterisis)) {
+  if (now < (lim - hysterisis)) {
     ((OUTbool*)outputs[0])->set(false);
   }
+  #ifdef CONTROL_HYSTERISIS_DEBUG
+    debug("ControlHysterisis after act");
+  #endif
   // If  lim-histerisis < hum < lim+histerisis then don't change setting
 };
 
