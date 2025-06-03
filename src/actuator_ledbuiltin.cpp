@@ -35,14 +35,15 @@ Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, 
 
 void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
   if (topicActuatorId == id) {
-    if (
-      #ifdef ACTUATOR_LEDBUILTIN_RGB
-        color->dispatchLeaf(leaf, payload, isSet) ||
-      #endif
-      input->dispatchLeaf(leaf, payload, isSet)
-    ) { // True if changed
-      act();
-    }
+    Serial.print("XXX Actuator_Ledbuiltin::dispatchTwig " __FILE__); Serial.println(__LINE__);
+    #ifdef ACTUATOR_LEDBUILTIN_RGB
+      if (
+          color->dispatchLeaf(leaf, payload, isSet)
+      ) { // True if changed
+        act();
+      }
+    #endif
+    Actuator_Digital::dispatchTwig(topicActuatorId, leaf, payload, isSet); // Call parent to handle "input"
   }
 }
   

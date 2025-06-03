@@ -15,7 +15,7 @@
 Actuator_Digital::Actuator_Digital(const char * const id, const char * const name, const uint8_t pin, const char* color)
 : Actuator(id, name), 
   pin(pin),
-  input(new INbool(id, "on", name, false, color, false))
+  input(new INbool(id, "on", "On", false, color, false))
 {};
 
 void Actuator_Digital::act() {
@@ -33,6 +33,7 @@ void Actuator_Digital::setup() {
   // initialize the digital pin as an output.
   pinMode(pin, OUTPUT);
   input->setup(name);
+  act(); // Set the digital output to match initial conditions.
 }
 void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
   if (topicActuatorId == id) {
