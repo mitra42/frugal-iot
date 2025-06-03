@@ -513,7 +513,7 @@ void OUTuint16::set(const uint16_t newvalue) {
   }
 }
 void OUTbool::set(const bool newvalue) {
-  #ifdef CONTROL_HUMIDITY_DEBUG
+  #ifdef CONTROL_HYSTERISIS_DEBUG
     Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
   #endif
   if (newvalue != value) {
