@@ -487,7 +487,9 @@ void OUTuint16::sendWired() {
   }
 }
 void OUTbool::sendWired() {
+  Serial.print("XXX sendWired " __FILE__); Serial.println(__LINE__);
   if (wiredPath && wiredPath->length() ) {
+    Serial.print("XXX sendWired " __FILE__); Serial.println(__LINE__);
     Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
   }
 }
