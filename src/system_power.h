@@ -50,7 +50,19 @@ class System_Power : public Frugal_Base {
     bool maybeSleep();
     unsigned long sleepSafeMillis(); 
 };
-
-extern System_Power* powerController;
+class System_Power_Mode : public Frugal_Base {
+    unsigned long nextSleepTime = 0; // Next time to sleep in millis() (NOT offseted) - set in constructor, updated in maybeSleep()
+    unsigned long cycle_ms // Time for each cycle (wake + sleep)
+    unsigned long wake_ms; // Time to stay awake during each cycle
+    System_Power_Mode();
+    // void setup();
+    unsigned long sleep_ms() = cycle_ms - wake_ms;
+    unsigned long sleep_us() = sleep_ms * 1000ULL
+    virtual void configure(); // Typically called from setup() but might also be called if switch modes
+    virtual void prepareForSleep();
+    virtual void enterSleep();
+    virtual void recoverFromSleep();   
+}
+extern System_Power_Mode* powerController;
 
 #endif // SYSTEM_POWER_H
