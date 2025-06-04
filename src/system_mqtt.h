@@ -54,7 +54,7 @@ class MqttManager : public Frugal_Base {
     WiFiClient net;
     MQTTClient client; //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.
     bool inReceived = false;
-    bool subscriptionsDone = false; // True when server has reported a session - so dont need to subscribe OR have resubscribed.
+    bool subscriptionsDone = false; // True when server has reported a session - so dont need to subscribe OR have resubscribed. Also true at start before did subscriptions.
     unsigned long nextLoopTime; // Not sleepSafeMillis as frequent.
     unsigned long ms;
     MqttManager();
