@@ -34,34 +34,48 @@
     #error "Must define one of SYSTEM_POWER_MODE_HIGH _MEDIUM or _LOW"
   #endif
 #endif
-#define SYSTEM_POWER_SLEEP_MS (SYSTEM_POWER_MS - SYSTEM_POWER_WAKE_MS) // How long to sleep in microseconds
-#define SYSTEM_POWER_SLEEP_US (SYSTEM_POWER_SLEEP_MS * 1000ULL) // How long to sleep in microseconds
 
 
-class System_Power : public Frugal_Base {
-  public:
-    unsigned long nextSleepTime = 0; // Next time to sleep in millis() (NOT offseted) - set in constructor, updated in maybeSleep()
-    System_Power();
-    void setup();
-    void prepareForDeepSleep();
-    void recoverFromDeepSleep();
-    void prepareForLightSleep();
-    void recoverFromLightSleep();
-    bool maybeSleep();
-    unsigned long sleepSafeMillis(); 
-};
 class System_Power_Mode : public Frugal_Base {
     unsigned long nextSleepTime = 0; // Next time to sleep in millis() (NOT offseted) - set in constructor, updated in maybeSleep()
     unsigned long cycle_ms // Time for each cycle (wake + sleep)
     unsigned long wake_ms; // Time to stay awake during each cycle
     System_Power_Mode();
     // void setup();
-    unsigned long sleep_ms() = cycle_ms - wake_ms;
-    unsigned long sleep_us() = sleep_ms * 1000ULL
+    unsigned long sleep_ms() { return cycle_ms - wake_ms; }
+    unsigned long sleep_us() { return sleep_ms * 1000ULL; }
     virtual void configure(); // Typically called from setup() but might also be called if switch modes
-    virtual void prepareForSleep();
-    virtual void enterSleep();
-    virtual void recoverFromSleep();   
+    virtual void prepare();
+    virtual void sleep();
+    virtual void recover();
+}
+class System_Power_Mode_High : public System_Power_Mode {
+  System_Power_Mode_High();
+  void configure(); // Typically called from setup() but might also be called if switch modes
+  void prepare();
+  void sleep();
+  void recover();
+}
+class System_Power_Mode_Medium : public System_Power_Mode {
+  System_Power_Mode_Medium();
+  void configure(); // Typically called from setup() but might also be called if switch modes
+  void prepare();
+  void sleep();
+  void recover();
+}
+class System_Power_Mode_Low : public System_Power_Mode {
+  System_Power_Mode_Low();
+  void configure(); // Typically called from setup() but might also be called if switch modes
+  void prepare();
+  void sleep();
+  void recover();
+}
+class System_Power_Mode_Auto : public System_Power_Mode {
+  System_Power_Mode_Auto();
+  void configure(); // Typically called from setup() but might also be called if switch modes
+  void prepare();
+  void sleep();
+  void recover();
 }
 extern System_Power_Mode* powerController;
 
