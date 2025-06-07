@@ -18,15 +18,12 @@
 // Note there are differences between the TTGO LoRa V1 and V2 boards
 // On Arduino the board definitions get these pins right - not checked yet on PlatformIO
 #if defined(TTGO_LORA_SX127X_V1)
-  // These are NOT default I2C pins for ESP32
-  #define OLED_SDA 4 // 21 on V2
-  #define OLED_SCL 15  // 22 on V2
+  // These are NOT default I2C pins for ESP32 on the V1 board but OLED_SDA and OLED_SCL correctly defined 
   #define OLED_RST_X OLED_RST // Crashes on V2
-#elif defined(TTGO_LORA_SX127X_V2)
+#elif defined(TTGO_LORA_SX127X_V2) || defined(TTGO_LORA_SX127X_V21)
+  // OLED_SDA and OLED_SCL correctly defined - OLED_RST is 16 
   // These are default I2C pins for ESP32
-  #define OLED_SDA 21 // 4 on V1
-  #define OLED_SCL 22  // 15 on V1
-  #define OLED_RST_X -1 // 16 on V1 but dont use as seems to freeze the display
+  #define OLED_RST_X -1 // OLED_RST is 16 but dont use on V21 as seems to freeze the display
 #else
   #error "Unsupported OLED display configuration. Please define either TTGO_LORA_SX127X_V1 or TTGO_LORA_SX127X_V2. or define new BOARD"
 #endif

@@ -137,8 +137,9 @@ void setup() {
   Mqtt->subscribe("set/#"); 
 }
 
-void infrequently() {  //TODO-23 double dipping, here and infrequently called from main setup
-    if (nextLoopTime <= (powerController->sleepSafeMillis())) {
+ //TODO-23 This wont work as nextLoopTime wont be remembered in Deep Sleep
+void infrequently() { 
+    if (nextLoopTime <= (powerController->sleepSafeMillis())) { 
         quickAdvertise(); // Send info about this node to server (on timer)
         nextLoopTime = powerController->sleepSafeMillis() + SYSTEM_DISCOVERY_MS;
     }

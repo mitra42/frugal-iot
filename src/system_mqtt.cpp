@@ -10,6 +10,9 @@
 * topicTwig (or Twig) is the components after the topicPrefix typically sensor/io and usually char*
 * topicLeaf (or Leaf) is the last component e.g. "temperature" and usually char* (deprecated in favor of topicTwig) its "id" in any IO
 * "topic" is ambiguous and therefore wrong ! 
+*
+* Incoming flow 
+* messageReceived -> dispatch -> (dispatchTwigAll; dispatchPathAll)
 */
 
 #include "_settings.h"

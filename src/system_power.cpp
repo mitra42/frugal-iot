@@ -17,85 +17,55 @@
 
 System_Power_Mode* powerController;
 
-System_Power_Mode* powerController;
-
-
 RTC_DATA_ATTR unsigned long wake_count = 0; // If 1 per minute, uint_16 would just be 45 days
 RTC_DATA_ATTR unsigned long millis_offset = 0; 
 
-System_Power_Mode::System_Power_Mode(unsigned long cycle_ms, unsigned_long wake_ms)
-System_Power_Mode::System_Power_Mode(unsigned long cycle_ms, unsigned_long wake_ms)
+System_Power_Mode::System_Power_Mode(unsigned long cycle_ms, unsigned long wake_ms)
 : Frugal_Base(),
   cycle_ms(cycle_ms),
   wake_ms(wake_ms),
   nextSleepTime(millis() + wake_ms) // not sleepSafeMillis() as by definition dont sleep before this
 { }
-System_Power_Mode_High::System_Power_Mode_High() : System_Power_Mode() {
+System_Power_Mode_High::System_Power_Mode_High(unsigned long cycle_ms, unsigned long wake_ms) 
+: System_Power_Mode(cycle_ms, wake_ms) {
   #ifdef SYSTEM_POWER_DEBUG
-      Serial.printf("Power Management Mode High: %d of %d\n"); 
-}
-System_Power_Mode_Medium::System_Power_Mode_Medium() : System_Power_Mode() {
-  #ifdef SYSTEM_POWER_DEBUG
-      Serial.printf("Power Management Mode Medium: %d of %d\n"); 
+    Serial.printf("Power Management Mode High: %d of %d\n", wake_ms, cycle_ms); 
   #endif
 }
-System_Power_Mode_Low::System_Power_Mode_Low() : System_Power_Mode() {
-  cycle_ms(cycle_ms),
-  wake_ms(wake_ms),
-  nextSleepTime(millis() + wake_ms) // not sleepSafeMillis() as by definition dont sleep before this
-{ }
-System_Power_Mode_High::System_Power_Mode_High() : System_Power_Mode() {
+System_Power_Mode_Medium::System_Power_Mode_Medium(unsigned long cycle_ms, unsigned long wake_ms) 
+: System_Power_Mode(cycle_ms, wake_ms) {
   #ifdef SYSTEM_POWER_DEBUG
-      Serial.printf("Power Management Mode High: %d of %d\n"); 
-}
-System_Power_Mode_Medium::System_Power_Mode_Medium() : System_Power_Mode() {
-  #ifdef SYSTEM_POWER_DEBUG
-      Serial.printf("Power Management Mode Medium: %d of %d\n"); 
+    Serial.printf("Power Management Mode Medium: %d of %d\n", wake_ms, cycle_ms); 
   #endif
 }
-System_Power_Mode_Low::System_Power_Mode_Low() : System_Power_Mode() {
+System_Power_Mode_Low::System_Power_Mode_Low(unsigned long cycle_ms, unsigned long wake_ms) 
+: System_Power_Mode(cycle_ms, wake_ms)
+{
   #ifdef SYSTEM_POWER_DEBUG
-      Serial.printf("Power Management Mode Low: %d of %d\n"); 
-  #endif
-}
-System_Power_Mode_Auto::System_Power_Mode_Auto() : System_Power_Mode() {
-  #ifdef SYSTEM_POWER_DEBUG
-      Serial.printf("Power Management Mode Auto: %d of %d\n"); 
-      Serial.printf("Power Management Mode Low: %d of %d\n"); 
-  #endif
-}
-System_Power_Mode_Auto::System_Power_Mode_Auto() : System_Power_Mode() {
-  #ifdef SYSTEM_POWER_DEBUG
-      Serial.printf("Power Management Mode Auto: %d of %d\n"); 
+    Serial.printf("Power Management Mode Low: %d of %d\n", wake_ms, cycle_ms); 
   #endif
 }
 
-
-
-
-
-void System_Power::setup() {
+System_Power_Mode_Auto::System_Power_Mode_Auto(unsigned long cycle_ms, unsigned long wake_ms) 
+: System_Power_Mode(cycle_ms, wake_ms) {
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.println("Power Management: setup");
+    Serial.printf("Power Management Mode Auto: %d of %d\n", wake_ms, cycle_ms); 
   #endif
 }
-void System_Power_Low::setup() {
+// setup - run from main.cpp::setup
+void System_Power_Mode::setup() {
 }
-void System_Power_Low::setup() {
+void System_Power_Mode_High::setup() {
   if (wake_count) {
-    // This is not a fresh start, so we are recovering from a deep sleep
-    recoverFromSleep(); 
-  } else {
-    System_Power_Mode::setup();
-    recoverFromSleep(); 
+    // This is not a fresh start, so we are recovering from a deep sleep (should only be in System_Power_Mode_Low but is generically true)
+    recover(); 
   } else {
     System_Power_Mode::setup();
   }
 }
-void System_Power_Mode::prepare() {
+// prepare - run from loop (or maybeSleep) just before sleeping 
 void System_Power_Mode::prepare() {
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.println("Power Management: preparing");
     Serial.println("Power Management: preparing");
   #endif
   // TODO-23 will loop through sensors and actuators here are some pointers found elsewhere...
@@ -106,7 +76,7 @@ void System_Power_Mode::prepare() {
   // LoRa.sleep();
   // SPI.end();
 }
-void System_Power_Medium::prepare() {
+void System_Power_Mode_Medium::prepare() {
   System_Power_Mode::prepare();
   #ifdef SYSTEM_OLED_WANT
     oled->display.setCursor(0,40);
@@ -115,22 +85,24 @@ void System_Power_Medium::prepare() {
   #endif
   xWifi::prepareForLightSleep(); 
 }
-System_Power_Mode_High::sleep() {
+void System_Power_Mode::sleep() {
+  Serial.println(F("sleep should be defined"));
+}
+void System_Power_Mode_High::sleep() {
   // Note sleep is just the "period" when in SYSTEM_POWER_MODE_HIGH
 }
-System_Power_Mode_Medium::sleep() {
+void System_Power_Mode_Medium::sleep() {
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html#_CPPv421esp_light_sleep_startv
-  esp_sleep_enable_timer_wakeup(sleep_us);
+  esp_sleep_enable_timer_wakeup(sleep_us());
   esp_light_sleep_start();
 }
-System_Power_Mode_Low::sleep() {
-  millis_offset = millis() + sleep_ms; // Since millis() will reset to 0
-  esp_deep_sleep(sleep_us);
+void System_Power_Mode_Low::sleep() {
+  millis_offset = millis() + sleep_ms(); // Since millis() will reset to 0
+  esp_deep_sleep(sleep_us());
   Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
 }
-System_Power_Mode_Auto::sleep() {
+void System_Power_Mode_Auto::sleep() {
 }
-
 // Note how this is placed in RTC code space so it can be executed prior to the restart
 void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
     esp_default_wake_deep_sleep();
@@ -142,54 +114,9 @@ void System_Power_Mode::recover() {
   #endif
 }
 
-void System_Power_High::recover() {
+void System_Power_Mode_High::recover() {
       nextSleepTime = millis() + cycle_ms;
 }
-
-void System_Power_Mode_Medium::recover() {
-  // Note millis preserved during lightSleep
-  nextSleepTime = millis() + wake_ms;
-  System_Power_Mode::recover();
-void System_Power_Medium::prepare() {
-  System_Power_Mode::prepare();
-  #ifdef SYSTEM_OLED_WANT
-    oled->display.setCursor(0,40);
-    oled->display.print("Peparing for Light Sleep");      
-    oled->display.display();
-  #endif
-  xWifi::prepareForLightSleep(); 
-}
-System_Power_Mode_High::sleep() {
-  // Note sleep is just the "period" when in SYSTEM_POWER_MODE_HIGH
-}
-System_Power_Mode_Medium::sleep() {
-  // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html#_CPPv421esp_light_sleep_startv
-  esp_sleep_enable_timer_wakeup(sleep_us);
-  esp_light_sleep_start();
-}
-System_Power_Mode_Low::sleep() {
-  millis_offset = millis() + sleep_ms; // Since millis() will reset to 0
-  esp_deep_sleep(sleep_us);
-  Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
-}
-System_Power_Mode_Auto::sleep() {
-}
-
-// Note how this is placed in RTC code space so it can be executed prior to the restart
-void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
-    esp_default_wake_deep_sleep();
-    wake_count++;
-}
-void System_Power_Mode::recover() {
-  #ifdef SYSTEM_POWER_DEBUG
-    Serial.println("Power Management: recovering");
-  #endif
-}
-
-void System_Power_High::recover() {
-      nextSleepTime = millis() + cycle_ms;
-}
-
 void System_Power_Mode_Medium::recover() {
   // Note millis preserved during lightSleep
   nextSleepTime = millis() + wake_ms;
@@ -205,13 +132,7 @@ void System_Power_Mode_Medium::recover() {
   } 
 }
 
-void System_Power_Low::recover() {
-  #ifdef SYSTEM_POWER_DEBUG
-    Serial.println("Power Management: recovering from Deep Sleep: "); Serial.println(wake_count);
-  #endif
-}
-
-void System_Power_Low::recover() {
+void System_Power_Mode_Low::recover() {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println("Power Management: recovering from Deep Sleep: "); Serial.println(wake_count);
   #endif
@@ -225,32 +146,12 @@ bool System_Power_Mode::maybeSleep() {
     sleep();
     recover(); // Never gets here in deep sleep - in that case recover is called from setup
     return true;
-// maybeSleep is the API that should be used in main.cpp.loop() 
-bool System_Power_Mode::maybeSleep() {
-  if (nextSleepTime <= millis()) {
-    prepare();
-    sleep();
-    recover(); // Never gets here in deep sleep - in that case recover is called from setup
-    return true;
   }
   return false;
 }
 
-unsigned long System_Power::sleepSafeMillis() {
+unsigned long System_Power_Mode::sleepSafeMillis() {
   // Return millis() adjusted for any sleep offset
   // TODO-23 millis wraps at 49 days, so need to handle that
   return millis() + millis_offset;
 }
-
-
-#ifdef SYSTEM_POWER_HIGH
-  System_Power_Mode_High* powerController;
-#elif defined(SYSTEM_POWER_MODE_MEDIUM)
-  System_Power_Mode_Medium* powerController(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE);
-#elif defined(SYSTEM_POWER_MODE_LOW)
-  System_Power_Mode_Low* powerController;
-#elif defined(SYSTEM_POWER_MODE_Auto)
-  System_Power_Mode_Auto powerController;
-#else
-  #error Must define valid power mode
-#endif

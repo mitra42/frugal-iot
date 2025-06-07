@@ -88,11 +88,20 @@
 #ifdef SYSTEM_LORA_WANT
 #include "system_lora.h"
 #endif
+#ifdef SYSTEM_LORAMESHER_WANT
+#include "system_loramesher.h"
+#endif
 #ifdef SYSTEM_OLED_WANT
 #include "system_oled.h"
 #endif
+//#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE // TODO CHECK IF THIS IS NEEDED/HELPS
+#include "esp_log.h"
 
 void setup() {
+//esp_log_level_set("*", ESP_LOG_ERROR);        // set all components to ERROR level
+//esp_log_level_set("wifi", ESP_LOG_WARN);      // enable WARN logs from WiFi stack
+esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
+
 #ifdef LILYGOHIGROW
   pinMode(POWER_CTRL, OUTPUT);
   digitalWrite(POWER_CTRL, HIGH); // TODO-115 this is for power control - may need other board specific stuff somewhere
@@ -227,6 +236,10 @@ Control_Logger* clfs = new Control_LoggerFS(
   lora = new System_LoRa();
   lora->setup();
 #endif // SYSTEM_LORA_WANT
+#ifdef SYSTEM_LORAMESHER_WANT
+  loramesher = new System_LoraMesher();
+  loramesher->setup();
+#endif
 
 #pragma GCC diagnostic pop
 
@@ -234,7 +247,17 @@ Control_Logger* clfs = new Control_LoggerFS(
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();
 #endif
-  powerController = new System_Power();
+#ifdef SYSTEM_POWER_MODE_HIGH
+  powerController = new System_Power_Mode_High(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#elif SYSTEM_POWER_MODE_MEDIUM
+  powerController = new System_Power_Mode_Medium(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#elif SYSTEM_POWER_MODE_LOW
+  powerController = new System_Power_Mode_Low(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#elif SYSTEM_POWER_MODE_AUTO
+  powerController = new System_Power_Mode_Auto(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#endif
+powerController->setup();
+
 #ifdef SYSTEM_TIME_WANT // Synchronize time
   xTime::setup();
 #endif
@@ -250,11 +273,6 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
 
   // TODO-125 want to ifdef this
   internal_watchdog_setup();
-  #ifdef SYSTEM_POWER_MODE_LOW
-  // If in low power mode then need to do these on return from sleep, but take care not doing twice (in setup and here)
-  periodically();
-  infrequently();
-#endif
 #ifdef ANY_DEBUG  
   Serial.println(F("FrugalIoT Starting Loop"));
 #endif // ANY_DEBUG
@@ -278,6 +296,9 @@ void periodically() {
   #ifdef CONTROL_WANT
     Control::periodicallyAll(); // TODO-23 this is not going to work for most control loops (only Blinken currently) which will have a timeframe
   #endif
+  #ifdef SYSTEM_LORAMESHER_WANT
+    loramesher->periodically();
+  #endif
   // No actuator time dependent at this point
   #ifdef LOCAL_DEV_WANT
     localDev::periodically();
@@ -300,14 +321,16 @@ void infrequently() {
   internal_watchdog_loop(); // TODO-23 think about this, probably ok as will be awake less than period
 }
 
+bool donePeriodic = false;
+
 void loop() {
+  if (!donePeriodic) {
+    periodically();  // Do things that happen once per cycle
+    infrequently();  // Do things that keep their own track of time
+    donePeriodic = true;
+  }
   frequently(); // Do things like MQTT which run frequently with their own clock
   if (powerController->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_HIGH
-    #ifndef SYSTEM_POWER_MODE_LOW
-      // If not in low power mode then do the periodic and infrequent stuff
-      // In low power mode we do this in setup and then go to sleep after repeating frequently()
-      periodically();  // Do things that happen once per cycle
-      infrequently();  // Do things that keep their own track of time
-    #endif   
+    donePeriodic = false; // reset after sleep (note deep sleep comes in at top again)
   }
 }

@@ -11,11 +11,12 @@
 #include <SPI.h>
 #include <LoRa.h> // LoRa library for ESP32
 
+// These settings duplicated in system_loramesher.cpp and system_lora.cpp
 #if defined(TTGO_LORA_SX127X_V1)
   #define LORA_SCK 5
   #define LORA_MISO 19
   #define LORA_MOSI 27
-  #define LORA_SS 18
+  #define LORA_CS 18
   #define LORA_RST 14 // Note 23 on V2
   #define LORA_DIO0 26
 #elif defined(TTGO_LORA_SX127X_V2) // V3 is same as V2
@@ -28,6 +29,8 @@
 #else
   #error "Unsupported LORA configuration. Please define either TTGO_LORA_SX127X_V1 or TTGO_LORA_SX127X_V2. or define new BOARD"
 #endif
+#define LORA_IRQ LORA_DIO0
+
 
 // TODO note that each board only does specific bands: 
 // SX1278 does BAND 433MHz (Europe) 144-148MHz suitable for Asia
