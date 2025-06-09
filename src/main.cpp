@@ -175,7 +175,7 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
-  controls.push_back(new ControlHysterisis("humidity", "Humidity control", 50, 1, 0, 100));
+  controls.push_back(new ControlHysterisis("control", "Control", 50, 1, 0, 100));
 #endif //CONTROL_HYSTERISIS_WANT
 #ifdef CONTROL_GSHEETS_WANT
   Control_Gsheets* cg =   new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);
@@ -210,11 +210,6 @@ Control_Logger* clfs = new Control_LoggerFS(
 #endif // CONTROL_LOGGERFS_WANT
 
 #pragma GCC diagnostic pop
-
-
-
-xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
-
 
 #ifdef SYSTEM_OTA_WANT
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi

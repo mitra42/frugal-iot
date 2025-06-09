@@ -337,6 +337,7 @@ void MqttManager::messageSend(const char* const topicTwig, const bool value, con
 void MqttManager::messageSendQueued() {
   // TODO-125 should probably check connected each time go around loop and only pop if sendInner succeeds
   while (!queued.empty()) {
+    Serial.print("XXX queue not empty " __FILE__); Serial.println(__LINE__);
     Message &m = queued.front();
     messageSendInner(*m.topicPath, *m.payload, m.retain, m.qos);
     queued.pop_front();
