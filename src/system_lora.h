@@ -19,6 +19,7 @@ public:
     void infrequent();
     void periodic();
     void frequent();
+    void prepareForSleep();
 };
 
 extern System_LoRa* lora; // Declare the lora object globally

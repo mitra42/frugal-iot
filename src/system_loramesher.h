@@ -24,5 +24,6 @@ class System_LoraMesher : public Frugal_Base {
       // Match mqtt.client profile
       publish(const String &topicPath, const String &payload, const bool retain, const int qos);
     #endif
+    void prepareForSleep();
 };
 extern System_LoraMesher* loramesher;

@@ -79,4 +79,8 @@ void System_LoRa::periodic() {
 void System_LoRa::frequent() {
     // Code for frequent tasks, e.g., every 10 ms
 }
+
+System_Lora::prepareForSleep() {
+  // TODO-139 TODO-23 find where put radio and SPI to sleep - on some other libraries its LoRa.sleep() and SPI.end()
+}
 #endif // SYSTEM_LORA_WANT
