@@ -37,6 +37,7 @@ void Actuator_Digital::setup() {
 }
 void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
   if (topicActuatorId == id) {
+    Serial.print(F("XXX dispatchTwig: ")); Serial.println(id);
     if (input->dispatchLeaf(leaf, payload, isSet)) { // True if changed
       act();
     }

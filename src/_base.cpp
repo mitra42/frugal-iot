@@ -375,6 +375,7 @@ bool INuint16::convertAndSet(const String &p) {
 }
 bool INbool::convertAndSet(const String &payload) {
   const bool v = payload.toInt();
+  Serial.print("XXX "); Serial.print(id); Serial.print(F(" converted ")); Serial.print(payload); Serial.print(F(" to ")); Serial.println(v);
   if (v != value) {
     value = v;
     return true; // Need to rerun calcs
