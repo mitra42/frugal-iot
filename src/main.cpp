@@ -247,12 +247,12 @@ Control_Logger* clfs = new Control_LoggerFS(
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();
 #endif
-#ifdef SYSTEM_POWER_MODE_HIGH
-  powerController = new System_Power_Mode_High(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
-#elif SYSTEM_POWER_MODE_MEDIUM
-  powerController = new System_Power_Mode_Medium(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
-#elif SYSTEM_POWER_MODE_LOW
-  powerController = new System_Power_Mode_Low(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#ifdef SYSTEM_POWER_MODE_LOOP
+  powerController = new System_Power_Mode_Loop(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#elif SYSTEM_POWER_MODE_LIGHT
+  powerController = new System_Power_Mode_Light(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#elif SYSTEM_POWER_MODE_DEEP
+  powerController = new System_Power_Mode_Deep(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
 #elif SYSTEM_POWER_MODE_AUTO
   powerController = new System_Power_Mode_Auto(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
 #endif
@@ -330,7 +330,7 @@ void loop() {
     donePeriodic = true;
   }
   frequently(); // Do things like MQTT which run frequently with their own clock
-  if (powerController->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_HIGH
+  if (powerController->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
     donePeriodic = false; // reset after sleep (note deep sleep comes in at top again)
   }
 }

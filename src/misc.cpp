@@ -15,8 +15,8 @@
 //#include <stdarg.h> // Doesnt appear to be needed - was in sample code from Jonathan Semple
 //#include "WString.h" // Doesnt appear to be needed - was in sample code from Jonathan Semple
 
-#define PRINTF_BUFFER_SIZE 200 // Size of buffer used by printf functions
-#define STRINGS_DEBUG
+#define PRINTF_BUFFER_SIZE 256 // Size of buffer used by printf functions
+
 const String StringF(const char* format, ...) {
     char buffer[PRINTF_BUFFER_SIZE]; // out of scope at end of this
     va_list args;
