@@ -1,5 +1,6 @@
 /* Frugal IoT - System Power - control power managemwent 
  * 
+ * Required SYSTEM_POWER_MODE_xxx
  */
 #ifndef SYSTEM_POWER_H
 #define SYSTEM_POWER_H
@@ -7,9 +8,6 @@
 #include "_settings.h"
 #include "_base.h"
 
-#if !defined(SYSTEM_POWER_MODE_LOOP) && !defined(SYSTEM_POWER_MODE_LIGHT) && !defined(SYSTEM_POWER_MODE_DEEP)
-  #define SYSTEM_POWER_MODE_LOOP // Default to high power mode if none defined
-#endif
 // SYSTEM_POWER_MS is how often to run perioically(). 
 #ifndef SYSTEM_POWER_MS
   #ifdef SYSTEM_POWER_MODE_LOOP
@@ -79,9 +77,18 @@ class System_Power_Mode_Deep : public System_Power_Mode {
     void sleep();
     void recover();
 };
-class System_Power_Mode_Auto : public System_Power_Mode {
+class System_Power_Mode_LightWifi : public System_Power_Mode {
   public:
-    System_Power_Mode_Auto(unsigned long cycle_ms, unsigned long wake_ms);
+    System_Power_Mode_LightWifi(unsigned long cycle_ms, unsigned long wake_ms);
+    //void configure(); // Typically called from setup() but might also be called if switch modes
+    void setup();
+    //void prepare();
+    void sleep();
+    void recover();
+};
+class System_Power_Mode_Modem : public System_Power_Mode {
+  public:
+    System_Power_Mode_Modem(unsigned long cycle_ms, unsigned long wake_ms);
     //void configure(); // Typically called from setup() but might also be called if switch modes
     //void prepare();
     void sleep();

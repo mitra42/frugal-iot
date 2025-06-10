@@ -191,7 +191,7 @@ void System_LoraMesher::periodically() {
   }
 #endif
 
-  System_LoraMesher::prepareForSleep() {
+ void System_LoraMesher::prepareForSleep() {
     // TODO-139 TODO-23 find where put radio and SPI to sleep - on some other libraries its LoRa.sleep() and SPI.end()
   }
 

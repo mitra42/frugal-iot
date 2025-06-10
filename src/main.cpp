@@ -247,10 +247,13 @@ Control_Logger* clfs = new Control_LoggerFS(
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();
 #endif
+// TO-ADD-POWERMODE
 #ifdef SYSTEM_POWER_MODE_LOOP
   powerController = new System_Power_Mode_Loop(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
 #elif SYSTEM_POWER_MODE_LIGHT
   powerController = new System_Power_Mode_Light(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#elif SYSTEM_POWER_MODE_LIGHTWIFI
+  powerController = new System_Power_Mode_LightWifi(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
 #elif SYSTEM_POWER_MODE_DEEP
   powerController = new System_Power_Mode_Deep(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
 #elif SYSTEM_POWER_MODE_AUTO
