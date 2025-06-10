@@ -100,7 +100,6 @@
 void setup() {
 //esp_log_level_set("*", ESP_LOG_ERROR);        // set all components to ERROR level
 //esp_log_level_set("wifi", ESP_LOG_WARN);      // enable WARN logs from WiFi stack
-esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
 
 #ifdef LILYGOHIGROW
   pinMode(POWER_CTRL, OUTPUT);
@@ -237,6 +236,7 @@ Control_Logger* clfs = new Control_LoggerFS(
   lora->setup();
 #endif // SYSTEM_LORA_WANT
 #ifdef SYSTEM_LORAMESHER_WANT
+  esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
   loramesher = new System_LoraMesher();
   loramesher->setup();
 #endif

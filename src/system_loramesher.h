@@ -8,6 +8,11 @@
  *    This uses the "radio" library for LoRa rather than Sandeep Mishra's 
  * 
 */
+#ifndef SYSTEM_LORAMESHER_H
+#define SYSTEM_LORAMESHER_H
+
+#include "_settings.h"
+#ifdef SYSTEM_LORAMESHER_WANT
 
 #include "LoraMesher.h"
 #include "_base.h"
@@ -26,4 +31,6 @@ class System_LoraMesher : public Frugal_Base {
     #endif
     void prepareForSleep();
 };
+#endif // SYSTEM_LORAMESHER_WANT
+#endif // SYSTEM_LORAMESHER_H
 extern System_LoraMesher* loramesher;
