@@ -52,8 +52,6 @@ System_LoraMesher::System_LoraMesher()
     config.freq = SYSTEM_LORAMESHER_BAND;
 }
 
-TaskHandle_t receiveLoRaMessage_Handle = NULL;
-
 #if defined(SYSTEM_LORAMESHER_SENDER_TEST) || defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
   uint32_t dataCounter = 0;
   struct dataPacket {
@@ -133,6 +131,9 @@ void processReceivedPackets(void*) {
         }
     }
 }
+
+// Used in task creation
+TaskHandle_t receiveLoRaMessage_Handle = NULL;
 
 // Create a Receive Messages Task and add it to the LoRaMesher
 // Equivalent of system_mqtt's: client.onMessage(xMqtt::MessageReceived)
