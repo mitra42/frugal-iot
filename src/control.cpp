@@ -25,7 +25,7 @@
 const char* groupAdvertLine  = "\n  -\n    group: %s\n    name: %s";
 
 Control::Control(const char * const id, const char* const name, std::vector<IN*> i, std::vector<OUT*> o)
-    : Frugal_Base() , id(id), name(name), inputs(i), outputs(o) { }
+    : Frugal_Base(id, name), inputs(i), outputs(o) { }
 
 #ifdef CONTROL_DEBUG
 void Control::debug(const char* const where) {
@@ -95,50 +95,6 @@ String Control::advertisement() {
   }
   return ad;
 }
-
-// Note Static
-void Control::setupAll() {
-  for (Control* c: controls) {
-    Serial.print("Setting up Control:"); Serial.println(c->id);
-    c->setup();
-  }
-}
-// Note Static
-void Control::periodicallyAll() {
-  for (Control* c: controls) {
-    c->periodically();
-  }
-}
-// Note Static
-void Control::dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet) {
-  uint8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
-  if (slashPos != -1) {
-    String topicControlId = topicTwig.substring(0, slashPos);       // Extract the part before the slash
-    String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
-    for (Control* a: controls) {
-      a->dispatchTwig(topicControlId, topicLeaf, payload, isSet);
-    }
-  } else {
-    Serial.println("No slash found in topic: " + topicTwig);
-  }
-}
-
-
-void Control::dispatchPathAll(const String &topicPath, const String &payload) {
-  for (Control* c: controls) {
-    c->dispatchPath(topicPath, payload);
-  }
-}
-// Note Sensor::advertisementAll almost same as Control::advertisementAll so if change one, change the other
-String Control::advertisementAll() {
-  String ad = String();
-  for (Control* c: controls) {
-    ad += (c->advertisement());
-  }
-  return ad;
-}
-
-std::vector<Control*> controls;
 
 
 #endif //CONTROL_WANT

@@ -58,8 +58,7 @@ void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
 #endif
 
 System_Power_Mode::System_Power_Mode(const char* name, unsigned long cycle_ms, unsigned long wake_ms)
-: Frugal_Base(),
-  name(name),
+: Frugal_Base("power", name),
   nextSleepTime(millis() + wake_ms), // not sleepSafeMillis() as by definition dont sleep before this
   cycle_ms(cycle_ms),
   wake_ms(wake_ms)
@@ -107,8 +106,15 @@ void System_Power_Mode_Deep::setup() {
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 void System_Power_Mode_LightWifi::setup() {
+  // This bit is weird - there are 5 different ESP32 config structures - all identical - note CONFIG_IDF_TARGET_ESP32xx is defined in board files
   #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(LOLIN_C3_PICO) // Defined in board files on PlatformIO untested on Arduino
     esp_pm_config_esp32c3_t pm_config; // Seems identical structure to the default ESP32 one ! 
+  #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    esp_pm_config_esp32s2_t pm_config;
+  #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    esp_pm_config_esp32s3_t pm_config;
+  #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+    esp_pm_config_esp32h2_t pm_config;
   #else
     esp_pm_config_esp32_t pm_config;
   #endif

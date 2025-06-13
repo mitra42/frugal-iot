@@ -12,7 +12,7 @@
 * "topic" is ambiguous and therefore wrong ! 
 *
 * Incoming flow 
-* messageReceived -> dispatch -> (dispatchTwigAll; dispatchPathAll)
+* messageReceived -> dispatch -> (dispatchTwig; dispatchPath)
 */
 
 #include "_settings.h"
@@ -34,6 +34,7 @@
 
 #include <MQTT.h>
 #include "misc.h" // For StringF
+#include "frugal_iot.h" // for frugal_iot
 
 // If configred not to use Wifi (or in future BLE) then will just operate locally, sending MQTT between components on this node, but 
 // not elsewhere.
@@ -74,7 +75,7 @@ void MqttManager::setup() {
   blockTillConnected();
 }
 // Run every 10ms TODO-25 and TODO-23 this should be MUCH longer ideally
-MqttManager::MqttManager() : Frugal_Base(), client(1024,128), nextLoopTime(0), ms(10) {
+MqttManager::MqttManager() : Frugal_Base("mqtt", "MQTT"), client(1024,128), nextLoopTime(0), ms(10) {
   setup();
 }
 
@@ -196,23 +197,14 @@ void MqttManager::dispatch(const String &topicPath, const String &payload) {
       isSet = true;
       topicTwig.remove(0, 4); // Remove set/ from start
       // At the moment it looks like all dispatchTwig are isSet, because control subscribes to full path for its wired.
-      #ifdef SENSOR_WANT
-        Sensor::dispatchTwigAll(topicTwig, payload, isSet); // None of the sensors have subscriptions
-      #endif
-      #ifdef ACTUATOR_WANT
-        Actuator::dispatchTwigAll(topicTwig, payload, isSet); // Just matches twigs
-      #endif
-      #ifdef CONTROL_WANT
-        // note called for isSet and !isSet
-        Control::dispatchTwigAll(topicTwig, payload, isSet); // Just matches twigs
-      #endif
+      frugal_iot.dispatchTwig(topicTwig, payload, isSet); // Just matches twigs
     }
   }
  
   #ifdef CONTROL_WANT
-    Control::dispatchPathAll(topicPath, payload);  // Matches just paths. Twigs and sets handle above
+    frugal_iot.dispatchPath(topicPath, payload);  // Matches just paths. Twigs and sets handle above
   #endif
-  //TODO-25 System::dispatchPathAll(*topicPath, payload)
+  //TODO-25 System::dispatchPath(*topicPath, payload)
 }
 bool MqttManager::resubscribeAll() {
   // TODO-125 may put a flag on subscriptions then only resubscribe those not done

@@ -98,11 +98,18 @@
 #ifdef ESP32 // Not available on ESP8266 - have not yet looked for equivalent
   #include "esp_log.h"
 #endif
+
+#include "frugal_iot.h"
+
+Frugal_IoT frugal_iot; // Singleton
+
 void setup() {
 //esp_log_level_set("*", ESP_LOG_ERROR);        // set all components to ERROR level
 //esp_log_level_set("wifi", ESP_LOG_WARN);      // enable WARN logs from WiFi stack
 
-#ifdef LILYGOHIGROW
+frugal_iot.setup(); // TODO-141 move most of below into this and this should come after sensors added.
+
+#ifdef LILYGOHIGROW // TODO-141 maybe move to "boards"
   pinMode(POWER_CTRL, OUTPUT);
   digitalWrite(POWER_CTRL, HIGH); // TODO-115 this is for power control - may need other board specific stuff somewhere
 #endif
@@ -115,104 +122,111 @@ void setup() {
   //Serial.setDebugOutput(true);  // Enable debug from wifi, also needed to enable output from printf
   Serial.println(F("FrugalIoT Starting"));
 #endif // ANY_DEBUG
-xWifi::setup();
-Mqtt = new MqttManager(); // Connects to wifi and broker
+xWifi::setup(); // TODO-141 make into a class and put in FrugalIoT
+Mqtt = new MqttManager(); // Connects to wifi and broker // TODO-141 make Mqtt a field of Frugal_IoT and setup there.
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
+// TODO-141 find where/how aLedBuiltin used
   Actuator_Ledbuiltin* aLedBuiltin = new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, ACTUATOR_LEDBUILTIN_BRIGHTNESS, ACTUATOR_LEDBUILTIN_COLOR);
-  actuators.push_back(aLedBuiltin);
+  frugal_iot.actuators->add(aLedBuiltin);
 #endif
 #ifdef ACTUATOR_RELAY_WANT
-  actuators.push_back(new Actuator_Digital("relay", "Relay", ACTUATOR_RELAY_PIN, "purple"));
+  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", ACTUATOR_RELAY_PIN, "purple"));
 #endif
 
-// TODO_C++_EXPERT weird I have to assign to a vaiable even though constructor sticks in the "sensors" vector, else compiler complains, 
-// but if I assign then it complaisn the variable isn't used.  And the pragma's seem to get ignored in the .ino file 
-//TODO-25 try adding these to a Sensor* Vector here instead of in constructor
+// TODO-141 try removing the pragma
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #ifdef SENSOR_ANALOG_INSTANCES_WANT
-  sensors.push_back(new Sensor_Analog("analog1", "Analog 1", SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, 0, 5000, SENSOR_ANALOG_COLOR_1, SENSOR_ANALOG_MS_1, true));
+  frugal_iot.sensors->add(new Sensor_Analog("analog1", "Analog 1", SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, 0, 5000, SENSOR_ANALOG_COLOR_1, SENSOR_ANALOG_MS_1, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_2
-  sensors.push_back(new Sensor_Analog("analog2", "Analog 2", SENSOR_ANALOG_PIN_2, SENSOR_ANALOG_SMOOTH_2, SENSOR_ANALOG_COLOR_2, SENSOR_ANALOG_MS_2, true));
+  frugal_iot.sensors->add(new Sensor_Analog("analog2", "Analog 2", SENSOR_ANALOG_PIN_2, SENSOR_ANALOG_SMOOTH_2, SENSOR_ANALOG_COLOR_2, SENSOR_ANALOG_MS_2, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_3
-  sensors.push_back(new Sensor_Analog("analog3", "Analog 3", SENSOR_ANALOG_PIN_3, SENSOR_ANALOG_SMOOTH_3, SENSOR_ANALOG_COLOR_3, SENSOR_ANALOG_MS_3, true));
+  frugal_iot.sensors->add(new Sensor_Analog("analog3", "Analog 3", SENSOR_ANALOG_PIN_3, SENSOR_ANALOG_SMOOTH_3, SENSOR_ANALOG_COLOR_3, SENSOR_ANALOG_MS_3, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_4
-  sensors.push_back(Sensor_Analog("analog4", "Analog 4", SENSOR_ANALOG_PIN_4, SENSOR_ANALOG_SMOOTH_4, SENSOR_ANALOG_COLOR_4, SENSOR_ANALOG_MS_4, true));
+  frugal_iot.sensors->add(Sensor_Analog("analog4", "Analog 4", SENSOR_ANALOG_PIN_4, SENSOR_ANALOG_SMOOTH_4, SENSOR_ANALOG_COLOR_4, SENSOR_ANALOG_MS_4, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_5
-  sensors.push_back(Sensor_Analog("analog5", "Analog 5", SENSOR_ANALOG_PIN_5, SENSOR_ANALOG_SMOOTH_5, SENSOR_ANALOG_COLOR_5, SENSOR_ANALOG_MS_5, true));
+  frugal_iot.sensors->add(Sensor_Analog("analog5", "Analog 5", SENSOR_ANALOG_PIN_5, SENSOR_ANALOG_SMOOTH_5, SENSOR_ANALOG_COLOR_5, SENSOR_ANALOG_MS_5, true));
 #endif
 
 #ifdef SENSOR_BATTERY_WANT
-  sensors.push_back(new Sensor_Battery(SENSOR_BATTERY_PIN));  // TODO-57 will rarely be as simple as this
+  frugal_iot.sensors->add(new Sensor_Battery(SENSOR_BATTERY_PIN));  // TODO-57 will rarely be as simple as this
 #endif
 #ifdef SENSOR_SHT_WANT
+// TODO-141 where is ss used and how
   Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, SENSOR_SHT_MS, true);
-sensors.push_back(ss);
+frugal_iot.sensors->add(ss);
 #endif
 #ifdef SENSOR_DHT_WANT
-  sensors.push_back(new Sensor_DHT("DHT", SENSOR_DHT_PIN, SENSOR_DHT_MS, true));
+  frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, SENSOR_DHT_MS, true));
 #endif
 #ifdef SENSOR_SOIL_WANT
-  sensors.push_back(new Sensor_Soil("soil1", "Soil 1", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, "brown", SENSOR_SOIL_MS, true));
+  frugal_iot.sensors->add(new Sensor_Soil("soil1", "Soil 1", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, "brown", SENSOR_SOIL_MS, true));
   #ifdef SENSOR_SOIL_PIN2
-    sensors.push_back(new Sensor_Soil("soil2", "Soil 2", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN2, 0, "brown", SENSOR_SOIL_MS, true));
+    frugal_iot.sensors->add(new Sensor_Soil("soil2", "Soil 2", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN2, 0, "brown", SENSOR_SOIL_MS, true));
   #endif
   #ifdef SENSOR_SOIL_PIN3
-    sensors.push_back(new Sensor_Soil("soil3", "Soil 3", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, "brown", SENSOR_SOIL_MS, true));
+    frugal_iot.sensors->add(new Sensor_Soil("soil3", "Soil 3", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, "brown", SENSOR_SOIL_MS, true));
   #endif
 #endif
 #ifdef SENSOR_BH1750_WANT
-  sensors.push_back(new Sensor_BH1750(SENSOR_BH1750_ID, SENSOR_BH1750_NAME, SENSOR_BH1750_ADDRESS, SENSOR_BH1750_MS, true));
+  frugal_iot.sensors->add(new Sensor_BH1750(SENSOR_BH1750_ID, SENSOR_BH1750_NAME, SENSOR_BH1750_ADDRESS, SENSOR_BH1750_MS, true));
 #endif
 #ifdef SENSOR_MS5803_WANT
-  sensors.push_back(new Sensor_ms5803("pressure", "Pressure"));
+  frugal_iot.sensors->add(new Sensor_ms5803("pressure", "Pressure"));
 #endif
 #ifdef SENSOR_BUTTON_WANT
   // Pushed to sensors by newSensor_Button
+  // TODO-141 make this fit the pattern
   Sensor_Button::newSensor_Button("button", "Button", SENSOR_BUTTON_PIN, "purple");
 #endif
 #ifdef SENSOR_LOADCELL_WANT
-  sensors.push_back(new Sensor_LoadCell("loadcell", "Load Cell", 2000, "pink", SENSOR_LOADCELL_MS, true));
+  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 2000, "pink", SENSOR_LOADCELL_MS, true));
 #endif
 #ifdef SENSOR_ENSAHT_WANT
-  sensors.push_back(new Sensor_ensaht("ensaht","ENS AHT"));
+  frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS AHT"));
 #endif
 
+// TODO-141 move setup into frugal-iot note the setup_after_mqtt pattern not used yet
 xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
 
 #ifdef CONTROL_BLINKEN_WANT
+  // TODO-141 figure out how cb used 
   Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
-  controls.push_back(cb);
+  frugal_iot.controls->add(cb);
   // TODO Make function an dredo wirepath
   cb->outputs[0]->wireTo(Mqtt->path(aLedBuiltin->input->topicTwig)); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
-  controls.push_back(new ControlHysterisis("control", "Control", 50, 1, 0, 100));
+  frugal_iot.controls->add(new ControlHysterisis("control", "Control", 50, 1, 0, 100));
 #endif //CONTROL_HYSTERISIS_WANT
 #ifdef CONTROL_GSHEETS_WANT
+  // TODO-141 figure out how cg used - note this is where ss used
   Control_Gsheets* cg =   new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);
-  controls.push_back(cg);
+  frugal_iot.controls->add(cg);
   cg->track("temperature", Mqtt->path(ss->temperature->topicTwig));
 #endif
 
 #ifdef SYSTEM_SD_WANT
+// TODO-141 move into frugal_iot. 
   System_SD* fs1 = new System_SD();
   fs1->setup(); //TODO-110 at moment should printout dir
 #endif
 #ifdef SYSTEM_SPIFFS_WANT
+// TODO-141 move into frugal_iot. 
   System_SPIFFS* fs2 = new System_SPIFFS();
   fs2->setup(); //TODO-110 at moment should printout dir
 #endif
 
 #ifdef CONTROL_LOGGERFS_WANT
 // Must be after sensor_sht for default wiring below
+// TODO-141 Make match pattern
 Control_Logger* clfs = new Control_LoggerFS(
   "Logger",
   fs2, // TODO-110 Using spiffs for testing for now
@@ -224,19 +238,22 @@ Control_Logger* clfs = new Control_LoggerFS(
     new INtext("Logger", "log2", "log2", nullptr, "black", true),
     new INtext("Logger", "log3", "log3", nullptr, "black", true)
     });
-  controls.push_back(clfs);
+  frugal_iot.controls->add(clfs);
   clfs->inputs[0]->wireTo(ss->temperature); // TODO this is default wiring - should remove.
 #endif // CONTROL_LOGGERFS_WANT
 
 #ifdef SYSTEM_OLED_WANT
+  // TODO-141 move into frugal_iot. 
   oled = new System_OLED();
   oled->setup();
 #endif // SYSTEM_OLED_WANT
 #ifdef SYSTEM_LORA_WANT
+  // TODO-141 move into frugal_iot. 
   lora = new System_LoRa();
   lora->setup();
 #endif // SYSTEM_LORA_WANT
 #ifdef SYSTEM_LORAMESHER_WANT
+  // TODO-141 move into frugal_iot. 
   esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
   loramesher = new System_LoraMesher();
   loramesher->setup();
@@ -246,9 +263,11 @@ Control_Logger* clfs = new Control_LoggerFS(
 
 #ifdef SYSTEM_OTA_WANT
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
+  // TODO-141 move into frugal_iot. 
   xOta::setup();
 #endif
 // TO-ADD-POWERMODE
+// TODO-141 move into frugal_iot. 
 #ifdef SYSTEM_POWER_MODE_LOOP
   powerController = new System_Power_Mode_Loop(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
 #elif SYSTEM_POWER_MODE_LIGHT
@@ -263,19 +282,21 @@ Control_Logger* clfs = new Control_LoggerFS(
 powerController->setup();
 
 #ifdef SYSTEM_TIME_WANT // Synchronize time
+  // TODO-141 move into frugal_iot. 
   xTime::setup();
 #endif
 
 #ifdef LOCAL_DEV_WANT
-  localDev::setup(); // Note has to be before Frugal_Base::setupAll()
+  // TODO-141 move into frugal_iot. 
+  localDev::setup(); // Note has to be before Frugal_Base::setupAll() TODO-141 rework this, e.g. push the local
 #endif
 
-Frugal_Base::setupAll(); // Will replace all setups as developed - currently doing sensors and actuatorsand controls
-
    // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
+// TODO-141 move into frugal_iot. 
   xDiscovery::fullAdvertise();
 
   // TODO-125 want to ifdef this
+  // TODO-141 move into frugal_iot. 
   internal_watchdog_setup();
 #ifdef ANY_DEBUG  
   Serial.println(F("FrugalIoT Starting Loop"));
@@ -284,6 +305,7 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
 }
 
 // This is stuff done multiple times per period
+// TODO-141 move into frugal_iot. 
 void frequently() {
   Mqtt->frequently(); // 
   #ifdef LOCAL_DEV_WANT
@@ -293,13 +315,9 @@ void frequently() {
 }
 
 // These are things done one time per period - where a period is the time set in SYSTEM_POWER_MS
+// TODO-141 move into frugal_iot. 
 void periodically() {
-  #ifdef SENSOR_WANT
-    Sensor::periodicallyAll(); // TODO-23 check none of the sensors subclass Loop to do something other than readAndSet
-  #endif
-  #ifdef CONTROL_WANT
-    Control::periodicallyAll(); // TODO-23 this is not going to work for most control loops (only Blinken currently) which will have a timeframe
-  #endif
+  frugal_iot.periodically();
   #ifdef SYSTEM_LORAMESHER_WANT
     loramesher->periodically();
   #endif
@@ -309,6 +327,7 @@ void periodically() {
   #endif
 }
 // These are things done occasionally - maybe once over multiple periods (HIGH MEDIUM) or each period (LOW)
+// TODO-141 move into frugal_iot. 
 void infrequently() {
   #ifdef SYSTEM_DISCOVERY_WANT
     xDiscovery::infrequently();
@@ -328,6 +347,7 @@ void infrequently() {
 bool donePeriodic = false;
 
 void loop() {
+// TODO-141 move into frugal_iot. 
   if (!donePeriodic) {
     periodically();  // Do things that happen once per cycle
     infrequently();  // Do things that keep their own track of time
@@ -338,3 +358,5 @@ void loop() {
     donePeriodic = false; // reset after sleep (note deep sleep comes in at top again)
   }
 }
+
+

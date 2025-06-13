@@ -12,27 +12,16 @@
 #include "misc.h"
 #include "system_mqtt.h"
 
-Frugal_Base::Frugal_Base() { }; // Intentionally nothing here
+Frugal_Base::Frugal_Base(const char * const id, const char * const name)
+: id(id), name(name) { };
 
 void Frugal_Base::setup() { }; // This will get called if no setup() in subclass 
-
-void Frugal_Base::setupAll() {
-
-  #ifdef SENSOR_WANT // If there are any sensors
-    Sensor::setupAll();
-  #endif
-  #ifdef ACTUATOR_WANT // If there are any actuators
-    Actuator::setupAll();
-  #endif
-  #ifdef CONTROL_WANT
-    Control::setupAll();
-  #endif
-  // TODO-25 calls system.setupAll
-}
 void Frugal_Base::infrequently() { }; // This will get called if no loop() in subclass 
 void Frugal_Base::frequently() { }; // This will get called if no loop() in subclass 
 void Frugal_Base::periodically() { }; // This will get called if no loop() in subclass 
-
+void Frugal_Base::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {};
+void Frugal_Base::dispatchPath(const String &topicPath, const String &payload) {};
+String Frugal_Base::advertisement() {return String();};
 
 // ========== IO - base class for IN and OUT ===== 
 
@@ -455,7 +444,7 @@ OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const ch
 }
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
-// OUT::dispatchPath() - wont be called from Control::dispatchAll.
+// OUT::dispatchPath() - wont be called from Control::dispatchPath.
 
 // TO_ADD_OUTxxx
 OUTbool::OUTbool(const OUTbool &other) 

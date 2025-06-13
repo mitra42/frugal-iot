@@ -51,7 +51,7 @@ Not currently used in this code
 
 System_LoRa* lora;
 
-System_LoRa::System_LoRa() : Frugal_Base() {
+System_LoRa::System_LoRa() : Frugal_Base("lora", "LoRa") {
     // Constructor code here, if needed
 }
 void System_LoRa::setup() {

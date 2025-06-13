@@ -16,16 +16,9 @@ class Sensor : public Frugal_Base {
 
     //Sensor();
     Sensor(const char* id, const char* const name, const unsigned long ms, bool retain);
-    virtual void setup();
-    static void setupAll();
     virtual void readAndSet();
-    static void periodicallyAll();
-    virtual String advertisement();
-    static String advertisementAll();
-    virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
-    static void dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet);
+    void periodically();
 }; // Class Sensor
 
-extern std::vector<Sensor*> sensors;
 
 #endif // SENSOR_H

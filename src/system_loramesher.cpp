@@ -47,7 +47,7 @@
 System_LoraMesher* loramesher;
 
 System_LoraMesher::System_LoraMesher()
-: Frugal_Base(),
+: Frugal_Base("loramesher", "LoraMesher"),
     radio(LoraMesher::getInstance()),
     config(LoraMesher::LoraMesherConfig())
 {

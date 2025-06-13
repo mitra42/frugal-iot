@@ -39,6 +39,7 @@
   #include "control.h"
 #endif
 #include "system_power.h" // For sleepSafemillis()
+#include "frugal_iot.h" // for frugal_iot
 
 
 namespace xDiscovery {
@@ -111,15 +112,7 @@ void fullAdvertise() {
     "\ntopics:" 
     )
   );
-  #ifdef ACTUATOR_WANT
-    *advertisePayload += (Actuator::advertisementAll());
-  #endif
-  #ifdef SENSOR_WANT
-    *advertisePayload += (Sensor::advertisementAll());
-  #endif
-  #ifdef CONTROL_WANT
-    *advertisePayload += (Control::advertisementAll());
-  #endif
+  *advertisePayload += frugal_iot.advertisement();
   Mqtt->messageSend(*advertiseTopic, *advertisePayload, true, 1);
 }
 

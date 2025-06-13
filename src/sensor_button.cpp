@@ -49,7 +49,7 @@ void Sensor_Button::newSensor_Button(const char * const id, const char * const n
   Sensor_Button* sb = new Sensor_Button(id, name, pin, color);
   sb->button->setID(buttons.size());
   buttons.push_back(sb);
-  sensors.push_back(sb);   
+  frugal_iot.sensors->add(sb);   
 }
 Sensor_Button* Sensor_Button::handler(Button2& button) {
   return buttons[button.getID()];

@@ -36,7 +36,6 @@
 
 class System_Power_Mode : public Frugal_Base {
   public:
-    char const *name; // Human readable name of this power mode
     unsigned long nextSleepTime = 0; // Next time to sleep in millis() (NOT offseted) - set in constructor, updated in maybeSleep()
     unsigned long cycle_ms; // Time for each cycle (wake + sleep)
     unsigned long wake_ms; // Time to stay awake during each cycle
