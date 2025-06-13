@@ -17,8 +17,9 @@
 #include "system_wifi.h"
 #include "system_mqtt.h"
 #include "system_power.h" // For sleepSafemillis()
-#include <esp_wifi.h> // For esp_wifi_stop / start
-#if ESP8266
+#ifdef ESP32
+  #include <esp_wifi.h> // For esp_wifi_stop / start
+#elif defined(ESP8266)
   #include <ESP8266WiFi.h>  // for WiFiClient
 #else
   #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
@@ -343,9 +344,12 @@ bool reconnectWiFi() { // Try hard to reconnect WiFi
   return WiFi.status() == WL_CONNECTED;
 }
 
+#ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 bool prepareForLightSleep() {
    return (esp_wifi_stop() == ESP_OK); // Suggested to reduce dropping WiFi connection
 }
+#endif
+#ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 bool recoverFromLightSleep() {
   if (esp_wifi_start() != ESP_OK) {
     Serial.println(F("Failed to restart esp_wifi"));
@@ -358,6 +362,7 @@ bool recoverFromLightSleep() {
   } 
   return reconnectWiFi(); // Quick connect if possible - otherwise scan and connect
 }
+#endif
 
 } // namespace xWifi
 #endif // SYSTEM_WIFI_WANT

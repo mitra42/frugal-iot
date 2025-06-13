@@ -16,6 +16,8 @@
 #include "_settings.h"
 #ifdef SYSTEM_LORAMESHER_WANT
 
+#error "SYSTEM_LORAMESHER code is known not to be finished - see issue # 152 - uncomment to develop"
+
 #include "LoraMesher.h"
 #include "system_loramesher.h"
 #if defined(SYSTEM_LORAMESHER_SENDER_TEST) || defined(SYSTEM_LORAMESHER_RECEIVER_TEST)

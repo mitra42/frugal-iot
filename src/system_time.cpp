@@ -112,14 +112,14 @@ namespace xTime {  //TODO-25 - put this in a class and call from base etc
   }
 
   void infrequently() {
-    if (nextLoopTime <= (powerController->sleepSafeMillis() ) {
+    if (nextLoopTime <= powerController->sleepSafeMillis() ) {
       if (! systemTime.isTimeSet()) {
           Serial.print("Time since boot"); Serial.println(systemTime.now());
       } else {
           systemTime.now();
           Serial.print("Local time = "); Serial.println(systemTime.dateTime().c_str());
       }
-      nextLoopTime = (powerController->sleepSafeMillis() + SYSTEM_TIME_MS;
+      nextLoopTime = (powerController->sleepSafeMillis() + SYSTEM_TIME_MS);
       configTime(0, 0, "foo","bar","bax");
     }
   }

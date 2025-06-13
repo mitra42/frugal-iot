@@ -49,7 +49,11 @@ class System_Power_Mode : public Frugal_Base {
     virtual void prepare();
     virtual void sleep();
     virtual void recover();
-    unsigned long sleepSafeMillis();
+    #ifdef ESP32
+      unsigned long sleepSafeMillis();
+    #else // Only needed/valid on ESP32 where have saved millis_offset in RTCs memory
+      unsigned long sleepSafeMillis() { return millis(); }
+    #endif
 };
 class System_Power_Mode_Loop : public System_Power_Mode {
   public:
@@ -60,6 +64,7 @@ class System_Power_Mode_Loop : public System_Power_Mode {
     void sleep(); // Does nothing in Loop
     void recover(); // Does nothing in Loop
 };
+#ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 class System_Power_Mode_Light : public System_Power_Mode {
   public:
     System_Power_Mode_Light(unsigned long cycle_ms, unsigned long wake_ms);
@@ -68,6 +73,9 @@ class System_Power_Mode_Light : public System_Power_Mode {
     void sleep();
     void recover();
 };
+#endif
+#ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
+
 class System_Power_Mode_Deep : public System_Power_Mode {
   public:
     System_Power_Mode_Deep(unsigned long cycle_ms, unsigned long wake_ms);
@@ -77,6 +85,9 @@ class System_Power_Mode_Deep : public System_Power_Mode {
     void sleep();
     void recover();
 };
+#endif
+#ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
+
 class System_Power_Mode_LightWifi : public System_Power_Mode {
   public:
     System_Power_Mode_LightWifi(unsigned long cycle_ms, unsigned long wake_ms);
@@ -86,6 +97,9 @@ class System_Power_Mode_LightWifi : public System_Power_Mode {
     void sleep();
     void recover();
 };
+#endif
+#ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
+
 class System_Power_Mode_Modem : public System_Power_Mode {
   public:
     System_Power_Mode_Modem(unsigned long cycle_ms, unsigned long wake_ms);
@@ -94,6 +108,8 @@ class System_Power_Mode_Modem : public System_Power_Mode {
     void sleep();
     //void recover();
 };
+#endif
+
 extern System_Power_Mode* powerController;
 
 #endif // SYSTEM_POWER_H

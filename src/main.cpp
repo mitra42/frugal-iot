@@ -95,8 +95,9 @@
 #include "system_oled.h"
 #endif
 //#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE // TODO CHECK IF THIS IS NEEDED/HELPS
-#include "esp_log.h"
-
+#ifdef ESP32 // Not available on ESP8266 - have not yet looked for equivalent
+  #include "esp_log.h"
+#endif
 void setup() {
 //esp_log_level_set("*", ESP_LOG_ERROR);        // set all components to ERROR level
 //esp_log_level_set("wifi", ESP_LOG_WARN);      // enable WARN logs from WiFi stack

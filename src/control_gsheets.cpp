@@ -14,6 +14,7 @@
 #include "system_time.h"
 #ifdef ESP8266
   #include <ESP8266HTTPClient.h> // For ESP8266
+  #include <ESP8266WiFi.h>  // for WiFiClient
 #else // ESP32  
   #include <HTTPClient.h>
 #endif
@@ -55,7 +56,12 @@ void Control_Gsheets::act() {
 };
 void Control_Gsheets::sendGoogle(String* payload) {
     HTTPClient http;
+  #ifdef ESP8266
+    WiFiClient client; // Assumes system_wifi has already connected to access point - note this will not run if Wifi fails to connect and goes to portal mode
+    http.begin(client, *url);
+  #else
     http.begin(*url);
+  #endif
     http.addHeader("Content-Type", "application/json");
     Serial.print("📤 Sending Data to Google Sheet at:"); Serial.println(*url);
     Serial.println(*payload);  // Debug: Print JSON payload

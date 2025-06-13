@@ -7,6 +7,8 @@
 #include "_settings.h"
 
 #ifdef SYSTEM_LORA_WANT
+#error "SYSTEM_LORA code is known not to be finished - uncomment to develop - see issue # 137"
+
 #include "system_lora.h"
 #include <SPI.h>
 #include <LoRa.h> // LoRa library for ESP32
