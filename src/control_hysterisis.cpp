@@ -11,6 +11,7 @@
 #include "misc.h"
 #include "control_hysterisis.h"
 
+#ifdef CONTROL_HYSTERISIS_DEBUG
 void ControlHysterisis::debug(const char* const where) {
   Serial.printf("%s: ",where);
   Serial.printf(" now=%f ", inputs[0]->floatValue());
@@ -25,6 +26,8 @@ void ControlHysterisis::debug(const char* const where) {
   if (((INfloat*)outputs[0])->wiredPath) { Serial.print(*(((INfloat*)outputs[0])->wiredPath)); }
   Serial.println();
 }
+#endif //CONTROL_HYSTERISIS_DEBUG
+
 void ControlHysterisis::act() {
   const float now = inputs[0]->floatValue();
   const float greater = inputs[1]->boolValue();

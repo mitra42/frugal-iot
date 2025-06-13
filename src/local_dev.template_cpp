@@ -29,12 +29,11 @@ void setup() {
   controls.push_back(new ControlHysterisis("control", "Control", 50, 0, 100));
 }
 
-// Put your loop here, but note if you use a subclass of Actuator, Sensor or Control 
-// then its loop member function will be called automatically and is not needed here
-// In that case, the function still needs to exist - just empty 
-void loop () {
-
-}
+// These are three kinds of loop function
+// frequently - for things that run more than once a period - should check time
+// periodically - run exactly once each period (which depends on power mode)
+// infrequently - which run less than once per period, and should check time.
+// Note if you use a subclass of Actuator, Sensor or Control that they will have the frequently, periodically and infrequently function called
 
 } // namespace localDev
 

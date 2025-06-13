@@ -10,6 +10,9 @@
 * topicTwig (or Twig) is the components after the topicPrefix typically sensor/io and usually char*
 * topicLeaf (or Leaf) is the last component e.g. "temperature" and usually char* (deprecated in favor of topicTwig) its "id" in any IO
 * "topic" is ambiguous and therefore wrong ! 
+*
+* Incoming flow 
+* messageReceived -> dispatch -> (dispatchTwigAll; dispatchPathAll)
 */
 
 #include "_settings.h"
@@ -75,7 +78,7 @@ MqttManager::MqttManager() : Frugal_Base(), client(1024,128), nextLoopTime(0), m
   setup();
 }
 
-void MqttManager::loop() {
+void MqttManager::frequently() {
   if (nextLoopTime <= millis()) {
     // Automatically reconnect
     blockTillConnected(); // TODO-125 maybe make non blocking and queue messages while down
@@ -87,7 +90,7 @@ void MqttManager::loop() {
         Serial.print(F("MQTT client loop failed ")); Serial.println(client.lastError()); // lwmqtt_err
       #endif // SYSTEM_MQTT_DEBUG
     }; // Do this at end of loop so some time before checks if connected
-    nextLoopTime = millis() + SYSTEM_MQTT_MS;
+    nextLoopTime = millis() + SYSTEM_MQTT_MS; // Not sleepSafeMillis as this is frequent
   }
 }
 
@@ -109,13 +112,13 @@ bool MqttManager::connect() {
       if (!client.sessionPresent()) {
         subscriptionsDone = false; // No session so will need to redo subscriptions
       } else {
-        Serial.print(F(" Session present "));
+        Serial.println(F(" Session present "));
       }
     }
   }
   /* Have a connection - new or old */
   if (!subscriptionsDone) { // Client has reported existence of a session
-    /* State connected but broker doesnt no subscriptions */
+    /* State connected but broker doesnt know subscriptions */
     if (resubscribeAll()) { 
       subscriptionsDone = true;
     } else {
@@ -343,6 +346,12 @@ void MqttManager::messageSendQueued() {
     queued.pop_front();
     //TODO-125 prob need to delete message popped
   }
+}
+bool MqttManager::prepareForLightSleep() {
+  return true;
+}
+bool MqttManager::recoverFromLightSleep() {
+  return connect();
 }
 namespace xMqtt {
 

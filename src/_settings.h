@@ -88,13 +88,10 @@
   #define CONTROL_DEBUG
 #endif
 // TO_ADD_SYSTEM - there is no class hierarchy
-#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG)
+#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_OLED_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG)
   #define SYSTEM_DEBUG
 #endif
 
-#if defined(SENSOR_DEBUG) || defined(ACTUATOR_DEBUG) || defined(CONTROL_DEBUG) || defined(SYSTEM_DEBUG)
-  #define ANY_DEBUG
-#endif 
 
 #if defined(SENSOR_MS5803_SPI) 
   #define SYSTEM_SPI_WANT
@@ -108,11 +105,31 @@
 #if defined(CONTROL_GSHEETS_WANT)
   #define SYSTEM_TIME_WANT
 #endif
+
+#if defined(SENSOR_DEBUG) || defined(ACTUATOR_DEBUG) || defined(CONTROL_DEBUG) || defined(SYSTEM_DEBUG)
+  #define ANY_DEBUG
+#endif 
 // TO_ADD_BOARD
 // shields compatible with D1 and its ESP8266 not C-pico which has same pin layout but different availability esp of analog
 #if defined(ESP8266_D1_MINI_PROv2) || defined (ESP8266_D1_MINI) || defined(ESP8266_D1_PRO_CLONE)
   #define ESP8266_D1
 #endif
+#if defined(TTGO_LORA_SX1278_V1) || defined(TTGO_LORA_SX1276_V1)
+  #define TTGO_LORA_SX127X_V1
+#elif defined(TTGO_LORA_SX1278_V21) || defined(TTGO_LORA_SX1276_V21)
+  #define TTGO_LORA_SX127X_V21
+#elif defined(TTGO_LORA_SX1278_V2) || defined(TTGO_LORA_SX1276_V2)
+  #define TTGO_LORA_SX127X_V2
+#endif
+#if defined(TTGO_LORA_SX1276_V1) || defined(TTGO_LORA_SX1276_V2) || defined(TTGO_LORA_SX1276_V21)
+  #define TTGO_LORA_SX1276
+#elif defined(TTGO_LORA_SX1278_V1) || defined(TTGO_LORA_SX1278_V2) || defined(TTGO_LORA_SX1276_V21)
+  #define TTGO_LORA_SX1278
+#endif
+#if defined(TTGO_LORA_SX1276) || defined(TTGO_LORA_SX1278)
+  #define TTGO_LORA_SX127X
+#endif
+
 
 // To specify a language (for the WiFi portal) #define all the ones you want, otherwise it supports the _ALL lsit which is currerntly EN, NL, DE, ID 
 #if \

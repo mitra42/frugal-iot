@@ -7,6 +7,7 @@
 #include "_base.h" // Base for new class version
 #include "sensor.h" // Base class for sensors
 #include "misc.h" // 
+#include "main.h"
 
 #ifdef SYSTEM_WIFI_WANT
 #include "system_wifi.h"
@@ -75,14 +76,32 @@
 #include "control_logger_fs.h"
 #include "system_fs.h"
 #endif
+
+#include "system_power.h"
+
 #ifdef SYSTEM_TIME_WANT
 #include "system_time.h"
 #endif
 #ifdef LOCAL_DEV_WANT
 #include "local_dev.h"
 #endif
-
+#ifdef SYSTEM_LORA_WANT
+#include "system_lora.h"
+#endif
+#ifdef SYSTEM_LORAMESHER_WANT
+#include "system_loramesher.h"
+#endif
+#ifdef SYSTEM_OLED_WANT
+#include "system_oled.h"
+#endif
+//#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE // TODO CHECK IF THIS IS NEEDED/HELPS
+#ifdef ESP32 // Not available on ESP8266 - have not yet looked for equivalent
+  #include "esp_log.h"
+#endif
 void setup() {
+//esp_log_level_set("*", ESP_LOG_ERROR);        // set all components to ERROR level
+//esp_log_level_set("wifi", ESP_LOG_WARN);      // enable WARN logs from WiFi stack
+
 #ifdef LILYGOHIGROW
   pinMode(POWER_CTRL, OUTPUT);
   digitalWrite(POWER_CTRL, HIGH); // TODO-115 this is for power control - may need other board specific stuff somewhere
@@ -193,6 +212,7 @@ xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR
 #endif
 
 #ifdef CONTROL_LOGGERFS_WANT
+// Must be after sensor_sht for default wiring below
 Control_Logger* clfs = new Control_LoggerFS(
   "Logger",
   fs2, // TODO-110 Using spiffs for testing for now
@@ -205,9 +225,22 @@ Control_Logger* clfs = new Control_LoggerFS(
     new INtext("Logger", "log3", "log3", nullptr, "black", true)
     });
   controls.push_back(clfs);
-  clfs->inputs[0]->wireTo(ss->temperature);
-
+  clfs->inputs[0]->wireTo(ss->temperature); // TODO this is default wiring - should remove.
 #endif // CONTROL_LOGGERFS_WANT
+
+#ifdef SYSTEM_OLED_WANT
+  oled = new System_OLED();
+  oled->setup();
+#endif // SYSTEM_OLED_WANT
+#ifdef SYSTEM_LORA_WANT
+  lora = new System_LoRa();
+  lora->setup();
+#endif // SYSTEM_LORA_WANT
+#ifdef SYSTEM_LORAMESHER_WANT
+  esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
+  loramesher = new System_LoraMesher();
+  loramesher->setup();
+#endif
 
 #pragma GCC diagnostic pop
 
@@ -215,6 +248,20 @@ Control_Logger* clfs = new Control_LoggerFS(
   // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
   xOta::setup();
 #endif
+// TO-ADD-POWERMODE
+#ifdef SYSTEM_POWER_MODE_LOOP
+  powerController = new System_Power_Mode_Loop(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#elif SYSTEM_POWER_MODE_LIGHT
+  powerController = new System_Power_Mode_Light(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#elif SYSTEM_POWER_MODE_LIGHTWIFI
+  powerController = new System_Power_Mode_LightWifi(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#elif SYSTEM_POWER_MODE_DEEP
+  powerController = new System_Power_Mode_Deep(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#elif SYSTEM_POWER_MODE_AUTO
+  powerController = new System_Power_Mode_Auto(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
+#endif
+powerController->setup();
+
 #ifdef SYSTEM_TIME_WANT // Synchronize time
   xTime::setup();
 #endif
@@ -230,33 +277,64 @@ Frugal_Base::setupAll(); // Will replace all setups as developed - currently doi
 
   // TODO-125 want to ifdef this
   internal_watchdog_setup();
-
-
-#ifdef ANY_DEBUG
+#ifdef ANY_DEBUG  
   Serial.println(F("FrugalIoT Starting Loop"));
 #endif // ANY_DEBUG
 
 }
 
-void loop() {
-  Mqtt->loop();
-  Frugal_Base::loopAll(); // Will replace all loops as developed - but starting with sensors, so positioned here.
-
-#ifdef SYSTEM_DISCOVERY_WANT
-  xDiscovery::loop();
-#endif
-#ifdef SYSTEM_OTA_WANT
-  xOta::loop();
-#endif
-#ifdef SYSTEM_TIME_WANT
-  xTime::loop();
-#endif
-  // TODO-125 probably want to ifdef this
-  internal_watchdog_loop();
-
-#ifdef LOCAL_DEV_WANT
-  localDev::loop();
-#endif
+// This is stuff done multiple times per period
+void frequently() {
+  Mqtt->frequently(); // 
+  #ifdef LOCAL_DEV_WANT
+    localDev::frequently();
+  #endif
+  // TODO-23 will want something here for buttons as well
 }
 
+// These are things done one time per period - where a period is the time set in SYSTEM_POWER_MS
+void periodically() {
+  #ifdef SENSOR_WANT
+    Sensor::periodicallyAll(); // TODO-23 check none of the sensors subclass Loop to do something other than readAndSet
+  #endif
+  #ifdef CONTROL_WANT
+    Control::periodicallyAll(); // TODO-23 this is not going to work for most control loops (only Blinken currently) which will have a timeframe
+  #endif
+  #ifdef SYSTEM_LORAMESHER_WANT
+    loramesher->periodically();
+  #endif
+  // No actuator time dependent at this point
+  #ifdef LOCAL_DEV_WANT
+    localDev::periodically();
+  #endif
+}
+// These are things done occasionally - maybe once over multiple periods (HIGH MEDIUM) or each period (LOW)
+void infrequently() {
+  #ifdef SYSTEM_DISCOVERY_WANT
+    xDiscovery::infrequently();
+  #endif
+  #ifdef SYSTEM_OTA_WANT
+    xOta::infrequently(); // TODO-23 default time should be less than one period
+  #endif
+  #ifdef SYSTEM_TIME_WANT
+    xTime::infrequently();
+  #endif
+  #ifdef LOCAL_DEV_WANT
+    localDev::infrequently();
+  #endif
+  internal_watchdog_loop(); // TODO-23 think about this, probably ok as will be awake less than period
+}
 
+bool donePeriodic = false;
+
+void loop() {
+  if (!donePeriodic) {
+    periodically();  // Do things that happen once per cycle
+    infrequently();  // Do things that keep their own track of time
+    donePeriodic = true;
+  }
+  frequently(); // Do things like MQTT which run frequently with their own clock
+  if (powerController->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
+    donePeriodic = false; // reset after sleep (note deep sleep comes in at top again)
+  }
+}

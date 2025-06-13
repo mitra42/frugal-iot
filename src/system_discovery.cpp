@@ -9,6 +9,8 @@
   Optional SYSTEM_DISCOVERY_DEBUG
   Optional *_WANT and *ADVERTISEMENT for each sensor and actuator
 
+  TODO make this into a class ! 
+
 */
 
 #include "_settings.h"
@@ -36,10 +38,12 @@
 #ifdef CONTROL_WANT
   #include "control.h"
 #endif
+#include "system_power.h" // For sleepSafemillis()
+
 
 namespace xDiscovery {
 
-unsigned long nextLoopTime = 0;
+unsigned long nextLoopTime = 0; // sleepSafeMillis
 
 //TODO Optimization - should these be String & instead of String *
 // projectTopic - gets 30592; 332252 *projectTopic 30584 / 332220
@@ -83,8 +87,10 @@ void fullAdvertise() {
         "Lolin C3 Pico"
       #elif defined(LOLIN_S2_MINI)
         "Lolin S2 Mini"
+      #elif defined(TTGO_LORA_SX127X)
+        "TTGO Lora SX127X" 
       #else
-        #error undefined board in system_discovery.cpp #TO_ADD_NEW_BOARD
+        #error undefined board in system_discovery.cpp #TO_ADD_BOARD
       #endif
       // TO_ADD_SENSOR (note space at start of string)
       #ifdef SENSOR_SHT_WANT
@@ -131,10 +137,11 @@ void setup() {
   Mqtt->subscribe("set/#"); 
 }
 
-void loop() {
-    if (nextLoopTime <= millis()) {
+ //TODO-23 This wont work as nextLoopTime wont be remembered in Deep Sleep
+void infrequently() { 
+    if (nextLoopTime <= (powerController->sleepSafeMillis())) { 
         quickAdvertise(); // Send info about this node to server (on timer)
-        nextLoopTime = millis() + SYSTEM_DISCOVERY_MS;
+        nextLoopTime = powerController->sleepSafeMillis() + SYSTEM_DISCOVERY_MS;
     }
 }
 

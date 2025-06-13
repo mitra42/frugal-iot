@@ -28,20 +28,6 @@ void Actuator::readAndSet() {
   Serial.println("XXX25 Shouldnt be calling Actuator::readAndSet - should be a subclass");
 }
 */
-/* Zero Actuators currently need loop
-void Actuator::loop() {
-  if (nextLoopTime <= millis()) {
-    readAndSet(); // Will also send message via act()
-    nextLoopTime = millis() + ms;
-  }
-}
-
-void Actuator::loopAll() {
-  for (Actuator* s: actuators) {
-    s->loop();
-  }
-}
-*/
 
 
 void Actuator::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {

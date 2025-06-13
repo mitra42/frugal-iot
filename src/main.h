@@ -1,11 +1,11 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#ifdef PLATFORMIO
-  void setup();
-  void loop();
-#else
-  void setup();
-  void loop();
-#endif
+#include "_settings.h"
+
+void setup();
+void loop();
+void frequently();
+void infrequently();
+void periodically();
 #endif // MAIN_H
