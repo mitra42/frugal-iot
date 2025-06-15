@@ -66,12 +66,6 @@
 #ifdef CONTROL_HYSTERISIS_WANT
 #include "control_hysterisis.h"
 #endif
-#ifdef SYSTEM_DISCOVERY_WANT
-#include "system_discovery.h"
-#endif
-#ifdef SYSTEM_OTA_WANT
-#include "system_ota.h"
-#endif
 #ifdef CONTROL_LOGGERFS_WANT
 #include "control_logger_fs.h"
 #include "system_fs.h"
@@ -260,11 +254,6 @@ Control_Logger* clfs = new Control_LoggerFS(
 
 #pragma GCC diagnostic pop
 
-#ifdef SYSTEM_OTA_WANT
-  // OTA should be after WiFi and before MQTT **but** it needs strings from Discovery TODO-37 fix this later - put strings somewhere global after WiFi
-  // TODO-141 move into frugal_iot. 
-  xOta::setup();
-#endif
 // TO-ADD-POWERMODE
 // TODO-141 move into frugal_iot. 
 #ifdef SYSTEM_POWER_MODE_LOOP
@@ -326,10 +315,7 @@ void periodically() {
 // These are things done occasionally - maybe once over multiple periods (HIGH MEDIUM) or each period (LOW)
 // TODO-141 move into frugal_iot. 
 void infrequently() {
-  frugal_iot.infrequently();
-  #ifdef SYSTEM_OTA_WANT
-    xOta::infrequently(); // TODO-23 default time should be less than one period
-  #endif
+  frugal_iot.infrequently(); // Discovery; OTA
   #ifdef SYSTEM_TIME_WANT
     xTime::infrequently();
   #endif

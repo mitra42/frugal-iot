@@ -17,6 +17,7 @@
 #include "_base.h"
 #include <vector>
 #include "system_discovery.h"
+#include "system_ota.h"
 
 class Frugal_Group : public Frugal_Base {
   public:
@@ -38,6 +39,7 @@ class Frugal_IoT : public Frugal_Group {
     Frugal_Group* controls;
     Frugal_Group* system;
     System_Discovery* discovery;
+    System_OTA* ota;
     Frugal_IoT();
     void setup();
 };
