@@ -304,15 +304,6 @@ void periodically() {
     localDev::periodically();
   #endif
 }
-// These are things done occasionally - maybe once over multiple periods (HIGH MEDIUM) or each period (LOW)
-// TODO-141 move into frugal_iot. 
-void infrequently() {
-  frugal_iot.infrequently(); // Discovery; OTA
-  #ifdef LOCAL_DEV_WANT
-    localDev::infrequently();
-  #endif
-  internal_watchdog_loop(); // TODO-23 think about this, probably ok as will be awake less than period
-}
 
 bool donePeriodic = false;
 
@@ -320,7 +311,7 @@ void loop() {
 // TODO-141 move into frugal_iot. 
   if (!donePeriodic) {
     periodically();  // Do things that happen once per cycle
-    infrequently();  // Do things that keep their own track of time
+    frugal_iot.infrequently();  // Do things that keep their own track of time
     donePeriodic = true;
   }
   frequently(); // Do things like MQTT which run frequently with their own clock

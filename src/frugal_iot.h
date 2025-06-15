@@ -48,6 +48,7 @@ class Frugal_IoT : public Frugal_Group {
     #endif
     Frugal_IoT();
     void setup();
+    void infrequently();
 };
 
 extern Frugal_IoT frugal_iot;

@@ -18,6 +18,7 @@
 
 #include "_settings.h" // Note - ideally shouldnt be dependent on anything here, or at least not in _local.h
 #include "frugal_iot.h"
+#include "misc.h"
 
 Frugal_Group::Frugal_Group(const char * const id, const char * const name)
 : Frugal_Base(id, name)
@@ -116,6 +117,14 @@ void Frugal_IoT::setup() {
     time->setup_after_wifi();
   #endif
   discovery->setup_after_mqtt();  // System_Discovery
+}
+void Frugal_IoT::infrequently() {
+  Frugal_Group::infrequently();
+  #ifdef LOCAL_DEV_WANT
+    // TODO-141 this will go back into the new main.cpp in some form
+    localDev::infrequently();
+  #endif
+  internal_watchdog_loop(); // TODO-23 think about this, probably ok as will be awake less than period
 }
 
 
