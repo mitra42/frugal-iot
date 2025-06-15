@@ -130,6 +130,21 @@
   #define TTGO_LORA_SX127X
 #endif
 
+//TO_ADD_BOARD 
+#ifndef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
+  #ifdef ESP8266_D1
+    #define BOARDNAME "ESP8266 D1"
+  #elif defined(LOLIN_C3_PICO)
+    #define BOARDNAME "Lolin C3 Pico"
+  #elif defined(LOLIN_S2_MINI)
+    #define BOARDNAME "Lolin S2 Mini"
+  #elif defined(TTGO_LORA_SX127X)
+    #define BOARDNAME "TTGO Lora SX127X" 
+  #else
+    #error undefined board in system_discovery.cpp #TO_ADD_BOARD
+  #endif
+#endif
+
 
 // To specify a language (for the WiFi portal) #define all the ones you want, otherwise it supports the _ALL lsit which is currerntly EN, NL, DE, ID 
 #if \

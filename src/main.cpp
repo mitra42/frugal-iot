@@ -107,7 +107,9 @@ void setup() {
 //esp_log_level_set("*", ESP_LOG_ERROR);        // set all components to ERROR level
 //esp_log_level_set("wifi", ESP_LOG_WARN);      // enable WARN logs from WiFi stack
 
+Serial.print("Setup: ");
 frugal_iot.setup(); // TODO-141 move most of below into this and this should come after sensors added.
+Serial.println();
 
 #ifdef LILYGOHIGROW // TODO-141 maybe move to "boards"
   pinMode(POWER_CTRL, OUTPUT);
@@ -191,9 +193,6 @@ frugal_iot.sensors->add(ss);
 #ifdef SENSOR_ENSAHT_WANT
   frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS AHT"));
 #endif
-
-// TODO-141 move setup into frugal-iot note the setup_after_mqtt pattern not used yet
-xDiscovery::setup(); // Must be after system mqtt and before ACTUATOR* or SENSOR* or CONTROL* that setup topics
 
 #ifdef CONTROL_BLINKEN_WANT
   // TODO-141 figure out how cb used 
@@ -291,9 +290,6 @@ powerController->setup();
   localDev::setup(); // Note has to be before Frugal_Base::setupAll() TODO-141 rework this, e.g. push the local
 #endif
 
-   // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
-// TODO-141 move into frugal_iot. 
-  xDiscovery::fullAdvertise();
 
   // TODO-125 want to ifdef this
   // TODO-141 move into frugal_iot. 
@@ -307,6 +303,7 @@ powerController->setup();
 // This is stuff done multiple times per period
 // TODO-141 move into frugal_iot. 
 void frequently() {
+  frugal_iot.frequently();
   Mqtt->frequently(); // 
   #ifdef LOCAL_DEV_WANT
     localDev::frequently();
@@ -329,9 +326,7 @@ void periodically() {
 // These are things done occasionally - maybe once over multiple periods (HIGH MEDIUM) or each period (LOW)
 // TODO-141 move into frugal_iot. 
 void infrequently() {
-  #ifdef SYSTEM_DISCOVERY_WANT
-    xDiscovery::infrequently();
-  #endif
+  frugal_iot.infrequently();
   #ifdef SYSTEM_OTA_WANT
     xOta::infrequently(); // TODO-23 default time should be less than one period
   #endif

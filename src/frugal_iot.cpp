@@ -27,21 +27,11 @@ void Frugal_Group::add(Frugal_Base* fb) {
   group.push_back(fb);
 }
 
-Frugal_IoT::Frugal_IoT()
-: Frugal_Group("frugal_iot", "Frugal_IoT"),
-  actuators(new Frugal_Group("actuators", "Actuators")),
-  sensors(new Frugal_Group("sensors", "Sensors")),
-  controls(new Frugal_Group("controls", "Controls"))
-{
-  add(actuators);
-  add(sensors);
-  add(controls);
-}
 
 // TODO-141 move most of main.cpp::setup to here, all non-app stuff
 void Frugal_Group::setup() {
   for (Frugal_Base* fb: group) {
-    //TODO-141 move name to FB // Serial.print("Setting up Actuator:"); Serial.print(a->name); Serial.print(" id="); Serial.println(a->id);
+    Serial.print(fb->id); Serial.print(F(" "));
     fb->setup();
   }
 }
@@ -74,11 +64,42 @@ String Frugal_Group::advertisement() {
   return ad;
 }
 
+void Frugal_Group::frequently() {
+  for (Frugal_Base* fb: group) {
+    fb->frequently();
+  }
+}
 void Frugal_Group::periodically() {
   for (Frugal_Base* fb: group) {
     fb->periodically();
   }
 }
+void Frugal_Group::infrequently() {
+  for (Frugal_Base* fb: group) {
+    fb->infrequently();
+  }
+}
+
+Frugal_IoT::Frugal_IoT()
+: Frugal_Group("frugal_iot", "Frugal_IoT"),
+  actuators(new Frugal_Group("actuators", "Actuators")),
+  sensors(new Frugal_Group("sensors", "Sensors")),
+  controls(new Frugal_Group("controls", "Controls")),
+  system(new Frugal_Group("system", "System")),
+  discovery(new System_Discovery())
+{
+  add(actuators);
+  add(sensors);
+  add(controls);
+  system->add(discovery);
+  add(system);
+}
+
+void Frugal_IoT::setup() {
+  Frugal_Group::setup(); // TODO-141 make sure includes WiFi and MQTT
+  discovery->setup_after_mqtt();  // System_Discovery
+}
+
 
 
 

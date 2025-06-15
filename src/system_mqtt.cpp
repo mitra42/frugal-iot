@@ -172,12 +172,12 @@ void MqttManager::subscribe(const String& topicPath) {
 }
 
 String* MqttManager::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
-  return new String(*xDiscovery::topicPrefix + topicTwig);
+  return new String(*frugal_iot.discovery->topicPrefix + topicTwig);
 }
 String* MqttManager::twig(const String &topicPath) { 
-  if (topicPath.startsWith(*xDiscovery::topicPrefix)) {
+  if (topicPath.startsWith(*frugal_iot.discovery->topicPrefix)) {
     String* const topicTwig = new String(topicPath);
-    topicTwig->remove(0, xDiscovery::topicPrefix->length());
+    topicTwig->remove(0, frugal_iot.discovery->topicPrefix->length());
     return topicTwig;
   } else {
     return nullptr;
@@ -190,8 +190,8 @@ void MqttManager::subscribe(const char* topicTwig) {
 }
 void MqttManager::dispatch(const String &topicPath, const String &payload) {
   // TODO move this to _base.cpp
-  if (topicPath.startsWith(*xDiscovery::topicPrefix)) { // includes trailing slash
-    String topicTwig = topicPath.substring(xDiscovery::topicPrefix->length()); 
+  if (topicPath.startsWith(*frugal_iot.discovery->topicPrefix)) { // includes trailing slash
+    String topicTwig = topicPath.substring(frugal_iot.discovery->topicPrefix->length()); 
     bool isSet;
     if (topicTwig.startsWith("set/")) {
       isSet = true;
@@ -301,7 +301,7 @@ void MqttManager::messageSend(const String &topicPath, const String &payload, co
 
 // Be careful if change this to avoid either out-of-scope or memory leaksx xxxxxx
 void MqttManager::messageSend(const char* const topicTwig, const String &payload, const bool retain, const int qos) {
-  const String topicPath = String(*xDiscovery::topicPrefix + topicTwig); // TODO can merge into next line
+  const String topicPath = String(*frugal_iot.discovery->topicPrefix + topicTwig); // TODO can merge into next line
   messageSend(topicPath, payload, retain, qos);
 }
 

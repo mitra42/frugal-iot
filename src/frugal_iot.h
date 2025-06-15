@@ -16,6 +16,7 @@
 
 #include "_base.h"
 #include <vector>
+#include "system_discovery.h"
 
 class Frugal_Group : public Frugal_Base {
   public:
@@ -26,14 +27,19 @@ class Frugal_Group : public Frugal_Base {
     void dispatchTwig(const String &topicTwig, const String &payload, bool isSet);
     void dispatchPath(const String &topicPath, const String &payload); // Only currently relevant on controls
     String advertisement();
+    void frequently();
     void periodically();
+    void infrequently();
 };
 class Frugal_IoT : public Frugal_Group {
   public:
     Frugal_Group* actuators;
     Frugal_Group* sensors;
     Frugal_Group* controls;
+    Frugal_Group* system;
+    System_Discovery* discovery;
     Frugal_IoT();
+    void setup();
 };
 
 extern Frugal_IoT frugal_iot;
