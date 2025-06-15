@@ -73,9 +73,6 @@
 
 #include "system_power.h"
 
-#ifdef SYSTEM_TIME_WANT
-#include "system_time.h"
-#endif
 #ifdef LOCAL_DEV_WANT
 #include "local_dev.h"
 #endif
@@ -269,11 +266,6 @@ Control_Logger* clfs = new Control_LoggerFS(
 #endif
 powerController->setup();
 
-#ifdef SYSTEM_TIME_WANT // Synchronize time
-  // TODO-141 move into frugal_iot. 
-  xTime::setup();
-#endif
-
 #ifdef LOCAL_DEV_WANT
   // TODO-141 move into frugal_iot. 
   localDev::setup(); // Note has to be before Frugal_Base::setupAll() TODO-141 rework this, e.g. push the local
@@ -316,9 +308,6 @@ void periodically() {
 // TODO-141 move into frugal_iot. 
 void infrequently() {
   frugal_iot.infrequently(); // Discovery; OTA
-  #ifdef SYSTEM_TIME_WANT
-    xTime::infrequently();
-  #endif
   #ifdef LOCAL_DEV_WANT
     localDev::infrequently();
   #endif

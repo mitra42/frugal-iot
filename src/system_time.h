@@ -3,29 +3,26 @@
 
 #include <time.h>
 #include <Arduino.h> // For String
+#include "_base.h"
 
-class SystemTime {
-    public:
-        SystemTime();
-        ~SystemTime();
-        const char* timezone;
-        void init(const char* timezone);
-        time_t now();
-        String dateTime();
-        bool isTimeSet();
-        void sync();
-        time_t lastSync();
+class System_Time : public Frugal_Base {
+  public:
+    unsigned long nextLoopTime = 0; // sleepSafeMillis
+    System_Time();
+    ~System_Time();
+    const char* timezone;
+    void init(const char* timezone);
+    time_t now();
+    String dateTime();
+    bool isTimeSet();
+    void sync();
+    time_t lastSync();
+    void setup_after_wifi();
+    void infrequently();
         
     private:
         time_t _now;
         struct tm _localTime;
 };
-
-extern SystemTime systemTime;
-
-namespace xTime { // TODO move these into the FrugalBase etc setup and loop and make methods of SystemTime
-  void setup();
-  void infrequently();
-}
 
 #endif //SYSTEM_TIME_H

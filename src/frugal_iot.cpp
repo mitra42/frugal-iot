@@ -86,13 +86,23 @@ Frugal_IoT::Frugal_IoT()
   sensors(new Frugal_Group("sensors", "Sensors")),
   controls(new Frugal_Group("controls", "Controls")),
   system(new Frugal_Group("system", "System")),
-  ota(new System_OTA()),
+  #ifdef SYSTEM_OTA_WANT
+    ota(new System_OTA()),
+  #endif
+  #ifdef SYSTEM_TIME_WANT
+    time(new System_Time()),
+  #endif
   discovery(new System_Discovery())
 {
   add(actuators);
   add(sensors);
   add(controls);
-  system->add(ota);
+  #ifdef SYSTEM_OTA_WANT
+    system->add(ota);
+  #endif
+  #ifdef SYSTEM_TIME_WANT
+    system->add(time);
+  #endif
   system->add(discovery);
   add(system);
 }
@@ -101,6 +111,9 @@ void Frugal_IoT::setup() {
   Frugal_Group::setup(); // TODO-141 make sure includes WiFi and MQTT
   #ifdef SYSTEM_OTA_WANT
     ota->setup_after_wifi();
+  #endif
+  #ifdef SYSTEM_TIME_WANT
+    time->setup_after_wifi();
   #endif
   discovery->setup_after_mqtt();  // System_Discovery
 }

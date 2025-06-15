@@ -35,8 +35,8 @@
 #define JAN_01_2024 1704070861L
 // #define TEN_MINS 600
 
-SystemTime::SystemTime() {}
-SystemTime::~SystemTime() {}
+System_Time::System_Time() : Frugal_Base("time","Time") {}
+System_Time::~System_Time() {}
 
 // Last time synced with NTP in seconds
 time_t _lastSyncTime;
@@ -50,7 +50,7 @@ void NTPSyncTimeCallback(struct timeval* tv) {
 }
 
 // Initialize all the time stuff - set Timezone and start asynchronous sync with NTP 
-void SystemTime::init(const char* timeZone) {
+void System_Time::init(const char* timeZone) {
   #ifdef SYSTEM_TIME_DEBUG
     Serial.println("Time: Init");
   #endif
@@ -73,7 +73,7 @@ void SystemTime::init(const char* timeZone) {
   #endif
 }
 // Sync the time with NTP
-void SystemTime::sync() {
+void System_Time::sync() {
   if (!getLocalTime(&_localTime)) {
     #ifdef SYSTEM_TIME_DEBUG
       Serial.println("Time: Not yet synced");
@@ -82,47 +82,40 @@ void SystemTime::sync() {
 }
 
 //True if time has been successfully set (with NTP)
-bool SystemTime::isTimeSet() {
+bool System_Time::isTimeSet() {
   time(&_now);
   return (_now > JAN_01_2024); 
 }
 
 //Return time in milliseconds since Epoch
-time_t SystemTime::now() {
+time_t System_Time::now() {
   time(&_now);
   localtime_r(&_now, &_localTime);
   return _now;
 }
 
-String SystemTime::dateTime() {
+String System_Time::dateTime() {
   // Note String is on stack so safe but not for long term use
   return StringF("%02d/%02d/%02d %02d:%02d:%02d %s", _localTime.tm_mday, _localTime.tm_mon + 1, _localTime.tm_year > 100 ? _localTime.tm_year - 100 : _localTime.tm_year, _localTime.tm_hour, _localTime.tm_min, _localTime.tm_sec, SYSTEM_TIME_ZONE_ABBREV);
 }
-time_t SystemTime::lastSync() { return _lastSyncTime; }
+time_t System_Time::lastSync() { return _lastSyncTime; }
 
-SystemTime systemTime;
+void System_Time::setup_after_wifi() {
+    init(SYSTEM_TIME_ZONE);
+    sync();
+}
 
-namespace xTime {  //TODO-25 - put this in a class and call from base etc
-
-  unsigned long nextLoopTime = 0; // sleepSafeMillis
-
-  void setup() {
-      systemTime.init(SYSTEM_TIME_ZONE);
-      systemTime.sync();
-  }
-
-  void infrequently() {
-    if (nextLoopTime <= powerController->sleepSafeMillis() ) {
-      if (! systemTime.isTimeSet()) {
-          Serial.print("Time since boot"); Serial.println(systemTime.now());
-      } else {
-          systemTime.now();
-          Serial.print("Local time = "); Serial.println(systemTime.dateTime().c_str());
-      }
-      nextLoopTime = (powerController->sleepSafeMillis() + SYSTEM_TIME_MS);
-      configTime(0, 0, "foo","bar","bax");
+void System_Time::infrequently() {
+  if (nextLoopTime <= powerController->sleepSafeMillis() ) {
+    if (! isTimeSet()) {
+        Serial.print("Time since boot"); Serial.println(now());
+    } else {
+        now();
+        Serial.print("Local time = "); Serial.println(dateTime().c_str());
     }
+    nextLoopTime = (powerController->sleepSafeMillis() + SYSTEM_TIME_MS);
+    configTime(0, 0, "foo","bar","bax"); // TODO this cant be right, which servers are we using ?
   }
-} // namespace xTime
+}
 
 #endif // SYSTEM_TIME_WANT
