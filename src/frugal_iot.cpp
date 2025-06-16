@@ -93,18 +93,24 @@ Frugal_IoT::Frugal_IoT()
   #ifdef SYSTEM_TIME_WANT
     time(new System_Time()),
   #endif
+  #ifdef SYSTEM_LORAMESHER_WANT
+    loramesher(new System_LoraMesher()),
+  #endif
   discovery(new System_Discovery())
 {
   add(actuators);
   add(sensors);
   add(controls);
+  system->add(discovery);
   #ifdef SYSTEM_OTA_WANT
     system->add(ota);
+  #endif
+  #ifdef SYSTEM_LORAMESHER_WANT
+    system->add(loramesher);
   #endif
   #ifdef SYSTEM_TIME_WANT
     system->add(time);
   #endif
-  system->add(discovery);
   add(system);
 }
 

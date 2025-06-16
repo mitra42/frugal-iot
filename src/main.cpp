@@ -242,12 +242,6 @@ Control_Logger* clfs = new Control_LoggerFS(
   lora = new System_LoRa();
   lora->setup();
 #endif // SYSTEM_LORA_WANT
-#ifdef SYSTEM_LORAMESHER_WANT
-  // TODO-141 move into frugal_iot. 
-  esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
-  loramesher = new System_LoraMesher();
-  loramesher->setup();
-#endif
 
 #pragma GCC diagnostic pop
 
@@ -296,9 +290,6 @@ void frequently() {
 // TODO-141 move into frugal_iot. 
 void periodically() {
   frugal_iot.periodically();
-  #ifdef SYSTEM_LORAMESHER_WANT
-    loramesher->periodically();
-  #endif
   // No actuator time dependent at this point
   #ifdef LOCAL_DEV_WANT
     localDev::periodically();
@@ -306,7 +297,6 @@ void periodically() {
 }
 
 bool donePeriodic = false;
-
 void loop() {
 // TODO-141 move into frugal_iot. 
   if (!donePeriodic) {

@@ -16,7 +16,7 @@
 #include "_settings.h"
 #ifdef SYSTEM_LORAMESHER_WANT
 
-#error "SYSTEM_LORAMESHER code is known not to be finished - see issue # 152 - uncomment to develop"
+//#error "SYSTEM_LORAMESHER code is known not to be finished - see issue # 152 - uncomment to develop"
 
 #include "LoraMesher.h"
 #include "system_loramesher.h"
@@ -24,6 +24,7 @@
   #include "system_oled.h"
 #endif
 #include "misc.h"  // for lprintf
+#include "frugal_iot.h"
 
 // These settings duplicated in system_loramesher.cpp and system_lora.cpp (system_loramesher.cpp are newer)
 #if defined(TTGO_LORA_SX1276)
@@ -43,8 +44,6 @@
 #else
   #error "Unsupported LORA configuration. Please define either TTGO_LORA_SX127X_V1 or TTGO_LORA_SX127X_V2. or define new BOARD"
 #endif
-
-System_LoraMesher* loramesher;
 
 System_LoraMesher::System_LoraMesher()
 : Frugal_Base("loramesher", "LoraMesher"),
@@ -147,29 +146,29 @@ void processReceivedPackets(void*) {
     for (;;) {
         /* Wait for the notification of processReceivedPackets and enter blocking */
         ulTaskNotifyTake(pdPASS, portMAX_DELAY);
-
+        // TODO-137 move much of this into a method on System_LoraMesher
         //Iterate through all the packets inside the Received User Packets Queue
-        while (loramesher->radio.getReceivedQueueSize() > 0) {
+        while (frugal_iot.loramesher->radio.getReceivedQueueSize() > 0) {
             Serial.println("ReceivedUserData_TaskHandle notify received");
-            Serial.printf("Queue receiveUserData size: %d\n", loramesher->radio.getReceivedQueueSize());
+            Serial.printf("Queue receiveUserData size: %d\n", frugal_iot.loramesher->radio.getReceivedQueueSize());
 
             //Get the first element inside the Received User Packets Queue
             #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-              AppPacket<counterPacket>* packet = loramesher->radio.getNextAppPzacket<counterPacket>();
+              AppPacket<counterPacket>* packet = frugal_iot.loramesher->radio.getNextAppPzacket<counterPacket>();
               //Print the App Packet
               printAppCounterPacket(packet); // This is the actual handling
             #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
-              AppPacket<uint8_t>* appPacket = loramesher->radio.getNextAppPacket<uint8_t>();
+              AppPacket<uint8_t>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<uint8_t>();
               printAppData(appPacket);
 
             #else // Start (but wont work) of FrugalIoT packet
-              AppPacket<FrugalIoTMessage>* appPacket = loramesher->radio.getNextAppPacket<FrugalIoTMessage>();
+              AppPacket<FrugalIoTMessage>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<FrugalIoTMessage>();
               printAppFrugal(packet);
               // Pull apart FrugalIoTMessage to something want to process
               //DataMessage* dataMessage = createDataMessage(AppPacket<FrugalIoTMessage>* appPacket))
             #endif      
             //Delete the packet when used. It is very important to call this function to release the memory of the packet.
-            loramesher->radio.deletePacket(appPacket);
+            frugal_iot.loramesher->radio.deletePacket(appPacket);
         }
     }
 }

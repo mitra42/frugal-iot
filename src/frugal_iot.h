@@ -19,6 +19,7 @@
 #include "system_discovery.h"
 #include "system_ota.h"
 #include "system_time.h"
+#include "system_loramesher.h"
 
 class Frugal_Group : public Frugal_Base {
   public:
@@ -46,6 +47,10 @@ class Frugal_IoT : public Frugal_Group {
     #ifdef SYSTEM_TIME_WANT
       System_Time* time;
     #endif
+    #ifdef SYSTEM_LORAMESHER_WANT
+      System_LoraMesher* loramesher;
+    #endif
+
     Frugal_IoT();
     void setup();
     void infrequently();
