@@ -115,17 +115,12 @@ Serial.println();
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
-// TODO-141 find where/how aLedBuiltin used
-  Actuator_Ledbuiltin* aLedBuiltin = new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, ACTUATOR_LEDBUILTIN_BRIGHTNESS, ACTUATOR_LEDBUILTIN_COLOR);
-  frugal_iot.actuators->add(aLedBuiltin);
+  frugal_iot.actuators->add(new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, ACTUATOR_LEDBUILTIN_BRIGHTNESS, ACTUATOR_LEDBUILTIN_COLOR));
 #endif
 #ifdef ACTUATOR_RELAY_WANT
   frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", ACTUATOR_RELAY_PIN, "purple"));
 #endif
 
-// TODO-141 try removing the pragma
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 #ifdef SENSOR_ANALOG_INSTANCES_WANT
   frugal_iot.sensors->add(new Sensor_Analog("analog1", "Analog 1", SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, 0, 5000, SENSOR_ANALOG_COLOR_1, SENSOR_ANALOG_MS_1, true));
 #endif
@@ -146,7 +141,6 @@ Serial.println();
   frugal_iot.sensors->add(new Sensor_Battery(SENSOR_BATTERY_PIN));  // TODO-57 will rarely be as simple as this
 #endif
 #ifdef SENSOR_SHT_WANT
-// TODO-141 where is ss used and how
   Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, SENSOR_SHT_MS, true);
 frugal_iot.sensors->add(ss);
 #endif
@@ -169,9 +163,7 @@ frugal_iot.sensors->add(ss);
   frugal_iot.sensors->add(new Sensor_ms5803("pressure", "Pressure"));
 #endif
 #ifdef SENSOR_BUTTON_WANT
-  // Pushed to sensors by newSensor_Button
-  // TODO-141 make this fit the pattern
-  Sensor_Button::newSensor_Button("button", "Button", SENSOR_BUTTON_PIN, "purple");
+  frugal_iot.sensors->add(new Sensor_Button("button", "Button", SENSOR_BUTTON_PIN, "purple"));
 #endif
 #ifdef SENSOR_LOADCELL_WANT
   frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 2000, "pink", SENSOR_LOADCELL_MS, true));
@@ -184,18 +176,17 @@ frugal_iot.sensors->add(ss);
   // TODO-141 figure out how cb used 
   Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
   frugal_iot.controls->add(cb);
-  // TODO Make function an dredo wirepath
-  cb->outputs[0]->wireTo(frugal_iot.mqtt->path(aLedBuiltin->input->topicTwig)); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
+  cb->outputs[0]->wireTo(frugal_iot.mqtt->path("ledbuiltin/id")); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
   frugal_iot.controls->add(new ControlHysterisis("control", "Control", 50, 1, 0, 100));
 #endif //CONTROL_HYSTERISIS_WANT
 #ifdef CONTROL_GSHEETS_WANT
-  // TODO-141 figure out how cg used - note this is where ss used
+  // TODO-141 figure out how cg used 
   Control_Gsheets* cg =   new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);
   frugal_iot.controls->add(cg);
-  cg->track("temperature", frugal_iot.mqtt->path(ss->temperature->topicTwig));
+  cg->track("temperature", frugal_iot.mqtt->path("sht/temperature"));
 #endif
 
 #ifdef SYSTEM_SD_WANT
@@ -237,8 +228,6 @@ Control_Logger* clfs = new Control_LoggerFS(
   lora = new System_LoRa();
   lora->setup();
 #endif // SYSTEM_LORA_WANT
-
-#pragma GCC diagnostic pop
 
 // TO-ADD-POWERMODE
 // TODO-141 move into frugal_iot. 

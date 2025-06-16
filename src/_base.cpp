@@ -40,7 +40,7 @@ void IO::wireTo(String* topicPath) {
   // TODO probably should unsubscribe from previous BUT could be subscribed elsewhere
   wiredPath = topicPath;
   if (topicPath->length() > 0) {
-    frugal_iot.mqtt->subscribe(*wiredPath);
+frugal_iot.mqtt->subscribe(*wiredPath);
   }
 }
 void IO::wireTo(IO* io) {

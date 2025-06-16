@@ -11,6 +11,7 @@
  #include <vector>
  #include "Button2.h" // https://github.com/LennartHennigs/Button2
  #include "sensor.h"
+ #include "frugal_iot.h"
 
  #ifndef SENSOR_BUTTON_MS
   #define SENSOR_BUTTON_MS 10
@@ -37,14 +38,11 @@
       static void longClickHandler(Button2& btn);
       static void doubleClickHandler(Button2& btn);
       static void tripleClickHandler(Button2& btn);
-      static void newSensor_Button(const char * const id, const char * const name, uint8_t pin, const char* color);
       static Sensor_Button* handler(Button2& button);
     private:
       Button2* button;
       uint8_t pin;
  };
- 
- extern std::vector<Sensor_Button*> buttons;
  
  #endif // SYSTEM_BUTTON_WANT
  #endif // SENSOR_BUTTON_H

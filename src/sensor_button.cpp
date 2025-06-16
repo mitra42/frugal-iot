@@ -14,7 +14,7 @@
 #include "frugal_iot.h"
 #include "Button2.h" // https://github.com/LennartHennigs/Button2
 
-
+Frugal_Group buttons("buttons", "Buttons");
 
 Sensor_Button::Sensor_Button(const char * const id, const char * const name, uint8_t pin, const char* const color) :
   Sensor(id, name, 10, false), pin(pin) {
@@ -24,6 +24,8 @@ Sensor_Button::Sensor_Button(const char * const id, const char * const name, uin
   button->setLongClickHandler(Sensor_Button::longClickHandler);
   button->setDoubleClickHandler(Sensor_Button::doubleClickHandler);
   button->setTripleClickHandler(Sensor_Button::tripleClickHandler);
+  button->setID(buttons.group.size());
+  buttons.group.push_back(this);
 }
 
 // Unclear how would use an "OUT" as its not dependent on a change
@@ -45,14 +47,8 @@ void Sensor_Button::doubleClickHandler(Button2& btn) {
 void Sensor_Button::tripleClickHandler(Button2& btn) {
   handler(btn)->clickHandlerInner(triple_click);
 }
-void Sensor_Button::newSensor_Button(const char * const id, const char * const name, uint8_t pin, const char* const color) {
-  Sensor_Button* sb = new Sensor_Button(id, name, pin, color);
-  sb->button->setID(buttons.size());
-  buttons.push_back(sb);
-  frugal_iot.sensors->add(sb);   
-}
 Sensor_Button* Sensor_Button::handler(Button2& button) {
-  return buttons[button.getID()];
+  return (Sensor_Button*)buttons.group[button.getID()];
 }
 void Sensor_Button::setup() {
   button->begin(pin);
@@ -61,6 +57,5 @@ void Sensor_Button::frequently() {
   button->loop();
 }
 
-std::vector<Sensor_Button*> buttons;
 
 #endif // SYSTEM_BUTTON_WANT
