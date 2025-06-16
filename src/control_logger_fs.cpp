@@ -38,7 +38,7 @@ void Control_LoggerFS::append(const String &topicPath, const String &payload) {
     Serial.print("Control_Logger::append "); Serial.print(topicPath); Serial.print(" "); Serial.println(payload);
   #endif
   #ifdef SYSTEM_TIME_WANT
-    time_t _now = systemTime.now(); 
+    time_t _now = frugal_iot.time->now(); 
     struct tm* tmstruct = localtime(&_now);
   #endif
   String line;

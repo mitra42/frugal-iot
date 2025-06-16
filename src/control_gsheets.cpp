@@ -21,6 +21,7 @@
 #include <Arduino.h> // For String
 #include "control_gsheets.h"
 #include "misc.h" // For StringF
+#include "frugal_iot.h"
 
 Control_Gsheets::Control_Gsheets(const char* name, String* googleSheetsUrl)
   : Control_Logger("gsheets", name), url(googleSheetsUrl)
@@ -40,7 +41,7 @@ void Control_Gsheets::track(const char* col, const char* topicPath) {
 
 void Control_Gsheets::act() {
   String* payload = new String(F("{\"timestamp\":\""));
-  *payload += systemTime.dateTime();
+  *payload += frugal_iot.time->dateTime();
   *payload += "\"";
   // For some reason this alternative doesnt work - would have expected dateTime to be in scope but StringF is fussy.
   //String dateTime = systemTime.dateTime();
