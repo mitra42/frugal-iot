@@ -12,9 +12,6 @@
 #ifdef SYSTEM_WIFI_WANT
 #include "system_wifi.h"
 #endif
-#ifdef SYSTEM_MQTT_WANT
-#include "system_mqtt.h"
-#endif
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
 #include "actuator_ledbuiltin.h"
@@ -116,7 +113,6 @@ Serial.println();
   Serial.println(F("FrugalIoT Starting"));
 #endif // ANY_DEBUG
 xWifi::setup(); // TODO-141 make into a class and put in FrugalIoT
-Mqtt = new MqttManager(); // Connects to wifi and broker // TODO-141 make Mqtt a field of Frugal_IoT and setup there.
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -190,7 +186,7 @@ frugal_iot.sensors->add(ss);
   Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
   frugal_iot.controls->add(cb);
   // TODO Make function an dredo wirepath
-  cb->outputs[0]->wireTo(Mqtt->path(aLedBuiltin->input->topicTwig)); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
+  cb->outputs[0]->wireTo(frugal_iot.mqtt->path(aLedBuiltin->input->topicTwig)); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
 #endif
 #ifdef CONTROL_HYSTERISIS_WANT
 // Example definition of control
@@ -200,7 +196,7 @@ frugal_iot.sensors->add(ss);
   // TODO-141 figure out how cg used - note this is where ss used
   Control_Gsheets* cg =   new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);
   frugal_iot.controls->add(cg);
-  cg->track("temperature", Mqtt->path(ss->temperature->topicTwig));
+  cg->track("temperature", frugal_iot.mqtt->path(ss->temperature->topicTwig));
 #endif
 
 #ifdef SYSTEM_SD_WANT
@@ -275,36 +271,15 @@ powerController->setup();
 
 }
 
-// This is stuff done multiple times per period
-// TODO-141 move into frugal_iot. 
-void frequently() {
-  frugal_iot.frequently();
-  Mqtt->frequently(); // 
-  #ifdef LOCAL_DEV_WANT
-    localDev::frequently();
-  #endif
-  // TODO-23 will want something here for buttons as well
-}
-
-// These are things done one time per period - where a period is the time set in SYSTEM_POWER_MS
-// TODO-141 move into frugal_iot. 
-void periodically() {
-  frugal_iot.periodically();
-  // No actuator time dependent at this point
-  #ifdef LOCAL_DEV_WANT
-    localDev::periodically();
-  #endif
-}
-
 bool donePeriodic = false;
 void loop() {
 // TODO-141 move into frugal_iot. 
   if (!donePeriodic) {
-    periodically();  // Do things that happen once per cycle
+    frugal_iot.periodically();  // Do things run once per cycle
     frugal_iot.infrequently();  // Do things that keep their own track of time
     donePeriodic = true;
   }
-  frequently(); // Do things like MQTT which run frequently with their own clock
+  frugal_iot.frequently(); // Do things like MQTT which run frequently with their own clock
   if (powerController->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
     donePeriodic = false; // reset after sleep (note deep sleep comes in at top again)
   }

@@ -18,8 +18,6 @@
 #ifdef SENSOR_ANALOG_WANT
 
 #include <Arduino.h>
-#include "system_mqtt.h"
-#include "system_discovery.h" // 
 
 //TO_ADD_BOARD
 //  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/

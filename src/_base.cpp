@@ -10,7 +10,7 @@
 #include "actuator.h"
 #include "control.h"
 #include "misc.h"
-#include "system_mqtt.h"
+#include "frugal_iot.h"
 
 Frugal_Base::Frugal_Base(const char * const id, const char * const name)
 : id(id), name(name) { };
@@ -40,11 +40,11 @@ void IO::wireTo(String* topicPath) {
   // TODO probably should unsubscribe from previous BUT could be subscribed elsewhere
   wiredPath = topicPath;
   if (topicPath->length() > 0) {
-    Mqtt->subscribe(*wiredPath);
+    frugal_iot.mqtt->subscribe(*wiredPath);
   }
 }
 void IO::wireTo(IO* io) {
-  wireTo(Mqtt->path(io->topicTwig)); // Subscribe to the twig of the IO
+  wireTo(frugal_iot.mqtt->path(io->topicTwig)); // Subscribe to the twig of the IO
 }
 // TO_ADD_INxxx 
 float IN::floatValue() {
@@ -467,19 +467,19 @@ OUTuint16::OUTuint16(const OUTuint16 &other)
 // Called when either value, or wiredPath changes
 void OUTfloat::sendWired() {
   if (wiredPath && wiredPath->length() ) {
-    Mqtt->messageSend(*wiredPath, value, width, true, 1 ); // TODO note retain and qos=1 
+    frugal_iot.mqtt->messageSend(*wiredPath, value, width, true, 1 ); // TODO note retain and qos=1 
   }
 }
 void OUTuint16::sendWired() {
   if (wiredPath && wiredPath->length() ) {
-    Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    frugal_iot.mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
   }
 }
 void OUTbool::sendWired() {
   Serial.print("XXX sendWired " __FILE__); Serial.println(__LINE__);
   if (wiredPath && wiredPath->length() ) {
     Serial.print("XXX sendWired " __FILE__); Serial.println(__LINE__);
-    Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
+    frugal_iot.mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
   }
 }
 // TO-ADD-OUTxxx
@@ -489,7 +489,7 @@ void OUTfloat::set(const float newvalue) {
   #endif
   if (newvalue != value) {
     value = newvalue;
-    Mqtt->messageSend(topicTwig, value, width, true, 1 ); // retain and qos=1 
+    frugal_iot.mqtt->messageSend(topicTwig, value, width, true, 1 ); // retain and qos=1 
     sendWired();
   }
 }
@@ -499,7 +499,7 @@ void OUTuint16::set(const uint16_t newvalue) {
   #endif
   if (newvalue != value) {
     value = newvalue;
-    Mqtt->messageSend(topicTwig, value, true, 1 ); 
+    frugal_iot.mqtt->messageSend(topicTwig, value, true, 1 ); 
     sendWired();
   }
 }
@@ -509,7 +509,7 @@ void OUTbool::set(const bool newvalue) {
   #endif
   if (newvalue != value) {
     value = newvalue;
-    Mqtt->messageSend(topicTwig, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    frugal_iot.mqtt->messageSend(topicTwig, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
     sendWired();
   }
 }

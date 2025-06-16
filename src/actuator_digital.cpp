@@ -7,8 +7,6 @@
 #ifdef ACTUATOR_DIGITAL_WANT // defined in _settings.h if subclasses defined
 
 #include <Arduino.h>
-#include "system_mqtt.h"
-#include "system_discovery.h" // 
 #include "actuator.h"
 #include "actuator_digital.h" // defines ACUATOR_DIGITAL_DEBUG
 

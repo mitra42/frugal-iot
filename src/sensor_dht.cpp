@@ -27,7 +27,6 @@
 #include <Arduino.h>
 #include <dhtnew.h>                     // https://github.com/RobTillaart/DHTNew
 #include "sensor_dht.h"
-#include "system_mqtt.h"                // Library for sending messages
 
 // Add alternative constructor with id e.g. dht1, dht2 etc
 Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, const unsigned long ms_init, bool retain) 

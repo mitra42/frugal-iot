@@ -237,7 +237,7 @@ void setupLanguages() {
   #endif
 }
 
-// Note this is blocking - so order is important, in particular it must complete this before trying xMqtt::setup
+// Note this is blocking - so order is important, in particular it must complete this before trying mqtt::setup
 void setup() {
   #ifdef ESP32
     SPIFFS.begin(true); // Will format on the first run after failing to mount

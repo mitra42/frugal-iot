@@ -6,6 +6,4 @@
 void setup();
 void loop();
 void frequently();
-void infrequently();
-void periodically();
 #endif // MAIN_H

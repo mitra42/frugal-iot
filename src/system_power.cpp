@@ -21,7 +21,7 @@
 #include "system_power.h"
 #include "system_oled.h"
 // TODO may not need all these once WiFi debugged and code moved to other files
-#include "system_mqtt.h"
+#include "frugal_iot.h"
 #ifdef ESP32 // Not available on ESP8266 - have not yet searched for equivalents
   // Next three .h might or might not be needed 
   #include "esp_pm.h"
@@ -174,7 +174,7 @@ void System_Power_Mode_LightWifi::sleep() {
   //esp_sleep_enable_wifi_wakeup
   Serial.print("Sleeping for "); Serial.println(sleep_ms());
   // TODO-25 move this to prepare
-  Mqtt->client.disconnect();
+  frugal_iot.mqtt->client.disconnect();
   //printTaskList(); // Wont work in Arduino framework
   uart_driver_delete(UART_NUM_0); // Disable UART0 (Serial)
   delay(sleep_ms()); // Light sleep will be automatic
@@ -223,7 +223,7 @@ void System_Power_Mode_Light::recover() {
     oled->display.display();
   #endif
   if (xWifi::recoverFromLightSleep()) {
-    Mqtt->recoverFromLightSleep(); // New or old session
+    frugal_iot.mqtt->recoverFromLightSleep(); // New or old session
   } 
 }
 #endif
@@ -238,7 +238,7 @@ void System_Power_Mode_LightWifi::recover() {
     oled->display.display();
   #endif
   //if (xWifi::recoverFromLightSleep()) {
-    Mqtt->recoverFromLightSleep(); // New or old session
+    frugal_iot.mqtt->recoverFromLightSleep(); // New or old session
   //} 
 }
 #endif

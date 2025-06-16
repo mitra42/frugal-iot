@@ -6,7 +6,6 @@
 #include <Arduino.h>
 #include <vector>
 #include "sensor.h"
-#include "system_mqtt.h"
 
 Sensor::Sensor(const char* const id, const char* const name, const unsigned long m, bool r) 
 : Frugal_Base(id, name), ms(m), retain(r) { }

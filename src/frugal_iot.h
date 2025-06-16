@@ -20,6 +20,7 @@
 #include "system_ota.h"
 #include "system_time.h"
 #include "system_loramesher.h"
+#include "system_mqtt.h"
 
 class Frugal_Group : public Frugal_Base {
   public:
@@ -41,6 +42,7 @@ class Frugal_IoT : public Frugal_Group {
     Frugal_Group* controls;
     Frugal_Group* system;
     System_Discovery* discovery;
+    System_MQTT* mqtt; // TODO-141 change to System_MQTT and mqtt
     #ifdef SYSTEM_OTA_WANT
       System_OTA* ota;
     #endif
@@ -54,6 +56,8 @@ class Frugal_IoT : public Frugal_Group {
     Frugal_IoT();
     void setup();
     void infrequently();
+    void frequently();
+    void periodically();
 };
 
 extern Frugal_IoT frugal_iot;

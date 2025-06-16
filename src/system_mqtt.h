@@ -49,7 +49,7 @@ class Message : public Subscription {
     const int qos;
     Message(const String &tp,const String &pl, const bool r, const int q);
 };
-class MqttManager : public Frugal_Base {
+class System_MQTT : public Frugal_Base {
   public:
     WiFiClient net;
     MQTTClient client; //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.
@@ -57,8 +57,8 @@ class MqttManager : public Frugal_Base {
     bool subscriptionsDone = false; // True when server has reported a session - so dont need to subscribe OR have resubscribed. Also true at start before did subscriptions.
     unsigned long nextLoopTime; // Not sleepSafeMillis as frequent.
     unsigned long ms;
-    MqttManager();
-    void setup();
+    System_MQTT();
+    void setup_after_wifi();
     void frequently();
     bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
     void blockTillConnected(); // Connect to MQTT, loop until succeed
@@ -89,13 +89,5 @@ class MqttManager : public Frugal_Base {
     std::forward_list<Subscription> subscriptions;
     std::forward_list<Message> queued;
 };
-
-namespace xMqtt {
-  void MessageReceived(String &topicPath, String &payload);
-  void setup();
-  void frequently();
-} // namespace xMqtt
-
-extern MqttManager* Mqtt; // Will get initialized by setup in frugalIot.ino
 
 #endif // SYSTEM_MQTT_H

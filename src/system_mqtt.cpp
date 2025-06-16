@@ -62,24 +62,28 @@ bool Subscription::operator==(const String& tp) {
 }
 Message::Message(const String &tp, String const &pl, const bool r, const int q): Subscription(&tp, &pl), retain(r), qos(q) { }
 
-MqttManager* Mqtt; // Will get initialized by setup in frugalIot.ino
+
+// Note intentionally outside class, passed as callback to Mqtt client
+void MqttMessageReceived(String &topicPath, String &payload) { // cant be constant as dispatch isnt
+  frugal_iot.mqtt->messageReceived(topicPath, payload);
+}
 
 
-void MqttManager::setup() {
+void System_MQTT::setup_after_wifi() {
   // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
   // by Arduino. You need to set the IP address directly.
   client.begin(xWifi::mqtt_host.c_str(), net);
   client.setCleanSession(true); // on power up should refresh subscriptions
   // client.setClockSource(XXX); // TODO-23 See https://github.com/256dpi/arduino-mqtt will need for power management
-  client.onMessage(xMqtt::MessageReceived);  // Called back from client.loop - this is a naked function that just calls into the instance
+  client.onMessage(MqttMessageReceived);  // Called back from client.loop - this is a naked function that just calls into the instance
   blockTillConnected();
 }
 // Run every 10ms TODO-25 and TODO-23 this should be MUCH longer ideally
-MqttManager::MqttManager() : Frugal_Base("mqtt", "MQTT"), client(1024,128), nextLoopTime(0), ms(10) {
+System_MQTT::System_MQTT() : Frugal_Base("mqtt", "MQTT"), client(1024,128), nextLoopTime(0), ms(10) {
   setup();
 }
 
-void MqttManager::frequently() {
+void System_MQTT::frequently() {
   if (nextLoopTime <= millis()) {
     // Automatically reconnect
     blockTillConnected(); // TODO-125 maybe make non blocking and queue messages while down
@@ -96,7 +100,7 @@ void MqttManager::frequently() {
 }
 
 /* Connect to MQTT broker and - if necessary - resubscribe to all topics */
-bool MqttManager::connect() {
+bool System_MQTT::connect() {
   xWifi::checkConnected();  // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
   if (!client.connected()) {
     /* Not connected */
@@ -132,7 +136,7 @@ bool MqttManager::connect() {
 }
 
 /* Connect to MQTT, loop until succeed */
-void MqttManager::blockTillConnected() {
+void System_MQTT::blockTillConnected() {
   while (!connect()) {
     #ifdef ESP32
       esp_task_wdt_reset();
@@ -141,7 +145,7 @@ void MqttManager::blockTillConnected() {
   }
 }
 
-Subscription* MqttManager::find(const String &topicPath) {
+Subscription* System_MQTT::find(const String &topicPath) {
   for(Subscription& mi: subscriptions) {
     if (mi == topicPath) {
       return &mi;
@@ -150,7 +154,7 @@ Subscription* MqttManager::find(const String &topicPath) {
   return NULL;
 }
 
-void MqttManager::subscribe(const String& topicPath) {
+void System_MQTT::subscribe(const String& topicPath) {
   #ifdef SYSTEM_MQTT_DEBUG
     Serial.print(F("Subscribing to: ")); Serial.println(topicPath);
   #endif
@@ -171,10 +175,10 @@ void MqttManager::subscribe(const String& topicPath) {
   }
 }
 
-String* MqttManager::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
+String* System_MQTT::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
   return new String(*frugal_iot.discovery->topicPrefix + topicTwig);
 }
-String* MqttManager::twig(const String &topicPath) { 
+String* System_MQTT::twig(const String &topicPath) { 
   if (topicPath.startsWith(*frugal_iot.discovery->topicPrefix)) {
     String* const topicTwig = new String(topicPath);
     topicTwig->remove(0, frugal_iot.discovery->topicPrefix->length());
@@ -184,11 +188,11 @@ String* MqttManager::twig(const String &topicPath) {
   }
 }
 // Short cut to allow subscribing based on an actuator or sensors own topic
-void MqttManager::subscribe(const char* topicTwig) {
+void System_MQTT::subscribe(const char* topicTwig) {
   const String * const topicPath = path(topicTwig);
   subscribe(*topicPath);
 }
-void MqttManager::dispatch(const String &topicPath, const String &payload) {
+void System_MQTT::dispatch(const String &topicPath, const String &payload) {
   // TODO move this to _base.cpp
   if (topicPath.startsWith(*frugal_iot.discovery->topicPrefix)) { // includes trailing slash
     String topicTwig = topicPath.substring(frugal_iot.discovery->topicPrefix->length()); 
@@ -206,7 +210,7 @@ void MqttManager::dispatch(const String &topicPath, const String &payload) {
   #endif
   //TODO-25 System::dispatchPath(*topicPath, payload)
 }
-bool MqttManager::resubscribeAll() {
+bool System_MQTT::resubscribeAll() {
   // TODO-125 may put a flag on subscriptions then only resubscribe those not done
   // TODO-125 should probably check connected each time go around loop and only flag if sendInner succeeds
   Serial.print(F("Resubscribing: ")); 
@@ -225,14 +229,14 @@ bool MqttManager::resubscribeAll() {
   return true;
 }
 
-void MqttManager::retainPayload(const String &topicPath, const String &payload) {
+void System_MQTT::retainPayload(const String &topicPath, const String &payload) {
   Subscription* mi = find(topicPath);
   if (mi) {
     mi->payload = new String(payload); // TODO maybe a mem leak - the prev value not explicitly destroyed but no references left to it
   }
 }
 
-void MqttManager::messageReceived(const String &topicPath, const String &payload) { // cant be constant as dispatch isnt
+void System_MQTT::messageReceived(const String &topicPath, const String &payload) { // cant be constant as dispatch isnt
   #ifdef SYSTEM_MQTT_DEBUG
     Serial.print(F("MQTT incoming: ")); Serial.print(topicPath); Serial.print(F(" - ")); Serial.println(payload);
   #endif
@@ -250,8 +254,8 @@ void MqttManager::messageReceived(const String &topicPath, const String &payload
 // qos: 0 = send at most once; 1 = send at least once; 2 = send exactly once
 // These are intentionally required parameters rather than defaulting so the coder thinks about the desired behavior
 
-// Send message to Mqtt client - used for both repeats and first time messages
-void MqttManager::messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos) {
+// Send message to MQTT client - used for both repeats and first time messages
+void System_MQTT::messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos) {
   if (!client.publish(topicPath, payload, retain, qos)) {
     #ifdef SYSTEM_MQTT_DEBUG
       Serial.print(F("Failed to publish: ")); Serial.print(topicPath); Serial.print(F("=")); Serial.print(payload); 
@@ -278,7 +282,7 @@ void MqttManager::messageSendInner(const String &topicPath, const String &payloa
 }
 
 // Send or queue up a message 
-void MqttManager::messageSend(const String &topicPath, const String &payload, const bool retain, const int qos) {
+void System_MQTT::messageSend(const String &topicPath, const String &payload, const bool retain, const int qos) {
   // TODO-21-sema also queue if WiFi is down and qos>0 - not worth doing till xWifi::connect is non-blocking
   #ifdef SYSTEM_MQTT_DEBUG
     Serial.print(F("MQTT ")); Serial.print((inReceived && qos) ? F("queue ") : F("publish ")); Serial.print(topicPath); Serial.print(F(" - ")); Serial.println(payload);
@@ -300,36 +304,36 @@ void MqttManager::messageSend(const String &topicPath, const String &payload, co
 
 
 // Be careful if change this to avoid either out-of-scope or memory leaksx xxxxxx
-void MqttManager::messageSend(const char* const topicTwig, const String &payload, const bool retain, const int qos) {
+void System_MQTT::messageSend(const char* const topicTwig, const String &payload, const bool retain, const int qos) {
   const String topicPath = String(*frugal_iot.discovery->topicPrefix + topicTwig); // TODO can merge into next line
   messageSend(topicPath, payload, retain, qos);
 }
 
-void MqttManager::messageSend(const String &topicPath, const float &value, const int width, const bool retain, const int qos) {
+void System_MQTT::messageSend(const String &topicPath, const float &value, const int width, const bool retain, const int qos) {
   const String foo = String(value, width);
   messageSend(topicPath, foo, retain, qos);
 }
-void MqttManager::messageSend(const char* const topicTwig, const float &value, const int width, const bool retain, const int qos) {
+void System_MQTT::messageSend(const char* const topicTwig, const float &value, const int width, const bool retain, const int qos) {
   const String foo = String(value, width);
   messageSend(topicTwig, foo, retain, qos);
 }
-void MqttManager::messageSend(const String &topicPath, const int value, const bool retain, const int qos) {
+void System_MQTT::messageSend(const String &topicPath, const int value, const bool retain, const int qos) {
   const String foo = String(value); Serial.println(foo);
   messageSend(topicPath, foo, retain, qos);
 }
-void MqttManager::messageSend(const char* const topicTwig, const int value, const bool retain, const int qos) {
+void System_MQTT::messageSend(const char* const topicTwig, const int value, const bool retain, const int qos) {
   const String foo = String(value);
   messageSend(topicTwig, foo, retain, qos);
 }
-void MqttManager::messageSend(const String &topicPath, const bool value, const bool retain, const int qos) {
+void System_MQTT::messageSend(const String &topicPath, const bool value, const bool retain, const int qos) {
   const String foo = String(value); Serial.println(foo);
   messageSend(topicPath, foo, retain, qos);
 }
-void MqttManager::messageSend(const char* const topicTwig, const bool value, const bool retain, const int qos) {
+void System_MQTT::messageSend(const char* const topicTwig, const bool value, const bool retain, const int qos) {
   const String foo = String(value);
   messageSend(topicTwig, foo, retain, qos);
 }
-void MqttManager::messageSendQueued() {
+void System_MQTT::messageSendQueued() {
   // TODO-125 should probably check connected each time go around loop and only pop if sendInner succeeds
   while (!queued.empty()) {
     Serial.print("XXX queue not empty " __FILE__); Serial.println(__LINE__);
@@ -339,16 +343,10 @@ void MqttManager::messageSendQueued() {
     //TODO-125 prob need to delete message popped
   }
 }
-bool MqttManager::prepareForLightSleep() {
+bool System_MQTT::prepareForLightSleep() {
   return true;
 }
-bool MqttManager::recoverFromLightSleep() {
+bool System_MQTT::recoverFromLightSleep() {
   return connect();
 }
-namespace xMqtt {
 
-// Note intentionally outside class, passed as callback to Mqtt client
-void MessageReceived(String &topicPath, String &payload) { // cant be constant as dispatch isnt
-  Mqtt->messageReceived(topicPath, payload);
-}
-} // namespace xMqtt

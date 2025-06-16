@@ -7,8 +7,6 @@
 #include <forward_list>
 #include "sensor.h"
 #include "sensor_uint16.h"
-#include "system_mqtt.h"
-
 #ifdef SENSOR_UINT16_WANT
 
 //Sensor_Uint16::Sensor_Uint16() : Sensor() {  };
@@ -52,7 +50,7 @@ bool Sensor_Uint16::changed(const uint16_t newvalue) {
 /*
 void Sensor_Uint16::act() {
     if (topicTwig) {
-      Mqtt->messageSend(topicTwig, output->value, retain, qos); // Note messageSend will convert value to String and expand topicTwig
+      frugal_iot.mqtt->messageSend(topicTwig, output->value, retain, qos); // Note messageSend will convert value to String and expand topicTwig
     }
 }
 */

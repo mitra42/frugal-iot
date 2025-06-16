@@ -5,9 +5,7 @@
 #include "_settings.h"  // Settings for what to include etc
 #ifdef ACTUATOR_DIGITAL_WANT // defined in _settings.h if subclasses defined
 #include <Arduino.h>
-#include <vector>
 #include "actuator.h"
-#include "system_mqtt.h"
 
 Actuator::Actuator(const char * const id, const char * const name) 
 : Frugal_Base(id, name) { } 

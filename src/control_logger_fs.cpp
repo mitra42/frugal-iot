@@ -21,7 +21,6 @@
   #include "system_time.h" // For system_time.now
 #endif
 #include "misc.h"
-#include "system_mqtt.h" // For Mqtt
 
 Control_LoggerFS::Control_LoggerFS(const char * const name, System_FS* f, const char * const r, const uint8_t strategy, std::vector<IN*> i) 
 : Control_Logger("loggerfs",name, i), 

@@ -26,8 +26,6 @@
 #include <Arduino.h>
 #include <SHT85.h>
 #include "sensor_sht.h"
-#include "system_mqtt.h"                // Library for sending messages
-
 
 // TODO Add alternative constructor with id e.g. sht1, sht2 etc
 Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, const unsigned long ms_init, bool retain) 

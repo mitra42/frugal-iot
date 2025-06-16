@@ -96,11 +96,13 @@ Frugal_IoT::Frugal_IoT()
   #ifdef SYSTEM_LORAMESHER_WANT
     loramesher(new System_LoraMesher()),
   #endif
+  mqtt(new System_MQTT()),
   discovery(new System_Discovery())
 {
   add(actuators);
   add(sensors);
   add(controls);
+  system->add(mqtt);
   system->add(discovery);
   #ifdef SYSTEM_OTA_WANT
     system->add(ota);
@@ -115,13 +117,14 @@ Frugal_IoT::Frugal_IoT()
 }
 
 void Frugal_IoT::setup() {
-  Frugal_Group::setup(); // TODO-141 make sure includes WiFi and MQTT
+  Frugal_Group::setup(); // TODO-141 make sure includes WiFi
   #ifdef SYSTEM_OTA_WANT
     ota->setup_after_wifi();
   #endif
   #ifdef SYSTEM_TIME_WANT
     time->setup_after_wifi();
   #endif
+  mqtt->setup_after_wifi();
   discovery->setup_after_mqtt();  // System_Discovery
 }
 void Frugal_IoT::infrequently() {
@@ -133,6 +136,24 @@ void Frugal_IoT::infrequently() {
   internal_watchdog_loop(); // TODO-23 think about this, probably ok as will be awake less than period
 }
 
+// These are things done one time per period - where a period is the time set in SYSTEM_POWER_MS
+void Frugal_IoT::periodically() {
+  Frugal_Group::periodically();
+  #ifdef LOCAL_DEV_WANT
+    // TODO-141 this will go back into the new main.cpp in some form
+    localDev::periodically();
+  #endif
+}
 
+// This is stuff done multiple times per period
+// TODO-141 move into frugal_iot. 
+void Frugal_IoT::frequently() {
+  Frugal_Group::frequently();
+  frugal_iot.mqtt->frequently(); // 
+  #ifdef LOCAL_DEV_WANT //TODO-141 move to new app specific main.cpp
+    localDev::frequently();
+  #endif
+  // TODO-23 will want something here for buttons as well
+}
 
 

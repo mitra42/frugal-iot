@@ -177,7 +177,7 @@ void processReceivedPackets(void*) {
 TaskHandle_t receiveLoRaMessage_Handle = NULL;
 
 // Create a Receive Messages Task and add it to the LoRaMesher
-// Equivalent of system_mqtt's: client.onMessage(xMqtt::MessageReceived)
+// Equivalent of system_mqtt's: client.onMessage(MessageReceived)
 void createReceiveMessages() {
     int res = xTaskCreate(
         processReceivedPackets,

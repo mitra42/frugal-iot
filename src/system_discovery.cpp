@@ -27,7 +27,6 @@
 
 #include <Arduino.h>
 #include "system_wifi.h"  // xWiFi
-#include "system_mqtt.h"  // Mqtt
 #include "system_discovery.h"
 #ifdef ACTUATOR_WANT
   #include "actuator.h"
@@ -46,7 +45,7 @@ System_Discovery::System_Discovery()
 : Frugal_Base("discovery", "Discovery") { }
 
 void System_Discovery::quickAdvertise() {
-    Mqtt->messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
+    frugal_iot.mqtt->messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
 }
 
 // TODO-141 see if this divergence is still true.
@@ -81,7 +80,7 @@ void System_Discovery::fullAdvertise() {
     )
   );
   *advertisePayload += frugal_iot.advertisement();
-  Mqtt->messageSend(*advertiseTopic, *advertisePayload, true, 1);
+  frugal_iot.mqtt->messageSend(*advertiseTopic, *advertisePayload, true, 1);
   doneFullAdvertise = true;
 }
 
@@ -96,7 +95,7 @@ void System_Discovery::setup_after_mqtt() { // TODO-141 move this to MQTT after 
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);
   #endif
   // Subscribe to all `set` for this node
-  Mqtt->subscribe("set/#"); 
+  frugal_iot.mqtt->subscribe("set/#"); 
 }
 
  //TODO-23 This wont work as nextLoopTime wont be remembered in Deep Sleep
