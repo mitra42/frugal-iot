@@ -96,12 +96,14 @@ Frugal_IoT::Frugal_IoT()
   #ifdef SYSTEM_LORAMESHER_WANT
     loramesher(new System_LoraMesher()),
   #endif
+  wifi(new System_WiFi()),
   mqtt(new System_MQTT()),
   discovery(new System_Discovery())
 {
   add(actuators);
   add(sensors);
   add(controls);
+  system->add(wifi);
   system->add(mqtt);
   system->add(discovery);
   #ifdef SYSTEM_OTA_WANT
@@ -117,7 +119,7 @@ Frugal_IoT::Frugal_IoT()
 }
 
 void Frugal_IoT::setup() {
-  Frugal_Group::setup(); // TODO-141 make sure includes WiFi
+  Frugal_Group::setup(); // includes WiFi
   #ifdef SYSTEM_OTA_WANT
     ota->setup_after_wifi();
   #endif

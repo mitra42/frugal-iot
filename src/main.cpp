@@ -112,7 +112,6 @@ Serial.println();
   //Serial.setDebugOutput(true);  // Enable debug from wifi, also needed to enable output from printf
   Serial.println(F("FrugalIoT Starting"));
 #endif // ANY_DEBUG
-xWifi::setup(); // TODO-141 make into a class and put in FrugalIoT
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT

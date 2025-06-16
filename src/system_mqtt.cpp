@@ -72,7 +72,7 @@ void MqttMessageReceived(String &topicPath, String &payload) { // cant be consta
 void System_MQTT::setup_after_wifi() {
   // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
   // by Arduino. You need to set the IP address directly.
-  client.begin(xWifi::mqtt_host.c_str(), net);
+  client.begin(frugal_iot.wifi->mqtt_host.c_str(), net);
   client.setCleanSession(true); // on power up should refresh subscriptions
   // client.setClockSource(XXX); // TODO-23 See https://github.com/256dpi/arduino-mqtt will need for power management
   client.onMessage(MqttMessageReceived);  // Called back from client.loop - this is a naked function that just calls into the instance
@@ -101,11 +101,11 @@ void System_MQTT::frequently() {
 
 /* Connect to MQTT broker and - if necessary - resubscribe to all topics */
 bool System_MQTT::connect() {
-  xWifi::checkConnected();  // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
+  frugal_iot.wifi->checkConnected();  // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
   if (!client.connected()) {
     /* Not connected */
-    Serial.print(F("\nMQTT connecting: to ")); Serial.print(xWifi::mqtt_host.c_str());
-    if (!client.connect(xWifi::clientid().c_str(), SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD)) {
+    Serial.print(F("\nMQTT connecting: to ")); Serial.print(frugal_iot.wifi->mqtt_host.c_str());
+    if (!client.connect(frugal_iot.wifi->clientid().c_str(), SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD)) {
       /* Still not connected */
       Serial.print(F(" Fail "));
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116
@@ -283,7 +283,7 @@ void System_MQTT::messageSendInner(const String &topicPath, const String &payloa
 
 // Send or queue up a message 
 void System_MQTT::messageSend(const String &topicPath, const String &payload, const bool retain, const int qos) {
-  // TODO-21-sema also queue if WiFi is down and qos>0 - not worth doing till xWifi::connect is non-blocking
+  // TODO-21-sema also queue if WiFi is down and qos>0 - not worth doing till frugal_iot.wifi->connect is non-blocking
   #ifdef SYSTEM_MQTT_DEBUG
     Serial.print(F("MQTT ")); Serial.print((inReceived && qos) ? F("queue ") : F("publish ")); Serial.print(topicPath); Serial.print(F(" - ")); Serial.println(payload);
   #endif

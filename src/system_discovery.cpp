@@ -26,7 +26,6 @@
 #endif
 
 #include <Arduino.h>
-#include "system_wifi.h"  // xWiFi
 #include "system_discovery.h"
 #ifdef ACTUATOR_WANT
   #include "actuator.h"
@@ -45,7 +44,7 @@ System_Discovery::System_Discovery()
 : Frugal_Base("discovery", "Discovery") { }
 
 void System_Discovery::quickAdvertise() {
-    frugal_iot.mqtt->messageSend(*projectTopic,  xWifi::clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
+    frugal_iot.mqtt->messageSend(*projectTopic,  frugal_iot.wifi->clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
 }
 
 // TODO-141 see if this divergence is still true.
@@ -63,8 +62,8 @@ void System_Discovery::quickAdvertise() {
 void System_Discovery::fullAdvertise() {
   // Note - this is intentionally not a global string as it can be quite big, better to create, send an free up
   String* advertisePayload = new String( 
-    idcolon + xWifi::clientid() 
-    + nlNameColon + xWifi::device_name
+    idcolon + frugal_iot.wifi->clientid() 
+    + nlNameColon + frugal_iot.wifi->device_name
     + F("\ndescription: "
     // Can be overridden in _local.h
     #ifdef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
@@ -86,10 +85,10 @@ void System_Discovery::fullAdvertise() {
 
 void System_Discovery::setup_after_mqtt() { // TODO-141 move this to MQTT after that is in frugal_iot
   // This line fails when board 'LOLIN C3 PICO' is chosen
-  // projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + xWifi::discovery_project + F("/"));
+  // projectTopic = new String(F(SYSTEM_DISCOVERY_ORGANIZATION "/") + frugal_iot.wifi->discovery_project + F("/"));
   //Serial.print(xxx); //TODO_C++EXPERT - for weird reason requires this and const char PROGMEM above  or get run time exception
-  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + xWifi::discovery_project );
-  advertiseTopic = new String(*projectTopic + F("/") + xWifi::clientid()); // e.g. "dev/lotus/esp32-12345"
+  projectTopic = new String(SYSTEM_DISCOVERY_ORGANIZATION "/" + frugal_iot.wifi->discovery_project );
+  advertiseTopic = new String(*projectTopic + F("/") + frugal_iot.wifi->clientid()); // e.g. "dev/lotus/esp32-12345"
   topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/lotus/esp32-12345/" prefix of most topics
   #ifdef SYSTEM_DISCOVERY_DEBUG
     Serial.print(F("topicPrefix=")); Serial.println(*topicPrefix);

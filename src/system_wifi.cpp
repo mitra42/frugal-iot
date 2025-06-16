@@ -24,6 +24,7 @@
 #else
   #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
+#include "frugal_iot.h"
 
 
 // TODO find a way to store in eeprom rather than SPIFFS. 
@@ -42,8 +43,6 @@
   #define SYSTEM_WIFI_PORTAL_RESTART 120000 // How long (ms) portal should wait before restarting - 2 mins probably about right
 #endif
 
-namespace xWifi {
-
 struct Texts {
     const __FlashStringHelper
       *MqttServer,
@@ -58,13 +57,11 @@ struct Texts {
 };
 Texts T;
 
-String mqtt_host;
-String discovery_project;
-String device_name;
-
+System_WiFi::System_WiFi()
+: Frugal_Base("wifi", "WiFi") {}
 
 // Attempt to connect to main network as configured, if succeed save the id and password as a known network
-bool connect1() {
+bool System_WiFi::connect1() {
   // Use last stored credentials (if any) to attempt connect to your WiFi access point.
   // store for future use if successfull.
   WiFiSettings.ssid = slurp("/wifi-ssid");
@@ -81,7 +78,7 @@ bool connect1() {
   }
   return false;
 }
-bool scanConnectOneAndAll() {
+bool System_WiFi::scanConnectOneAndAll() {
     //delay(5000); //TODO-125
     #ifdef ESP32
       WiFi.disconnect(true, true);    // reset state so .scanNetworks() works
@@ -124,9 +121,9 @@ bool scanConnectOneAndAll() {
     }
     return false;
 }
-// This is called - blocking - by xWiFi.setup, but can also be called if discover no longer connected
+// This is called - blocking - by setup(), but can also be called if discover no longer connected
 // Replaces WiFiSettingsClass::connect
-bool connect() {
+bool System_WiFi::connect() {
   WiFiSettings.begin();
   if (scanConnectOneAndAll()) {
     WiFi.setAutoReconnect(true); // Stay connected if lose it - doesnt seem to work at least on TTGO
@@ -141,7 +138,7 @@ bool connect() {
 }
 
 // Blocking attempt at reconnecting - can be called by MQTT
-void checkConnected() {
+void System_WiFi::checkConnected() {
   if (WiFi.status() != WL_CONNECTED) {
     #ifdef SYSTEM_WIFI_DEBUG
       Serial.printf("WiFi status=%d not connected, forcing reconnect\n", WiFi.status());
@@ -175,6 +172,7 @@ String slurp(const String& fn) {
 // Adding ability to reset if wanted wifi appears. 
 bool portalWatchdog() {
   // TODO-23 think about sleep and the portal
+  // TODO-141 move some of this into the System_WiFi class, just stub it in bare function
   static unsigned long lastWatchdog = powerController->sleepSafeMillis(); // initialized first time this is called
   if (powerController->sleepSafeMillis() > lastWatchdog + (WiFi.softAPgetStationNum() ? SYSTEM_WIFI_PORTAL_RESTART : 15000)) {
     #ifdef SYSTEM_WIFI_DEBUG
@@ -182,7 +180,7 @@ bool portalWatchdog() {
     #endif
     // Note this rescan wont be reflected in any any open portal as the HTML generated is static, 
     // but will reflect if user reloads
-    if (scanConnectOneAndAll()) {
+    if (frugal_iot.wifi->scanConnectOneAndAll()) {
       return true; // Connected - exit portal
     }
     // If noone connected rescan every 15 seconds
@@ -192,12 +190,12 @@ bool portalWatchdog() {
 }
 #endif // SYSTEM_WIFI_PORTAL_RESTART
 
-String &clientid() {
+String& System_WiFi::clientid() {
   WiFiSettings.begin(); // Ensure WiFi has created variables - at this point any previous ssid and language are now set
   return WiFiSettings.hostname;
 }
 
-void setupLanguages() {
+void System_WiFi::setupLanguages() {
   // TODO-39 need to make sure external for language is set prior to this - get defined from _local.h and LANGUAGE_ALL from _locals.h
   #ifdef LANGUAGE_DEFAULT
     WiFiSettings.language = LANGUAGE_DEFAULT; // This must happen BEFORE WiFiSettings.begin().
@@ -238,7 +236,7 @@ void setupLanguages() {
 }
 
 // Note this is blocking - so order is important, in particular it must complete this before trying mqtt::setup
-void setup() {
+void System_WiFi::setup() {
   #ifdef ESP32
     SPIFFS.begin(true); // Will format on the first run after failing to mount
   #elif ESP8266
@@ -331,7 +329,7 @@ void setup() {
   connect();
 }
 
-bool reconnectWiFi() { // Try hard to reconnect WiFi
+bool System_WiFi::reconnectWiFi() { // Try hard to reconnect WiFi
   if (WiFi.status() == WL_DISCONNECTED) {
     if (!WiFi.reconnect()) { Serial.println("Failed to reconnect to WiFi"); return 0; }; 
     unsigned long starttime = millis();
@@ -345,12 +343,13 @@ bool reconnectWiFi() { // Try hard to reconnect WiFi
 }
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-bool prepareForLightSleep() {
+bool System_WiFi::prepareForLightSleep() {
    return (esp_wifi_stop() == ESP_OK); // Suggested to reduce dropping WiFi connection
 }
 #endif
+
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-bool recoverFromLightSleep() {
+bool System_WiFi::recoverFromLightSleep() {
   if (esp_wifi_start() != ESP_OK) {
     Serial.println(F("Failed to restart esp_wifi"));
     return 0;
@@ -362,7 +361,6 @@ bool recoverFromLightSleep() {
   } 
   return reconnectWiFi(); // Quick connect if possible - otherwise scan and connect
 }
-#endif
+#endif // ESP32
 
-} // namespace xWifi
 #endif // SYSTEM_WIFI_WANT

@@ -21,6 +21,7 @@
 #include "system_time.h"
 #include "system_loramesher.h"
 #include "system_mqtt.h"
+#include "system_wifi.h"
 
 class Frugal_Group : public Frugal_Base {
   public:
@@ -43,6 +44,7 @@ class Frugal_IoT : public Frugal_Group {
     Frugal_Group* system;
     System_Discovery* discovery;
     System_MQTT* mqtt; // TODO-141 change to System_MQTT and mqtt
+    System_WiFi* wifi;
     #ifdef SYSTEM_OTA_WANT
       System_OTA* ota;
     #endif
