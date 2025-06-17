@@ -17,10 +17,8 @@
 #ifdef CONTROL_LOGGERFS_WANT
 #include "control_logger_fs.h"
 #include "control_logger.h"
-#ifdef SYSTEM_TIME_WANT
-  #include "system_time.h" // For system_time.now
-#endif
 #include "misc.h"
+#include "frugal_iot.h"
 
 Control_LoggerFS::Control_LoggerFS(const char * const name, System_FS* f, const char * const r, const uint8_t strategy, std::vector<IN*> i) 
 : Control_Logger("loggerfs",name, i), 

@@ -58,7 +58,24 @@
 
 
 // Constructors
-System_FS::System_FS() { }
+System_FS::System_FS(const char* const id, const char* const name) 
+: Frugal_Base(id, name) { } 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreturn-type" 
+fs::File System_FS::open(const char *filename, const char *mode) { 
+  Serial.print(F("should be subclassed"));
+}
+fs::File System_FS::open(const String &filename, const char *mode ) { 
+  Serial.print(F("should be subclassed")); 
+}
+boolean System_FS::exists(const char *filename) {
+  Serial.print(F("should be subclassed")); return false;
+}
+boolean System_FS::exists(const String &filename) {
+  Serial.print(F("should be subclassed")); return false;
+}
+#pragma GCC diagnostic pop
 
 // Basic file ops // 
 // This only includes the ones we need - 
@@ -162,8 +179,8 @@ void System_FS::printDirectory(File dir, int numTabs) {  // e.g. "/"
 
 #endif // SYSTEM_FS_DEBUG
 
-System_SD::System_SD() {}
-System_SPIFFS::System_SPIFFS() {}
+System_SD::System_SD() : System_FS("sd", "SD") {}
+System_SPIFFS::System_SPIFFS() : System_FS("spiffs", "SPIFFS") {}
 
 void System_SD::setup() {
   uint8_t pin = SYSTEM_SD_PIN;

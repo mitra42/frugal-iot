@@ -8,6 +8,7 @@
 #include "_settings.h"
 #include "_base.h"
 
+// TO-ADD-POWER
 // SYSTEM_POWER_MS is how often to run perioically(). 
 #ifndef SYSTEM_POWER_MS
   #ifdef SYSTEM_POWER_MODE_LOOP
@@ -17,9 +18,11 @@
   #elif defined(SYSTEM_POWER_MODE_DEEP)
     #define SYSTEM_POWER_MS (60*60*1000) // In low power mode, it might be infrquent e.g. every hour
   #else
-    #error "Must define one of SYSTEM_POWER_MODE_LOOP _MEDIUM or _LOW"
+    #error "Must define SYSTEM_POWER_MS or one of SYSTEM_POWER_MODE_LOOP _MEDIUM or _LOW"
   #endif
 #endif
+
+// TO-ADD-POWER
 // SYSTEM_POWER_WAKE_MS is how long to stay awake before sleeping - say 10 seconds to allow for queued messages - maybe less 
 #ifndef SYSTEM_POWER_WAKE_MS
   #if defined(SYSTEM_POWER_MODE_LOOP)
@@ -29,7 +32,7 @@
   #elif defined(SYSTEM_POWER_MODE_DEEP)
     #define SYSTEM_POWER_WAKE_MS 30000 // In low power mode, has to be long enough to connect to WiFi and MQTT, so 30 seconds
   #else
-    #error "Must define one of SYSTEM_POWER_MODE_LOOP _MEDIUM or _LOW"
+    #error "Must define SYSTEM_POWER_WAKE_MS or one of SYSTEM_POWER_MODE_LOOP _MEDIUM or _LOW"
   #endif
 #endif
 

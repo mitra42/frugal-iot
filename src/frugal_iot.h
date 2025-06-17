@@ -25,6 +25,7 @@
 #include "system_time.h"
 #include "system_wifi.h"
 #include "system_power.h"
+#include "system_watchdog.h"
 
 class Frugal_Group : public Frugal_Base {
   public:

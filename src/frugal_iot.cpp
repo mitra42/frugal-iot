@@ -126,6 +126,7 @@ Frugal_IoT::Frugal_IoT()
   system->add(mqtt);
   system->add(discovery);
   system->add(powercontroller);
+  system->add(new System_Watchdog());
   #ifdef SYSTEM_OLED_WANT
     system->add(oled);
   #endif
@@ -162,7 +163,6 @@ void Frugal_IoT::infrequently() {
     // TODO-141 this will go back into the new main.cpp in some form
     localDev::infrequently();
   #endif
-  internal_watchdog_loop(); // TODO-23 think about this, probably ok as will be awake less than period
 }
 
 // These are things done one time per period - where a period is the time set in SYSTEM_POWER_MS

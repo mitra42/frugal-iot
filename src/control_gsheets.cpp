@@ -11,7 +11,6 @@
 
 #ifdef CONTROL_GSHEETS_WANT
 
-#include "system_time.h"
 #ifdef ESP8266
   #include <ESP8266HTTPClient.h> // For ESP8266
   #include <ESP8266WiFi.h>  // for WiFiClient

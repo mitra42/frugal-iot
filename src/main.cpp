@@ -68,20 +68,8 @@
 #include "system_fs.h"
 #endif
 
-#include "system_power.h"
-
 #ifdef LOCAL_DEV_WANT
 #include "local_dev.h"
-#endif
-#ifdef SYSTEM_LORA_WANT
-#include "system_lora.h"
-#endif
-#ifdef SYSTEM_LORAMESHER_WANT
-#include "system_loramesher.h"
-#endif
-//#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE // TODO CHECK IF THIS IS NEEDED/HELPS
-#ifdef ESP32 // Not available on ESP8266 - have not yet looked for equivalent
-  #include "esp_log.h"
 #endif
 
 #include "frugal_iot.h"
@@ -89,8 +77,6 @@
 Frugal_IoT frugal_iot; // Singleton
 
 void setup() {
-//esp_log_level_set("*", ESP_LOG_ERROR);        // set all components to ERROR level
-//esp_log_level_set("wifi", ESP_LOG_WARN);      // enable WARN logs from WiFi stack
 
 Serial.print("Setup: ");
 frugal_iot.setup(); // TODO-141 move most of below into this and this should come after sensors added.
@@ -139,7 +125,7 @@ Serial.println();
 #endif
 #ifdef SENSOR_SHT_WANT
   Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, SENSOR_SHT_MS, true);
-frugal_iot.sensors->add(ss);
+  frugal_iot.sensors->add(ss);
 #endif
 #ifdef SENSOR_DHT_WANT
   frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, SENSOR_DHT_MS, true));
@@ -187,14 +173,12 @@ frugal_iot.sensors->add(ss);
 #endif
 
 #ifdef SYSTEM_SD_WANT
-// TODO-141 move into frugal_iot. 
-  System_SD* fs1 = new System_SD();
-  fs1->setup(); //TODO-110 at moment should printout dir
+  System_SD* fs_SD = new System_SD();
+  frugal_iot.system->add(fs_SD);
 #endif
 #ifdef SYSTEM_SPIFFS_WANT
-// TODO-141 move into frugal_iot. 
-  System_SPIFFS* fs2 = new System_SPIFFS();
-  fs2->setup(); //TODO-110 at moment should printout dir
+  System_SPIFFS* fs_SPIFFS = new System_SPIFFS();
+  frugal_iot.system->add(fs_SPIFFS);
 #endif
 
 #ifdef CONTROL_LOGGERFS_WANT
@@ -202,7 +186,7 @@ frugal_iot.sensors->add(ss);
 // TODO-141 Make match pattern
 Control_Logger* clfs = new Control_LoggerFS(
   "Logger",
-  fs2, // TODO-110 Using spiffs for testing for now
+  fs_SPIFFS, // TODO-110 Using spiffs for testing for now
   "/",
   0x02, // Single log.csv with topicPath, time, value
   std::vector<IN*> {
@@ -215,18 +199,11 @@ Control_Logger* clfs = new Control_LoggerFS(
   clfs->inputs[0]->wireTo(ss->temperature); // TODO this is default wiring - should remove.
 #endif // CONTROL_LOGGERFS_WANT
 
-
-frugal_iot.powercontroller->setup();
-
 #ifdef LOCAL_DEV_WANT
   // TODO-141 move into frugal_iot. 
   localDev::setup(); // Note has to be before Frugal_Base::setupAll() TODO-141 rework this, e.g. push the local
 #endif
 
-
-  // TODO-125 want to ifdef this
-  // TODO-141 move into frugal_iot. 
-  internal_watchdog_setup();
 #ifdef ANY_DEBUG  
   Serial.println(F("FrugalIoT Starting Loop"));
 #endif // ANY_DEBUG
