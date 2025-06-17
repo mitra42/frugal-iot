@@ -46,9 +46,6 @@ class Frugal_IoT : public Frugal_Group {
     Frugal_Group* sensors;
     Frugal_Group* controls;
     Frugal_Group* system;
-    System_Discovery* discovery;
-    System_MQTT* mqtt; // TODO-141 change to System_MQTT and mqtt
-    System_WiFi* wifi;
     #ifdef SYSTEM_OTA_WANT
       System_OTA* ota;
     #endif
@@ -65,6 +62,10 @@ class Frugal_IoT : public Frugal_Group {
       System_LoRa* lora;
     #endif
     System_Power_Mode* powercontroller;
+    System_WiFi* wifi;
+    System_MQTT* mqtt; // TODO-141 change to System_MQTT and mqtt
+    System_Discovery* discovery;
+
 
     Frugal_IoT();
     void setup();

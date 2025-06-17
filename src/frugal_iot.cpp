@@ -118,6 +118,7 @@ Frugal_IoT::Frugal_IoT()
   wifi(new System_WiFi()),
   mqtt(new System_MQTT()),
   discovery(new System_Discovery())
+  
 {
   add(actuators);
   add(sensors);

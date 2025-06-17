@@ -91,6 +91,10 @@ void System_Power_Mode::setup() {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.printf("Setup %s: %d of %d\n", name, wake_ms, cycle_ms); 
   #endif
+  #ifdef LILYGOHIGROW
+    pinMode(POWER_CTRL, OUTPUT);
+    digitalWrite(POWER_CTRL, HIGH); // TODO-115 this is for power control - may need other board specific stuff somewhere
+  #endif
 }
 #ifdef ESP32 // Specific to ESP32s
 //LOW: This is not a fresh start, so we are recovering from a deep sleep (should only be in System_Power_Mode_Deep but is generically true)
@@ -125,6 +129,7 @@ void System_Power_Mode_LightWifi::setup() {
 
   // Enable modem sleep (WiFi will automatically enter modem sleep when possible)
   esp_wifi_set_ps(WIFI_PS_MIN_MODEM); // or WIFI_PS_MAX_MODEM for more savings
+  System_Power_Mode::setup();
 }
 #endif
 
@@ -135,6 +140,10 @@ void System_Power_Mode::prepare() {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println("Power Management: preparing");
   #endif
+  #ifdef LILYGOHIGROW
+    digitalWrite(POWER_CTRL, LOW);
+  #endif
+
   // TODO-23 will loop through sensors and actuators here are some pointers found elsewhere...
   // WIFI 
   // see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/power_management.html for how to keep WiFi alive during sleep
@@ -204,6 +213,9 @@ void System_Power_Mode_Deep::sleep() {
 void System_Power_Mode::recover() {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println("Power Management: recovering");
+  #endif
+  #ifdef LILYGOHIGROW
+    digitalWrite(POWER_CTRL, HIGH);
   #endif
 }
 

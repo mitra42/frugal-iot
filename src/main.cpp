@@ -46,10 +46,6 @@ Serial.print("Setup: ");
 frugal_iot.setup(); // TODO-141 move most of below into this and this should come after sensors added.
 Serial.println();
 
-#ifdef LILYGOHIGROW // TODO-141 maybe move to "boards"
-  pinMode(POWER_CTRL, OUTPUT);
-  digitalWrite(POWER_CTRL, HIGH); // TODO-115 this is for power control - may need other board specific stuff somewhere
-#endif
 #ifdef ANY_DEBUG
   Serial.begin(SERIAL_BAUD);
   while (!Serial) { 
