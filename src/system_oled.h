@@ -46,9 +46,6 @@ class System_OLED : public Frugal_Base {
     void displayMessage(const String &message); // Function to display a message on the OLED
 };
 
-extern System_OLED* oled; // Declare the oled object globally
-
-
 
 #endif // SYSTEM_OLED_WANT
 #endif // SYSTEM_OLED_H

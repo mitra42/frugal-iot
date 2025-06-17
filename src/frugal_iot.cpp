@@ -96,6 +96,10 @@ Frugal_IoT::Frugal_IoT()
   #ifdef SYSTEM_LORAMESHER_WANT
     loramesher(new System_LoraMesher()),
   #endif
+  #ifdef SYSTEM_OLED_WANT
+    // TODO-141 move into frugal_iot. 
+    oled(new System_OLED()),
+  #endif // SYSTEM_OLED_WANT
   wifi(new System_WiFi()),
   mqtt(new System_MQTT()),
   discovery(new System_Discovery())
@@ -106,6 +110,9 @@ Frugal_IoT::Frugal_IoT()
   system->add(wifi);
   system->add(mqtt);
   system->add(discovery);
+  #ifdef SYSTEM_OLED_WANT
+    system->add(oled);
+  #endif
   #ifdef SYSTEM_OTA_WANT
     system->add(ota);
   #endif

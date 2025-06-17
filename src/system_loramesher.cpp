@@ -20,9 +20,6 @@
 
 #include "LoraMesher.h"
 #include "system_loramesher.h"
-#if defined(SYSTEM_LORAMESHER_SENDER_TEST) || defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
-  #include "system_oled.h"
-#endif
 #include "misc.h"  // for lprintf
 #include "frugal_iot.h"
 
@@ -76,18 +73,18 @@ System_LoraMesher::System_LoraMesher()
     void printCounterPacket(counterPacket data) {
       Serial.printf("Hello Counter received nº %d\n", data.counter);
       // Display information
-      oled->display.clearDisplay();
-      oled->display.setCursor(0,0);
-      oled->display.print("LORA MESH RECEIVER");
-      oled->display.setCursor(0,20);
-      oled->display.print("Received packet:");
-      oled->display.setCursor(0,30);
-      oled->display.print(data.counter);
-      //oled->display.setCursor(0,40);
-      //oled->display.print("RSSI:");
-      //oled->display.setCursor(30,40);
-      //oled->display.print(rssi);
-      oled->display.display();   
+      frugal_iot.oled->display.clearDisplay();
+      frugal_iot.oled->display.setCursor(0,0);
+      frugal_iot.oled->display.print("LORA MESH RECEIVER");
+      frugal_iot.oled->display.setCursor(0,20);
+      frugal_iot.oled->display.print("Received packet:");
+      frugal_iot.oled->display.setCursor(0,30);
+      frugal_iot.oled->display.print(data.counter);
+      //frugal_iot.oled->display.setCursor(0,40);
+      //frugal_iot.oled->display.print("RSSI:");
+      //frugal_iot.oled->display.setCursor(30,40);
+      //frugal_iot.oled->display.print(rssi);
+      frugal_iot.oled->display.display();   
     }
     void printAppCounterPacket(AppPacket<counterPacket>* packet) {
         Serial.printf("Packet arrived from %X with size %d\n", packet->src, packet->payloadSize);
@@ -108,18 +105,18 @@ System_LoraMesher::System_LoraMesher()
         size_t payloadLength = appPacket->getPayloadLength()-1; // Length of string without terminator 
         Serial.write(dPacket, payloadLength); Serial.println(); // Being conservative in case no terminating \0 
               // Display information
-        oled->display.clearDisplay();
-        oled->display.setCursor(0,0);
-        oled->display.print("LORA MESH RECEIVER");
-        oled->display.setCursor(0,20);
-        oled->display.print("Received packet:");
-        oled->display.setCursor(0,30);
-        oled->display.print((char*)dPacket);
-        //oled->display.setCursor(0,40);
-        //oled->display.print("RSSI:");
-        //oled->display.setCursor(30,40);
-        //oled->display.print(rssi);
-        oled->display.display();   
+        frugal_iot.oled->display.clearDisplay();
+        frugal_iot.oled->display.setCursor(0,0);
+        frugal_iot.oled->display.print("LORA MESH RECEIVER");
+        frugal_iot.oled->display.setCursor(0,20);
+        frugal_iot.oled->display.print("Received packet:");
+        frugal_iot.oled->display.setCursor(0,30);
+        frugal_iot.oled->display.print((char*)dPacket);
+        //frugal_iot.oled->display.setCursor(0,40);
+        //frugal_iot.oled->display.print("RSSI:");
+        //frugal_iot.oled->display.setCursor(30,40);
+        //frugal_iot.oled->display.print(rssi);
+        frugal_iot.oled->display.display();   
     }
 
     #else // Start - wont work - of FrugalIoT
@@ -257,25 +254,25 @@ void System_LoraMesher::periodically() {
       memcpy(msg->message, stringymessage, msglen);
       //Serial.println(stringypacket);
     #endif
-    oled->display.clearDisplay();
-    oled->display.setCursor(0,0);
-    oled->display.println("LORAMESH SENDER");
-    oled->display.setCursor(0,20);
-    oled->display.setTextSize(1);
-    oled->display.print("LoRa packet sent.");
-    oled->display.setCursor(0,30);
+    frugal_iot.oled->display.clearDisplay();
+    frugal_iot.oled->display.setCursor(0,0);
+    frugal_iot.oled->display.println("LORAMESH SENDER");
+    frugal_iot.oled->display.setCursor(0,20);
+    frugal_iot.oled->display.setTextSize(1);
+    frugal_iot.oled->display.print("LoRa packet sent.");
+    frugal_iot.oled->display.setCursor(0,30);
     #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-      oled->display.print("Counter:");
-      oled->display.setCursor(50,30);
-      oled->display.print(dataCounter);      
+      frugal_iot.oled->display.print("Counter:");
+      frugal_iot.oled->display.setCursor(50,30);
+      frugal_iot.oled->display.print(dataCounter);      
     #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
-      oled->display.print("Counter:");
-      oled->display.setCursor(50,30);
-      oled->display.print(dataCounter-1);
+      frugal_iot.oled->display.print("Counter:");
+      frugal_iot.oled->display.setCursor(50,30);
+      frugal_iot.oled->display.print(dataCounter-1);
     #else // Start - wont work - for FrugalIoT
-      oled->display.print(dataCounter);      
+      frugal_iot.oled->display.print(dataCounter);      
     #endif
-    oled->display.display();
+    frugal_iot.oled->display.display();
     #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
       radio.createPacketAndSend(BROADCAST_ADDR, data, 1); // Size is number of counterPackets.
     #elif defined(SYSTEM_LORAMESHER_TEST_STRING)

@@ -11,8 +11,6 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-System_OLED* oled; // Declare the oled object globally
-
 System_OLED::System_OLED() 
 : Frugal_Base("oled", "OLED"),
   display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST_X) // Allow code to access 

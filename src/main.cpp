@@ -79,9 +79,6 @@
 #ifdef SYSTEM_LORAMESHER_WANT
 #include "system_loramesher.h"
 #endif
-#ifdef SYSTEM_OLED_WANT
-#include "system_oled.h"
-#endif
 //#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE // TODO CHECK IF THIS IS NEEDED/HELPS
 #ifdef ESP32 // Not available on ESP8266 - have not yet looked for equivalent
   #include "esp_log.h"
@@ -217,12 +214,6 @@ Control_Logger* clfs = new Control_LoggerFS(
   frugal_iot.controls->add(clfs);
   clfs->inputs[0]->wireTo(ss->temperature); // TODO this is default wiring - should remove.
 #endif // CONTROL_LOGGERFS_WANT
-
-#ifdef SYSTEM_OLED_WANT
-  // TODO-141 move into frugal_iot. 
-  oled = new System_OLED();
-  oled->setup();
-#endif // SYSTEM_OLED_WANT
 #ifdef SYSTEM_LORA_WANT
   // TODO-141 move into frugal_iot. 
   lora = new System_LoRa();

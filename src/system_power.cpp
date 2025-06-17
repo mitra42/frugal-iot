@@ -19,7 +19,6 @@
 
 #include "_settings.h"
 #include "system_power.h"
-#include "system_oled.h"
 // TODO may not need all these once WiFi debugged and code moved to other files
 #include "frugal_iot.h"
 #ifdef ESP32 // Not available on ESP8266 - have not yet searched for equivalents
@@ -218,9 +217,9 @@ void System_Power_Mode_Light::recover() {
   nextSleepTime = millis() + wake_ms;
   System_Power_Mode::recover();
   #ifdef SYSTEM_OLED_WANT
-    oled->display.setCursor(0,40);
-    oled->display.print("Recovering from Light Sleep");  
-    oled->display.display();
+    frugal_iot.oled->display.setCursor(0,40);
+    frugal_iot.oled->display.print("Recovering from Light Sleep");  
+    frugal_iot.oled->display.display();
   #endif
   if (frugal_iot.wifi->recoverFromLightSleep()) {
     frugal_iot.mqtt->recoverFromLightSleep(); // New or old session
@@ -233,9 +232,9 @@ void System_Power_Mode_LightWifi::recover() {
   nextSleepTime = millis() + wake_ms;
   System_Power_Mode::recover();
   #ifdef SYSTEM_OLED_WANT
-    oled->display.setCursor(0,40);
-    oled->display.print("Recovering from Light Sleep");  
-    oled->display.display();
+    frugal_iot.oled->display.setCursor(0,40);
+    frugal_iot.oled->display.print("Recovering from Light Sleep");  
+    frugal_iot.oled->display.display();
   #endif
   //if (frugal_iot.wifi->recoverFromLightSleep()) {
     frugal_iot.mqtt->recoverFromLightSleep(); // New or old session
