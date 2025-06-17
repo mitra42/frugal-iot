@@ -100,6 +100,9 @@ Frugal_IoT::Frugal_IoT()
     // TODO-141 move into frugal_iot. 
     oled(new System_OLED()),
   #endif // SYSTEM_OLED_WANT
+  #ifdef SYSTEM_LORA_WANT
+    lora(new System_LoRa());
+  #endif
   wifi(new System_WiFi()),
   mqtt(new System_MQTT()),
   discovery(new System_Discovery())
@@ -122,6 +125,10 @@ Frugal_IoT::Frugal_IoT()
   #ifdef SYSTEM_TIME_WANT
     system->add(time);
   #endif
+  #ifdef SYSTEM_LORA_WANT
+    system->add(lora);
+  #endif // SYSTEM_LORA_WANT
+
   add(system);
 }
 

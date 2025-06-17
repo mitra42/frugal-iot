@@ -17,10 +17,12 @@
 #include "_base.h"
 #include <vector>
 #include "system_discovery.h"
-#include "system_ota.h"
-#include "system_time.h"
+#include "system_lora.h"
 #include "system_loramesher.h"
 #include "system_mqtt.h"
+#include "system_oled.h"
+#include "system_ota.h"
+#include "system_time.h"
 #include "system_wifi.h"
 
 class Frugal_Group : public Frugal_Base {
@@ -54,6 +56,13 @@ class Frugal_IoT : public Frugal_Group {
     #ifdef SYSTEM_LORAMESHER_WANT
       System_LoraMesher* loramesher;
     #endif
+    #ifdef SYSTEM_OLED_WANT
+      System_OLED* oled;
+    #endif
+    #ifdef SYSTEM_LORA_WANT
+      System_LoRa* lora;
+    #endif
+    
 
     Frugal_IoT();
     void setup();

@@ -22,7 +22,5 @@ public:
     void prepareForSleep();
 };
 
-extern System_LoRa* lora; // Declare the lora object globally
-
 #endif // SYSTEM_LORA_WANT
 #endif // SYSTEM_LORA_H

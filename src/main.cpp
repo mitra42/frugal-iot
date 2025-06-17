@@ -214,11 +214,6 @@ Control_Logger* clfs = new Control_LoggerFS(
   frugal_iot.controls->add(clfs);
   clfs->inputs[0]->wireTo(ss->temperature); // TODO this is default wiring - should remove.
 #endif // CONTROL_LOGGERFS_WANT
-#ifdef SYSTEM_LORA_WANT
-  // TODO-141 move into frugal_iot. 
-  lora = new System_LoRa();
-  lora->setup();
-#endif // SYSTEM_LORA_WANT
 
 // TO-ADD-POWERMODE
 // TODO-141 move into frugal_iot. 
