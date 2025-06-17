@@ -139,7 +139,7 @@
   #elif defined(LOLIN_S2_MINI)
     #define BOARDNAME "Lolin S2 Mini"
   #elif defined(TTGO_LORA_SX127X)
-    #define BOARDNAME "TTGO Lora SX127X" 
+    #define BOARDNAME "TTGO Lora SX127X"  
   #else
     #error undefined board in system_discovery.cpp #TO_ADD_BOARD
   #endif
