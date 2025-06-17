@@ -8,7 +8,6 @@
   #define SYSTEM_FS_DEBUG
 #endif
 
-#ifdef SYSTEM_FS_WANT
 #include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
 #ifdef SYSTEM_SD_WANT
   #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
@@ -66,5 +65,4 @@ class System_SD : public System_FS {
     virtual boolean exists(const String &filename);
 };
 
-#endif //SYSTEM_FS_WANT
 #endif //SYSTEM_FS_H

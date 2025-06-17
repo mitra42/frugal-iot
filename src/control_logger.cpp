@@ -9,8 +9,6 @@
 */
 #include "_settings.h"
 
-#ifdef CONTROL_LOGGER_WANT
-
 #include "control.h"
 #include "control_logger.h"
 
@@ -20,5 +18,3 @@ Control_Logger::Control_Logger(const char* const id, const char* const name, std
 Control_Logger::Control_Logger(const char* const id, const char* const name)
   : Control_Logger(id, name,  std::vector<IN*> {})
   {}
-
-#endif // CONTROL_LOGGER_WANT

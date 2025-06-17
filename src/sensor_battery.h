@@ -3,13 +3,12 @@
 
 /* Configuration options
  * Required: 
- * Optional: SENSOR_BATTERY_PIN SENSOR_BATTERY_MS SENSOR_BATTERY_TOPIC
+ * Optional: SENSOR_BATTERY_PIN SENSOR_BATTERY_MS 
  */
-// TODO-141 could use a rewrite - eg SENSOR_BATTERY_TOPIC is out of date
 
-#include "sensor_analog.h"
+ #include "sensor_analog.h"
 
-#ifndef SENSOR_BATTERY_PIN
+#if defined(SENSOR_BATTERY_WANT) && !defined(SENSOR_BATTERY_PIN)
   #ifdef LOLIN_C3_PICO
     #define SENSOR_BATTERY_PIN (3) // There is a solder jump to pin 3 - which - on D1 shields - is same as A0 on ESP8266
   #elif defined(ESP8266)
@@ -21,9 +20,6 @@
   #endif
 #endif
 
-#ifndef SENSOR_BATTERY_TOPIC
-  #define SENSOR_BATTERY_TOPIC "battery"
-#endif
 #ifndef SENSOR_BATTERY_MS
   #define SENSOR_BATTERY_MS (60000)
 #endif

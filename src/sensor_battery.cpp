@@ -4,7 +4,7 @@
  * 
  * Configuration options
  * Required: 
- * Optional: SENSOR_BATTERY_PIN SENSOR_BATTERY_MS SENSOR_BATTERY_TOPIC
+ * Optional: SENSOR_BATTERY_PIN SENSOR_BATTERY_MS
 
 */
 

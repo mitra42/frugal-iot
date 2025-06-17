@@ -5,7 +5,7 @@
 #include <dhtnew.h>                     // https://github.com/RobTillaart/DHTNew
 
 
-#ifndef SENSOR_DHT_PIN
+#if defined(SENSOR_DHT_WANT) && !defined(SENSOR_DHT_PIN)
   #ifdef ESP8266_D1
     #define SENSOR_DHT_PIN D4
   #elif defined(LOLIN_C3_PICO)
@@ -18,7 +18,7 @@
 #endif // SENSOR_DHT_PIN
 
 #ifndef SENSOR_DHT_MS
-  #define SENSOR_DHT_MS 60000 // once a minute
+  #define SENSOR_DHT_MS 60000 // once a minute // TODO-141 shouldnt this be in periodic ? 
 #endif
 
 class Sensor_DHT : public Sensor_HT {

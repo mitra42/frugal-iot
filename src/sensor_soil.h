@@ -8,7 +8,7 @@
 
 #include "sensor_analog.h"
 
-#ifndef SENSOR_SOIL_PIN
+#if defined(SENSOR_SOIL_WANT) && !defined(SENSOR_SOIL_PIN)
   //TO_ADD_BOARD
   #if defined(LOLIN_C3_PICO)
     #error there is no default pin on C3-pico suggest 4, 0 or 1

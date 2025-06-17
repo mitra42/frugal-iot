@@ -8,7 +8,7 @@
 #include "actuator_digital.h"
 
 
-#ifndef ACTUATOR_RELAY_PIN
+#if defined(ACTUATOR_RELAY_WANT) && !defined(ACTUATOR_RELAY_PIN)
   //TO_ADD_BOARD
   #if defined(ITEAD_SONOFF)
         #define ACTUATOR_RELAY_PIN 12

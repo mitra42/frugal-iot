@@ -9,64 +9,28 @@
 #include "misc.h" // 
 #include "main.h"
 
-#ifdef SYSTEM_WIFI_WANT
 #include "system_wifi.h"
-#endif
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
-#ifdef ACTUATOR_LEDBUILTIN_WANT
 #include "actuator_ledbuiltin.h"
-#endif
-#ifdef ACTUATOR_RELAY_WANT
 #include "actuator_relay.h"
-#endif
 
 // Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
-#ifdef SENSOR_ANALOG_INSTANCES_WANT
 #include "sensor_analog_instances.h"
-#endif
-#ifdef SENSOR_SOIL_WANT
 #include "sensor_soil.h"
-#endif
-#ifdef SENSOR_BATTERY_WANT
 #include "sensor_battery.h"
-#endif
-#ifdef SENSOR_SHT_WANT
 #include "sensor_sht.h"
-#endif
-#ifdef SENSOR_DHT_WANT
 #include "sensor_dht.h"
-#endif
-#ifdef SENSOR_BH1750_WANT
 #include "sensor_bh1750.h"
-#endif
-#ifdef SENSOR_BUTTON_WANT
 #include "sensor_button.h"
-#endif
-#ifdef SENSOR_MS5803_WANT
 #include "sensor_ms5803.h"
-#endif
-#ifdef SENSOR_LOADCELL_WANT
 #include "sensor_loadcell.h"
-#endif
-#ifdef SENSOR_ENSAHT_WANT
 #include "sensor_ens160aht21.h"
-#endif
-#ifdef CONTROL_BLINKEN_WANT
 #include "control_blinken.h"
-#endif
-#ifdef CONTROL_GSHEETS_WANT
 #include "control_gsheets.h"
-#endif
-#ifdef CONTROL_WANT
 #include "control.h"
-#endif
-#ifdef CONTROL_HYSTERISIS_WANT
 #include "control_hysterisis.h"
-#endif
-#ifdef CONTROL_LOGGERFS_WANT
 #include "control_logger_fs.h"
 #include "system_fs.h"
-#endif
 
 #ifdef LOCAL_DEV_WANT
 #include "local_dev.h"
@@ -198,11 +162,6 @@ Control_Logger* clfs = new Control_LoggerFS(
   frugal_iot.controls->add(clfs);
   clfs->inputs[0]->wireTo(ss->temperature); // TODO this is default wiring - should remove.
 #endif // CONTROL_LOGGERFS_WANT
-
-#ifdef LOCAL_DEV_WANT
-  // TODO-141 move into frugal_iot. 
-  localDev::setup(); // Note has to be before Frugal_Base::setupAll() TODO-141 rework this, e.g. push the local
-#endif
 
 #ifdef ANY_DEBUG  
   Serial.println(F("FrugalIoT Starting Loop"));

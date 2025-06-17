@@ -156,6 +156,9 @@ void Frugal_IoT::setup() {
   #endif
   mqtt->setup_after_wifi();
   discovery->setup_after_mqtt();  // System_Discovery
+  #ifdef LOCAL_DEV_WANT
+    localDev::setup();
+  #endif
 }
 void Frugal_IoT::infrequently() {
   Frugal_Group::infrequently();
