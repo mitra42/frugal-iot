@@ -101,7 +101,19 @@ Frugal_IoT::Frugal_IoT()
     oled(new System_OLED()),
   #endif // SYSTEM_OLED_WANT
   #ifdef SYSTEM_LORA_WANT
-    lora(new System_LoRa());
+    lora(new System_LoRa()),
+  #endif
+  // TO-ADD-POWERMODE
+  #ifdef SYSTEM_POWER_MODE_LOOP
+    powercontroller(new System_Power_Mode_Loop(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
+  #elif SYSTEM_POWER_MODE_LIGHT
+    powercontroller(new System_Power_Mode_Light(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
+  #elif SYSTEM_POWER_MODE_LIGHTWIFI
+    powercontroller(new System_Power_Mode_LightWifi(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
+  #elif SYSTEM_POWER_MODE_DEEP
+    powercontroller(new System_Power_Mode_Deep(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
+  #elif SYSTEM_POWER_MODE_AUTO
+    powercontroller(new System_Power_Mode_Auto(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
   #endif
   wifi(new System_WiFi()),
   mqtt(new System_MQTT()),
@@ -113,6 +125,7 @@ Frugal_IoT::Frugal_IoT()
   system->add(wifi);
   system->add(mqtt);
   system->add(discovery);
+  system->add(powercontroller);
   #ifdef SYSTEM_OLED_WANT
     system->add(oled);
   #endif

@@ -16,7 +16,7 @@
 #include <Arduino.h>
 #include "control_blinken.h"
 #include "control.h"
-#include "system_power.h" // For sleepSafemillis()
+#include "frugal_iot.h"
 
 ControlBlinken::ControlBlinken (const char* const id, const char * const name, float secsOn, float secsOff) 
 : Control(id, name,
@@ -38,14 +38,14 @@ void ControlBlinken::act() {
   // If calling act, then we know blinkSpeed changed
   blinkOn = inputs[0]->floatValue() * 1000;
   blinkOff = inputs[1]->floatValue() * 1000;
-  nextBlinkTime = powerController->sleepSafeMillis() + (outputs[0]->boolValue() ? blinkOn : blinkOff) ; // Blink after new blink time
+  nextBlinkTime = frugal_iot.powercontroller->sleepSafeMillis() + (outputs[0]->boolValue() ? blinkOn : blinkOff) ; // Blink after new blink time
 }
 
 void ControlBlinken::frequently() {
-  if (nextBlinkTime <= powerController->sleepSafeMillis()) {
+  if (nextBlinkTime <= frugal_iot.powercontroller->sleepSafeMillis()) {
     bool next = !outputs[0]->boolValue();
     ((OUTbool*)outputs[0])->set(next); // Will send message
-    nextBlinkTime = powerController->sleepSafeMillis() + (next ? blinkOn : blinkOff);
+    nextBlinkTime = frugal_iot.powercontroller->sleepSafeMillis() + (next ? blinkOn : blinkOff);
   }
 }
 #endif // CONTROL_BLINKEN_WANT

@@ -19,7 +19,7 @@
 #endif
 #include "system_time.h"
 #include "misc.h" // for StringF
-#include "system_power.h" // For sleepSafemillis()
+#include "frugal_iot.h" // For sleepSafemillis()
 
 
 #ifndef SYSTEM_TIME_ZONE
@@ -106,14 +106,14 @@ void System_Time::setup_after_wifi() {
 }
 
 void System_Time::infrequently() {
-  if (nextLoopTime <= powerController->sleepSafeMillis() ) {
+  if (nextLoopTime <= frugal_iot.powercontroller->sleepSafeMillis() ) {
     if (! isTimeSet()) {
         Serial.print("Time since boot"); Serial.println(now());
     } else {
         now();
         Serial.print("Local time = "); Serial.println(dateTime().c_str());
     }
-    nextLoopTime = (powerController->sleepSafeMillis() + SYSTEM_TIME_MS);
+    nextLoopTime = (frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_TIME_MS);
     configTime(0, 0, "foo","bar","bax"); // TODO this cant be right, which servers are we using ?
   }
 }

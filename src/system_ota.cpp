@@ -37,7 +37,7 @@
 #else
     #error OTA only defined so far for ESP8266 and ESP32 
 #endif
-#include "system_power.h" // For sleepSafemillis()
+#include "frugal_iot.h" // For sleepSafemillis()
 
 #ifndef SYSTEM_OTA_MS
   // By default, check for updates once an hour
@@ -194,9 +194,9 @@ void System_OTA::setup_after_wifi() { // TODO-25 - put this in a class and call 
 
 void System_OTA::infrequently() {
   // Note wont operate on first loop (see initialization of nextLoopTime)
-  if (nextLoopTime <= powerController->sleepSafeMillis() ) {
+  if (nextLoopTime <= frugal_iot.powercontroller->sleepSafeMillis() ) {
     checkForUpdate();
-    nextLoopTime = powerController->sleepSafeMillis() + SYSTEM_OTA_MS;
+    nextLoopTime = frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_OTA_MS;
   }
 }
 

@@ -24,6 +24,7 @@
 #include "system_ota.h"
 #include "system_time.h"
 #include "system_wifi.h"
+#include "system_power.h"
 
 class Frugal_Group : public Frugal_Base {
   public:
@@ -62,7 +63,7 @@ class Frugal_IoT : public Frugal_Group {
     #ifdef SYSTEM_LORA_WANT
       System_LoRa* lora;
     #endif
-    
+    System_Power_Mode* powercontroller;
 
     Frugal_IoT();
     void setup();

@@ -36,7 +36,8 @@
 #ifdef CONTROL_WANT
   #include "control.h"
 #endif
-#include "system_power.h" // For sleepSafemillis()
+#include "frugal_iot.h"
+// For sleepSafemillis()
 #include "frugal_iot.h" // for frugal_iot
 
 
@@ -99,12 +100,12 @@ void System_Discovery::setup_after_mqtt() { // TODO-141 move this to MQTT after 
 
  //TODO-23 This wont work as nextLoopTime wont be remembered in Deep Sleep
 void System_Discovery::infrequently() { 
-    if (nextLoopTime <= (powerController->sleepSafeMillis())) {
+    if (nextLoopTime <= (frugal_iot.powercontroller->sleepSafeMillis())) {
       if (!doneFullAdvertise) {
         fullAdvertise();
       } 
       quickAdvertise(); // Send info about this node to server (on timer)
-      nextLoopTime = powerController->sleepSafeMillis() + SYSTEM_DISCOVERY_MS;
+      nextLoopTime = frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_DISCOVERY_MS;
     }
 }
 

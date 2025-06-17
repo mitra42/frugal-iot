@@ -16,7 +16,6 @@
 #endif
 #include "system_wifi.h"
 #include "system_mqtt.h"
-#include "system_power.h" // For sleepSafemillis()
 #ifdef ESP32
   #include <esp_wifi.h> // For esp_wifi_stop / start
 #elif defined(ESP8266)
@@ -173,8 +172,8 @@ String slurp(const String& fn) {
 bool portalWatchdog() {
   // TODO-23 think about sleep and the portal
   // TODO-141 move some of this into the System_WiFi class, just stub it in bare function
-  static unsigned long lastWatchdog = powerController->sleepSafeMillis(); // initialized first time this is called
-  if (powerController->sleepSafeMillis() > lastWatchdog + (WiFi.softAPgetStationNum() ? SYSTEM_WIFI_PORTAL_RESTART : 15000)) {
+  static unsigned long lastWatchdog = frugal_iot.powercontroller->sleepSafeMillis(); // initialized first time this is called
+  if (frugal_iot.powercontroller->sleepSafeMillis() > lastWatchdog + (WiFi.softAPgetStationNum() ? SYSTEM_WIFI_PORTAL_RESTART : 15000)) {
     #ifdef SYSTEM_WIFI_DEBUG
       Serial.println(F("WiFiSettings Rescanning"));
     #endif
@@ -184,7 +183,7 @@ bool portalWatchdog() {
       return true; // Connected - exit portal
     }
     // If noone connected rescan every 15 seconds
-    lastWatchdog = powerController->sleepSafeMillis();
+    lastWatchdog = frugal_iot.powercontroller->sleepSafeMillis();
   } 
   return false; 
 }

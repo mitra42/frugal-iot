@@ -215,20 +215,8 @@ Control_Logger* clfs = new Control_LoggerFS(
   clfs->inputs[0]->wireTo(ss->temperature); // TODO this is default wiring - should remove.
 #endif // CONTROL_LOGGERFS_WANT
 
-// TO-ADD-POWERMODE
-// TODO-141 move into frugal_iot. 
-#ifdef SYSTEM_POWER_MODE_LOOP
-  powerController = new System_Power_Mode_Loop(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
-#elif SYSTEM_POWER_MODE_LIGHT
-  powerController = new System_Power_Mode_Light(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
-#elif SYSTEM_POWER_MODE_LIGHTWIFI
-  powerController = new System_Power_Mode_LightWifi(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
-#elif SYSTEM_POWER_MODE_DEEP
-  powerController = new System_Power_Mode_Deep(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
-#elif SYSTEM_POWER_MODE_AUTO
-  powerController = new System_Power_Mode_Auto(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS);
-#endif
-powerController->setup();
+
+frugal_iot.powercontroller->setup();
 
 #ifdef LOCAL_DEV_WANT
   // TODO-141 move into frugal_iot. 
@@ -254,7 +242,7 @@ void loop() {
     donePeriodic = true;
   }
   frugal_iot.frequently(); // Do things like MQTT which run frequently with their own clock
-  if (powerController->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
+  if (frugal_iot.powercontroller->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
     donePeriodic = false; // reset after sleep (note deep sleep comes in at top again)
   }
 }

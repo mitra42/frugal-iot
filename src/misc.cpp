@@ -8,7 +8,7 @@
 #ifdef ESP8266
 #include "user_interface.h" // system_get_free_heap_size
 #endif
-#include "system_power.h" // For sleepSafemillis()
+#include "frugal_iot.h"
 
 #include <Arduino.h> // For String
 //#include <stdio.h> // Doesnt appear to be needed - was in sample code from Jonathan Semple
@@ -87,7 +87,7 @@ void internal_watchdog_loop() {
     esp_task_wdt_reset();
   #endif
   // TODO move this to infrequent() on something
-  if (powerController->sleepSafeMillis() > (internal_watchdog_last + SYSTEM_WATCHDOG_MEM_MS)) {
+  if (frugal_iot.powercontroller->sleepSafeMillis() > (internal_watchdog_last + SYSTEM_WATCHDOG_MEM_MS)) {
     #ifdef SYSTEM_MEMORY_DEBUG
       #ifdef ESP8266
         Serial.print(F("heap=")); Serial.println(system_get_free_heap_size());  // https://www.esp8266.com/viewtopic.php?p=82839
@@ -96,6 +96,6 @@ void internal_watchdog_loop() {
         Serial.print(F(" min heap=")); Serial.println(esp_get_minimum_free_heap_size());
       #endif //ESP32
     #endif
-    internal_watchdog_last = powerController->sleepSafeMillis(); 
+    internal_watchdog_last = frugal_iot.powercontroller->sleepSafeMillis(); 
   }
 }
