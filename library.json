@@ -18,7 +18,8 @@
         "robtillaart/SHT85": "0.6.0",
         "robtillaart/HX711": "^0.5.2",
         "adafruit/Adafruit SSD1306": "^2.5.14",
-        "adafruit/Adafruit GFX Library": "^1.12.1"
+        "adafruit/Adafruit GFX Library": "^1.12.1",
+        "LoRaMesher": "https://github.com/LoRaMesher/LoRaMesher.git"
     },
     "frameworks": "arduino",
     "platforms": "*",
