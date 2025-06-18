@@ -12,7 +12,7 @@
 
 //Since I work on multiple nodes, I define each here, then uncomment exactly one and have its settings below. 
 #ifndef PLATFORMIO // On PlatformIO use the platformio.ini to choose project(s)
-#define BOARDCOMPILECHECK "Pseudo board to test everything compiles"
+#define BOARDCOMPILECHECK "Pseudo board to test everything compiles".
 //#define BOARDDEV "Working short term dev"
 //#define ISSUE25 "Control class"
 //#define DATALOGGER110 "Data logger"
