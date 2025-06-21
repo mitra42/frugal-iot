@@ -3,6 +3,11 @@
 
 #include <Arduino.h>
 
+#ifndef SYSTEM_OTA_MS
+  // By default, check for updates once an hour - override in platformio.ini
+  #define SYSTEM_OTA_MS 3600000
+#endif // SYSTEM_OTA_MS
+
 class System_OTA : public System_Base {
   public:
 

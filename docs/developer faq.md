@@ -1,3 +1,4 @@
+# TODO-141 this file needs a check since will have changed - but better to move into wiki
 # Frugal IoT - Developer FAQ*
 
 ## FrugalIoT: File structure
@@ -86,7 +87,6 @@ In the top of the .cpp and .h files, define defaults for any paramaters,
 follow the conventions - some common ones
 * SENSOR_FOO_PIN - the active pin
 * SENSOR_FOO_ADDRESS - I2C address etc
-* SENSOR_FOO_MS - how often, in milliseconds to read it
 * SENSOR_FOO_DEBUG - if defined then print copious debugging - wrap all (or almost all) your `Serial.print` with this. 
 
 #### _local.h*

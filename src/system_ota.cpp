@@ -39,10 +39,6 @@
 #endif
 #include "system_frugal.h" // For sleepSafemillis()
 
-#ifndef SYSTEM_OTA_MS
-  // By default, check for updates once an hour
-  #define SYSTEM_OTA_MS 3600000
-#endif // SYSTEM_OTA_MS
 #ifndef SYSTEM_OTA_VERSION
   #define SYSTEM_OTA_VERSION "0.0.0" // We dont use versions, we are using MD5
 #endif

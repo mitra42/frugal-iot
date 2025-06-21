@@ -91,9 +91,6 @@
   #define SYSTEM_WIFI_SSID_9 "Silver"
   #define SYSTEM_WIFI_PASSWORD_9 "O2IL-w8k2-w6ki-TzqG"
 
-#define SYSTEM_OTA_MS 300000 // 5 minute updates
-
-
 // Note that on ESP that ESP32 or ESP8266 will be defined - should define other chips names here if its not ESP32 or ESP8266
 #ifdef BOARDCOMPILECHECK // FOr checking everything compiles - check with both ESP32 and ESP8266 boards
   #define SYSTEM_WIFI_PROJECT "lotus"
@@ -194,22 +191,6 @@
 #endif
 
 
-#ifdef DEVSHT30
-  #ifdef ESP8266
-    #define SYSTEM_OTA_KEY "esp8266sht30"
-  #elif defined(ESP32)
-    #define SYSTEM_OTA_KEY "esp32sht30"
-  #endif
-  #define SYSTEM_WIFI_DEVICE "SHT30"
-  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION DEVSHT30
-  #define ACTUATOR_LEDBUILTIN_WANT // LED on board - usually wanted
-  #define SENSOR_SHT_WANT
-  #define SYSTEM_OTA_WANT
-  #define SYSTEM_WIFI_PROJECT "lotus"
-  #define SENSOR_SHT_MS 10000 // For debugging
-  #define SENSOR_SHT_DEBUG
-  #define SYSTEM_POWER_MODE_LOOP
-#endif //SHT30 
 
 #ifdef LILYGOHIGROW1
   #ifndef ESP32
