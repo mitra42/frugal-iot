@@ -11,13 +11,13 @@
 #include "_settings.h"  // Settings for what to include etc
 #include <Arduino.h>
 #include <vector>
-#include "_base.h"
+#include "system_base.h"
 
 #if defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_MPQ_DEBUG)
   #define CONTROL_DEBUG
 #endif
 
-class Control : public Frugal_Base {
+class Control : public System_Base {
   public:
     std::vector<IN*> inputs; // Vector of inputs
     std::vector<OUT*> outputs; // Vector of outputs

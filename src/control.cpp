@@ -24,7 +24,7 @@
 const char* groupAdvertLine  = "\n  -\n    group: %s\n    name: %s";
 
 Control::Control(const char * const id, const char* const name, std::vector<IN*> i, std::vector<OUT*> o)
-    : Frugal_Base(id, name), inputs(i), outputs(o) { }
+    : System_Base(id, name), inputs(i), outputs(o) { }
 
 #ifdef CONTROL_DEBUG
 void Control::debug(const char* const where) {

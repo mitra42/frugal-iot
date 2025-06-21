@@ -19,7 +19,7 @@
 #endif
 #include "system_time.h"
 #include "misc.h" // for StringF
-#include "frugal_iot.h" // For sleepSafemillis()
+#include "system_frugal.h" // For sleepSafemillis()
 
 
 #ifndef SYSTEM_TIME_ZONE
@@ -35,7 +35,7 @@
 #define JAN_01_2024 1704070861L
 // #define TEN_MINS 600
 
-System_Time::System_Time() : Frugal_Base("time","Time") {}
+System_Time::System_Time() : System_Base("time","Time") {}
 System_Time::~System_Time() {}
 
 // Last time synced with NTP in seconds

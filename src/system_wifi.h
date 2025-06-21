@@ -1,9 +1,9 @@
 #ifndef SYSTEM_WIFI_H
 #define SYSTEM_WIFI_H
 
-#include "_base.h"
+#include "system_base.h"
 
-class System_WiFi : public Frugal_Base {
+class System_WiFi : public System_Base {
   public:
     // Customized variables from configuration
     String mqtt_host;

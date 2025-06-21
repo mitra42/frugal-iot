@@ -12,26 +12,26 @@
  * QUICK TODOs - remove as done
  * 
  * Incremental tasks
- *  Move material from main.cpp::setup to Frugal_IoT::setup
+ *  Move material from main.cpp::setup to System_Frugal::setup
  */
 
 
 #include "_settings.h" // Note - ideally shouldnt be dependent on anything here, or at least not in _local.h
-#include "frugal_iot.h"
+#include "system_frugal.h"
 #include "misc.h"
 
 Frugal_Group::Frugal_Group(const char * const id, const char * const name)
-: Frugal_Base(id, name)
+: System_Base(id, name)
 {}
 
-void Frugal_Group::add(Frugal_Base* fb) {
+void Frugal_Group::add(System_Base* fb) {
   group.push_back(fb);
 }
 
 
 // TODO-141 move most of main.cpp::setup to here, all non-app stuff
 void Frugal_Group::setup() {
-  for (Frugal_Base* fb: group) {
+  for (System_Base* fb: group) {
     Serial.print(fb->id); Serial.print(F(" "));
     fb->setup();
   }
@@ -44,7 +44,7 @@ void Frugal_Group::dispatchTwig(const String &topicTwig, const String &payload, 
   if (slashPos != -1) {
     String id = topicTwig.substring(0, slashPos);       // Extract the part before the slash
     String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
-    for (Frugal_Base* fb: group) {
+    for (System_Base* fb: group) {
       fb->dispatchTwig(id, topicLeaf, payload, isSet);
     }
   } else {
@@ -52,37 +52,37 @@ void Frugal_Group::dispatchTwig(const String &topicTwig, const String &payload, 
   }
 }
 void Frugal_Group::dispatchPath(const String &topicPath, const String &payload) {
-  for (Frugal_Base* fb: group) {
+  for (System_Base* fb: group) {
     fb->dispatchPath(topicPath, payload);
   }
 }
 
 String Frugal_Group::advertisement() {
   String ad = String();
-  for (Frugal_Base* fb: group) {
+  for (System_Base* fb: group) {
     ad += (fb->advertisement());
   }
   return ad;
 }
 
 void Frugal_Group::frequently() {
-  for (Frugal_Base* fb: group) {
+  for (System_Base* fb: group) {
     fb->frequently();
   }
 }
 void Frugal_Group::periodically() {
-  for (Frugal_Base* fb: group) {
+  for (System_Base* fb: group) {
     fb->periodically();
   }
 }
 void Frugal_Group::infrequently() {
-  for (Frugal_Base* fb: group) {
+  for (System_Base* fb: group) {
     fb->infrequently();
   }
 }
 
-Frugal_IoT::Frugal_IoT()
-: Frugal_Group("frugal_iot", "Frugal_IoT"),
+System_Frugal::System_Frugal()
+: Frugal_Group("frugal_iot", "System_Frugal"),
   actuators(new Frugal_Group("actuators", "Actuators")),
   sensors(new Frugal_Group("sensors", "Sensors")),
   controls(new Frugal_Group("controls", "Controls")),
@@ -147,7 +147,7 @@ Frugal_IoT::Frugal_IoT()
   add(system);
 }
 
-void Frugal_IoT::setup() {
+void System_Frugal::setup() {
   Frugal_Group::setup(); // includes WiFi
   #ifdef SYSTEM_OTA_WANT
     ota->setup_after_wifi();
@@ -161,7 +161,7 @@ void Frugal_IoT::setup() {
     localDev::setup();
   #endif
 }
-void Frugal_IoT::infrequently() {
+void System_Frugal::infrequently() {
   Frugal_Group::infrequently();
   #ifdef LOCAL_DEV_WANT
     // TODO-141 this will go back into the new main.cpp in some form
@@ -170,7 +170,7 @@ void Frugal_IoT::infrequently() {
 }
 
 // These are things done one time per period - where a period is the time set in SYSTEM_POWER_MS
-void Frugal_IoT::periodically() {
+void System_Frugal::periodically() {
   Frugal_Group::periodically();
   #ifdef LOCAL_DEV_WANT
     // TODO-141 this will go back into the new main.cpp in some form
@@ -180,7 +180,7 @@ void Frugal_IoT::periodically() {
 
 // This is stuff done multiple times per period
 // TODO-141 move into frugal_iot. 
-void Frugal_IoT::frequently() {
+void System_Frugal::frequently() {
   Frugal_Group::frequently();
   frugal_iot.mqtt->frequently(); // 
   #ifdef LOCAL_DEV_WANT //TODO-141 move to new app specific main.cpp

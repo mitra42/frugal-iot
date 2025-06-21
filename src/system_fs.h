@@ -2,7 +2,7 @@
 #define SYSTEM_FS_H
 
 #include "_settings.h"
-#include "_base.h"
+#include "system_base.h"
 
 #if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
   #define SYSTEM_FS_DEBUG
@@ -24,7 +24,7 @@
 #endif // SYSTEM_SPIFFS_WANT
 
 
-class System_FS : public Frugal_Base {
+class System_FS : public System_Base {
   public:
     System_FS(const char* const id, const char* const name);
     bool spurt(const String& fn, const String& content);  // TODO-110 port to SD

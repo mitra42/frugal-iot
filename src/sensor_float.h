@@ -2,7 +2,7 @@
 #define SENSOR_FLOAT_H
 
 #include <Arduino.h>
-#include "_base.h"
+#include "system_base.h"
 #include "sensor.h"
 
 class Sensor_Float : public Sensor {

@@ -22,7 +22,7 @@
 #include "system_discovery.h"
 #include "system_wifi.h"
 #include "system_ota.h"
-#include "frugal_iot.h"
+#include "system_frugal.h"
 
 #ifdef ESP8266
   #include <ESP8266httpUpdate.h> // defines ESPhttpUpdate
@@ -37,7 +37,7 @@
 #else
     #error OTA only defined so far for ESP8266 and ESP32 
 #endif
-#include "frugal_iot.h" // For sleepSafemillis()
+#include "system_frugal.h" // For sleepSafemillis()
 
 #ifndef SYSTEM_OTA_MS
   // By default, check for updates once an hour
@@ -87,7 +87,7 @@
   "-----END CERTIFICATE-----\n";
 #endif
 
-System_OTA::System_OTA() : Frugal_Base("ota", "OTA") { }
+System_OTA::System_OTA() : System_Base("ota", "OTA") { }
 
 System_OTA::~System_OTA() { }
 

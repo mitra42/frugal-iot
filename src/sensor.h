@@ -2,10 +2,10 @@
 #define SENSOR_H
 
 #include <Arduino.h>
-#include "_base.h"
+#include "system_base.h"
 #include <vector>
 
-class Sensor : public Frugal_Base {
+class Sensor : public System_Base {
   public:
     const char* id = nullptr; // System readable id
     const char* name = nullptr; // Human readable name of sensor (changeable in UX)

@@ -8,7 +8,7 @@
 #include "actuator.h"
 
 Actuator::Actuator(const char * const id, const char * const name) 
-: Frugal_Base(id, name) { } 
+: System_Base(id, name) { } 
 
 /* Zero Actuators currently need readAndSet
 // TODO_C++_EXPERT - unclear why this is needed, all objects in "actuators" will be subclasses e.g. Actuator_digital each of which has a readAndSet method.

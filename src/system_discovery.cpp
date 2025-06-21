@@ -36,13 +36,13 @@
 #ifdef CONTROL_WANT
   #include "control.h"
 #endif
-#include "frugal_iot.h"
+#include "system_frugal.h"
 // For sleepSafemillis()
-#include "frugal_iot.h" // for frugal_iot
+#include "system_frugal.h" // for frugal_iot
 
 
 System_Discovery::System_Discovery() 
-: Frugal_Base("discovery", "Discovery") { }
+: System_Base("discovery", "Discovery") { }
 
 void System_Discovery::quickAdvertise() {
     frugal_iot.mqtt->messageSend(*projectTopic,  frugal_iot.wifi->clientid(), false, 0); // Don't RETAIN as other nodes also broadcasting to same topic

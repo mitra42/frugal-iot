@@ -2,9 +2,9 @@
 #define ACTUATOR_H
 
 #include <Arduino.h>
-#include "_base.h"
+#include "system_base.h"
 
-class Actuator : public Frugal_Base {
+class Actuator : public System_Base {
   public:
     // unsigned long ms = 10000; // No loops in Actuators currently - uncomment and initialize to zero if have any
     // unsigned long nextLoopTime = 0; // No loops in Actuators currently - uncomment and initialize to zero if have any

@@ -16,12 +16,16 @@
 #include "_settings.h"
 #ifdef SYSTEM_LORAMESHER_WANT
 
+// This is currently only defined for ESP32, 
+// Certainly fials to complie on ESP8266 but might be fixable - I dont have a ESP8266+LoRa combo to try
+#ifdef ESP32
+
 //#error "SYSTEM_LORAMESHER code is known not to be finished - see issue # 152 - uncomment to develop"
 
 #include "LoraMesher.h"
 #include "system_loramesher.h"
 #include "misc.h"  // for lprintf
-#include "frugal_iot.h"
+#include "system_frugal.h"
 
 // These settings duplicated in system_loramesher.cpp and system_lora.cpp (system_loramesher.cpp are newer)
 #if defined(TTGO_LORA_SX1276)
@@ -43,7 +47,7 @@
 #endif
 
 System_LoraMesher::System_LoraMesher()
-: Frugal_Base("loramesher", "LoraMesher"),
+: System_Base("loramesher", "LoraMesher"),
     radio(LoraMesher::getInstance()),
     config(LoraMesher::LoraMesherConfig())
 {
@@ -297,4 +301,5 @@ void System_LoraMesher::periodically() {
     // TODO-139 TODO-23 find where put radio and SPI to sleep - on some other libraries its LoRa.sleep() and SPI.end()
   }
 
+#endif // ESP32
 #endif // SYSTEM_LORAMESHER_WANT

@@ -8,7 +8,7 @@
 #define SYSTEM_OLED_H
 #include "_settings.h"
 #ifdef SYSTEM_OLED_WANT
-#include "_base.h" // For Frugal_Base class
+#include "system_base.h" // For System_Base class
 
 // TODO-149 check which headers needed
 //#include <Arduino.h>
@@ -34,7 +34,7 @@
 #endif
 
 
-class System_OLED : public Frugal_Base {
+class System_OLED : public System_Base {
   public:
     Adafruit_SSD1306 display; // OLED display object TODO-138 parameterize this and depend on board
     System_OLED(); // Constructor

@@ -32,7 +32,7 @@
 #include "system_wifi.h"   // xWifi
 #include "system_discovery.h"
 #include <forward_list>
-#include "_base.h"
+#include "system_base.h"
 
 class Subscription {
   // This is both a subscription and a record of a message for retention purposes
@@ -49,7 +49,7 @@ class Message : public Subscription {
     const int qos;
     Message(const String &tp,const String &pl, const bool r, const int q);
 };
-class System_MQTT : public Frugal_Base {
+class System_MQTT : public System_Base {
   public:
     WiFiClient net;
     MQTTClient client; //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.

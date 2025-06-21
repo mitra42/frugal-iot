@@ -15,9 +15,9 @@
 #ifdef SYSTEM_LORAMESHER_WANT
 
 #include "LoraMesher.h"
-#include "_base.h"
+#include "system_base.h"
 
-class System_LoraMesher : public Frugal_Base {
+class System_LoraMesher : public System_Base {
   public:
     LoraMesher& radio;
     LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();

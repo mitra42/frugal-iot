@@ -12,12 +12,12 @@
 #include <Adafruit_SSD1306.h>
 
 System_OLED::System_OLED() 
-: Frugal_Base("oled", "OLED"),
+: System_Base("oled", "OLED"),
   display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST_X) // Allow code to access 
 {}
 
 void System_OLED::setup() {
-  Frugal_Base::setup();
+  System_Base::setup();
   // Setup code here, if needed
   #if OLED_RST_X != -1 // If OLED_RST is defined, use it (e.g. on TTGO_LORA_SX127X_V1)
     //reset OLED display via software

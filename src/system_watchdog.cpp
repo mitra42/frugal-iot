@@ -10,7 +10,7 @@
 #include "user_interface.h" // system_get_free_heap_size
 #endif
 #include "system_watchdog.h"
-#include "frugal_iot.h"
+#include "system_frugal.h"
 
 // TODO-125
 // This pair of functions is intended to debug the freezes being seen on ESP32's 
@@ -23,7 +23,7 @@
 
 long unsigned internal_watchdog_last = 0; // Will be sleepSafeMillis 
 
-System_Watchdog::System_Watchdog() : Frugal_Base("watchdog", "Watchdog") {}
+System_Watchdog::System_Watchdog() : System_Base("watchdog", "Watchdog") {}
 
 void System_Watchdog::setup() {
   //Ref: https://forum.arduino.cc/t/esp32-ram-check/871248/2

@@ -1,9 +1,9 @@
 #ifndef SYSTEM_DISCOVERY_H
 #define SYSTEM_DISCOVERY_H
 
-#include "_base.h"
+#include "system_base.h"
 
-class System_Discovery : public Frugal_Base {
+class System_Discovery : public System_Base {
   public:
     String *topicPrefix;
     bool doneFullAdvertise = false;

@@ -3,9 +3,9 @@
 
 #include <time.h>
 #include <Arduino.h> // For String
-#include "_base.h"
+#include "system_base.h"
 
-class System_Time : public Frugal_Base {
+class System_Time : public System_Base {
   public:
     unsigned long nextLoopTime = 0; // sleepSafeMillis
     System_Time();

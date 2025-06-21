@@ -6,7 +6,7 @@
 #define SYSTEM_POWER_H
 
 #include "_settings.h"
-#include "_base.h"
+#include "system_base.h"
 
 // TO-ADD-POWER
 // SYSTEM_POWER_MS is how often to run perioically(). 
@@ -37,7 +37,7 @@
 #endif
 
 
-class System_Power_Mode : public Frugal_Base {
+class System_Power_Mode : public System_Base {
   public:
     unsigned long nextSleepTime = 0; // Next time to sleep in millis() (NOT offseted) - set in constructor, updated in maybeSleep()
     unsigned long cycle_ms; // Time for each cycle (wake + sleep)

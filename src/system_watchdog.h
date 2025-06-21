@@ -3,9 +3,9 @@
 #define SYSTEM_WATCHDOG_H
 
 #include "_settings.h"
-#include "_base.h"
+#include "system_base.h"
 
-class System_Watchdog : public Frugal_Base {
+class System_Watchdog : public System_Base {
   public:
     System_Watchdog();
     void setup();

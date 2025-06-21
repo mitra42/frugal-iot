@@ -2,7 +2,7 @@
 #define SENSOR_UINT16_H
 
 #include <Arduino.h>
-#include "_base.h"
+#include "system_base.h"
 #include "sensor.h"
 
 class Sensor_Uint16 : public Sensor {

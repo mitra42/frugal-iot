@@ -20,7 +20,7 @@
 #include <Arduino.h> // For String
 #include "control_gsheets.h"
 #include "misc.h" // For StringF
-#include "frugal_iot.h"
+#include "system_frugal.h"
 
 Control_Gsheets::Control_Gsheets(const char* name, String* googleSheetsUrl)
   : Control_Logger("gsheets", name), url(googleSheetsUrl)

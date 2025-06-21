@@ -20,7 +20,7 @@
 #include "_settings.h"
 #include "system_power.h"
 // TODO may not need all these once WiFi debugged and code moved to other files
-#include "frugal_iot.h"
+#include "system_frugal.h"
 #ifdef ESP32 // Not available on ESP8266 - have not yet searched for equivalents
   // Next three .h might or might not be needed 
   #include "esp_pm.h"
@@ -57,7 +57,7 @@ void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
 #endif
 
 System_Power_Mode::System_Power_Mode(const char* name, unsigned long cycle_ms, unsigned long wake_ms)
-: Frugal_Base("power", name),
+: System_Base("power", name),
   nextSleepTime(millis() + wake_ms), // not sleepSafeMillis() as by definition dont sleep before this
   cycle_ms(cycle_ms),
   wake_ms(wake_ms)

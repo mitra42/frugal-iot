@@ -49,7 +49,7 @@
 Not currently used in this code
 */
 
-System_LoRa::System_LoRa() : Frugal_Base("lora", "LoRa") {
+System_LoRa::System_LoRa() : System_Base("lora", "LoRa") {
     // Constructor code here, if needed
 }
 void System_LoRa::setup() {

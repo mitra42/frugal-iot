@@ -16,7 +16,7 @@
 #include <Arduino.h>
 #include "control_blinken.h"
 #include "control.h"
-#include "frugal_iot.h"
+#include "system_frugal.h"
 
 ControlBlinken::ControlBlinken (const char* const id, const char * const name, float secsOn, float secsOff) 
 : Control(id, name,

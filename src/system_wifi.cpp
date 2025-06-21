@@ -23,7 +23,7 @@
 #else
   #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
-#include "frugal_iot.h"
+#include "system_frugal.h"
 
 
 // TODO find a way to store in eeprom rather than SPIFFS. 
@@ -57,7 +57,7 @@ struct Texts {
 Texts T;
 
 System_WiFi::System_WiFi()
-: Frugal_Base("wifi", "WiFi") {}
+: System_Base("wifi", "WiFi") {}
 
 // Attempt to connect to main network as configured, if succeed save the id and password as a known network
 bool System_WiFi::connect1() {

@@ -34,7 +34,7 @@
 
 #include <MQTT.h>
 #include "misc.h" // For StringF
-#include "frugal_iot.h" // for frugal_iot
+#include "system_frugal.h" // for frugal_iot
 
 // If configred not to use Wifi (or in future BLE) then will just operate locally, sending MQTT between components on this node, but 
 // not elsewhere.
@@ -79,7 +79,7 @@ void System_MQTT::setup_after_wifi() {
   blockTillConnected();
 }
 // Run every 10ms TODO-25 and TODO-23 this should be MUCH longer ideally
-System_MQTT::System_MQTT() : Frugal_Base("mqtt", "MQTT"), client(1024,128), nextLoopTime(0), ms(10) {
+System_MQTT::System_MQTT() : System_Base("mqtt", "MQTT"), client(1024,128), nextLoopTime(0), ms(10) {
   setup();
 }
 

@@ -3,11 +3,11 @@
  */
 
 
-#include "frugal_iot.h"
+#include "system_frugal.h"
 
 #include "_settings.h"  // Settings for what to include etc
 
-#include "_base.h" // Base for new class version
+#include "system_base.h" // Base for new class version
 #include "sensor.h" // Base class for sensors
 #include "misc.h" // 
 #include "main.h"
@@ -40,7 +40,7 @@
 #endif
 
 
-Frugal_IoT frugal_iot; // Singleton
+System_Frugal frugal_iot; // Singleton
 
 void setup() {
 

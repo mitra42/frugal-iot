@@ -15,11 +15,11 @@ enum IOtype {
 };
 */
 
-class Frugal_Base {
+class System_Base {
   public:
     const char* id = nullptr; // Name of actuator, sensor or control 
     const char* name = nullptr; // Name of actuator, sensor or control
-    Frugal_Base(const char * const id, const char * const name);
+    System_Base(const char * const id, const char * const name);
     virtual void setup();
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);
     virtual void dispatchPath(const String &topicPath, const String &payload);

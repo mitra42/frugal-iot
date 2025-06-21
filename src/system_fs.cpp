@@ -51,7 +51,7 @@
 
 
 #include "system_fs.h"
-#include "_base.h"
+#include "system_base.h"
 #include "misc.h" // For StringF
 // May change for different boards
 // #define SYSTEM_SD_CHIPSELECT D8   // SPI select pin used - note SS defined as 15 - not sure if that is D8
@@ -59,7 +59,7 @@
 
 // Constructors
 System_FS::System_FS(const char* const id, const char* const name) 
-: Frugal_Base(id, name) { } 
+: System_Base(id, name) { } 
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreturn-type" 

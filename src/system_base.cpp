@@ -5,23 +5,23 @@
 #include "_settings.h"  // Settings for what to include etc
 #include <Arduino.h>
 #include <string>     // std::string, std::stoi
-#include "_base.h"
+#include "system_base.h"
 #include "sensor.h"
 #include "actuator.h"
 #include "control.h"
 #include "misc.h"
-#include "frugal_iot.h"
+#include "system_frugal.h"
 
-Frugal_Base::Frugal_Base(const char * const id, const char * const name)
+System_Base::System_Base(const char * const id, const char * const name)
 : id(id), name(name) { };
 
-void Frugal_Base::setup() { }; // This will get called if no setup() in subclass 
-void Frugal_Base::infrequently() { }; // This will get called if no loop() in subclass 
-void Frugal_Base::frequently() { }; // This will get called if no loop() in subclass 
-void Frugal_Base::periodically() { }; // This will get called if no loop() in subclass 
-void Frugal_Base::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {};
-void Frugal_Base::dispatchPath(const String &topicPath, const String &payload) {};
-String Frugal_Base::advertisement() {return String();};
+void System_Base::setup() { }; // This will get called if no setup() in subclass 
+void System_Base::infrequently() { }; // This will get called if no loop() in subclass 
+void System_Base::frequently() { }; // This will get called if no loop() in subclass 
+void System_Base::periodically() { }; // This will get called if no loop() in subclass 
+void System_Base::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {};
+void System_Base::dispatchPath(const String &topicPath, const String &payload) {};
+String System_Base::advertisement() {return String();};
 
 // ========== IO - base class for IN and OUT ===== 
 

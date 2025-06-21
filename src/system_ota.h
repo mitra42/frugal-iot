@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-class System_OTA : public Frugal_Base {
+class System_OTA : public System_Base {
   public:
 
     System_OTA();

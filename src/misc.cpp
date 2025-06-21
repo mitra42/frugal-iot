@@ -2,7 +2,7 @@
 // Some common functions - ifdef them for the functions that use them
 #include <Arduino.h>
 #include "_settings.h"
-#include "frugal_iot.h"
+#include "system_frugal.h"
 
 #include <Arduino.h> // For String
 //#include <stdio.h> // Doesnt appear to be needed - was in sample code from Jonathan Semple

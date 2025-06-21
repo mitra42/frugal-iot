@@ -11,7 +11,7 @@
  #include <vector>
  #include "Button2.h" // https://github.com/LennartHennigs/Button2
  #include "sensor.h"
- #include "frugal_iot.h"
+ #include "system_frugal.h"
 
  #ifndef SENSOR_BUTTON_MS
   #define SENSOR_BUTTON_MS 10
