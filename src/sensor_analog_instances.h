@@ -3,7 +3,7 @@
 
 /* Configuration options
  * Required: SENSOR_ANALOG_INSTANCES_PIN_x (where x = 1..5)
- * Optional: SENSOR_ANALOG_MS_x SENSOR_ANALOG_REFERENCE_x SENSOR_ANALOG_SMOOTH_x SENSOR_ANALOG_NAME_x SENSOR_ANALOG_TOPIC_x
+ * Optional: SENSOR_ANALOG_REFERENCE_x SENSOR_ANALOG_SMOOTH_x SENSOR_ANALOG_NAME_x SENSOR_ANALOG_TOPIC_x
 */
 //TODO add to this for instances 2..5 if required
 
@@ -27,11 +27,6 @@
 
 #ifndef SENSOR_ANALOG_SMOOTH_1
   #define SENSOR_ANALOG_SMOOTH_1 0
-#endif
-
-//TODO-23 for power management will rethink individual timers
-#ifndef SENSOR_ANALOG_MS_1
-  #define SENSOR_ANALOG_MS_1 900000 // How often to read in MS - default to 15 minutes if not overridden
 #endif
 
 #ifndef SENSOR_ANALOG_COLOR_1

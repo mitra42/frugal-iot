@@ -12,15 +12,12 @@
   // TODO build address this into OTA Key as requires two binaries
   #define SENSOR_SHT_ADDRESS 0x44 // Either 0x44 (small cheap ones we use or Deeley) 0x45 (D1 shield)
 #endif
-#ifndef SENSOR_SHT_MS
-  #define SENSOR_SHT_MS 60000
-#endif
 
 class Sensor_SHT : public Sensor_HT {
 public:
   uint8_t address;
   SENSOR_SHT_DEVICE *sht; 
-  Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, const unsigned long ms, bool retain);
+  Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, bool retain);
   virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor
 };
 

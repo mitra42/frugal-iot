@@ -3,7 +3,7 @@
   Read from a pin and return as sSoil::Value
 
 Configuration options
-Optional with defaults: SENSOR_SOIL_PIN=4 SENSOR_SOIL_MS=15000 SENSOR_SOIL_TOPIC=soil SENSOR_SOIL_0=3200 SENSOR_SOIL_100=1300 
+Optional with defaults: SENSOR_SOIL_PIN=4 SENSOR_SOIL_TOPIC=soil SENSOR_SOIL_0=3200 SENSOR_SOIL_100=1300 
 Optional undefined: SENSOR_SOIL_SMOOTH
 
 On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,10 just reads 0; 7 reads 0 ad seems connected to LED
@@ -16,8 +16,8 @@ On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,
 #include <Arduino.h>
 #include "sensor_soil.h"
 
-Sensor_Soil::Sensor_Soil(const char* const id, const char * const name, const uint16_t map0_init, const uint16_t map100_init, const uint8_t pin_init, const uint8_t smooth_init, const char* color, const unsigned long ms_init, bool retain) 
-  : Sensor_Analog(id, name, pin_init, smooth_init, 0, 100, color, ms_init, retain), map0(map0_init), map100(map100_init) { }
+Sensor_Soil::Sensor_Soil(const char* const id, const char * const name, const uint16_t map0_init, const uint16_t map100_init, const uint8_t pin_init, const uint8_t smooth_init, const char* color, bool retain) 
+  : Sensor_Analog(id, name, pin_init, smooth_init, 0, 100, color, retain), map0(map0_init), map100(map100_init) { }
 
 #define SENSOR_SOIL_INVALIDVALUE 0xFFFF
 

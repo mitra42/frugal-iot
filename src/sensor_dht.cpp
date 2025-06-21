@@ -7,7 +7,6 @@
  * 
  * Required:
  * Optional: 
- * SENSOR_DHT_MS                 // How often to poll each sensor, for now we presume we poll them all this often
  * SENSOR_DHT_PIN          // Which pins sensors connected to - default to 4
  * SENSOR_DHT_DEBUG              // Debugging output
  * SENSOR_DHT_COUNT              // How many devices - default to 1
@@ -29,8 +28,8 @@
 #include "sensor_dht.h"
 
 // Add alternative constructor with id e.g. dht1, dht2 etc
-Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, const unsigned long ms_init, bool retain) 
-  : Sensor_HT("dht", name, ms_init, retain), 
+Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, bool retain) 
+  : Sensor_HT("dht", name, retain), 
    pin(pin_init) {
   dht = new DHTNEW(pin_init); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
   // dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/104
@@ -107,7 +106,7 @@ void Sensor_DHT::readAndSet() {
   }
 }
 
-//Sensor_DHT sensor_dht(SENSOR_DHT_PIN, "temperature", "humidity", SENSOR_DHT_MS);
+//Sensor_DHT sensor_dht(SENSOR_DHT_PIN, "temperature", "humidity");
 
 #endif // SENSOR_DHT_WANT
 

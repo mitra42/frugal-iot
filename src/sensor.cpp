@@ -7,8 +7,8 @@
 #include <vector>
 #include "sensor.h"
 
-Sensor::Sensor(const char* const id, const char* const name, const unsigned long m, bool r) 
-: System_Base(id, name), ms(m), retain(r) { }
+Sensor::Sensor(const char* const id, const char* const name, bool r) 
+: System_Base(id, name), retain(r) { }
 
 // Can either sublass read(), and set() or subclass readAndSet() - use latter if more than one result e.g. in sensor_HT
 void Sensor::readAndSet() {

@@ -10,8 +10,8 @@
 #include "sensor.h"
 #include "sensor_ht.h"
 
-Sensor_HT::Sensor_HT(const char* const id, const char * const name, const unsigned long ms_init, boolean retain) 
-  : Sensor(id, name, ms_init, retain),
+Sensor_HT::Sensor_HT(const char* const id, const char * const name, boolean retain) 
+  : Sensor(id, name, retain),
     temperature(new OUTfloat(id, "temperature", "Temperature", 0, 1, 0.0, 45.0, "red", false)),
     humidity(new OUTfloat(id, "humidity", "Humidity", 0, 1, 0.0, 100.0, "blue", false))
   { }

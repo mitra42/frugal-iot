@@ -159,7 +159,6 @@
   #define SYSTEM_WIFI_PROJECT "lotus"
   #define ACTUATOR_LEDBUILTIN_WANT
   #define SENSOR_SHT_WANT
-  #define SENSOR_SHT_MS 10000 // For debugging
   #define SENSOR_SHT_DEBUG
   #define SYSTEM_POWER_MODE_LOOP
 #endif
@@ -224,14 +223,12 @@
   #define SENSOR_DHT_WANT
   //#define SENSOR_LIGHT_WANT
   #define SENSOR_SOIL_WANT
-  #define SENSOR_SOIL_MS 10000 // For debugging
   #define SENSOR_SOIL_DEBUG
   //#define SENSOR_ANALOG_INSTANCES_WANT
   #define SENSOR_ANALOG_INSTANCES_DEBUG
   #define SENSOR_ANALOG_PIN_1 34
   #define SENSOR_ANALOG_TOPIC_1 "salt"
   #define SENSOR_ANALOG_NAME_1 "Salt"
-  #define SENSOR_ANALOG_MS_1 2000 // For debugging
   #define SENSOR_ANALOG_SMOOTH_1 4
   //#define SENSOR_BATTERY_WANT // Untested as battery never arrived ! 
   #define SENSOR_BH1750_WANT
@@ -273,13 +270,11 @@
 #ifdef ISSUE112
   #define SENSOR_DHT_WANT
   #define SYSTEM_WIFI_PROJECT "lotus"
-  #define SENSOR_DHT_MS 1000
   #define SENSOR_DHT_DEBUG
 #endif
 
 #ifdef ISSUE132MS5803
   #define SENSOR_MS5803_WANT
-  #define SENSOR_MS5803_MS 3000
   #define SENSOR_MS5803_DEBUG
   //#define SENSOR_MS5803_SPI 15 // CS Pin for SPI on D1-mini is D8=15 probably different on ESP32
   #define SENSOR_MS5803_I2C 0x77 // Set via jumper to 76 or 77 

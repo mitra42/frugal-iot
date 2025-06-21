@@ -92,14 +92,12 @@
   #define SENSOR_DHT_WANT
   //#define SENSOR_LIGHT_WANT
   #define SENSOR_SOIL_WANT
-  #define SENSOR_SOIL_MS 10000 // For debugging
   #define SENSOR_SOIL_DEBUG
   //#define SENSOR_ANALOG_INSTANCES_WANT
   #define SENSOR_ANALOG_INSTANCES_DEBUG
   #define SENSOR_ANALOG_PIN_1 34
   #define SENSOR_ANALOG_TOPIC_1 "salt"
   #define SENSOR_ANALOG_NAME_1 "Salt"
-  #define SENSOR_ANALOG_MS_1 2000 // For debugging
   #define SENSOR_ANALOG_SMOOTH_1 4
   //#define SENSOR_BATTERY_WANT // Untested as battery never arrived ! 
   #define SENSOR_BH1750_WANT

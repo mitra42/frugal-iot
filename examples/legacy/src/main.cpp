@@ -34,42 +34,42 @@ void setup() {
 #endif
 
 #ifdef SENSOR_ANALOG_INSTANCES_WANT
-  frugal_iot.sensors->add(new Sensor_Analog("analog1", "Analog 1", SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, 0, 5000, SENSOR_ANALOG_COLOR_1, SENSOR_ANALOG_MS_1, true));
+  frugal_iot.sensors->add(new Sensor_Analog("analog1", "Analog 1", SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, 0, 5000, SENSOR_ANALOG_COLOR_1, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_2
-  frugal_iot.sensors->add(new Sensor_Analog("analog2", "Analog 2", SENSOR_ANALOG_PIN_2, SENSOR_ANALOG_SMOOTH_2, SENSOR_ANALOG_COLOR_2, SENSOR_ANALOG_MS_2, true));
+  frugal_iot.sensors->add(new Sensor_Analog("analog2", "Analog 2", SENSOR_ANALOG_PIN_2, SENSOR_ANALOG_SMOOTH_2, SENSOR_ANALOG_COLOR_2, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_3
-  frugal_iot.sensors->add(new Sensor_Analog("analog3", "Analog 3", SENSOR_ANALOG_PIN_3, SENSOR_ANALOG_SMOOTH_3, SENSOR_ANALOG_COLOR_3, SENSOR_ANALOG_MS_3, true));
+  frugal_iot.sensors->add(new Sensor_Analog("analog3", "Analog 3", SENSOR_ANALOG_PIN_3, SENSOR_ANALOG_SMOOTH_3, SENSOR_ANALOG_COLOR_3, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_4
-  frugal_iot.sensors->add(Sensor_Analog("analog4", "Analog 4", SENSOR_ANALOG_PIN_4, SENSOR_ANALOG_SMOOTH_4, SENSOR_ANALOG_COLOR_4, SENSOR_ANALOG_MS_4, true));
+  frugal_iot.sensors->add(Sensor_Analog("analog4", "Analog 4", SENSOR_ANALOG_PIN_4, SENSOR_ANALOG_SMOOTH_4, SENSOR_ANALOG_COLOR_4, true));
 #endif
 #ifdef SENSOR_ANALOG_PIN_5
-  frugal_iot.sensors->add(Sensor_Analog("analog5", "Analog 5", SENSOR_ANALOG_PIN_5, SENSOR_ANALOG_SMOOTH_5, SENSOR_ANALOG_COLOR_5, SENSOR_ANALOG_MS_5, true));
+  frugal_iot.sensors->add(Sensor_Analog("analog5", "Analog 5", SENSOR_ANALOG_PIN_5, SENSOR_ANALOG_SMOOTH_5, SENSOR_ANALOG_COLOR_5, true));
 #endif
 
 #ifdef SENSOR_BATTERY_WANT
   frugal_iot.sensors->add(new Sensor_Battery(SENSOR_BATTERY_PIN));  // TODO-57 will rarely be as simple as this
 #endif
 #ifdef SENSOR_SHT_WANT
-  Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, SENSOR_SHT_MS, true);
+  Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true);
   frugal_iot.sensors->add(ss);
 #endif
 #ifdef SENSOR_DHT_WANT
-  frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, SENSOR_DHT_MS, true));
+  frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, true));
 #endif
 #ifdef SENSOR_SOIL_WANT
-  frugal_iot.sensors->add(new Sensor_Soil("soil1", "Soil 1", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, "brown", SENSOR_SOIL_MS, true));
+  frugal_iot.sensors->add(new Sensor_Soil("soil1", "Soil 1", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN, 0, "brown", true));
   #ifdef SENSOR_SOIL_PIN2
-    frugal_iot.sensors->add(new Sensor_Soil("soil2", "Soil 2", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN2, 0, "brown", SENSOR_SOIL_MS, true));
+    frugal_iot.sensors->add(new Sensor_Soil("soil2", "Soil 2", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN2, 0, "brown", true));
   #endif
   #ifdef SENSOR_SOIL_PIN3
-    frugal_iot.sensors->add(new Sensor_Soil("soil3", "Soil 3", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, "brown", SENSOR_SOIL_MS, true));
+    frugal_iot.sensors->add(new Sensor_Soil("soil3", "Soil 3", SENSOR_SOIL_0, SENSOR_SOIL_100, SENSOR_SOIL_PIN3, 0, "brown", true));
   #endif
 #endif
 #ifdef SENSOR_BH1750_WANT
-  frugal_iot.sensors->add(new Sensor_BH1750(SENSOR_BH1750_ID, SENSOR_BH1750_NAME, SENSOR_BH1750_ADDRESS, SENSOR_BH1750_MS, true));
+  frugal_iot.sensors->add(new Sensor_BH1750(SENSOR_BH1750_ID, SENSOR_BH1750_NAME, SENSOR_BH1750_ADDRESS, true));
 #endif
 #ifdef SENSOR_MS5803_WANT
   frugal_iot.sensors->add(new Sensor_ms5803("pressure", "Pressure"));
@@ -78,7 +78,7 @@ void setup() {
   frugal_iot.sensors->add(new Sensor_Button("button", "Button", SENSOR_BUTTON_PIN, "purple"));
 #endif
 #ifdef SENSOR_LOADCELL_WANT
-  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 2000, "pink", SENSOR_LOADCELL_MS, true));
+  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 2000, "pink", true));
 #endif
 #ifdef SENSOR_ENSAHT_WANT
   frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS AHT"));

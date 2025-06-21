@@ -3,7 +3,7 @@
 
 /* Configuration options
  * Required: SENSOR_SOIL_PIN
- * Optional: SENSOR_SOIL_MS SENSOR_SOIL_REFERENCE SENSOR_SOIL_SMOOTH
+ * Optional: SENSOR_SOIL_REFERENCE SENSOR_SOIL_SMOOTH
 */
 
 #include "sensor_analog.h"
@@ -19,11 +19,6 @@
   #else 
     #error Sorry no default Analog pin for your board
   #endif
-#endif
-
-
-#ifndef SENSOR_SOIL_MS
-  #define SENSOR_SOIL_MS 15000 // How often to read in MS
 #endif
 
 #ifndef SENSOR_SOIL_0
@@ -51,7 +46,7 @@ class Sensor_Soil : public Sensor_Analog {
   public: 
     uint16_t map0;
     uint16_t map100;
-    Sensor_Soil(const char* const id, const char * const name, const uint16_t map0, const uint16_t map100, const uint8_t pin_init, const uint8_t smooth_init, const char* color, const unsigned long ms_init, bool retain);
+    Sensor_Soil(const char* const id, const char * const name, const uint16_t map0, const uint16_t map100, const uint8_t pin_init, const uint8_t smooth_init, const char* color, bool retain);
     virtual uint16_t read();
     bool valid(uint16_t newvalue);
 };

@@ -17,7 +17,7 @@
 Frugal_Group buttons("buttons", "Buttons");
 
 Sensor_Button::Sensor_Button(const char * const id, const char * const name, uint8_t pin, const char* const color) :
-  Sensor(id, name, 10, false), pin(pin) {
+  Sensor(id, name, false), pin(pin) {
   output = new OUTuint16(id, "out", name, empty, single_click, empty, color, false); // TODO convert this into a OUTenum - hard part is UX
   button = new Button2(pin);
   button->setClickHandler(Sensor_Button::clickHandler);
@@ -54,7 +54,7 @@ void Sensor_Button::setup() {
   button->begin(pin);
 }
 void Sensor_Button::frequently() {
-  button->loop();
+  button->loop(); // TODO-141 should probably only do every 10 MS 
 }
 
 

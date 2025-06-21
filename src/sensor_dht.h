@@ -17,16 +17,12 @@
   #endif
 #endif // SENSOR_DHT_PIN
 
-#ifndef SENSOR_DHT_MS
-  #define SENSOR_DHT_MS 60000 // once a minute // TODO-141 shouldnt this be in periodic ? 
-#endif
-
 class Sensor_DHT : public Sensor_HT {
 public:
   uint8_t pin;
   DHTNEW *dht; 
 
-  Sensor_DHT(const char * const name, const uint8_t pin, const unsigned long ms, bool retain);
+  Sensor_DHT(const char * const name, const uint8_t pin, bool retain);
   virtual void readAndSet(); // Combines function of set(read()) since reads two values from sensor
 };
 

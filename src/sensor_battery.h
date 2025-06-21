@@ -3,7 +3,7 @@
 
 /* Configuration options
  * Required: 
- * Optional: SENSOR_BATTERY_PIN SENSOR_BATTERY_MS 
+ * Optional: SENSOR_BATTERY_PIN 
  */
 
  #include "sensor_analog.h"
@@ -18,10 +18,6 @@
   #else
     #error Measuring battery voltage is board specific, only currently defined for a few boards
   #endif
-#endif
-
-#ifndef SENSOR_BATTERY_MS
-  #define SENSOR_BATTERY_MS (60000)
 #endif
 
 class Sensor_Battery : public Sensor_Analog {

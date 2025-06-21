@@ -9,7 +9,6 @@
  * Required:
  * SENSOR_SHT_DEVICE SHT30                  // Which kind of device, for now it presumes they are all the same.
  * SENSOR_SHT_ADDRESS                       // Device address
- * SENSOR_SHT_MS                            // How often to poll each sensor, for now we presume we poll them all this often
  * Optional: 
  * SENSOR_SHT_DEBUG                          // Debugging output
  *
@@ -28,8 +27,8 @@
 #include "sensor_sht.h"
 
 // TODO Add alternative constructor with id e.g. sht1, sht2 etc
-Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, const unsigned long ms_init, bool retain) 
-  : Sensor_HT("sht", name, ms_init, retain), 
+Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, bool retain) 
+  : Sensor_HT("sht", name, retain), 
     address(address_init) {
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   Wire.begin(); // Appears to default to 4,5 which is correct for the Lolin D1 Mini SHT30 shield
@@ -82,7 +81,5 @@ void Sensor_SHT::readAndSet() {
   #endif
   }
 }
-
-//Sensor_SHT sensor_sht(SENSOR_SHT_ADDRESS, &Wire, "temperature", "humidity", SENSOR_SHT_MS);
 
 #endif // SENSOR_SHT_WANT

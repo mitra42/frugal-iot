@@ -12,10 +12,6 @@
   #define SENSOR_BH1750_NAME "Lux"
 #endif
 
-#ifndef SENSOR_BH1750_MS
-  #define SENSOR_BH1750_MS 10000
-#endif
-
 #ifndef SENSOR_BH1750_ADDRESS
   #ifdef LILYGOHIGROW
     #define SENSOR_BH1750_ADDRESS (0x23)  // This may be a generally useful default ?
@@ -33,7 +29,7 @@ class Sensor_BH1750 : public Sensor_Float {
   public:
     uint8_t pin;
     BH1750 lightmeter;
-    Sensor_BH1750(const char* const id, const char * const name, uint8_t pin, const unsigned long ms, bool retain);
+    Sensor_BH1750(const char* const id, const char * const name, uint8_t pin, bool retain);
     void setup();
     virtual float read();
 };
