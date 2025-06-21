@@ -17,8 +17,12 @@
 #include <vector>
 #include "system_base.h"
 #include "system_discovery.h"
+#ifdef ESP32
 #include "system_lora.h"
+#endif
+#ifdef ESP32
 #include "system_loramesher.h"
+#endif
 #include "system_mqtt.h"
 #include "system_oled.h"
 #include "system_ota.h"
