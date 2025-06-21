@@ -73,6 +73,7 @@ class System_Frugal : public Frugal_Group {
 
     System_Frugal();
     void setup();
+    void loop(); // Call this from main.cpp
     void infrequently();
     void frequently();
     void periodically();

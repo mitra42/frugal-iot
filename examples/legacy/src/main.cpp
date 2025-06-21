@@ -2,61 +2,28 @@
  *  This is a test harness for the Frugal IoT project
  */
 
+ // TODO-141 obsolete _settings.h from here - see legacyt
+#include "_settings.h"  // For SERIAL_BAUD SERIAL_DELAY ANY_DEBUG
 
-#include "system_frugal.h"
+#include "frugal_iot.h"
 
-#include "_settings.h"  // Settings for what to include etc
-
-#include "system_base.h" // Base for new class version
-#include "sensor.h" // Base class for sensors
-#include "misc.h" // 
-#include "main.h"
-
-#include "system_wifi.h"
-//TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
-#include "actuator_ledbuiltin.h"
-#include "actuator_relay.h"
-
-// Follow the pattern below and add any variables and search for other places tagged TO_ADD_SENSOR
-#include "sensor_analog_instances.h"
-#include "sensor_soil.h"
-#include "sensor_battery.h"
-#include "sensor_sht.h"
-#include "sensor_dht.h"
-#include "sensor_bh1750.h"
-#include "sensor_button.h"
-#include "sensor_ms5803.h"
-#include "sensor_loadcell.h"
-#include "sensor_ens160aht21.h"
-#include "control_blinken.h"
-#include "control_gsheets.h"
-#include "control.h"
-#include "control_hysterisis.h"
-#include "control_logger_fs.h"
-#include "system_fs.h"
-
+// TODO-141 move this into frugal_iot
 #ifdef LOCAL_DEV_WANT
 #include "local_dev.h"
 #endif
-
 
 System_Frugal frugal_iot; // Singleton
 
 void setup() {
 
-Serial.print("Setup: ");
-frugal_iot.setup(); // TODO-141 move most of below into this and this should come after sensors added.
-Serial.println();
-
-#ifdef ANY_DEBUG
-  Serial.begin(SERIAL_BAUD);
-  while (!Serial) { 
-    ; // wait for serial port to connect. Needed for Arduino Leonardo only
-  }
-  delay(SERIAL_DELAY); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
-  //Serial.setDebugOutput(true);  // Enable debug from wifi, also needed to enable output from printf
-  Serial.println(F("FrugalIoT Starting"));
-#endif // ANY_DEBUG
+  #ifdef ANY_DEBUG
+    Serial.begin(SERIAL_BAUD);
+    while (!Serial) { 
+      ; // wait for serial port to connect. Needed for Arduino Leonardo only
+    }
+    delay(SERIAL_DELAY); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
+    Serial.println(F("FrugalIoT Starting"));
+  #endif // ANY_DEBUG
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
@@ -161,24 +128,15 @@ Control_Logger* clfs = new Control_LoggerFS(
   clfs->inputs[0]->wireTo(ss->temperature); // TODO this is default wiring - should remove.
 #endif // CONTROL_LOGGERFS_WANT
 
+frugal_iot.setup(); // Has to be after setup sensors and actuators and controls
+
 #ifdef ANY_DEBUG  
   Serial.println(F("FrugalIoT Starting Loop"));
 #endif // ANY_DEBUG
 
 }
 
-bool donePeriodic = false;
 void loop() {
-// TODO-141 move into frugal_iot. 
-  if (!donePeriodic) {
-    frugal_iot.periodically();  // Do things run once per cycle
-    frugal_iot.infrequently();  // Do things that keep their own track of time
-    donePeriodic = true;
-  }
-  frugal_iot.frequently(); // Do things like MQTT which run frequently with their own clock
-  if (frugal_iot.powercontroller->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
-    donePeriodic = false; // reset after sleep (note deep sleep comes in at top again)
-  }
+  frugal_iot.loop();
 }
-
 

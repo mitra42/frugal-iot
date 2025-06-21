@@ -148,6 +148,9 @@ System_Frugal::System_Frugal()
 }
 
 void System_Frugal::setup() {
+  #ifdef SYSTEM_FRUGAL_DEBUG
+    Serial.print("Setup: ");
+  #endif
   Frugal_Group::setup(); // includes WiFi
   #ifdef SYSTEM_OTA_WANT
     ota->setup_after_wifi();
@@ -157,8 +160,8 @@ void System_Frugal::setup() {
   #endif
   mqtt->setup_after_wifi();
   discovery->setup_after_mqtt();  // System_Discovery
-  #ifdef LOCAL_DEV_WANT
-    localDev::setup();
+  #ifdef SYSTEM_FRUGAL_DEBUG
+     Serial.println();
   #endif
 }
 void System_Frugal::infrequently() {
@@ -189,4 +192,17 @@ void System_Frugal::frequently() {
   // TODO-23 will want something here for buttons as well
 }
 
+// Main loop() - call this from main.cpp
+void System_Frugal::loop() {
+  static bool donePeriodic = false;
+  if (!donePeriodic) {
+    periodically();  // Do things run once per cycle
+    infrequently();  // Do things that keep their own track of time
+    donePeriodic = true;
+  }
+  frequently(); // Do things like MQTT which run frequently with their own clock
+  if (powercontroller->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
+    donePeriodic = false; // reset after sleep (note deep sleep comes in at top again)
+  }
+}
 
