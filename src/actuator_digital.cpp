@@ -4,8 +4,6 @@
 
 #include "_settings.h"  // Settings for what to include etc
 
-#ifdef ACTUATOR_DIGITAL_WANT // defined in _settings.h if subclasses defined
-
 #include <Arduino.h>
 #include "actuator.h"
 #include "actuator_digital.h" // defines ACUATOR_DIGITAL_DEBUG
@@ -45,4 +43,3 @@ String Actuator_Digital::advertisement() {
   return input->advertisement(name); // Note using name of actuator not name of input (which is usually the same)
 }
 
-#endif // ACTUATOR_DIGITAL_WANT

@@ -32,21 +32,26 @@ void Frugal_Group::add(System_Base* fb) {
 // TODO-141 move most of main.cpp::setup to here, all non-app stuff
 void Frugal_Group::setup() {
   for (System_Base* fb: group) {
-    Serial.print(fb->id); Serial.print(F(" "));
+    #ifdef SYSTEM_FRUGAL_DEBUG
+      Serial.print(fb->id); Serial.print(F(" "));
+    #endif
     fb->setup();
   }
 }
 
-void Frugal_Group::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
+void Frugal_Group::dispatchTwig(const String &id, const String &topicLeaf, const String &payload, bool isSet) {
+  for (System_Base* fb: group) {
+    fb->dispatchTwig(id, topicLeaf, payload, isSet);
+  }
+};
+
+void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
   // topic Twig  <actuatorId>/<ioID> or  <actuatorId>/set/<ioID> or <actuatorId>/set/<ioID>/<config>
-  // This came from Actuators - not checked on Sensors or Control yet
   uint8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
   if (slashPos != -1) {
     String id = topicTwig.substring(0, slashPos);       // Extract the part before the slash
     String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
-    for (System_Base* fb: group) {
-      fb->dispatchTwig(id, topicLeaf, payload, isSet);
-    }
+    Frugal_Group::dispatchTwig(id, topicLeaf, payload, isSet);
   } else {
     Serial.println("No slash found in topic: " + topicTwig);
   }
@@ -87,7 +92,7 @@ System_Frugal::System_Frugal()
   sensors(new Frugal_Group("sensors", "Sensors")),
   controls(new Frugal_Group("controls", "Controls")),
   system(new Frugal_Group("system", "System")),
-  #ifdef SYSTEM_OTA_WANT
+  #ifdef SYSTEM_OTA_KEY
     ota(new System_OTA()),
   #endif
   #ifdef SYSTEM_TIME_WANT
@@ -131,7 +136,7 @@ System_Frugal::System_Frugal()
   #ifdef SYSTEM_OLED_WANT
     system->add(oled);
   #endif
-  #ifdef SYSTEM_OTA_WANT
+  #ifdef SYSTEM_OTA_KEY
     system->add(ota);
   #endif
   #ifdef SYSTEM_LORAMESHER_WANT
@@ -152,14 +157,14 @@ void System_Frugal::setup() {
     Serial.print("Setup: ");
   #endif
   Frugal_Group::setup(); // includes WiFi
-  #ifdef SYSTEM_OTA_WANT
-    ota->setup_after_wifi();
-  #endif
   #ifdef SYSTEM_TIME_WANT
     time->setup_after_wifi();
   #endif
   mqtt->setup_after_wifi();
   discovery->setup_after_mqtt();  // System_Discovery
+  #ifdef SYSTEM_OTA_KEY
+    ota->setup_after_discovery();
+  #endif
   #ifdef SYSTEM_FRUGAL_DEBUG
      Serial.println();
   #endif

@@ -41,28 +41,10 @@
 // #define SYSTEM_OTA_MS 300000 // 5 minute updates
 
 //Since I work on multiple nodes, I define each here, then uncomment exactly one and have its settings below. 
-#define SHT30 "ESP8266 with SHT sensor"
 //#define BOARD2 "ESP32 C3 Pico with Soil and Battery sensor"
 //#define SONOFF_R2 "Sonoff R2"
 //#define LILYGOHIGROW1 "Lilygo HiGrow"
 //#define BOARDCOMPILECHECK "Check all code compiles"
-
-// Note that on ESP that ESP32 or ESP8266 will be defined - should define other chips names here if its not ESP32 or ESP8266
-#ifdef DEVSHT30
-  #ifdef ESP8266
-    #define SYSTEM_OTA_KEY "esp8266sht30"
-  #elif defined(ESP32)
-    #define ARDUINO_LOLIN_C3_PICO
-    #define SYSTEM_OTA_KEY "esp32sht30"
-    #endif
-  #define SYSTEM_WIFI_DEVICE "SHT30"
-  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION SHT30
-  #define ACTUATOR_LEDBUILTIN_WANT // LED on board - usually wanted
-  #define SENSOR_SHT_WANT
-  #define SYSTEM_OTA_WANT
-  #define SYSTEM_WIFI_PROJECT "lotus"
-#endif //SHT30
-
 
 #ifdef SONOFF_R2
   // See https://github.com/mitra42/frugal-iot/issues/108
@@ -75,7 +57,6 @@
   #define SYSTEM_WIFI_PROJECT "lotus" // Replce with your project
   #define ACTUATOR_LED_WANT
   #define SYSTEM_WIFI_DEVICE "Sonoff switch"
-  #define SYSTEM_OTA_WANT
   #define SYSTEM_OTA_KEY "sonoff-r2"
 #endif
 
@@ -126,10 +107,7 @@
   //TO_ADD_CONTROL
   #define CONTROL_BLINKEN_WANT
   #define CONTROL_HYSTERISIS_WANT
-  #ifdef ESP8266
-    #define SYSTEM_OTA_WANT
-    #define SYSTEM_OTA_KEY "xxx" // Dummy - dont want it to OTA
-  #endif
+  #define SYSTEM_OTA_KEY "xxx" // Dummy - dont want it to OTA
   #ifdef ESP32
     #define SENSOR_SOIL_WANT
     #define SYSTEM_TIME_WANT

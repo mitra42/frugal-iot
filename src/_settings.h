@@ -40,14 +40,8 @@
 
 
 //  TO_ADD_ACTUATOR - add in appropriate line below depending on superclass
-#if defined(ACTUATOR_RELAY_WANT) || defined(ACTUATOR_LEDBUILTIN_WANT)
-  #define ACTUATOR_DIGITAL_WANT
-#endif
 #if defined(ACTUATOR_RELAY_DEBUG) || defined(ACTUATOR_LEDBUILTIN_DEBUG)
   #define ACTUATOR_DIGITAL_DEBUG
-#endif
-#if defined(ACTUATOR_DIGITAL_WANT)
-  #define ACTUATOR_WANT
 #endif
 #if defined(ACTUATOR_DIGITAL_DEBUG)
   #define ACTUATOR_DEBUG
@@ -108,7 +102,7 @@
 // Note for lolin_c3_pico we are using lolin_c3_mini which seems correct except for RGB_BUILTIN not being defined
 // 
 // Board names in e.g. ~/.platformio/platforms/espressif32/boards/lolin_c3_mini.json
-// ARDUINO_LOLIN_C3_MINI ARDUINO_LOLIN_S2_MINI ARDUINO_ESP8266_WEMOS_D1MINIPRO 
+// ARDUINO_LOLIN_C3_MINI ARDUINO_LOLIN_S2_MINI ARDUINO_ESP8266_WEMOS_D1MINI ARDUINO_ESP8266_WEMOS_D1MINIPRO 
 // These boards use a more generic board definition so need defining in platformio.dev
 // LilyGo HiGrow uses esp32dev which defines ARDUINO_ESP32_DEV TODO-140 define something
 // Sonoff uses esp01_1m which defines ARDUINO_ESP8266_ESP01 TODO-140 define something 

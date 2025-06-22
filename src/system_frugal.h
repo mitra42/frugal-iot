@@ -37,7 +37,7 @@ class Frugal_Group : public System_Base {
     Frugal_Group(const char * const id, const char * const name);
     void setup();
     void add(System_Base* fb);
-    void dispatchTwig(const String &topicTwig, const String &payload, bool isSet);
+    void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet); 
     void dispatchPath(const String &topicPath, const String &payload); // Only currently relevant on controls
     String advertisement();
     void frequently();
@@ -50,7 +50,7 @@ class System_Frugal : public Frugal_Group {
     Frugal_Group* sensors;
     Frugal_Group* controls;
     Frugal_Group* system;
-    #ifdef SYSTEM_OTA_WANT
+    #ifdef SYSTEM_OTA_KEY
       System_OTA* ota;
     #endif
     #ifdef SYSTEM_TIME_WANT
@@ -72,6 +72,7 @@ class System_Frugal : public Frugal_Group {
 
 
     System_Frugal();
+    void dispatchTwig(const String &topicTwig, const String &payload, bool isSet);
     void setup();
     void loop(); // Call this from main.cpp
     void infrequently();

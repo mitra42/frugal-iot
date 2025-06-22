@@ -12,7 +12,7 @@
 */
 
 #include "_settings.h"
-#ifdef SYSTEM_OTA_WANT
+#ifdef SYSTEM_OTA_KEY
 
 #if ! (defined(ESP8266) || defined(ESP32))
   #error OTA is currently only defined for ESP8266 and ESP32
@@ -173,7 +173,7 @@ char* System_OTA::getOTApath() {
     return url;
 }
 
-void System_OTA::setup_after_wifi() { // TODO-25 - put this in a class and call from base etc
+void System_OTA::setup_after_discovery() { // TODO-25 - put this in a class and call from base etc
   const char* const url = getOTApath();
   // Note this must run after WiFi has connected  and ideally before MQTT or Discovery except it needs xDiscovery::topicPrefix
   Serial.print("Attempt OTA from:"); Serial.println(url);
@@ -196,4 +196,4 @@ void System_OTA::infrequently() {
   }
 }
 
-#endif // SYSTEM_OTA_WANT
+#endif // SYSTEM_OTA_KEY

@@ -1,5 +1,6 @@
 /* Frugal IoT - main .h file - includes all the others */
 
+#include "_settings.h" // Load board definitions first
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #include "actuator_ledbuiltin.h"
 #include "actuator_relay.h"

@@ -3,11 +3,13 @@
 
 /* Configuration options
  * Optional: ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_PIN - defaults
- * Optional: ACTUATOR_LEDBUILTIN_BRIGHTNESS
- * Optional: BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
+ * Optional: 
+ *  ACTUATOR_LEDBUILTIN_BRIGHTNESS (255) - main.cpp can use this in constructor
+ *  ACTUATOR_LEDBUILTIN_COLOR (0xFFFFFF) - main.cpp can use this in constructor
+ *  BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
 
  * For reference the LED is on the following pins for boards we have been working with .... 
- * Sonoff: 13
+ * Sonoff: 13   D1-mini and D1-mini-pro: 2 
 */
 
 #include "actuator_digital.h" // for class Actuator_Digital
@@ -17,7 +19,7 @@
 // standard blinkplay fails on for example the WEMOS boards.
 // Arduino_UNO Pin 13 has an LED connected on most Arduino boards but doesnt define BUILTIN_LED
 // This next part is to handle some weirdnesses where early versions of ESP8266 define BUILTIN_LED instead of LED_BUILTIN
-// but BUILTIN_LED responds to ifndef
+// but BUILTIN_LED responds to ifndef because its a constant
 // This version works on ESP8266 D1 Mini and ESP32 Lolin C3 Pico and SONOFF R2,
 // It is not tested on others but should work if LED_BUILTIN is corectly defined for them. 
 // 
@@ -47,8 +49,8 @@
 #ifndef ACTUATOR_LEDBUILTIN_BRIGHTNESS
   #define ACTUATOR_LEDBUILTIN_BRIGHTNESS 255
 #endif
-#ifndef ACTUATOR_LEDBUILTIN_COLOR
-  #define ACTUATOR_LEDBUILTIN_COLOR "0x00FF00" // White
+#ifndef ACTUATOR_LEDBUILTIN_COLOR // TODO-141 this should always come from the constructor
+  #define ACTUATOR_LEDBUILTIN_COLOR "0xFFFFFF" // White
 #endif
 
 

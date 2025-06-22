@@ -2,7 +2,7 @@
   Turn the built in LED on or off
 
   Required from .h: ACTUATOR_LEDBUILTIN_PIN
-  Optional:   ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_BRIGHTNESS
+  Optional:   ACTUATOR_LEDBUILTIN_DEBUG
   Optional: BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
 
   For reference the LED is on the following pins for boards we have been working with .... 
@@ -11,8 +11,6 @@
 */
 
 #include "_settings.h"  // Settings for what to include etc
-
-#ifdef ACTUATOR_LEDBUILTIN_WANT
 
 #include <Arduino.h>
 #include "actuator_ledbuiltin.h"
@@ -82,4 +80,3 @@ void Actuator_Ledbuiltin::act() {
     #endif
   #endif 
 }
-#endif // ACTUATOR_LEDBUILTIN_WANT

@@ -24,7 +24,7 @@ class System_OTA : public System_Base {
     friend void otaEndCB(void);
     friend void otaErrorCB(int errorCode);
 
-    void setup_after_wifi();
+    void setup_after_discovery();
     void infrequently();
 
   private:

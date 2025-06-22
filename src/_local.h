@@ -138,8 +138,7 @@
   //#define SYSTEM_LORAMESHER_WANT
   //#define SYSTEM_LORAMESHER_SENDER_TEST // Remove when LORAMESHER via MQTT built
   //#define SYSTEM_OLED_WANT
-  #define SYSTEM_OTA_WANT 
-  #define SYSTEM_OTA_KEY "xxx" // Dummy - dont want it to OTA
+  #define SYSTEM_OTA_KEY "xxx" // Dummy - dont want it to actually OTA
 #endif
 
 #ifdef DATALOGGER110 // testing Logger
@@ -187,7 +186,6 @@
   #define ACTUATOR_LED_WANT
   #define SYSTEM_WIFI_DEVICE "Sonoff switch"
   #define CONTROL_HYSTERISIS_WANT
-  #define SYSTEM_OTA_WANT
   #define SYSTEM_OTA_KEY "sonoff"
 #endif
 
@@ -243,8 +241,7 @@
   #define SENSOR_SOIL_100 800
   //#define SENSOR_SHT_WANT
   #define CONTROL_HYSTERISIS_WANT
-  //#define SYSTEM_OTA_WANT
-  #define SYSTEM_OTA_KEY "kopernik1"
+  //#define SYSTEM_OTA_KEY "kopernik1"
   #define SYSTEM_WIFI_PROJECT "lotus"
   //#define LOCAL_DEV_WANT // Include custom code
 #endif //BOARDEMO1
