@@ -262,11 +262,6 @@
   #define SENSOR_MS5803_I2C 0x77 // Set via jumper to 76 or 77 
 #endif
 
-// Want debugging usually on following
-#define SYSTEM_DISCOVERY_DEBUG
-#define SYSTEM_WIFI_DEBUG
-#define SYSTEM_MQTT_DEBUG
-
 #ifndef SYSTEM_WIFI_PROJECT
   #define SYSTEM_WIFI_PROJECT "lotus"
 #endif
