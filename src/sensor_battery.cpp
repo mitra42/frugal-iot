@@ -17,9 +17,9 @@
 Sensor_Battery::Sensor_Battery(const uint8_t pin_init) 
 : Sensor_Analog("battery", "Battery", pin_init, 0, 0, 4500, "green", true) { }
 
-#ifdef ESP8266_D1_MINI_PROv2 // Green D1 pro
+#ifdef ARDUINO_ESP8266_WEMOS_D1MINIPRO // Note only works on D1 mini pro V2 (the Green one)
   #define VOLTAGE_DIVIDER 4.5 // (130+220+100)/100 i.e. 1V on A0 when 4.5 on batt 
-#elif defined(LOLIN_C3_PICO)
+#elif defined(ARDUINO_LOLIN_C3_PICO)
   #define VOLTAGE_DIVIDER 2 // Maybe board specific but most I see have 2 equal resistors
 #elif defined(LILYGOHIGROW)
   #define VOLTAGE_DIVIDER 6.6 // From LilyGo code, not testd yet
@@ -32,7 +32,7 @@ Sensor_Battery::Sensor_Battery(const uint8_t pin_init)
   #define ANALOG_READ_RANGE 1024 // THis can be board/chip specific, 
   #define VCC_MILLIVOLTS 1000.0 // Voltage at chip pin at which we get ANALOG_READ_RANGE
   // Note that on some boards -  the voltage divider for the battery is different than for pin A0
-  // e.g. ESP8266_D1_MINI_PROv2 - batt = (130+220+100)/100 while A0 is just (220+100)/100
+  // e.g. ARDUINO_ESP8266_WEMOS_D1MINIPRO (V2) - batt = (130+220+100)/100 while A0 is just (220+100)/100
 
   // Note the ESP32 function returns uint32_t which makes no sense given max battery is 5000
   uint16_t analogReadMilliVolts(uint8_t pin) {

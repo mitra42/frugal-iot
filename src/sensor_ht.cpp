@@ -1,10 +1,11 @@
 /*
- * Base class for temperature and humidity sensors (Sensor_SHT & Sensor_DHT)
+ * Frugal IoT - Base class for temperature and humidity sensors (Sensor_SHT & Sensor_DHT)
+ *
+ * Mitra Ardron: Sept 2024...Jun 2025
+ *
  */
 
 #include "_settings.h"  // Settings for what to include etc
-
-#ifdef SENSOR_HT_WANT
 
 #include <Arduino.h>
 #include "sensor.h"
@@ -38,5 +39,3 @@ void Sensor_HT::dispatchTwig(const String &topicSensorId, const String &leaf, co
     }
   }
 }
-
-#endif // SENSOR_HT_WANT

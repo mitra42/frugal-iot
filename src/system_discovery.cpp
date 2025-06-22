@@ -30,9 +30,7 @@
 #ifdef ACTUATOR_WANT
   #include "actuator.h"
 #endif
-#ifdef SENSOR_WANT
-  #include "sensor.h"
-#endif
+#include "sensor.h"
 #ifdef CONTROL_WANT
   #include "control.h"
 #endif

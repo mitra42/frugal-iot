@@ -2,15 +2,23 @@
  * Temperature and Humidity sensor, 
  * Based on SHT85_demo_async.ino in https://github.com/RobTillaart/SHT85
  * 
- * Mitra Ardron: Sept 2024
+ * Mitra Ardron: Sept 2024...Jun 2025
  * 
- * Tested on Lolin SHT30 shield on ESP8266 - not yet tested on other devices or processors
+ * See the for guide to building one at 
+ * https://github.com/mitra42/frugal-iot/wiki/Building-a-temperature---humidity-sensor/ 
  * 
- * Required:
- * SENSOR_SHT_DEVICE SHT30                  // Which kind of device, for now it presumes they are all the same.
- * SENSOR_SHT_ADDRESS                       // Device address
- * Optional: 
- * SENSOR_SHT_DEBUG                          // Debugging output
+ * Tested on:
+ * Sensors: Lolin SHT30; a nice one on a cord, including some really cheap ones - no known compatability issues
+ * Dev boards: ESP8266 & ESP32 on multiple boards - no known compatability issues
+ * 
+ * Required
+ * Optional (default)
+ * SENSOR_SHT_DEVICE (SHT30) // Which kind of device, for now it presumes they are all the same.
+ * SENSOR_SHT_DEBUG          // Debugging output
+ * 
+ * Note - following is only used in main.cpp for constructor wth default in .h
+ * SENSOR_SHT_ADDRESS (0x44) // Device address - 0x45 is also common esp D1 SHT shield
+ *
  *
  * TODO-16 Support multiple I2C Wires - so for example can use two sensors on each wire. See Issue#16
  * TODO-16 Pull the Wire support into a seperate module so that a single Wire can be used for alternate sensors. See Issue#16
@@ -20,8 +28,6 @@
 
 #include "_settings.h"  // Settings for what to include etc
 
-#ifdef SENSOR_SHT_WANT
-
 #include <Arduino.h>
 #include <SHT85.h>
 #include "sensor_sht.h"
@@ -30,6 +36,8 @@
 Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, bool retain) 
   : Sensor_HT("sht", name, retain), 
     address(address_init) {
+  //TODO move most of this to setup rather than constructor
+  //
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   Wire.begin(); // Appears to default to 4,5 which is correct for the Lolin D1 Mini SHT30 shield
   Wire.setClock(100000);
@@ -81,5 +89,3 @@ void Sensor_SHT::readAndSet() {
   #endif
   }
 }
-
-#endif // SENSOR_SHT_WANT

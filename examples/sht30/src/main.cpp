@@ -1,9 +1,10 @@
 /* 
- *  This is a test harness for the Frugal IoT project
+ *  Frugal IoT example - SHT30 temperature and humidity sensor
+ * 
+ * Optional: SENSOR_SHT_ADDRESS - defaults to 0x44, (note the D1 shields default to 0x45)
  */
 
  // TODO-141 obsolete _settings.h from here - see legacyt
-#include "_settings.h"  // For SERIAL_BAUD SERIAL_DELAY ANY_DEBUG
 
 #define ANY_DEBUG
 #if !defined(SERIAL_BAUD)
@@ -13,7 +14,7 @@
   #define SERIAL_DELAY 5000
 #endif
 
-
+// defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "frugal_iot.h"
 
 System_Frugal frugal_iot; // Singleton

@@ -17,10 +17,9 @@
 
 // This will replace loop() and then parts will be put into 
 
-#include "_settings.h"
-#include "system_power.h"
+#include <Arduino.h> // Required to get sdkconfig.h to get CONFIG_IDF_TARGET_xxx
 // TODO may not need all these once WiFi debugged and code moved to other files
-#include "system_frugal.h"
+//#include "system_frugal.h"
 #ifdef ESP32 // Not available on ESP8266 - have not yet searched for equivalents
   // Next three .h might or might not be needed 
   #include "esp_pm.h"
@@ -31,6 +30,9 @@
   #include "freertos/FreeRTOS.h"
   #include "freertos/task.h"
 #endif
+#include "_settings.h"
+#include "system_power.h"
+#include "system_frugal.h"
 
 /*
 // Wont work in Arduino framework 
@@ -110,7 +112,7 @@ void System_Power_Mode_Deep::setup() {
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 void System_Power_Mode_LightWifi::setup() {
   // This bit is weird - there are 5 different ESP32 config structures - all identical - note CONFIG_IDF_TARGET_ESP32xx is defined in board files
-  #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(LOLIN_C3_PICO) // Defined in board files on PlatformIO untested on Arduino
+  #if defined(CONFIG_IDF_TARGET_ESP32C3) // Defined in board files on PlatformIO untested on Arduino
     esp_pm_config_esp32c3_t pm_config; // Seems identical structure to the default ESP32 one ! 
   #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     esp_pm_config_esp32s2_t pm_config;

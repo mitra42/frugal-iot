@@ -9,9 +9,6 @@
 #ifdef LOCAL_DEV_WANT
 
 // Next step is usually to define any default parameters, if they aren't defined in _local.h e.g. 
-// #ifndef FOO_MS
-// #define FOO_MS 1000
-// #endif
 
 #include "control.h"
 

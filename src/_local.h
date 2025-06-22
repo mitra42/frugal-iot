@@ -32,7 +32,7 @@
 
 // Define which board you are using - or it will use a default
 #ifndef PLATFORMIO // If you are using PlatformIO, it will define the board for you
-// #define LOLIN_C3_PICO
+// #define ARDUINO_LOLIN_C3_PICO
 #endif //PLATFORMIO
 
 
@@ -123,16 +123,17 @@
   #define SYSTEM_SD_WANT
   #define SYSTEM_SPIFFS_WANT // ALso includes LittleFS
   #if defined(ESP8266) && !defined(PLATFORMIO)
-    #define ESP8266_D1_MINI_PROv2  // Use Mini Pro v2 for testing because supports battery 
+   // #define ARDUINO_ESP8266_WEMOS_D1MINIPRO  // Use Mini Pro for testing because (V2) supports battery 
   #endif
-  #if defined(ESP32) && !defined(PLATFORMIO)
-      #define LOLIN_C3_PICO
-  #endif
+  //Not sure why we are doing this 
+  //#if defined(ESP32) && !defined(PLATFORMIO)
+  //    #define ARDUINO_LOLIN_C3_PICO
+  //#endif
   #ifdef ESP32 // Functions that only work on ESP32
     #define SYSTEM_TIME_WANT
   #endif
   #define SYSTEM_POWER_MODE_LOOP
-  //Need to use LOLIN_C3_PICO for many of the sensors, so cant test LoRa or OLED here yet
+  //Need to use ARDUINO_LOLIN_C3_PICO for many of the sensors, so cant test LoRa or OLED here yet
   //#define SYSTEM_LORA_WANT
   //#define SYSTEM_LORAMESHER_WANT
   //#define SYSTEM_LORAMESHER_SENDER_TEST // Remove when LORAMESHER via MQTT built

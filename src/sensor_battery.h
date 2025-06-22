@@ -9,8 +9,8 @@
  #include "sensor_analog.h"
 
 #if defined(SENSOR_BATTERY_WANT) && !defined(SENSOR_BATTERY_PIN)
-  #ifdef LOLIN_C3_PICO
-    #define SENSOR_BATTERY_PIN (3) // There is a solder jump to pin 3 - which - on D1 shields - is same as A0 on ESP8266
+  #ifdef ARDUINO_LOLIN_C3_PICO // Not there is no battery pin on ARDUINO_LOLIN_C3_MINI
+    #define SENSOR_BATTERY_PIN (3) // There is a solder jump to pin 3 - which - on D1 shields - is same as A0 on ESP8266-D1
   #elif defined(ESP8266)
     #define SENSOR_BATTERY_PIN A0 // Its the only analog pin so got to be here
   #elif defined(LILYGOHIGROW)

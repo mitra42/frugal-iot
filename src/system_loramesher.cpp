@@ -11,7 +11,10 @@
  *  LoRaMeshMessage = appPrtDst appPrtSrc messageId  // as used by LoRaChat
  *  FrugalIoTMessage = message // Will evolve to what needed for MQTT
  *  AppPacket<xxx> = src dst payload=xxx
-*/
+ * 
+ * Required
+ * SYSTEM_LORAMESHER_MODULE either LoraMesher::LoraModules::SX1278_MOD or ...::SX1276_MOD
+ */
 
 #include "_settings.h"
 #ifdef SYSTEM_LORAMESHER_WANT
@@ -28,22 +31,16 @@
 #include "system_frugal.h"
 
 // These settings duplicated in system_loramesher.cpp and system_lora.cpp (system_loramesher.cpp are newer)
-#if defined(TTGO_LORA_SX1276)
-  #define SYSTEM_LORAMESHER_MODULE LoraMesher::LoraModules::SX1276_MOD // For N.America and Australia 
-#elif defined(TTGO_LORA_SX1278)
-  #define SYSTEM_LORAMESHER_MODULE LoraMesher::LoraModules::SX1278_MOD // For N.America and Australia 
-#endif
-
-// For TTGO_LORA_SX127X 
+// For ARDUINO_TTGO_LoRa32 
 // LORA_SCK; LORA_MISO; LORA_MOSI; LORA_CS; LORA_RST; and for V21 LORA_D1 are defined correctly in
 // e.g. ~/Arduino15/packages/esp32/hardware/esp32/3.2.0/variants/ttgo-lora32-v21new/pins_arduino.h etc
-#if defined(TTGO_LORA_SX127X_V1)
+#if defined(ARDUINO_TTGO_LoRa32_v1)
   #define LORA_D0 LORA_IRQ
-#elif defined(TTGO_LORA_SX127X_V2) || defined(TTGO_LORA_SX127X_V21) // V3 is almost same as V2
+#elif defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_v21new) // V3 is almost same as V2
   #define LORA_D0 LORA_IRQ
   // Note on V2 but not V21 LORA_D1 is not defined and may need a physical wire to GPIO 33
 #else
-  #error "Unsupported LORA configuration. Please define either TTGO_LORA_SX127X_V1 or TTGO_LORA_SX127X_V2. or define new BOARD"
+  #error "Unsupported LORA configuration. Please define either ARDUINO_TTGO_LoRa32_v1 or ARDUINO_TTGO_LoRa32_v2. or define new BOARD"
 #endif
 
 System_LoraMesher::System_LoraMesher()
@@ -54,7 +51,7 @@ System_LoraMesher::System_LoraMesher()
     config.loraCs = LORA_CS;
     config.loraRst = LORA_RST;
     config.loraIrq = LORA_IRQ;
-    config.loraIo1 = LORA_D1;  // Requirement for D1 may mean it won't work on TTGO_LORA_SX127X_V1 or _V2 but will on _V21
+    config.loraIo1 = LORA_D1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_v1 or _V2 but will on _V21
     config.module = SYSTEM_LORAMESHER_MODULE;
     config.freq = SYSTEM_LORAMESHER_BAND;
 }

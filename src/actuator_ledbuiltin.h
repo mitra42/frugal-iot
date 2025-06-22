@@ -34,11 +34,11 @@
 #endif // ACTUATOR_LEDBUILTIN_PIN
 
 // TODO-ADD-BOARD - add your board here
-#if defined(LOLIN_C3_PICO) || defined(LILYGOHIGROW)
-  #define ACTUATOR_LEDBUILTIN_RGB
+#if defined(ARDUINO_LOLIN_C3_PICO) || defined(LILYGOHIGROW) // note ARDUINO_LOLIN_C3_MINI is not RGB
+  #define ACTUATOR_LEDBUILTIN_RGB // TODO-141 replce by RGB_BUILTIN and define for ARDUINI_LOLIN_C3_PICO
 #elif defined(SONOFF_R2) || defined(ESP8266_D1) 
   #define ACTUATOR_LEDBUILTIN_INVERT
-#elif defined(LOLIN_S2_MINI) || defined(TTGO_LORA_SX127X) 
+#elif defined(ARDUINO_LOLIN_S2_MINI) || defined(ARDUINO_TTGO_LoRa32) 
   // Not defined LED is digital and not inverted
 #else
   #error "please define whether your LED is RGB or not"

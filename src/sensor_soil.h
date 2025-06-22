@@ -10,10 +10,10 @@
 
 #if defined(SENSOR_SOIL_WANT) && !defined(SENSOR_SOIL_PIN)
   //TO_ADD_BOARD
-  #if defined(LOLIN_C3_PICO)
+  #if defined(ARDUINO_LOLIN_C3_PICO)
     #error there is no default pin on C3-pico suggest 4, 0 or 1
   #elif defined(ESP8266_D1)
-    #define SENSOR_SOIL_PIN A0 // Which pin to read - this will be board specific
+    #define SENSOR_SOIL_PIN A0 // THere is only one Anlog on D1
   #elif defined(LILYGOHIGROW)
     #define SENSOR_SOIL_PIN 32
   #else 

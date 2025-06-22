@@ -15,7 +15,7 @@
   #elif defined(ESP8266_D1)
     // Reasonable to assume using the Wemos Relay shield
     #define ACTUATOR_RELAY_PIN D1 // Default on Wemos relay shield for D1 mini or C3 Pico 
-  #elif defined (LOLIN_C3_PICO) || defined (LOLIN_S2_MINI)
+  #elif defined(ARDUINO_LOLIN_C3_PICO) || defined(ARDUINO_LOLIN_S2_MINI)
     // Reasonable to assume using the Wemos Relay shield
     #define ACTUATOR_RELAY_PIN 10 // Not sure if pin 10 is called "10" in digital write
   #else

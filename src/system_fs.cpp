@@ -28,7 +28,7 @@
   #ifndef SYSTEM_SD_PIN
     #ifdef ESP8266_D1
       #define SYSTEM_SD_PIN D4 // Default pin on the shield - if override theres a solder bridge to change
-    #elif defined(LOLIN_C3_PICO)
+    #elif defined(ARDUINO_LOLIN_C3_PICO)
       #define SYSTEM_SD_SCK 1
       #define SYSTEM_SD_MISO 0
       #define SYSTEM_SD_MOSI 4
@@ -186,7 +186,7 @@ void System_SD::setup() {
   uint8_t pin = SYSTEM_SD_PIN;
   // Library is SS=D8=15 fails;  old sketch was 4 some online says 8 but that fatals. D4=GPIO0=2 worked on Lolin Relay with no solder bridge
   Serial.println("SD initialization on CS pin "); Serial.print(pin);
-  #ifdef SYSTEM_SD_SCK // esp on LOLIN_C3_PICO default pins are wrong - not those used on the shield 
+  #ifdef SYSTEM_SD_SCK // esp on ARDUINO_LOLIN_C3_PICO default pins are wrong - not those used on the shield 
     SPI.begin(SYSTEM_SD_SCK, SYSTEM_SD_MISO, SYSTEM_SD_MOSI, pin); // SCK, MISO, MOSI, pin
   #endif 
   if (!SD.begin(pin)) { 

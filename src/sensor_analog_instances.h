@@ -17,7 +17,7 @@
   #ifdef ESP8266_D1
     // Only one analog pin on D1 Mini
     #define SENSOR_ANALOG_PIN_1 A0
-  #elif defined(LOLIN_C3_PICO) || defined(LOLIN_S2_MINI)
+  #elif defined(ARDUINO_LOLIN_C3_PICO) || defined(ARDUINO_LOLIN_S2_MINI)
       // 0,1,4 work 5 gets error message; 3 is Vbatt; 2 just gets 4095, 8,10 get 0, 7 gets 0 and seems connected to LED
       #error You must define which pins on a Lolin_C3_Pico typically 0,1,4
   #else

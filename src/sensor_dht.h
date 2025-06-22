@@ -8,8 +8,8 @@
 #if defined(SENSOR_DHT_WANT) && !defined(SENSOR_DHT_PIN)
   #ifdef ESP8266_D1
     #define SENSOR_DHT_PIN D4
-  #elif defined(LOLIN_C3_PICO)
-    #define SENSOR_DHT_PIN 6 // Currently untested but should be the same as D4 on ESP8266_D1
+  #elif defined(ARDUINO_LOLIN_C3_PICO)
+    #define SENSOR_DHT_PIN 6 // Currently untested but should be the same physical pin as D4 on ESP8266_D1
   #elif defined(LILYGOHIGROW)
     #define SENSOR_DHT_PIN GPIO_NUM_16
   #else
