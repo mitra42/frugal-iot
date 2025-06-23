@@ -27,7 +27,7 @@ void setup() {
 
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #ifdef ACTUATOR_LEDBUILTIN_WANT
-  frugal_iot.actuators->add(new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, ACTUATOR_LEDBUILTIN_BRIGHTNESS, ACTUATOR_LEDBUILTIN_COLOR));
+  frugal_iot.actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN, RGB_BRIGHTNESS, "0xFFFFFF"));
 #endif
 #ifdef ACTUATOR_RELAY_WANT
   frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", ACTUATOR_RELAY_PIN, "purple"));

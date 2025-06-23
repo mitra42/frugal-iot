@@ -31,7 +31,7 @@ void setup() {
     Serial.println(F("FrugalIoT Starting"));
   #endif // ANY_DEBUG  
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true));
-  frugal_iot.actuators->add(new Actuator_Ledbuiltin(ACTUATOR_LEDBUILTIN_PIN, ACTUATOR_LEDBUILTIN_BRIGHTNESS, ACTUATOR_LEDBUILTIN_COLOR));
+  frugal_iot.actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN));
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls
   Serial.println(F("FrugalIoT Starting Loop"));
 }

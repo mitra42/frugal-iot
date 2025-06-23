@@ -1,14 +1,32 @@
-/*
-  Turn the built in LED on or off
-
-  Required from .h: ACTUATOR_LEDBUILTIN_PIN
-  Optional:   ACTUATOR_LEDBUILTIN_DEBUG
-  Optional: BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
-
-  For reference the LED is on the following pins for boards we have been working with .... 
-  Sonoff: 13
-  LILYGOHIGROW: 18
-*/
+/* Frugal IoT - LED control 
+ *
+ * LEDs have some historical problems, and legacy bugs so some of this code may look weird, 
+ * please be careful about un-weirding it if you do not have all the options to test on.
+ * 
+ * Using RBB_BUILTIN as the indicator of whether its RGB or not and using that for calls to neopixelwrite or rgbLedWrite
+ * Using LED_BUILTIN for the digital pin and calls to digitalWrite
+ * Use RGB_BRIGHTNESS as default brightness typically set to around 64 on bright LEDs
+ * If ACTUATOR_LEDBUILTIN_INVERT is defined then digital output inverted (SONOFF-R2 and ESP8266-D1)
+ * 
+ * Note that for RGB Leds LED_BUILTIN=RGB_BUILTIN and is set to a higher value 
+ *
+ * ODDITIES KNOWN AND HOW CORRECTED
+ * lolin_c3_pico board definition is missing, most people use lolin_c3_mini board defs but that gets LED_BUILTIN and RGB_BUILTIN wrong - overridden below
+ * SONOFF_R2 and ESP8266_D1 are inverted - 1 is off, 0 is on // TODO-141 confirm
+ * SONOFF_R2 - esp01_1m defines LED_BUILTIN on 1 but have note that its on 13 and inverted  TODO-141 check
+ * Some legacy boards (Arduino Uno?) define BUILTIN_LED instead
+ * 
+ * Expect from platformio.ini
+ * ACTUATOR_LEDBUILTIN_DEBUG - if want detailed debugging - needed surprisingly often given oddities.
+ *
+ * Outout from .h 
+ *
+ * KNOWN PINS For reference the LED is on the following pins for boards we have been working with .... 
+ * TODO-ADD-BOARD please check and add below
+ * Digital: ARDUINO_LOLIN_S2_MINI (15) TODO check); ARDUINO_TTGO_LoRa32 (25);
+ * Inverted Digital: Sonoff: 13 (TODO-CHECK THEN DEFINE BELOW); esp8266-D1 (2); 
+ * RGB: LILYGOHIGROW: 18 - but have not been able to get it to work 
+ */
 
 #include "_settings.h"  // Settings for what to include etc
 
@@ -16,9 +34,11 @@
 #include "actuator_ledbuiltin.h"
 #include "actuator_digital.h"
 
+#define ACTUATOR_LEDBUILTIN_WHITE "0xFFFFFF"
+
 Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, const char* color) :
   Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow"),
-  #ifdef ACTUATOR_LEDBUILTIN_RGB
+  #ifdef RGB_BUILTIN
     color(new INcolor("led", "color", "LED color", color, false)), //TODO-131 color of UX should reflect color of LED
   #endif
   brightness(brightness) 
@@ -30,7 +50,7 @@ Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, 
 
 void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
   if (topicActuatorId == id) {
-    #ifdef ACTUATOR_LEDBUILTIN_RGB
+    #ifdef RGB_BUILTIN
       if (
           color->dispatchLeaf(leaf, payload, isSet)
       ) { // True if changed
@@ -42,10 +62,7 @@ void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const Stri
 }
   
 void Actuator_Ledbuiltin::act() {
-  #ifdef RGB_BUILTIN // Lolon C3 doesnt have RGB_BUILTIN defined so digitalWrite doesnt work correctly
-    #error Unclear to me if boards with RGB_BUILTIN should use the neopixelwrie or digitalWrite (with latter doing a neopixelwrite) - I dont have a board to play with that does this.
-  #endif
-  #ifdef ACTUATOR_LEDBUILTIN_RGB
+  #ifdef RGB_BUILTIN
     #ifdef ESP8266
       // Fix this if encounter a ESP8266 board with RGB LED
       Serial.println(F("Do not have code for RGB LED on ESP8266")); 
@@ -67,16 +84,17 @@ void Actuator_Ledbuiltin::act() {
         Serial.print(r, HEX); Serial.print(g,HEX); Serial.println(b, HEX); //TODO-131 0 should be "00"
       #endif
       #ifdef PLATFORMIO
-        neopixelWrite(pin,g,r,b);   // Neopixel is g r b on Lolin- esp32-hal-rgb-led.c
+        // TODO check if this is really grb or should use rgb
+        neopixelWrite(pin,g,r,b);   // Neopixel is g r b on Lolin- esp32-hal-rgb-led.c (or maybe was, but isnt any longer)
       #else // neopixelWrite deprecated on Arduino IDE
         rgbLedWrite(pin,r,g,b);   // Note this is r,g,b (Neopixel is g r b on Lolin)
       #endif
     #endif
-  #else // !ACTUATOR_LEDBUILTIN_RGB
+  #else // !RGB_BUILTIN
     #ifdef ACTUATOR_LEDBUILTIN_INVERT
-      digitalWrite(ACTUATOR_LEDBUILTIN_PIN, input->value ? LOW : HIGH); // LED pin is inverted, at least on Lolin D1 Mini
+      digitalWrite(pin, input->value ? LOW : HIGH); // LED pin is inverted, at least on Lolin D1 Mini
     #else
-      digitalWrite(ACTUATOR_LEDBUILTIN_PIN, input->value ? HIGH : LOW); // LED pin is not inverted, e.g. on Lolin S3 mini
+      digitalWrite(pin, input->value ? HIGH : LOW); // LED pin is not inverted, e.g. on Lolin S3 mini
     #endif
   #endif 
 }

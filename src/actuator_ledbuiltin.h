@@ -1,59 +1,73 @@
+/* Frugal IoT - LED control 
+ *
+ * LEDs have some historical problems, and legacy bugs so some of this code may look weird, 
+ * please be careful about un-weirding it if you do not have all the options to test on.
+ * 
+ * Using RBB_BUILTIN as the indicator of whether its RGB or not and using that for calls to neopixelwrite or rgbLedWrite
+ * Using LED_BUILTIN for the digital pin and calls to digitalWrite
+ * Use RGB_BRIGHTNESS as default brightness typically set to around 64 on bright LEDs
+ * If ACTUATOR_LEDBUILTIN_INVERT is defined then digital output inverted (SONOFF-R2 and ESP8266-D1)
+ * 
+ * Note that for RGB Leds LED_BUILTIN=RGB_BUILTIN and is set to a higher value 
+ *
+ * ODDITIES KNOWN AND HOW CORRECTED
+ * lolin_c3_pico board definition is missing - its provided in boards/ and defines LED_BUILTIN=RGB_BUILTIN=29 (7+SOC_GPIO_PIN_COUNT)
+ * SONOFF_R2 and ESP8266_D1 are inverted - 1 is off, 0 is on // TODO-141 confirm
+ * SONOFF_R2 - esp01_1m defines LED_BUILTIN on 1 but have note that its on 13 and inverted  TODO-141 check
+ * Some legacy boards (Arduino Uno?) define BUILTIN_LED instead
+ * 
+ * Expect from platformio.ini
+ * ACTUATOR_LEDBUILTIN_DEBUG - if want detailed debugging - needed surprisingly often given oddities.
+ *
+ * Outout from .h 
+ *
+ * KNOWN PINS For reference the LED is on the following pins for boards we have been working with .... 
+ * TODO-ADD-BOARD please check and add below
+ * Digital: ARDUINO_LOLIN_S2_MINI (15) TODO check); ARDUINO_TTGO_LoRa32 (25);
+ * Inverted Digital: Sonoff: 13 (TODO-CHECK THEN DEFINE BELOW); esp8266-D1 (2); 
+ * RGB: LILYGOHIGROW: 18 - but have not been able to get it to work 
+ */
+
 #ifndef ACTUATOR_LEDBUILTIN_H
 #define ACTUATOR_LEDBUILTIN_H
 
-/* Configuration options
- * Optional: ACTUATOR_LEDBUILTIN_DEBUG ACTUATOR_LEDBUILTIN_PIN - defaults
- * Optional: 
- *  ACTUATOR_LEDBUILTIN_BRIGHTNESS (255) - main.cpp can use this in constructor
- *  ACTUATOR_LEDBUILTIN_COLOR (0xFFFFFF) - main.cpp can use this in constructor
- *  BUILTIN_LED LED_BUILTIN RGB_BUILTIN - set on various boards  
-
- * For reference the LED is on the following pins for boards we have been working with .... 
+/*
  * Sonoff: 13   D1-mini and D1-mini-pro: 2 
 */
 
 #include "actuator_digital.h" // for class Actuator_Digital
 
-// TO_ADD_BOARD, look this thru and check it - there are historical bugs in board definitions in this area, so its art rather than science! 
-// Arduinos unfortunately dont use any kind of #define for the board type so the 
-// standard blinkplay fails on for example the WEMOS boards.
-// Arduino_UNO Pin 13 has an LED connected on most Arduino boards but doesnt define BUILTIN_LED
-// This next part is to handle some weirdnesses where early versions of ESP8266 define BUILTIN_LED instead of LED_BUILTIN
-// but BUILTIN_LED responds to ifndef because its a constant
-// This version works on ESP8266 D1 Mini and ESP32 Lolin C3 Pico and SONOFF R2,
-// It is not tested on others but should work if LED_BUILTIN is corectly defined for them. 
-// 
-#ifndef ACTUATOR_LEDBUILTIN_PIN
-  #ifdef LED_BUILTIN
-    #define ACTUATOR_LEDBUILTIN_PIN LED_BUILTIN
-  #elif defined(BUILTIN_LED)
-      #define ACTUATOR_LEDBUILTIN_PIN BUILTIN_LED
-  #elif defined(LILYGOHIGROW)
-    #define ACTUATOR_LEDBUILTIN_PIN 18
-  #else 
-    #error "No ACTUATOR_LEDBUILTIN_PIN pin defined and no default known for this board"
-  #endif
-#endif // ACTUATOR_LEDBUILTIN_PIN
-
-// TODO-ADD-BOARD - add your board here
-#if defined(ARDUINO_LOLIN_C3_PICO) || defined(LILYGOHIGROW) // note ARDUINO_LOLIN_C3_MINI is not RGB
-  #define ACTUATOR_LEDBUILTIN_RGB // TODO-141 replce by RGB_BUILTIN and define for ARDUINI_LOLIN_C3_PICO
-#elif defined(SONOFF_R2) || defined(ESP8266_D1) 
-  #define ACTUATOR_LEDBUILTIN_INVERT
-#elif defined(ARDUINO_LOLIN_S2_MINI) || defined(ARDUINO_TTGO_LoRa32) 
-  // Not defined LED is digital and not inverted
-#else
-  #error "please define whether your LED is RGB or not"
-#endif // BOARDS
-
-#ifndef ACTUATOR_LEDBUILTIN_BRIGHTNESS
-  #define ACTUATOR_LEDBUILTIN_BRIGHTNESS 255
-#endif
-#ifndef ACTUATOR_LEDBUILTIN_COLOR // TODO-141 this should always come from the constructor
-  #define ACTUATOR_LEDBUILTIN_COLOR "0xFFFFFF" // White
+// On some older boards - esp Arduino Uno LED_BUILTIN is not defined but BUILTIN_LED=13, *but* is a constant so does not show up with ifdef
+#ifndef LED_BUILTIN
+  // May put a board test in here if find this is problematic on boards with no LED_BUILTIN defined because there is no LED
+  #define LED_BUILTIN BUILTIN_LED // BUILTIN_LED probably a constant
 #endif
 
+#if defined(LILYGOHIGROW)
+  #define LED_BUILTIN 18 // TODO test if this actually works - see notes that have failed - also try as Neopixel 
+  //#define RGB_BUILTIN lED_BUILTIN
+#endif
 
+#ifndef LED_BUILTIN
+  // May need to comment this out if encounter voards with no LED as this is now always compiled
+  #error "No ACTUATOR_LEDBUILTIN_PIN pin defined and no default known for this board"
+#endif
+
+// Oddity - some digital boards are inverted 
+// TODO-141 reconfirm this  - including checking definition of HIGH and LOW 
+// Also check which pin SONOFF is on and make sure set somewhere as LED_BUILTIN probably wrong
+#if defined(SONOFF_R2) || defined(ESP8266_D1) 
+  #define ACTUATOR_LEDBUILTIN_INVERT 
+#endif
+
+#ifdef ARDUINO_LOLIN_C3_PICO
+  #undef LED_BUILTIN
+  //static const uint8_t LED_BUILTIN = 7+SOC_GPIO_PIN_COUNT;
+  #define BUILTIN_LED  LED_BUILTIN // backward compatibility
+  #define LED_BUILTIN (7+SOC_GPIO_PIN_COUNT)  // allow testing #ifdef LED_BUILTIN
+  #define RGB_BUILTIN LED_BUILTIN
+  #define RGB_BRIGHTNESS 64
+#endif
 
 class Actuator_Ledbuiltin : public Actuator_Digital {
   // Actuator_Digital value is on/off for LED
@@ -61,7 +75,7 @@ class Actuator_Ledbuiltin : public Actuator_Digital {
     Actuator_Ledbuiltin(const uint8_t p, uint8_t brightness = 255, const char* color = "0xFFFFFF");
     virtual void act();
     uint8_t brightness; // Brightness of LED  0-255
-    #ifdef ACTUATOR_LEDBUILTIN_RGB
+    #ifdef RGB_BUILTIN
       INcolor* color;
     #endif
     void dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet);
