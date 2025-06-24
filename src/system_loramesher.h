@@ -12,7 +12,7 @@
 #define SYSTEM_LORAMESHER_H
 
 #include "_settings.h"
-#ifdef SYSTEM_LORAMESHER_WANT
+#ifdef SYSTEM_LORAMESHER_WANT  // defined in platformio.ini
 
 #include "LoraMesher.h"
 #include "system_base.h"
@@ -32,8 +32,6 @@ class System_LoraMesher : public System_Base {
     #endif
     void prepareForSleep();
 };
-
-extern System_LoraMesher* loramesher;
 
 // Adapted From LoRaChat/src/loramesh/loraMeshMessage.h
 

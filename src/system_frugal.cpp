@@ -98,10 +98,7 @@ System_Frugal::System_Frugal()
   #ifdef SYSTEM_TIME_WANT
     time(new System_Time()),
   #endif
-  #ifdef SYSTEM_LORAMESHER_WANT
-    loramesher(new System_LoraMesher()),
-  #endif
-  #ifdef SYSTEM_OLED_WANT
+  #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
     // TODO-141 move into frugal_iot. 
     oled(new System_OLED()),
   #endif // SYSTEM_OLED_WANT
@@ -125,6 +122,9 @@ System_Frugal::System_Frugal()
   discovery(new System_Discovery())
   
 {
+  #ifdef LED_BUILTIN // defined by board or _settings.h
+    actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN)); // Default LED builtin actuator at default brightness and white
+  #endif
   add(actuators);
   add(sensors);
   add(controls);
@@ -138,9 +138,6 @@ System_Frugal::System_Frugal()
   #endif
   #ifdef SYSTEM_OTA_KEY
     system->add(ota);
-  #endif
-  #ifdef SYSTEM_LORAMESHER_WANT
-    system->add(loramesher);
   #endif
   #ifdef SYSTEM_TIME_WANT
     system->add(time);
@@ -211,3 +208,18 @@ void System_Frugal::loop() {
   }
 }
 
+#if !defined(SERIAL_DELAY)
+  #define SERIAL_DELAY 5000
+#endif
+
+void System_Frugal::startSerial() {
+  // Encapsulate setting up and starting serial
+  #ifdef ANY_DEBUG
+    Serial.begin(SERIAL_BAUD);
+    while (!Serial) { 
+      ; // wait for serial port to connect. Needed for Arduino Leonardo only
+    }
+    delay(SERIAL_DELAY); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
+    Serial.println(F("FrugalIoT Starting"));
+  #endif // ANY_DEBUG  
+}

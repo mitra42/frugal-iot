@@ -168,4 +168,10 @@
 #define SERIAL_BAUD 460800 // Generally find 460800 works well - reliability on all boards tested
 #define SYSTEM_WIFI_WANT  // currently always wanted - recommend defining in _locals.h in case that decision ever changes
 #define SYSTEM_MQTT_WANT // Given the dependence on MQTT can't imagine not "wanting" it
- #endif // _SETTINGS_H
+
+#if defined(ARDUINO_TTGO_LoRa32)
+  #define SYSTEM_OLED_WANT
+#endif
+
+
+#endif // _SETTINGS_H

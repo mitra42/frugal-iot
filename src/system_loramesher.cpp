@@ -8,7 +8,7 @@
  *    This uses the "radio" library for LoRa rather than Sandeep Mishra's 
  * 
  * Explanations: (Based on limited understanding - i.e. could be wrong)
- *  LoRaMeshMessage = appPrtDst appPrtSrc messageId  // as used by LoRaChat
+ *  LoRaMeshMessage = appPrtDst appPrtSrc messageId // as used by LoRaChat
  *  FrugalIoTMessage = message // Will evolve to what needed for MQTT
  *  AppPacket<xxx> = src dst payload=xxx
  * 
@@ -17,7 +17,7 @@
  */
 
 #include "_settings.h"
-#ifdef SYSTEM_LORAMESHER_WANT
+#ifdef SYSTEM_LORAMESHER_WANT // defined in platformio.ini
 
 // This is currently only defined for ESP32, 
 // Certainly fials to complie on ESP8266 but might be fixable - I dont have a ESP8266+LoRa combo to try
@@ -67,7 +67,6 @@ System_LoraMesher::System_LoraMesher()
 #else 
   #error Must define SYSTEM_LORAMESHER_TEST_COUNTER or SYSTEM_LORAMESHER_TEST_STRING
 #endif
-
 
 #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
   #ifdef SYSTEM_LORAMESHER_TEST_COUNTER
@@ -120,19 +119,19 @@ System_LoraMesher::System_LoraMesher()
         frugal_iot.oled->display.display();   
     }
 
-    #else // Start - wont work - of FrugalIoT
+  #else // Start - wont work - of FrugalIoT
     void printAppFrugal(AppPacket<FrugalIoTMessage>* packet) {
-        Serial.printf("Packet arrived from %X with size %d\n", packet->src, packet->payloadSize);
-        //Get the payload to iterate through it
-        FrugalIoTMessage* dPacket = packet->payload;
-        size_t payloadLength = packet->getPayloadLength();
-        Serial.println(*dPacket->message);
-        /*
-        for (size_t i = 0; i < payloadLength; i++) {
-            //Print the packet
-            printCounterPacket(dPacket[i]);
-        }
-        */
+      Serial.printf("Packet arrived from %X with size %d\n", packet->src, packet->payloadSize);
+      //Get the payload to iterate through it
+      FrugalIoTMessage* dPacket = packet->payload;
+      size_t payloadLength = packet->getPayloadLength();
+      Serial.println(*dPacket->message);
+      /*
+      for (size_t i = 0; i < payloadLength; i++) {
+          //Print the packet
+          printCounterPacket(dPacket[i]);
+      }
+      */
     }
   #endif
 #endif // SYSTEM_LORAMESHER_RECEIVER_TEST

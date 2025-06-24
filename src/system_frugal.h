@@ -15,6 +15,7 @@
  #define FRUGAL_IOT_H
 
 #include <vector>
+#include "actuator_ledbuiltin.h"
 #include "system_base.h"
 #include "system_discovery.h"
 #ifdef ESP32
@@ -70,8 +71,8 @@ class System_Frugal : public Frugal_Group {
     System_MQTT* mqtt; // TODO-141 change to System_MQTT and mqtt
     System_Discovery* discovery;
 
-
     System_Frugal();
+    void startSerial(); // Encapsulate setting up and starting serial
     void dispatchTwig(const String &topicTwig, const String &payload, bool isSet);
     void setup();
     void loop(); // Call this from main.cpp
