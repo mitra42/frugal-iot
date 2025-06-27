@@ -58,14 +58,8 @@
   #define SYSTEM_TIME_DEBUG
   #define SYSTEM_FS_DEBUG
 #endif
-#if defined(SYSTEM_SD_WANT) || defined(SYSTEM_SPIFFS_WANT)
-  #define SYSTEM_FS_WANT
-#endif
 #if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
   #define SYSTEM_FS_DEBUG
-#endif
-#if defined(CONTROL_LOGGERFS_WANT) || defined(CONTROL_GSHEETS_WANT)
-  #define CONTROL_LOGGER_WANT 
 #endif
 #if defined(CONTROL_LOGGERFS_DEBUG) || defined(CONTROL_GSHEETS_DEBUG)
   #define CONTROL_LOGGER_DEBUG 
@@ -89,7 +83,7 @@
   #define SYSTEM_SPI_DEBUG
 #endif
 #if defined(CONTROL_GSHEETS_WANT)
-  #define SYSTEM_TIME_WANT
+  #define SYSTEM_TIME_WANT // TODO-141 it needs to create time in main.cpp
 #endif
 
 #if defined(SENSOR_DEBUG) || defined(ACTUATOR_DEBUG) || defined(CONTROL_DEBUG) || defined(SYSTEM_DEBUG)

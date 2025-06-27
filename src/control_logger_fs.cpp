@@ -14,7 +14,6 @@
 #include "_settings.h"
 #include <Arduino.h>
 
-#ifdef CONTROL_LOGGERFS_WANT
 #include "control_logger_fs.h"
 #include "control_logger.h"
 #include "misc.h"
@@ -27,7 +26,7 @@ Control_LoggerFS::Control_LoggerFS(const char * const name, System_FS* f, const 
 
 void Control_LoggerFS::setup() {
   fs->setup();
-  Control::setup(); // Call base class setup
+  Control_Logger::setup(); // Call base class setup
 }
 
 // Basis append for logger, there might be other sets of parameters needed = extend as required.
@@ -35,10 +34,8 @@ void Control_LoggerFS::append(const String &topicPath, const String &payload) {
   #ifdef CONTROL_LOGGERFS_DEBUG
     Serial.print("Control_Logger::append "); Serial.print(topicPath); Serial.print(" "); Serial.println(payload);
   #endif
-  #ifdef SYSTEM_TIME_WANT
-    time_t _now = frugal_iot.time->now(); 
-    struct tm* tmstruct = localtime(&_now);
-  #endif
+  time_t _now = frugal_iot.time->now(); 
+  struct tm* tmstruct = localtime(&_now);
   String line;
   String filepath;
   // TODO move to 2007-04-05T14:30Z
@@ -84,5 +81,3 @@ void Control_LoggerFS::dispatchPath(const String &topicPath, const String &paylo
     append(topicPath, payload);  // Normally we would subclass act() BUT need topicPath & payload
   }
 }
-
-#endif //CONTROL_LOGGER_WANT

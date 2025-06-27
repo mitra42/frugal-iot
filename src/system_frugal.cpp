@@ -92,11 +92,9 @@ System_Frugal::System_Frugal()
   sensors(new Frugal_Group("sensors", "Sensors")),
   controls(new Frugal_Group("controls", "Controls")),
   system(new Frugal_Group("system", "System")),
+  time(nullptr), // time is optional and setup by main.cpp if needed
   #ifdef SYSTEM_OTA_KEY
     ota(new System_OTA()),
-  #endif
-  #ifdef SYSTEM_TIME_WANT
-    time(new System_Time()),
   #endif
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
     oled(new System_OLED()),
@@ -138,9 +136,6 @@ System_Frugal::System_Frugal()
   #ifdef SYSTEM_OTA_KEY
     system->add(ota);
   #endif
-  #ifdef SYSTEM_TIME_WANT
-    system->add(time);
-  #endif
   #ifdef SYSTEM_LORA_WANT
     system->add(lora);
   #endif // SYSTEM_LORA_WANT
@@ -153,9 +148,9 @@ void System_Frugal::setup() {
     Serial.print("Setup: ");
   #endif
   Frugal_Group::setup(); // includes WiFi
-  #ifdef SYSTEM_TIME_WANT
+  if (time) { // If time has been constructed
     time->setup_after_wifi();
-  #endif
+  }
   mqtt->setup_after_wifi();
   discovery->setup_after_mqtt();  // System_Discovery
   #ifdef SYSTEM_OTA_KEY

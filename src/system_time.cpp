@@ -4,14 +4,17 @@
  *
  * Mitra Ardron: Jan 2025
  * 
+ * // TODO-141 pass in constructor
  * Required: SYSTEM_TIME_ZONE e.g. "GMT0BST,M3.5.0/1,M10.5.0" (technically optional but we are going to default it to GMT if you do not define it!)
+ * 
+ * // TODO-141 pass in constructor
  * Optional: SYSTEM_TIME_MS time in milliseconds to report time on serial port - usually very lomg e.g. 3600000
+ * 
  * Optional: SYSTEM_TIME_DEBUG 
  */
 
 #include "_settings.h"
 
-#ifdef SYSTEM_TIME_WANT
 #include "Arduino.h"
 #include <time.h>
 #ifdef ESP32
@@ -21,13 +24,15 @@
 #include "misc.h" // for StringF
 #include "system_frugal.h" // For sleepSafemillis()
 
-
+// TODO-141 pass in constructor
 #ifndef SYSTEM_TIME_ZONE
   #define SYSTEM_TIME_ZONE "GMT0BST,M3.5.0/1,M10.5.0" // Get yours at https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv 
 #endif
+// TODO-141 pass in constructor
 #ifndef SYSTEM_TIME_ZONE_ABBREV
   #define SYSTEM_TIME_ZONE_ABBREV "GMT" // The typical way time is described locally 
 #endif
+// TODO-141 pass in constructor
 #ifndef SYSTEM_TIME_MS
   #define SYSTEM_TIME_MS 360000 
 #endif
@@ -38,9 +43,13 @@
 System_Time::System_Time() : System_Base("time","Time") {}
 System_Time::~System_Time() {}
 
+// TODO-141 move into System_Time (and check its used in non-ESP32 case)
 // Last time synced with NTP in seconds
-time_t _lastSyncTime;
+#ifdef ESP32 // Only set from NTPSyncTimeCallback which is only called on ESP32
+  time_t _lastSyncTime;
+#endif // ESP32
 
+#ifdef ESP32 // Doesnt get called if not ESP32
 // Callback when time sync swith NTP
 void NTPSyncTimeCallback(struct timeval* tv) {
   #ifdef SYSTEM_TIME_DEBUG
@@ -48,6 +57,7 @@ void NTPSyncTimeCallback(struct timeval* tv) {
   #endif
   _lastSyncTime = (*tv).tv_sec;
 }
+#endif // ESP32
 
 // Initialize all the time stuff - set Timezone and start asynchronous sync with NTP 
 void System_Time::init(const char* timeZone) {
@@ -65,7 +75,7 @@ void System_Time::init(const char* timeZone) {
   #endif
   sync();
 
-  setenv("TZ", timezone, 1);
+  setenv("TZ", timezone, 1); // Unclear how/if this is useful
   tzset();
   #ifdef SYSTEM_TIME_DEBUG
     Serial.print(F("Time: Init done: "));
@@ -98,7 +108,9 @@ String System_Time::dateTime() {
   // Note String is on stack so safe but not for long term use
   return StringF("%02d/%02d/%02d %02d:%02d:%02d %s", _localTime.tm_mday, _localTime.tm_mon + 1, _localTime.tm_year > 100 ? _localTime.tm_year - 100 : _localTime.tm_year, _localTime.tm_hour, _localTime.tm_min, _localTime.tm_sec, SYSTEM_TIME_ZONE_ABBREV);
 }
-time_t System_Time::lastSync() { return _lastSyncTime; }
+#ifdef ESP32 // Dont expose this function on ESP8266 as _lastSyncTime is not set
+  time_t System_Time::lastSync() { return _lastSyncTime; }
+#endif // ESP32
 
 void System_Time::setup_after_wifi() {
     init(SYSTEM_TIME_ZONE);
@@ -117,5 +129,3 @@ void System_Time::infrequently() {
     configTime(0, 0, "foo","bar","bax"); // TODO this cant be right, which servers are we using ?
   }
 }
-
-#endif // SYSTEM_TIME_WANT

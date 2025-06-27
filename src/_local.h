@@ -84,9 +84,6 @@
   #define CONTROL_BLINKEN_WANT
   #define CONTROL_GSHEETS_WANT
   #define CONTROL_GSHEETS_URL "https://blahblah"
-  #define CONTROL_LOGGERFS_WANT
-  #define SYSTEM_SD_WANT
-  #define SYSTEM_SPIFFS_WANT // ALso includes LittleFS
   #if defined(ESP8266) && !defined(PLATFORMIO)
    // #define ARDUINO_ESP8266_WEMOS_D1MINIPRO  // Use Mini Pro for testing because (V2) supports battery 
   #endif
@@ -94,9 +91,6 @@
   //#if defined(ESP32) && !defined(PLATFORMIO)
   //    #define ARDUINO_LOLIN_C3_PICO
   //#endif
-  #ifdef ESP32 // Functions that only work on ESP32
-    #define SYSTEM_TIME_WANT
-  #endif
   #define SYSTEM_POWER_MODE_LOOP
   //Need to use ARDUINO_LOLIN_C3_PICO for many of the sensors, so cant test LoRa or OLED here yet
   //#define SYSTEM_LORA_WANT
@@ -106,23 +100,7 @@
   #define SYSTEM_OTA_KEY "xxx" // Dummy - dont want it to actually OTA
 #endif
 
-#ifdef DATALOGGER110 // testing Logger
-  #define SYSTEM_WIFI_DEVICE "Dev 110"
-  #define SYSTEM_TIME_WANT
-  #define SYSTEM_TIME_DEBUG
-  #define CONTROL_LOGGERFS_WANT
-  #define SYSTEM_SD_WANT
-  #define SYSTEM_SPIFFS_WANT // ALso includes LittleFS
-  #define SYSTEM_SD_DEBUG
-  #define SYSTEM_SPIFFS_DEBUG
-  #define CONTROL_LOGGERFS_DEBUG
-  // TODO-141 main.cpp add Control and SHT
-  #define CONTROL_DEBUG
-  #define SYSTEM_WIFI_PROJECT "lotus"
-  #define ACTUATOR_LEDBUILTIN_WANT
-  #define SENSOR_SHT_DEBUG
-  #define SYSTEM_POWER_MODE_LOOP
-#endif
+
 
 #ifdef ISSUE25 // Stripped down for quick compilations
   #define SYSTEM_WIFI_DEVICE "Dev 25"

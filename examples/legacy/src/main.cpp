@@ -91,33 +91,6 @@ void setup() {
   cg->track("temperature", frugal_iot.mqtt->path("sht/temperature"));
 #endif
 
-#ifdef SYSTEM_SD_WANT
-  System_SD* fs_SD = new System_SD();
-  frugal_iot.system->add(fs_SD);
-#endif
-#ifdef SYSTEM_SPIFFS_WANT
-  System_SPIFFS* fs_SPIFFS = new System_SPIFFS();
-  frugal_iot.system->add(fs_SPIFFS);
-#endif
-
-#ifdef CONTROL_LOGGERFS_WANT
-// Must be after sensor_sht for default wiring below
-// TODO-141 Make match pattern
-Control_Logger* clfs = new Control_LoggerFS(
-  "Logger",
-  fs_SPIFFS, // TODO-110 Using spiffs for testing for now
-  "/",
-  0x02, // Single log.csv with topicPath, time, value
-  std::vector<IN*> {
-    //INtext(const char * const sensorId, const char * const id, const char* const name, String* value, const char* const color, const bool wireable)
-    new INtext("Logger", "log1", "log1", nullptr, "black", true),
-    new INtext("Logger", "log2", "log2", nullptr, "black", true),
-    new INtext("Logger", "log3", "log3", nullptr, "black", true)
-    });
-  frugal_iot.controls->add(clfs);
-  clfs->inputs[0]->wireTo(ss->temperature); // TODO this is default wiring - should remove.
-#endif // CONTROL_LOGGERFS_WANT
-
 frugal_iot.setup(); // Has to be after setup sensors and actuators and controls
 
 #ifdef ANY_DEBUG  
