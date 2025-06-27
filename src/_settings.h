@@ -70,9 +70,6 @@
 #if defined(CONTROL_LOGGERFS_DEBUG) || defined(CONTROL_GSHEETS_DEBUG)
   #define CONTROL_LOGGER_DEBUG 
 #endif
-#if defined(CONTROL_BLINKEN_WANT) || defined(CONTROL_HYSTERISIS_WANT) || defined(CONTROL_LOGGER_WANT)
-  #define CONTROL_WANT
-#endif
 #if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_LOGGER_DEBUG) 
   #define CONTROL_DEBUG
 #endif
@@ -102,10 +99,10 @@
 // Note for lolin_c3_pico we are using lolin_c3_mini which seems correct except for RGB_BUILTIN not being defined
 // 
 // Board names in e.g. ~/.platformio/platforms/espressif32/boards/lolin_c3_mini.json
-// ARDUINO_LOLIN_C3_MINI ARDUINO_LOLIN_S2_MINI ARDUINO_ESP8266_WEMOS_D1MINI ARDUINO_ESP8266_WEMOS_D1MINIPRO 
+// ARDUINO_LOLIN_C3_MINI ARDUINO_LOLIN_S2_MINI ARDUINO_ESP8266_WEMOS_D1MINI ARDUINO_ESP8266_WEMOS_D1MINIPRO ARDUINO_ESP8266_ESP01
 // These boards use a more generic board definition so need defining in platformio.dev
 // LilyGo HiGrow uses esp32dev which defines ARDUINO_ESP32_DEV TODO-140 define something
-// Sonoff uses esp01_1m which defines ARDUINO_ESP8266_ESP01 TODO-140 define something 
+// Sonoff uses esp01_1m which defines ARDUINO_ESP8266_ESP01 - define ITEAD_SONOFF if reqd
 // ttgo-lora32-v21 defines ARDUINO_TTGO_LoRa32_v21new; but also need whether SX1276 or SX1278 so TODO-140 define that
 // And in the arduino core code ESP32 or ESP8266
 //
@@ -115,8 +112,6 @@
 //
 // Amd in pins_arduino.h 
 // LED_BUILTIN; uart TX RX; i2c SDA SCL; spi SS MOSI MISO SCK; 
-// 
-// TODO-141 rework to use ARDUINO_LOLIN_C3_MINI instead of LOLIN_C3_MINI
 // 
 
 // shields compatible with D1 and its ESP8266 not C-pico which has same pin layout but different availability esp of analog
@@ -135,7 +130,7 @@
 #endif
 
 //TO_ADD_BOARD  // TODO-141 see how/if using BOARDNAME
-#ifndef SYSTEM_DISCOVERY_DEVICE_DESCRIPTION
+#if !defined(SYSTEM_DISCOVERY_DEVICE_DESCRIPTION) && !defined(BOARDNAME)
   #ifdef ESP8266_D1
     #define BOARDNAME "ESP8266 D1"
   #elif defined(ARDUINO_LOLIN_C3_PICO) // Must do before MINI which is erroneously defined if using PICO but setting closest board file
@@ -145,7 +140,7 @@
   #elif defined(ARDUINO_LOLIN_S2_MINI)
     #define BOARDNAME "Lolin S2 Mini"
   #elif defined(ARDUINO_TTGO_LoRa32)
-    #define BOARDNAME "TTGO Lora"  
+    #define BOARDNAME "TTGO Lora"
   #else
     #error undefined board in system_discovery.cpp #TO_ADD_BOARD
   #endif

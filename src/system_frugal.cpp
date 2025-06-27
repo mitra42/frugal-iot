@@ -99,7 +99,6 @@ System_Frugal::System_Frugal()
     time(new System_Time()),
   #endif
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
-    // TODO-141 move into frugal_iot. 
     oled(new System_OLED()),
   #endif // SYSTEM_OLED_WANT
   #ifdef SYSTEM_LORA_WANT
@@ -184,7 +183,6 @@ void System_Frugal::periodically() {
 }
 
 // This is stuff done multiple times per period
-// TODO-141 move into frugal_iot. 
 void System_Frugal::frequently() {
   Frugal_Group::frequently();
   frugal_iot.mqtt->frequently(); // 

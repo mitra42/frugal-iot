@@ -29,10 +29,6 @@ void setup() {
 #ifdef ACTUATOR_LEDBUILTIN_WANT
   frugal_iot.actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN, RGB_BRIGHTNESS, "0xFFFFFF"));
 #endif
-#ifdef ACTUATOR_RELAY_WANT
-  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", ACTUATOR_RELAY_PIN, "purple"));
-#endif
-
 #ifdef SENSOR_ANALOG_INSTANCES_WANT
   frugal_iot.sensors->add(new Sensor_Analog("analog1", "Analog 1", SENSOR_ANALOG_PIN_1, SENSOR_ANALOG_SMOOTH_1, 0, 5000, SENSOR_ANALOG_COLOR_1, true));
 #endif
@@ -52,10 +48,8 @@ void setup() {
 #ifdef SENSOR_BATTERY_WANT
   frugal_iot.sensors->add(new Sensor_Battery(SENSOR_BATTERY_PIN));  // TODO-57 will rarely be as simple as this
 #endif
-#ifdef SENSOR_SHT_WANT
   Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true);
   frugal_iot.sensors->add(ss);
-#endif
 #ifdef SENSOR_DHT_WANT
   frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, true));
 #endif
@@ -90,10 +84,6 @@ void setup() {
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.mqtt->path("ledbuiltin/id")); //TODO-25 turn into a function but note that aLedBuiltin will also change as gets INbool
 #endif
-#ifdef CONTROL_HYSTERISIS_WANT
-// Example definition of control
-  frugal_iot.controls->add(new ControlHysterisis("control", "Control", 50, 1, 0, 100));
-#endif //CONTROL_HYSTERISIS_WANT
 #ifdef CONTROL_GSHEETS_WANT
   // TODO-141 figure out how cg used 
   Control_Gsheets* cg =   new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);

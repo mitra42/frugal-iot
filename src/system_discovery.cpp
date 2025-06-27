@@ -29,9 +29,7 @@
 #include "system_discovery.h"
 #include "actuator.h"
 #include "sensor.h"
-#ifdef CONTROL_WANT
-  #include "control.h"
-#endif
+#include "control.h"
 #include "system_frugal.h"
 // For sleepSafemillis()
 #include "system_frugal.h" // for frugal_iot
@@ -68,7 +66,7 @@ void System_Discovery::fullAdvertise() {
     #else
       BOARDNAME
     #endif
-    #ifdef SYSTEM_OTA_KEY // TODO-141 get this from presence or absence of ota_key. 
+    #ifdef SYSTEM_OTA_KEY
       "\nota: " SYSTEM_OTA_KEY 
     #endif
     // TODO-44 add location: <gsm coords>

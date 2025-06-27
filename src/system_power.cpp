@@ -65,7 +65,7 @@ System_Power_Mode::System_Power_Mode(const char* name, unsigned long cycle_ms, u
   wake_ms(wake_ms)
 {
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.printf("%s: %d of %d\n", name, wake_ms, cycle_ms); 
+    Serial.printf("%s: %lu of %lu\n", name, wake_ms, cycle_ms); 
   #endif
 }
 // ================== constructor =========== called from main.cpp::setup based on #define ========= TO-ADD-POWERMODE
@@ -91,7 +91,7 @@ System_Power_Mode_Modem::System_Power_Mode_Modem(unsigned long cycle_ms, unsigne
 // ================== setup =========== called from main.cpp::setup ========= TO-ADD-POWERMODE but usually nothing
 void System_Power_Mode::setup() {
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.printf("Setup %s: %d of %d\n", name, wake_ms, cycle_ms); 
+    Serial.printf("Setup %s: %lu of %lu\n", name, wake_ms, cycle_ms); 
   #endif
   #ifdef LILYGOHIGROW
     pinMode(POWER_CTRL, OUTPUT);

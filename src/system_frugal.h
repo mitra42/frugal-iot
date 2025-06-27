@@ -68,7 +68,7 @@ class System_Frugal : public Frugal_Group {
     #endif
     System_Power_Mode* powercontroller;
     System_WiFi* wifi;
-    System_MQTT* mqtt; // TODO-141 change to System_MQTT and mqtt
+    System_MQTT* mqtt;
     System_Discovery* discovery;
 
     System_Frugal();

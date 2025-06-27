@@ -11,13 +11,7 @@
 #include "control.h"
 #include "misc.h"
 
-#ifdef CONTROL_WANT
-
 // TODO-ADD-CONTROL
-#if defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_MPQ_DEBUG)
-  #define CONTROL_DEBUG
-#endif
-
 
 // ==== Control - base class for all controls 
 
@@ -94,6 +88,3 @@ String Control::advertisement() {
   }
   return ad;
 }
-
-
-#endif //CONTROL_WANT

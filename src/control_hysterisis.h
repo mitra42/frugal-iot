@@ -1,4 +1,3 @@
-#ifdef CONTROL_HYSTERISIS_WANT
 
 #include "control.h"
 
@@ -12,4 +11,3 @@ class ControlHysterisis : public Control {
       void debug(const char* const where);
     #endif //CONTROL_HYSTERISIS_DEBUG
 };
-#endif //CONTROL_HYSTERISIS_WANT

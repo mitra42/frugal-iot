@@ -205,9 +205,7 @@ void System_MQTT::dispatch(const String &topicPath, const String &payload) {
     }
   }
  
-  #ifdef CONTROL_WANT
-    frugal_iot.dispatchPath(topicPath, payload);  // Matches just paths. Twigs and sets handle above
-  #endif
+  frugal_iot.dispatchPath(topicPath, payload);  // Matches just paths. Twigs and sets handle above
   //TODO-25 System::dispatchPath(*topicPath, payload)
 }
 bool System_MQTT::resubscribeAll() {

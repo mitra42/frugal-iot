@@ -13,10 +13,6 @@
 #include <vector>
 #include "system_base.h"
 
-#if defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_MPQ_DEBUG)
-  #define CONTROL_DEBUG
-#endif
-
 class Control : public System_Base {
   public:
     std::vector<IN*> inputs; // Vector of inputs

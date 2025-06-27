@@ -1,41 +1,12 @@
 #ifndef LOCAL_H
 #define LOCAL_H
 /* 
- * Copy this file to _local.h and edit it
- * Use it for local #ifdefs
- * Its the place to list the configuration of your device e.g. defines like SENSOR_SHT_WANT 
- *
- * _local-template.h will be on github, but _local.h will not - so its a safer place for passwords etc.
- */
+* Being obsoleted - best to ignore this file and use platformio.ini
+*/
 
 // Organization behind this set of devices. Also used for MQTT userid
 
-//Since I work on multiple nodes, I define each here, then uncomment exactly one and have its settings below. 
-#ifndef PLATFORMIO // On PlatformIO use the platformio.ini to choose project(s)
-#define BOARDCOMPILECHECK "Pseudo board to test everything compiles".
-//#define BOARDDEV "Working short term dev"
-//#define ISSUE25 "Control class"
-//#define DATALOGGER110 "Data logger"
-//#define SONOFF_R2 "Sonoff R2"
-//#define BOARDMAGI1 "ESP8266 D1 mini pro v2 green with SHT"
-//#define BOARDMAGI2 "ESP32 C3 pico with SHT and Soil"
-//#define BOARDMAGI3 "ESP8266 D1 pro clone battery and antenna with SHT"
-//#define BOARDMAGI4 "ESP32 C3 pico with SHT"
-//#define BOARDMAGI5 "ESP8266 D1 pro green + SHT -2"
-//#define BOARDMAGI6 "ESP8266 D1 pro blue + SHT"
-//#define LILYGOHIGROW1 "Lilygo HiGrow dev unit"
-//#define BOARDDEMO1 "ESP8266 D1 pro green + SHT -1"
-//#define BOARDDEMO2 "ESP8266 D1 pro blue + SHT + Relay"
-//#define KOPERNIK1 "Kopernik pump control"
-//#define ISSUE112
-#endif
-
-// Define which board you are using - or it will use a default
-#ifndef PLATFORMIO // If you are using PlatformIO, it will define the board for you
-// #define ARDUINO_LOLIN_C3_PICO
-#endif //PLATFORMIO
-
-
+//TODO-141 these need to be defined somewhere, probably in platformio.ini
 #ifdef KOPERNIK1
   #define SYSTEM_DISCOVERY_ORGANIZATION "kopernik"
   #define SYSTEM_MQTT_USER SYSTEM_DISCOVERY_ORGANIZATION  // Edit if you use something other than the organization name for MQTT user
@@ -48,7 +19,6 @@
   #define SYSTEM_MQTT_PASSWORD "public"
 #endif
 #define SYSTEM_MQTT_SERVER "frugaliot.naturalinnovation.org"
-
 
 // It can be slow developing by resting the portal each time, so if wanted define SSID and PASSWORD here, 
 // just don't forget to comment these out before release
@@ -91,6 +61,7 @@
   #define SYSTEM_WIFI_SSID_9 "Silver"
   #define SYSTEM_WIFI_PASSWORD_9 "O2IL-w8k2-w6ki-TzqG"
 
+  
 // Note that on ESP that ESP32 or ESP8266 will be defined - should define other chips names here if its not ESP32 or ESP8266
 #ifdef BOARDCOMPILECHECK // FOr checking everything compiles - check with both ESP32 and ESP8266 boards
   #define SYSTEM_WIFI_PROJECT "lotus"
@@ -107,16 +78,10 @@
   #define SENSOR_LOADCELL_WANT
   #define SENSOR_MS5803_WANT
   #define SENSOR_MS5803_I2C 0x77
-  #define SENSOR_SHT_WANT
   #define SENSOR_SOIL_WANT
   #define SENSOR_SOIL_PIN 4
-  //TO_ADD_ACTUATOR
-  #define ACTUATOR_LEDBUILTIN_WANT // LED on board - usually wanted
-  #define ACTUATOR_RELAY_WANT
-  #define ACTUATOR_RELAY_PIN 22 // Dummy pin for testing
   //TO_ADD_CONTROL
   #define CONTROL_BLINKEN_WANT
-  #define CONTROL_HYSTERISIS_WANT
   #define CONTROL_GSHEETS_WANT
   #define CONTROL_GSHEETS_URL "https://blahblah"
   #define CONTROL_LOGGERFS_WANT
@@ -151,20 +116,16 @@
   #define SYSTEM_SD_DEBUG
   #define SYSTEM_SPIFFS_DEBUG
   #define CONTROL_LOGGERFS_DEBUG
-  #define CONTROL_WANT
+  // TODO-141 main.cpp add Control and SHT
   #define CONTROL_DEBUG
   #define SYSTEM_WIFI_PROJECT "lotus"
   #define ACTUATOR_LEDBUILTIN_WANT
-  #define SENSOR_SHT_WANT
   #define SENSOR_SHT_DEBUG
   #define SYSTEM_POWER_MODE_LOOP
 #endif
 
 #ifdef ISSUE25 // Stripped down for quick compilations
   #define SYSTEM_WIFI_DEVICE "Dev 25"
-  //#define ACTUATOR_LEDBUILTIN_WANT
-  //#define CONTROL_HYSTERISIS_WANT
-  //#define CONTROL_HYSTERISIS_DEBUG
   #define SYSTEM_WIFI_PROJECT "lotus"
 #endif
 
@@ -173,23 +134,6 @@
   #define SYSTEM_WIFI_PROJECT "lotus"
   #define SENSOR_ANALOG_INSTANCES_WANT
 #endif
-
-#ifdef SONOFF_R2
-  // See https://github.com/mitra42/frugal-iot/issues/108
-  #ifndef ESP8266
-    #error should be using ITEAD_SONOFF in the IDE which defines ESP8266 even though the Sonoff R2 is ESP8285
-  #endif
-  #define ITEAD_SONOFF
-  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION SONOFF_R2
-  #define ACTUATOR_RELAY_WANT
-  #define SYSTEM_WIFI_PROJECT "lotus"
-  #define ACTUATOR_LED_WANT
-  #define SYSTEM_WIFI_DEVICE "Sonoff switch"
-  #define CONTROL_HYSTERISIS_WANT
-  #define SYSTEM_OTA_KEY "sonoff"
-#endif
-
-
 
 #ifdef LILYGOHIGROW1
   #ifndef ESP32
@@ -230,17 +174,13 @@
   #define ESP32_WROVER_DEV
   #define SYSTEM_WIFI_DEVICE "Kopernik pump control"
   #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION KOPERNIK1
-  //#define ACTUATOR_LEDBUILTIN_WANT // LED on board - usually wanted
-  #define ACTUATOR_RELAY_WANT
-  #define ACTUATOR_RELAY_PIN 4
+  // main.cpp - relay;  pin=4
   #define SENSOR_SOIL_WANT
   #define SENSOR_SOIL_PIN 36
   #define SENSOR_ANALOG_ATTENUATION ADC_11db
   #define SENSOR_SOIL_DEBUG
   #define SENSOR_SOIL_0 3000
   #define SENSOR_SOIL_100 800
-  //#define SENSOR_SHT_WANT
-  #define CONTROL_HYSTERISIS_WANT
   //#define SYSTEM_OTA_KEY "kopernik1"
   #define SYSTEM_WIFI_PROJECT "lotus"
   //#define LOCAL_DEV_WANT // Include custom code
