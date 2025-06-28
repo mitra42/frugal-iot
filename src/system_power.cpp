@@ -17,11 +17,9 @@
 
 // This will replace loop() and then parts will be put into 
 
-#include "_settings.h"
-#include "system_power.h"
-#include "system_oled.h"
+#include <Arduino.h> // Required to get sdkconfig.h to get CONFIG_IDF_TARGET_xxx
 // TODO may not need all these once WiFi debugged and code moved to other files
-#include "system_mqtt.h"
+//#include "system_frugal.h"
 #ifdef ESP32 // Not available on ESP8266 - have not yet searched for equivalents
   // Next three .h might or might not be needed 
   #include "esp_pm.h"
@@ -32,6 +30,9 @@
   #include "freertos/FreeRTOS.h"
   #include "freertos/task.h"
 #endif
+#include "_settings.h"
+#include "system_power.h"
+#include "system_frugal.h"
 
 /*
 // Wont work in Arduino framework 
@@ -58,14 +59,13 @@ void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
 #endif
 
 System_Power_Mode::System_Power_Mode(const char* name, unsigned long cycle_ms, unsigned long wake_ms)
-: Frugal_Base(),
-  name(name),
+: System_Base("power", name),
   nextSleepTime(millis() + wake_ms), // not sleepSafeMillis() as by definition dont sleep before this
   cycle_ms(cycle_ms),
   wake_ms(wake_ms)
 {
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.printf("%s: %d of %d\n", name, wake_ms, cycle_ms); 
+    Serial.printf("%s: %lu of %lu\n", name, wake_ms, cycle_ms); 
   #endif
 }
 // ================== constructor =========== called from main.cpp::setup based on #define ========= TO-ADD-POWERMODE
@@ -91,7 +91,11 @@ System_Power_Mode_Modem::System_Power_Mode_Modem(unsigned long cycle_ms, unsigne
 // ================== setup =========== called from main.cpp::setup ========= TO-ADD-POWERMODE but usually nothing
 void System_Power_Mode::setup() {
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.printf("Setup %s: %d of %d\n", name, wake_ms, cycle_ms); 
+    Serial.printf("Setup %s: %lu of %lu\n", name, wake_ms, cycle_ms); 
+  #endif
+  #ifdef LILYGOHIGROW
+    pinMode(POWER_CTRL, OUTPUT);
+    digitalWrite(POWER_CTRL, HIGH); // TODO-115 this is for power control - may need other board specific stuff somewhere
   #endif
 }
 #ifdef ESP32 // Specific to ESP32s
@@ -107,8 +111,15 @@ void System_Power_Mode_Deep::setup() {
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 void System_Power_Mode_LightWifi::setup() {
-  #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(LOLIN_C3_PICO) // Defined in board files on PlatformIO untested on Arduino
+  // This bit is weird - there are 5 different ESP32 config structures - all identical - note CONFIG_IDF_TARGET_ESP32xx is defined in board files
+  #if defined(CONFIG_IDF_TARGET_ESP32C3) // Defined in board files on PlatformIO untested on Arduino
     esp_pm_config_esp32c3_t pm_config; // Seems identical structure to the default ESP32 one ! 
+  #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    esp_pm_config_esp32s2_t pm_config;
+  #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    esp_pm_config_esp32s3_t pm_config;
+  #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+    esp_pm_config_esp32h2_t pm_config;
   #else
     esp_pm_config_esp32_t pm_config;
   #endif
@@ -120,6 +131,7 @@ void System_Power_Mode_LightWifi::setup() {
 
   // Enable modem sleep (WiFi will automatically enter modem sleep when possible)
   esp_wifi_set_ps(WIFI_PS_MIN_MODEM); // or WIFI_PS_MAX_MODEM for more savings
+  System_Power_Mode::setup();
 }
 #endif
 
@@ -130,6 +142,10 @@ void System_Power_Mode::prepare() {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println("Power Management: preparing");
   #endif
+  #ifdef LILYGOHIGROW
+    digitalWrite(POWER_CTRL, LOW);
+  #endif
+
   // TODO-23 will loop through sensors and actuators here are some pointers found elsewhere...
   // WIFI 
   // see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/power_management.html for how to keep WiFi alive during sleep
@@ -144,7 +160,7 @@ void System_Power_Mode_Loop::prepare() {
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 void System_Power_Mode_Light::prepare() {
   System_Power_Mode::prepare();
-  xWifi::prepareForLightSleep(); 
+  frugal_iot.wifi->prepareForLightSleep(); 
 }
 #endif
 // ================== sleep =========== called from maybeSleep ========= TO-ADD-POWERMODE
@@ -168,7 +184,7 @@ void System_Power_Mode_LightWifi::sleep() {
   //esp_sleep_enable_wifi_wakeup
   Serial.print("Sleeping for "); Serial.println(sleep_ms());
   // TODO-25 move this to prepare
-  Mqtt->client.disconnect();
+  frugal_iot.mqtt->client.disconnect();
   //printTaskList(); // Wont work in Arduino framework
   uart_driver_delete(UART_NUM_0); // Disable UART0 (Serial)
   delay(sleep_ms()); // Light sleep will be automatic
@@ -200,6 +216,9 @@ void System_Power_Mode::recover() {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println("Power Management: recovering");
   #endif
+  #ifdef LILYGOHIGROW
+    digitalWrite(POWER_CTRL, HIGH);
+  #endif
 }
 
 void System_Power_Mode_Loop::recover() {
@@ -212,12 +231,12 @@ void System_Power_Mode_Light::recover() {
   nextSleepTime = millis() + wake_ms;
   System_Power_Mode::recover();
   #ifdef SYSTEM_OLED_WANT
-    oled->display.setCursor(0,40);
-    oled->display.print("Recovering from Light Sleep");  
-    oled->display.display();
+    frugal_iot.oled->display.setCursor(0,40);
+    frugal_iot.oled->display.print("Recovering from Light Sleep");  
+    frugal_iot.oled->display.display();
   #endif
-  if (xWifi::recoverFromLightSleep()) {
-    Mqtt->recoverFromLightSleep(); // New or old session
+  if (frugal_iot.wifi->recoverFromLightSleep()) {
+    frugal_iot.mqtt->recoverFromLightSleep(); // New or old session
   } 
 }
 #endif
@@ -227,12 +246,12 @@ void System_Power_Mode_LightWifi::recover() {
   nextSleepTime = millis() + wake_ms;
   System_Power_Mode::recover();
   #ifdef SYSTEM_OLED_WANT
-    oled->display.setCursor(0,40);
-    oled->display.print("Recovering from Light Sleep");  
-    oled->display.display();
+    frugal_iot.oled->display.setCursor(0,40);
+    frugal_iot.oled->display.print("Recovering from Light Sleep");  
+    frugal_iot.oled->display.display();
   #endif
-  //if (xWifi::recoverFromLightSleep()) {
-    Mqtt->recoverFromLightSleep(); // New or old session
+  //if (frugal_iot.wifi->recoverFromLightSleep()) {
+    frugal_iot.mqtt->recoverFromLightSleep(); // New or old session
   //} 
 }
 #endif

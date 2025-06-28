@@ -15,50 +15,49 @@
 #include "_settings.h"
 #include <Arduino.h>
 
-#ifdef SYSTEM_FS_WANT
-
 #if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
   #define SYSTEM_FS_DEBUG
 #endif
 
 #include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
-#ifdef SYSTEM_SD_WANT
-  #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
-  #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
-  #ifndef SYSTEM_SD_PIN
-    #ifdef ESP8266_D1
-      #define SYSTEM_SD_PIN D4 // Default pin on the shield - if override theres a solder bridge to change
-    #elif defined(LOLIN_C3_PICO)
-      #define SYSTEM_SD_SCK 1
-      #define SYSTEM_SD_MISO 0
-      #define SYSTEM_SD_MOSI 4
-      #define SYSTEM_SD_PIN 6 // Default pin on the shield - if override theres a solder bridge to change
-    #else
-      #error No default pin for SD cards on your board
-    #endif
-  #endif
-#endif
+#include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
+#include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
 
-#ifdef SYSTEM_SPIFFS_WANT
-  #ifdef ESP32
-    #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
-    #include <SPIFFS.h>
-  #elif ESP8266
-    #define ESPFS LittleFS // LittleFS defind in LittleFS.h
-    #include <LittleFS.h>
-  #endif // ESP32||ESP8266
-#endif // SYSTEM_SPIFFS_WANT
+#ifdef ESP32
+  #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
+  #include <SPIFFS.h>
+#elif ESP8266
+  #define ESPFS LittleFS // LittleFS defind in LittleFS.h
+  #include <LittleFS.h>
+#endif // ESP32||ESP8266
 
 
 #include "system_fs.h"
-#include "_base.h"
+#include "system_base.h"
 #include "misc.h" // For StringF
 // May change for different boards
 // #define SYSTEM_SD_CHIPSELECT D8   // SPI select pin used - note SS defined as 15 - not sure if that is D8
 
 
 // Constructors
-System_FS::System_FS() { }
+System_FS::System_FS(const char* const id, const char* const name) 
+: System_Base(id, name) { } 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreturn-type" 
+fs::File System_FS::open(const char *filename, const char *mode) { 
+  Serial.print(F("should be subclassed"));
+}
+fs::File System_FS::open(const String &filename, const char *mode ) { 
+  Serial.print(F("should be subclassed")); 
+}
+boolean System_FS::exists(const char *filename) {
+  Serial.print(F("should be subclassed")); return false;
+}
+boolean System_FS::exists(const String &filename) {
+  Serial.print(F("should be subclassed")); return false;
+}
+#pragma GCC diagnostic pop
 
 // Basic file ops // 
 // This only includes the ones we need - 
@@ -88,7 +87,6 @@ boolean System_SPIFFS::exists(const String &filename) {
   return ESPFS.exists(filename);
 }
 
-#ifdef SYSTEM_SPIFFS_WANT
 // Copied from system_wifi.cpp which got it from ESP-WiFiSettings library
 bool System_FS::spurt(const String& filename, const String& content) {
     File f = open(filename, "w"); // Virtual, knows what kind of FS
@@ -103,7 +101,6 @@ String System_FS::slurp(const String& fn) {
   f.close();
   return r;
 }
-#endif //SYSTEM_SPIFFS_WANT
 
 #ifdef SYSTEM_FS_DEBUG
   String System_FS::formatBytes(size_t bytes) {
@@ -124,7 +121,7 @@ String System_FS::slurp(const String& fn) {
 void System_FS::printDirectory(const char* path, int numTabs) {  // e.g. "/" 
   File dir = open(path); // TODO call via System_FS virtual 
   if (!dir) {
-    Serial.println("Failed to open"); Serial.println(path);
+    Serial.println(F("Failed to open")); Serial.println(path);
   }
   printDirectory(dir, numTabs);
 }
@@ -162,20 +159,23 @@ void System_FS::printDirectory(File dir, int numTabs) {  // e.g. "/"
 
 #endif // SYSTEM_FS_DEBUG
 
-System_SD::System_SD() {}
-System_SPIFFS::System_SPIFFS() {}
+System_SD::System_SD(uint8_t pin) 
+: System_FS("sd", "SD"),
+  pin(pin)
+  {}
+
+System_SPIFFS::System_SPIFFS() : System_FS("spiffs", "SPIFFS") {}
 
 void System_SD::setup() {
-  uint8_t pin = SYSTEM_SD_PIN;
   // Library is SS=D8=15 fails;  old sketch was 4 some online says 8 but that fatals. D4=GPIO0=2 worked on Lolin Relay with no solder bridge
-  Serial.println("SD initialization on CS pin "); Serial.print(pin);
-  #ifdef SYSTEM_SD_SCK // esp on LOLIN_C3_PICO default pins are wrong - not those used on the shield 
+  Serial.println(F("SD initialization on CS pin ")); Serial.print(pin);
+  #ifdef SYSTEM_SD_SCK // esp on ARDUINO_LOLIN_C3_PICO default pins are wrong - not those used on the shield 
     SPI.begin(SYSTEM_SD_SCK, SYSTEM_SD_MISO, SYSTEM_SD_MOSI, pin); // SCK, MISO, MOSI, pin
   #endif 
   if (!SD.begin(pin)) { 
-    Serial.println(" failed!");
+    Serial.println(F(" failed!"));
   } else {
-    Serial.println(" done.");
+    Serial.println(F(" done."));
     #ifdef SYSTEM_SD_DEBUG
       printDirectory("/"); // For debugging
     #endif
@@ -184,26 +184,25 @@ void System_SD::setup() {
 void System_SPIFFS::setup() {
   #ifdef SYSTEM_SPIFFS_DEBUG
     #ifdef ESP32
-      Serial.print("SPIFFS ");
+      Serial.print(F("SPIFFS "));
     #elif ESP8266 
-      Serial.print("LittleFS ");
+      Serial.print(F("LittleFS "));
     #endif
   #endif
 
   #ifdef ESP32
-    if (!ESPFS.begin(true)) {
+    if (!ESPFS.begin(true))
   #elif ESP8266 
-    if (!ESPFS.begin()) {
+    if (!ESPFS.begin())
   #endif
-      Serial.println("initialization failed!");
+  {
+      Serial.println(F("initialization failed!"));
   } else {
     #ifdef SYSTEM_SPIFFS_DEBUG
-      Serial.println("initialization done.");
+      Serial.println(F("initialization done."));
     #endif
     #ifdef SYSTEM_SPIFFS_DEBUG
       printDirectory("/"); // For debugging
     #endif
   }
 }
-
-#endif //SYSTEM_FS_WANT

@@ -8,51 +8,31 @@
 #ifndef _SETTINGS_H
 #define _SETTINGS_H
 
+#include <Arduino.h> // make sure CONFIG_IDF_TARGET_ESP32C3 etc defined if on those boards
 #include "_local.h"               // Will fail if user hasn't copied _local-template.h to _local.h and edited
 
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
-#if defined(SENSOR_SHT_WANT) || defined(SENSOR_DHT_WANT)
-  #define SENSOR_HT_WANT
-#endif
 #if defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG)
   #define SENSOR_HT_DEBUG
 #endif
-#if defined(SENSOR_ANALOG_INSTANCES_WANT) || defined(SENSOR_BATTERY_WANT) || defined(SENSOR_SOIL_WANT)
-  #define SENSOR_ANALOG_WANT
-#endif
-#if defined(SENSOR_ANALOG_INSTANCES_DEBUG) || defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG)
+#if defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG)
   #define SENSOR_ANALOG_DEBUG
-#endif
-#if defined(SENSOR_ANALOG_WANT) 
-  #define SENSOR_UINT16_WANT
 #endif
 #if defined(SENSOR_ANALOG_DEBUG) 
   #define SENSOR_UINT16_DEBUG
 #endif
-#if defined(SENSOR_BH1750_WANT) || defined(SENSOR_LOADCELL_WANT)
-  #define SENSOR_FLOAT_WANT
-#endif
 #if defined(SENSOR_BH1750_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
-#if defined(SENSOR_UINT16_WANT) || defined(SENSOR_FLOAT_WANT) || defined(SENSOR_HT_WANT) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_MS5803_WANT) || defined(SENSOR_ENSAHT_WANT)
-  #define SENSOR_WANT
-#endif
 #if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)
-  #define SENSOR_DEBUG
+  #define SENSOR_DEBUG // Only used for ANY_DEBUG below
 #endif
 
 
 
 //  TO_ADD_ACTUATOR - add in appropriate line below depending on superclass
-#if defined(ACTUATOR_RELAY_WANT) || defined(ACTUATOR_LEDBUILTIN_WANT)
-  #define ACTUATOR_DIGITAL_WANT
-#endif
 #if defined(ACTUATOR_RELAY_DEBUG) || defined(ACTUATOR_LEDBUILTIN_DEBUG)
   #define ACTUATOR_DIGITAL_DEBUG
-#endif
-#if defined(ACTUATOR_DIGITAL_WANT)
-  #define ACTUATOR_WANT
 #endif
 #if defined(ACTUATOR_DIGITAL_DEBUG)
   #define ACTUATOR_DEBUG
@@ -69,20 +49,11 @@
   #define SYSTEM_TIME_DEBUG
   #define SYSTEM_FS_DEBUG
 #endif
-#if defined(SYSTEM_SD_WANT) || defined(SYSTEM_SPIFFS_WANT)
-  #define SYSTEM_FS_WANT
-#endif
 #if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
   #define SYSTEM_FS_DEBUG
 #endif
-#if defined(CONTROL_LOGGERFS_WANT) || defined(CONTROL_GSHEETS_WANT)
-  #define CONTROL_LOGGER_WANT 
-#endif
 #if defined(CONTROL_LOGGERFS_DEBUG) || defined(CONTROL_GSHEETS_DEBUG)
   #define CONTROL_LOGGER_DEBUG 
-#endif
-#if defined(CONTROL_BLINKEN_WANT) || defined(CONTROL_HYSTERISIS_WANT) || defined(CONTROL_LOGGER_WANT)
-  #define CONTROL_WANT
 #endif
 #if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_LOGGER_DEBUG) 
   #define CONTROL_DEBUG
@@ -91,43 +62,62 @@
 #if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_OLED_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG)
   #define SYSTEM_DEBUG
 #endif
-
-
-#if defined(SENSOR_MS5803_SPI) 
-  #define SYSTEM_SPI_WANT
-#endif
-#if defined(SENSOR_MS5803_I2C) || defined(SENSOR_ENSAHT_WANT)
-  #define SYSTEM_I2C_WANT
-#endif
-#if defined(SENSOR_MS5803_DEBUG) 
-  #define SYSTEM_SPI_DEBUG
-#endif
 #if defined(CONTROL_GSHEETS_WANT)
-  #define SYSTEM_TIME_WANT
+  #define SYSTEM_TIME_WANT // TODO-141 it needs to create time in main.cpp
 #endif
 
 #if defined(SENSOR_DEBUG) || defined(ACTUATOR_DEBUG) || defined(CONTROL_DEBUG) || defined(SYSTEM_DEBUG)
   #define ANY_DEBUG
 #endif 
 // TO_ADD_BOARD
+// Note for lolin_c3_pico we are using lolin_c3_mini which seems correct except for RGB_BUILTIN not being defined
+// 
+// Board names in e.g. ~/.platformio/platforms/espressif32/boards/lolin_c3_mini.json
+// ARDUINO_LOLIN_C3_MINI ARDUINO_LOLIN_S2_MINI ARDUINO_ESP8266_WEMOS_D1MINI ARDUINO_ESP8266_WEMOS_D1MINIPRO ARDUINO_ESP8266_ESP01
+// These boards use a more generic board definition so need defining in platformio.dev
+// LilyGo HiGrow uses esp32dev which defines ARDUINO_ESP32_DEV TODO-140 define something
+// Sonoff uses esp01_1m which defines ARDUINO_ESP8266_ESP01 - define ITEAD_SONOFF if reqd
+// ttgo-lora32-v21 defines ARDUINO_TTGO_LoRa32_v21new; but also need whether SX1276 or SX1278 so TODO-140 define that
+// And in the arduino core code ESP32 or ESP8266
+//
+// And in sdkconfig.h which is included by <Arduino.h> 
+// CONFIG_IDF_TARGET_ESP32C3 etc
+// CONFIG_IDF_TARGET or CONFIG_ARDUINO_VARIANT = esp32c3 etc
+//
+// Amd in pins_arduino.h 
+// LED_BUILTIN; uart TX RX; i2c SDA SCL; spi SS MOSI MISO SCK; 
+// 
+
 // shields compatible with D1 and its ESP8266 not C-pico which has same pin layout but different availability esp of analog
-#if defined(ESP8266_D1_MINI_PROv2) || defined (ESP8266_D1_MINI) || defined(ESP8266_D1_PRO_CLONE)
+// Note there are at least three versions 
+// V2 (Green - long - has SPI socket, battery;
+// V3 Blue with external antennea
+// V4 With I2C but no external antenna
+
+#if defined(ARDUINO_ESP8266_WEMOS_D1MINILITE) || defined(ARDUINO_ESP8266_WEMOS_D1MINIPRO) || defined(ARDUINO_ESP8266_WEMOS_D1MINI) || defined(ARDUINO_ESP8266_WEMOS_D1WROOM02) || defined(ARDUINO_ESP8266_WEMOS_D1R1)
   #define ESP8266_D1
 #endif
-#if defined(TTGO_LORA_SX1278_V1) || defined(TTGO_LORA_SX1276_V1)
-  #define TTGO_LORA_SX127X_V1
-#elif defined(TTGO_LORA_SX1278_V21) || defined(TTGO_LORA_SX1276_V21)
-  #define TTGO_LORA_SX127X_V21
-#elif defined(TTGO_LORA_SX1278_V2) || defined(TTGO_LORA_SX1276_V2)
-  #define TTGO_LORA_SX127X_V2
+
+// Difference between SX1276 and SX1278 based boards is by defined SYSTEM_LORAMESHER_MODULE in platformio.ini
+#if defined(ARDUINO_TTGO_LoRa32_v21new) || defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_v1)
+  #define ARDUINO_TTGO_LoRa32
 #endif
-#if defined(TTGO_LORA_SX1276_V1) || defined(TTGO_LORA_SX1276_V2) || defined(TTGO_LORA_SX1276_V21)
-  #define TTGO_LORA_SX1276
-#elif defined(TTGO_LORA_SX1278_V1) || defined(TTGO_LORA_SX1278_V2) || defined(TTGO_LORA_SX1276_V21)
-  #define TTGO_LORA_SX1278
-#endif
-#if defined(TTGO_LORA_SX1276) || defined(TTGO_LORA_SX1278)
-  #define TTGO_LORA_SX127X
+
+//TO_ADD_BOARD  // TODO-141 see how/if using BOARDNAME
+#if !defined(SYSTEM_DISCOVERY_DEVICE_DESCRIPTION) && !defined(BOARDNAME)
+  #ifdef ESP8266_D1
+    #define BOARDNAME "ESP8266 D1"
+  #elif defined(ARDUINO_LOLIN_C3_PICO) // Must do before MINI which is erroneously defined if using PICO but setting closest board file
+    #define BOARDNAME "Lolin C3 Pico"
+  #elif defined(ARDUINO_LOLIN_C3_MINI)
+    #define BOARDNAME "Lolin C3 Mini"
+  #elif defined(ARDUINO_LOLIN_S2_MINI)
+    #define BOARDNAME "Lolin S2 Mini"
+  #elif defined(ARDUINO_TTGO_LoRa32)
+    #define BOARDNAME "TTGO Lora"
+  #else
+    #error undefined board in system_discovery.cpp #TO_ADD_BOARD
+  #endif
 #endif
 
 
@@ -147,4 +137,10 @@
 #define SERIAL_BAUD 460800 // Generally find 460800 works well - reliability on all boards tested
 #define SYSTEM_WIFI_WANT  // currently always wanted - recommend defining in _locals.h in case that decision ever changes
 #define SYSTEM_MQTT_WANT // Given the dependence on MQTT can't imagine not "wanting" it
- #endif // _SETTINGS_H
+
+#if defined(ARDUINO_TTGO_LoRa32)
+  #define SYSTEM_OLED_WANT
+#endif
+
+
+#endif // _SETTINGS_H

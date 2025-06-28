@@ -1,24 +1,30 @@
-/*
-  Sensor Soil
-  Read from a pin and return as sSoil::Value
-
-Configuration options
-Optional with defaults: SENSOR_SOIL_PIN=4 SENSOR_SOIL_MS=15000 SENSOR_SOIL_TOPIC=soil SENSOR_SOIL_0=3200 SENSOR_SOIL_100=1300 
-Optional undefined: SENSOR_SOIL_SMOOTH
-
-On C3 - pin 0,1,4 works  5 gets error message  3 is Vbatt. 2 just reads 4095; 8,10 just reads 0; 7 reads 0 ad seems connected to LED
-
-*/
+/* Frugal IoT - Soil Sensor
+ *
+  * Mitra Ardron: 2024
+ * 
+ * Tested values:
+ * Device        | 0% reading | 100% reading
+ * --------------|------------|-------------
+ * default       | 3000       | 1000
+ * Lilygo HiGrow | 4095       | 0
+ * 
+ * Pins by board:
+ * LILYGOHIGROW: 32
+ * ESP8266 D1: A0 - there is only one analog on D1
+ * ARDUINO_LOLIN_C3_PICO: 4, 0 or 1 seem to work - there is no default pin
+ *
+ * Add by for example in main.cpp with:
+ * frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil", 4095, 0, 32, 0, "brown", true));
+ *
+ */
 
 #include "_settings.h"  // Settings for what to include etc
-#ifdef SENSOR_SOIL_WANT
 
 #include <Arduino.h>
 #include "sensor_soil.h"
-#include "system_mqtt.h"
 
-Sensor_Soil::Sensor_Soil(const char* const id, const char * const name, const uint16_t map0_init, const uint16_t map100_init, const uint8_t pin_init, const uint8_t smooth_init, const char* color, const unsigned long ms_init, bool retain) 
-  : Sensor_Analog(id, name, pin_init, smooth_init, 0, 100, color, ms_init, retain), map0(map0_init), map100(map100_init) { }
+Sensor_Soil::Sensor_Soil(const char* const id, const char * const name, const uint16_t map0_init, const uint16_t map100_init, const uint8_t pin_init, const uint8_t smooth_init, const char* color, bool retain) 
+  : Sensor_Analog(id, name, pin_init, smooth_init, 0, 100, color, retain), map0(map0_init), map100(map100_init) { }
 
 #define SENSOR_SOIL_INVALIDVALUE 0xFFFF
 
@@ -36,6 +42,3 @@ uint16_t Sensor_Soil::read() {
 bool Sensor_Soil::valid(uint16_t newvalue) {
   return (newvalue != SENSOR_SOIL_INVALIDVALUE);
 }
-
-
-#endif // SENSOR_SOIL_WANT

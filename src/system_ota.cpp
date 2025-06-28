@@ -12,7 +12,7 @@
 */
 
 #include "_settings.h"
-#ifdef SYSTEM_OTA_WANT
+#ifdef SYSTEM_OTA_KEY
 
 #if ! (defined(ESP8266) || defined(ESP32))
   #error OTA is currently only defined for ESP8266 and ESP32
@@ -22,6 +22,8 @@
 #include "system_discovery.h"
 #include "system_wifi.h"
 #include "system_ota.h"
+#include "system_frugal.h"
+
 #ifdef ESP8266
   #include <ESP8266httpUpdate.h> // defines ESPhttpUpdate
   #include <ESP8266WiFi.h>  // for WiFiClient
@@ -35,12 +37,8 @@
 #else
     #error OTA only defined so far for ESP8266 and ESP32 
 #endif
-#include "system_power.h" // For sleepSafemillis()
+#include "system_frugal.h" // For sleepSafemillis()
 
-#ifndef SYSTEM_OTA_MS
-  // By default, check for updates once an hour
-  #define SYSTEM_OTA_MS 3600000
-#endif // SYSTEM_OTA_MS
 #ifndef SYSTEM_OTA_VERSION
   #define SYSTEM_OTA_VERSION "0.0.0" // We dont use versions, we are using MD5
 #endif
@@ -85,39 +83,11 @@
   "-----END CERTIFICATE-----\n";
 #endif
 
-class OTAMgr{
-  public:
+System_OTA::System_OTA() : System_Base("ota", "OTA") { }
 
-    OTAMgr();
-    ~OTAMgr();
-    void init(const String otaServerAddress, const String softwareVersion, const char* caCert);
-    void checkForUpdate(void);
-	  bool isOK() { return _isOK; }
-	  bool canRetry() { return _retryCount > 0; }
-	  bool checked() { return _checked; }
-	
-    friend void otaStartCB(void);
-    friend void otaProgressCB(int done, int size);
-    friend void otaEndCB(void);
-    friend void otaErrorCB(int errorCode);
+System_OTA::~System_OTA() { }
 
-  private:
-    bool _isOK;
-    bool _checked;
-    int _retryCount;
-    const char* _caCert;
-    String _otaServerAddress;
-    String _softwareVersion;
-	
-};
-
-extern OTAMgr g_OTAMgr;
-
-OTAMgr::OTAMgr() { }
-
-OTAMgr::~OTAMgr() { }
-
-void OTAMgr::init(const String otaServerAddress, const String softwareVersion, const char* caCert) {
+void System_OTA::init(const String otaServerAddress, const String softwareVersion, const char* caCert) {
   _otaServerAddress = otaServerAddress;
   _softwareVersion = softwareVersion;
   _isOK = true;
@@ -126,7 +96,7 @@ void OTAMgr::init(const String otaServerAddress, const String softwareVersion, c
 }
 
 void otaStartCB() {
-  g_OTAMgr._isOK = true;
+  frugal_iot.ota->_isOK = true;
   Serial.println("OTA start");
 }
 
@@ -136,15 +106,15 @@ void otaProgressCB(int done, int size) {
 
 void otaEndCB() {
   Serial.println("OTA end");
-  g_OTAMgr._checked = true;
+  frugal_iot.ota->_checked = true;
 }
 
 void otaErrorCB(int errorCode) {
   Serial.print("OTA error "); Serial.println(errorCode);
-  g_OTAMgr._isOK = false;
+  frugal_iot.ota->_isOK = false;
 }
 
-void OTAMgr::checkForUpdate() {
+void System_OTA::checkForUpdate() {
   #ifdef ESP32
     WiFiClientSecure client;
     client.setCACert(_caCert);
@@ -193,44 +163,37 @@ void OTAMgr::checkForUpdate() {
   _retryCount -= 1;
 }
 
-OTAMgr g_OTAMgr; // Instantiate a single instance - there is only ever one
-
-namespace xOta {
-
-unsigned long nextLoopTime = SYSTEM_OTA_MS; // Dont activate on first loop - as happens in Setup  sleepSafeMillis()
-char* getOTApath() {
+char* System_OTA::getOTApath() {
     // Note there is no correlation between the path here, and where its stored on the server which also pays attention to dev/project/node
-    const size_t buffer_size = strlen(SYSTEM_OTA_SERVERPORTPATH) + xDiscovery::topicPrefix->length() + strlen(SYSTEM_OTA_KEY) ;
+    const size_t buffer_size = strlen(SYSTEM_OTA_SERVERPORTPATH) + frugal_iot.discovery->topicPrefix->length() + strlen(SYSTEM_OTA_KEY) ;
     char* url = new char[buffer_size];
     strcpy(url, SYSTEM_OTA_SERVERPORTPATH);
-    strcat(url, xDiscovery::topicPrefix->c_str());
+    strcat(url, frugal_iot.discovery->topicPrefix->c_str());
     strcat(url, SYSTEM_OTA_KEY);
     return url;
 }
 
-void setup() { // TODO-25 - put this in a class and call from base etc
+void System_OTA::setup_after_discovery() { // TODO-25 - put this in a class and call from base etc
   const char* const url = getOTApath();
   // Note this must run after WiFi has connected  and ideally before MQTT or Discovery except it needs xDiscovery::topicPrefix
   Serial.print("Attempt OTA from:"); Serial.println(url);
 
   #ifdef ESP32
-    g_OTAMgr.init(url, SYSTEM_OTA_VERSION, rootCACertificateForNaturalInnovation);
+    init(url, SYSTEM_OTA_VERSION, rootCACertificateForNaturalInnovation);
   #elif defined(ESP8266)
-    g_OTAMgr.init(url, SYSTEM_OTA_VERSION, nullptr);
+    init(url, SYSTEM_OTA_VERSION, nullptr);
   #endif
 
   // Blocks while does update //TODO-23 double dipping, here and infrequently called from main setup
-  g_OTAMgr.checkForUpdate();
+  checkForUpdate();
 }
 
-void infrequently() {
+void System_OTA::infrequently() {
   // Note wont operate on first loop (see initialization of nextLoopTime)
-  if (nextLoopTime <= powerController->sleepSafeMillis() ) {
-    g_OTAMgr.checkForUpdate();
-    nextLoopTime = powerController->sleepSafeMillis() + SYSTEM_OTA_MS;
+  if (nextLoopTime <= frugal_iot.powercontroller->sleepSafeMillis() ) {
+    checkForUpdate();
+    nextLoopTime = frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_OTA_MS;
   }
 }
 
-} // namespace xOta
-
-#endif // SYSTEM_OTA_WANT
+#endif // SYSTEM_OTA_KEY

@@ -12,12 +12,12 @@
 #define SYSTEM_LORAMESHER_H
 
 #include "_settings.h"
-#ifdef SYSTEM_LORAMESHER_WANT
+#ifdef SYSTEM_LORAMESHER_WANT  // defined in platformio.ini
 
 #include "LoraMesher.h"
-#include "_base.h"
+#include "system_base.h"
 
-class System_LoraMesher : public Frugal_Base {
+class System_LoraMesher : public System_Base {
   public:
     LoraMesher& radio;
     LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();
@@ -28,12 +28,10 @@ class System_LoraMesher : public Frugal_Base {
     void periodically();
     #if !defined(SYSTEM_LORAMESHER_SENDER_TEST) && !defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
       // Match mqtt.client profile
-      publish(const String &topicPath, const String &payload, const bool retain, const int qos);
+      void publish(const String &topicPath, const String &payload, const bool retain, const int qos);
     #endif
     void prepareForSleep();
 };
-
-extern System_LoraMesher* loramesher;
 
 // Adapted From LoRaChat/src/loramesh/loraMeshMessage.h
 

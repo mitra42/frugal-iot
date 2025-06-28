@@ -1,19 +1,27 @@
 #ifndef SYSTEM_WIFI_H
 #define SYSTEM_WIFI_H
 
-// TODO this should be a class ! 
-namespace xWifi {
-// Customized variables from configuration
-extern String mqtt_host;
-extern String discovery_project;
-extern String device_name;
+#include "system_base.h"
 
-void setup();
-bool connect();
-void checkConnected();
-bool reconnectWiFi(); // Try hard to reconnect WiFi
-bool prepareForLightSleep();
-bool recoverFromLightSleep();
-String &clientid();
-} // namespace xWifi
+class System_WiFi : public System_Base {
+  public:
+    // Customized variables from configuration
+    String mqtt_host;
+    String device_name;
+    String discovery_project;
+    System_WiFi();
+    String &clientid();
+    void checkConnected();
+    bool prepareForLightSleep();
+    bool recoverFromLightSleep();
+    bool scanConnectOneAndAll();
+    void setup();
+  private:
+
+    bool connect();
+    bool connect1();
+    bool reconnectWiFi(); // Try hard to reconnect WiFi
+    void setupLanguages();
+};
+
 #endif // SYSTEM_WIFI_H

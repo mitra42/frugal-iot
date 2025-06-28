@@ -6,8 +6,4 @@
 const String StringF(const char* format, ...);
 const char* lprintf(size_t buffer_size, const char* format, ...);
 
-// TODO-125 ifdef or move somewhere
-void internal_watchdog_setup();
-void internal_watchdog_loop();
-
 #endif //MISC_H

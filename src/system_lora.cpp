@@ -14,14 +14,14 @@
 #include <LoRa.h> // LoRa library for ESP32
 
 // These settings duplicated in system_loramesher.cpp and system_lora.cpp
-#if defined(TTGO_LORA_SX127X_V1)
+#if defined(ARDUINO_TTGO_LoRa32_v1)
   #define LORA_SCK 5
   #define LORA_MISO 19
   #define LORA_MOSI 27
   #define LORA_CS 18
   #define LORA_RST 14 // Note 23 on V2
   #define LORA_DIO0 26
-#elif defined(TTGO_LORA_SX127X_V2) // V3 is same as V2
+#elif defined(ARDUINO_TTGO_LoRa32_v2) // V3 is same as V2
   #define LORA_SCK 5
   #define LORA_MISO 19
   #define LORA_MOSI 27
@@ -29,7 +29,7 @@
   #define LORA_RST 23 // Note 14 on V1 and 23 in tutorial comments & v21new and 12 in /Users/mitra/Library/Arduino15/packages/esp32/hardware/esp32/3.2.0/variants/ttgo-lora32-v2/pins_arduino.h
   #define LORA_DIO0 26 //Tutorial  calls this DIO0
 #else
-  #error "Unsupported LORA configuration. Please define either TTGO_LORA_SX127X_V1 or TTGO_LORA_SX127X_V2. or define new BOARD"
+  #error "Unsupported LORA configuration. Please define either ARDUINO_TTGO_LoRa32_v1 or ARDUINO_TTGO_LoRa32_v2. or define new BOARD"
 #endif
 #define LORA_IRQ LORA_DIO0
 
@@ -49,9 +49,7 @@
 Not currently used in this code
 */
 
-System_LoRa* lora;
-
-System_LoRa::System_LoRa() : Frugal_Base() {
+System_LoRa::System_LoRa() : System_Base("lora", "LoRa") {
     // Constructor code here, if needed
 }
 void System_LoRa::setup() {

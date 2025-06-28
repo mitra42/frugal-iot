@@ -8,53 +8,50 @@
  *    This uses the "radio" library for LoRa rather than Sandeep Mishra's 
  * 
  * Explanations: (Based on limited understanding - i.e. could be wrong)
- *  LoRaMeshMessage = appPrtDst appPrtSrc messageId  // as used by LoRaChat
+ *  LoRaMeshMessage = appPrtDst appPrtSrc messageId // as used by LoRaChat
  *  FrugalIoTMessage = message // Will evolve to what needed for MQTT
  *  AppPacket<xxx> = src dst payload=xxx
-*/
+ * 
+ * Required
+ * SYSTEM_LORAMESHER_MODULE either LoraMesher::LoraModules::SX1278_MOD or ...::SX1276_MOD
+ */
 
 #include "_settings.h"
-#ifdef SYSTEM_LORAMESHER_WANT
+#ifdef SYSTEM_LORAMESHER_WANT // defined in platformio.ini
 
-#error "SYSTEM_LORAMESHER code is known not to be finished - see issue # 152 - uncomment to develop"
+// This is currently only defined for ESP32, 
+// Certainly fials to complie on ESP8266 but might be fixable - I dont have a ESP8266+LoRa combo to try
+#ifdef ESP32
+
+//#error "SYSTEM_LORAMESHER code is known not to be finished - see issue # 152 - uncomment to develop"
 
 #include "LoraMesher.h"
 #include "system_loramesher.h"
-#if defined(SYSTEM_LORAMESHER_SENDER_TEST) || defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
-  #include "system_oled.h"
-#endif
 #include "misc.h"  // for lprintf
+#include "system_frugal.h"
 
 // These settings duplicated in system_loramesher.cpp and system_lora.cpp (system_loramesher.cpp are newer)
-#if defined(TTGO_LORA_SX1276)
-  #define SYSTEM_LORAMESHER_MODULE LoraMesher::LoraModules::SX1276_MOD // For N.America and Australia 
-#elif defined(TTGO_LORA_SX1278)
-  #define SYSTEM_LORAMESHER_MODULE LoraMesher::LoraModules::SX1278_MOD // For N.America and Australia 
-#endif
-
-// For TTGO_LORA_SX127X 
+// For ARDUINO_TTGO_LoRa32 
 // LORA_SCK; LORA_MISO; LORA_MOSI; LORA_CS; LORA_RST; and for V21 LORA_D1 are defined correctly in
 // e.g. ~/Arduino15/packages/esp32/hardware/esp32/3.2.0/variants/ttgo-lora32-v21new/pins_arduino.h etc
-#if defined(TTGO_LORA_SX127X_V1)
+#if defined(ARDUINO_TTGO_LoRa32_v1)
   #define LORA_D0 LORA_IRQ
-#elif defined(TTGO_LORA_SX127X_V2) || defined(TTGO_LORA_SX127X_V21) // V3 is almost same as V2
+#elif defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_v21new) // V3 is almost same as V2
   #define LORA_D0 LORA_IRQ
   // Note on V2 but not V21 LORA_D1 is not defined and may need a physical wire to GPIO 33
 #else
-  #error "Unsupported LORA configuration. Please define either TTGO_LORA_SX127X_V1 or TTGO_LORA_SX127X_V2. or define new BOARD"
+  #error "Unsupported LORA configuration. Please define either ARDUINO_TTGO_LoRa32_v1 or ARDUINO_TTGO_LoRa32_v2. or define new BOARD"
 #endif
 
-System_LoraMesher* loramesher;
-
 System_LoraMesher::System_LoraMesher()
-: Frugal_Base(),
+: System_Base("loramesher", "LoraMesher"),
     radio(LoraMesher::getInstance()),
     config(LoraMesher::LoraMesherConfig())
 {
     config.loraCs = LORA_CS;
     config.loraRst = LORA_RST;
     config.loraIrq = LORA_IRQ;
-    config.loraIo1 = LORA_D1;  // Requirement for D1 may mean it won't work on TTGO_LORA_SX127X_V1 or _V2 but will on _V21
+    config.loraIo1 = LORA_D1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_v1 or _V2 but will on _V21
     config.module = SYSTEM_LORAMESHER_MODULE;
     config.freq = SYSTEM_LORAMESHER_BAND;
 }
@@ -71,24 +68,23 @@ System_LoraMesher::System_LoraMesher()
   #error Must define SYSTEM_LORAMESHER_TEST_COUNTER or SYSTEM_LORAMESHER_TEST_STRING
 #endif
 
-
 #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
   #ifdef SYSTEM_LORAMESHER_TEST_COUNTER
     void printCounterPacket(counterPacket data) {
       Serial.printf("Hello Counter received nº %d\n", data.counter);
       // Display information
-      oled->display.clearDisplay();
-      oled->display.setCursor(0,0);
-      oled->display.print("LORA MESH RECEIVER");
-      oled->display.setCursor(0,20);
-      oled->display.print("Received packet:");
-      oled->display.setCursor(0,30);
-      oled->display.print(data.counter);
-      //oled->display.setCursor(0,40);
-      //oled->display.print("RSSI:");
-      //oled->display.setCursor(30,40);
-      //oled->display.print(rssi);
-      oled->display.display();   
+      frugal_iot.oled->display.clearDisplay();
+      frugal_iot.oled->display.setCursor(0,0);
+      frugal_iot.oled->display.print("LORA MESH RECEIVER");
+      frugal_iot.oled->display.setCursor(0,20);
+      frugal_iot.oled->display.print("Received packet:");
+      frugal_iot.oled->display.setCursor(0,30);
+      frugal_iot.oled->display.print(data.counter);
+      //frugal_iot.oled->display.setCursor(0,40);
+      //frugal_iot.oled->display.print("RSSI:");
+      //frugal_iot.oled->display.setCursor(30,40);
+      //frugal_iot.oled->display.print(rssi);
+      frugal_iot.oled->display.display();   
     }
     void printAppCounterPacket(AppPacket<counterPacket>* packet) {
         Serial.printf("Packet arrived from %X with size %d\n", packet->src, packet->payloadSize);
@@ -109,33 +105,33 @@ System_LoraMesher::System_LoraMesher()
         size_t payloadLength = appPacket->getPayloadLength()-1; // Length of string without terminator 
         Serial.write(dPacket, payloadLength); Serial.println(); // Being conservative in case no terminating \0 
               // Display information
-        oled->display.clearDisplay();
-        oled->display.setCursor(0,0);
-        oled->display.print("LORA MESH RECEIVER");
-        oled->display.setCursor(0,20);
-        oled->display.print("Received packet:");
-        oled->display.setCursor(0,30);
-        oled->display.print((char*)dPacket);
-        //oled->display.setCursor(0,40);
-        //oled->display.print("RSSI:");
-        //oled->display.setCursor(30,40);
-        //oled->display.print(rssi);
-        oled->display.display();   
+        frugal_iot.oled->display.clearDisplay();
+        frugal_iot.oled->display.setCursor(0,0);
+        frugal_iot.oled->display.print("LORA MESH RECEIVER");
+        frugal_iot.oled->display.setCursor(0,20);
+        frugal_iot.oled->display.print("Received packet:");
+        frugal_iot.oled->display.setCursor(0,30);
+        frugal_iot.oled->display.print((char*)dPacket);
+        //frugal_iot.oled->display.setCursor(0,40);
+        //frugal_iot.oled->display.print("RSSI:");
+        //frugal_iot.oled->display.setCursor(30,40);
+        //frugal_iot.oled->display.print(rssi);
+        frugal_iot.oled->display.display();   
     }
 
-    #else // Start - wont work - of FrugalIoT
+  #else // Start - wont work - of FrugalIoT
     void printAppFrugal(AppPacket<FrugalIoTMessage>* packet) {
-        Serial.printf("Packet arrived from %X with size %d\n", packet->src, packet->payloadSize);
-        //Get the payload to iterate through it
-        FrugalIoTMessage* dPacket = packet->payload;
-        size_t payloadLength = packet->getPayloadLength();
-        Serial.println(*dPacket->message);
-        /*
-        for (size_t i = 0; i < payloadLength; i++) {
-            //Print the packet
-            printCounterPacket(dPacket[i]);
-        }
-        */
+      Serial.printf("Packet arrived from %X with size %d\n", packet->src, packet->payloadSize);
+      //Get the payload to iterate through it
+      FrugalIoTMessage* dPacket = packet->payload;
+      size_t payloadLength = packet->getPayloadLength();
+      Serial.println(*dPacket->message);
+      /*
+      for (size_t i = 0; i < payloadLength; i++) {
+          //Print the packet
+          printCounterPacket(dPacket[i]);
+      }
+      */
     }
   #endif
 #endif // SYSTEM_LORAMESHER_RECEIVER_TEST
@@ -147,29 +143,29 @@ void processReceivedPackets(void*) {
     for (;;) {
         /* Wait for the notification of processReceivedPackets and enter blocking */
         ulTaskNotifyTake(pdPASS, portMAX_DELAY);
-
+        // TODO-137 move much of this into a method on System_LoraMesher
         //Iterate through all the packets inside the Received User Packets Queue
-        while (loramesher->radio.getReceivedQueueSize() > 0) {
+        while (frugal_iot.loramesher->radio.getReceivedQueueSize() > 0) {
             Serial.println("ReceivedUserData_TaskHandle notify received");
-            Serial.printf("Queue receiveUserData size: %d\n", loramesher->radio.getReceivedQueueSize());
+            Serial.printf("Queue receiveUserData size: %d\n", frugal_iot.loramesher->radio.getReceivedQueueSize());
 
             //Get the first element inside the Received User Packets Queue
             #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-              AppPacket<counterPacket>* packet = loramesher->radio.getNextAppPzacket<counterPacket>();
+              AppPacket<counterPacket>* packet = frugal_iot.loramesher->radio.getNextAppPzacket<counterPacket>();
               //Print the App Packet
               printAppCounterPacket(packet); // This is the actual handling
             #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
-              AppPacket<uint8_t>* appPacket = loramesher->radio.getNextAppPacket<uint8_t>();
+              AppPacket<uint8_t>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<uint8_t>();
               printAppData(appPacket);
 
             #else // Start (but wont work) of FrugalIoT packet
-              AppPacket<FrugalIoTMessage>* appPacket = loramesher->radio.getNextAppPacket<FrugalIoTMessage>();
+              AppPacket<FrugalIoTMessage>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<FrugalIoTMessage>();
               printAppFrugal(packet);
               // Pull apart FrugalIoTMessage to something want to process
               //DataMessage* dataMessage = createDataMessage(AppPacket<FrugalIoTMessage>* appPacket))
             #endif      
             //Delete the packet when used. It is very important to call this function to release the memory of the packet.
-            loramesher->radio.deletePacket(appPacket);
+            frugal_iot.loramesher->radio.deletePacket(appPacket);
         }
     }
 }
@@ -178,7 +174,7 @@ void processReceivedPackets(void*) {
 TaskHandle_t receiveLoRaMessage_Handle = NULL;
 
 // Create a Receive Messages Task and add it to the LoRaMesher
-// Equivalent of system_mqtt's: client.onMessage(xMqtt::MessageReceived)
+// Equivalent of system_mqtt's: client.onMessage(MessageReceived)
 void createReceiveMessages() {
     int res = xTaskCreate(
         processReceivedPackets,
@@ -258,25 +254,25 @@ void System_LoraMesher::periodically() {
       memcpy(msg->message, stringymessage, msglen);
       //Serial.println(stringypacket);
     #endif
-    oled->display.clearDisplay();
-    oled->display.setCursor(0,0);
-    oled->display.println("LORAMESH SENDER");
-    oled->display.setCursor(0,20);
-    oled->display.setTextSize(1);
-    oled->display.print("LoRa packet sent.");
-    oled->display.setCursor(0,30);
+    frugal_iot.oled->display.clearDisplay();
+    frugal_iot.oled->display.setCursor(0,0);
+    frugal_iot.oled->display.println("LORAMESH SENDER");
+    frugal_iot.oled->display.setCursor(0,20);
+    frugal_iot.oled->display.setTextSize(1);
+    frugal_iot.oled->display.print("LoRa packet sent.");
+    frugal_iot.oled->display.setCursor(0,30);
     #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-      oled->display.print("Counter:");
-      oled->display.setCursor(50,30);
-      oled->display.print(dataCounter);      
+      frugal_iot.oled->display.print("Counter:");
+      frugal_iot.oled->display.setCursor(50,30);
+      frugal_iot.oled->display.print(dataCounter);      
     #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
-      oled->display.print("Counter:");
-      oled->display.setCursor(50,30);
-      oled->display.print(dataCounter-1);
+      frugal_iot.oled->display.print("Counter:");
+      frugal_iot.oled->display.setCursor(50,30);
+      frugal_iot.oled->display.print(dataCounter-1);
     #else // Start - wont work - for FrugalIoT
-      oled->display.print(dataCounter);      
+      frugal_iot.oled->display.print(dataCounter);      
     #endif
-    oled->display.display();
+    frugal_iot.oled->display.display();
     #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
       radio.createPacketAndSend(BROADCAST_ADDR, data, 1); // Size is number of counterPackets.
     #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
@@ -301,4 +297,5 @@ void System_LoraMesher::periodically() {
     // TODO-139 TODO-23 find where put radio and SPI to sleep - on some other libraries its LoRa.sleep() and SPI.end()
   }
 
+#endif // ESP32
 #endif // SYSTEM_LORAMESHER_WANT

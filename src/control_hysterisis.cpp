@@ -1,11 +1,8 @@
-/* 
- * Hysterisis driven control
+/* Frugal IoT - ControlHysterisis - Parameterised control with hysterisis built in.
+ *
  */
 
 #include "_settings.h"  // Settings for what to include etc
-
-#ifdef CONTROL_HYSTERISIS_WANT
-
 
 #include <Arduino.h>
 #include "misc.h"
@@ -62,5 +59,4 @@ ControlHysterisis::ControlHysterisis (const char* const id, const char * const n
   #endif
 };
 
-#endif //CONTROL_HYSTERISIS_WANT
 

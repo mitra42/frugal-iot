@@ -11,16 +11,10 @@
 #include "_settings.h"  // Settings for what to include etc
 #include <Arduino.h>
 #include <vector>
-#include "_base.h"
+#include "system_base.h"
 
-#if defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_MPQ_DEBUG)
-  #define CONTROL_DEBUG
-#endif
-
-class Control : public Frugal_Base {
+class Control : public System_Base {
   public:
-    const char * const id; // ID of control
-    const char * const name; // User friendly name of control
     std::vector<IN*> inputs; // Vector of inputs
     std::vector<OUT*> outputs; // Vector of outputs
 
@@ -28,19 +22,11 @@ class Control : public Frugal_Base {
     void setup();
     virtual void act();
     String advertisement();
-    static void setupAll();
     void dispatchTwig(const String &topicControlId, const String &topicLeaf, const String &payload, bool isSet);
     virtual void dispatchPath(const String &topicPath, const String &payload);
-    static void dispatchTwigAll(const String &topicTwig, const String &payload, bool isSet);
-    static void dispatchPathAll(const String &topicPath, const String &payload);
-    static String advertisementAll();
-    static void periodicallyAll();
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const blah);
     #endif //CONTROL_DEBUG
 };
-
-extern std::vector<Control*> controls;
-
     
 #endif //CONTROL_H

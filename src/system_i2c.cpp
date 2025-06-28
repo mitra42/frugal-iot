@@ -4,7 +4,6 @@
  * 
  */
 #include "_settings.h"
-#ifdef SYSTEM_I2C_WANT
 #include <Wire.h>
 #include "system_i2c.h"
 
@@ -81,5 +80,3 @@ bool System_I2C::sendAndRead(uint8_t cmd, uint8_t* rcvBuffer,uint8_t rcvLength) 
   send(cmd); // TODO allow for failure here - if fails dont try the read just return false
   return read(rcvBuffer, rcvLength);
 }
-
-#endif //SYSTEM_I2C_WANT

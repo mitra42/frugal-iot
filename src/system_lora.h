@@ -8,10 +8,10 @@
 #include "_settings.h"
 
 #ifdef SYSTEM_LORA_WANT
-#include "_base.h"
+#include "system_base.h"
 #include <LoRa.h> // Note that LoRa is declared globally in <LoRa.h> and used directly in callers.
 
-class System_LoRa : public Frugal_Base {
+class System_LoRa : public System_Base {
     // This class is intended to manage the LoRa system functionality.
 public:
     System_LoRa();
@@ -21,8 +21,6 @@ public:
     void frequent();
     void prepareForSleep();
 };
-
-extern System_LoRa* lora; // Declare the lora object globally
 
 #endif // SYSTEM_LORA_WANT
 #endif // SYSTEM_LORA_H

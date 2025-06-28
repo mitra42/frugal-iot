@@ -14,7 +14,6 @@ in the field to update themselves.
 ### What options are needed to support OTA
 In your _locals.h file you'll need something like. 
 ```
-#define SYSTEM_OTA_WANT   // Compile OTA support 
 #define SYSTEM_OTA_KEY "sonoff-r2"  // Tell the device which package to download
 #define SYSTEM_OTA_MS 3600000 // Optionally tell the device how often to check for updates - default is 1-hour (360000)
 #define SYSTEM_OTA_SERVERPORTPATH "https://frugaliot.naturalinnovation.org/ota_update/" // Optionally tell the node somewhere else to look for updates

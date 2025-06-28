@@ -7,13 +7,10 @@
 #include <forward_list>
 #include "sensor.h"
 #include "sensor_uint16.h"
-#include "system_mqtt.h"
-
-#ifdef SENSOR_UINT16_WANT
 
 //Sensor_Uint16::Sensor_Uint16() : Sensor() {  };
-Sensor_Uint16::Sensor_Uint16(const char* const id, const char * const name, const uint8_t smooth_init, uint16_t min, uint16_t max, const char* color, const unsigned long ms_init, bool retain)
-  : Sensor(id, name, ms_init, retain), smooth(smooth_init) {
+Sensor_Uint16::Sensor_Uint16(const char* const id, const char * const name, const uint8_t smooth_init, uint16_t min, uint16_t max, const char* color, bool retain)
+  : Sensor(id, name, retain), smooth(smooth_init) {
     output = new OUTuint16(id, id, name, 0, min, max, color, false); //TODO-25-22apr pass color
   }
     
@@ -52,7 +49,7 @@ bool Sensor_Uint16::changed(const uint16_t newvalue) {
 /*
 void Sensor_Uint16::act() {
     if (topicTwig) {
-      Mqtt->messageSend(topicTwig, output->value, retain, qos); // Note messageSend will convert value to String and expand topicTwig
+      frugal_iot.mqtt->messageSend(topicTwig, output->value, retain, qos); // Note messageSend will convert value to String and expand topicTwig
     }
 }
 */
@@ -69,4 +66,3 @@ void Sensor_Uint16::dispatchTwig(const String &topicSensorId, const String &leaf
     }
   }
 }
-#endif //SENSOR_UINT16_WANT

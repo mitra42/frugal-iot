@@ -5,34 +5,23 @@
 #include "_settings.h"  // Settings for what to include etc
 #include <Arduino.h>
 #include <string>     // std::string, std::stoi
-#include "_base.h"
+#include "system_base.h"
 #include "sensor.h"
 #include "actuator.h"
 #include "control.h"
 #include "misc.h"
-#include "system_mqtt.h"
+#include "system_frugal.h"
 
-Frugal_Base::Frugal_Base() { }; // Intentionally nothing here
+System_Base::System_Base(const char * const id, const char * const name)
+: id(id), name(name) { };
 
-void Frugal_Base::setup() { }; // This will get called if no setup() in subclass 
-
-void Frugal_Base::setupAll() {
-
-  #ifdef SENSOR_WANT // If there are any sensors
-    Sensor::setupAll();
-  #endif
-  #ifdef ACTUATOR_WANT // If there are any actuators
-    Actuator::setupAll();
-  #endif
-  #ifdef CONTROL_WANT
-    Control::setupAll();
-  #endif
-  // TODO-25 calls system.setupAll
-}
-void Frugal_Base::infrequently() { }; // This will get called if no loop() in subclass 
-void Frugal_Base::frequently() { }; // This will get called if no loop() in subclass 
-void Frugal_Base::periodically() { }; // This will get called if no loop() in subclass 
-
+void System_Base::setup() { }; // This will get called if no setup() in subclass 
+void System_Base::infrequently() { }; // This will get called if no loop() in subclass 
+void System_Base::frequently() { }; // This will get called if no loop() in subclass 
+void System_Base::periodically() { }; // This will get called if no loop() in subclass 
+void System_Base::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {};
+void System_Base::dispatchPath(const String &topicPath, const String &payload) {};
+String System_Base::advertisement() {return String();};
 
 // ========== IO - base class for IN and OUT ===== 
 
@@ -51,11 +40,11 @@ void IO::wireTo(String* topicPath) {
   // TODO probably should unsubscribe from previous BUT could be subscribed elsewhere
   wiredPath = topicPath;
   if (topicPath->length() > 0) {
-    Mqtt->subscribe(*wiredPath);
+frugal_iot.mqtt->subscribe(*wiredPath);
   }
 }
 void IO::wireTo(IO* io) {
-  wireTo(Mqtt->path(io->topicTwig)); // Subscribe to the twig of the IO
+  wireTo(frugal_iot.mqtt->path(io->topicTwig)); // Subscribe to the twig of the IO
 }
 // TO_ADD_INxxx 
 float IN::floatValue() {
@@ -457,7 +446,7 @@ OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const ch
 }
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
-// OUT::dispatchPath() - wont be called from Control::dispatchAll.
+// OUT::dispatchPath() - wont be called from Control::dispatchPath.
 
 // TO_ADD_OUTxxx
 OUTbool::OUTbool(const OUTbool &other) 
@@ -480,19 +469,19 @@ OUTuint16::OUTuint16(const OUTuint16 &other)
 // Called when either value, or wiredPath changes
 void OUTfloat::sendWired() {
   if (wiredPath && wiredPath->length() ) {
-    Mqtt->messageSend(*wiredPath, value, width, true, 1 ); // TODO note retain and qos=1 
+    frugal_iot.mqtt->messageSend(*wiredPath, value, width, true, 1 ); // TODO note retain and qos=1 
   }
 }
 void OUTuint16::sendWired() {
   if (wiredPath && wiredPath->length() ) {
-    Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    frugal_iot.mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
   }
 }
 void OUTbool::sendWired() {
   Serial.print("XXX sendWired " __FILE__); Serial.println(__LINE__);
   if (wiredPath && wiredPath->length() ) {
     Serial.print("XXX sendWired " __FILE__); Serial.println(__LINE__);
-    Mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
+    frugal_iot.mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
   }
 }
 // TO-ADD-OUTxxx
@@ -502,7 +491,7 @@ void OUTfloat::set(const float newvalue) {
   #endif
   if (newvalue != value) {
     value = newvalue;
-    Mqtt->messageSend(topicTwig, value, width, true, 1 ); // retain and qos=1 
+    frugal_iot.mqtt->messageSend(topicTwig, value, width, true, 1 ); // retain and qos=1 
     sendWired();
   }
 }
@@ -512,7 +501,7 @@ void OUTuint16::set(const uint16_t newvalue) {
   #endif
   if (newvalue != value) {
     value = newvalue;
-    Mqtt->messageSend(topicTwig, value, true, 1 ); 
+    frugal_iot.mqtt->messageSend(topicTwig, value, true, 1 ); 
     sendWired();
   }
 }
@@ -522,7 +511,7 @@ void OUTbool::set(const bool newvalue) {
   #endif
   if (newvalue != value) {
     value = newvalue;
-    Mqtt->messageSend(topicTwig, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    frugal_iot.mqtt->messageSend(topicTwig, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
     sendWired();
   }
 }

@@ -62,7 +62,7 @@
 
 
 Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name) 
-  : Sensor(id, name, 10000, false)
+  : Sensor(id, name, false)
 { // TODO-101 try movign some of these into part above
   aht = new System_I2C(SENSOR_ENSAHT_AHTI2C);
   // AHT21
