@@ -51,6 +51,9 @@ void setup() {
 
   frugal_iot.sensors->add(new Sensor_DHT("DHT", 16, true));
 
+  // M<S5803 is set via jumper to 76 or 77
+  frugal_iot.sensors->add(new Sensor_ms5803("pressure", "Pressure", 0x77));
+
   Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true); // Create SHT30 sensor
   frugal_iot.sensors->add(ss); // Add SHT30 sensor
 

@@ -75,11 +75,6 @@
   //#define LOCAL_DEV_WANT // Include custom code
 #endif //BOARDEMO1
 
-#ifdef ISSUE132MS5803
-  #define SENSOR_MS5803_WANT
-  #define SENSOR_MS5803_DEBUG
-  //#define SENSOR_MS5803_SPI 15 // CS Pin for SPI on D1-mini is D8=15 probably different on ESP32
-  #define SENSOR_MS5803_I2C 0x77 // Set via jumper to 76 or 77 
-#endif
+
 
 #endif //LOCAL_H

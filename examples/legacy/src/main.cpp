@@ -16,20 +16,6 @@ System_Frugal frugal_iot; // Singleton
 
 void setup() {
 
-  #ifdef ANY_DEBUG
-    Serial.begin(SERIAL_BAUD);
-    while (!Serial) { 
-      ; // wait for serial port to connect. Needed for Arduino Leonardo only
-    }
-    delay(SERIAL_DELAY); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
-    Serial.println(F("FrugalIoT Starting"));
-  #endif // ANY_DEBUG
-
-  Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true);
-  frugal_iot.sensors->add(ss);
-#ifdef SENSOR_MS5803_WANT
-  frugal_iot.sensors->add(new Sensor_ms5803("pressure", "Pressure"));
-#endif
 #ifdef SENSOR_LOADCELL_WANT
   frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 2000, "pink", true));
 #endif

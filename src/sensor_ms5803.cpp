@@ -15,21 +15,12 @@
 // ====== NOTE THIS IS NOT YET WORKING - NEEDS TESTING ======
 
 #include "_settings.h"  // Settings for what to include etc
-#ifdef SENSOR_MS5803_WANT
 #include <Arduino.h>
-#ifdef SENSOR_MS5803_I2C
-  #include <Wire.h>
-#endif
+#include <Wire.h>
 
 #include "sensor_ms5803.h"
-#ifdef SENSOR_MS5803_SPI
-#include "system_spi.h"
-#elif defined(SENSOR_MS5803_I2C)
+// #include "system_spi.h" // Not currently working - needs revising to match system_i2c patterns
 #include "system_i2c.h"
-#endif
-
-
-#define SENSOR_MS5803_DEBUG
 
 // Sensor constants:
 #define SENSOR_CMD_RESET      0x1E
@@ -48,13 +39,12 @@
   // TODO-132 add to mqtt
   // TODO-132 need to use a slower clock when at distance
 // Instantiate with  sensors.push_back(new Sensor_ms5803())
-Sensor_ms5803::Sensor_ms5803(const char* const id, const char * const name) : 
+Sensor_ms5803::Sensor_ms5803(const char* const id, const char * const name, uint8_t address) : 
   Sensor(id, name, false),
-  #ifdef SENSOR_MS5803_SPI
-    interface(SENSOR_MS5803_SPI, SPI_CLOCK_DIV64) // uses default pins
-  #elif defined(SENSOR_MS5803_I2C)
-    interface(SENSOR_MS5803_I2C)
-  #endif
+  // system_spi not currently working - needs revising to match system_i2c patterns
+  //#ifdef SENSOR_MS5803_SPI
+  //  interface(SENSOR_MS5803_SPI, SPI_CLOCK_DIV64) // uses default pins
+  interface(address) 
 {
  
   pressure = new OUTfloat(id, "pressure", "Pressure", 0, 1, 0, 99, "blue", false);
@@ -174,5 +164,3 @@ void Sensor_ms5803::dispatchTwig(const String &topicSensorId, const String &leaf
     }
   }
 }
-
-#endif // SENSOR_MS5803_WANT
