@@ -92,6 +92,7 @@ System_Frugal::System_Frugal()
   sensors(new Frugal_Group("sensors", "Sensors")),
   controls(new Frugal_Group("controls", "Controls")),
   system(new Frugal_Group("system", "System")),
+  buttons(new Frugal_Group("buttons", "Buttons")),
   time(nullptr), // time is optional and setup by main.cpp if needed
   #ifdef SYSTEM_OTA_KEY
     ota(new System_OTA()),
@@ -125,6 +126,7 @@ System_Frugal::System_Frugal()
   add(actuators);
   add(sensors);
   add(controls);
+  // add(buttons); // optimizing by not adding this - its only needed for looping for infrequently()
   system->add(wifi);
   system->add(mqtt);
   system->add(discovery);
@@ -162,6 +164,7 @@ void System_Frugal::setup() {
 }
 void System_Frugal::infrequently() {
   Frugal_Group::infrequently();
+  buttons->infrequently(); // Not in the main group of groups as infrequently() is only thing called.
   #ifdef LOCAL_DEV_WANT
     // TODO-141 this will go back into the new main.cpp in some form
     localDev::infrequently();

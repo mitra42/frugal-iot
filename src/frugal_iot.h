@@ -5,7 +5,6 @@
 #include "actuator_ledbuiltin.h"
 
 //TO-ADD-SENSOR - add any new sensors here
-#include "sensor_analog_instances.h"
 #include "sensor_soil.h"
 #include "sensor_battery.h"
 #include "sensor_sht.h"

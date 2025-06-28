@@ -15,20 +15,11 @@
 #if defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG)
   #define SENSOR_HT_DEBUG
 #endif
-#if defined(SENSOR_ANALOG_INSTANCES_WANT) || defined(SENSOR_BATTERY_WANT) || defined(SENSOR_SOIL_WANT)
-  #define SENSOR_ANALOG_WANT
-#endif
-#if defined(SENSOR_ANALOG_INSTANCES_DEBUG) || defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG)
+#if defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG)
   #define SENSOR_ANALOG_DEBUG
-#endif
-#if defined(SENSOR_ANALOG_WANT) 
-  #define SENSOR_UINT16_WANT
 #endif
 #if defined(SENSOR_ANALOG_DEBUG) 
   #define SENSOR_UINT16_DEBUG
-#endif
-#if defined(SENSOR_BH1750_WANT) || defined(SENSOR_LOADCELL_WANT)
-  #define SENSOR_FLOAT_WANT
 #endif
 #if defined(SENSOR_BH1750_DEBUG)
   #define SENSOR_FLOAT_DEBUG

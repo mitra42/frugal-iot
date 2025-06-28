@@ -23,6 +23,17 @@
 #endif // ESP32||ESP8266
 #endif // SYSTEM_SPIFFS_WANT
 
+// Define defuault SD Pin if known - constructor can use if not specified
+#ifndef SYSTEM_SD_PIN
+  #ifdef ESP8266_D1
+    #define SYSTEM_SD_PIN D4 // Default pin on the shield - if override theres a solder bridge to change
+  #elif defined(ARDUINO_LOLIN_C3_PICO)
+    #define SYSTEM_SD_SCK 1
+    #define SYSTEM_SD_MISO 0
+    #define SYSTEM_SD_MOSI 4
+    #define SYSTEM_SD_PIN 6 // Default pin on the shield - if override theres a solder bridge to change
+  #endif
+#endif
 
 class System_FS : public System_Base {
   public:
@@ -57,7 +68,8 @@ class System_SPIFFS : public System_FS {
 };
 class System_SD : public System_FS {
   public:
-    System_SD();
+    uint8_t pin;
+    System_SD(uint8_t pin);
     void setup();
     fs::File open(const char *filename, const char *mode);
     fs::File open(const String &filename, const char *mode);

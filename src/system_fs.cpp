@@ -22,18 +22,6 @@
 #include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
 #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
 #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
-#ifndef SYSTEM_SD_PIN
-  #ifdef ESP8266_D1
-    #define SYSTEM_SD_PIN D4 // Default pin on the shield - if override theres a solder bridge to change
-  #elif defined(ARDUINO_LOLIN_C3_PICO)
-    #define SYSTEM_SD_SCK 1
-    #define SYSTEM_SD_MISO 0
-    #define SYSTEM_SD_MOSI 4
-    #define SYSTEM_SD_PIN 6 // Default pin on the shield - if override theres a solder bridge to change
-  #else
-    #error No default pin for SD cards on your board // TODO-141 not an error since may not want SD
-  #endif
-#endif
 
 #ifdef ESP32
   #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
@@ -171,11 +159,14 @@ void System_FS::printDirectory(File dir, int numTabs) {  // e.g. "/"
 
 #endif // SYSTEM_FS_DEBUG
 
-System_SD::System_SD() : System_FS("sd", "SD") {}
+System_SD::System_SD(uint8_t pin) 
+: System_FS("sd", "SD"),
+  pin(pin)
+  {}
+
 System_SPIFFS::System_SPIFFS() : System_FS("spiffs", "SPIFFS") {}
 
 void System_SD::setup() {
-  uint8_t pin = SYSTEM_SD_PIN;
   // Library is SS=D8=15 fails;  old sketch was 4 some online says 8 but that fatals. D4=GPIO0=2 worked on Lolin Relay with no solder bridge
   Serial.println(F("SD initialization on CS pin ")); Serial.print(pin);
   #ifdef SYSTEM_SD_SCK // esp on ARDUINO_LOLIN_C3_PICO default pins are wrong - not those used on the shield 

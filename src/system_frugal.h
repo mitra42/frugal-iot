@@ -51,6 +51,7 @@ class System_Frugal : public Frugal_Group {
     Frugal_Group* sensors;
     Frugal_Group* controls;
     Frugal_Group* system;
+    Frugal_Group* buttons;
     System_Time* time; // Optional - may be nullptr if not set up
     #ifdef SYSTEM_OTA_KEY
       System_OTA* ota;

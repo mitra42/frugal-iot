@@ -66,20 +66,11 @@
 #ifdef BOARDCOMPILECHECK // FOr checking everything compiles - check with both ESP32 and ESP8266 boards
   #define SYSTEM_WIFI_PROJECT "lotus"
   //TO_ADD_SENSOR
-  #define SENSOR_ANALOG_INSTANCES_WANT
-  #define SENSOR_ANALOG_PIN_1 4
-  #define SENSOR_BATTERY_WANT // Only works currently on ESP8266
-  #define SENSOR_BH1750_WANT
-  #define SENSOR_BH1750_ADDRESS 0x23
-  #define SENSOR_BUTTON_WANT
-  #define SENSOR_BUTTON_PIN 4
   #define SENSOR_DHT_WANT
   #define SENSOR_ENSAHT_WANT
   #define SENSOR_LOADCELL_WANT
   #define SENSOR_MS5803_WANT
   #define SENSOR_MS5803_I2C 0x77
-  #define SENSOR_SOIL_WANT
-  #define SENSOR_SOIL_PIN 4
   //TO_ADD_CONTROL
   #define CONTROL_BLINKEN_WANT
   #define CONTROL_GSHEETS_WANT
@@ -100,51 +91,6 @@
   #define SYSTEM_OTA_KEY "xxx" // Dummy - dont want it to actually OTA
 #endif
 
-
-
-#ifdef ISSUE25 // Stripped down for quick compilations
-  #define SYSTEM_WIFI_DEVICE "Dev 25"
-  #define SYSTEM_WIFI_PROJECT "lotus"
-#endif
-
-#ifdef BOARDDEV // Stripped down for quick compilations
-  #define SYSTEM_WIFI_DEVICE "Quick dev"
-  #define SYSTEM_WIFI_PROJECT "lotus"
-  #define SENSOR_ANALOG_INSTANCES_WANT
-#endif
-
-#ifdef LILYGOHIGROW1
-  #ifndef ESP32
-    #error should be using "ESP32 Dev Module" in the IDE, and looks like you are using a ESP8266 board
-  #endif
-  #define LILYGOHIGROW // For board determined decisions of things like pins
-  #define SYSTEM_WIFI_DEVICE "LilyGo HiGrow"
-  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION LILYGOHIGROW1
-  // Below here need developing 
-  #define ACTUATOR_LEDBUILTIN_WANT // unclear if there is a LED
-  #define SENSOR_DHT_WANT
-  //#define SENSOR_LIGHT_WANT
-  #define SENSOR_SOIL_WANT
-  #define SENSOR_SOIL_DEBUG
-  //#define SENSOR_ANALOG_INSTANCES_WANT
-  #define SENSOR_ANALOG_INSTANCES_DEBUG
-  #define SENSOR_ANALOG_PIN_1 34
-  #define SENSOR_ANALOG_TOPIC_1 "salt"
-  #define SENSOR_ANALOG_NAME_1 "Salt"
-  #define SENSOR_ANALOG_SMOOTH_1 4
-  //#define SENSOR_BATTERY_WANT // Untested as battery never arrived ! 
-  #define SENSOR_BH1750_WANT
-  #define SENSOR_BH1750_DEBUG
-  //#define ACTUATOR_RELAY
-  //#define SENSOR_BATTERY
-  #define SENSOR_BUTTON_WANT
-  #define POWER_CTRL 4 // Required before reading anything TODO-power consumption turnoff outside loops TODO-115 move this to a system_power module
-  #define SYSTEM_WIFI_PROJECT "lotus"
-#endif
-
-// Can also define a default language
-#define LANGUAGE_DEFAULT "id"
-
 #ifdef KOPERNIK1
   #ifndef ESP32
     #error should be using "ESP32 WROVER MODULE" in the IDE, and looks like you are using a ESP32 board
@@ -153,12 +99,7 @@
   #define SYSTEM_WIFI_DEVICE "Kopernik pump control"
   #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION KOPERNIK1
   // main.cpp - relay;  pin=4
-  #define SENSOR_SOIL_WANT
-  #define SENSOR_SOIL_PIN 36
-  #define SENSOR_ANALOG_ATTENUATION ADC_11db
-  #define SENSOR_SOIL_DEBUG
-  #define SENSOR_SOIL_0 3000
-  #define SENSOR_SOIL_100 800
+  // main.cpp - soil sensor; pin=36  SENSOR_ANALOG_ATTENUATION=ADC_11db
   //#define SYSTEM_OTA_KEY "kopernik1"
   #define SYSTEM_WIFI_PROJECT "lotus"
   //#define LOCAL_DEV_WANT // Include custom code

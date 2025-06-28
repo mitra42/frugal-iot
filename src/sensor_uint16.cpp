@@ -7,7 +7,6 @@
 #include <forward_list>
 #include "sensor.h"
 #include "sensor_uint16.h"
-#ifdef SENSOR_UINT16_WANT
 
 //Sensor_Uint16::Sensor_Uint16() : Sensor() {  };
 Sensor_Uint16::Sensor_Uint16(const char* const id, const char * const name, const uint8_t smooth_init, uint16_t min, uint16_t max, const char* color, bool retain)
@@ -33,7 +32,7 @@ void Sensor_Uint16::set(const uint16_t newvalue) {
       vv = newvalue;
     }
     #ifdef SENSOR_UINT16_DEBUG
-      Serial.print(topicTwig);
+      Serial.print(id);
       Serial.print(" "); Serial.println(newvalue);
       if (smooth) { Serial.print(F(" Smoothed")); Serial.print(" "); Serial.println(vv); }
       
@@ -67,4 +66,3 @@ void Sensor_Uint16::dispatchTwig(const String &topicSensorId, const String &leaf
     }
   }
 }
-#endif //SENSOR_UINT16_WANT

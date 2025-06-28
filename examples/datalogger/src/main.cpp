@@ -15,7 +15,7 @@ void setup() {
   frugal_iot.startSerial(); // Encapsulate setting up and starting serial
   frugal_iot.system->add(frugal_iot.time = new System_Time());
   #ifdef SYSTEM_SD_WANT
-    System_SD* fs_SD = new System_SD();
+    System_SD* fs_SD = new System_SD(SYSTEM_SD_PIN);
     frugal_iot.system->add(fs_SD);
   #else // If no SD then use SPIFFS
     System_SPIFFS* fs_SPIFFS = new System_SPIFFS(); // TODO-141 merge with SPIFFS used by WiFi

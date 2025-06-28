@@ -6,11 +6,6 @@
 
 #include "_settings.h"  // Settings for what to include etc
 
-#if defined(SENSOR_XYZ_WANT) || defined(SENSOR_MPQ_WANT)
-  #define SENSOR_FLOAT_WANT
-#endif
-#ifdef SENSOR_FLOAT_WANT
-
 #include <Arduino.h>
 #include <forward_list>
 #include "sensor.h"
@@ -43,4 +38,3 @@ void Sensor_Float::dispatchTwig(const String &topicSensorId, const String &leaf,
   }
 }
 
-#endif // SENSOR_FLOAT_WANT

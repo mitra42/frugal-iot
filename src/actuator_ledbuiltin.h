@@ -38,7 +38,7 @@
 #include "actuator_digital.h" // for class Actuator_Digital
 
 // On some older boards - esp Arduino Uno LED_BUILTIN is not defined but BUILTIN_LED=13, *but* is a constant so does not show up with ifdef
-#ifndef LED_BUILTIN
+#if !defined(LED_BUILTIN) && defined(BUILTIN_LED)
   // May put a board test in here if find this is problematic on boards with no LED_BUILTIN defined because there is no LED
   #define LED_BUILTIN BUILTIN_LED // BUILTIN_LED probably a constant
 #endif

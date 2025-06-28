@@ -1,15 +1,12 @@
-/*
- * Temperature and Humidity sensor, 
- *
+/* Frugal IoT - DHT temperature and humidity sensor
+ * 
  * Mitra Ardron: Nov 2024
  * 
  * Testing using the Arduino KY-015 board with its DHT11 - connected to Lolin D1 Mini 
  * 
  * Required:
  * Optional: 
- * SENSOR_DHT_PIN          // Which pins sensors connected to - default to 4
  * SENSOR_DHT_DEBUG              // Debugging output
- * SENSOR_DHT_COUNT              // How many devices - default to 1
  *
  * See examples at https://www.thegeekpub.com/wiki/sensor-wiki-ky-015-dht11-combination-temperature-and-humidity-sensor
  * Bit bashing at https://www.phippselectronics.com/using-the-temperature-and-humidity-sensor-ky-015-with-arduino/ looks simple as well
@@ -17,23 +14,34 @@
  * or non-blocking DHT at https://github.com/toannv17/DHT-Sensors-Non-Blocking/blob/main/DHT_Async.cpp (this is a library)
  *
  * This version uses Rob Tillart's library (who also did the SHT library we use) 
+ * 
+ * Known Pins for various boards
+ *  LilyGo HiGrow:        GPIO_NUM_16
+ *  ARDUINO_LOLIN_C3_PICO 6 // Currently untested but should be the same physical pin as D4 on ESP8266_D1
+ *  ESP8266_D1            D4 // Standard on DHT D1 Mini shields
+ * 
+ * Include in main.cpp as e.g.
+ *    frugal_iot.sensors->add(new Sensor_DHT("DHT", GPIO_NUM_16, true));
+ * 
 */
 
 #include "_settings.h"  // Settings for what to include etc
 
-#ifdef SENSOR_DHT_WANT
-
 #include <Arduino.h>
-#include <dhtnew.h>                     // https://github.com/RobTillaart/DHTNew
+#include <dhtnew.h> // https://github.com/RobTillaart/DHTNew
 #include "sensor_dht.h"
 
 // Add alternative constructor with id e.g. dht1, dht2 etc
 Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, bool retain) 
   : Sensor_HT("dht", name, retain), 
+    dht(new DHTNEW(pin_init)),
    pin(pin_init) {
-  dht = new DHTNEW(pin_init); //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
+  //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
   // dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/104
+}
+void Sensor_DHT::setup() {
   dht->powerUp(); //TODO-POWER think about when do this
+  Sensor_HT::setup(); // Call parent setup
 }
 
 #ifdef SENSOR_DHT_DEBUG
@@ -105,9 +113,3 @@ void Sensor_DHT::readAndSet() {
     set(temp, humy); // Will also send message via output->set()
   }
 }
-
-//Sensor_DHT sensor_dht(SENSOR_DHT_PIN, "temperature", "humidity");
-
-#endif // SENSOR_DHT_WANT
-
-//  -- END OF FILE --

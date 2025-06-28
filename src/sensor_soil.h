@@ -1,46 +1,9 @@
 #ifndef SENSOR_SOIL_H
 #define SENSOR_SOIL_H
 
-/* Configuration options
- * Required: SENSOR_SOIL_PIN
- * Optional: SENSOR_SOIL_REFERENCE SENSOR_SOIL_SMOOTH
-*/
+
 
 #include "sensor_analog.h"
-
-#if defined(SENSOR_SOIL_WANT) && !defined(SENSOR_SOIL_PIN)
-  //TO_ADD_BOARD
-  #if defined(ARDUINO_LOLIN_C3_PICO)
-    #error there is no default pin on C3-pico suggest 4, 0 or 1
-  #elif defined(ESP8266_D1)
-    #define SENSOR_SOIL_PIN A0 // THere is only one Anlog on D1
-  #elif defined(LILYGOHIGROW)
-    #define SENSOR_SOIL_PIN 32
-  #else 
-    #error Sorry no default Analog pin for your board
-  #endif
-#endif
-
-#ifndef SENSOR_SOIL_0
-  #if defined(LILYGOHIGROW)
-    #define SENSOR_SOIL_0 4095
-  #else
-    #define SENSOR_SOIL_0 3000
-  #endif
-#endif
-#ifndef SENSOR_SOIL_100
-  #if defined(LILYGOHIGROW)
-    #define SENSOR_SOIL_100 0
-  #else
-    #define SENSOR_SOIL_100 1000
-  #endif
-#endif
-
-#ifndef SENSOR_ANALOG_COLOR_1
-  #define SENSOR_ANALOG_COLOR_1 "0x87643"
-#endif
-
-
 
 class Sensor_Soil : public Sensor_Analog {
   public: 
