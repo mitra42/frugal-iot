@@ -61,36 +61,6 @@
   #define SYSTEM_WIFI_SSID_9 "Silver"
   #define SYSTEM_WIFI_PASSWORD_9 "O2IL-w8k2-w6ki-TzqG"
 
-  
-// Note that on ESP that ESP32 or ESP8266 will be defined - should define other chips names here if its not ESP32 or ESP8266
-#ifdef BOARDCOMPILECHECK // FOr checking everything compiles - check with both ESP32 and ESP8266 boards
-  #define SYSTEM_WIFI_PROJECT "lotus"
-  //TO_ADD_SENSOR
-  #define SENSOR_DHT_WANT
-  #define SENSOR_ENSAHT_WANT
-  #define SENSOR_LOADCELL_WANT
-  #define SENSOR_MS5803_WANT
-  #define SENSOR_MS5803_I2C 0x77
-  //TO_ADD_CONTROL
-  #define CONTROL_BLINKEN_WANT
-  #define CONTROL_GSHEETS_WANT
-  #define CONTROL_GSHEETS_URL "https://blahblah"
-  #if defined(ESP8266) && !defined(PLATFORMIO)
-   // #define ARDUINO_ESP8266_WEMOS_D1MINIPRO  // Use Mini Pro for testing because (V2) supports battery 
-  #endif
-  //Not sure why we are doing this 
-  //#if defined(ESP32) && !defined(PLATFORMIO)
-  //    #define ARDUINO_LOLIN_C3_PICO
-  //#endif
-  #define SYSTEM_POWER_MODE_LOOP
-  //Need to use ARDUINO_LOLIN_C3_PICO for many of the sensors, so cant test LoRa or OLED here yet
-  //#define SYSTEM_LORA_WANT
-  //#define SYSTEM_LORAMESHER_WANT
-  //#define SYSTEM_LORAMESHER_SENDER_TEST // Remove when LORAMESHER via MQTT built
-  //#define SYSTEM_OLED_WANT
-  #define SYSTEM_OTA_KEY "xxx" // Dummy - dont want it to actually OTA
-#endif
-
 #ifdef KOPERNIK1
   #ifndef ESP32
     #error should be using "ESP32 WROVER MODULE" in the IDE, and looks like you are using a ESP32 board
@@ -105,21 +75,11 @@
   //#define LOCAL_DEV_WANT // Include custom code
 #endif //BOARDEMO1
 
-#ifdef ISSUE112
-  #define SENSOR_DHT_WANT
-  #define SYSTEM_WIFI_PROJECT "lotus"
-  #define SENSOR_DHT_DEBUG
-#endif
-
 #ifdef ISSUE132MS5803
   #define SENSOR_MS5803_WANT
   #define SENSOR_MS5803_DEBUG
   //#define SENSOR_MS5803_SPI 15 // CS Pin for SPI on D1-mini is D8=15 probably different on ESP32
   #define SENSOR_MS5803_I2C 0x77 // Set via jumper to 76 or 77 
-#endif
-
-#ifndef SYSTEM_WIFI_PROJECT
-  #define SYSTEM_WIFI_PROJECT "lotus"
 #endif
 
 #endif //LOCAL_H

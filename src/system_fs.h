@@ -27,7 +27,7 @@
 #ifndef SYSTEM_SD_PIN
   #ifdef ESP8266_D1
     #define SYSTEM_SD_PIN D4 // Default pin on the shield - if override theres a solder bridge to change
-  #elif defined(ARDUINO_LOLIN_C3_PICO)
+  #elif defined(ARDUINO_LOLIN_C3_PICO) || defined(ARDUINO_LOLIN_S2_MINI)
     #define SYSTEM_SD_SCK 1
     #define SYSTEM_SD_MISO 0
     #define SYSTEM_SD_MOSI 4

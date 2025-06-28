@@ -34,8 +34,8 @@
 
 class Sensor_DHT : public Sensor_HT {
 public:
-  uint8_t pin;
   DHTNEW *dht; 
+  uint8_t pin;
   Sensor_DHT(const char * const name, const uint8_t pin, bool retain);
   void setup();
   virtual void readAndSet(); // Combines function of set(read()) since reads two values from sensor
