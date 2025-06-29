@@ -2,8 +2,6 @@
 #define CONTROL_GSHEETS_H
 
 #include "_settings.h"
-#ifdef CONTROL_GSHEETS_WANT
-
 #include "system_base.h" // for IOtype
 #include "control_logger.h"
 
@@ -17,6 +15,4 @@ class Control_Gsheets : public Control_Logger {
     void sendGoogle(String* payload);
     void act();
 };
-
-#endif // CONTROL_GSHEETS_WANT
 #endif // CONTROL_GSHEETS_H
