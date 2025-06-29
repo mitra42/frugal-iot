@@ -27,4 +27,3 @@ void setup() {
 void loop() {
   frugal_iot.loop();
 }
-

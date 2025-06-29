@@ -93,6 +93,9 @@ System_Frugal::System_Frugal()
   controls(new Frugal_Group("controls", "Controls")),
   system(new Frugal_Group("system", "System")),
   buttons(new Frugal_Group("buttons", "Buttons")),
+  discovery(new System_Discovery()),
+  fs_SPIFFS(new System_SPIFFS()),
+  mqtt(new System_MQTT()),
   time(nullptr), // time is optional and setup by main.cpp if needed
   #ifdef SYSTEM_OTA_KEY
     ota(new System_OTA()),
@@ -115,10 +118,7 @@ System_Frugal::System_Frugal()
   #elif SYSTEM_POWER_MODE_AUTO
     powercontroller(new System_Power_Mode_Auto(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
   #endif
-  wifi(new System_WiFi()),
-  mqtt(new System_MQTT()),
-  discovery(new System_Discovery())
-  
+  wifi(new System_WiFi())
 {
   #ifdef LED_BUILTIN // defined by board or _settings.h
     actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN)); // Default LED builtin actuator at default brightness and white
@@ -127,6 +127,7 @@ System_Frugal::System_Frugal()
   add(sensors);
   add(controls);
   // add(buttons); // optimizing by not adding this - its only needed for looping for infrequently()
+  system->add(fs_SPIFFS);
   system->add(wifi);
   system->add(mqtt);
   system->add(discovery);
@@ -143,6 +144,8 @@ System_Frugal::System_Frugal()
   #endif // SYSTEM_LORA_WANT
 
   add(system);
+  // These things should really be in setup() but we want them to run before the rest of the main.cpp setup()
+  fs_SPIFFS->pre_setup();
 }
 
 void System_Frugal::setup() {

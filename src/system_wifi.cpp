@@ -23,19 +23,27 @@
 #else
   #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
+#include "misc.h" // For lprintf
 #include "system_frugal.h"
 
+#ifndef SYSTEM_WIFI_DEVICE //TODO-141 do this in platformio.ini not _locals.h
+  #define SYSTEM_WIFI_DEVICE "device"
+#endif
+#ifndef SYSTEM_WIFI_PROJECT //TODO-141 do this in platformio.ini not _locals.h
+  #define SYSTEM_WIFI_PROJECT "project"
+#endif
 
-// TODO find a way to store in eeprom rather than SPIFFS. 
-#ifdef ESP32
-  #define ESPFS SPIFFS
-  #include <SPIFFS.h>
-#elif ESP8266
+
+// SPIFFS is now deprecated in favor of LittleFS for both ESP32 and ESP8266
+//#ifdef ESP32
+//  #define ESPFS SPIFFS
+//  #include <SPIFFS.h>
+//#elif ESP8266
   #define ESPFS LittleFS
   #include <LittleFS.h>
-#else
-    #error "This example only supports ESP32 and ESP8266"
-#endif 
+//#else
+//    #error "This example only supports ESP32 and ESP8266"
+//#endif 
 #include "WiFiSettings.h"  // adapted from https://github.com/Juerd/ESP-WiFiSettings
 
 #ifndef SYSTEM_WIFI_PORTAL_RESTART
@@ -63,14 +71,12 @@ System_WiFi::System_WiFi()
 bool System_WiFi::connect1() {
   // Use last stored credentials (if any) to attempt connect to your WiFi access point.
   // store for future use if successfull.
-  WiFiSettings.ssid = slurp("/wifi-ssid");
-  String pw = slurp("/wifi-password");
+  WiFiSettings.ssid = frugal_iot.fs_SPIFFS->slurp("/wifi-ssid");
+  String pw = frugal_iot.fs_SPIFFS->slurp("/wifi-password");
   //if (WiFiSettings.onConnect) WiFiSettings.onConnect(); // FrugalIot isn't using this currently
   if (WiFiSettings.ssid.length()) {
     if (WiFiSettings.connectInner(WiFiSettings.ssid, pw)) {
-      String filename = String("/wifi/" + WiFiSettings.ssid);
-      //Serial.print("Saving password in"); Serial.println(filename);
-      spurt(filename, pw ); // Save password as a successfully connected network
+      addWiFi(WiFiSettings.ssid, pw);
       //if (WiFiSettings.onSuccess) WiFiSettings.onSuccess(); // FrugalIot not using
       return true;
     }
@@ -106,7 +112,7 @@ bool System_WiFi::scanConnectOneAndAll() {
         if ((WiFi.RSSI(i) > minRSSI) && (WiFi.RSSI(i) <= (minRSSI + 5))) {
           String filename = String("/wifi/" + WiFi.SSID(i)) ;
           Serial.print(WiFi.SSID(i)); Serial.print(F(" ")); Serial.print(WiFi.RSSI(i)); Serial.print(F(" "));
-          String pw = slurp(filename);
+          String pw = frugal_iot.fs_SPIFFS->slurp(filename);
           if (pw.length()) {
             if (WiFiSettings.connectInner(WiFi.SSID(i), pw)) {
               Serial.print(F("Connected to ")); Serial.println(WiFi.SSID(i));
@@ -145,26 +151,7 @@ void System_WiFi::checkConnected() {
     connect();
   }
 }
-/*
-// Note duplicated in system_fs 
-#ifdef SYSTEM_WIFI_SSID
-bool spurt(const String& fn, const String& content) {
-    File f = ESPFS.open(fn, "w");
-    if (!f) return false;
-    auto w = f.print(content);
-    f.close();
-    return w == content.length();
-}
-// TODO-110 just temporary while debugging SYSTEM_FS
-String slurp(const String& fn) {
-    File f = ESPFS.open(fn, "r");
-    String r = f.readString();
-    f.close();
-    return r;
-}
 
-#endif
-*/
 #ifdef SYSTEM_WIFI_PORTAL_RESTART
 
 // A watchdog on the portal, that will reset after SYSTEM_WIFI_PORTAL_RESTART ms
@@ -234,62 +221,21 @@ void System_WiFi::setupLanguages() {
   #endif
 }
 
+void System_WiFi::addWiFi(String ssid, String password) {
+  const String filename = StringF("/wifi/%s",ssid);
+  if (!frugal_iot.fs_SPIFFS->spurt(filename,password)) {
+    Serial.println("XXX fail to spurt");
+  };
+}
 // Note this is blocking - so order is important, in particular it must complete this before trying mqtt::setup
 void System_WiFi::setup() {
-  #ifdef ESP32
-    SPIFFS.begin(true); // Will format on the first run after failing to mount
-  #elif ESP8266
-    LittleFS.begin();  
-  #else
-    #error "This example only supports ESP32 and ESP8266"
-  #endif
-  
   setupLanguages(); // Must come before any calls to WiFiSettings.<anything> 
 
-  #ifdef SYSTEM_WIFI_SSID
-    Serial.println(F("Overriding WiFi SSID / Password for development"));
-    spurt(F("/wifi-ssid"), F(SYSTEM_WIFI_SSID));
-    spurt(F("/wifi-password"), F(SYSTEM_WIFI_PASSWORD));
-  #endif // SYSTEM_WIFI_SSID
   // Store extra wifis - device should recognize any of them 
-  #ifdef SYSTEM_WIFI_SSID_1
-    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_1), F(SYSTEM_WIFI_PASSWORD_1));
+  #ifdef SYSTEM_WIFI_SSID
+    addWiFi(F(SYSTEM_WIFI_SSID), F(SYSTEM_WIFI_PASSWORD));
   #endif // SYSTEM_WIFI_SSID
-  #ifdef SYSTEM_WIFI_SSID_2
-    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_2), F(SYSTEM_WIFI_PASSWORD_2));
-  #endif
-  #ifdef SYSTEM_WIFI_SSID_3
-    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_3), F(SYSTEM_WIFI_PASSWORD_3));
-  #endif
-  #ifdef SYSTEM_WIFI_SSID_4
-    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_4), F(SYSTEM_WIFI_PASSWORD_4));
-  #endif
-  #ifdef SYSTEM_WIFI_SSID_5
-    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_5), F(SYSTEM_WIFI_PASSWORD_5));
-  #endif
-  #ifdef SYSTEM_WIFI_SSID_6
-    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_6), F(SYSTEM_WIFI_PASSWORD_6));
-  #endif
-  #ifdef SYSTEM_WIFI_SSID_7
-    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_7), F(SYSTEM_WIFI_PASSWORD_7));
-  #endif
-  #ifdef SYSTEM_WIFI_SSID_8
-    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_8), F(SYSTEM_WIFI_PASSWORD_8));
-  #endif
-  #ifdef SYSTEM_WIFI_SSID_9
-    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_9), F(SYSTEM_WIFI_PASSWORD_9));
-  #endif
-  #ifdef SYSTEM_WIFI_SSID_10
-    spurt(F("/wifi/"  SYSTEM_WIFI_SSID_10), F(SYSTEM_WIFI_PASSWORD_10));
-  #endif
   // Feel free to extend if need more than 10! 
-
-  #ifndef SYSTEM_WIFI_DEVICE
-    #define SYSTEM_WIFI_DEVICE "device"
-  #endif
-  #ifndef SYSTEM_WIFI_PROJECT
-    #define SYSTEM_WIFI_PROJECT "project"
-  #endif
 
   // Custom configuration variables, these will read configured values if previously set and return default values if not.
   /*

@@ -13,15 +13,14 @@
   #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
   #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
 #endif
-#ifdef SYSTEM_SPIFFS_WANT
-#ifdef ESP32
-  #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
-  #include <SPIFFS.h>
-#elif ESP8266
+// SPIFFS is now deprecated in favor of LittleFS for both ESP32 and ESP8266
+//#ifdef ESP32
+//  #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
+//  #include <SPIFFS.h>
+//#elif ESP8266
   #define ESPFS LittleFS // LittleFS defind in LittleFS.h
   #include <LittleFS.h>
-#endif // ESP32||ESP8266
-#endif // SYSTEM_SPIFFS_WANT
+//#endif // ESP32||ESP8266
 
 // Define defuault SD Pin if known - constructor can use if not specified
 #ifndef SYSTEM_SD_PIN
@@ -59,7 +58,7 @@ class System_FS : public System_Base {
 class System_SPIFFS : public System_FS {
   public:
     System_SPIFFS();
-    void setup();
+    void pre_setup();
     fs::File open(const char *filename, const char *mode);
     fs::File open(const String &filename, const char *mode);
     virtual boolean exists(const char *filename);

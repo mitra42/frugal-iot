@@ -18,6 +18,7 @@
 #include "actuator_ledbuiltin.h"
 #include "system_base.h"
 #include "system_discovery.h"
+#include "system_fs.h"
 #ifdef ESP32
 #include "system_lora.h"
 #endif
@@ -52,7 +53,13 @@ class System_Frugal : public Frugal_Group {
     Frugal_Group* controls;
     Frugal_Group* system;
     Frugal_Group* buttons;
+    System_Discovery* discovery;
+
+    System_MQTT* mqtt;
+    System_Power_Mode* powercontroller;
+    System_SPIFFS* fs_SPIFFS; 
     System_Time* time; // Optional - may be nullptr if not set up
+
     #ifdef SYSTEM_OTA_KEY
       System_OTA* ota;
     #endif
@@ -65,11 +72,7 @@ class System_Frugal : public Frugal_Group {
     #ifdef SYSTEM_LORA_WANT
       System_LoRa* lora;
     #endif
-    System_Power_Mode* powercontroller;
     System_WiFi* wifi;
-    System_MQTT* mqtt;
-    System_Discovery* discovery;
-
     System_Frugal();
     void startSerial(); // Encapsulate setting up and starting serial
     void dispatchTwig(const String &topicTwig, const String &payload, bool isSet);

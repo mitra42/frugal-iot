@@ -7,17 +7,15 @@
  */
 
 #include "WiFiSettings.h"
+#include "system_frugal.h" // For frugal_iot.SPIFFS
+
 #ifdef ESP32
-    #define ESPFS SPIFFS
     #define ESPMAC (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24))
-    #include <SPIFFS.h>
     #include <WiFi.h>
     #include <WebServer.h>
     #include <esp_task_wdt.h>
 #elif ESP8266
-    #define ESPFS LittleFS
     #define ESPMAC (Sprintf("%06" PRIx32, ESP.getChipId()))
-    #include <LittleFS.h>
     #include <ESP8266WiFi.h>
     #include <ESP8266WebServer.h>
     #define WebServer ESP8266WebServer
@@ -39,20 +37,7 @@ WiFiSettingsLanguage::Texts _WSL_T;
 
 #define Sprintf(f, ...) ({ char* s; asprintf(&s, f, __VA_ARGS__); String r = s; free(s); r; })
 
-    String slurp(const String& fn) {
-        File f = ESPFS.open(fn, "r");
-        String r = f.readString();
-        f.close();
-        return r;
-    }
 
-    bool spurt(const String& fn, const String& content) {
-        File f = ESPFS.open(fn, "w");
-        if (!f) return false;
-        auto w = f.print(content);
-        f.close();
-        return w == content.length();
-    }
 namespace {  // Helpers
 
     String pwgen() {
@@ -88,8 +73,8 @@ namespace {  // Helpers
         long max = LONG_MAX;
 
         String filename() { String fn = "/"; fn += name; return fn; }
-        bool store() { return (name && name.length())? spurt(filename(), value): true; }
-        void fill() { if (name && name.length()) value = slurp(filename()); }
+        bool store() { return (name && name.length())? frugal_iot.fs_SPIFFS->spurt(filename(), value): true; }
+        void fill() { if (name && name.length()) value = frugal_iot.fs_SPIFFS->slurp(filename()); }
         virtual void set(const String&) = 0;
         virtual String html() = 0;
     };
@@ -345,7 +330,7 @@ void WiFiSettingsClass::portal() {
             "<select name=ssid onchange=\"document.getElementsByName('password')[0].value=''\">"
         ));
 
-        ssid = slurp("/wifi-ssid");
+        ssid = frugal_iot.fs_SPIFFS->slurp("/wifi-ssid");
         bool found = false;
         for (int i = 0; i < num_networks; i++) {
             String opt = F("<option value='{ssid}'{sel}>{ssid} {lock} {1x}</option>");
@@ -375,7 +360,7 @@ void WiFiSettingsClass::portal() {
 
         http.sendContent(_WSL_T.wifi_password);
         http.sendContent(F(":<br><input name=password value='"));
-        if (slurp("/wifi-password").length()) http.sendContent("##**##**##**");
+        if (frugal_iot.fs_SPIFFS->slurp("/wifi-password").length()) http.sendContent("##**##**##**");
         http.sendContent(F("'></label><hr>"));
 
         if (WiFiSettingsLanguage::multiple()) {
@@ -407,10 +392,10 @@ void WiFiSettingsClass::portal() {
 
     http.on("/", HTTP_POST, [this, &http]() {
         bool ok = true;
-        if (! spurt("/wifi-ssid", http.arg("ssid"))) ok = false;
+        if (! frugal_iot.fs_SPIFFS->spurt("/wifi-ssid", http.arg("ssid"))) ok = false;
 
         if (WiFiSettingsLanguage::multiple()) {
-            if (! spurt("/WiFiSettings-language", http.arg("language"))) ok = false;
+            if (! frugal_iot.fs_SPIFFS->spurt("/WiFiSettings-language", http.arg("language"))) ok = false;
             // Don't update immediately, because there is currently
             // no mechanism for reloading param strings.
             //language = http.arg("language");
@@ -419,7 +404,7 @@ void WiFiSettingsClass::portal() {
 
         String pw = http.arg("password");
         if (pw != "##**##**##**") {
-            if (! spurt("/wifi-password", pw)) ok = false;
+            if (! frugal_iot.fs_SPIFFS->spurt("/wifi-password", pw)) ok = false;
         }
 
         for (auto& p : params) {
@@ -471,28 +456,6 @@ void WiFiSettingsClass::portal() {
   }
 }
 
-/* Deprecated for version in sysetm_wifi.cpp 
-bool WiFiSettingsClass::connect(bool portal, int wait_seconds) {
-    begin();
-
-    ssid = slurp("/wifi-ssid");
-    String pw = slurp("/wifi-password");
-    if (ssid.length() == 0) {
-        Serial.println(F("First contact!\n"));
-        this->portal(); // never exits except via restart
-    }
-
-    if (onConnect) onConnect();
-    if (connectInner(ssid, pw, wait_seconds)) {
-      if (onSuccess) onSuccess();
-      return true;
-    } else {
-      if (onFailure) onFailure();
-      if (portal) this->portal(); // Note portal never returns - it only ever restarts
-      return false;
-    }
-}
-*/
 // Seperated out so can be called by external attempt to connect to other previously seen SSIDs
 bool WiFiSettingsClass::connectInner(String ssid, String pw, int wait_seconds) {
     // Unclear why this brute multiple setHostname calls - should be documented?
@@ -532,7 +495,7 @@ void WiFiSettingsClass::begin() {
     // These things can't go in the constructor because the constructor runs
     // before ESPFS.begin()
 
-    String user_language = slurp("/WiFiSettings-language");
+    String user_language = frugal_iot.fs_SPIFFS->slurp("/WiFiSettings-language");
     user_language.trim();
     if (user_language.length() && WiFiSettingsLanguage::available(user_language)) {
         language = user_language;

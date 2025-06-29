@@ -25,7 +25,7 @@ Control_LoggerFS::Control_LoggerFS(const char * const name, System_FS* f, const 
 {}
 
 void Control_LoggerFS::setup() {
-  fs->setup();
+  fs->setup(); // Note that SPIFFS will already have been setup by its pre_setup() call
   Control_Logger::setup(); // Call base class setup
 }
 

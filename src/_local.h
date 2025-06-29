@@ -48,6 +48,7 @@
   #define SYSTEM_WIFI_SSID_8 "GEREBIG VILLA 1"
   #define SYSTEM_WIFI_PASSWORD_8 "GRB575800"
 #else
+/*
   #define SYSTEM_WIFI_SSID_1 "EXETEL 8BFC34 2.4G"
   #define SYSTEM_WIFI_PASSWORD_1 "urGGFHQN"
   #define SYSTEM_WIFI_SSID_2 "EXETEL 8BFC34 5G"
@@ -56,6 +57,7 @@
   #define SYSTEM_WIFI_PASSWORD_3 "lotusponds1"
   #define SYSTEM_WIFI_SSID_4 "WiFi-A634E9" // Paseyo
   #define SYSTEM_WIFI_PASSWORD_4 "64346298"
+  */
 #endif
   // The rest of this list are included for development purposes - its where I code ! 
   #define SYSTEM_WIFI_SSID_9 "Silver"

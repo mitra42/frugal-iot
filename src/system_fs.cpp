@@ -1,5 +1,7 @@
 /*
- *  File System handling - will be used with either SD or SPIFFS
+ *  Frugal IoT - File System handling - will be used with either SD or SPIFFS
+ * 
+ * There are two subclasses - System_SD and System_SPIFFS each of which expose the same API 
  * 
  * Configuration:
  * Required:
@@ -90,9 +92,15 @@ boolean System_SPIFFS::exists(const String &filename) {
 // Copied from system_wifi.cpp which got it from ESP-WiFiSettings library
 bool System_FS::spurt(const String& filename, const String& content) {
     File f = open(filename, "w"); // Virtual, knows what kind of FS
-    if (!f) return false;
+    if (!f) {
+      Serial.print(F("Failed to open for writing ")); Serial.println(filename);
+      return false;
+    }
     auto w = f.print(content);
     f.close();
+    if (w != content.length()) {
+      Serial.print(F("Failed to write to ")); Serial.println(filename);
+    }
     return w == content.length();
 }
 String System_FS::slurp(const String& fn) {
@@ -181,7 +189,7 @@ void System_SD::setup() {
     #endif
   }
 }
-void System_SPIFFS::setup() {
+void System_SPIFFS::pre_setup() {
   #ifdef SYSTEM_SPIFFS_DEBUG
     #ifdef ESP32
       Serial.print(F("SPIFFS "));
@@ -191,7 +199,7 @@ void System_SPIFFS::setup() {
   #endif
 
   #ifdef ESP32
-    if (!ESPFS.begin(true))
+    if (!ESPFS.begin(true)) // TODO-141 this might not work now that only using LittleFS
   #elif ESP8266 
     if (!ESPFS.begin())
   #endif

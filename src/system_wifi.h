@@ -16,6 +16,7 @@ class System_WiFi : public System_Base {
     bool recoverFromLightSleep();
     bool scanConnectOneAndAll();
     void setup();
+    void addWiFi(String ssid, String password);
   private:
 
     bool connect();
