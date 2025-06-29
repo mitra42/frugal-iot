@@ -43,7 +43,7 @@ void setup() {
       });
   frugal_iot.controls->add(clfs);
   // Wire the logger to the temperature sensor, it could be left blank and wired in the UX to a remote sensor
-  clfs->inputs[0]->wireTo(ss->temperature); // Wired to the temperatur sensor
+  clfs->inputs[0]->wireTo(ss->temperature); // Wired to the temperatur sensor  // TODO-141 probably breaks as MQTT wont have setup yet
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and system
   Serial.println(F("FrugalIoT Starting Loop"));
 }

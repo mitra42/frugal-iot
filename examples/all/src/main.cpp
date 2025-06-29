@@ -66,6 +66,10 @@ void setup() {
   frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil", 4095, 0, 32, 0, "brown", true));
 
   // CONTROLS
+  Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
+  frugal_iot.controls->add(cb);
+  cb->outputs[0]->wireTo(frugal_iot.mqtt->path("ledbuiltin/id")); //TODO-141 probably wont work as mqtt not setup yet
+
   ControlHysterisis* cb = new ControlHysterisis("control", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.mqtt->path("relay/on"));

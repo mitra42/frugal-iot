@@ -1,11 +1,10 @@
-#ifndef CONTROL_BLINKEN_H
-#define CONTROL_BLINKEN_H
-
-/*  Demo blinking led on board
+/* Frugal IoT - Blinken demo, a simple control that blinks a light
  *
- * Configuration options
  * Optional: CONTROL_BLINKEN_DEBUG
-*/
+ */
+
+ #ifndef CONTROL_BLINKEN_H
+#define CONTROL_BLINKEN_H
 
 #include "control.h"
 
