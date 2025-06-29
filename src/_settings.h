@@ -42,9 +42,6 @@
 // TODO-110 when IO moved to base.cpp; SYSTEM_FS wont need CONTROL
 
 // TODO_ADD_SYSTEM
-#if defined(SYSTEM_LOGGER_WANT)
-  #define SYSTEM_FS_WANT
-#endif
 #if defined(SYSTEM_LOGGER_DEBUG)
   #define SYSTEM_TIME_DEBUG
   #define SYSTEM_FS_DEBUG
@@ -61,9 +58,6 @@
 // TO_ADD_SYSTEM - there is no class hierarchy
 #if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_OLED_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG)
   #define SYSTEM_DEBUG
-#endif
-#if defined(CONTROL_GSHEETS_WANT)
-  #define SYSTEM_TIME_WANT // TODO-141 it needs to create time in main.cpp
 #endif
 
 #if defined(SENSOR_DEBUG) || defined(ACTUATOR_DEBUG) || defined(CONTROL_DEBUG) || defined(SYSTEM_DEBUG)
@@ -130,14 +124,10 @@
     #define LANGUAGE_ALL
 #endif
 
-#define SERIAL_DELAY 5000 // Necessary to avoid losing initial messsage in garbage, at least on ESP8266_D1_MINI
-
 // Always defined currently, but recommend defining in _locals.h in case that decision ever changes
-#define SYSTEM_DISCOVERY_WANT // Almost always set, will tell the MQTT server about the device so the Client can find it 
-#define SERIAL_BAUD 460800 // Generally find 460800 works well - reliability on all boards tested
 #define SYSTEM_WIFI_WANT  // currently always wanted - recommend defining in _locals.h in case that decision ever changes
-#define SYSTEM_MQTT_WANT // Given the dependence on MQTT can't imagine not "wanting" it
 
+// Define boards which have built in OLED and should include automatically
 #if defined(ARDUINO_TTGO_LoRa32)
   #define SYSTEM_OLED_WANT
 #endif

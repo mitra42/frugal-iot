@@ -165,28 +165,17 @@ void System_Frugal::setup() {
 void System_Frugal::infrequently() {
   Frugal_Group::infrequently();
   buttons->infrequently(); // Not in the main group of groups as infrequently() is only thing called.
-  #ifdef LOCAL_DEV_WANT
-    // TODO-141 this will go back into the new main.cpp in some form
-    localDev::infrequently();
-  #endif
 }
 
 // These are things done one time per period - where a period is the time set in SYSTEM_POWER_MS
 void System_Frugal::periodically() {
   Frugal_Group::periodically();
-  #ifdef LOCAL_DEV_WANT
-    // TODO-141 this will go back into the new main.cpp in some form
-    localDev::periodically();
-  #endif
 }
 
 // This is stuff done multiple times per period
 void System_Frugal::frequently() {
   Frugal_Group::frequently();
   frugal_iot.mqtt->frequently(); // 
-  #ifdef LOCAL_DEV_WANT //TODO-141 move to new app specific main.cpp
-    localDev::frequently();
-  #endif
   // TODO-23 will want something here for buttons as well
 }
 

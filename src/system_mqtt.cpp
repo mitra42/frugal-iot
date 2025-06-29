@@ -48,10 +48,6 @@
 #include "actuator.h"
 #include "sensor.h"
 #include "control.h"
-//TODO-25 replace with control.h when ready
-  #ifdef CONTROL_BLINKEN_WANT
-    #include "control_blinken.h"
-  #endif
 #include <forward_list>
 
 Subscription::Subscription(const String* const tp) : topicPath(tp), payload(NULL) { }

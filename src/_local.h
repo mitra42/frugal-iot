@@ -61,20 +61,4 @@
   #define SYSTEM_WIFI_SSID_9 "Silver"
   #define SYSTEM_WIFI_PASSWORD_9 "O2IL-w8k2-w6ki-TzqG"
 
-#ifdef KOPERNIK1
-  #ifndef ESP32
-    #error should be using "ESP32 WROVER MODULE" in the IDE, and looks like you are using a ESP32 board
-  #endif
-  #define ESP32_WROVER_DEV
-  #define SYSTEM_WIFI_DEVICE "Kopernik pump control"
-  #define SYSTEM_DISCOVERY_DEVICE_DESCRIPTION KOPERNIK1
-  // main.cpp - relay;  pin=4
-  // main.cpp - soil sensor; pin=36  SENSOR_ANALOG_ATTENUATION=ADC_11db
-  //#define SYSTEM_OTA_KEY "kopernik1"
-  #define SYSTEM_WIFI_PROJECT "lotus"
-  //#define LOCAL_DEV_WANT // Include custom code
-#endif //KOPERNIK1
-
-
-
 #endif //LOCAL_H

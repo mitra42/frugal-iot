@@ -6,7 +6,6 @@
  */
 
 #include "_settings.h"  // Settings for what to include etc
-#ifdef LOCAL_DEV_WANT
 
 // Next step is usually to define any default parameters, if they aren't defined in _local.h e.g. 
 
@@ -124,5 +123,3 @@ void frequently() {
 void infrequently() { }
 
 } // namespace localDev
-
-#endif 

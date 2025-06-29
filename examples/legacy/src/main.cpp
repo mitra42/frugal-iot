@@ -7,11 +7,6 @@
 
 #include "frugal_iot.h"
 
-// TODO-141 move this into frugal_iot
-#ifdef LOCAL_DEV_WANT
-#include "local_dev.h"
-#endif
-
 System_Frugal frugal_iot; // Singleton
 
 void setup() {

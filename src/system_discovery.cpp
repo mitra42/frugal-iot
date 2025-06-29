@@ -15,8 +15,6 @@
 
 #include "_settings.h"
 
-#ifdef SYSTEM_DISCOVERY_WANT // Until have BLE, no WIFI means local only
-
 #if !defined(SYSTEM_DISCOVERY_ORGANIZATION)
   #error system_discover does not have all requirements in _locals.h: SYSTEM_DISCOVERY_ORGANIZATION
 #endif
@@ -102,6 +100,3 @@ void System_Discovery::infrequently() {
       nextLoopTime = frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_DISCOVERY_MS;
     }
 }
-
-#endif // SYSTEM_DISCOVERY_WANT
-
