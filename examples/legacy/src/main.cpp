@@ -16,9 +16,6 @@ System_Frugal frugal_iot; // Singleton
 
 void setup() {
 
-#ifdef SENSOR_LOADCELL_WANT
-  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 2000, "pink", true));
-#endif
 #ifdef SENSOR_ENSAHT_WANT
   frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS AHT"));
 #endif

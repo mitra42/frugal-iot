@@ -73,7 +73,7 @@
   //#define SYSTEM_OTA_KEY "kopernik1"
   #define SYSTEM_WIFI_PROJECT "lotus"
   //#define LOCAL_DEV_WANT // Include custom code
-#endif //BOARDEMO1
+#endif //KOPERNIK1
 
 
 
