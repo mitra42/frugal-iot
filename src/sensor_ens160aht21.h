@@ -2,7 +2,6 @@
 #define SENSOR_ENSAHT_H
 #include "_settings.h"  // Settings for what to include etc
 
-#ifdef SENSOR_ENSAHT_WANT
 #include <Arduino.h>
 #include "system_i2c.h"
 #include "sensor.h"
@@ -39,5 +38,4 @@ class Sensor_ensaht : public Sensor {
     void dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet);
  };
  
-#endif // SENSOR_ENSAHT_WANT
 #endif // SENSOR_ENSAHT_H

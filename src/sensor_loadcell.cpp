@@ -32,12 +32,13 @@
 Sensor_LoadCell::Sensor_LoadCell(const char* const id, const char * const name, float max, const char* color, const bool retain, 
   uint8_t DOUTpin, uint8_t SCKpin, uint8_t times, int32_t offset, int32_t scale)
   : Sensor_Float(id, name, 3, 0, max, color, retain), 
+    hx711(new HX711()),
+    times(times),
     offset(offset), 
-    scale(scale),
-    times(times) {
-  hx711 = new HX711();
-  hx711->begin(DOUTpin, SCKpin);
-}
+    scale(scale)
+  {
+    hx711->begin(DOUTpin, SCKpin);
+  }
 // This may also get set by a button or a message
 void Sensor_LoadCell::tare() {
   Serial.print(__FILE__); Serial.println(__LINE__);

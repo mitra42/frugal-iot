@@ -2,31 +2,36 @@
 * 
 * This is a sensor that uses the ENS160 and AHT21 chips to read the air quality.
 *
+* Some info I found for this online
 * Info: https://www.instructables.com/ENS160-AHT21-Sensor-for-Arduino/
 * Source: https://www.aliexpress.us/w/wholesale-ens160%2Baht21.html?
 * Issue: https://github.com/mitra42/frugal-iot/issues/101
 * Reddit: https://www.reddit.com/r/arduino/comments/12ulwo2/has_anyone_been_able_to_get_ensaht_working/
 * 
-* Important notes extracte from above.
-* Vin is 5V - dont use 3.3V its an output from the regulator
+* One of the articles says Vin is 5V - dont use 3.3V its an output from the regulator, but I had it work on 3V fine.
 *
+* For AHT21
 * Thanks for lessons learned and some ideas/bits copied from https://github.com/adafruit/Adafruit_AHTX0
 *
 * For ENS160 
 * Based on https://github.com/adafruit/ENS160_driver
-* Note this implemets additional functionality not used here, especially custom heaters
+* Note Adafruit's driver implemets additional functionality not used here, especially custom heaters
 * Also extra commands in https://github.com/adafruit/ENS160_driver/blob/master/src/ScioSense_ENS160.h
 * 
+* Configuration
+* SENSOR_ENSAHT_AHTI2C(0x38); and SENSOR_ENSAHT_ENSI2C(0x53) if using multiple sensors
+* SENSOR_ENSAHT_DEBUG
+*
 * //TODO-101 and TODO-23 note ENS160_OPMODE_DEP_SLEEP
 * //TODO-101 also review https://registry.platformio.org/libraries/k0i05/esp_ahtxx see if missed anything
 */
 
 #include "_settings.h"  // Settings for what to include etc
-#ifdef SENSOR_ENSAHT_WANT
 #include <Arduino.h>
 #include "sensor_ens160aht21.h"
 #include "system_i2c.h"
 
+// The sensors can be configured at alternative addresses, via defines - these are the default on the combination board
 #ifndef SENSOR_ENSAHT_AHTI2C
   #define SENSOR_ENSAHT_AHTI2C (0x38) // AHT default I2C address (alternate are 0x38 0x39)
 #endif
@@ -275,6 +280,3 @@ void Sensor_ensaht::dispatchTwig(const String &topicSensorId, const String &leaf
     }
   }
 }
-
-
-#endif // SENSOR_ENSAHT_WANT

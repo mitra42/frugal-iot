@@ -6,7 +6,6 @@
  * Its great if you make a change to check that this compiles OK.  
  */
 
-// defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "frugal_iot.h"
 
 System_Frugal frugal_iot; // Singleton
@@ -50,6 +49,12 @@ void setup() {
   frugal_iot.sensors->add(new Sensor_Button("button", "Button", 35, "purple"));
 
   frugal_iot.sensors->add(new Sensor_DHT("DHT", 16, true));
+
+  frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS160 AHT21"));
+
+  // Add a new sensor max=2000, color="pink", retain=true, DOUTpin=0, SCKpin=1, times=10, offset=0, scale=2000
+  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 2000, "pink", true,
+    1, 0, 10, 0, 2000)); // DOUT, SCK, times, offset, scale
 
   // M<S5803 is set via jumper to 76 or 77
   frugal_iot.sensors->add(new Sensor_ms5803("pressure", "Pressure", 0x77));

@@ -16,9 +16,6 @@ System_Frugal frugal_iot; // Singleton
 
 void setup() {
 
-#ifdef SENSOR_ENSAHT_WANT
-  frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS AHT"));
-#endif
 
 #ifdef CONTROL_BLINKEN_WANT
   // TODO-141 figure out how cb used 
