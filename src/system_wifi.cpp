@@ -5,7 +5,7 @@
     Note language support is for text displayed in the portal, others like filenames and debug texts are intentionally left in Engish.
 */
 
-#include "_settings.h"  // Settings for what to include etc
+#include "_settings.h"  // Settings for what to include etc - defines LANGUAGE_ALL if LANGUAGE_XX not defined
 #ifdef SYSTEM_WIFI_WANT
 
 // #include <Arduino.h>
@@ -26,24 +26,8 @@
 #include "misc.h" // For lprintf
 #include "system_frugal.h"
 
-#ifndef SYSTEM_WIFI_DEVICE //TODO-141 do this in platformio.ini not _locals.h
-  #define SYSTEM_WIFI_DEVICE "device"
-#endif
-#ifndef SYSTEM_WIFI_PROJECT //TODO-141 do this in platformio.ini not _locals.h
-  #define SYSTEM_WIFI_PROJECT "project"
-#endif
-
-
-// SPIFFS is now deprecated in favor of LittleFS for both ESP32 and ESP8266
-//#ifdef ESP32
-//  #define ESPFS SPIFFS
-//  #include <SPIFFS.h>
-//#elif ESP8266
-  #define ESPFS LittleFS
-  #include <LittleFS.h>
-//#else
-//    #error "This example only supports ESP32 and ESP8266"
-//#endif 
+#define ESPFS LittleFS
+#include <LittleFS.h>
 #include "WiFiSettings.h"  // adapted from https://github.com/Juerd/ESP-WiFiSettings
 
 #ifndef SYSTEM_WIFI_PORTAL_RESTART
@@ -65,7 +49,8 @@ struct Texts {
 Texts T;
 
 System_WiFi::System_WiFi()
-: System_Base("wifi", "WiFi") {}
+: System_Base("wifi", "WiFi")
+  {}
 
 // Attempt to connect to main network as configured, if succeed save the id and password as a known network
 bool System_WiFi::connect1() {
@@ -182,7 +167,7 @@ String& System_WiFi::clientid() {
 }
 
 void System_WiFi::setupLanguages() {
-  // TODO-39 need to make sure external for language is set prior to this - get defined from _local.h and LANGUAGE_ALL from _locals.h
+  // TODO-39 need to make sure external for language is set prior to this - get defined from platformio.h and LANGUAGE_ALL
   #ifdef LANGUAGE_DEFAULT
     WiFiSettings.language = LANGUAGE_DEFAULT; // This must happen BEFORE WiFiSettings.begin().
   #endif
@@ -231,11 +216,11 @@ void System_WiFi::addWiFi(String ssid, String password) {
 void System_WiFi::setup() {
   setupLanguages(); // Must come before any calls to WiFiSettings.<anything> 
 
-  // Store extra wifis - device should recognize any of them 
-  #ifdef SYSTEM_WIFI_SSID
-    addWiFi(F(SYSTEM_WIFI_SSID), F(SYSTEM_WIFI_PASSWORD));
-  #endif // SYSTEM_WIFI_SSID
-  // Feel free to extend if need more than 10! 
+  // This may be confusing ! 
+  // Each line initializes a variable to the existing value, 
+  // but override from LittleFS if available, 
+  // then adds a line to the WiFi portal that can be used to set the file value, 
+  // which will be used after the reboot.
 
   // Custom configuration variables, these will read configured values if previously set and return default values if not.
   /*
@@ -244,14 +229,14 @@ void System_WiFi::setup() {
     bool checkbox(String name, bool init = false, String label = name);
   */
 
-  mqtt_host = WiFiSettings.string(F("mqtt_host"), 4,40, F(SYSTEM_MQTT_SERVER), T.MqttServer); 
-  // TODO-29 turn discovery_project into a dropdown, use an ifdef for the ORGANIZATION in _locals.h not support by ESPWifi-Settings yet.
-  discovery_project = WiFiSettings.string(F("discovery_project"), 3,20, F(SYSTEM_WIFI_PROJECT), T.Project); 
-  device_name = WiFiSettings.string(F("device_name"), 3,20, F(SYSTEM_WIFI_DEVICE), T.DeviceName); 
+  frugal_iot.mqtt->hostname = WiFiSettings.string(F("mqtt_host"), 4,40, frugal_iot.mqtt->hostname, T.MqttServer); 
+  // TODO-29 turn projet into a dropdown, use an ifdef for the ORGANIZATION in _locals.h not support by ESPWifi-Settings yet.
+  frugal_iot.project = WiFiSettings.string(F("project"), 3,20, frugal_iot.project, T.Project); 
+  frugal_iot.device_name = WiFiSettings.string(F("device_name"), 3,20, frugal_iot.device_name, T.DeviceName); 
   #ifdef SYSTEM_WIFI_DEBUG
-    Serial.print(F("MQTT host = ")); Serial.println(mqtt_host);
-    Serial.print(F("Project = ")); Serial.println(discovery_project);
-    Serial.print(F("Device Name = ")); Serial.println(device_name);
+    Serial.print(F("MQTT host = ")); Serial.println(frugal_iot.mqtt->hostname);
+    Serial.print(F("Project = ")); Serial.println(frugal_iot.project);
+    Serial.print(F("Device Name = ")); Serial.println(frugal_iot.device_name);
   #endif
 
   // Cases of connect and portal

@@ -1,7 +1,7 @@
 /* MQTT client
 * 
 * Configuration
-* Required: SYSTEM_MQTT_MS SYSTM_MQTT_USER SYSTEM_MQTT_PASSWORD
+* Required: SYSTEM_MQTT_MS
 * Optional: ESP8266 SYSTEM_MQTT_DEBUG 
 * 
 * Note definitions
@@ -20,10 +20,6 @@
   #include "esp_task_wdt.h" // TODO-125
 #endif
 
-#if (!defined(SYSTEM_MQTT_USER) || !defined(SYSTEM_MQTT_PASSWORD))
-  error system_discover does not have all requirements in _locals.h: SYSTEM_MQTT_USER SYSTEM_MQTT_PASSWORD 
-#endif
-
 #define SYSTEM_MQTT_LOOPBACK // If true dispatch the message locally as well - this is always the case currerntly 
 
 #if ESP8266 // Note ESP8266 and ESP32 are defined for respective chips - unclear if anything like that for other Arduinos
@@ -39,9 +35,7 @@
 // If configred not to use Wifi (or in future BLE) then will just operate locally, sending MQTT between components on this node, but 
 // not elsewhere.
 // TODO-49 add support for BLE if it makes sense for MQTT
-#ifdef SYSTEM_WIFI_WANT
-  #include "system_wifi.h"   // xWifi
-#endif  //SYSTEM_WIFI_WANT
+#include "system_wifi.h"   // xWifi
 #include <Arduino.h>
 #include "system_discovery.h"
 #include "system_mqtt.h"
@@ -68,16 +62,22 @@ void MqttMessageReceived(String &topicPath, String &payload) { // cant be consta
 void System_MQTT::setup_after_wifi() {
   // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
   // by Arduino. You need to set the IP address directly.
-  client.begin(frugal_iot.wifi->mqtt_host.c_str(), net);
+  client.begin(hostname.c_str(), net);
   client.setCleanSession(true); // on power up should refresh subscriptions
   // client.setClockSource(XXX); // TODO-23 See https://github.com/256dpi/arduino-mqtt will need for power management
   client.onMessage(MqttMessageReceived);  // Called back from client.loop - this is a naked function that just calls into the instance
   blockTillConnected();
 }
 // Run every 10ms TODO-25 and TODO-23 this should be MUCH longer ideally
-System_MQTT::System_MQTT() : System_Base("mqtt", "MQTT"), client(1024,128), nextLoopTime(0), ms(10) {
-  setup();
-}
+System_MQTT::System_MQTT(const char* hostname, const char* username, const char* password) 
+: System_Base("mqtt", "MQTT"), 
+  client(1024,128),
+  hostname(hostname),
+  ms(10),
+  nextLoopTime(0), 
+  password(password),
+  username(username)
+{}
 
 void System_MQTT::frequently() {
   if (nextLoopTime <= millis()) {
@@ -100,8 +100,8 @@ bool System_MQTT::connect() {
   frugal_iot.wifi->checkConnected();  // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
   if (!client.connected()) {
     /* Not connected */
-    Serial.print(F("\nMQTT connecting: to ")); Serial.print(frugal_iot.wifi->mqtt_host.c_str());
-    if (!client.connect(frugal_iot.wifi->clientid().c_str(), SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD)) {
+    Serial.print(F("\nMQTT connecting: to ")); Serial.print(hostname);
+    if (!client.connect(frugal_iot.wifi->clientid().c_str(), username, password)) {
       /* Still not connected */
       Serial.print(F(" Fail "));
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116

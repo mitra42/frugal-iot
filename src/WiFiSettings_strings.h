@@ -25,12 +25,6 @@ struct Texts {
     ;
 };
 
-#if \
-   !defined LANGUAGE_EN \
-&& !defined LANGUAGE_NL \
-&& !defined LANGUAGE_DE
-    #define LANGUAGE_ALL
-#endif
 
 std::map<const String, const String> languages {
 // Ordered alphabetically

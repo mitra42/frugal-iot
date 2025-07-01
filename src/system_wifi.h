@@ -5,10 +5,6 @@
 
 class System_WiFi : public System_Base {
   public:
-    // Customized variables from configuration
-    String mqtt_host;
-    String device_name;
-    String discovery_project;
     System_WiFi();
     String &clientid();
     void checkConnected();

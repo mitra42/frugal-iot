@@ -13,14 +13,8 @@
   #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
   #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
 #endif
-// SPIFFS is now deprecated in favor of LittleFS for both ESP32 and ESP8266
-//#ifdef ESP32
-//  #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
-//  #include <SPIFFS.h>
-//#elif ESP8266
-  #define ESPFS LittleFS // LittleFS defind in LittleFS.h
-  #include <LittleFS.h>
-//#endif // ESP32||ESP8266
+#define ESPFS LittleFS // LittleFS defind in LittleFS.h
+#include <LittleFS.h>
 
 // Define defuault SD Pin if known - constructor can use if not specified
 #ifndef SYSTEM_SD_PIN

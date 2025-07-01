@@ -25,15 +25,6 @@
 #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
 #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
 
-#ifdef ESP32
-  #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
-  #include <SPIFFS.h>
-#elif ESP8266
-  #define ESPFS LittleFS // LittleFS defind in LittleFS.h
-  #include <LittleFS.h>
-#endif // ESP32||ESP8266
-
-
 #include "system_fs.h"
 #include "system_base.h"
 #include "misc.h" // For StringF
@@ -191,20 +182,11 @@ void System_SD::setup() {
 }
 void System_SPIFFS::pre_setup() {
   #ifdef SYSTEM_SPIFFS_DEBUG
-    #ifdef ESP32
-      Serial.print(F("SPIFFS "));
-    #elif ESP8266 
-      Serial.print(F("LittleFS "));
-    #endif
+    Serial.print(F("LittleFS "));
   #endif
-
-  #ifdef ESP32
-    if (!ESPFS.begin(true)) // TODO-141 this might not work now that only using LittleFS
-  #elif ESP8266 
-    if (!ESPFS.begin())
-  #endif
+  if (!ESPFS.begin()) // Note it was begin(true) on SPIFFS
   {
-      Serial.println(F("initialization failed!"));
+    Serial.println(F("initialization failed!"));
   } else {
     #ifdef SYSTEM_SPIFFS_DEBUG
       Serial.println(F("initialization done."));

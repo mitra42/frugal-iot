@@ -15,6 +15,17 @@
  *  Move material from main.cpp::setup to System_Frugal::setup
  */
 
+ // Defines because cannot pass parameters to constructor
+#ifndef SYSTEM_FRUGAL_PROJECT
+  #define SYSTEM_FRUGAL_PROJECT "developers"
+#endif
+#ifndef SYSTEM_MQTT_HOST
+  #define SYSTEM_MQTT_HOST "frugaliot.naturalinnovation.org"
+#endif
+#ifndef SYSTEM_MQTT_PASSWORD
+  #define SYSTEM_MQTT_PASSWORD "public"
+#endif    
+
 
 #include "_settings.h" // Note - ideally shouldnt be dependent on anything here, or at least not in _local.h
 #include "system_frugal.h"
@@ -85,26 +96,27 @@ void Frugal_Group::infrequently() {
     fb->infrequently();
   }
 }
-
-System_Frugal::System_Frugal()
+System_Frugal::System_Frugal(const char* org, const char* project, const char* device_name, const char* description)
 : Frugal_Group("frugal_iot", "System_Frugal"),
+  org(org),
+  project(project),
+  description(description),
+  device_name(device_name),
   actuators(new Frugal_Group("actuators", "Actuators")),
   sensors(new Frugal_Group("sensors", "Sensors")),
   controls(new Frugal_Group("controls", "Controls")),
   system(new Frugal_Group("system", "System")),
   buttons(new Frugal_Group("buttons", "Buttons")),
-  discovery(new System_Discovery()),
-  fs_SPIFFS(new System_SPIFFS()),
-  mqtt(new System_MQTT()),
-  time(nullptr), // time is optional and setup by main.cpp if needed
-  #ifdef SYSTEM_OTA_KEY
-    ota(new System_OTA()),
+  discovery(new System_Discovery()), 
+  #ifdef SYSTEM_LORA_WANT
+    lora(new System_LoRa()),
   #endif
+  // mqtt is added in main.cp along with host,user,password
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
     oled(new System_OLED()),
   #endif // SYSTEM_OLED_WANT
-  #ifdef SYSTEM_LORA_WANT
-    lora(new System_LoRa()),
+  #ifdef SYSTEM_OTA_KEY
+    ota(new System_OTA()),
   #endif
   // TO-ADD-POWERMODE
   #ifdef SYSTEM_POWER_MODE_LOOP
@@ -118,6 +130,8 @@ System_Frugal::System_Frugal()
   #elif SYSTEM_POWER_MODE_AUTO
     powercontroller(new System_Power_Mode_Auto(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
   #endif
+  fs_SPIFFS(new System_SPIFFS()),
+  time(nullptr), // time is optional and setup by main.cpp if needed
   wifi(new System_WiFi())
 {
   #ifdef LED_BUILTIN // defined by board or _settings.h
@@ -149,17 +163,18 @@ System_Frugal::System_Frugal()
 }
 
 void System_Frugal::setup() {
+  // By the time this is run, mqtt should have been added, and serial started in main.cpp
   #ifdef SYSTEM_FRUGAL_DEBUG
     Serial.print("Setup: ");
   #endif
   Frugal_Group::setup(); // includes WiFi
   if (time) { // If time has been constructed
-    time->setup_after_wifi();
+    time->setup_after_wifi();     // Needs the WiFi connection
   }
-  mqtt->setup_after_wifi();
+  mqtt->setup_after_wifi();       // Needs the WiFi connection
   discovery->setup_after_mqtt();  // System_Discovery
   #ifdef SYSTEM_OTA_KEY
-    ota->setup_after_discovery();
+    ota->setup_after_discovery(); // Sends advertisement over MQTT
   #endif
   #ifdef SYSTEM_FRUGAL_DEBUG
      Serial.println();

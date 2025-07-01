@@ -46,34 +46,37 @@ class Frugal_Group : public System_Base {
     void periodically();
     void infrequently();
 };
+
 class System_Frugal : public Frugal_Group {
   public:
+    String org;
+    String project;
+    String description; 
+    String device_name;
     Frugal_Group* actuators;
     Frugal_Group* sensors;
     Frugal_Group* controls;
     Frugal_Group* system;
     Frugal_Group* buttons;
     System_Discovery* discovery;
-
-    System_MQTT* mqtt;
-    System_Power_Mode* powercontroller;
-    System_SPIFFS* fs_SPIFFS; 
-    System_Time* time; // Optional - may be nullptr if not set up
-
-    #ifdef SYSTEM_OTA_KEY
-      System_OTA* ota;
+    #ifdef SYSTEM_LORA_WANT
+      System_LoRa* lora;
     #endif
     #ifdef SYSTEM_LORAMESHER_WANT
       System_LoraMesher* loramesher;
     #endif
+    System_MQTT* mqtt;
     #ifdef SYSTEM_OLED_WANT
       System_OLED* oled;
     #endif
-    #ifdef SYSTEM_LORA_WANT
-      System_LoRa* lora;
+    #ifdef SYSTEM_OTA_KEY
+      System_OTA* ota;
     #endif
+    System_Power_Mode* powercontroller;
+    System_SPIFFS* fs_SPIFFS; 
+    System_Time* time; // Optional - may be nullptr if not set up
     System_WiFi* wifi;
-    System_Frugal();
+    System_Frugal(const char* org, const char* project, const char* id, const char* name);
     void startSerial(); // Encapsulate setting up and starting serial
     void dispatchTwig(const String &topicTwig, const String &payload, bool isSet);
     void setup();

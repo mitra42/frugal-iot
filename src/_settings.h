@@ -9,7 +9,6 @@
 #define _SETTINGS_H
 
 #include <Arduino.h> // make sure CONFIG_IDF_TARGET_ESP32C3 etc defined if on those boards
-#include "_local.h"               // Will fail if user hasn't copied _local-template.h to _local.h and edited
 
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
 #if defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG)
@@ -96,24 +95,6 @@
 #if defined(ARDUINO_TTGO_LoRa32_v21new) || defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_v1)
   #define ARDUINO_TTGO_LoRa32
 #endif
-
-//TO_ADD_BOARD  // TODO-141 see how/if using BOARDNAME
-#if !defined(SYSTEM_DISCOVERY_DEVICE_DESCRIPTION) && !defined(BOARDNAME)
-  #ifdef ESP8266_D1
-    #define BOARDNAME "ESP8266 D1"
-  #elif defined(ARDUINO_LOLIN_C3_PICO) // Must do before MINI which is erroneously defined if using PICO but setting closest board file
-    #define BOARDNAME "Lolin C3 Pico"
-  #elif defined(ARDUINO_LOLIN_C3_MINI)
-    #define BOARDNAME "Lolin C3 Mini"
-  #elif defined(ARDUINO_LOLIN_S2_MINI)
-    #define BOARDNAME "Lolin S2 Mini"
-  #elif defined(ARDUINO_TTGO_LoRa32)
-    #define BOARDNAME "TTGO Lora"
-  #else
-    #error undefined board in system_discovery.cpp #TO_ADD_BOARD
-  #endif
-#endif
-
 
 // To specify a language (for the WiFi portal) #define all the ones you want, otherwise it supports the _ALL lsit which is currerntly EN, NL, DE, ID 
 #if \

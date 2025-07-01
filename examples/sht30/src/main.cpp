@@ -6,17 +6,29 @@
 
 // defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "frugal_iot.h"
-
-System_Frugal frugal_iot; // Singleton
+// Change the parameters here to match your ... 
+// organization, project, id, description
+System_Frugal frugal_iot("dev", "developers", "sht30", "SHT30 Temperature and Humidity Sensor"); 
 
 void setup() {
   frugal_iot.startSerial(); // Encapsulate setting up and starting serial
+
+  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
+  frugal_iot.system->add(new System_MQTT("frugaliot.naturalinnovation.org", "dev", "public"));
   // system_oled and actuator_ledbuiltin added automatically on boards that have them.
-  // Dont change above here - should be before setup the actuators, controls and sensors
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
-  frugal_iot.wifi->addWiFi(F("mywifi_ssid"),F("mywifi_password"));
-  
+  frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
+
+
+  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
+  frugal_iot.system->add(new System_MQTT("frugaliot.naturalinnovation.org", "dev", "public"));
+  // system_oled and actuator_ledbuiltin added automatically on boards that have them.
+
+  // Add local wifis here, or see instructions in the wiki for adding via the /data
+  frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
+
+  // Add sensors, actuators and controls
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true));
   
   // Dont change below here - should be after setup the actuators, controls and sensors
