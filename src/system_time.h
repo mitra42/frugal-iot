@@ -16,9 +16,6 @@ class System_Time : public System_Base {
     String dateTime();
     bool isTimeSet();
     void sync();
-    #ifdef ESP32 // Only set from NTPSyncTimeCallback which is only called on ESP32
-      time_t lastSync();
-    #endif
     void setup_after_wifi();
     void infrequently();
         
