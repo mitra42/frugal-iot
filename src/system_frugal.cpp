@@ -40,7 +40,6 @@ void Frugal_Group::add(System_Base* fb) {
 }
 
 
-// TODO-141 move most of main.cpp::setup to here, all non-app stuff
 void Frugal_Group::setup() {
   for (System_Base* fb: group) {
     #ifdef SYSTEM_FRUGAL_DEBUG
@@ -130,7 +129,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   #elif SYSTEM_POWER_MODE_AUTO
     powercontroller(new System_Power_Mode_Auto(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
   #endif
-  fs_SPIFFS(new System_SPIFFS()),
+  fs_LittleFS(new System_LittleFS()),
   time(nullptr), // time is optional and setup by main.cpp if needed
   wifi(new System_WiFi())
 {
@@ -141,7 +140,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   add(sensors);
   add(controls);
   // add(buttons); // optimizing by not adding this - its only needed for looping for infrequently()
-  system->add(fs_SPIFFS);
+  system->add(fs_LittleFS);
   system->add(wifi);
   system->add(mqtt);
   system->add(discovery);
@@ -159,7 +158,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
 
   add(system);
   // These things should really be in setup() but we want them to run before the rest of the main.cpp setup()
-  fs_SPIFFS->pre_setup();
+  fs_LittleFS->pre_setup();
 }
 
 void System_Frugal::setup() {

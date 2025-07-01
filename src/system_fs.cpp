@@ -1,7 +1,7 @@
 /*
- *  Frugal IoT - File System handling - will be used with either SD or SPIFFS
+ *  Frugal IoT - File System handling - will be used with either SD or LittleFS
  * 
- * There are two subclasses - System_SD and System_SPIFFS each of which expose the same API 
+ * There are two subclasses - System_SD and System_LittleFS each of which expose the same API 
  * 
  * Configuration:
  * Required:
@@ -17,7 +17,7 @@
 #include "_settings.h"
 #include <Arduino.h>
 
-#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
+#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_LITTLEFS_DEBUG)
   #define SYSTEM_FS_DEBUG
 #endif
 
@@ -67,16 +67,16 @@ boolean System_SD::exists(const char *filename) {
 boolean System_SD::exists(const String &filename) {
   return SD.exists(filename);
 }
-fs::File System_SPIFFS::open(const char *filename, const char *mode) { 
+fs::File System_LittleFS::open(const char *filename, const char *mode) { 
   return ESPFS.open(filename, mode);
 }
-fs::File System_SPIFFS::open(const String &filename, const char *mode) { 
+fs::File System_LittleFS::open(const String &filename, const char *mode) { 
   return ESPFS.open(filename, mode);
 }
-boolean System_SPIFFS::exists(const char *filename) {
+boolean System_LittleFS::exists(const char *filename) {
   return ESPFS.exists(filename);
 }
-boolean System_SPIFFS::exists(const String &filename) {
+boolean System_LittleFS::exists(const String &filename) {
   return ESPFS.exists(filename);
 }
 
@@ -163,7 +163,7 @@ System_SD::System_SD(uint8_t pin)
   pin(pin)
   {}
 
-System_SPIFFS::System_SPIFFS() : System_FS("spiffs", "SPIFFS") {}
+System_LittleFS::System_LittleFS() : System_FS("littlefs", "LittleFS") {}
 
 void System_SD::setup() {
   // Library is SS=D8=15 fails;  old sketch was 4 some online says 8 but that fatals. D4=GPIO0=2 worked on Lolin Relay with no solder bridge
@@ -180,18 +180,18 @@ void System_SD::setup() {
     #endif
   }
 }
-void System_SPIFFS::pre_setup() {
-  #ifdef SYSTEM_SPIFFS_DEBUG
+void System_LittleFS::pre_setup() {
+  #ifdef SYSTEM_LITTLEFS_DEBUG
     Serial.print(F("LittleFS "));
   #endif
-  if (!ESPFS.begin()) // Note it was begin(true) on SPIFFS
+  if (!ESPFS.begin()) // Note it was begin(true) on LittleFS
   {
     Serial.println(F("initialization failed!"));
   } else {
-    #ifdef SYSTEM_SPIFFS_DEBUG
+    #ifdef SYSTEM_LITTLEFS_DEBUG
       Serial.println(F("initialization done."));
     #endif
-    #ifdef SYSTEM_SPIFFS_DEBUG
+    #ifdef SYSTEM_LITTLEFS_DEBUG
       printDirectory("/"); // For debugging
     #endif
   }

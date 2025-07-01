@@ -45,7 +45,7 @@
   #define SYSTEM_TIME_DEBUG
   #define SYSTEM_FS_DEBUG
 #endif
-#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
+#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_LITTLEFS_DEBUG)
   #define SYSTEM_FS_DEBUG
 #endif
 #if defined(CONTROL_LOGGERFS_DEBUG) || defined(CONTROL_GSHEETS_DEBUG)

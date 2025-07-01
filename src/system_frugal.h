@@ -73,7 +73,7 @@ class System_Frugal : public Frugal_Group {
       System_OTA* ota;
     #endif
     System_Power_Mode* powercontroller;
-    System_SPIFFS* fs_SPIFFS; 
+    System_LittleFS* fs_LittleFS; 
     System_Time* time; // Optional - may be nullptr if not set up
     System_WiFi* wifi;
     System_Frugal(const char* org, const char* project, const char* id, const char* name);
