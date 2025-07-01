@@ -6,7 +6,7 @@
  * Optional: 
  * Status:  This works for its current requirement, i.e. 
  *   Can be programatically or via the UI to any message
- *   Can write to SPIFFS or SD in a number of formats
+ *   Can write to LittleFS or SD in a number of formats
  * 
  * TODO: See https://github.com/mitra42/frugal-iot/issues/110
  */
@@ -25,7 +25,7 @@ Control_LoggerFS::Control_LoggerFS(const char * const name, System_FS* f, const 
 {}
 
 void Control_LoggerFS::setup() {
-  fs->setup(); // Note that SPIFFS will already have been setup by its pre_setup() call
+  fs->setup(); // Note that LittleFS will already have been setup by its pre_setup() call
   Control_Logger::setup(); // Call base class setup
 }
 

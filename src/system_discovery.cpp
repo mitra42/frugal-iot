@@ -53,7 +53,7 @@ void System_Discovery::fullAdvertise() {
   doneFullAdvertise = true;
 }
 
-void System_Discovery::setup_after_mqtt() { // TODO-141 move this to MQTT after that is in frugal_iot
+void System_Discovery::setup_after_mqtt() {
   projectTopic = new String(frugal_iot.org + "/" + frugal_iot.project );
   advertiseTopic = new String(*projectTopic + F("/") + frugal_iot.wifi->clientid()); // e.g. "dev/lotus/esp32-12345"
   topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/lotus/esp32-12345/" prefix of most topics

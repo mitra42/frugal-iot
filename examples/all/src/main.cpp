@@ -30,8 +30,8 @@ void setup() {
     System_SD* fs_SD = new System_SD(SYSTEM_SD_PIN);
     frugal_iot.system->add(fs_SD);
   #endif
-  System_SPIFFS* fs_SPIFFS = new System_SPIFFS(); // TODO-141 merge with SPIFFS used by WiFi
-  frugal_iot.system->add(fs_SPIFFS);
+  System_LittleFS* fs_LittleFS = new System_LittleFS();
+  frugal_iot.system->add(fs_LittleFS);
 
   #ifdef SYSTEM_LORAMESHER_WANT // Conditionally compiled as fails on non-Lora boards
     // Held in a variable as future LoRaMesher will access it directly e.g. from MQTT
@@ -85,13 +85,12 @@ void setup() {
   cb->outputs[0]->wireTo(frugal_iot.mqtt->path("relay/on"));
 
   // Must be after sensor_sht for default wiring below
-  // TODO-141 Make match pattern
   Control_Logger* clfs = new Control_LoggerFS(
     "Logger",
     #ifdef SYSTEM_SD_WANT
       fs_SD, // Use SD card for logging
     #else
-      fs_SPIFFS, // TODO-110 Using spiffs for testing for now
+      fs_LittleFS, // TODO-110 Using LittleFS for testing for now
     #endif
     "/",
     0x02, // Single log.csv with topicPath, time, value

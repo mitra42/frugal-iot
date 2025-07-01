@@ -4,7 +4,7 @@
 #include "_settings.h"
 #include "system_base.h"
 
-#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
+#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_LITTLEFS_DEBUG)
   #define SYSTEM_FS_DEBUG
 #endif
 
@@ -40,7 +40,7 @@ class System_FS : public System_Base {
     virtual boolean exists(const char *filename);
     virtual boolean exists(const String &filename);
 
-    // Once you have a file you should be able to append(String&) and close(); independent of whether its SPIFFS LittleFS or SD
+    // Once you have a file you should be able to append(String&) and close(); independent of whether its LittleFS LittleFS or SD
 
     #ifdef SYSTEM_FS_DEBUG
       String formatBytes(size_t bytes);
@@ -49,9 +49,9 @@ class System_FS : public System_Base {
     #endif
 };
 
-class System_SPIFFS : public System_FS {
+class System_LittleFS : public System_FS {
   public:
-    System_SPIFFS();
+    System_LittleFS();
     void pre_setup();
     fs::File open(const char *filename, const char *mode);
     fs::File open(const String &filename, const char *mode);

@@ -13,8 +13,6 @@ class System_Discovery : public System_Base {
     void infrequently();
   private: 
     unsigned long nextLoopTime = 0; // sleepSafeMillis
-    //TODO Optimization - should these be String & instead of String *
-    // projectTopic - gets 30592; 332252 *projectTopic 30584 / 332220
     String *projectTopic;
     String *advertiseTopic;
     void quickAdvertise();

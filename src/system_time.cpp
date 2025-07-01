@@ -24,15 +24,14 @@
 #include "misc.h" // for StringF
 #include "system_frugal.h" // For sleepSafemillis()
 
-// TODO-141 pass in constructor
+// Could pass time zone in constructor, but do not yet have any applications where local time is relevant 
 #ifndef SYSTEM_TIME_ZONE
   #define SYSTEM_TIME_ZONE "GMT0BST,M3.5.0/1,M10.5.0" // Get yours at https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv 
 #endif
-// TODO-141 pass in constructor
 #ifndef SYSTEM_TIME_ZONE_ABBREV
   #define SYSTEM_TIME_ZONE_ABBREV "GMT" // The typical way time is described locally 
 #endif
-// TODO-141 pass in constructor
+
 #ifndef SYSTEM_TIME_MS
   #define SYSTEM_TIME_MS 360000 
 #endif
@@ -104,6 +103,7 @@ void System_Time::infrequently() {
         Serial.print("Local time = "); Serial.println(dateTime().c_str());
     }
     nextLoopTime = (frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_TIME_MS);
+    // TODO-141 check actually setting time
     configTime(0, 0, "foo","bar","bax"); // TODO this cant be right, which servers are we using ?
   }
 }

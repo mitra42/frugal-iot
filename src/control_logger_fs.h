@@ -9,7 +9,7 @@
 
 class Control_LoggerFS : public Control_Logger {
   public:
-    System_FS* fs; // Will be pointer to System_SD or System_SPIFFS
+    System_FS* fs; // Will be pointer to System_SD or System_LittleFS
     const char* const root; 
     // 0x01 one file per date 
     // 0x02 store topic in file

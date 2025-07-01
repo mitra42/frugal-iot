@@ -56,8 +56,8 @@ System_WiFi::System_WiFi()
 bool System_WiFi::connect1() {
   // Use last stored credentials (if any) to attempt connect to your WiFi access point.
   // store for future use if successfull.
-  WiFiSettings.ssid = frugal_iot.fs_SPIFFS->slurp("/wifi-ssid");
-  String pw = frugal_iot.fs_SPIFFS->slurp("/wifi-password");
+  WiFiSettings.ssid = frugal_iot.fs_LittleFS->slurp("/wifi-ssid");
+  String pw = frugal_iot.fs_LittleFS->slurp("/wifi-password");
   //if (WiFiSettings.onConnect) WiFiSettings.onConnect(); // FrugalIot isn't using this currently
   if (WiFiSettings.ssid.length()) {
     if (WiFiSettings.connectInner(WiFiSettings.ssid, pw)) {
@@ -97,7 +97,7 @@ bool System_WiFi::scanConnectOneAndAll() {
         if ((WiFi.RSSI(i) > minRSSI) && (WiFi.RSSI(i) <= (minRSSI + 5))) {
           String filename = String("/wifi/" + WiFi.SSID(i)) ;
           Serial.print(WiFi.SSID(i)); Serial.print(F(" ")); Serial.print(WiFi.RSSI(i)); Serial.print(F(" "));
-          String pw = frugal_iot.fs_SPIFFS->slurp(filename);
+          String pw = frugal_iot.fs_LittleFS->slurp(filename);
           if (pw.length()) {
             if (WiFiSettings.connectInner(WiFi.SSID(i), pw)) {
               Serial.print(F("Connected to ")); Serial.println(WiFi.SSID(i));
@@ -208,7 +208,7 @@ void System_WiFi::setupLanguages() {
 
 void System_WiFi::addWiFi(String ssid, String password) {
   const String filename = StringF("/wifi/%s",ssid);
-  if (!frugal_iot.fs_SPIFFS->spurt(filename,password)) {
+  if (!frugal_iot.fs_LittleFS->spurt(filename,password)) {
     Serial.println("XXX fail to spurt");
   };
 }
