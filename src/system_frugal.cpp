@@ -216,5 +216,10 @@ void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
 }
   
 void System_Frugal::startSerial() {
-  startSerial(460800, 5000);
+  // At least on my mac, Arduino has problems at higher speeds like 460800
+  #ifdef PLATFORMIO
+    startSerial(460800, 5000);
+  #else
+    startSerial(115200, 5000);
+  #endif
 }
