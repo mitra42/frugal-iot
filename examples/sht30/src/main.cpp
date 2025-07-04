@@ -29,6 +29,8 @@ void setup() {
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
+  //frugal_iot.wifi->addWiFi(F("Silver"),F("O2IL-w8k2-w6ki-TzqG"));
+  frugal_iot.wifi->addWiFi(F("EXETEL 8BFC34 2.4G"),F("urGGFHQN"));
   
   // Add sensors, actuators and controls
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true));
