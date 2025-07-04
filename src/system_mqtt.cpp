@@ -32,10 +32,10 @@
 #include "misc.h" // For StringF
 #include "system_frugal.h" // for frugal_iot
 
-// If configred not to use Wifi (or in future BLE) then will just operate locally, sending MQTT between components on this node, but 
+// If configred not to use WiFi (or in future BLE) then will just operate locally, sending MQTT between components on this node, but 
 // not elsewhere.
 // TODO-49 add support for BLE if it makes sense for MQTT
-#include "system_wifi.h"   // xWifi
+#include "system_wifi.h"   // xWiFi
 #include <Arduino.h>
 #include "system_discovery.h"
 #include "system_mqtt.h"

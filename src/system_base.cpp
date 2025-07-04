@@ -19,8 +19,11 @@ void System_Base::setup() { }; // This will get called if no setup() in subclass
 void System_Base::infrequently() { }; // This will get called if no loop() in subclass 
 void System_Base::frequently() { }; // This will get called if no loop() in subclass 
 void System_Base::periodically() { }; // This will get called if no loop() in subclass 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void System_Base::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {};
 void System_Base::dispatchPath(const String &topicPath, const String &payload) {};
+#pragma GCC diagnostic pop
 String System_Base::advertisement() {return String();};
 
 // ========== IO - base class for IN and OUT ===== 
@@ -164,9 +167,12 @@ String OUTbool::StringValue() {
   return value ? "true" : "false";
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void IO::setup(const char * const sensorname) {
     // Note topicTwig subscribed to by IN, not by OUT
 }
+#pragma GCC diagnostic pop
 
 void IN::setup(const char * const sensorname) {
   IO::setup(sensorname);
@@ -580,6 +586,8 @@ IN* IN::INxxx(IOtype t, const char* sensorId) {
 
 // These are mostly to stop the compiler complaining about missing vtables
 void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 String IO::advertisement(const char * const group) { shouldBeDefined(); return String(); }
 float IO::floatValue() { shouldBeDefined(); return 0.0; }
 bool IO::dispatchLeaf(const String &twig, const String &p, bool isSet) { shouldBeDefined(); return false; }
@@ -590,3 +598,4 @@ uint16_t OUT::uint16Value() { shouldBeDefined(); return 0; }
 void OUT::sendWired() { shouldBeDefined(); }
 bool IN::convertAndSet(const String &payload) { shouldBeDefined(); return false;}
 String IN::advertisement(const char * const name) { shouldBeDefined(); return String(); }
+#pragma GCC diagnostic pop

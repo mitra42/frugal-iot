@@ -10,6 +10,16 @@
 
 #include <Arduino.h> // make sure CONFIG_IDF_TARGET_ESP32C3 etc defined if on those boards
 
+#if !defined(PLATFORMIO)
+  // On Arduiono do not have platformio.ini so presume these standards
+  #define SYSTEM_MQTT_DEBUG
+  #define SYSTEM_WIFI_DEBUG
+  #define SYSTEM_POWER_DEBUG
+  #define SYSTEM_DISCOVERY_DEBUG
+  #define SYSTEM_FRUGAL_DEBUG
+  #define SYSTEM_TIME_DEBUG
+#endif
+
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
 #if defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG)
   #define SENSOR_HT_DEBUG

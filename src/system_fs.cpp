@@ -38,6 +38,7 @@ System_FS::System_FS(const char* const id, const char* const name)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreturn-type" 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 fs::File System_FS::open(const char *filename, const char *mode) { 
   Serial.print(F("should be subclassed"));
 }

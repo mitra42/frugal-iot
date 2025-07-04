@@ -1,6 +1,5 @@
 /* Frugal IoT - System Power - control power managemwent 
  * 
- * Required SYSTEM_POWER_MODE_xxx
  */
 #ifndef SYSTEM_POWER_H
 #define SYSTEM_POWER_H
@@ -9,33 +8,13 @@
 #include "system_base.h"
 
 // TO-ADD-POWER
-// SYSTEM_POWER_MS is how often to run perioically(). 
-#ifndef SYSTEM_POWER_MS
-  #ifdef SYSTEM_POWER_MODE_LOOP
-    #define SYSTEM_POWER_MS 10000 // Run sensors every 10 seconds 
-  #elif defined(SYSTEM_POWER_MODE_LIGHT)
-    #define SYSTEM_POWER_MS 60000 // Perioidically read sensors, say every 60 seconds
-  #elif defined(SYSTEM_POWER_MODE_DEEP)
-    #define SYSTEM_POWER_MS (60*60*1000) // In low power mode, it might be infrquent e.g. every hour
-  #else
-    #error "Must define SYSTEM_POWER_MS or one of SYSTEM_POWER_MODE_LOOP _MEDIUM or _LOW"
-  #endif
-#endif
-
-// TO-ADD-POWER
-// SYSTEM_POWER_WAKE_MS is how long to stay awake before sleeping - say 10 seconds to allow for queued messages - maybe less 
-#ifndef SYSTEM_POWER_WAKE_MS
-  #if defined(SYSTEM_POWER_MODE_LOOP)
-    #define SYSTEM_POWER_WAKE_MS SYSTEM_POWER_MS // In high power mode, always awake
-  #elif defined(SYSTEM_POWER_MODE_LIGHT)
-    #define SYSTEM_POWER_WAKE_MS 10000 // Long enough for queued messages etc say 10 seconds.
-  #elif defined(SYSTEM_POWER_MODE_DEEP)
-    #define SYSTEM_POWER_WAKE_MS 30000 // In low power mode, has to be long enough to connect to WiFi and MQTT, so 30 seconds
-  #else
-    #error "Must define SYSTEM_POWER_WAKE_MS or one of SYSTEM_POWER_MODE_LOOP _MEDIUM or _LOW"
-  #endif
-#endif
-
+enum System_Power_Type { 
+  Power_Loop,         // Standard loop, no waiting
+  Power_Light,        // Does a Light sleep
+  Power_LightWiFi,    // Like Light, but wakes on WiFi, which menas it SHOULD keep WiFi alive. (poor power savings currently - possibly because of Uart=Serial)
+  Power_Modem,        // ESP32 Modem sleep mode - need to check what this means
+  Power_Deep          // Does a deep sleep - resulting in a restart
+};
 
 class System_Power_Mode : public System_Base {
   public:
@@ -51,15 +30,16 @@ class System_Power_Mode : public System_Base {
     virtual void prepare();
     virtual void sleep();
     virtual void recover();
+    static System_Power_Mode* create(System_Power_Type, unsigned long cycle_ms, unsigned long wake_ms);
     #ifdef ESP32
       unsigned long sleepSafeMillis();
     #else // Only needed/valid on ESP32 where have saved millis_offset in RTCs memory
       unsigned long sleepSafeMillis() { return millis(); }
     #endif
 };
-class System_Power_Mode_Loop : public System_Power_Mode {
+class System_Power_Loop : public System_Power_Mode {
   public:
-    System_Power_Mode_Loop(unsigned long cycle_ms, unsigned long wake_ms);
+    System_Power_Loop(unsigned long cycle_ms, unsigned long wake_ms);
     //void configure(); // Typically called from setup() but might also be called if switch modes
     //void setup();
     void prepare();  // Does nothing in Loop
@@ -67,9 +47,9 @@ class System_Power_Mode_Loop : public System_Power_Mode {
     void recover(); // Does nothing in Loop
 };
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-class System_Power_Mode_Light : public System_Power_Mode {
+class System_Power_Light : public System_Power_Mode {
   public:
-    System_Power_Mode_Light(unsigned long cycle_ms, unsigned long wake_ms);
+    System_Power_Light(unsigned long cycle_ms, unsigned long wake_ms);
     //void configure(); // Typically called from setup() but might also be called if switch modes
     void prepare();
     void sleep();
@@ -78,9 +58,9 @@ class System_Power_Mode_Light : public System_Power_Mode {
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 
-class System_Power_Mode_Deep : public System_Power_Mode {
+class System_Power_Deep : public System_Power_Mode {
   public:
-    System_Power_Mode_Deep(unsigned long cycle_ms, unsigned long wake_ms);
+    System_Power_Deep(unsigned long cycle_ms, unsigned long wake_ms);
    // void configure(); // Typically called from setup() but might also be called if switch modes
     void setup();
     //void prepare(); // Use superclass
@@ -90,9 +70,9 @@ class System_Power_Mode_Deep : public System_Power_Mode {
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 
-class System_Power_Mode_LightWifi : public System_Power_Mode {
+class System_Power_LightWiFi : public System_Power_Mode {
   public:
-    System_Power_Mode_LightWifi(unsigned long cycle_ms, unsigned long wake_ms);
+    System_Power_LightWiFi(unsigned long cycle_ms, unsigned long wake_ms);
     //void configure(); // Typically called from setup() but might also be called if switch modes
     void setup();
     //void prepare();
@@ -102,16 +82,15 @@ class System_Power_Mode_LightWifi : public System_Power_Mode {
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 
-class System_Power_Mode_Modem : public System_Power_Mode {
+class System_Power_Modem : public System_Power_Mode {
   public:
-    System_Power_Mode_Modem(unsigned long cycle_ms, unsigned long wake_ms);
+    System_Power_Modem(unsigned long cycle_ms, unsigned long wake_ms);
     //void configure(); // Typically called from setup() but might also be called if switch modes
     //void prepare();
     void sleep();
     //void recover();
 };
 #endif
-
 extern System_Power_Mode* powerController;
 
 #endif // SYSTEM_POWER_H

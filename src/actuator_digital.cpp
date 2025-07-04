@@ -24,12 +24,16 @@ Actuator_Digital::Actuator_Digital(const char * const id, const char * const nam
 void Actuator_Digital::act() {
   digitalWrite(pin, input->value ? HIGH : LOW); // Relay pin on Wemos shield is NOT inverted
 }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void Actuator_Digital::set(const bool v) {
+  // Note there is nothing to actually "set"
   #ifdef ACTUATOR_DIGITAL_DEBUG
     Serial.print(F("\nSetting ")); Serial.print(name); Serial.println(v ? F(" on") : F(" off"));
   #endif
   act();
 }
+#pragma GCC diagnostic pop
 
 void Actuator_Digital::setup() {
   Actuator::setup();

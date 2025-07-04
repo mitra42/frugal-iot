@@ -18,11 +18,11 @@
   #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
 #include <MQTT.h> // https://github.com/256dpi/arduino-mqtt
-// If configred not to use Wifi (or in future BLE) then will just operate locally, sending MQTT between components on this node, but 
+// If configred not to use WiFi (or in future BLE) then will just operate locally, sending MQTT between components on this node, but 
 // not elsewhere.
 // TODO-49 add support for BLE if it makes sense for MQTT
 #include <Arduino.h>
-#include "system_wifi.h"   // xWifi
+#include "system_wifi.h"   // xWiFi
 #include "system_discovery.h"
 #include <forward_list>
 #include "system_base.h"

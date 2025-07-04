@@ -43,7 +43,7 @@ void Frugal_Group::add(System_Base* fb) {
 void Frugal_Group::setup() {
   for (System_Base* fb: group) {
     #ifdef SYSTEM_FRUGAL_DEBUG
-      Serial.print(fb->id); Serial.print(F(" "));
+      Serial.println(fb->id);
     #endif
     fb->setup();
   }
@@ -57,7 +57,7 @@ void Frugal_Group::dispatchTwig(const String &id, const String &topicLeaf, const
 
 void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
   // topic Twig  <actuatorId>/<ioID> or  <actuatorId>/set/<ioID> or <actuatorId>/set/<ioID>/<config>
-  uint8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
+  int8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
   if (slashPos != -1) {
     String id = topicTwig.substring(0, slashPos);       // Extract the part before the slash
     String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
@@ -110,24 +110,12 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   #ifdef SYSTEM_LORA_WANT
     lora(new System_LoRa()),
   #endif
-  // mqtt is added in main.cp along with host,user,password
+  // mqtt is added in main.cp > configure_mqtt(host,user,password)
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
     oled(new System_OLED()),
   #endif // SYSTEM_OLED_WANT
   #ifdef SYSTEM_OTA_KEY
     ota(new System_OTA()),
-  #endif
-  // TO-ADD-POWERMODE
-  #ifdef SYSTEM_POWER_MODE_LOOP
-    powercontroller(new System_Power_Mode_Loop(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
-  #elif SYSTEM_POWER_MODE_LIGHT
-    powercontroller(new System_Power_Mode_Light(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
-  #elif SYSTEM_POWER_MODE_LIGHTWIFI
-    powercontroller(new System_Power_Mode_LightWifi(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
-  #elif SYSTEM_POWER_MODE_DEEP
-    powercontroller(new System_Power_Mode_Deep(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
-  #elif SYSTEM_POWER_MODE_AUTO
-    powercontroller(new System_Power_Mode_Auto(SYSTEM_POWER_MS, SYSTEM_POWER_WAKE_MS)),
   #endif
   fs_LittleFS(new System_LittleFS()),
   time(nullptr), // time is optional and setup by main.cpp if needed
@@ -142,9 +130,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   // add(buttons); // optimizing by not adding this - its only needed for looping for infrequently()
   system->add(fs_LittleFS);
   system->add(wifi);
-  system->add(mqtt);
   system->add(discovery);
-  system->add(powercontroller);
   system->add(new System_Watchdog());
   #ifdef SYSTEM_OLED_WANT
     system->add(oled);
@@ -159,6 +145,13 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   add(system);
   // These things should really be in setup() but we want them to run before the rest of the main.cpp setup()
   fs_LittleFS->pre_setup();
+}
+
+void System_Frugal::configure_mqtt(const char* hostname, const char* username, const char* password) {
+  system->add(mqtt = new System_MQTT(hostname, username, password));  
+}
+void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
+  system->add(powercontroller = System_Power_Mode::create(t, cycle_ms, wake_ms));  
 }
 
 void System_Frugal::setup() {
@@ -184,7 +177,7 @@ void System_Frugal::infrequently() {
   buttons->infrequently(); // Not in the main group of groups as infrequently() is only thing called.
 }
 
-// These are things done one time per period - where a period is the time set in SYSTEM_POWER_MS
+// These are things done one time per period - where a period is the time set in powercontroller->cycle_ms
 void System_Frugal::periodically() {
   Frugal_Group::periodically();
 }
@@ -210,18 +203,18 @@ void System_Frugal::loop() {
   }
 }
 
-#if !defined(SERIAL_DELAY)
-  #define SERIAL_DELAY 5000
-#endif
-
-void System_Frugal::startSerial() {
+void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
   // Encapsulate setting up and starting serial
   #ifdef ANY_DEBUG
-    Serial.begin(SERIAL_BAUD);
+    Serial.begin(baud);
     while (!Serial) { 
       ; // wait for serial port to connect. Needed for Arduino Leonardo only
     }
-    delay(SERIAL_DELAY); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
+    delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
     Serial.println(F("FrugalIoT Starting"));
   #endif // ANY_DEBUG  
+}
+  
+void System_Frugal::startSerial() {
+  startSerial(460800, 5000);
 }

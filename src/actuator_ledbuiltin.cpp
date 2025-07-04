@@ -36,6 +36,8 @@
 
 #define ACTUATOR_LEDBUILTIN_WHITE "0xFFFFFF"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, const char* color) :
   Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow"),
   #ifdef RGB_BUILTIN
@@ -47,6 +49,7 @@ Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, 
       Serial.print(F("Ledbuiltin pin=")); Serial.println(pin); 
     #endif
   }
+#pragma GCC diagnostic pop
 
 void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
   if (topicActuatorId == id) {

@@ -59,7 +59,7 @@ void Control_Gsheets::act() {
 void Control_Gsheets::sendGoogle(String* payload) {
     HTTPClient http;
   #ifdef ESP8266
-    WiFiClient client; // Assumes system_wifi has already connected to access point - note this will not run if Wifi fails to connect and goes to portal mode
+    WiFiClient client; // Assumes system_wifi has already connected to access point - note this will not run if WiFi fails to connect and goes to portal mode
     http.begin(client, *url);
   #else
     http.begin(*url);

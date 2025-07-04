@@ -119,7 +119,7 @@ void System_OTA::checkForUpdate() {
     WiFiClientSecure client;
     client.setCACert(_caCert);
   #elif defined(ESP8266)
-    WiFiClient client; // Assumes system_wifi has already connected to access point - note this will not run if Wifi fails to connect and goes to portal mode
+    WiFiClient client; // Assumes system_wifi has already connected to access point - note this will not run if WiFi fails to connect and goes to portal mode
   #endif
   client.setTimeout(20000);
   // Set this if you want your OTA server to be able to return a redirect to force devices to collect the firmware from e.g. githubraw

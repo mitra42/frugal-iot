@@ -1,5 +1,5 @@
 /*
-    Wifi Configuration and connection
+    WiFi Configuration and connection
     Based on the example from https://github.com/Juerd/ESP-WiFiSettings
 
     Note language support is for text displayed in the portal, others like filenames and debug texts are intentionally left in Engish.
@@ -230,7 +230,7 @@ void System_WiFi::setup() {
   */
 
   frugal_iot.mqtt->hostname = WiFiSettings.string(F("mqtt_host"), 4,40, frugal_iot.mqtt->hostname, T.MqttServer); 
-  // TODO-29 turn projet into a dropdown, use an ifdef for the ORGANIZATION in _locals.h not support by ESPWifi-Settings yet.
+  // TODO-29 turn projet into a dropdown, use an ifdef for the ORGANIZATION in _locals.h not support by ESPWiFi-Settings yet.
   frugal_iot.project = WiFiSettings.string(F("project"), 3,20, frugal_iot.project, T.Project); 
   frugal_iot.device_name = WiFiSettings.string(F("device_name"), 3,20, frugal_iot.device_name, T.DeviceName); 
   #ifdef SYSTEM_WIFI_DEBUG

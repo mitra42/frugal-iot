@@ -84,9 +84,9 @@ We test on a variety of environments - most often the ESP8266 Lolin D1 Mini; ESP
   Add the MQTT server, userid and password, if you aren't going to use `naturalinnovation.org` 
   Uncomment lines for any sensors you have on the board.
 * Compile and Flash to your dev board
-* On a Wifi device such as a phone
+* On a WiFi device such as a phone
   * Connect to the wifi node of the board which will have a SSID like esp8266-12345
-  * Configure the Wifi SSID and Password of your router,
+  * Configure the WiFi SSID and Password of your router,
   * Pick the name for your project (use the same one for all your boards), 
     * Let us know by either (opening a Github issue)[https://github.com/mitra42/frugal-iot/issues/new/choose], or editing `html/server/config.yaml` and doing a Pull Request
   * Give your board a name and description
