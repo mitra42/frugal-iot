@@ -12,12 +12,19 @@
 
 #if !defined(PLATFORMIO)
   // On Arduiono do not have platformio.ini so presume these standards
-  #define SYSTEM_MQTT_DEBUG
-  #define SYSTEM_WIFI_DEBUG
-  #define SYSTEM_POWER_DEBUG
+  #define CONTROL_BLINKEN_DEBUG
+  #define CONTROL_LOGGERFS_DEBUG
+  #define SENSOR_ENSAHT_DEBUG
+  #define SENSOR_LOADCELL_DEBUG
+  #define SENSOR_MS5803_DEBUG
+  #define SENSOR_SHT_DEBUG
   #define SYSTEM_DISCOVERY_DEBUG
   #define SYSTEM_FRUGAL_DEBUG
+  #define SYSTEM_LITTLEFS_DEBUG
+  #define SYSTEM_MQTT_DEBUG
   #define SYSTEM_TIME_DEBUG
+  #define SYSTEM_POWER_DEBUG
+  #define SYSTEM_WIFI_DEBUG
 #endif
 
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
