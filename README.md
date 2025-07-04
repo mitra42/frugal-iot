@@ -12,10 +12,8 @@ ALSO - its only tested on Macs - so documentation for other platforms could be i
 
 #### Platforms
 The intention is for this library to work in both PlatformIO and Arduino IDE. 
-However the major refactor recently (June 2025) has (hopefully temporarily) broken Arduino IDE support.
 
-Working in the Arduino IDE is simpler, but seriously, its like working with one hand tied behind your back!
-We strongly encourage installing Visual Studio with the Platform IO plugin. 
+Working in the Arduino IDE is simpler, but seriously, its like working with one hand tied behind your back. We strongly encourage installing Visual Studio with the Platform IO plugin. 
 
 ### Getting help 
 
@@ -50,9 +48,18 @@ We test on a variety of environments - most often the ESP8266 Lolin D1 Mini; ESP
 #### Platform IO  basics - skip if you know what you are doing
 (June 2025: These need updating since the major refactor)
 
-#### Arduino IDE basics - skip if you know what you are doing
-(June 2025: See note above these will need updating when support for Arduino IDE resumes)
-* In Arduino IDE 
+#### Arduino IDE basics - skip most of this if you know what you are doing
+
+On https://github.com/mitra42/frugal-iot
+
+* Code > Download Zip
+
+In Arduino IDE 
+* top menu > Sketch > Include Library > Add .ZIP file and select Zip file opened
+* This library should now be available to your own sketches
+* 
+
+
 * Open `~/frugal-iot/`
 * Tools -> Upload Speed -> 460800
 * Tools -> Manage Libraries -> Search for, and install:
