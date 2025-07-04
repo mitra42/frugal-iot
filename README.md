@@ -46,7 +46,16 @@ We test on a variety of environments - most often the ESP8266 Lolin D1 Mini; ESP
 
 
 #### Platform IO  basics - skip if you know what you are doing
-(June 2025: These need updating since the major refactor)
+
+* In whatever directory you want ....
+* git clone https://github.com/mitra42/frugal-iot.git
+
+In PlatformIO
+* File > Open > frugal-iot > examples > sht30
+* Select the board and port on the bottom bar
+* It will install the necessary libraries and compile
+* 
+
 
 #### Arduino IDE basics - skip most of this if you know what you are doing
 
@@ -54,48 +63,51 @@ On https://github.com/mitra42/frugal-iot
 
 * Code > Download Zip
 
-In Arduino IDE 
+Then In Arduino IDE 
 * top menu > Sketch > Include Library > Add .ZIP file and select Zip file opened
 * This library should now be available to your own sketches
-* 
-
-
-* Open `~/frugal-iot/`
-* Tools -> Upload Speed -> 460800
+* File > Examples > scroll down to bottom group "Examples form Custom Libraries"
+* Frugal-IoT > select any example SHT30 is simplest
+* See notes below on configuring your example
+* Tools -> Upload Speed -> 115200
 * Tools -> Manage Libraries -> Search for, and install:
   * Libraries used by almost all cases
-    * ESP-WiFiSettings by Juerd Waalboer
     * MQTT by Joel Gaehwiler
-  * Libraries only needed if you use specific sensors. 
+  * Libraries only needed if you use specific sensors or actuators
     * SHT85 by Rob Tillaart;
-    * DHTNEW also by Rob Tillaart (SENSOR_DHT_WANT to enable)
-    * BH1750 from Christopher Laws (SENSOR_BH1750_WANT to enable)
+    * DHTNEW also by Rob Tillaart
+    * BH1750 from Christopher Laws
+    * Button2 by Lennart Hennigs
+    * HX711 by Rob Tillaart for Load Sensors
     * If you add more sensors make sure to add any library requirement here (TO_ADD_SENSOR)
-  * Libraries only needed if you use specific sensors. 
-    * If you add more actuators make sure to add any library requirement here (TO_ADD_ACTUATOR)
 * Tools -> Board 
   * Check you have selected the dev board
   * TODO add instructions, or a link here for adding new boards to an Arduino IDE - most will need to do this. 
 * Tools -> Port 
   * Select the port your device is plugged into
 * Tools -> Serial Monitor 
-  * This can be tricky - it should open at 460800 but might need changing after the first run at which point it should remember
+  * This can be tricky - it should open at 115200 but might need changing after the first run at which point it should remember
 
 
 ### Installing and testing on a dev board
 
 #### Basic test
-(June 2025: These need updating since the major refactor)
-
-* Copy _local-template.h to _local.h. For now leave the ORGANIZATION as "dev" unless you talk to us. 
-  Add the MQTT server, userid and password, if you aren't going to use `naturalinnovation.org` 
-  Uncomment lines for any sensors you have on the board.
+* Edit around line 31 of the .ino files `addWiFi` to have your own SSID and Password, 
+* You can duplicate this line for multiple WiFi's 
+* If you do not add a WiFi that it can see, then a portal will be opened - see below. 
+* On PlatformIO there is a nicer alternative way to put the WiFi's and configuration info in data files, but TODO this needs documenting.
+* Add the MQTT server, userid and password, if you aren't going to use `naturalinnovation.org` 
+* Check the examples for how to add sensors, controls and actuators. 
 * Compile and Flash to your dev board
-* On a WiFi device such as a phone
+  * On PlatformIO this is the compile button (✔︎ and > on bottom bar)
+  * On Arduino its the ✔︎ and > on the top bar
+* If you did not add a valid WiFi
+  * On a WiFi device such as a phone
   * Connect to the wifi node of the board which will have a SSID like esp8266-12345
   * Configure the WiFi SSID and Password of your router,
-  * Pick the name for your project (use the same one for all your boards), 
-    * Let us know by either (opening a Github issue)[https://github.com/mitra42/frugal-iot/issues/new/choose], or editing `html/server/config.yaml` and doing a Pull Request
+  * Pick the name for your project (use the same one for all your boards),  
+    * You can use "developers" for testing,
+    * Or pick your own and let us know by either (opening a Github issue)[https://github.com/mitra42/frugal-iot/issues/new/choose], or editing `html/server/config.yaml` and doing a Pull Request
   * Give your board a name and description
   * Click SAVE then RESTART
 * The device should now connect to the mqtt server at frugaliot.naturalinnovation.org
