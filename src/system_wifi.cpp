@@ -210,7 +210,7 @@ void System_WiFi::addWiFi(String ssid, String password) {
   //const String filename = StringF("/wifi/%s",ssid.c_str());
   const String filename("/wifi/" + ssid);
   if (!frugal_iot.fs_LittleFS->spurt(filename,password)) {
-    Serial.println("XXX fail to spurt");
+    Serial.println(F("Fail to write wifi to file system"));
   };
 }
 // Note this is blocking - so order is important, in particular it must complete this before trying mqtt::setup

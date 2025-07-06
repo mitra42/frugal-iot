@@ -189,6 +189,7 @@ void createReceiveMessages() {
 }
 #endif // SYSTEM_LORAMESHER_RECEIVER_TEST
 
+// addGatewayRole is called on receiver during setup, once route tables propogate this should start seeing hte gateway
 bool System_LoraMesher::findGatewayNode() {
     RouteNode* rn = radio.getClosestGateway();
     if (rn) {
@@ -213,7 +214,7 @@ void System_LoraMesher::setup() {
   radio.start();     //Start LoRaMesher
   #ifdef SYSTEM_LORAMESHER_SENDER_TEST
   if (!findGatewayNode()) {
-      Serial.println("Setup did not find a gateway node");
+      Serial.println("Setup did not find a gateway node - expect after recieve routing");
   }
   #endif //SYSTEM_LORAMESHER_SENDER_TEST
   #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
@@ -256,9 +257,9 @@ void System_LoraMesher::periodically() {
     #endif
     frugal_iot.oled->display.clearDisplay();
     frugal_iot.oled->display.setCursor(0,0);
+    frugal_iot.oled->display.setTextSize(1);
     frugal_iot.oled->display.println("LORAMESH SENDER");
     frugal_iot.oled->display.setCursor(0,20);
-    frugal_iot.oled->display.setTextSize(1);
     frugal_iot.oled->display.print("LoRa packet sent.");
     frugal_iot.oled->display.setCursor(0,30);
     #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)

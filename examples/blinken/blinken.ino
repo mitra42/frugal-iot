@@ -37,7 +37,6 @@ void setup() {
 
   Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
   frugal_iot.controls->add(cb);
-  Serial.print("XXX" __FILE__); Serial.print(__LINE__); Serial.println(*frugal_iot.mqtt->path("ledbuiltin/id"));
   cb->outputs[0]->wireTo(frugal_iot.mqtt->path("ledbuiltin/id")); //TODO-141 probably wont work as mqtt not setup yet
 
   // Dont change below here - should be after setup the actuators, controls and sensors

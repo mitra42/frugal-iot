@@ -482,9 +482,7 @@ void OUTuint16::sendWired() {
   }
 }
 void OUTbool::sendWired() {
-  Serial.print("XXX sendWired " __FILE__); Serial.println(__LINE__);
   if (wiredPath && wiredPath->length() ) {
-    Serial.print("XXX sendWired " __FILE__); Serial.println(__LINE__);
     frugal_iot.mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
   }
 }
@@ -549,7 +547,7 @@ String OUTbool::advertisement(const char * const group) {
 //Not used - built for gsheets where followed by a "wireto"
 IN* IN::INxxx(IOtype t, const char* sensorId) {
   switch (t) {
-    // TO-ADD-INXXX
+    // TO-ADD-INxxx
     case BOOL:
       return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
     case UINT16:
@@ -568,7 +566,7 @@ IN* IN::INxxx(IOtype t, const char* sensorId) {
 //Not used - built for gsheets where followed by a "wireto"
 IN* IN::INxxx(IOtype t, const char* sensorId) {
   switch (t) {
-    // TO-ADD-INXXX
+    // TO-ADD-INxxx
     case BOOL:
       return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
     case UINT16:
