@@ -62,17 +62,17 @@ System_LoraMesher::System_LoraMesher()
       uint32_t counter = 0;
   };
   counterPacket* helloPacket = new counterPacket;
-#elif defined(SYSTEM_LORAMESHER_TEST_STRING)
+#elif defined(SYSTEM_LORAMESHER_TEST_STRING) || defined(SYSTEM_LORAMESHER_TEST_MQTT)
   uint32_t dataCounter = 0;
 #else 
-  #error Must define SYSTEM_LORAMESHER_TEST_COUNTER or SYSTEM_LORAMESHER_TEST_STRING
+  #error Must define SYSTEM_LORAMESHER_TEST_COUNTER or SYSTEM_LORAMESHER_TEST_STRING or (SYSTEM_LORAMESHER_TEST_MQTT
 #endif
 
 // TODO for now this is an extern as its not going to be the final interface so its not worth putting together a way to pass a callback
 #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
   #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
     extern void printAppCounterPacket(AppPacket<counterPacket>*);
-  #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
+  #elif defined(SYSTEM_LORAMESHER_TEST_STRING) || defined(SYSTEM_LORAMESHER_TEST_MQTT)
     extern void printAppData(AppPacket<uint8_t>*);
   #endif
 
@@ -92,16 +92,10 @@ void processReceivedPackets(void*) {
               AppPacket<counterPacket>* packet = frugal_iot.loramesher->radio.getNextAppPzacket<counterPacket>();
               //Print the App Packet
               printAppCounterPacket(packet); // This is the actual handling
-            #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
+            #elif defined(SYSTEM_LORAMESHER_TEST_STRING) || defined(SYSTEM_LORAMESHER_TEST_MQTT)
               // Note its <uint8_t>* because its a string
               AppPacket<uint8_t>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<uint8_t>();
               printAppData(appPacket); // TODO-151 see note above about this being an extern
-
-            #else // Start (but wont work) of FrugalIoT packet
-              AppPacket<FrugalIoTMessage>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<FrugalIoTMessage>();
-              printAppFrugal(packet);
-              // Pull apart FrugalIoTMessage to something want to process
-              //DataMessage* dataMessage = createDataMessage(AppPacket<FrugalIoTMessage>* appPacket))
             #endif      
             //Delete the packet when used. It is very important to call this function to release the memory of the packet.
             frugal_iot.loramesher->radio.deletePacket(appPacket);
