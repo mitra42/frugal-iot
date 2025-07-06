@@ -49,10 +49,12 @@ class Frugal_Group : public System_Base {
 
 class System_Frugal : public Frugal_Group {
   public:
+    // Configuration strings 
     String org;
     String project;
     String description; 
     String device_name;
+    // Pointers to other Frugal_Base objects or groups of objects
     Frugal_Group* actuators;
     Frugal_Group* sensors;
     Frugal_Group* controls;
@@ -76,6 +78,8 @@ class System_Frugal : public Frugal_Group {
     System_LittleFS* fs_LittleFS; 
     System_Time* time; // Optional - may be nullptr if not set up
     System_WiFi* wifi;
+    // Operational
+    bool timeForPeriodic = true;
     System_Frugal(const char* org, const char* project, const char* id, const char* name);
     void configure_mqtt(const char* hostname, const char* username, const char* password);
     void configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms);

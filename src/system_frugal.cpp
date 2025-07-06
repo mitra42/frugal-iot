@@ -193,15 +193,14 @@ void System_Frugal::frequently() {
 
 // Main loop() - call this from main.cpp
 void System_Frugal::loop() {
-  static bool donePeriodic = false;
-  if (!donePeriodic) {
+  if (timeForPeriodic) {
     periodically();  // Do things run once per cycle
     infrequently();  // Do things that keep their own track of time
-    donePeriodic = true;
+    timeForPeriodic = false;
   }
   frequently(); // Do things like MQTT which run frequently with their own clock
   if (powercontroller->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
-    donePeriodic = false; // reset after sleep (note deep sleep comes in at top again)
+    timeForPeriodic = true; // reset after sleep (note deep sleep comes in at top again)
   }
 }
 
