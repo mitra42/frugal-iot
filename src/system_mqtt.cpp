@@ -43,6 +43,7 @@
 #include "sensor.h"
 #include "control.h"
 #include <forward_list>
+#include "system_loramesher.h"
 
 Subscription::Subscription(const String* const tp) : topicPath(tp), payload(NULL) { }
 Subscription::Subscription(const String* const tp, String const* pl) : topicPath(tp), payload(pl) { }
@@ -249,6 +250,12 @@ void System_MQTT::messageReceived(const String &topicPath, const String &payload
 // These are intentionally required parameters rather than defaulting so the coder thinks about the desired behavior
 
 // Send message to MQTT client - used for both repeats and first time messages
+#if defined(SYSTEM_LORAMESHER_TEST_MQTT) && defined(SYSTEM_LORAMESHER_SENDER_TEST)
+  // TODO-151 - temporary hack with no decision
+void System_MQTT::messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos) {
+  frugal_iot.loramesher->publish(topicPath, payload, retain, qos);
+}
+#else
 void System_MQTT::messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos) {
   if (!client.publish(topicPath, payload, retain, qos)) {
     #ifdef SYSTEM_MQTT_DEBUG
@@ -274,7 +281,7 @@ void System_MQTT::messageSendInner(const String &topicPath, const String &payloa
     }
   };
 }
-
+#endif
 // Send or queue up a message 
 void System_MQTT::messageSend(const String &topicPath, const String &payload, const bool retain, const int qos) {
   // TODO-21-sema also queue if WiFi is down and qos>0 - not worth doing till frugal_iot.wifi->connect is non-blocking
@@ -284,7 +291,7 @@ void System_MQTT::messageSend(const String &topicPath, const String &payload, co
   if (inReceived && qos) {
     const String* topicPathCopy = new String(topicPath); // payload will go out of scope before queue flushed
     const String* payloadCopy = new String(payload); // payload will go out of scope before queue flushed
-    queued.emplace_front(*topicPathCopy, *payloadCopy, retain, qos); 
+    queued.emplace_front(*topicPathCopy, *payloadCopy, retain, qos);  // Implicit new Message
   } else {
     messageSendInner(topicPath, payload, retain, qos);
   }

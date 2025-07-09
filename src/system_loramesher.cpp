@@ -29,6 +29,7 @@
 #include "system_loramesher.h"
 #include "misc.h"  // for lprintf
 #include "system_frugal.h"
+#include "system_mqtt.h"
 
 // These settings duplicated in system_loramesher.cpp and system_lora.cpp (system_loramesher.cpp are newer)
 // For ARDUINO_TTGO_LoRa32 
@@ -121,6 +122,28 @@ void createReceiveMessages() {
     }
 }
 #endif // SYSTEM_LORAMESHER_RECEIVER_TEST
+
+void System_LoraMesher::publish(const String &topic, const String &payload, bool retain, int qos) {
+      // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
+      //Message* mqttmess = new Message(String("dev/developers/esp12345/sht/temperature"),String(dataCounter++), true, 1);
+      char qos_char = '0' + qos;
+      char retain_char = '0' + retain;
+      const char* stringymessage = lprintf(100, "%c%c%s:%s", 
+        qos_char, retain_char,
+        topic.c_str(), payload.c_str());
+      Serial.print(__LINE__); Serial.print(" XXX " __FILE__ " "); Serial.println(stringymessage);
+      size_t msglen = strlen(stringymessage)+1; // +1 to include terminating \0
+      // Allocate enough memory for the struct + message
+      uint8_t* msg = (uint8_t*) malloc(msglen);
+      //DataPacket* dPacket = (DataPacket*) malloc(sizeof(DataPacket) + msglen); // sendPacket wants uint8_t*
+      // Copy the string into the message array
+      memcpy(msg, stringymessage, msglen);
+      delete(stringymessage);
+      // TODO-152 - maybe could just cast stringmessage as (uint8_t*) instead of copying
+      frugal_iot.loramesher->radio.sendPacket(frugal_iot.loramesher->gatewayNodeAddress, msg, msglen); // Will be broadcast if no node
+      free(msg); // msg is copied in createPacketAndSend
+}
+
 
 // addGatewayRole is called on receiver during setup, once route tables propogate this should start seeing hte gateway
 bool System_LoraMesher::findGatewayNode() {

@@ -26,7 +26,7 @@ class System_LoraMesher : public System_Base {
     bool findGatewayNode();
     void setup();
     //void periodically();
-    #if !defined(SYSTEM_LORAMESHER_SENDER_TEST) && !defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
+    #if SYSTEM_LORAMESHER_TEST_MQTT
       // Match mqtt.client profile
       void publish(const String &topicPath, const String &payload, const bool retain, const int qos);
     #endif
