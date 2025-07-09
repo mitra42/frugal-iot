@@ -81,7 +81,7 @@ void loop() {
     // Things which happen once for each sensor read period go here. 
     // This is also a good place to put things that check how long since last running
     #ifdef SYSTEM_LORAMESHER_SENDER_TEST
-      senderPeriodic();
+      // senderPeriodic();
     #endif
   }
   frugal_iot.loop(); // Do not delete this call to frugal_iot.loop

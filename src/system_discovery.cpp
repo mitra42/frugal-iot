@@ -1,7 +1,7 @@
 /* Manage MQTT higher level 
    Advertise in a way that allows a client to discover the nodes from knowing the project
  
-   Periodically (SYSTEM_DISCOVERY_MS) send node name on project  e.g  "dev/Lotus/" = "node1"
+   Periodically (SYSTEM_DISCOVERY_MS) send node name on project  e.g  "dev/developers/" = "node1"
   At startup send a YAML string that describes this node and all sensors actuators
 
   Required SYSTEM_DISCOVERY_MS 
@@ -55,8 +55,8 @@ void System_Discovery::fullAdvertise() {
 
 void System_Discovery::setup_after_mqtt() {
   projectTopic = new String(frugal_iot.org + "/" + frugal_iot.project );
-  advertiseTopic = new String(*projectTopic + F("/") + frugal_iot.wifi->clientid()); // e.g. "dev/lotus/esp32-12345"
-  topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/lotus/esp32-12345/" prefix of most topics
+  advertiseTopic = new String(*projectTopic + F("/") + frugal_iot.wifi->clientid()); // e.g. "dev/developers/esp32-12345"
+  topicPrefix = new String(*advertiseTopic + F("/")); // e.g. "dev/developers/esp32-12345/" prefix of most topics
   // Subscribe to all `set` for this node
   frugal_iot.mqtt->subscribe("set/#"); 
 }

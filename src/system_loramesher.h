@@ -30,6 +30,7 @@ class System_LoraMesher : public System_Base {
     //void periodically();
     // Match mqtt.client profile
     void publish(const String &topicPath, const String &payload, const bool retain, const int qos);
+    void processReceivedPacket(AppPacket<uint8_t>* appPacket);
     void prepareForSleep();
 };
 

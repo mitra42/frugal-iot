@@ -62,7 +62,7 @@ System_LoraMesher::System_LoraMesher()
 // TODO for now this is an extern as its not going to be the final interface so its not worth putting together a way to pass a callback
 #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
     // extern void printAppCounterPacket(AppPacket<counterPacket>*); // This was how we handled structured packets
-    extern void printAppData(AppPacket<uint8_t>*);
+    extern void printAppData(AppPacket<uint8_t>*); //TODO-152 probably remove
 
   // Function that process the received packets - it receives an AppPacket<xxx> and passes to handler
 void processReceivedPackets(void*) {
@@ -79,10 +79,7 @@ void processReceivedPackets(void*) {
             //LORAMESHER-STRUCTURED: AppPacket<counterPacket>* packet = frugal_iot.loramesher->radio.getNextAppPzacket<counterPacket>(); printAppCounterPacket(packet); // This is the actual handling
             // Note its <uint8_t>* because its a string
             AppPacket<uint8_t>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<uint8_t>();
-            frugal_iot.loramesher->sentPacketCounter++;
-            printAppData(appPacket); // TODO-151 see note above about this being an extern
-            //Delete the packet when used. It is very important to call this function to release the memory of the packet.
-            frugal_iot.loramesher->radio.deletePacket(appPacket);
+            frugal_iot.loramesher->processReceivedPacket(appPacket);
         }
     }
 }
@@ -129,6 +126,28 @@ void System_LoraMesher::publish(const String &topic, const String &payload, bool
         // TODO-152 queue till have gateway (depending on qos)
       }
       free(msg); // msg is copied in createPacketAndSend
+}
+
+void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
+  rcvdPacketCounter++;
+  //printAppData(appPacket); // TODO-151 see note above about this being an extern
+  const uint8_t qos = appPacket->payload[0] - '0';
+  const bool retain = appPacket->payload[0] - '0'; // will be 0 or 1
+  // Assume appPacket->payload is a uint8_t* or char* and is null-terminated from [2] onward
+  const char* str = (const char*)&appPacket->payload[2];
+  String topicPath, payload;
+
+  const char* eq = strchr(str, ':');
+  if (eq) {
+      topicPath = String(str).substring(0, eq - str);
+      payload = String(eq + 1);
+  } else {
+      topicPath = String(str);
+      payload = "";
+  }
+  //Delete the packet when used. It is very important to call this function to release the memory of the packet.
+  radio.deletePacket(appPacket);
+  frugal_iot.mqtt->messageSend(topicPath, payload, retain, qos);
 }
 
 

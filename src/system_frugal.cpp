@@ -161,6 +161,7 @@ void System_Frugal::setup() {
   #endif
   //esp_log_level_set("*", ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
   esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
+  // TODO-152 next is blocking if WiFi fails - fix that
   Frugal_Group::setup(); // includes WiFi
   if (time) { // If time has been constructed
     time->setup_after_wifi();     // Needs the WiFi connection

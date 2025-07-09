@@ -36,7 +36,7 @@ class Subscription {
     Subscription(const String* tp, String const * payload);
     bool operator==(const String& topicPath);
 };
-class Message : public Subscription {
+class Message : public Subscription { // Only used for outgoing queued messages
   public:
     const bool retain;
     const int qos;
