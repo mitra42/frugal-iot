@@ -3,7 +3,6 @@
  * 
  * Optional: 
  *  SYSTEM_LORAMESHER_SENDER_TEST or SYSTEM_LORAMESHER_RECEIVER_TEST which role it should play
- *  SYSTEM_LORAMESHER_TEST_STRING specify to run the string test
  * 
  */
 
@@ -45,107 +44,12 @@ void setup() {
 
 
 #ifdef SYSTEM_LORAMESHER_SENDER_TEST
-  void senderPeriodic() {
-    static uint32_t dataCounter = 0;
-    Serial.print("Send packet ");  Serial.println(dataCounter);
-    if (frugal_iot.loramesher->gatewayNodeAddress == BROADCAST_ADDR) {
-      if (frugal_iot.loramesher->findGatewayNode()) {
-        Serial.println("============ XXX Now seeing gateway node ======");
-      }
-    }
-    #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-      counterPacket* data = new counterPacket;
-      data->counter = dataCounter++;
-    #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
-      const char* stringymessage = lprintf(20, "Test # %d", dataCounter++);
-      size_t msglen = strlen(stringymessage)+1; // +1 to include terminating \0
-      // Allocate enough memory for the struct + message
-      uint8_t* msg = (uint8_t*) malloc(msglen);
-      //DataPacket* dPacket = (DataPacket*) malloc(sizeof(DataPacket) + msglen); // sendPacket wants uint8_t*
-      // Copy the string into the message array
-      memcpy(msg, stringymessage, msglen);
-      delete(stringymessage);
-      // TODO-152- maybe could just cast stringmessage as (uint8_t*) instead of copying
-    #elif defined(SYSTEM_LORAMESHER_TEST_MQTT)
 
-      // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
-      //Message* mqttmess = new Message(String("dev/developers/esp12345/sht/temperature"),String(dataCounter++), true, 1);
-      //uint8_t qos_char = mqttmess->qos + '0';
-      //uint8_t retain_byte = mqttmess->retain + '0';
-      const char* stringymessage = lprintf(100, "%c%c%s:%s", '1', '2',
-        "dev/developers/esp12345/sht/temperature",
-        "210.1");
-      size_t msglen = strlen(stringymessage)+1; // +1 to include terminating \0
-      // Allocate enough memory for the struct + message
-      uint8_t* msg = (uint8_t*) malloc(msglen);
-      //DataPacket* dPacket = (DataPacket*) malloc(sizeof(DataPacket) + msglen); // sendPacket wants uint8_t*
-      // Copy the string into the message array
-      memcpy(msg, stringymessage, msglen);
-
-      delete(stringymessage);
-      // TODO-152 - maybe could just cast stringmessage as (uint8_t*) instead of copying
-
-    #else // Start - not working - for FrugalIoT message
-        #error "undefined Loramesher test"
-    #endif
-    frugal_iot.oled->display.clearDisplay();
-    frugal_iot.oled->display.setCursor(0,0);
-    frugal_iot.oled->display.setTextSize(1);
-    frugal_iot.oled->display.println("LORAMESH SENDER");
-    frugal_iot.oled->display.setCursor(0,20);
-    frugal_iot.oled->display.print("LoRa packet sent.");
-    frugal_iot.oled->display.setCursor(0,30);
-    #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-      frugal_iot.oled->display.print("Counter:");
-      frugal_iot.oled->display.setCursor(50,30);
-      frugal_iot.oled->display.print(dataCounter);      
-    #elif defined(SYSTEM_LORAMESHER_TEST_STRING) || defined(SYSTEM_LORAMESHER_TEST_MQTT)
-      frugal_iot.oled->display.print("Counter:");
-      frugal_iot.oled->display.setCursor(50,30);
-      frugal_iot.oled->display.print(dataCounter-1);
-    #else // Start - wont work - for FrugalIoT
-      frugal_iot.oled->display.print(dataCounter);      
-    #endif
-    frugal_iot.oled->display.display();
-    #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-      radio.createPacketAndSend(BROADCAST_ADDR, data, 1); // Size is number of counterPackets.
-    #elif defined(SYSTEM_LORAMESHER_TEST_STRING)  || defined(SYSTEM_LORAMESHER_TEST_MQTT)
-      frugal_iot.loramesher->radio.sendPacket(frugal_iot.loramesher->gatewayNodeAddress, msg, msglen); // Will be broadcast if no node
-    #endif
-    free(msg); // msg is copied in createPacketAndSend
-}
 #endif // SYSTEM_LORAMESHER_SENDER_TEST
 
 
 #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
-  #ifdef SYSTEM_LORAMESHER_TEST_COUNTER
-    void printCounterPacket(counterPacket data) {
-      Serial.printf("Hello Counter received nº %d\n", data.counter);
-      // Display information
-      frugal_iot.oled->display.clearDisplay();
-      frugal_iot.oled->display.setCursor(0,0);
-      frugal_iot.oled->display.print("LORA MESH RECEIVER");
-      frugal_iot.oled->display.setCursor(0,20);
-      frugal_iot.oled->display.print("Received packet:");
-      frugal_iot.oled->display.setCursor(0,30);
-      frugal_iot.oled->display.print(data.counter);
-      //frugal_iot.oled->display.setCursor(0,40);
-      //frugal_iot.oled->display.print("RSSI:");
-      //frugal_iot.oled->display.setCursor(30,40);
-      //frugal_iot.oled->display.print(rssi);
-      frugal_iot.oled->display.display();   
-    }
-    void printAppCounterPacket(AppPacket<counterPacket>* packet) {
-        Serial.printf("Packet arrived from %X with size %d\n", packet->src, packet->payloadSize);
-        //Get the payload to iterate through it
-        counterPacket* dPacket = packet->payload;
-        size_t payloadLength = packet->getPayloadLength();
-        for (size_t i = 0; i < payloadLength; i++) {
-            //Print the packet
-            printCounterPacket(dPacket[i]);
-        }
-    }
-  #elif defined(SYSTEM_LORAMESHER_TEST_STRING)  || defined(SYSTEM_LORAMESHER_TEST_MQTT)
+
     void printAppData(AppPacket<uint8_t>* appPacket) {
         Serial.printf("Packet arrived from %X with size %d\n", appPacket->src, appPacket->payloadSize);
         //Get the payload to iterate through it
@@ -167,10 +71,6 @@ void setup() {
         //frugal_iot.oled->display.print(rssi);
         frugal_iot.oled->display.display();   
     }
-
-  #else // Start - wont work - of FrugalIoT
-    #error "Must define one of the Loramesher tests"
-  #endif
 #endif // SYSTEM_LORAMESHER_RECEIVER_TEST
 
 

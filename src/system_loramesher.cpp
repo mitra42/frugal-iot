@@ -57,25 +57,12 @@ System_LoraMesher::System_LoraMesher()
     config.freq = SYSTEM_LORAMESHER_BAND;
 }
 
-#if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-  uint32_t dataCounter = 0;
-  struct counterPacket {
-      uint32_t counter = 0;
-  };
-  counterPacket* helloPacket = new counterPacket;
-#elif defined(SYSTEM_LORAMESHER_TEST_STRING) || defined(SYSTEM_LORAMESHER_TEST_MQTT)
-  uint32_t dataCounter = 0;
-#else 
-  #error Must define SYSTEM_LORAMESHER_TEST_COUNTER or SYSTEM_LORAMESHER_TEST_STRING or (SYSTEM_LORAMESHER_TEST_MQTT
-#endif
+  // LORAMESH-STRUCTURED: struct counterPacket {  uint32_t counter = 0; }; counterPacket* helloPacket = new counterPacket;
 
 // TODO for now this is an extern as its not going to be the final interface so its not worth putting together a way to pass a callback
 #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
-  #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-    extern void printAppCounterPacket(AppPacket<counterPacket>*);
-  #elif defined(SYSTEM_LORAMESHER_TEST_STRING) || defined(SYSTEM_LORAMESHER_TEST_MQTT)
+    // extern void printAppCounterPacket(AppPacket<counterPacket>*); // This was how we handled structured packets
     extern void printAppData(AppPacket<uint8_t>*);
-  #endif
 
   // Function that process the received packets - it receives an AppPacket<xxx> and passes to handler
 void processReceivedPackets(void*) {
@@ -89,15 +76,11 @@ void processReceivedPackets(void*) {
             Serial.printf("Queue receiveUserData size: %d\n", frugal_iot.loramesher->radio.getReceivedQueueSize());
 
             //Get the first element inside the Received User Packets Queue
-            #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-              AppPacket<counterPacket>* packet = frugal_iot.loramesher->radio.getNextAppPzacket<counterPacket>();
-              //Print the App Packet
-              printAppCounterPacket(packet); // This is the actual handling
-            #elif defined(SYSTEM_LORAMESHER_TEST_STRING) || defined(SYSTEM_LORAMESHER_TEST_MQTT)
-              // Note its <uint8_t>* because its a string
-              AppPacket<uint8_t>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<uint8_t>();
-              printAppData(appPacket); // TODO-151 see note above about this being an extern
-            #endif      
+            //LORAMESHER-STRUCTURED: AppPacket<counterPacket>* packet = frugal_iot.loramesher->radio.getNextAppPzacket<counterPacket>(); printAppCounterPacket(packet); // This is the actual handling
+            // Note its <uint8_t>* because its a string
+            AppPacket<uint8_t>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<uint8_t>();
+            frugal_iot.loramesher->sentPacketCounter++;
+            printAppData(appPacket); // TODO-151 see note above about this being an extern
             //Delete the packet when used. It is very important to call this function to release the memory of the packet.
             frugal_iot.loramesher->radio.deletePacket(appPacket);
         }
@@ -125,7 +108,6 @@ void createReceiveMessages() {
 
 void System_LoraMesher::publish(const String &topic, const String &payload, bool retain, int qos) {
       // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
-      //Message* mqttmess = new Message(String("dev/developers/esp12345/sht/temperature"),String(dataCounter++), true, 1);
       char qos_char = '0' + qos;
       char retain_char = '0' + retain;
       const char* stringymessage = lprintf(100, "%c%c%s:%s", 
@@ -140,7 +122,12 @@ void System_LoraMesher::publish(const String &topic, const String &payload, bool
       memcpy(msg, stringymessage, msglen);
       delete(stringymessage);
       // TODO-152 - maybe could just cast stringmessage as (uint8_t*) instead of copying
-      frugal_iot.loramesher->radio.sendPacket(frugal_iot.loramesher->gatewayNodeAddress, msg, msglen); // Will be broadcast if no node
+      frugal_iot.loramesher->sentPacketCounter++;
+      if (frugal_iot.loramesher->findGatewayNode()) { 
+        frugal_iot.loramesher->radio.sendPacket(frugal_iot.loramesher->gatewayNodeAddress, msg, msglen); // Will be broadcast if no node
+      } else {
+        // TODO-152 queue till have gateway (depending on qos)
+      }
       free(msg); // msg is copied in createPacketAndSend
 }
 

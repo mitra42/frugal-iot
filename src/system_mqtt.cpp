@@ -250,7 +250,7 @@ void System_MQTT::messageReceived(const String &topicPath, const String &payload
 // These are intentionally required parameters rather than defaulting so the coder thinks about the desired behavior
 
 // Send message to MQTT client - used for both repeats and first time messages
-#if defined(SYSTEM_LORAMESHER_TEST_MQTT) && defined(SYSTEM_LORAMESHER_SENDER_TEST)
+#if defined(SYSTEM_LORAMESHER_SENDER_TEST) // TODO-152 this will be a program test - e.g. whether WiFi enabled
   // TODO-151 - temporary hack with no decision
 void System_MQTT::messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos) {
   frugal_iot.loramesher->publish(topicPath, payload, retain, qos);
