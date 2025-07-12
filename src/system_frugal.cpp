@@ -159,8 +159,10 @@ void System_Frugal::setup() {
   #ifdef SYSTEM_FRUGAL_DEBUG
     Serial.print("Setup: ");
   #endif
-  //esp_log_level_set("*", ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
-  esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
+  #if defined(SYSTEM_LORAMESHER_SENDER_TEST) || defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
+    //esp_log_level_set("*", ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
+    esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
+  #endif
   // TODO-152 next is blocking if WiFi fails - fix that
   Frugal_Group::setup(); // includes WiFi
   if (time) { // If time has been constructed
