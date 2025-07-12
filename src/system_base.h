@@ -2,6 +2,7 @@
 #define BASE_H
 
 #include <Arduino.h>
+#include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
 
 extern const char* valueAdvertLineFloat;
 extern const char* valueAdvertLineBool;
@@ -24,6 +25,8 @@ class System_Base {
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);
     virtual void dispatchPath(const String &topicPath, const String &payload);
     virtual String advertisement();
+    void readConfigFromFS();
+    void readConfigFromFS(File dir, const String* leaf);
     virtual void frequently();
     virtual void periodically();
     virtual void infrequently();

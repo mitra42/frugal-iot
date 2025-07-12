@@ -85,6 +85,7 @@ class System_Frugal : public Frugal_Group {
     void configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms);
     void startSerial(uint32_t baud, uint16_t serial_delay);
     void startSerial(); // Encapsulate setting up and starting serial
+    void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
     void dispatchTwig(const String &topicTwig, const String &payload, bool isSet);
     void setup();
     void loop(); // Call this from main.cpp

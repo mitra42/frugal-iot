@@ -49,11 +49,23 @@ void Frugal_Group::setup() {
   }
 }
 
-void Frugal_Group::dispatchTwig(const String &id, const String &topicLeaf, const String &payload, bool isSet) {
+void Frugal_Group::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
   for (System_Base* fb: group) {
-    fb->dispatchTwig(id, topicLeaf, payload, isSet);
+    fb->dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   }
 };
+
+void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
+  if (isSet && (topicSensorId == id)) {
+    if (topicLeaf == "project") {
+      project = payload;
+    } else if (topicLeaf == "device_name") {
+      device_name = payload;
+    }
+  } else { // No point in passing on our own id for the loop
+    Frugal_Group::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
+  }
+}
 
 void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
   // topic Twig  <actuatorId>/<ioID> or  <actuatorId>/set/<ioID> or <actuatorId>/set/<ioID>/<config>
@@ -159,6 +171,9 @@ void System_Frugal::setup() {
   #ifdef SYSTEM_FRUGAL_DEBUG
     Serial.print("Setup: ");
   #endif
+  Serial.print("XXX " __FILE__); Serial.println(__LINE__);
+  readConfigFromFS(); // Reads config and passes to our dispatchLeaf
+  Serial.print("XXX " __FILE__); Serial.println(__LINE__);
   #if defined(SYSTEM_LORAMESHER_SENDER_TEST) || defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
     //esp_log_level_set("*", ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
     esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher

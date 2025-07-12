@@ -26,6 +26,38 @@ void System_Base::dispatchPath(const String &topicPath, const String &payload) {
 #pragma GCC diagnostic pop
 String System_Base::advertisement() {return String();};
 
+// Basic read configuration - based on the object's "id"
+void System_Base::readConfigFromFS() {
+  // Note LittleFS should have been setup in frugal_iot constructor so this should not be null
+  File dir = frugal_iot.fs_LittleFS->open(String("/") + id, "r"); // TODO call via System_FS virtual 
+  if (dir) {
+    readConfigFromFS(dir, nullptr);
+  }
+}
+void System_Base::readConfigFromFS(File dir, const String* leaf) {
+  while (true) {
+    File entry = dir.openNextFile("r");
+    if (!entry) {
+      // no more files
+      break;
+    }
+    // Lets presume reading a:  wifi/foo  or b:  sht/temperature or c: sht/temperature/max
+    //Serial.print(id); Serial.print("/"); Serial.print(leaf); Serial.print("/"); Serial.print(entry.name());
+    const String newleaf = (leaf ? (*leaf + "/") : "") + entry.name();
+    Serial.print(id); Serial.print(F("/")); Serial.print(newleaf);
+    if (entry.isDirectory()) { // b: entry is directory sht/temperature 
+      Serial.println("/");
+      readConfigFromFS(entry, &newleaf); 
+    } else { // a: id=wifi twiglet=nullptr entry is foo   or c: id=sht twiglet=temperature entry is max
+      String payload = entry.readString();
+      Serial.print("="); Serial.println(payload);
+      dispatchTwig(id, newleaf, payload, true);
+    }
+    entry.close();
+  }
+}
+
+
 // ========== IO - base class for IN and OUT ===== 
 
 
