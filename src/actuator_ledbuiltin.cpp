@@ -86,12 +86,12 @@ void Actuator_Ledbuiltin::act() {
         Serial.print(F("Actuator_Ledbuiltin::act rgb=0x")); 
         Serial.print(r, HEX); Serial.print(g,HEX); Serial.println(b, HEX); //TODO-131 0 should be "00"
       #endif
-      #ifdef PLATFORMIO
-        // TODO check if this is really grb or should use rgb
-        neopixelWrite(pin,g,r,b);   // Neopixel is g r b on Lolin- esp32-hal-rgb-led.c (or maybe was, but isnt any longer)
-      #else // neopixelWrite deprecated on Arduino IDE
+      //#ifdef PLATFORMIO
+      //  // TODO check if this is really grb or should use rgb
+      //  neopixelWrite(pin,g,r,b);   // Neopixel is g r b on Lolin- esp32-hal-rgb-led.c (or maybe was, but isnt any longer)
+      //#else // neopixelWrite deprecated on Arduino IDE
         rgbLedWrite(pin,r,g,b);   // Note this is r,g,b (Neopixel is g r b on Lolin)
-      #endif
+      //#endif
     #endif
   #else // !RGB_BUILTIN
     #ifdef ACTUATOR_LEDBUILTIN_INVERT

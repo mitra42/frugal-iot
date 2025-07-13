@@ -17,6 +17,7 @@
 #include <vector>
 #include "actuator_ledbuiltin.h"
 #include "system_base.h"
+#include "system_captive.h"
 #include "system_discovery.h"
 #include "system_fs.h"
 #ifdef ESP32
@@ -60,6 +61,7 @@ class System_Frugal : public Frugal_Group {
     Frugal_Group* controls;
     Frugal_Group* system;
     Frugal_Group* buttons;
+    System_Captive* captive;
     System_Discovery* discovery;
     #ifdef SYSTEM_LORA_WANT
       System_LoRa* lora;

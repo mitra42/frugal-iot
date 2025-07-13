@@ -130,6 +130,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   #ifdef SYSTEM_OTA_KEY
     ota(new System_OTA()),
   #endif
+  captive(new System_Captive()),
   fs_LittleFS(new System_LittleFS()),
   time(nullptr), // time is optional and setup by main.cpp if needed
   wifi(new System_WiFi())
@@ -154,7 +155,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   #ifdef SYSTEM_LORA_WANT
     system->add(lora);
   #endif // SYSTEM_LORA_WANT
-
+  system->add(captive);
   add(system);
   // These things should really be in setup() but we want them to run before the rest of the main.cpp setup()
   fs_LittleFS->pre_setup();
