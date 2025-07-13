@@ -31,7 +31,7 @@ void System_Watchdog::setup() {
   // If the TWDT was not initialized automatically on startup, manually intialize it now
 
   #ifdef ESP32
-    #ifdef PLATFORMIO // defined automatically when using PLATFORMIO in Visual Studio
+    #ifdef DEPRECATED_PLATFORMIO // defined automatically when using PLATFORMIO in Visual Studio
       esp_task_wdt_init(TWDT_TIMEOUT_MS, true);
     #else // Assuming ARDUINO-IDE which has different definition of esp_task_wdt_init - unsure which is older, which newer
       esp_task_wdt_config_t twdt_config = {
