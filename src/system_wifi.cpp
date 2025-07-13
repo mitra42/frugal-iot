@@ -230,10 +230,10 @@ void System_WiFi::setup() {
     bool checkbox(String name, bool init = false, String label = name);
   */
 
-  frugal_iot.mqtt->hostname = WiFiSettings.string(F("mqtt_host"), 4,40, frugal_iot.mqtt->hostname, T.MqttServer); 
+  frugal_iot.mqtt->hostname = WiFiSettings.string(F("mqtt/hostname"), 4,40, frugal_iot.mqtt->hostname, T.MqttServer); 
   // TODO-29 turn projet into a dropdown, use an ifdef for the ORGANIZATION in _locals.h not support by ESPWiFi-Settings yet.
-  frugal_iot.project = WiFiSettings.string(F("project"), 3,20, frugal_iot.project, T.Project); 
-  frugal_iot.device_name = WiFiSettings.string(F("device_name"), 3,20, frugal_iot.device_name, T.DeviceName); 
+  frugal_iot.project = WiFiSettings.string(F("frugal_iot/project"), 3,20, frugal_iot.project, T.Project); 
+  frugal_iot.device_name = WiFiSettings.string(F("frugal_iot/device_name"), 3,20, frugal_iot.device_name, T.DeviceName); 
   #ifdef SYSTEM_WIFI_DEBUG
     Serial.print(F("MQTT host = ")); Serial.println(frugal_iot.mqtt->hostname);
     Serial.print(F("Project = ")); Serial.println(frugal_iot.project);

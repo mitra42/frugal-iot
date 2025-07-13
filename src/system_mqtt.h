@@ -55,6 +55,7 @@ class System_MQTT : public System_Base {
     const char* username;
 
     System_MQTT(const char* hostname, const char* username, const char* password);
+    void setup();
     void setup_after_wifi();
     void frequently();
     bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
@@ -62,7 +63,8 @@ class System_MQTT : public System_Base {
     Subscription* find(const String &topicPath);
     void subscribe(const String& topicPath);
     void subscribe(const char* topicTwig);
-    void dispatch(const String &topicPath, const  String &payload);
+    void dispatch(const String &topicPath, const  String &payload); // dispatch received messages for other modules
+    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet); // receiving message for the mqtt module
     bool resubscribeAll();
     void retainPayload(const String &topicPath, const String &payload);
     void messageReceived(const String &topicPath, const String &payload);

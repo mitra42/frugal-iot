@@ -55,27 +55,28 @@ void Frugal_Group::dispatchTwig(const String &topicSensorId, const String &topic
   }
 };
 
-void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
+void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
-    if (topicLeaf == "project") {
+    if (topicTwig == "project") {
       project = payload;
-    } else if (topicLeaf == "device_name") {
+    } else if (topicTwig == "device_name") {
       device_name = payload;
     }
+    writeConfigToFS(topicTwig, payload);
   } else { // No point in passing on our own id for the loop
-    Frugal_Group::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
+    Frugal_Group::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }
 
 void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
-  // topic Twig  <actuatorId>/<ioID> or  <actuatorId>/set/<ioID> or <actuatorId>/set/<ioID>/<config>
+  // topic Twig  <actuatorId>/<ioID> or  <actuatorId>/<ioID> or <actuatorId>/<ioID>/<config>
   int8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
   if (slashPos != -1) {
     String id = topicTwig.substring(0, slashPos);       // Extract the part before the slash
     String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
     Frugal_Group::dispatchTwig(id, topicLeaf, payload, isSet);
   } else {
-    Serial.println("No slash found in topic: " + topicTwig);
+    Serial.print(F("No slash found in topic: ")); Serial.println(topicTwig);
   }
 }
 void Frugal_Group::dispatchPath(const String &topicPath, const String &payload) {
@@ -171,9 +172,7 @@ void System_Frugal::setup() {
   #ifdef SYSTEM_FRUGAL_DEBUG
     Serial.print("Setup: ");
   #endif
-  Serial.print("XXX " __FILE__); Serial.println(__LINE__);
-  readConfigFromFS(); // Reads config and passes to our dispatchLeaf
-  Serial.print("XXX " __FILE__); Serial.println(__LINE__);
+  readConfigFromFS(); // Reads config (project, device_name) and passes to our dispatchTwig
   #if defined(SYSTEM_LORAMESHER_SENDER_TEST) || defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
     //esp_log_level_set("*", ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
     esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher

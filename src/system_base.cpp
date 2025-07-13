@@ -50,13 +50,17 @@ void System_Base::readConfigFromFS(File dir, const String* leaf) {
       readConfigFromFS(entry, &newleaf); 
     } else { // a: id=wifi twiglet=nullptr entry is foo   or c: id=sht twiglet=temperature entry is max
       String payload = entry.readString();
+      payload.trim(); // Remove leading/trailing whitespace
       Serial.print("="); Serial.println(payload);
       dispatchTwig(id, newleaf, payload, true);
     }
     entry.close();
   }
 }
-
+void System_Base::writeConfigToFS(const String& topicTwig, const String& payload) {
+  String path = String("/") + id + "/" + topicTwig;
+  frugal_iot.fs_LittleFS->spurt(path, payload);
+}
 
 // ========== IO - base class for IN and OUT ===== 
 

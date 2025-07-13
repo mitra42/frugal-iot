@@ -31,8 +31,8 @@
 class System_FS : public System_Base {
   public:
     System_FS(const char* const id, const char* const name);
-    bool spurt(const String& fn, const String& content);  // TODO-110 port to SD
-    String slurp(const String& fn);  // TODO-110 port to SD
+    bool spurt(const String& fn, const String& content);
+    String slurp(const String& fn);
 
     // --- these are just the underlying FS methods exposed
     virtual fs::File open(const char *filename, const char *mode = "r");

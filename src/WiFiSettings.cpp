@@ -148,7 +148,7 @@ String WiFiSettingsClass::string(const String& name, const String& init, const S
     x->name = name;
     x->label = label.length() ? label : name;
     x->init = init;
-    x->fill();
+    x->fill(); // slurps from FS
 
     params.push_back(x);
     return x->value.length() ? x->value : x->init;

@@ -58,7 +58,9 @@ Message::Message(const String &tp, String const &pl, const bool r, const int q):
 void MqttMessageReceived(String &topicPath, String &payload) { // cant be constant as dispatch isnt
   frugal_iot.mqtt->messageReceived(topicPath, payload);
 }
-
+void System_MQTT::setup() {
+  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig
+}
 
 void System_MQTT::setup_after_wifi() {
   // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
@@ -202,8 +204,19 @@ void System_MQTT::dispatch(const String &topicPath, const String &payload) {
     }
   }
  
-  frugal_iot.dispatchPath(topicPath, payload);  // Matches just paths. Twigs and sets handle above
-  //TODO-25 System::dispatchPath(*topicPath, payload)
+  frugal_iot.dispatchPath(topicPath, payload);  // Matches just paths. (Twigs and sets handled above)
+}
+// dispatch() is how MQTT handles incoming MQTT messsages, dispatchTwig is its own handler i.e. for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname
+void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+  if (isSet && (topicSensorId == id)) {
+    if (topicTwig == "hostname") {
+      hostname = payload;
+      writeConfigToFS(topicTwig, payload);
+    } else {
+      Serial.print(F("Ignoring /")); Serial.print(id); Serial.print(F("/")); Serial.print(topicTwig); 
+      Serial.print(F("=")); Serial.println(payload);
+    }
+  }
 }
 bool System_MQTT::resubscribeAll() {
   // TODO-125 may put a flag on subscriptions then only resubscribe those not done
