@@ -22,12 +22,6 @@
 
 #define SYSTEM_MQTT_LOOPBACK // If true dispatch the message locally as well - this is always the case currerntly 
 
-#if ESP8266 // Note ESP8266 and ESP32 are defined for respective chips - unclear if anything like that for other Arduinos
-  #include <ESP8266WiFi.h>  // for WiFiClient
-#else
-  #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
-#endif
-
 #include <MQTT.h>
 #include "misc.h" // For StringF
 #include "system_frugal.h" // for frugal_iot
@@ -69,7 +63,7 @@ void System_MQTT::setup_after_wifi() {
   client.setCleanSession(true); // on power up should refresh subscriptions
   // client.setClockSource(XXX); // TODO-23 See https://github.com/256dpi/arduino-mqtt will need for power management
   client.onMessage(MqttMessageReceived);  // Called back from client.loop - this is a naked function that just calls into the instance
-  blockTillConnected();
+  connect(); // Non blocking or at least not blocking on success //TODO-153 dig deeper as to whether blocking
 }
 // Run every 10ms TODO-25 and TODO-23 this should be MUCH longer ideally
 System_MQTT::System_MQTT(const char* hostname, const char* username, const char* password) 
@@ -85,26 +79,31 @@ System_MQTT::System_MQTT(const char* hostname, const char* username, const char*
 void System_MQTT::frequently() {
   if (nextLoopTime <= millis()) {
     // Automatically reconnect
-    blockTillConnected(); // TODO-125 maybe make non blocking and queue messages while down
-    messageSendQueued();
-    if (!client.loop()) {
-      #ifdef SYSTEM_MQTT_DEBUG
-        // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
-        // TODO-125 unclear which error this reports  it might client.returnCode()
-        Serial.print(F("MQTT client loop failed ")); Serial.println(client.lastError()); // lwmqtt_err
-      #endif // SYSTEM_MQTT_DEBUG
-    }; // Do this at end of loop so some time before checks if connected
+    if (connect()) { ; // TODO-153 check how blocking this is 
+      messageSendQueued();
+      if (!client.loop()) {
+        #ifdef SYSTEM_MQTT_DEBUG
+          // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
+          // TODO-125 unclear which error this reports  it might client.returnCode()
+          Serial.print(F("MQTT client loop failed ")); Serial.println(client.lastError()); // lwmqtt_err
+        #endif // SYSTEM_MQTT_DEBUG
+      }; // Do this at end of loop so some time before checks if connected
+    }
     nextLoopTime = millis() + SYSTEM_MQTT_MS; // Not sleepSafeMillis as this is frequent
   }
 }
 
 /* Connect to MQTT broker and - if necessary - resubscribe to all topics */
 bool System_MQTT::connect() {
-  frugal_iot.wifi->checkConnected();  // TODO-22 - blocking and potential puts portal up, may prefer some kind of reconnect
+  if (!frugal_iot.wifi->connected()) { //TODO-150 maybe its ok if have LoRaMesher instead
+    //Serial.print(F("MQTT waiting for WiFi"));
+    return false; // State machine should be reconnecting
+  }
   if (!client.connected()) {
+    // TODO-153 make this non blocking
     /* Not connected */
     Serial.print(F("\nMQTT connecting: to ")); Serial.print(hostname);
-    if (!client.connect(frugal_iot.wifi->clientid().c_str(), username, password)) {
+    if (!client.connect(frugal_iot.wifi->clientid.c_str(), username, password)) {
       /* Still not connected */
       Serial.print(F(" Fail "));
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116
@@ -134,6 +133,7 @@ bool System_MQTT::connect() {
   return true;
 }
 
+#ifdef NO_LONGER_DOING_BLOCKING_MQTT
 /* Connect to MQTT, loop until succeed */
 void System_MQTT::blockTillConnected() {
   while (!connect()) {
@@ -143,6 +143,7 @@ void System_MQTT::blockTillConnected() {
     delay(1000); // Block waiting for WiFi and MQTT to connect 
   }
 }
+#endif //NO_LONGER_DOING_BLOCKING_MQTT
 
 Subscription* System_MQTT::find(const String &topicPath) {
   for(Subscription& mi: subscriptions) {

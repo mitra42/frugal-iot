@@ -1,210 +1,116 @@
-/*
-    WiFi Configuration and connection
-    Based on the example from https://github.com/Juerd/ESP-WiFiSettings
+/* Frugal-IoT - WiFi handling
+ *
+ *
+ */
 
-    Note language support is for text displayed in the portal, others like filenames and debug texts are intentionally left in Engish.
-*/
-
-#include "_settings.h"  // Settings for what to include etc - defines LANGUAGE_ALL if LANGUAGE_XX not defined
-#ifdef SYSTEM_WIFI_WANT
-
-// #include <Arduino.h>
-#if ESP8266
-  #include <ESP8266WiFi.h>  // for WiFiClient
-#else
-  #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
-#endif
+#include <Arduino.h>
+#include "_settings.h" // For ???
 #include "system_wifi.h"
-#include "system_mqtt.h"
+#include "misc.h" // For Sprintf
+#include "system_frugal.h" // for frugal_iot
 #ifdef ESP32
-  #include <esp_wifi.h> // For esp_wifi_stop / start
+  #include <esp_wifi.h> // For esp_wifi_stop / start and WiFi client
 #elif defined(ESP8266)
   #include <ESP8266WiFi.h>  // for WiFiClient
-#else
-  #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
-#include "misc.h" // For lprintf
-#include "system_frugal.h"
-
-#define ESPFS LittleFS
-#include <LittleFS.h>
-#include "WiFiSettings.h"  // adapted from https://github.com/Juerd/ESP-WiFiSettings
-
-#ifndef SYSTEM_WIFI_PORTAL_RESTART
-  #define SYSTEM_WIFI_PORTAL_RESTART 120000 // How long (ms) portal should wait before restarting - 2 mins probably about right
-#endif
-
-struct Texts {
-    const __FlashStringHelper
-      *MqttServer,
-      *DeviceName,
-      *Project
-    ;
-    /*
-    const char
-        *init
-    ;
-    */
-};
-Texts T;
+#include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 
 System_WiFi::System_WiFi()
 : System_Base("wifi", "WiFi")
   {}
 
-// Attempt to connect to main network as configured, if succeed save the id and password as a known network
-bool System_WiFi::connect1() {
-  // Use last stored credentials (if any) to attempt connect to your WiFi access point.
-  // store for future use if successfull.
-  WiFiSettings.ssid = frugal_iot.fs_LittleFS->slurp("/wifi-ssid");
-  String pw = frugal_iot.fs_LittleFS->slurp("/wifi-password");
-  //if (WiFiSettings.onConnect) WiFiSettings.onConnect(); // FrugalIot isn't using this currently
-  if (WiFiSettings.ssid.length()) {
-    if (WiFiSettings.connectInner(WiFiSettings.ssid, pw)) {
-      addWiFi(WiFiSettings.ssid, pw);
-      //if (WiFiSettings.onSuccess) WiFiSettings.onSuccess(); // FrugalIot not using
-      return true;
-    }
+void System_WiFi::setStatus(WiFiStatusType newstatus) {
+  if (status != newstatus) {
+    status = newstatus;
+    statusSince = millis();
   }
-  return false;
 }
-bool System_WiFi::scanConnectOneAndAll() {
-    //delay(5000); //TODO-125
-    #ifdef ESP32
-      WiFi.disconnect(true, true);    // reset state so .scanNetworks() works
-    #else
-        WiFi.disconnect(true);
-    #endif
-    WiFiSettings.rescan();  // Finishes with print of number of networks
-    if (WiFiSettings.ssid.length()) {
-      int i;
-      for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { } // i will be ssid of num_networks if not found 
-      if (i == WiFiSettings.num_networks) {
-        Serial.print(F("Configured network ")); Serial.print(WiFiSettings.ssid); Serial.print(F(" not found"));
-      } else {
-        if (connect1()) { // See configured network, try it first
-          return true;
+
+void System_WiFi::setup() {
+  #ifdef ESP32
+    clientid =  String(F("esp32-")) + (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24));
+  #elif defined(ESP8266)
+    clientid = String(F("esp8266-")_ + (Sprintf("%06" PRIx32, ESP.getChipId()))
+  #else
+    #error Only defined for ESP32 and ESP8266
+  #endif
+}
+bool System_WiFi::rescan() {
+  // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
+  //bool async = false, bool show_hidden = false, bool passive = false, uint32_t max_ms_per_chan = 300, uint8_t channel = 0, const char *ssid = nullptr, const uint8_t *bssid = nullptr
+  // TODO-153 check if need this to scan as concerned disconnects AP
+  #ifdef ESP32
+    WiFi.disconnect(true, true);    // reset state so .scanNetworks() works
+  #else
+      WiFi.disconnect(true);
+  #endif
+  return (WiFi.scanNetworks(true) == WIFI_SCAN_RUNNING); // Scan asynchronously. look for WL_SCAN_COMPLETED when done
+}
+
+// Scan for networks - try and connect to any we have password for (in order of strength) true if success
+bool System_WiFi::connectOneAndAllNext() {
+  // Try to connect to any networks we know - in order of strength
+  // Running thru strongest networks first
+  Serial.print("XXX " __FILE__); Serial.println(__LINE__);
+  for (; minRSSI > -1000; minRSSI -= 5) { // Look at ranges of RSSI in 5 unit chunks
+    Serial.print("XXX " __FILE__ " minRSSI="); Serial.print(minRSSI); 
+    for (; (nextNetwork < num_networks); nextNetwork++) {  // Loop over networks we see
+      if ((WiFi.RSSI(nextNetwork) > minRSSI) && (WiFi.RSSI(nextNetwork) <= (minRSSI + 5))) { // Pick any in the RSSI range
+        Serial.print(WiFi.SSID(nextNetwork)); Serial.print(F(" ")); Serial.print(WiFi.RSSI(nextNetwork)); Serial.print(F(" "));
+        String filename = String("/wifi/" + WiFi.SSID(nextNetwork)) ;
+        String pw = frugal_iot.fs_LittleFS->slurp(filename);
+        if (pw.length()) { // Do we have a password
+          Serial.print("XXX " __FILE__); Serial.println(__LINE__);
+          (connectInnerAsync(WiFi.SSID(nextNetwork), pw)); // Try and connect
+          return true; // Drop out - state retained for next call which will happen after it succeeds or fails to connect
+        } else {
+          Serial.println(F("Unknown"));
         }
       }
     }
-    // On failure (or no credentials), scan, and try any that we've successfully connected to before.
-    int32_t minRSSI;
-    // Running thru strongest networks first
-    for (minRSSI = 0; minRSSI > -1000; minRSSI -= 5) {
-      int i;
-      // Serial.print("RSSI > "); Serial.println(minRSSI);
-      for (i = 0; (i < WiFiSettings.num_networks) && (WiFiSettings.ssid != WiFi.SSID(i)); i++) { 
-        if ((WiFi.RSSI(i) > minRSSI) && (WiFi.RSSI(i) <= (minRSSI + 5))) {
-          String filename = String("/wifi/" + WiFi.SSID(i)) ;
-          Serial.print(WiFi.SSID(i)); Serial.print(F(" ")); Serial.print(WiFi.RSSI(i)); Serial.print(F(" "));
-          String pw = frugal_iot.fs_LittleFS->slurp(filename);
-          if (pw.length()) {
-            if (WiFiSettings.connectInner(WiFi.SSID(i), pw)) {
-              Serial.print(F("Connected to ")); Serial.println(WiFi.SSID(i));
-              return true;
-            } 
-          } else {
-            Serial.println(F("Unknown"));
-          }
-        }
-      } 
-    }
-    return false;
+    nextNetwork = 0; // tried all (if any) networks at this RSSI 
+  }
+  Serial.print("XXX " __FILE__); Serial.println(__LINE__);
+  // If get to end of scan with none found return false.
+  return false;
 }
-// This is called - blocking - by setup(), but can also be called if discover no longer connected
-// Replaces WiFiSettingsClass::connect
-bool System_WiFi::connect() {
-  WiFiSettings.begin();
-  if (scanConnectOneAndAll()) {
-    WiFi.setAutoReconnect(true); // Stay connected if lose it - doesnt seem to work at least on TTGO
-    return true;
-  } else {
-    // Tried any networks we know
-    // If no successful connection, access point will be started with a captive portal to configure WiFi.
-    if (WiFiSettings.onFailure) WiFiSettings.onFailure(); // onFailure sets up portal watchdog 
-    WiFiSettings.portal(); // only returns if watchdog connects - if user configures it will reset instead
+void System_WiFi::connectOneAndAllReset() {
+  // num_networks = WiFi.scanComplete(); // Already set in state machine
+  minRSSI = 0;
+  nextNetwork = 0; 
+  // Serial.print(F("WiFi Scan found ")); Serial.println(num_networks); // Reported in state machine
+}
+// Try and connect to a single network
+void System_WiFi::connectInnerAsync(String ssid, String pw) {
+  // Unclear why this brute multiple setHostname calls - should be documented?
+  Serial.print(F("Connecting to WiFi SSID "));
+  Serial.print(ssid);
+  WiFi.setHostname(clientid.c_str());  
+  WiFi.begin(ssid.c_str(), pw.c_str()); // Attempt connection
+  WiFi.setHostname(clientid.c_str()); 
+  WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);  // arduino-esp32 #2537 and #6278
+  WiFi.setHostname(clientid.c_str());
+  // Dont drop captive portal while trying to connect
+  #ifdef ESP32
+    WiFi.mode(WIFI_MODE_APSTA);  // arduino-esp32 #6278.  WIFI_MODE_STA is just station, AP is just Access Point
+  #else
+    WiFi.mode(WIFI_AP_STA);  // On ESP8266 WIFI_MODE_APSTA doesnt exist its WIFI_AP_STA or WIFI_STA
+  #endif
+  WiFi.setHostname(clientid.c_str());
+}
+
+
+#ifdef UNUSED_WILL_USE_WITH_POST_BUT_NEEDS_ASYNC
+// TODO-153 - call something like this after POST only
+// Attempt to connect to main network as configured, if succeed save the id and password as a known network
+bool System_WiFi::connect1(String ssid, String pw, int wait_seconds) {
+  if (connectInner(ssid, pw)) {
+    addWiFi(ssid, pw); // Save for later
     return true;
   }
+  return false;
 }
-
-// Blocking attempt at reconnecting - can be called by MQTT
-void System_WiFi::checkConnected() {
-  if (WiFi.status() != WL_CONNECTED) {
-    #ifdef SYSTEM_WIFI_DEBUG
-      Serial.printf("WiFi status=%d not connected, forcing reconnect\n", WiFi.status());
-    #endif
-    connect();
-  }
-}
-
-#ifdef SYSTEM_WIFI_PORTAL_RESTART
-
-// A watchdog on the portal, that will reset after SYSTEM_WIFI_PORTAL_RESTART ms
-// Adding ability to reset if wanted wifi appears. 
-bool portalWatchdog() {
-  // TODO-23 think about sleep and the portal
-  // TODO-141 move some of this into the System_WiFi class, just stub it in bare function
-  static unsigned long lastWatchdog = frugal_iot.powercontroller->sleepSafeMillis(); // initialized first time this is called
-  if (frugal_iot.powercontroller->sleepSafeMillis() > lastWatchdog + (WiFi.softAPgetStationNum() ? SYSTEM_WIFI_PORTAL_RESTART : 15000)) {
-    #ifdef SYSTEM_WIFI_DEBUG
-      Serial.println(F("WiFiSettings Rescanning"));
-    #endif
-    // Note this rescan wont be reflected in any any open portal as the HTML generated is static, 
-    // but will reflect if user reloads
-    if (frugal_iot.wifi->scanConnectOneAndAll()) {
-      return true; // Connected - exit portal
-    }
-    // If noone connected rescan every 15 seconds
-    lastWatchdog = frugal_iot.powercontroller->sleepSafeMillis();
-  } 
-  return false; 
-}
-#endif // SYSTEM_WIFI_PORTAL_RESTART
-
-String& System_WiFi::clientid() {
-  WiFiSettings.begin(); // Ensure WiFi has created variables - at this point any previous ssid and language are now set
-  return WiFiSettings.hostname;
-}
-
-void System_WiFi::setupLanguages() {
-  // TODO-39 need to make sure external for language is set prior to this - get defined from platformio.h and LANGUAGE_ALL
-  #ifdef LANGUAGE_DEFAULT
-    WiFiSettings.language = LANGUAGE_DEFAULT; // This must happen BEFORE WiFiSettings.begin().
-  #endif
-  WiFiSettings.begin(); // WiFi has created variables - at this point any previous ssid and language are now set
-  Serial.print(F("Language = ")); Serial.println(WiFiSettings.language);
-  #if defined LANGUAGE_EN || defined LANGUAGE_ALL
-    if (WiFiSettings.language == "en") {
-      T.MqttServer = F("MQTT server");
-      T.DeviceName = F("Device name");
-      T.Project = F("Project");
-    } 
-  #endif
-  #if defined LANGUAGE_DE || defined LANGUAGE_ALL
-    // German settings all machine translated - confirmation from native German speaker, or better translations welcome
-    if (WiFiSettings.language == "de") {
-      T.MqttServer = F("MQTT server");
-      T.DeviceName = F("Gerätename");
-      T.Project = F("Projekt");
-    }
-  #endif
-  #if defined LANGUAGE_NL || defined LANGUAGE_ALL
-    // Dutch settings all machine translated - confirmation from native Dutch speaker, or better translations welcome
-    if (WiFiSettings.language == "de") {
-      T.MqttServer = F("MQTT server");
-      T.DeviceName = F("Apparaatnaam");
-      T.Project = F("Project");
-    }
-  #endif
-  #if defined LANGUAGE_ID || defined LANGUAGE_ALL
-    // Indonesian settings all machine translated - confirmation from native Bahasa speaker, or better translations welcome
-    if (WiFiSettings.language == "id") {
-      T.MqttServer = F("MQTT server");
-      T.DeviceName = F("Nama Perangkat");
-      T.Project = F("Proyek");
-    }
-  #endif
-}
+#endif
 
 void System_WiFi::addWiFi(String ssid, String password) {
   //const String filename = StringF("/wifi/%s",ssid.c_str());
@@ -212,65 +118,6 @@ void System_WiFi::addWiFi(String ssid, String password) {
   if (!frugal_iot.fs_LittleFS->spurt(filename,password)) {
     Serial.println(F("Fail to write wifi to file system"));
   };
-}
-// Note this is blocking - so order is important, in particular it must complete this before trying mqtt::setup
-void System_WiFi::setup() {
-  setupLanguages(); // Must come before any calls to WiFiSettings.<anything> 
-
-  // This may be confusing ! 
-  // Each line initializes a variable to the existing value, 
-  // but override from LittleFS if available, 
-  // then adds a line to the WiFi portal that can be used to set the file value, 
-  // which will be used after the reboot.
-
-  // Custom configuration variables, these will read configured values if previously set and return default values if not.
-  /*
-    int integer(String name, [long min, long max,] int init = 0, String label = name);
-    String string(String name, [[unsigned int min_length,] unsigned int max_length,] String init = "", String label = name);
-    bool checkbox(String name, bool init = false, String label = name);
-  */
-
-  frugal_iot.mqtt->hostname = WiFiSettings.string(F("mqtt/hostname"), 4,40, frugal_iot.mqtt->hostname, T.MqttServer); 
-  // TODO-29 turn projet into a dropdown, use an ifdef for the ORGANIZATION in _locals.h not support by ESPWiFi-Settings yet.
-  frugal_iot.project = WiFiSettings.string(F("frugal_iot/project"), 3,20, frugal_iot.project, T.Project); 
-  frugal_iot.device_name = WiFiSettings.string(F("frugal_iot/device_name"), 3,20, frugal_iot.device_name, T.DeviceName); 
-  #ifdef SYSTEM_WIFI_DEBUG
-    Serial.print(F("MQTT host = ")); Serial.println(frugal_iot.mqtt->hostname);
-    Serial.print(F("Project = ")); Serial.println(frugal_iot.project);
-    Serial.print(F("Device Name = ")); Serial.println(frugal_iot.device_name);
-  #endif
-
-  // Cases of connect and portal
-  // a: no SSIDs (main or /wifi/) portal run without attempting to connect - never resets
-  // b: SSID(s) but connect fails, we have settings, so set a watchdog on portal
-  // c: Something (e.g. MQTT) calls checkConnected, which calls connect - SSID will be set, so should attempt, and if fail - do portal with watchdog
-  #ifdef SYSTEM_WIFI_PORTAL_RESTART
-    WiFiSettings.onFailure = []() {
-      #ifdef SYSTEM_WIFI_DEBUG
-        Serial.print(F("Setting portal watchdog for ms"));
-        Serial.println(SYSTEM_WIFI_PORTAL_RESTART);
-      #endif
-      WiFiSettings.onPortalWaitLoop = portalWatchdog;
-    };
-  #endif // SYSTEM_WIFI_PORTAL_RESTART
-  #ifdef SYSTEM_WIFI_DEBUG
-    Serial.print(F("WiFi hostname="));
-    Serial.println(clientid());
-  #endif // SYSTEM_WIFI_DEBUG
-  connect();
-}
-
-bool System_WiFi::reconnectWiFi() { // Try hard to reconnect WiFi
-  if (WiFi.status() == WL_DISCONNECTED) {
-    if (!WiFi.reconnect()) { Serial.println("Failed to reconnect to WiFi"); return 0; }; 
-    unsigned long starttime = millis();
-    while (WiFi.status() != WL_CONNECTED && ((millis() - starttime) < 3000)) {
-        Serial.print(WiFi.status());
-        delay(20); // Short delay as expect to be fast
-    }
-  }
-  connect(); // Scan and more complicate connection - even AP portal if fail
-  return WiFi.status() == WL_CONNECTED;
 }
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
@@ -283,15 +130,120 @@ bool System_WiFi::prepareForLightSleep() {
 bool System_WiFi::recoverFromLightSleep() {
   if (esp_wifi_start() != ESP_OK) {
     Serial.println(F("Failed to restart esp_wifi"));
-    return 0;
+    return false;
   }
    // Spin till its started
   while (WiFi.status() == WL_NO_SHIELD) {
      /*Serial.print("w");*/ 
      delay(100); 
-  } 
-  return reconnectWiFi(); // Quick connect if possible - otherwise scan and connect
+  }
+  return true;
+  // Recover WiFi in stateMachine // TODO-153
 }
 #endif // ESP32
 
-#endif // SYSTEM_WIFI_WANT
+void System_WiFi::stateMachine() {
+  // State machine
+  Serial.print(" XXX Wifi="); Serial.print(status); Serial.print(" "); Serial.println(WiFi.status());
+  switch (status)
+  {
+    case WIFI_STARTING: //0
+      if (WiFi.status() != WL_STOPPED ) {
+        #ifdef SYSTEM_WIFI_DEBUG
+          Serial.print(F("XXX Should be WL_STOPPED but")); Serial.println(WiFi.status());
+          // Unsure what to do here - 
+        #endif
+      }
+      setStatus(WIFI_NEEDSCAN);
+      break;
+    case WIFI_DISCONNECTED: //1
+      if (WiFi.status() != WL_DISCONNECTED) {
+        #ifdef SYSTEM_WIFI_DEBUG
+          Serial.print(F("XXX Should be WL_DISCONNECTED or WL_STOPPED but")); Serial.println(WiFi.status());
+          // Unsure what to do here - 
+        #endif
+      }
+      setStatus(WIFI_RECONNECTING);
+      WiFi.reconnect();  // In theory should be quick if not possible. 
+        // drop thru
+    case WIFI_RECONNECTING: //2
+        if (WiFi.status() == WL_CONNECTED) {
+          setStatus(WIFI_CONNECTED);
+          break; // Success
+        }
+        if (millis() < (statusSince + 3000)) { // Failed to reconnect
+          break; // Leave at WIFI_RECONNECTING
+        }
+        Serial.println(F("WiFi failed to reconnect"));
+        setStatus(WIFI_NEEDSCAN);
+        // drop thru 
+    case WIFI_NEEDSCAN: //4
+        if (rescan()) { // async
+          setStatus(WIFI_SCANNING);
+          Serial.print("XXX WiFi rescanning "); Serial.println(WiFi.status());
+        } else {
+          Serial.println("XXX WiFi rescan failed");
+          break; // stay in WIFI_NEEDSCAN
+        }
+        // drop thru
+    case WIFI_SCANNING: //5
+      switch (num_networks = WiFi.scanComplete()) {
+        case WIFI_SCAN_FAILED: {
+          Serial.print(F("WiFi Scan failed"));
+          status = WIFI_NEEDSCAN;
+          break;
+        }
+        case WIFI_SCAN_RUNNING: {
+          Serial.print("XXX WiFi scanning");
+          break; // No need for timeout, it will terminate
+        }
+        default: {
+          // Weirdly WiFi.status() reports WL_DISCONNECTED rather than WL_SCAN_COMPLETED
+          Serial.print("WiFi found:"); Serial.println(num_networks);
+          connectOneAndAllReset(); 
+          status = WIFI_SCANNED;
+        }
+      }
+      break;
+      // Drop thru      
+    case WIFI_SCANNED: //6 Each time it hits this, it will try and connect to one more node if possible
+      if (!connectOneAndAllNext()) {
+        // Came to end but none found 
+        setStatus(WIFI_NEEDSCAN);
+        break;
+      }
+      setStatus(WIFI_CONNECTING); 
+      // Drop thru
+    case WIFI_CONNECTING: //7
+      if (WiFi.status() == WL_CONNECTED) {
+        setStatus(WIFI_CONNECTED);
+      } else if (millis() > (statusSince + 30000)) { // Give it 30 seconds to try
+        // Failed to connect
+        setStatus(WIFI_SCANNED); // Go back for next
+      }
+      break; // Either as WIFI_CONNECTED | WIFI_CONNECTING | WIFI_SCANNED
+    case WIFI_CONNECTED: //3
+      if (WiFi.status() == WL_DISCONNECTED) {
+        setStatus(WIFI_DISCONNECTED);
+      } else if (WiFi.status() != WL_CONNECTED) {
+        Serial.println(F("WiFi: unhandled state combination"));
+      }
+      break;
+    default:
+        Serial.println(F("WiFi: unhandled status"));
+      break;
+  }
+  //WiFi.softAPgetStationNum() maybe relevant - but prob not - its number connected to captive portal
+}
+
+bool System_WiFi::connected() {
+  return (status == WIFI_CONNECTED);
+}
+void System_WiFi::frequently() {
+  static unsigned long lasttime = millis();
+  if (millis() > (lasttime + 2000)) {
+    lasttime = millis();
+    stateMachine();
+  } 
+  //TODO-153 will need to be somewhere it runs more often - e.g. frequently
+}

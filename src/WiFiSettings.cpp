@@ -1,3 +1,5 @@
+#ifdef OBSOLETED
+
 /* This is a copy of ESP-WiFiSettings - that library is excellent but had 
  * a number of limitations - including not supporting Indonesia. 
  * At some point, the effort to get PR's included was too much so its 
@@ -10,12 +12,10 @@
 #include "system_frugal.h" // For frugal_iot.LittleFS
 
 #ifdef ESP32
-    #define ESPMAC (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24))
     #include <WiFi.h>
     #include <WebServer.h>
     #include <esp_task_wdt.h>
 #elif ESP8266
-    #define ESPMAC (Sprintf("%06" PRIx32, ESP.getChipId()))
     #include <ESP8266WiFi.h>
     #include <ESP8266WebServer.h>
     #define WebServer ESP8266WebServer
@@ -34,8 +34,6 @@
 #include "WiFiSettings_strings.h"
 
 WiFiSettingsLanguage::Texts _WSL_T;
-
-#define Sprintf(f, ...) ({ char* s; asprintf(&s, f, __VA_ARGS__); String r = s; free(s); r; })
 
 
 namespace {  // Helpers
@@ -224,15 +222,6 @@ void WiFiSettingsClass::heading(const String& contents, bool escape) {
     html("h2", contents, escape);
 }
 
-void WiFiSettingsClass::rescan() {
-  // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
-  //bool async = false, bool show_hidden = false, bool passive = false, uint32_t max_ms_per_chan = 300, uint8_t channel = 0, const char *ssid = nullptr, const uint8_t *bssid = nullptr
-
-  num_networks = WiFi.scanNetworks();
-  Serial.print(num_networks, DEC);
-  Serial.println(F(" WiFi networks found."));
-}
-
 void WiFiSettingsClass::portal() {
     WebServer http(80);
     DNSServer dns;
@@ -259,6 +248,7 @@ void WiFiSettingsClass::portal() {
     String ip = WiFi.softAPIP().toString();
     Serial.println(ip);
 
+    // TODO-153 may be important
     auto redirect = [&http, &ip]() {
         // iPhone doesn't deal well with redirects to http://hostname/ and
         // will wait 40 to 60 seconds before succesful retry. Works flawlessly
@@ -456,37 +446,6 @@ void WiFiSettingsClass::portal() {
   }
 }
 
-// Seperated out so can be called by external attempt to connect to other previously seen SSIDs
-bool WiFiSettingsClass::connectInner(String ssid, String pw, int wait_seconds) {
-    // Unclear why this brute multiple setHostname calls - should be documented?
-    Serial.print(F("Connecting to WiFi SSID "));
-    Serial.print(ssid);
-    WiFi.setHostname(hostname.c_str());
-    WiFi.begin(ssid.c_str(), pw.c_str());
-    WiFi.setHostname(hostname.c_str());
-    WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);  // arduino-esp32 #2537
-    WiFi.setHostname(hostname.c_str());
-    #ifdef ESP32
-      WiFi.mode(WIFI_MODE_APSTA);  // arduino-esp32 #6278.  WIFI_MODE_STA is just station, AP is just Access Point
-    #else
-      WiFi.mode(WIFI_AP_STA);  // On ESP8266 WIFI_MODE_APSTA doesnt exist its WIFI_AP_STA or WIFI_STA
-    #endif
-    WiFi.setHostname(hostname.c_str());
-
-    unsigned long starttime = millis(); // not sleepSafeMillis - and thats probably ok
-    while (WiFi.status() != WL_CONNECTED && (wait_seconds < 0 || (millis() - starttime) < (unsigned)wait_seconds * 1000)) {
-        Serial.print(".");
-        delay(onWaitLoop ? onWaitLoop() : 300);
-    }
-
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println(F(" failed."));
-        return false;
-    }
-
-    Serial.println(WiFi.localIP().toString());
-    return true;
-}
 
 void WiFiSettingsClass::begin() {
     if (begun) return;
@@ -525,19 +484,14 @@ void WiFiSettingsClass::begin() {
             params.back()->store();
         }
     }
-
-    if (hostname.endsWith("-")) hostname += ESPMAC;
+ ESPMAC;
 }
 
 WiFiSettingsClass::WiFiSettingsClass() {
-    #ifdef ESP32
-        hostname = F("esp32-");
-    #else
-        hostname = F("esp8266-");
-    #endif
-    num_networks = -1; // Set here, instead of portal so that can scan prior to entering portal
-
     language = "en";
 }
 
 WiFiSettingsClass WiFiSettings;
+
+
+#endif //OBSOLETED

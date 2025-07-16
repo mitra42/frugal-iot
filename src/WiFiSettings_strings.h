@@ -1,3 +1,4 @@
+#ifdef OBSOLETED
 #include <map>
 
 namespace WiFiSettingsLanguage {
@@ -147,3 +148,4 @@ bool select(Texts& T, String& language) {
 }
 
 } // namespace
+#endif //OBSOLETED

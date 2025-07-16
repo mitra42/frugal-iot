@@ -76,3 +76,90 @@ void System_Captive::setup() {
 void System_Captive::frequently() {
   dnsServer.processNextRequest();
 }
+
+
+#ifdef NOTINCORPORATEDYET
+
+void System_WiFi::setupLanguages() {
+  // TODO-39 need to make sure external for language is set prior to this - get defined from platformio.h and LANGUAGE_ALL
+  #ifdef LANGUAGE_DEFAULT
+    WiFiSettings.language = LANGUAGE_DEFAULT; // This must happen BEFORE WiFiSettings.begin().
+  #endif
+  WiFiSettings.begin(); // WiFi has created variables - at this point any previous ssid and language are now set
+  Serial.print(F("Language = ")); Serial.println(WiFiSettings.language);
+  #if defined LANGUAGE_EN || defined LANGUAGE_ALL
+    if (WiFiSettings.language == "en") {
+      T.MqttServer = F("MQTT server");
+      T.DeviceName = F("Device name");
+      T.Project = F("Project");
+    } 
+  #endif
+  #if defined LANGUAGE_DE || defined LANGUAGE_ALL
+    // German settings all machine translated - confirmation from native German speaker, or better translations welcome
+    if (WiFiSettings.language == "de") {
+      T.MqttServer = F("MQTT server");
+      T.DeviceName = F("Gerätename");
+      T.Project = F("Projekt");
+    }
+  #endif
+  #if defined LANGUAGE_NL || defined LANGUAGE_ALL
+    // Dutch settings all machine translated - confirmation from native Dutch speaker, or better translations welcome
+    if (WiFiSettings.language == "de") {
+      T.MqttServer = F("MQTT server");
+      T.DeviceName = F("Apparaatnaam");
+      T.Project = F("Project");
+    }
+  #endif
+  #if defined LANGUAGE_ID || defined LANGUAGE_ALL
+    // Indonesian settings all machine translated - confirmation from native Bahasa speaker, or better translations welcome
+    if (WiFiSettings.language == "id") {
+      T.MqttServer = F("MQTT server");
+      T.DeviceName = F("Nama Perangkat");
+      T.Project = F("Proyek");
+    }
+  #endif
+}
+
+void System_WiFi::setup() {
+  setupLanguages(); // Must come before any calls to WiFiSettings.<anything> 
+
+  // This may be confusing ! 
+  // Each line initializes a variable to the existing value, 
+  // but override from LittleFS if available, 
+  // then adds a line to the WiFi portal that can be used to set the file value, 
+  // which will be used after the reboot.
+
+  // Custom configuration variables, these will read configured values if previously set and return default values if not.
+  /*
+    int integer(String name, [long min, long max,] int init = 0, String label = name);
+    String string(String name, [[unsigned int min_length,] unsigned int max_length,] String init = "", String label = name);
+    bool checkbox(String name, bool init = false, String label = name);
+  */
+
+  frugal_iot.mqtt->hostname = WiFiSettings.string(F("mqtt/hostname"), 4,40, frugal_iot.mqtt->hostname, T.MqttServer); 
+  // TODO-29 turn projet into a dropdown, use an ifdef for the ORGANIZATION in _locals.h not support by ESPWiFi-Settings yet.
+  frugal_iot.project = WiFiSettings.string(F("frugal_iot/project"), 3,20, frugal_iot.project, T.Project); 
+  frugal_iot.device_name = WiFiSettings.string(F("frugal_iot/device_name"), 3,20, frugal_iot.device_name, T.DeviceName); 
+  #ifdef SYSTEM_WIFI_DEBUG
+    Serial.print(F("MQTT host = ")); Serial.println(frugal_iot.mqtt->hostname);
+    Serial.print(F("Project = ")); Serial.println(frugal_iot.project);
+    Serial.print(F("Device Name = ")); Serial.println(frugal_iot.device_name);
+  #endif
+
+
+// These are the language texts to use 
+struct Texts {
+    const __FlashStringHelper
+      *MqttServer,
+      *DeviceName,
+      *Project
+    ;
+    /*
+    const char
+        *init
+    ;
+    */
+};
+Texts T;
+
+#endif //NOTINCORPORATEDYET
