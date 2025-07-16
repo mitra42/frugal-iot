@@ -160,7 +160,6 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   add(system);
   // These things should really be in setup() but we want them to run before the rest of the main.cpp setup()
   // Note this is running BEFORE Serial is enabled
-  fs_LittleFS->pre_setup();
 }
 
 void System_Frugal::configure_mqtt(const char* hostname, const char* username, const char* password) {
