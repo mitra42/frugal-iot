@@ -48,19 +48,18 @@ bool System_WiFi::rescan() {
 }
 
 // Scan for networks - try and connect to any we have password for (in order of strength) true if success
+// This code is hairey ! As the for-loops are run over multiple calls to this function, 
+// notice how they don't set their control variable back to the start. 
 bool System_WiFi::connectOneAndAllNext() {
   // Try to connect to any networks we know - in order of strength
   // Running thru strongest networks first
-  Serial.print("XXX " __FILE__); Serial.println(__LINE__);
   for (; minRSSI > -1000; minRSSI -= 5) { // Look at ranges of RSSI in 5 unit chunks
-    Serial.print("XXX " __FILE__ " minRSSI="); Serial.print(minRSSI); 
     for (; (nextNetwork < num_networks); nextNetwork++) {  // Loop over networks we see
       if ((WiFi.RSSI(nextNetwork) > minRSSI) && (WiFi.RSSI(nextNetwork) <= (minRSSI + 5))) { // Pick any in the RSSI range
         Serial.print(WiFi.SSID(nextNetwork)); Serial.print(F(" ")); Serial.print(WiFi.RSSI(nextNetwork)); Serial.print(F(" "));
         String filename = String("/wifi/" + WiFi.SSID(nextNetwork)) ;
         String pw = frugal_iot.fs_LittleFS->slurp(filename);
         if (pw.length()) { // Do we have a password
-          Serial.print("XXX " __FILE__); Serial.println(__LINE__);
           (connectInnerAsync(WiFi.SSID(nextNetwork), pw)); // Try and connect
           return true; // Drop out - state retained for next call which will happen after it succeeds or fails to connect
         } else {
@@ -70,7 +69,6 @@ bool System_WiFi::connectOneAndAllNext() {
     }
     nextNetwork = 0; // tried all (if any) networks at this RSSI 
   }
-  Serial.print("XXX " __FILE__); Serial.println(__LINE__);
   // If get to end of scan with none found return false.
   return false;
 }
@@ -144,7 +142,7 @@ bool System_WiFi::recoverFromLightSleep() {
 
 void System_WiFi::stateMachine() {
   // State machine
-  Serial.print(" XXX Wifi="); Serial.print(status); Serial.print(" "); Serial.println(WiFi.status());
+  //Serial.print(" XXX Wifi="); Serial.print(status); Serial.print(" "); Serial.println(WiFi.status());
   switch (status)
   {
     case WIFI_STARTING: //0
@@ -180,21 +178,21 @@ void System_WiFi::stateMachine() {
     case WIFI_NEEDSCAN: //4
         if (rescan()) { // async
           setStatus(WIFI_SCANNING);
-          Serial.print("XXX WiFi rescanning "); Serial.println(WiFi.status());
+          Serial.print("WiFi rescanning "); Serial.println(WiFi.status());
         } else {
-          Serial.println("XXX WiFi rescan failed");
+          Serial.println("XXX WiFi Scan failed to start");
           break; // stay in WIFI_NEEDSCAN
         }
         // drop thru
     case WIFI_SCANNING: //5
       switch (num_networks = WiFi.scanComplete()) {
         case WIFI_SCAN_FAILED: {
-          Serial.print(F("WiFi Scan failed"));
+          Serial.print(F("WiFi Scan failed to complete"));
           status = WIFI_NEEDSCAN;
           break;
         }
         case WIFI_SCAN_RUNNING: {
-          Serial.print("XXX WiFi scanning");
+          // Serial.print("XXX WiFi scanning");
           break; // No need for timeout, it will terminate
         }
         default: {
