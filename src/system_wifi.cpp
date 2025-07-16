@@ -84,7 +84,7 @@ void System_WiFi::connectInnerAsync(String ssid, String pw) {
   Serial.print(F("Connecting to WiFi SSID "));
   Serial.print(ssid);
   WiFi.setHostname(clientid.c_str());  
-  WiFi.begin(ssid.c_str(), pw.c_str()); // Attempt connection
+  WiFi.begin(ssid.c_str(), pw.c_str()); // Attempt connection - note returns immediately need to check status
   WiFi.setHostname(clientid.c_str()); 
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);  // arduino-esp32 #2537 and #6278
   WiFi.setHostname(clientid.c_str());
@@ -224,7 +224,7 @@ void System_WiFi::stateMachine() {
       if (WiFi.status() == WL_DISCONNECTED) {
         setStatus(WIFI_DISCONNECTED);
       } else if (WiFi.status() != WL_CONNECTED) {
-        Serial.println(F("WiFi: unhandled state combination"));
+        Serial.print(F("WiFi: unhandled state combination CONNEcTED but WiFi.status=")); Serial.println(WiFi.status());
       }
       break;
     default:
@@ -235,11 +235,12 @@ void System_WiFi::stateMachine() {
 }
 
 bool System_WiFi::connected() {
-  return (status == WIFI_CONNECTED);
+  //TODO-153 can probalby shorten this, but seen at 1000 that first MQTT connect fails
+  return (status == WIFI_CONNECTED && statusSince > 2000); 
 }
 void System_WiFi::frequently() {
   static unsigned long lasttime = millis();
-  if (millis() > (lasttime + 2000)) {
+  if (millis() > (lasttime + 100)) { // Unclear what right time delay is here - 2000 works - so does 100 
     lasttime = millis();
     stateMachine();
   } 
