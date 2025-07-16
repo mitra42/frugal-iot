@@ -70,13 +70,13 @@ void System_LoRa::setup() {
     LoRa.setSyncWord(SyncWd); // byte val to use as sync word
   */
 }
-void System_LoRa::infrequent() {
+void System_LoRa::infrequently() {
     // Code for infrequent tasks, e.g., every 10 seconds
 }
-void System_LoRa::periodic() {
+void System_LoRa::periodically() {
     // Code for periodic tasks, e.g., every minute
 }
-void System_LoRa::frequent() {
+void System_LoRa::frequently() {
     // Code for frequent tasks, e.g., every 10 ms
 }
 

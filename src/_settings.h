@@ -122,8 +122,8 @@
     #define LANGUAGE_ALL
 #endif
 
-// Always defined currently, but recommend defining in _locals.h in case that decision ever changes
-#define SYSTEM_WIFI_WANT  // currently always wanted - recommend defining in _locals.h in case that decision ever changes
+// Always defined currently,
+#define SYSTEM_WIFI_WANT  // currently always wanted
 
 // Define boards which have built in OLED and should include automatically
 #if defined(ARDUINO_TTGO_LoRa32)

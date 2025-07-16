@@ -95,6 +95,7 @@ void Frugal_Group::infrequently() {
     fb->infrequently();
   }
 }
+// Note this constructor is running BEFORE Serial is enabledd
 System_Frugal::System_Frugal(const char* org, const char* project, const char* device_name, const char* description)
 : Frugal_Group("frugal_iot", "System_Frugal"),
   org(org),
@@ -144,6 +145,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
 
   add(system);
   // These things should really be in setup() but we want them to run before the rest of the main.cpp setup()
+  // Note this is running BEFORE Serial is enabled
   fs_LittleFS->pre_setup();
 }
 
@@ -196,6 +198,7 @@ void System_Frugal::frequently() {
 
 // Main loop() - call this from main.cpp
 void System_Frugal::loop() {
+  //Serial.print("⏳1");
   if (timeForPeriodic) {
     periodically();  // Do things run once per cycle
     infrequently();  // Do things that keep their own track of time

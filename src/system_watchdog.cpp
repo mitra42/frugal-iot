@@ -17,7 +17,7 @@
 // - see https://github.com/mitra42/frugal-iot/issues/125
 
 #ifdef ESP32
-  #define TWDT_TIMEOUT_MS 180000 // three minutes - want to be long enough.
+  #define TWDT_TIMEOUT_MS (180000) // three minutes - want to be long enough.
 #endif
 #define SYSTEM_WATCHDOG_MEM_MS 10000 // 10 seconds, much too fast once tested 
 
@@ -31,25 +31,29 @@ void System_Watchdog::setup() {
   // If the TWDT was not initialized automatically on startup, manually intialize it now
 
   #ifdef ESP32
-    #ifdef DEPRECATED_PLATFORMIO // defined automatically when using PLATFORMIO in Visual Studio
+   #ifdef OBSOLETE_PLATFORMIO // defined automatically when using PLATFORMIO in Visual Studio
       esp_task_wdt_init(TWDT_TIMEOUT_MS, true);
-    #else // Assuming ARDUINO-IDE which has different definition of esp_task_wdt_init - unsure which is older, which newer
+   #else // Assuming ARDUINO-IDE which has different definition of esp_task_wdt_init - unsure which is older, which newer
       esp_task_wdt_config_t twdt_config = {
           .timeout_ms = TWDT_TIMEOUT_MS,
           .idle_core_mask = (1 << CONFIG_FREERTOS_NUMBER_OF_CORES) - 1,    // Bitmask of all cores
           .trigger_panic = true,
       };
-      esp_task_wdt_init(&twdt_config);
-    #endif
+      esp_task_wdt_reconfigure(&twdt_config); // Was esp_task_wdt_init 
+   #endif
     //esp_task_wdt_init(esp_task_wdt_config_t{ 3000, 0, false}); //enable panic so ESP32 restarts
     esp_task_wdt_add(NULL); //add current thread to WDT watch  
   #endif //ESP32
 }
 
-void System_Watchdog::infrequently() {
+void System_Watchdog::frequently() {
+  //Serial.print("⏳");
   #ifdef ESP32
     esp_task_wdt_reset();
   #endif
+}
+
+void System_Watchdog::infrequently() {
   // TODO move this to infrequent() on something
   if (frugal_iot.powercontroller->sleepSafeMillis() > (internal_watchdog_last + SYSTEM_WATCHDOG_MEM_MS)) {
     #ifdef SYSTEM_MEMORY_DEBUG

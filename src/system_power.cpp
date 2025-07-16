@@ -103,18 +103,21 @@ void System_Power_Deep::setup() {
 // TODO-141 note Arduino warning: 'esp_pm_config_esp32_t' is deprecated: please use esp_pm_config_t instead [-Wdeprecated-declarations]
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 void System_Power_LightWiFi::setup() {
-  // This bit is weird - there are 5 different ESP32 config structures - all identical - note CONFIG_IDF_TARGET_ESP32xx is defined in board files
-  #if defined(CONFIG_IDF_TARGET_ESP32C3) // Defined in board files on PlatformIO untested on Arduino
-    esp_pm_config_esp32c3_t pm_config; // Seems identical structure to the default ESP32 one ! 
-  #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    esp_pm_config_esp32s2_t pm_config;
-  #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    esp_pm_config_esp32s3_t pm_config;
-  #elif defined(CONFIG_IDF_TARGET_ESP32H2)
-    esp_pm_config_esp32h2_t pm_config;
-  #else
-    esp_pm_config_esp32_t pm_config;
-  #endif
+  esp_pm_config_t pm_config;
+  #ifdef DEPRECATED_OLDER_PLATFORMIO
+    // This bit is weird - there are 5 different ESP32 config structures - all identical - note CONFIG_IDF_TARGET_ESP32xx is defined in board files
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) // Defined in board files on PlatformIO untested on Arduino
+      esp_pm_config_esp32c3_t pm_config; // Seems identical structure to the default ESP32 one ! 
+    #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+      esp_pm_config_esp32s2_t pm_config;
+    #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+      esp_pm_config_esp32s3_t pm_config;
+    #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+      esp_pm_config_esp32h2_t pm_config;
+    #else
+      esp_pm_config_esp32_t pm_config; // deprecated - may also be needed above
+    #endif
+  #endif // DEPRECATED_OLDER_PLATFORMIO
   pm_config.max_freq_mhz = 240;
   pm_config.min_freq_mhz = 80;
   pm_config.light_sleep_enable = true;

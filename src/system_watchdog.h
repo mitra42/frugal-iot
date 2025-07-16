@@ -9,6 +9,7 @@ class System_Watchdog : public System_Base {
   public:
     System_Watchdog();
     void setup();
+    void frequently();
     void infrequently();
 };
 

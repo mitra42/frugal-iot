@@ -181,19 +181,21 @@ void System_SD::setup() {
     #endif
   }
 }
+// Note pre_setup is usually running in frugal_iot constructor BEFORE serial setup
+// If need to debug, uncomment the Serial's below, and move the call of this to main.cpp AFTER Serial started
 void System_LittleFS::pre_setup() {
   #ifdef SYSTEM_LITTLEFS_DEBUG
-    Serial.print(F("LittleFS "));
+    //Serial.print(F("LittleFS "));
   #endif
-  if (!ESPFS.begin()) // Note it was begin(true) on LittleFS
+  if (!ESPFS.begin(true)) // Format LittleFS if its not there.
   {
-    Serial.println(F("initialization failed!"));
+    //Serial.println(F("initialization failed!"));
   } else {
     #ifdef SYSTEM_LITTLEFS_DEBUG
-      Serial.println(F("initialization done."));
+      //Serial.println(F("initialization done."));
     #endif
     #ifdef SYSTEM_LITTLEFS_DEBUG
-      printDirectory("/"); // For debugging
+      //printDirectory("/"); // For debugging
     #endif
   }
 }
