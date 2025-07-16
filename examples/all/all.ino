@@ -90,9 +90,9 @@ void setup() {
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.mqtt->path("ledbuiltin/id")); //TODO-141 probably wont work as mqtt not setup yet
 
-  ControlHysterisis* cb = new ControlHysterisis("control", "Control", 50, 1, 0, 100);
-  frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.mqtt->path("relay/on"));
+  ControlHysterisis* ch = new ControlHysterisis("control", "Control", 50, 1, 0, 100);
+  frugal_iot.controls->add(ch);
+  ch->outputs[0]->wireTo(frugal_iot.mqtt->path("relay/on"));
 
   // Must be after sensor_sht for default wiring below
   Control_Logger* clfs = new Control_LoggerFS(

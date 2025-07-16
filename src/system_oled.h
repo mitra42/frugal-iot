@@ -39,9 +39,9 @@ class System_OLED : public System_Base {
     Adafruit_SSD1306 display; // OLED display object TODO-138 parameterize this and depend on board
     System_OLED(); // Constructor
     void setup(); // Setup function to initialize the display
-    //void infrequent(); // Infrequent tasks, e.g., every 10 seconds
-    //void periodic(); // Periodic tasks, e.g., every minute
-    //void frequent(); // Frequent tasks, e.g., every 10 ms
+    //void infrequently(); // Infrequent tasks, e.g., every 10 seconds
+    //void periodically(); // Periodic tasks, e.g., every minute
+    //void frequently(); // Frequent tasks, e.g., every 10 ms
     // TODO-149 check if needed
     void displayMessage(const String &message); // Function to display a message on the OLED
 };

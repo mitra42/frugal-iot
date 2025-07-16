@@ -16,9 +16,9 @@ class System_LoRa : public System_Base {
 public:
     System_LoRa();
     void setup();
-    void infrequent();
-    void periodic();
-    void frequent();
+    void infrequently();
+    void periodically();
+    void frequently();
     void prepareForSleep();
 };
 
