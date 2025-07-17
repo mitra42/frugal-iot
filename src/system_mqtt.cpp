@@ -80,7 +80,7 @@ System_MQTT::System_MQTT(const char* hostname, const char* username, const char*
   username(username)
 {}
 
-void System_MQTT::frequently() {
+void System_MQTT::loop() {
   if (nextLoopTime <= millis()) {
     // Automatically reconnect
     blockTillConnected(); // TODO-125 maybe make non blocking and queue messages while down

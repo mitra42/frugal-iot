@@ -46,7 +46,7 @@ void System_Watchdog::setup() {
   #endif //ESP32
 }
 
-void System_Watchdog::frequently() {
+void System_Watchdog::loop() {
   //Serial.print("⏳");
   #ifdef ESP32
     esp_task_wdt_reset();

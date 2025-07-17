@@ -15,10 +15,12 @@
 System_Base::System_Base(const char * const id, const char * const name)
 : id(id), name(name) { };
 
-void System_Base::setup() { }; // This will get called if no setup() in subclass 
-void System_Base::infrequently() { }; // This will get called if no loop() in subclass 
-void System_Base::frequently() { }; // This will get called if no loop() in subclass 
-void System_Base::periodically() { }; // This will get called if no loop() in subclass 
+// Defaults for routines that can, but often are not, overridden in sub-class.
+void System_Base::setup() { };
+void System_Base::loop() { }; // Called frequently same as loop() in typical arduino apps
+void System_Base::periodically() { }; // Called once for each period - which might be 10 seconds, or seeral hours
+void System_Base::infrequently() { }; // Run once each period, but should check timing
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void System_Base::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {};

@@ -6,7 +6,6 @@
  * https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
  */
 
-// This will replace loop() and then parts will be put into 
 
 #include <Arduino.h> // Required to get sdkconfig.h to get CONFIG_IDF_TARGET_xxx
 // TODO may not need all these once WiFi debugged and code moved to other files

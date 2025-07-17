@@ -79,7 +79,7 @@ void periodically () {
   #endif // SYSTEM_LORA_SENDER_TEST || SYSTEM_LORA_RECEIVER_TEST
 }
 
-void frequently() {
+void loop() {
   // This is called frequently, so you can put code here that needs to run often
   #if defined(SYSTEM_LORA_RECEIVER_TEST)
 

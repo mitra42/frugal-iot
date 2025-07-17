@@ -24,7 +24,7 @@ class System_Base {
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);
     virtual void dispatchPath(const String &topicPath, const String &payload);
     virtual String advertisement();
-    virtual void frequently();
+    virtual void loop();
     virtual void periodically();
     virtual void infrequently();
 }; // Class FrugalBase

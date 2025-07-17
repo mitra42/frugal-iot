@@ -56,7 +56,7 @@ class System_MQTT : public System_Base {
 
     System_MQTT(const char* hostname, const char* username, const char* password);
     void setup_after_wifi();
-    void frequently();
+    void loop();
     bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
     void blockTillConnected(); // Connect to MQTT, loop until succeed
     Subscription* find(const String &topicPath);

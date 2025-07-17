@@ -50,6 +50,6 @@ Sensor_Button* Sensor_Button::handler(Button2& button) {
 void Sensor_Button::setup() {
   button->begin(pin);
 }
-void Sensor_Button::frequently() {
+void Sensor_Button::loop() {
   button->loop(); // TODO-141 should probably only do every 10 MS 
 }
