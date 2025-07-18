@@ -18,7 +18,7 @@ public:
     void setup();
     void infrequently();
     void periodically();
-    void frequently();
+    void loop();
     void prepareForSleep();
 };
 

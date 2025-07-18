@@ -20,7 +20,7 @@
       Sensor_Button( const char * const id, const char * const name, uint8_t pin, const char * const color);
       OUTuint16* output; // TODO convert to an enum 
       void setup();
-      void frequently();
+      void loop();
       void clickHandlerInner(clickType type);
       static void clickHandler(Button2& btn);
       static void longClickHandler(Button2& btn);

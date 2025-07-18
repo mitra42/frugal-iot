@@ -33,7 +33,7 @@ void ControlBlinken::act() {
   nextBlinkTime = frugal_iot.powercontroller->sleepSafeMillis() + (outputs[0]->boolValue() ? blinkOn : blinkOff) ; // Blink after new blink time
 }
 
-void ControlBlinken::frequently() {
+void ControlBlinken::loop() {
   if (nextBlinkTime <= frugal_iot.powercontroller->sleepSafeMillis()) {
     bool next = !outputs[0]->boolValue();
     ((OUTbool*)outputs[0])->set(next); // Will send message

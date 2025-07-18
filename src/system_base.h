@@ -28,7 +28,7 @@ class System_Base {
     void readConfigFromFS();
     void readConfigFromFS(File dir, const String* leaf);
     void writeConfigToFS(const String& topicTwig, const String& payload);
-    virtual void frequently();
+    virtual void loop();
     virtual void periodically();
     virtual void infrequently();
 }; // Class FrugalBase

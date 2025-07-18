@@ -41,7 +41,7 @@ class System_OLED : public System_Base {
     void setup(); // Setup function to initialize the display
     //void infrequently(); // Infrequent tasks, e.g., every 10 seconds
     //void periodically(); // Periodic tasks, e.g., every minute
-    //void frequently(); // Frequent tasks, e.g., every 10 ms
+    //void loop(); // Frequent tasks, e.g., every 10 ms
     // TODO-149 check if needed
     void displayMessage(const String &message); // Function to display a message on the OLED
 };

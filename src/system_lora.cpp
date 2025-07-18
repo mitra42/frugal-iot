@@ -76,7 +76,7 @@ void System_LoRa::infrequently() {
 void System_LoRa::periodically() {
     // Code for periodic tasks, e.g., every minute
 }
-void System_LoRa::frequently() {
+void System_LoRa::loop() {
     // Code for frequent tasks, e.g., every 10 ms
 }
 

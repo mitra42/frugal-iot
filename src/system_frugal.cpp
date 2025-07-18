@@ -93,9 +93,9 @@ String Frugal_Group::advertisement() {
   return ad;
 }
 
-void Frugal_Group::frequently() {
+void Frugal_Group::loop() {
   for (System_Base* fb: group) {
-    fb->frequently();
+    fb->loop();
   }
 }
 void Frugal_Group::periodically() {
@@ -203,13 +203,6 @@ void System_Frugal::periodically() {
   Frugal_Group::periodically();
 }
 
-// This is stuff done multiple times per period
-void System_Frugal::frequently() {
-  Frugal_Group::frequently();
-  frugal_iot.mqtt->frequently(); // 
-  // TODO-23 will want something here for buttons as well
-}
-
 // Main loop() - call this from main.cpp
 void System_Frugal::loop() {
   //Serial.print("⏳1");
@@ -218,7 +211,7 @@ void System_Frugal::loop() {
     infrequently();  // Do things that keep their own track of time
     timeForPeriodic = false;
   }
-  frequently(); // Do things like MQTT which run frequently with their own clock
+  Frugal_Group::loop(); // Do things like MQTT which run frequently with their own clock
   if (powercontroller->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
     timeForPeriodic = true; // reset after sleep (note deep sleep comes in at top again)
   }

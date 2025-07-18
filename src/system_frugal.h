@@ -43,7 +43,7 @@ class Frugal_Group : public System_Base {
     void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet); 
     void dispatchPath(const String &topicPath, const String &payload); // Only currently relevant on controls
     String advertisement();
-    void frequently();
+    void loop();
     void periodically();
     void infrequently();
 };
@@ -92,7 +92,6 @@ class System_Frugal : public Frugal_Group {
     void setup();
     void loop(); // Call this from main.cpp
     void infrequently();
-    void frequently();
     void periodically();
 };
 
