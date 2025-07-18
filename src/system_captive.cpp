@@ -11,6 +11,10 @@
  * 
  * Its based on the example that comes with ESPAsyncWebServer 
  * https://github.com/ESP32Async/ESPAsyncWebServer/blob/main/examples/CaptivePortal/CaptivePortal.ino
+ * 
+ * TODO-153
+ *  Handle /restart 
+ *  Handle POST of parameters
  */
 
 // SPDX-License-Identifier: LGPL-3.0-or-later
@@ -42,13 +46,46 @@ class CaptiveRequestHandler : public AsyncWebHandler {
   }
 
   void handleRequest(AsyncWebServerRequest *request) {
+    Serial.print("Captive: Handling request with captive portal");
     AsyncResponseStream *response = request->beginResponseStream("text/html");
-    response->print("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>");
-    response->print("<p>This is our captive portal front page.</p>");
-    response->printf("<p>You were trying to reach: http://%s%s</p>", request->host().c_str(), request->url().c_str());
-#if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
-    response->printf("<p>Try opening <a href='http://%s'>this link</a> instead</p>", WiFi.softAPIP().toString().c_str());
-#endif
+    response->print(F("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>"));
+    response->print(F(
+            "<meta name=viewport content='width=device-width,initial-scale=1'>" // TODO-153 copied from WiFiSettings check what does
+            "<style>"
+            "*{box-sizing:border-box} "
+            "html{background:#444;font:10pt sans-serif}"
+            "body{background:#ccc;color:black;max-width:30em;padding:1em;margin:1em auto}"
+            "a:link{color:#000} "
+            "label{clear:both}"
+            "select,input:not([type^=c]){display:block;width:100%;border:1px solid #444;padding:.3ex}"
+            "input[type^=s]{display:inline;width:auto;background:#de1;padding:1ex;border:1px solid #000;border-radius:1ex}"
+            "[type^=c]{float:left;margin-left:-1.5em}"
+            ":not([type^=s]):focus{outline:2px solid #d1ed1e}"
+            ".w::before{content:'\\26a0\\fe0f'}"
+            "p::before{margin-left:-2em;float:left;padding-top:1ex}"
+            ".i::before{content:'\\2139\\fe0f'}"
+            ".c{display:block;padding-left:2em}"
+            ".w,.i{display:block;padding:.5ex .5ex .5ex 3em}"
+            ".w,.i{background:#aaa;min-height:3em}"
+            "</style>"
+    ));
+    response->print(F( //TODO-153-TRANSLATE //TODO-153 handle /restart
+      "<form action=/restart method=post><input type=submit value=\"RESTART\"></form><hr>"
+    ));
+    //TODO-153 add dropdown of SSIDs (see WiFiSettings.cpp ~L310)
+    //TODO-153 add dropdown of languages (see WiFiSettings.cpp ~L360)
+    //TODO-153 add multiple lines from modules - may actually loop here  (see WiFiSettings.cpp ~L376)
+    response->print(F(
+      "<p style='position:sticky;bottom:0;text-align:right'>"
+      "<input type=submit value=\"SAVE\" style='font-size:150%'></form>" //TODO-TRANSLATE
+    ));
+    
+    #ifdef INSTANDARDEXAMPLENOTUSEDHERE
+      response->printf("<p>You were trying to reach: http://%s%s</p>", request->host().c_str(), request->url().c_str());
+      #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
+        response->printf("<p>Try opening <a href='http://%s'>this link</a> instead</p>", WiFi.softAPIP().toString().c_str());
+      #endif
+    #endif // INSTANDARDEXAMPLENOTUSEDHERE
     response->print("</body></html>");
     request->send(response);
   }
@@ -62,7 +99,7 @@ void System_Captive::setup() {
   Serial.println("Configuring access point...");
 
   #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
-    if (!WiFi.softAP("esp-captive")) {
+    if (!WiFi.softAP("esp-captive")) { // TODO-153 check if this is the SSID in which case replace as in WiFiSettings.cpp
       Serial.println("Soft AP creation failed.");
       while (1);
     }
@@ -72,6 +109,19 @@ void System_Captive::setup() {
   // more handlers...
   server.begin();
 }
+/* Example code to add handler
+
+// save callback for particular URL path
+auto handler = server.on("/some/path", [](AsyncWebServerRequest *request){
+  //do something useful
+});
+// upload a file to /upload
+  server.on("/upload", HTTP_POST, [](AsyncWebServerRequest *request){
+    request->send(200);
+  }, onUpload);
+
+*/
+
 
 void System_Captive::frequently() {
   dnsServer.processNextRequest();
