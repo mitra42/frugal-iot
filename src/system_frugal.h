@@ -93,6 +93,9 @@ class System_Frugal : public Frugal_Group {
     void loop(); // Call this from main.cpp
     void infrequently();
     void periodically();
+    bool canOTA();
+    bool canMQTT();
+
 };
 
 extern System_Frugal frugal_iot;

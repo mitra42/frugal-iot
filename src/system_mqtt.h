@@ -59,7 +59,7 @@ class System_MQTT : public System_Base {
     void setup_after_wifi();
     void loop();
     bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
-    void blockTillConnected(); // Connect to MQTT, loop until succeed
+    bool connected(); // Check if connected, dont change status
     Subscription* find(const String &topicPath);
     void subscribe(const String& topicPath);
     void subscribe(const char* topicTwig);

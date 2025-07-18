@@ -62,8 +62,9 @@ void System_Discovery::setup_after_mqtt() {
 }
 
  //TODO-23 This wont work as nextLoopTime wont be remembered in Deep Sleep
+ // TODO-153 as done now will only check once (infrequently() runs once per period), and if it runs before MQTT it will fail and not retry
 void System_Discovery::infrequently() { 
-    if (nextLoopTime <= (frugal_iot.powercontroller->sleepSafeMillis())) {
+    if (frugal_iot.canMQTT() && (nextLoopTime <= (frugal_iot.powercontroller->sleepSafeMillis()))) {
       if (!doneFullAdvertise) {
         fullAdvertise();
       } 

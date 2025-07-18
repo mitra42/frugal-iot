@@ -184,13 +184,12 @@ void System_OTA::setup_after_discovery() { // TODO-25 - put this in a class and 
     init(url, SYSTEM_OTA_VERSION, nullptr);
   #endif
 
-  // Blocks while does update //TODO-23 double dipping, here and infrequently called from main setup
-  checkForUpdate();
+  // Note - not doing here as WiFi won't be setup yet
+  //checkForUpdate();
 }
 
 void System_OTA::infrequently() {
-  // Note wont operate on first loop (see initialization of nextLoopTime)
-  if (nextLoopTime <= frugal_iot.powercontroller->sleepSafeMillis() ) {
+  if (frugal_iot.canOTA() && (nextLoopTime <= frugal_iot.powercontroller->sleepSafeMillis())) {
     checkForUpdate();
     nextLoopTime = frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_OTA_MS;
   }

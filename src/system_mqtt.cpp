@@ -92,6 +92,9 @@ void System_MQTT::loop() {
     nextLoopTime = millis() + SYSTEM_MQTT_MS; // Not sleepSafeMillis as this is frequent
   }
 }
+bool System_MQTT::connected() {
+  return client.connected(); 
+}
 
 /* Connect to MQTT broker and - if necessary - resubscribe to all topics */
 bool System_MQTT::connect() {
@@ -103,7 +106,7 @@ bool System_MQTT::connect() {
     // TODO-153 make this non blocking
     /* Not connected */
     Serial.print(F("\nMQTT connecting: to ")); Serial.print(hostname);
-    if (!client.connect(frugal_iot.wifi->clientid.c_str(), username, password)) {
+    if (!client.connect(frugal_iot.wifi->clientid.c_str(), username, password)) { //TODO-153 presumably blocking
       /* Still not connected */
       Serial.print(F(" Fail "));
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116

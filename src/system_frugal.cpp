@@ -237,3 +237,11 @@ void System_Frugal::startSerial() {
     startSerial(115200, 5000);
   #endif
 }
+
+// Called by OTA byt checking other modules
+bool System_Frugal::canOTA() {
+  return wifi->connected();
+}
+bool System_Frugal::canMQTT() {
+  return mqtt->connected();
+}

@@ -28,7 +28,7 @@ class System_OTA : public System_Base {
     void infrequently();
 
   private:
-    unsigned long nextLoopTime = SYSTEM_OTA_MS; // Dont activate on first loop - as happens in Setup  sleepSafeMillis()
+    unsigned long nextLoopTime = 0;
     bool _isOK;
     bool _checked;
     int _retryCount;
