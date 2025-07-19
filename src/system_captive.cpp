@@ -12,13 +12,8 @@
  * Its based on the example that comes with ESPAsyncWebServer 
  * https://github.com/ESP32Async/ESPAsyncWebServer/blob/main/examples/CaptivePortal/CaptivePortal.ino
  * 
- * TODO-153
- *  Handle /restart 
- *  Handle POST of parameters
+ * Acknowledgement to the ESP-WiFiSettings library from which some snippets have been used
  */
-
-// SPDX-License-Identifier: LGPL-3.0-or-later
-// Copyright 2016-2025 Hristo Gochkov, Mathieu Carbou, Emil Muratov
 
 #include <DNSServer.h>
 #if defined(ESP32) || defined(LIBRETINY)
@@ -35,10 +30,28 @@
 
 #include "ESPAsyncWebServer.h"
 #include "system_captive.h"
+#include "misc.h" // for Sprintf
+#include "system_frugal.h" // for frugal_iot
 
 static DNSServer dnsServer;
 static AsyncWebServer server(80);
 
+String html_entities(const String& raw) {
+    String r;
+    for (unsigned int i = 0; i < raw.length(); i++) {
+        char c = raw.charAt(i);
+        if (c < '!' || c == '"' || c == '&' || c == '\'' || c == '<' || c == '>' || c == 0x7f) {
+            // ascii control characters, html syntax characters, and space
+            r += Sprintf("&#%d;", c);
+        } else {
+            r += c;
+        }
+    }
+    return r;
+}
+// For debugging - as hard to view source on mobile
+//#define RESPONSEPRINT Serial.print
+//#define RESPONSEPRINT response->print
 class CaptiveRequestHandler : public AsyncWebHandler {
  public:
   bool canHandle(__unused AsyncWebServerRequest *request) const override {
@@ -46,11 +59,26 @@ class CaptiveRequestHandler : public AsyncWebHandler {
   }
 
   void handleRequest(AsyncWebServerRequest *request) {
-    Serial.print("Captive: Handling request with captive portal");
-    AsyncResponseStream *response = request->beginResponseStream("text/html");
-    response->print(F("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>"));
-    response->print(F(
-            "<meta name=viewport content='width=device-width,initial-scale=1'>" // TODO-153 copied from WiFiSettings check what does
+    Serial.println("Captive: Handling request with captive portal");
+    Serial.print("XXX Host="); Serial.println(request->host());
+    Serial.print("XXX User-Agent:"); Serial.println(request->getHeader("User-Agent")->value());
+    String ip = WiFi.softAPIP().toString();
+    Serial.print("XXX IP="); Serial.println(ip);
+    if (request->host() != ip) {
+      // iPhone doesn't deal well with redirects to http://hostname/ and
+      // will wait 40 to 60 seconds before succesful retry. Works flawlessly
+      // with http://ip/ though.
+      Serial.println("XXX Not Matching host and ip - i.e. its not accessing by IP address");  
+      // Anecdotally (according to WiFiSettings library), some devices require a non-empty response body
+      AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", ip);
+      response->addHeader("Location", "http://" + ip + "/");
+      request->send(response);
+    } else {
+      Serial.println("XXX Matching host and ip - i.e. acessed by IP address, not name");      
+      AsyncResponseStream *response = request->beginResponseStream("text/html");
+      response->print(F("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>"));
+      response->print(F(
+            "<meta name=viewport content='width=device-width,initial-scale=1'>"
             "<style>"
             "*{box-sizing:border-box} "
             "html{background:#444;font:10pt sans-serif}"
@@ -68,26 +96,49 @@ class CaptiveRequestHandler : public AsyncWebHandler {
             ".w,.i{display:block;padding:.5ex .5ex .5ex 3em}"
             ".w,.i{background:#aaa;min-height:3em}"
             "</style>"
-    ));
-    response->print(F( //TODO-153-TRANSLATE //TODO-153 handle /restart
-      "<form action=/restart method=post><input type=submit value=\"RESTART\"></form><hr>"
-    ));
-    //TODO-153 add dropdown of SSIDs (see WiFiSettings.cpp ~L310)
-    //TODO-153 add dropdown of languages (see WiFiSettings.cpp ~L360)
-    //TODO-153 add multiple lines from modules - may actually loop here  (see WiFiSettings.cpp ~L376)
-    response->print(F(
-      "<p style='position:sticky;bottom:0;text-align:right'>"
-      "<input type=submit value=\"SAVE\" style='font-size:150%'></form>" //TODO-TRANSLATE
-    ));
-    
-    #ifdef INSTANDARDEXAMPLENOTUSEDHERE
-      response->printf("<p>You were trying to reach: http://%s%s</p>", request->host().c_str(), request->url().c_str());
-      #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
-        response->printf("<p>Try opening <a href='http://%s'>this link</a> instead</p>", WiFi.softAPIP().toString().c_str());
-      #endif
-    #endif // INSTANDARDEXAMPLENOTUSEDHERE
-    response->print("</body></html>");
-    request->send(response);
+      ));
+      response->print(F( //TODO-153-TRANSLATE
+        "<form action=\"/restart\" method=post><input type=submit value=\"RESTART\"></form><hr>"
+      ));
+      //Dropdown of SSIDs (see WiFiSettings.cpp ~L310)
+      response->print(F(
+        "<h1>Connect to WiFi</h1>"
+        "<form method=post action=\"/\">"
+        "<label>WiFi Network"
+        "<select name=ssid onchange=\"document.getElementsByName('password')[0].value=''\">"
+      ));
+      while (WiFi.scanComplete() < 0) {  }; // TODO-153 careful in case this blocks everything mid-scan   
+      for (int i = 0; i < frugal_iot.wifi->num_networks; i++) {
+        String s = WiFi.SSID(i);
+        wifi_auth_mode_t mode = WiFi.encryptionType(i);
+        response->print(F("<option value='"));
+        response->print(html_entities(WiFi.SSID(i)) + F("'")); // TODO-153 make this the topic
+        if (s == WiFi.SSID()) { response->print(" selected"); }
+        response->print(F(">"));
+        response->print(WiFi.SSID(i));
+        response->print(mode == WIFI_AUTH_OPEN ? F("") : F("&#x1f512;"));
+        if (mode == WIFI_AUTH_WPA2_ENTERPRISE) { response->print(F(" unsupported 802.1x")); }
+        response->print(F("</option>"));
+      }
+      response->print(F("</select></label>"));
+      response->print(F("<label>Password:<input name=password value=''></label><hr>")); // TODO-153 what if have password already
+
+      //TODO-153 add dropdown of languages (see WiFiSettings.cpp ~L360)
+      //TODO-153 add multiple lines from modules - may actually loop here  (see WiFiSettings.cpp ~L376)
+      response->print(F(
+        "<p style='position:sticky;bottom:0;text-align:right'>"
+        "<input type=submit value=\"SAVE\" style='font-size:150%'></form>" //TODO-TRANSLATE
+      ));
+      
+      #ifdef INSTANDARDEXAMPLENOTUSEDHERE
+        response->printf("<p>You were trying to reach: http://%s%s</p>", request->host().c_str(), request->url().c_str());
+        #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
+          response->printf("<p>Try opening <a href='http://%s'>this link</a> instead</p>", WiFi.softAPIP().toString().c_str());
+        #endif
+      #endif // INSTANDARDEXAMPLENOTUSEDHERE
+      response->print("</body></html>");
+      request->send(response);
+    }
   }
 };
 
@@ -98,15 +149,65 @@ System_Captive::System_Captive()
 void System_Captive::setup() {
   Serial.println("Configuring access point...");
 
+  // Unsure what these items choose - copied from example -SOC_WIFI_SUPPORTED seems to be defined for ESP32
   #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
-    if (!WiFi.softAP("esp-captive")) { // TODO-153 check if this is the SSID in which case replace as in WiFiSettings.cpp
+    if (!WiFi.softAP(frugal_iot.nodeid)) { //TODO-153 add password as option (see WiFiSettings)
       Serial.println("Soft AP creation failed.");
-      while (1);
+      return;  // Shouldn't happen
     }
     dnsServer.start(53, "*", WiFi.softAPIP());
   #endif
+  String ip = WiFi.softAPIP().toString(); // TODO-153 note how this is used by redirect 
+  Serial.print(F("Access point on:")); Serial.println(ip);
+
+  // Order is important - this has to come BEFORE the catch-all default portal
+  server.on("/", HTTP_POST, [](AsyncWebServerRequest *request){
+    Serial.println("POST /");
+    int params = request->params();
+    for(int i=0;i<params;i++){
+      const AsyncWebParameter* p = request->getParam(i);
+      #ifdef ASYNCWEBSERVER_NEEDS_FILE_UPLOAD
+        if(p->isFile()){ //p->isPost() is also true
+          Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+        } else 
+      #endif
+        if(p->isPost()){
+          Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+          if (p->name() == "ssid") {
+            Serial.println("XXX Got ssid"); 
+            const AsyncWebParameter* password = request->getParam("password", true);
+            if (password) {
+              Serial.println("XXX Adding wifi"); Serial.print(p->value()); Serial.print("="); Serial.println(password->value());
+              frugal_iot.dispatchTwig("wifi", p->value(), password->value(), true);
+              // TODO-153 may wish to force it to try this new one
+            } else {
+              Serial.println("XXX But No password");
+            }
+          } else if (p->name() == "password") {
+            // Ignore - will be read by "ssid" above
+          } else {
+            Serial.println("XXX dispatching"); 
+            frugal_iot.dispatchTwig(p->name(), p->value(), true);
+          }
+        }
+        #ifdef ASYNCWEBSERVER_NEEDS_FILE_GETPARAMETERS
+          else {
+            Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+          }
+        #endif
+    } //for
+    request->send(200, "text/plain", "Settings updated");
+  });
+
+  server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
+    Serial.println("POST /restart");
+    request->send(200, "text/plain", "restarting .... plesae wait"); //TODO-153 translate
+    // May need a callback here to do certain things before restarting 
+    ESP.restart();
+  });
   server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);  // only when requested from AP
   // more handlers...
+  Serial.println("XXX " __FILE__ "starting webserver");
   server.begin();
 }
 /* Example code to add handler
@@ -122,9 +223,8 @@ auto handler = server.on("/some/path", [](AsyncWebServerRequest *request){
 
 */
 
-
-void System_Captive::frequently() {
-  dnsServer.processNextRequest();
+void System_Captive::loop() {
+  dnsServer.processNextRequest(); // Apparantly does nothing, and not needed
 }
 
 

@@ -47,7 +47,11 @@ void System_Watchdog::setup() {
 }
 
 void System_Watchdog::loop() {
-  //Serial.print("⏳");
+  static uint16_t watchcount = 0;
+  if (watchcount++ >= 10000 ) {
+    watchcount = 0;
+    Serial.print("⏳");
+  }
   #ifdef ESP32
     esp_task_wdt_reset();
   #endif

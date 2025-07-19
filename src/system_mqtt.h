@@ -44,32 +44,14 @@ class Message : public Subscription { // Only used for outgoing queued messages
 };
 class System_MQTT : public System_Base {
   public:
-    WiFiClient net;
+    // TODO-25 `client` is temporarily exposed for working with power, should be made private again 
     MQTTClient client; //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.
-    String hostname; 
-    bool inReceived = false;
-    unsigned long ms;
-    unsigned long nextLoopTime; // Not sleepSafeMillis as frequent.
-    bool subscriptionsDone = false; // True when server has reported a session - so dont need to subscribe OR have resubscribed. Also true at start before did subscriptions.
-    const char* password;
-    const char* username;
-
+    String* topicPrefix;  // Also used by OTA
     System_MQTT(const char* hostname, const char* username, const char* password);
-    void setup() override;
-    void setup_after_wifi();
-    void loop() override;
-    bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
-    bool connected(); // Check if connected, dont change status
-    Subscription* find(const String &topicPath);
+    String* path(char const * const topicTwig); // Used to expand twig from local to global in e.g. 'wireTo' and 'track'
+    // Note, there are many of messageSend to make sensor code simple and not duplicate conversions.
     void subscribe(const String& topicPath);
     void subscribe(const char* topicTwig);
-    void dispatch(const String &topicPath, const  String &payload); // dispatch received messages for other modules
-    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet); // receiving message for the mqtt module
-    bool resubscribeAll();
-    void retainPayload(const String &topicPath, const String &payload);
-    void messageReceived(const String &topicPath, const String &payload);
-    void messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos);
-    // Note, there are many of messageSend to make sensor code simple and not duplicate conversions.
     void messageSend(const String &topicPath, const String &payload, const bool retain, const int qos);
     void messageSend(const char* topicTwig, const String &payload, const bool retain, const int qos);
     void messageSend(const String &topicPath, const float &value, const int width, const bool retain, const int qos);
@@ -78,15 +60,35 @@ class System_MQTT : public System_Base {
     void messageSend(const char* topicTwig, const int value, const bool retain, const int qos);
     void messageSend(const String &topicPath, const bool value, const bool retain, const int qos);
     void messageSend(const char* topicTwig, const bool value, const bool retain, const int qos);
-    void messageSendQueued();
-    String* path(char const * const topicTwig);
-    String* twig(const String &topicPath);
+    void dispatch(const String &topicPath, const  String &payload); // dispatch received messages for other modules - its also used by LoraMesher and Captive for incoming messages
+    void setup() override;
+    void setup_after_wifi();
+    void loop() override;
+    bool connected(); // Check if connected, dont change status
+    void messageReceived(const String &topicPath, const String &payload); // Used in MqttMessageReceived callbacks //TODO-153 maybe should be using dispatch
     bool prepareForLightSleep();
     bool recoverFromLightSleep();
 
+
   protected: // TODO - some of the other methods should probably be protected
+    WiFiClient net;
+    String hostname; 
+    bool inReceived = false;
+    unsigned long ms;
+    unsigned long nextLoopTime; // Not sleepSafeMillis as frequent.
+    bool subscriptionsDone = false; // True when server has reported a session - so dont need to subscribe OR have resubscribed. Also true at start before did subscriptions.
+    const char* password;
+    const char* username;
     std::forward_list<Subscription> subscriptions;
     std::forward_list<Message> queued;
+    bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
+    Subscription* find(const String &topicPath);
+    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet); // receiving message for the mqtt module
+    bool resubscribeAll();
+    void retainPayload(const String &topicPath, const String &payload);
+    void messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos);
+    void messageSendQueued();
+    String* twig(const String &topicPath);
 };
 
 #endif // SYSTEM_MQTT_H

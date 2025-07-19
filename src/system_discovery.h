@@ -5,12 +5,11 @@
 
 class System_Discovery : public System_Base {
   public:
-    String *topicPrefix;
     bool doneFullAdvertise = false;
     System_Discovery();
     void fullAdvertise();
-    void setup_after_mqtt();
-    void infrequently();
+    void setup();
+    void infrequently() override;
   private: 
     unsigned long nextLoopTime = 0; // sleepSafeMillis
     String *projectTopic;

@@ -39,6 +39,8 @@ class Frugal_Group : public System_Base {
     std::vector<System_Base*> group;
     Frugal_Group(const char * const id, const char * const name);
     void setup();
+    void setup_after_wifi();
+    void setup_after_mqtt();
     void add(System_Base* fb);
     void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet); 
     void dispatchPath(const String &topicPath, const String &payload) override; // Only currently relevant on controls
@@ -55,6 +57,7 @@ class System_Frugal : public Frugal_Group {
     String project;
     String description; 
     String device_name;
+    String nodeid; // Unique id - starts esp32- or esp8266-
     // Pointers to other Frugal_Base objects or groups of objects
     Frugal_Group* actuators;
     Frugal_Group* sensors;

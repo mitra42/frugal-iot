@@ -13,7 +13,7 @@
     "dependencies": {
         "256dpi/MQTT": "^2.5.2",
         "claws/BH1750": "1.3.0",
-        "lennarthennigs/Button2": "^2.3.4",
+        "lennarthennigs/Button2": "^2.4.0",
         "robtillaart/DHTNEW": "0.5.3",
         "robtillaart/SHT85": "0.6.0",
         "robtillaart/HX711": "^0.5.2"

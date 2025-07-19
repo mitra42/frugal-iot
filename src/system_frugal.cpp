@@ -55,6 +55,8 @@ void Frugal_Group::dispatchTwig(const String &topicSensorId, const String &topic
   }
 };
 
+// Handle messages at top level - check for own, and if not loop through all other modules
+// e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
 void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
     if (topicTwig == "project") {
@@ -168,7 +170,6 @@ void System_Frugal::configure_mqtt(const char* hostname, const char* username, c
 void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
   system->add(powercontroller = System_Power_Mode::create(t, cycle_ms, wake_ms));  
 }
-
 void System_Frugal::setup() {
   // By the time this is run, mqtt should have been added, and serial started in main.cpp
   #ifdef SYSTEM_FRUGAL_DEBUG
@@ -179,19 +180,36 @@ void System_Frugal::setup() {
     //esp_log_level_set("*", ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
     esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
   #endif
+  // Use the unique id of the ESP32 or ESP8266
+  #ifdef ESP32
+    nodeid =  String(F("esp32-")) + (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24));
+  #elif defined(ESP8266)
+    nodeid = String(F("esp8266-")_ + (Sprintf("%06" PRIx32, ESP.getChipId()))
+  #else
+    #error Only defined for ESP32 and ESP8266
+  #endif
+
+
+
   // TODO-152 next is blocking if WiFi fails - fix that
   Frugal_Group::setup(); // includes WiFi
-  if (time) { // If time has been constructed
-    time->setup_after_wifi();     // Needs the WiFi connection
-  }
-  mqtt->setup_after_wifi();       // Needs the WiFi connection
-  discovery->setup_after_mqtt();  // System_Discovery
   #ifdef SYSTEM_OTA_KEY
-    ota->setup_after_discovery(); // Sends advertisement over MQTT
+    ota->setup_after_mqtt_setup(); // Sends advertisement over MQTT
   #endif
   #ifdef SYSTEM_FRUGAL_DEBUG
      Serial.println();
   #endif
+}
+// This is called from the loop() when wifi state machine gets to connected
+void System_Frugal::setup_after_wifi() {
+  static bool setup_after_wifi_done = false;
+  if (!setup_after_wifi_done) {
+    setup_after_wifi_done = true; 
+    if (time) { // If time has been constructed
+      time->setup_after_wifi();
+    }
+    mqtt->setup_after_wifi();
+  }
 }
 void System_Frugal::infrequently() {
   Frugal_Group::infrequently();
@@ -215,6 +233,7 @@ void System_Frugal::loop() {
   if (powercontroller->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
     timeForPeriodic = true; // reset after sleep (note deep sleep comes in at top again)
   }
+  delay(10); // Slow down and let other things run
 }
 
 void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {

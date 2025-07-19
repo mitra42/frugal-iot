@@ -27,23 +27,19 @@ void System_WiFi::setStatus(WiFiStatusType newstatus) {
 }
 
 void System_WiFi::setup() {
-  #ifdef ESP32
-    clientid =  String(F("esp32-")) + (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24));
-  #elif defined(ESP8266)
-    clientid = String(F("esp8266-")_ + (Sprintf("%06" PRIx32, ESP.getChipId()))
-  #else
-    #error Only defined for ESP32 and ESP8266
-  #endif
+  readConfigFromFS();
 }
 bool System_WiFi::rescan() {
   // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
   //bool async = false, bool show_hidden = false, bool passive = false, uint32_t max_ms_per_chan = 300, uint8_t channel = 0, const char *ssid = nullptr, const uint8_t *bssid = nullptr
   // TODO-153 check if need this to scan as concerned disconnects AP
+  /*
   #ifdef ESP32
     WiFi.disconnect(true, true);    // reset state so .scanNetworks() works
   #else
       WiFi.disconnect(true);
   #endif
+  */
   return (WiFi.scanNetworks(true) == WIFI_SCAN_RUNNING); // Scan asynchronously. look for WL_SCAN_COMPLETED when done
 }
 
@@ -58,7 +54,7 @@ bool System_WiFi::connectOneAndAllNext() {
       if ((WiFi.RSSI(nextNetwork) > minRSSI) && (WiFi.RSSI(nextNetwork) <= (minRSSI + 5))) { // Pick any in the RSSI range
         Serial.print(WiFi.SSID(nextNetwork)); Serial.print(F(" ")); Serial.print(WiFi.RSSI(nextNetwork)); Serial.print(F(" "));
         String filename = String("/wifi/" + WiFi.SSID(nextNetwork)) ;
-        String pw = frugal_iot.fs_LittleFS->slurp(filename);
+        String pw = frugal_iot.fs_LittleFS->slurp(filename, true);
         if (pw.length()) { // Do we have a password
           (connectInnerAsync(WiFi.SSID(nextNetwork), pw)); // Try and connect
           return true; // Drop out - state retained for next call which will happen after it succeeds or fails to connect
@@ -83,18 +79,18 @@ void System_WiFi::connectInnerAsync(String ssid, String pw) {
   // Unclear why this brute multiple setHostname calls - should be documented?
   Serial.print(F("Connecting to WiFi SSID "));
   Serial.print(ssid);
-  WiFi.setHostname(clientid.c_str());  
+  WiFi.setHostname(frugal_iot.nodeid.c_str());  
   WiFi.begin(ssid.c_str(), pw.c_str()); // Attempt connection - note returns immediately need to check status
-  WiFi.setHostname(clientid.c_str()); 
+  WiFi.setHostname(frugal_iot.nodeid.c_str());  
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);  // arduino-esp32 #2537 and #6278
-  WiFi.setHostname(clientid.c_str());
+  WiFi.setHostname(frugal_iot.nodeid.c_str());  
   // Dont drop captive portal while trying to connect
   #ifdef ESP32
     WiFi.mode(WIFI_MODE_APSTA);  // arduino-esp32 #6278.  WIFI_MODE_STA is just station, AP is just Access Point
   #else
     WiFi.mode(WIFI_AP_STA);  // On ESP8266 WIFI_MODE_APSTA doesnt exist its WIFI_AP_STA or WIFI_STA
   #endif
-  WiFi.setHostname(clientid.c_str());
+  WiFi.setHostname(frugal_iot.nodeid.c_str());  
 }
 
 
@@ -205,21 +201,35 @@ void System_WiFi::stateMachine() {
       break;
       // Drop thru      
     case WIFI_SCANNED: //6 Each time it hits this, it will try and connect to one more node if possible
-      if (!connectOneAndAllNext()) {
-        // Came to end but none found 
-        setStatus(WIFI_NEEDSCAN);
-        break;
+      if (!connectOneAndAllNext()) { // returns either true if started connecting, or false if nothing to try
+        // Came to end but none found
+        if (millis() > (statusSince + 5000)) { // Leave space between scans or portal wont work 
+          setStatus(WIFI_NEEDSCAN);
+        }
+        break; // Either still in WIFI_SCANNED at end of tries, OR with WIFI_NEEDSCAN
+      } else {
+        setStatus(WIFI_CONNECTING); 
       }
-      setStatus(WIFI_CONNECTING); 
       // Drop thru
     case WIFI_CONNECTING: //7
       if (WiFi.status() == WL_CONNECTED) {
-        setStatus(WIFI_CONNECTED);
+        setStatus(WIFI_STABILIZING);
       } else if (millis() > (statusSince + 30000)) { // Give it 30 seconds to try
         // Failed to connect
         setStatus(WIFI_SCANNED); // Go back for next
       }
       break; // Either as WIFI_CONNECTED | WIFI_CONNECTING | WIFI_SCANNED
+    case WIFI_STABILIZING: //8
+      if (WiFi.status() != WL_CONNECTED) {
+        setStatus(WIFI_DISCONNECTED);
+        break;
+      // TODO-153 Waiting for stabilization - maybe could be shorter but noticed at 1000 that first MQTT connect often faiks
+      } else if (millis() > (statusSince + 2000)) {
+        setStatus(WIFI_CONNECTED);
+        frugal_iot.setup_after_wifi(); // Callback to MQTT as first connected
+        //drop thru
+      }
+      // drop thru
     case WIFI_CONNECTED: //3
       if (WiFi.status() == WL_DISCONNECTED) {
         setStatus(WIFI_DISCONNECTED);
@@ -235,14 +245,22 @@ void System_WiFi::stateMachine() {
 }
 
 bool System_WiFi::connected() {
-  //TODO-153 can probalby shorten this, but seen at 1000 that first MQTT connect fails
-  return (status == WIFI_CONNECTED && statusSince > 2000); 
+  return (status == WIFI_CONNECTED); 
 }
-void System_WiFi::frequently() {
+void System_WiFi::loop() {
   static unsigned long lasttime = millis();
   if (millis() > (lasttime + 100)) { // Unclear what right time delay is here - 2000 works - so does 100 
     lasttime = millis();
     stateMachine();
   } 
-  //TODO-153 will need to be somewhere it runs more often - e.g. frequently
 }
+void System_WiFi::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+  Serial.print("XXX" __FILE__); Serial.println(__LINE__);
+  if (isSet && (topicSensorId == id)) {
+    Serial.print("XXX" __FILE__); Serial.println(__LINE__);
+    // topicTwig is ssid payload is password
+    addWiFi(topicTwig, payload);
+    writeConfigToFS(topicTwig, payload);
+  }
+}
+ 

@@ -31,9 +31,12 @@ String System_Base::advertisement() {return String();};
 // Basic read configuration - based on the object's "id"
 void System_Base::readConfigFromFS() {
   // Note LittleFS should have been setup in frugal_iot constructor so this should not be null
-  File dir = frugal_iot.fs_LittleFS->open(String("/") + id, "r"); // TODO call via System_FS virtual 
+  String path = String("/") + id;
+  File dir = frugal_iot.fs_LittleFS->open(path, "r"); // TODO call via System_FS virtual 
   if (dir) {
     readConfigFromFS(dir, nullptr);
+  } else {
+    frugal_iot.fs_LittleFS->mkdir(path); // There should be a directory, so can write config received over MQTT
   }
 }
 void System_Base::readConfigFromFS(File dir, const String* leaf) {
@@ -60,7 +63,9 @@ void System_Base::readConfigFromFS(File dir, const String* leaf) {
   }
 }
 void System_Base::writeConfigToFS(const String& topicTwig, const String& payload) {
+  Serial.print("XXX" __FILE__); Serial.println(__LINE__);
   String path = String("/") + id + "/" + topicTwig;
+  Serial.print("XXX" __FILE__ "path="); Serial.print(path); Serial.print("="); Serial.print(payload); 
   frugal_iot.fs_LittleFS->spurt(path, payload);
 }
 

@@ -177,7 +177,7 @@ void System_Power_Light::sleep() {
 void System_Power_LightWiFi::sleep() {
   //esp_sleep_enable_wifi_wakeup
   Serial.print("Sleeping for "); Serial.println(sleep_ms());
-  // TODO-25 move this to prepare
+  // TODO-25 move this to prepare in the MQTT task
   frugal_iot.mqtt->client.disconnect();
   //printTaskList(); // Wont work in Arduino framework
   uart_driver_delete(UART_NUM_0); // Disable UART0 (Serial)

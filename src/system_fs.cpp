@@ -74,6 +74,9 @@ fs::File System_LittleFS::open(const char *filename, const char *mode) {
 fs::File System_LittleFS::open(const String &filename, const char *mode) { 
   return ESPFS.open(filename, mode);
 }
+bool System_LittleFS::mkdir(const String &path) { 
+  return ESPFS.mkdir(path);
+}
 boolean System_LittleFS::exists(const char *filename) {
   return ESPFS.exists(filename);
 }
@@ -95,7 +98,12 @@ bool System_FS::spurt(const String& filename, const String& content) {
     }
     return w == content.length();
 }
-String System_FS::slurp(const String& fn) {
+String System_FS::slurp(const String& fn, const bool quietfail) {
+  if (quietfail && !exists(fn)) {
+    //Serial.print("XXX __FILE"); Serial.println(__LINE__);
+    return "";
+  }
+  //Serial.print("XXX __FILE"); Serial.println(__LINE__);
   File f = open(fn, "r"); // Virtual, knows what kind of FS
   String r = f.readString();
   f.close();

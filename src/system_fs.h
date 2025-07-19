@@ -32,8 +32,7 @@ class System_FS : public System_Base {
   public:
     System_FS(const char* const id, const char* const name);
     bool spurt(const String& fn, const String& content);
-    String slurp(const String& fn);
-
+    String slurp(const String& fn, const bool quietfail=false);
     // --- these are just the underlying FS methods exposed
     virtual fs::File open(const char *filename, const char *mode = "r");
     virtual fs::File open(const String &filename, const char *mode = "r");
@@ -57,7 +56,7 @@ class System_LittleFS : public System_FS {
     fs::File open(const String &filename, const char *mode) override;
     boolean exists(const char *filename) override;
     boolean exists(const String &filename) override;
-
+    bool mkdir(const String &path);
 };
 class System_SD : public System_FS {
   public:

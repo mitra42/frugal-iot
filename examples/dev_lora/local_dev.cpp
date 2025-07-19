@@ -18,7 +18,7 @@ namespace localDev {
 // 
 // This is also good place to instantiate instances of classes as its called from frugal_iot.cpp
 // Note if you use a subclass of Actuator, Sensor or Control, then the instance's setup() will be called as part of the System_Base::setupAll() as called by frugal_iot.cpp 
-void setup() {
+void setup() override {
   // And here is an example of instantiating a custom control using that function
   //controls.push_back(new ControlHysterisis("humidity", "Humidity control", 50, 0, 100));
 

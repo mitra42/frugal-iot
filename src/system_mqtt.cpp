@@ -54,8 +54,11 @@ void MqttMessageReceived(String &topicPath, String &payload) { // cant be consta
 }
 void System_MQTT::setup() {
   readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig
+  // e.g. "dev/developers/esp32-12345/" prefix of most topics
+  topicPrefix = new String(frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/")) ;
 }
 
+// Setup MQTT, connect and subscribe - note if WiFi is connected, this will block till MQTT times out 
 void System_MQTT::setup_after_wifi() {
   // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
   // by Arduino. You need to set the IP address directly.
@@ -63,7 +66,8 @@ void System_MQTT::setup_after_wifi() {
   client.setCleanSession(true); // on power up should refresh subscriptions
   // client.setClockSource(XXX); // TODO-23 See https://github.com/256dpi/arduino-mqtt will need for power management
   client.onMessage(MqttMessageReceived);  // Called back from client.loop - this is a naked function that just calls into the instance
-  connect(); // Non blocking or at least not blocking on success //TODO-153 dig deeper as to whether blocking
+  connect(); // Note if WiFi is connected, this will block till MQTT times out 
+  subscribe("set/#");  // Main subscription to all changes sent to this node
 }
 // Run every 10ms TODO-25 and TODO-23 this should be MUCH longer ideally
 System_MQTT::System_MQTT(const char* hostname, const char* username, const char* password) 
@@ -79,7 +83,7 @@ System_MQTT::System_MQTT(const char* hostname, const char* username, const char*
 void System_MQTT::loop() {
   if (nextLoopTime <= millis()) {
     // Automatically reconnect
-    if (connect()) { ; // TODO-153 check how blocking this is 
+    if (connect()) { ; // If Wifi is connected, this is blocking till timeout
       messageSendQueued();
       if (!client.loop()) {
         #ifdef SYSTEM_MQTT_DEBUG
@@ -97,6 +101,7 @@ bool System_MQTT::connected() {
 }
 
 /* Connect to MQTT broker and - if necessary - resubscribe to all topics */
+// Note this is blocking if not connected, and Wifi is connected // TODO-153 flag in callers.
 bool System_MQTT::connect() {
   if (!frugal_iot.wifi->connected()) { //TODO-150 maybe its ok if have LoRaMesher instead
     //Serial.print(F("MQTT waiting for WiFi"));
@@ -106,7 +111,8 @@ bool System_MQTT::connect() {
     // TODO-153 make this non blocking
     /* Not connected */
     Serial.print(F("\nMQTT connecting: to ")); Serial.print(hostname);
-    if (!client.connect(frugal_iot.wifi->clientid.c_str(), username, password)) { //TODO-153 presumably blocking
+    // The call to client.connect is blocking 
+    if (!client.connect(frugal_iot.nodeid.c_str(), username, password)) {
       /* Still not connected */
       Serial.print(F(" Fail "));
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116
@@ -179,12 +185,12 @@ void System_MQTT::subscribe(const String& topicPath) {
 }
 
 String* System_MQTT::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
-  return new String(*frugal_iot.discovery->topicPrefix + topicTwig);
+  return new String(*topicPrefix + topicTwig);
 }
 String* System_MQTT::twig(const String &topicPath) { 
-  if (topicPath.startsWith(*frugal_iot.discovery->topicPrefix)) {
+  if (topicPath.startsWith(*topicPrefix)) {
     String* const topicTwig = new String(topicPath);
-    topicTwig->remove(0, frugal_iot.discovery->topicPrefix->length());
+    topicTwig->remove(0, topicPrefix->length());
     return topicTwig;
   } else {
     return nullptr;
@@ -197,8 +203,8 @@ void System_MQTT::subscribe(const char* topicTwig) {
 }
 void System_MQTT::dispatch(const String &topicPath, const String &payload) {
   // TODO move this to _base.cpp
-  if (topicPath.startsWith(*frugal_iot.discovery->topicPrefix)) { // includes trailing slash
-    String topicTwig = topicPath.substring(frugal_iot.discovery->topicPrefix->length()); 
+  if (topicPath.startsWith(*topicPrefix)) { // includes trailing slash
+    String topicTwig = topicPath.substring(topicPrefix->length()); 
     bool isSet;
     if (topicTwig.startsWith("set/")) {
       isSet = true;
@@ -237,7 +243,7 @@ bool System_MQTT::resubscribeAll() {
       esp_task_wdt_reset();
     #endif
   }
-  Serial.println(); delay(1000);
+  Serial.println(); // delay(1000);
   return true;
 }
 
@@ -323,7 +329,7 @@ void System_MQTT::messageSend(const String &topicPath, const String &payload, co
 
 // Be careful if change this to avoid either out-of-scope or memory leaksx xxxxxx
 void System_MQTT::messageSend(const char* const topicTwig, const String &payload, const bool retain, const int qos) {
-  const String topicPath = String(*frugal_iot.discovery->topicPrefix + topicTwig); // TODO can merge into next line
+  const String topicPath = String(*topicPrefix + topicTwig); // TODO can merge into next line
   messageSend(topicPath, payload, retain, qos);
 }
 
@@ -364,6 +370,6 @@ bool System_MQTT::prepareForLightSleep() {
   return true;
 }
 bool System_MQTT::recoverFromLightSleep() {
-  return connect();
+  return connect(); // TODO-23 Note this is blocking if WiFi is connected, which it typically won't be. 
 }
 
