@@ -26,11 +26,11 @@ class System_WiFi : public System_Base {
     bool connected();
     void stateMachine();
     bool rescan();
-    //void periodically();
-    void frequently();
+    //void periodically() override;
+    void loop() override;
     bool prepareForLightSleep();
     bool recoverFromLightSleep();
-    void setup();
+    void setup() override;
     void addWiFi(String ssid, String password);
 };
 

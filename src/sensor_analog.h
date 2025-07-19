@@ -23,7 +23,7 @@ class Sensor_Analog : public Sensor_Uint16 {
     
     //Sensor_Analog(const uint8_t p);
     Sensor_Analog(const char* const id, const char * const name, const uint8_t pin, const uint8_t smooth, const uint16_t min, const uint16_t max, const char* color, bool retain);
-    virtual void setup();
-    virtual uint16_t read();
+    virtual void setup() override;
+    uint16_t read() override;
 }; // Class Sensor_Analog
 #endif // SENSOR_ANALOG_H

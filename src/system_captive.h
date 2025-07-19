@@ -20,8 +20,8 @@
 class System_Captive : public System_Base {
   public:
     System_Captive();
-    void setup();
-    void frequently();
+    void setup() override;
+    void loop() override;
 };
 
 #endif // SYSTEM_CAPTIVE_H

@@ -47,7 +47,7 @@ public:
   uint8_t address;
   SENSOR_SHT_DEVICE *sht; 
   Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, bool retain);
-  virtual void readAndSet(); // Combines function of set(read()) since read gets two values from sensor
+  void readAndSet() override; // Combines function of set(read()) since read gets two values from sensor
 };
 
 extern Sensor_SHT sensor_sht;

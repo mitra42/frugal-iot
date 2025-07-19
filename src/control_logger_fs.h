@@ -16,10 +16,10 @@ class Control_LoggerFS : public Control_Logger {
     const uint8_t strategy; // TODO turn into Enum or bit field. 
     bool needAppend;
     Control_LoggerFS(const char * const name, System_FS* fs, const char* const root, const uint8_t strategy, std::vector<IN*> i);
-    void setup();
+    void setup() override;
     void append(const String &topicPath, const String &payload);
-    void act();
-    void dispatchPath(const String &topicPath, const String &payload);
+    void act() override;
+    void dispatchPath(const String &topicPath, const String &payload) override;
 };
 
 #endif //CONTROL_LOGGER_FS_H

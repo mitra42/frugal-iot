@@ -24,8 +24,8 @@ class System_OTA : public System_Base {
     friend void otaEndCB(void);
     friend void otaErrorCB(int errorCode);
 
-    void setup_after_discovery();
-    void infrequently();
+    void setup_after_mqtt_setup();
+    void infrequently() override;
 
   private:
     unsigned long nextLoopTime = 0;

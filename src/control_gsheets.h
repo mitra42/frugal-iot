@@ -13,6 +13,6 @@ class Control_Gsheets : public Control_Logger {
     void track(const char* col, String* topicPath);
     void track(const char* col, const char* topicPath);
     void sendGoogle(String* payload);
-    void act();
+    void act() override;
 };
 #endif // CONTROL_GSHEETS_H

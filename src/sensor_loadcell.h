@@ -32,9 +32,9 @@ class Sensor_LoadCell : public Sensor_Float {
   public:
     Sensor_LoadCell(const char* const id, const char * const name, float max, const char* color, const bool retain, 
       uint8_t DOUTpin, uint8_t SCKpin, uint8_t times, int32_t offset, int32_t scale);
-    float read();
+    float read() override;
     void tare();
-    void setup();
+    void setup() override;
     void calibrate(float weight);
   private:
     HX711 *hx711;

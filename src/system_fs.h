@@ -53,21 +53,21 @@ class System_LittleFS : public System_FS {
   public:
     System_LittleFS();
     void pre_setup();
-    fs::File open(const char *filename, const char *mode);
-    fs::File open(const String &filename, const char *mode);
-    virtual boolean exists(const char *filename);
-    virtual boolean exists(const String &filename);
+    fs::File open(const char *filename, const char *mode) override;
+    fs::File open(const String &filename, const char *mode) override;
+    boolean exists(const char *filename) override;
+    boolean exists(const String &filename) override;
 
 };
 class System_SD : public System_FS {
   public:
     uint8_t pin;
     System_SD(uint8_t pin);
-    void setup();
-    fs::File open(const char *filename, const char *mode);
-    fs::File open(const String &filename, const char *mode);
-    virtual boolean exists(const char *filename);
-    virtual boolean exists(const String &filename);
+    void setup() override;
+    fs::File open(const char *filename, const char *mode) override;
+    fs::File open(const String &filename, const char *mode) override;
+    boolean exists(const char *filename) override;
+    boolean exists(const String &filename) override;
 };
 
 #endif //SYSTEM_FS_H

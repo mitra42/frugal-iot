@@ -6,7 +6,7 @@
 class ControlHysterisis : public Control {
   public:
     ControlHysterisis(const char* const id, const char * const name, float now, uint8_t width, float min, float max);
-    void act();
+    void act() override;
     #ifdef  CONTROL_HYSTERISIS_DEBUG
       void debug(const char* const where);
     #endif //CONTROL_HYSTERISIS_DEBUG

@@ -29,7 +29,7 @@ class Sensor_Battery : public Sensor_Analog {
   public: 
     float voltage_divider;
     Sensor_Battery(const uint8_t pin, float voltage_divider);
-    virtual uint16_t read();
+    uint16_t read() override;
 };
 
 #endif // SENSOR_BATTERY_H

@@ -73,7 +73,7 @@ class Actuator_Ledbuiltin : public Actuator_Digital {
   // Actuator_Digital value is on/off for LED
   public: 
     Actuator_Ledbuiltin(const uint8_t p, uint8_t brightness = 255, const char* color = "0xFFFFFF");
-    virtual void act();
+    void act() override;
     uint8_t brightness; // Brightness of LED  0-255
     #ifdef RGB_BUILTIN
       INcolor* color;

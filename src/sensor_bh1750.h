@@ -24,7 +24,7 @@ class Sensor_BH1750 : public Sensor_Float {
     uint8_t pin;
     BH1750 lightmeter;
     Sensor_BH1750(const char* const id, const char * const name, uint8_t pin, bool retain);
-    void setup();
-    virtual float read();
+    void setup() override;
+    float read() override;
 };
 #endif // SENSOR_BH1750_H

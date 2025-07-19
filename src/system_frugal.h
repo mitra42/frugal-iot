@@ -41,11 +41,11 @@ class Frugal_Group : public System_Base {
     void setup();
     void add(System_Base* fb);
     void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet); 
-    void dispatchPath(const String &topicPath, const String &payload); // Only currently relevant on controls
-    String advertisement();
-    void loop();
-    void periodically();
-    void infrequently();
+    void dispatchPath(const String &topicPath, const String &payload) override; // Only currently relevant on controls
+    String advertisement() override;
+    void loop() override;
+    void periodically() override;
+    void infrequently() override;
 };
 
 class System_Frugal : public Frugal_Group {
@@ -87,12 +87,13 @@ class System_Frugal : public Frugal_Group {
     void configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms);
     void startSerial(uint32_t baud, uint16_t serial_delay);
     void startSerial(); // Encapsulate setting up and starting serial
-    void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
-    void dispatchTwig(const String &topicTwig, const String &payload, bool isSet);
-    void setup();
-    void loop(); // Call this from main.cpp
-    void infrequently();
-    void periodically();
+    void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) override; // this is for local messages for ths obj
+    void dispatchTwig(const String &topicTwig, const String &payload, bool isSet); // this is the looping one
+    void setup() override;
+    void setup_after_wifi();
+    void loop() override; // Call this from main.cpp
+    void infrequently() override;
+    void periodically() override;
     bool canOTA();
     bool canMQTT();
 

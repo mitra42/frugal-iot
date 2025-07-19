@@ -26,8 +26,8 @@ class System_LoraMesher : public System_Base {
     uint16_t sentPacketCounter = 0; 
     System_LoraMesher();
     bool findGatewayNode();
-    void setup();
-    //void periodically();
+    void setup() override;
+    //void periodically() override;
     // Match mqtt.client profile
     void publish(const String &topicPath, const String &payload, const bool retain, const int qos);
     void processReceivedPacket(AppPacket<uint8_t>* appPacket);

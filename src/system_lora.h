@@ -15,10 +15,10 @@ class System_LoRa : public System_Base {
     // This class is intended to manage the LoRa system functionality.
 public:
     System_LoRa();
-    void setup();
-    void infrequently();
-    void periodically();
-    void loop();
+    void setup() override;
+    void infrequently() override;
+    void periodically() override;
+    void loop() override;
     void prepareForSleep();
 };
 

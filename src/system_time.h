@@ -17,7 +17,7 @@ class System_Time : public System_Base {
     bool isTimeSet();
     void sync();
     void setup_after_wifi();
-    void infrequently();
+    void infrequently() override;
         
     private:
         time_t _now;

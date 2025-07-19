@@ -19,8 +19,8 @@ class Sensor_ensaht : public Sensor {
     bool isENS161;
     Sensor_ensaht(const char* const id, const char* const name);
     ~Sensor_ensaht(); //TODO-101
-    void setup(); 
-    void readAndSet();
+    void setup() override; 
+    void readAndSet() override;
     void readAndSetAHT();
   private:
     // AHT
@@ -34,7 +34,7 @@ class Sensor_ensaht : public Sensor {
     bool ENScommand(uint8_t val);
     bool ENSsendAndRead(uint8_t reg, uint8_t *buf, uint8_t num);
     bool setenvdata(float temp, float hum);
-    String advertisement();
+    String advertisement() override;
     void dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet);
  };
  

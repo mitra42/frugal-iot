@@ -22,7 +22,7 @@ class System_Power_Mode : public System_Base {
     unsigned long cycle_ms; // Time for each cycle (wake + sleep)
     unsigned long wake_ms; // Time to stay awake during each cycle
     System_Power_Mode(const char* name, unsigned long cycle_ms, unsigned long wake_ms);
-    virtual void setup();
+    void setup() override;
     unsigned long sleep_ms() { return cycle_ms - wake_ms; }
     unsigned long sleep_us() { return sleep_ms() * 1000ULL; }
     bool maybeSleep();
@@ -41,7 +41,7 @@ class System_Power_Loop : public System_Power_Mode {
   public:
     System_Power_Loop(unsigned long cycle_ms, unsigned long wake_ms);
     //void configure(); // Typically called from setup() but might also be called if switch modes
-    //void setup();
+    //void setup() override;
     void prepare();  // Does nothing in Loop
     void sleep(); // Does nothing in Loop
     void recover(); // Does nothing in Loop
@@ -51,9 +51,9 @@ class System_Power_Light : public System_Power_Mode {
   public:
     System_Power_Light(unsigned long cycle_ms, unsigned long wake_ms);
     //void configure(); // Typically called from setup() but might also be called if switch modes
-    void prepare();
-    void sleep();
-    void recover();
+    void prepare() override;
+    void sleep() override;
+    void recover() override;
 };
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
@@ -62,10 +62,10 @@ class System_Power_Deep : public System_Power_Mode {
   public:
     System_Power_Deep(unsigned long cycle_ms, unsigned long wake_ms);
    // void configure(); // Typically called from setup() but might also be called if switch modes
-    void setup();
-    //void prepare(); // Use superclass
-    void sleep();
-    void recover();
+    void setup() override;
+    //void prepare() override; // Use superclass
+    void sleep() override;
+    void recover() override;
 };
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
@@ -74,10 +74,10 @@ class System_Power_LightWiFi : public System_Power_Mode {
   public:
     System_Power_LightWiFi(unsigned long cycle_ms, unsigned long wake_ms);
     //void configure(); // Typically called from setup() but might also be called if switch modes
-    void setup();
-    //void prepare();
-    void sleep();
-    void recover();
+    void setup() override;
+    //void prepare() override;
+    void sleep() override;
+    void recover() override;
 };
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
@@ -86,9 +86,9 @@ class System_Power_Modem : public System_Power_Mode {
   public:
     System_Power_Modem(unsigned long cycle_ms, unsigned long wake_ms);
     //void configure(); // Typically called from setup() but might also be called if switch modes
-    //void prepare();
-    void sleep();
-    //void recover();
+    //void prepare() override;
+    void sleep() override;
+    //void recover() override;
 };
 #endif
 extern System_Power_Mode* powerController;
