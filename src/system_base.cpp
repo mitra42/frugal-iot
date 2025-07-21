@@ -20,6 +20,7 @@ void System_Base::setup() { };
 void System_Base::loop() { }; // Called frequently same as loop() in typical arduino apps
 void System_Base::periodically() { }; // Called once for each period - which might be 10 seconds, or seeral hours
 void System_Base::infrequently() { }; // Run once each period, but should check timing
+//void System_Base::captiveLines(AsyncResponseStream* response) { }; // Called by captive portal for anything to display
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -63,9 +64,7 @@ void System_Base::readConfigFromFS(File dir, const String* leaf) {
   }
 }
 void System_Base::writeConfigToFS(const String& topicTwig, const String& payload) {
-  Serial.print("XXX" __FILE__); Serial.println(__LINE__);
   String path = String("/") + id + "/" + topicTwig;
-  Serial.print("XXX" __FILE__ "path="); Serial.print(path); Serial.print("="); Serial.print(payload); 
   frugal_iot.fs_LittleFS->spurt(path, payload);
 }
 

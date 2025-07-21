@@ -15,6 +15,7 @@
  #define FRUGAL_IOT_H
 
 #include <vector>
+#include "ESPAsyncWebServer.h" // for AsyncResponseStream"
 #include "actuator_ledbuiltin.h"
 #include "system_base.h"
 #include "system_captive.h"
@@ -48,6 +49,7 @@ class Frugal_Group : public System_Base {
     void loop() override;
     void periodically() override;
     void infrequently() override;
+    void captiveLines(AsyncResponseStream* response) override; 
 };
 
 class System_Frugal : public Frugal_Group {
@@ -97,6 +99,7 @@ class System_Frugal : public Frugal_Group {
     void loop() override; // Call this from main.cpp
     void infrequently() override;
     void periodically() override;
+    void captiveLines(AsyncResponseStream* response) override; 
     bool canOTA();
     bool canMQTT();
 

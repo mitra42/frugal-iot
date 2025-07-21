@@ -52,15 +52,11 @@ bool System_WiFi::connectOneAndAllNext() {
   for (; minRSSI > -1000; minRSSI -= 5) { // Look at ranges of RSSI in 5 unit chunks
     for (; (nextNetwork < num_networks); nextNetwork++) {  // Loop over networks we see
       if ((WiFi.RSSI(nextNetwork) > minRSSI) && (WiFi.RSSI(nextNetwork) <= (minRSSI + 5))) { // Pick any in the RSSI range
-        Serial.print(WiFi.SSID(nextNetwork)); Serial.print(F(" ")); Serial.print(WiFi.RSSI(nextNetwork)); Serial.print(F(" "));
-        String filename = String("/wifi/" + WiFi.SSID(nextNetwork)) ;
-        String pw = frugal_iot.fs_LittleFS->slurp(filename, true);
-        if (pw.length()) { // Do we have a password
-          (connectInnerAsync(WiFi.SSID(nextNetwork), pw)); // Try and connect
-          return true; // Drop out - state retained for next call which will happen after it succeeds or fails to connect
-        } else {
-          Serial.println(F("Unknown"));
+        if (connectOne(WiFi.SSID(nextNetwork), WiFi.RSSI(nextNetwork))) {
+          nextNetwork++; // If fails, try next network, not same again
+          return true;
         }
+        // Otherwise - no known password so try next
       }
     }
     nextNetwork = 0; // tried all (if any) networks at this RSSI 
@@ -73,6 +69,18 @@ void System_WiFi::connectOneAndAllReset() {
   minRSSI = 0;
   nextNetwork = 0; 
   // Serial.print(F("WiFi Scan found ")); Serial.println(num_networks); // Reported in state machine
+}
+bool System_WiFi::connectOne(String ssid, int32_t rssi) {
+  Serial.print(ssid); Serial.print(F(" ")); if (rssi) { Serial.print(rssi); }; Serial.print(F(" "));
+  String filename = String("/wifi/") + ssid ;
+  String pw = frugal_iot.fs_LittleFS->slurp(filename, true);
+  if (pw.length()) { // Do we have a password
+    connectInnerAsync(ssid, pw); // Try and connect
+    return true; // Drop out - state retained for next call which will happen after it succeeds or fails to connect
+  } else {
+    Serial.println(F("Unknown"));
+    return false;
+  }
 }
 // Try and connect to a single network
 void System_WiFi::connectInnerAsync(String ssid, String pw) {
@@ -107,11 +115,7 @@ bool System_WiFi::connect1(String ssid, String pw, int wait_seconds) {
 #endif
 
 void System_WiFi::addWiFi(String ssid, String password) {
-  //const String filename = StringF("/wifi/%s",ssid.c_str());
-  const String filename("/wifi/" + ssid);
-  if (!frugal_iot.fs_LittleFS->spurt(filename,password)) {
-    Serial.println(F("Fail to write wifi to file system"));
-  };
+  writeConfigToFS(ssid, password);  // /wifi/<ssid> = password
 }
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
@@ -176,7 +180,7 @@ void System_WiFi::stateMachine() {
           setStatus(WIFI_SCANNING);
           Serial.print("WiFi rescanning "); Serial.println(WiFi.status());
         } else {
-          Serial.println("XXX WiFi Scan failed to start");
+          Serial.println("WiFi Scan failed to start");
           break; // stay in WIFI_NEEDSCAN
         }
         // drop thru
@@ -188,7 +192,6 @@ void System_WiFi::stateMachine() {
           break;
         }
         case WIFI_SCAN_RUNNING: {
-          // Serial.print("XXX WiFi scanning");
           break; // No need for timeout, it will terminate
         }
         default: {
@@ -215,9 +218,11 @@ void System_WiFi::stateMachine() {
       if (WiFi.status() == WL_CONNECTED) {
         setStatus(WIFI_STABILIZING);
       } else if (millis() > (statusSince + 30000)) { // Give it 30 seconds to try
-        // Failed to connect
+        // Failed to connect - if don't do this heavy disconnect it will fail to scan.
+        WiFi.disconnect(true, true); // Shouldnt need to do this //TODO-153 if keep then only oor ESP32
         setStatus(WIFI_SCANNED); // Go back for next
       }
+      // WiFi.status() remains at 6 during this timeout - cant tell quicker that it failed
       break; // Either as WIFI_CONNECTED | WIFI_CONNECTING | WIFI_SCANNED
     case WIFI_STABILIZING: //8
       if (WiFi.status() != WL_CONNECTED) {
@@ -243,6 +248,15 @@ void System_WiFi::stateMachine() {
   }
   //WiFi.softAPgetStationNum() maybe relevant - but prob not - its number connected to captive portal
 }
+void System_WiFi::switchSSID(const String ssid) {
+  if (ssid != WiFi.SSID()) {
+    WiFi.disconnect(); // Disconnect if connected.
+    if (connectOne(ssid)) { // Will be false if no password
+      setStatus(WIFI_CONNECTING); 
+      connectOneAndAllReset(); // If connect fails, start search at top of scan
+    }
+  }
+}
 
 bool System_WiFi::connected() {
   return (status == WIFI_CONNECTED); 
@@ -255,12 +269,11 @@ void System_WiFi::loop() {
   } 
 }
 void System_WiFi::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  Serial.print("XXX" __FILE__); Serial.println(__LINE__);
   if (isSet && (topicSensorId == id)) {
-    Serial.print("XXX" __FILE__); Serial.println(__LINE__);
     // topicTwig is ssid payload is password
-    addWiFi(topicTwig, payload);
-    writeConfigToFS(topicTwig, payload);
+    if (payload.length()) {  // Only save if have a password
+      addWiFi(topicTwig, payload);
+    }
   }
 }
  

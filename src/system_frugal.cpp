@@ -63,11 +63,19 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
       project = payload;
     } else if (topicTwig == "device_name") {
       device_name = payload;
+    } else if (topicTwig == "description") {
+      description = payload;
     }
     writeConfigToFS(topicTwig, payload);
   } else { // No point in passing on our own id for the loop
     Frugal_Group::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
+}
+void System_Frugal::captiveLines(AsyncResponseStream* response) {
+  captive->string(response, id, "project", project, "Project", 2, 15);
+  captive->string(response, id, "device_name", device_name, "Device Name", 3, 15);
+  captive->string(response, id, "description", description, "Description", 3, 40);
+  Frugal_Group::captiveLines(response);
 }
 
 void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
@@ -76,14 +84,9 @@ void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload,
   if (slashPos != -1) {
     String id = topicTwig.substring(0, slashPos);       // Extract the part before the slash
     String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
-    Frugal_Group::dispatchTwig(id, topicLeaf, payload, isSet);
+    dispatchTwig(id, topicLeaf, payload, isSet);
   } else {
     Serial.print(F("No slash found in topic: ")); Serial.println(topicTwig);
-  }
-}
-void Frugal_Group::dispatchPath(const String &topicPath, const String &payload) {
-  for (System_Base* fb: group) {
-    fb->dispatchPath(topicPath, payload);
   }
 }
 
@@ -95,21 +98,15 @@ String Frugal_Group::advertisement() {
   return ad;
 }
 
-void Frugal_Group::loop() {
-  for (System_Base* fb: group) {
-    fb->loop();
-  }
-}
-void Frugal_Group::periodically() {
-  for (System_Base* fb: group) {
-    fb->periodically();
-  }
-}
-void Frugal_Group::infrequently() {
-  for (System_Base* fb: group) {
-    fb->infrequently();
-  }
-}
+// These just loop over the members of the group 
+void Frugal_Group::loop()         { for (System_Base* fb: group) { fb->loop(); } }
+void Frugal_Group::periodically() { for (System_Base* fb: group) { fb->periodically();} }
+void Frugal_Group::infrequently() { for (System_Base* fb: group) { fb->infrequently(); } }
+void Frugal_Group::captiveLines(AsyncResponseStream* response) 
+  { for (System_Base* fb: group) { fb->captiveLines(response); } }
+void Frugal_Group::dispatchPath(const String &topicPath, const String &payload) 
+  { for (System_Base* fb: group) { fb->dispatchPath(topicPath, payload); } }
+
 // Note this constructor is running BEFORE Serial is enabledd
 System_Frugal::System_Frugal(const char* org, const char* project, const char* device_name, const char* description)
 : Frugal_Group("frugal_iot", "System_Frugal"),
@@ -191,8 +188,8 @@ void System_Frugal::setup() {
 
 
 
-  // TODO-152 next is blocking if WiFi fails - fix that
-  Frugal_Group::setup(); // includes WiFi
+// TODO-152 next is blocking if WiFi fails - fix that
+Frugal_Group::setup(); // includes WiFi
   #ifdef SYSTEM_OTA_KEY
     ota->setup_after_mqtt_setup(); // Sends advertisement over MQTT
   #endif

@@ -228,6 +228,10 @@ void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicT
     }
   }
 }
+void System_MQTT::captiveLines(AsyncResponseStream* response) {
+  frugal_iot.captive->string(response, id, "hostname", hostname, "MQTT hostname", 5, 60);
+}
+
 bool System_MQTT::resubscribeAll() {
   // TODO-125 may put a flag on subscriptions then only resubscribe those not done
   // TODO-125 should probably check connected each time go around loop and only flag if sendInner succeeds

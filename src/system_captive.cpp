@@ -106,6 +106,7 @@ class CaptiveRequestHandler : public AsyncWebHandler {
         "<form method=post action=\"/\">"
         "<label>WiFi Network"
         "<select name=ssid onchange=\"document.getElementsByName('password')[0].value=''\">"
+        "<option hidden>Select one...</option>"
       ));
       while (WiFi.scanComplete() < 0) {  }; // TODO-153 careful in case this blocks everything mid-scan   
       for (int i = 0; i < frugal_iot.wifi->num_networks; i++) {
@@ -125,6 +126,9 @@ class CaptiveRequestHandler : public AsyncWebHandler {
 
       //TODO-153 add dropdown of languages (see WiFiSettings.cpp ~L360)
       //TODO-153 add multiple lines from modules - may actually loop here  (see WiFiSettings.cpp ~L376)
+
+      frugal_iot.captiveLines(response); // Calls back to captive.string etc 
+
       response->print(F(
         "<p style='position:sticky;bottom:0;text-align:right'>"
         "<input type=submit value=\"SAVE\" style='font-size:150%'></form>" //TODO-TRANSLATE
@@ -176,17 +180,18 @@ void System_Captive::setup() {
           if (p->name() == "ssid") {
             Serial.println("XXX Got ssid"); 
             const AsyncWebParameter* password = request->getParam("password", true);
-            if (password) {
+            if (password && password->value().length()) {
               Serial.println("XXX Adding wifi"); Serial.print(p->value()); Serial.print("="); Serial.println(password->value());
               frugal_iot.dispatchTwig("wifi", p->value(), password->value(), true);
               // TODO-153 may wish to force it to try this new one
             } else {
               Serial.println("XXX But No password");
             }
+            // Even if no password - can try switching WiFi
+            frugal_iot.wifi->switchSSID(p->value());
           } else if (p->name() == "password") {
             // Ignore - will be read by "ssid" above
           } else {
-            Serial.println("XXX dispatching"); 
             frugal_iot.dispatchTwig(p->name(), p->value(), true);
           }
         }
@@ -209,6 +214,10 @@ void System_Captive::setup() {
   // more handlers...
   Serial.println("XXX " __FILE__ "starting webserver");
   server.begin();
+}
+
+void System_Captive::string(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, uint8_t min_length, uint8_t max_length) {
+  response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlenght=" + min_length + " maxlength=" + max_length + "></label>");  
 }
 /* Example code to add handler
 

@@ -69,7 +69,6 @@ class System_MQTT : public System_Base {
     bool prepareForLightSleep();
     bool recoverFromLightSleep();
 
-
   protected: // TODO - some of the other methods should probably be protected
     WiFiClient net;
     String hostname; 
@@ -84,6 +83,7 @@ class System_MQTT : public System_Base {
     bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
     Subscription* find(const String &topicPath);
     void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet); // receiving message for the mqtt module
+    void captiveLines(AsyncResponseStream* response) override;
     bool resubscribeAll();
     void retainPayload(const String &topicPath, const String &payload);
     void messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos);

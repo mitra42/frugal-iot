@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
+#include "ESPAsyncWebServer.h" // for AsyncResponseStream"
 
 extern const char* valueAdvertLineFloat;
 extern const char* valueAdvertLineBool;
@@ -31,6 +32,7 @@ class System_Base {
     virtual void loop();
     virtual void periodically();
     virtual void infrequently();
+    virtual void captiveLines(AsyncResponseStream* response) { };
 }; // Class FrugalBase
 
 class IO {
