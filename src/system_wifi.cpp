@@ -10,10 +10,12 @@
 #include "system_frugal.h" // for frugal_iot
 #ifdef ESP32
   #include <esp_wifi.h> // For esp_wifi_stop / start and WiFi client
-#elif defined(ESP8266)
-  #include <ESP8266WiFi.h>  // for WiFiClient
 #endif
-#include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
+#if defined(ESP8266)
+  #include <ESP8266WiFi.h>  // for WiFiClient
+#else
+  #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
+#endif
 
 System_WiFi::System_WiFi()
 : System_Base("wifi", "WiFi")
@@ -146,12 +148,17 @@ void System_WiFi::stateMachine() {
   switch (status)
   {
     case WIFI_STARTING: //0
-      if (WiFi.status() != WL_STOPPED ) {
-        #ifdef SYSTEM_WIFI_DEBUG
-          Serial.print(F("XXX Should be WL_STOPPED but")); Serial.println(WiFi.status());
-          // Unsure what to do here - 
-        #endif
-      }
+      #ifdef ESP8266
+        // WL_STOPPED doesnt exist on ESP8266 - check what it should be at startup
+        Serial.print("XXX add check for WiFi.status() = "); Serial.println(WiFi.status());
+      #else
+        if (WiFi.status() != WL_STOPPED ) {
+          #ifdef SYSTEM_WIFI_DEBUG
+            Serial.print(F("XXX Should be WL_STOPPED but")); Serial.println(WiFi.status());
+            // Unsure what to do here - 
+          #endif
+        }
+      #endif
       setStatus(WIFI_NEEDSCAN);
       break;
     case WIFI_DISCONNECTED: //1

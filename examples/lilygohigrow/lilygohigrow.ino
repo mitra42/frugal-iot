@@ -11,7 +11,7 @@ System_Frugal frugal_iot("dev", "developers", "lilygohigrow", "LilyGo HiGrow pla
 
 void setup() {
   frugal_iot.startSerial(); // Encapsulate setting up and starting serial
-
+  frugal_iot.fs_LittleFS->pre_setup();
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 

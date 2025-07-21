@@ -10,14 +10,18 @@
             "maintainer": true
         }
     ],
-    "dependencies": {
-        "256dpi/MQTT": "^2.5.2",
-        "claws/BH1750": "1.3.0",
-        "lennarthennigs/Button2": "^2.4.0",
-        "robtillaart/DHTNEW": "0.5.3",
-        "robtillaart/SHT85": "0.6.0",
-        "robtillaart/HX711": "^0.5.2"
+    "build": {
+        "libCompatMode": "strict"
     },
+    "dependencies": [
+        { "name": "MQTT", "owner": "256dpi"},
+        { "name": "BH1750", "owner": "claws"},
+        { "name": "Button2", "owner": "lennarthennigs"},
+        { "name": "DHTNEW", "owner": "robtillaart"},
+        { "name": "SHT85", "owner": "robtillaart"},
+        { "name": "HX711", "owner": "robtillaart"},
+        { "name": "ESPAsyncWebServer", "owner": "ESP32Async", "platforms": ["espressif8266", "espressif32"]}
+    ],
     "frameworks": "arduino",
     "platforms": "*",
     "repository": {

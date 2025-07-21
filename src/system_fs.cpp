@@ -195,7 +195,12 @@ void System_LittleFS::pre_setup() {
   #ifdef SYSTEM_LITTLEFS_DEBUG
     //Serial.print(F("LittleFS "));
   #endif
-  if (!ESPFS.begin(true)) // Format LittleFS if its not there.
+  #ifdef ESP8266
+    // On ESP8266 it uses ESP8266/FS.cpp  which has no parameters to begin() and so does NOT format a non-existant file system
+    if (!ESPFS.begin())
+  #else
+    if (!ESPFS.begin(true)) // Format LittleFS if its not there.
+  #endif
   {
     //Serial.println(F("initialization failed!"));
   } else {

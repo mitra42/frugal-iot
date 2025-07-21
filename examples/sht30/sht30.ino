@@ -12,6 +12,7 @@ System_Frugal frugal_iot("dev", "developers", "sht30", "SHT30 Temperature and Hu
 
 void setup() {
   frugal_iot.startSerial(); // Encapsulate setting up and starting serial
+  frugal_iot.fs_LittleFS->pre_setup();
 
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
@@ -39,6 +40,6 @@ void setup() {
 }
 
 void loop() {
-  frugal_iot.loop();
+  frugal_iot.loop(); // Should be running watchdog.loop which will call esp_task_wdt_reset()
 }
 

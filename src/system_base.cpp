@@ -42,7 +42,7 @@ void System_Base::readConfigFromFS() {
 }
 void System_Base::readConfigFromFS(File dir, const String* leaf) {
   while (true) {
-    File entry = dir.openNextFile("r");
+    File entry = dir.openNextFile(); // ESP32 default to "r", ESP8266 takes no argument and always does "r"
     if (!entry) {
       // no more files
       break;

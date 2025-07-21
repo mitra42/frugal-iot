@@ -22,9 +22,12 @@
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
+// Handle some arbitrary differences between AsyncTCP.h and ESPAsyncTCP.h
+#define wifi_auth_mode_t uint8_t    // wl_enc_type
+#define WIFI_AUTH_OPEN ENC_TYPE_NONE
+constexpr auto WIFI_AUTH_WPA2_ENTERPRISE = -1337; // not available on ESP8266
 #elif defined(TARGET_RP2040) || defined(TARGET_RP2350) || defined(PICO_RP2040) || defined(PICO_RP2350)
 // Untested - these just come from the example
-//#include <RPAsyncTCP.h>
 //#include <WiFi.h>
 #endif
 
@@ -111,13 +114,13 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       while (WiFi.scanComplete() < 0) {  }; // TODO-153 careful in case this blocks everything mid-scan   
       for (int i = 0; i < frugal_iot.wifi->num_networks; i++) {
         String s = WiFi.SSID(i);
-        wifi_auth_mode_t mode = WiFi.encryptionType(i);
+        wifi_auth_mode_t mode = WiFi.encryptionType(i); //uint8_t on ESP8266
         response->print(F("<option value='"));
         response->print(html_entities(WiFi.SSID(i)) + F("'")); // TODO-153 make this the topic
         if (s == WiFi.SSID()) { response->print(" selected"); }
         response->print(F(">"));
         response->print(WiFi.SSID(i));
-        response->print(mode == WIFI_AUTH_OPEN ? F("") : F("&#x1f512;"));
+        response->print(mode == WIFI_AUTH_OPEN ? F("") : F("&#x1f512;")); // Lock icon
         if (mode == WIFI_AUTH_WPA2_ENTERPRISE) { response->print(F(" unsupported 802.1x")); }
         response->print(F("</option>"));
       }

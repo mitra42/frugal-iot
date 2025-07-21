@@ -119,6 +119,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   controls(new Frugal_Group("controls", "Controls")),
   system(new Frugal_Group("system", "System")),
   buttons(new Frugal_Group("buttons", "Buttons")),
+  captive(new System_Captive()),
   discovery(new System_Discovery()), 
   #ifdef SYSTEM_LORA_WANT
     lora(new System_LoRa()),
@@ -130,7 +131,6 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   #ifdef SYSTEM_OTA_KEY
     ota(new System_OTA()),
   #endif
-  captive(new System_Captive()),
   fs_LittleFS(new System_LittleFS()),
   time(nullptr), // time is optional and setup by main.cpp if needed
   wifi(new System_WiFi())
@@ -181,7 +181,7 @@ void System_Frugal::setup() {
   #ifdef ESP32
     nodeid =  String(F("esp32-")) + (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24));
   #elif defined(ESP8266)
-    nodeid = String(F("esp8266-")_ + (Sprintf("%06" PRIx32, ESP.getChipId()))
+    nodeid = String(F("esp8266-")) + (Sprintf("%06" PRIx32, ESP.getChipId()));
   #else
     #error Only defined for ESP32 and ESP8266
   #endif
