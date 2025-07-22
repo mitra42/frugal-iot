@@ -277,38 +277,41 @@ void System_MQTT::messageReceived(const String &topicPath, const String &payload
 // These are intentionally required parameters rather than defaulting so the coder thinks about the desired behavior
 
 // Send message to MQTT client - used for both repeats and first time messages
-#if defined(SYSTEM_LORAMESHER_SENDER_TEST) // TODO-152 this will be a program test - e.g. whether WiFi enabled
-  // TODO-151 - temporary hack with no decision
 void System_MQTT::messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos) {
-  frugal_iot.loramesher->publish(topicPath, payload, retain, qos);
-}
-#else
-void System_MQTT::messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos) {
-  if (!client.publish(topicPath, payload, retain, qos)) {
-    #ifdef SYSTEM_MQTT_DEBUG
-      Serial.print(F("Failed to publish: ")); Serial.print(topicPath); Serial.print(F("=")); Serial.print(payload); 
-      Serial.print(" qos="); Serial.print(qos);
-      // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
-      
-      switch (client.lastError()) {
-        case -1:
-          Serial.print(F(" MQTT Buffer too small, message length~")); Serial.println(topicPath.length() + payload.length());
-          break;
-        case -9:
-          Serial.println(F(" Missing or Wrong packet"));
-          break;
-        default: 
-          Serial.print(F(" err=")); Serial.println(client.lastError());
+  if (connected()) {
+    if (!client.publish(topicPath, payload, retain, qos)) {
+      #ifdef SYSTEM_MQTT_DEBUG
+        Serial.print(F("Failed to publish: ")); Serial.print(topicPath); Serial.print(F("=")); Serial.print(payload); 
+        Serial.print(" qos="); Serial.print(qos);
+        // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
+        
+        switch (client.lastError()) {
+          case -1:
+            Serial.print(F(" MQTT Buffer too small, message length~")); Serial.println(topicPath.length() + payload.length());
+            break;
+          case -9:
+            Serial.println(F(" Missing or Wrong packet"));
+            break;
+          default: 
+            Serial.print(F(" err=")); Serial.println(client.lastError());
+        }
+      #endif // SYSTEM_MQTT_DEBUG
+      if (qos > 0) {
+        // This doesn't work - if first publish failed, this does, and it loops
+        // TODO-152 maybe resurrect this, now check on client.connected()
+        //Serial.print(F("Requeuing"));
+        //queued.emplace_front(topicPath, payload, retain, qos);
       }
-    #endif // SYSTEM_MQTT_DEBUG
-    if (qos > 0) {
-      // This doesn't work - if first publish failed, this does, and it loops
-      //Serial.print(F("Requeuing"));
-      //queued.emplace_front(topicPath, payload, retain, qos);
-    }
-  };
+    };
+  #ifdef LORAMESHER_WANT
+    } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
+        frugal_iot.loramesher->publish(topicPath, payload, retain, qos);
+  #endif
+  } else { 
+    // Currently not doing anything with messages if neither WiFi->MQTT or LoraMesher // TODO-152
+    // Should probably queue till have a connection // TODO-152
+  }
 }
-#endif
 // Send or queue up a message 
 void System_MQTT::messageSend(const String &topicPath, const String &payload, const bool retain, const int qos) {
   // TODO-21-sema also queue if WiFi is down and qos>0 - not worth doing till frugal_iot.wifi->connect is non-blocking

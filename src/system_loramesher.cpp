@@ -17,7 +17,7 @@
  */
 
 #include "_settings.h"
-#ifdef SYSTEM_LORAMESHER_WANT // defined in platformio.ini
+#ifdef SYSTEM_LORAMESHER_WANT // defined in platformio.ini - //TODO-152 remove this when code stable
 
 // This is currently only defined for ESP32, 
 // Certainly fials to complie on ESP8266 but might be fixable - I dont have a ESP8266+LoRa combo to try
@@ -161,6 +161,9 @@ bool System_LoraMesher::findGatewayNode() {
       gatewayNodeAddress = BROADCAST_ADDR;
       return false;
     }
+}
+bool System_LoraMesher::connected() {
+  return findGatewayNode();
 }
 
 // setup points radio at receiveLoRaMessage_Handle which is set to processReceivedPackets in createReceiveMessages()
