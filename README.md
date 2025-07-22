@@ -73,6 +73,10 @@ Then In Arduino IDE
 * Tools -> Manage Libraries -> Search for, and install:
   * Libraries used by almost all cases
     * MQTT by Joel Gaehwiler
+    * All by ESP32Async ... (careful there are some similarly named forks by other people of these three)
+    * Async TCP (for ESP32s)
+    * ESP Async TCP (for ESP8266)
+    * ESP Async WebServer
   * Libraries only needed if you use specific sensors or actuators
     * SHT85 by Rob Tillaart;
     * DHTNEW also by Rob Tillaart
