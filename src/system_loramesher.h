@@ -22,14 +22,15 @@ class System_LoraMesher : public System_Base {
     LoraMesher& radio;
     LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();
     uint16_t gatewayNodeAddress;
+    uint16_t rcvdPacketCounter = 0;
+    uint16_t sentPacketCounter = 0; 
     System_LoraMesher();
     bool findGatewayNode();
-    void setup();
-    void periodically();
-    #if !defined(SYSTEM_LORAMESHER_SENDER_TEST) && !defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
-      // Match mqtt.client profile
-      void publish(const String &topicPath, const String &payload, const bool retain, const int qos);
-    #endif
+    void setup() override;
+    //void periodically() override;
+    // Match mqtt.client profile
+    void publish(const String &topicPath, const String &payload, const bool retain, const int qos);
+    void processReceivedPacket(AppPacket<uint8_t>* appPacket);
     void prepareForSleep();
 };
 

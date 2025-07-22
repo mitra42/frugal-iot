@@ -1,5 +1,7 @@
 /*
- *  File System handling - will be used with either SD or SPIFFS
+ *  Frugal IoT - File System handling - will be used with either SD or LittleFS
+ * 
+ * There are two subclasses - System_SD and System_LittleFS each of which expose the same API 
  * 
  * Configuration:
  * Required:
@@ -15,22 +17,13 @@
 #include "_settings.h"
 #include <Arduino.h>
 
-#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
+#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_LITTLEFS_DEBUG)
   #define SYSTEM_FS_DEBUG
 #endif
 
 #include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
 #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
 #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
-
-#ifdef ESP32
-  #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
-  #include <SPIFFS.h>
-#elif ESP8266
-  #define ESPFS LittleFS // LittleFS defind in LittleFS.h
-  #include <LittleFS.h>
-#endif // ESP32||ESP8266
-
 
 #include "system_fs.h"
 #include "system_base.h"
@@ -45,6 +38,7 @@ System_FS::System_FS(const char* const id, const char* const name)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreturn-type" 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 fs::File System_FS::open(const char *filename, const char *mode) { 
   Serial.print(F("should be subclassed"));
 }
@@ -74,28 +68,42 @@ boolean System_SD::exists(const char *filename) {
 boolean System_SD::exists(const String &filename) {
   return SD.exists(filename);
 }
-fs::File System_SPIFFS::open(const char *filename, const char *mode) { 
+fs::File System_LittleFS::open(const char *filename, const char *mode) { 
   return ESPFS.open(filename, mode);
 }
-fs::File System_SPIFFS::open(const String &filename, const char *mode) { 
+fs::File System_LittleFS::open(const String &filename, const char *mode) { 
   return ESPFS.open(filename, mode);
 }
-boolean System_SPIFFS::exists(const char *filename) {
+bool System_LittleFS::mkdir(const String &path) { 
+  return ESPFS.mkdir(path);
+}
+boolean System_LittleFS::exists(const char *filename) {
   return ESPFS.exists(filename);
 }
-boolean System_SPIFFS::exists(const String &filename) {
+boolean System_LittleFS::exists(const String &filename) {
   return ESPFS.exists(filename);
 }
 
 // Copied from system_wifi.cpp which got it from ESP-WiFiSettings library
 bool System_FS::spurt(const String& filename, const String& content) {
     File f = open(filename, "w"); // Virtual, knows what kind of FS
-    if (!f) return false;
+    if (!f) {
+      Serial.print(F("Failed to open for writing ")); Serial.println(filename);
+      return false;
+    }
     auto w = f.print(content);
     f.close();
+    if (w != content.length()) {
+      Serial.print(F("Failed to write to ")); Serial.println(filename);
+    }
     return w == content.length();
 }
-String System_FS::slurp(const String& fn) {
+String System_FS::slurp(const String& fn, const bool quietfail) {
+  if (quietfail && !exists(fn)) {
+    //Serial.print("XXX __FILE"); Serial.println(__LINE__);
+    return "";
+  }
+  //Serial.print("XXX __FILE"); Serial.println(__LINE__);
   File f = open(fn, "r"); // Virtual, knows what kind of FS
   String r = f.readString();
   f.close();
@@ -164,7 +172,7 @@ System_SD::System_SD(uint8_t pin)
   pin(pin)
   {}
 
-System_SPIFFS::System_SPIFFS() : System_FS("spiffs", "SPIFFS") {}
+System_LittleFS::System_LittleFS() : System_FS("littlefs", "LittleFS") {}
 
 void System_SD::setup() {
   // Library is SS=D8=15 fails;  old sketch was 4 some online says 8 but that fatals. D4=GPIO0=2 worked on Lolin Relay with no solder bridge
@@ -181,28 +189,26 @@ void System_SD::setup() {
     #endif
   }
 }
-void System_SPIFFS::setup() {
-  #ifdef SYSTEM_SPIFFS_DEBUG
-    #ifdef ESP32
-      Serial.print(F("SPIFFS "));
-    #elif ESP8266 
-      Serial.print(F("LittleFS "));
-    #endif
+// Note pre_setup is usually running in frugal_iot constructor BEFORE serial setup
+// If need to debug, uncomment the Serial's below, and move the call of this to main.cpp AFTER Serial started
+void System_LittleFS::pre_setup() {
+  #ifdef SYSTEM_LITTLEFS_DEBUG
+    //Serial.print(F("LittleFS "));
   #endif
-
-  #ifdef ESP32
-    if (!ESPFS.begin(true))
-  #elif ESP8266 
+  #ifdef ESP8266
+    // On ESP8266 it uses ESP8266/FS.cpp  which has no parameters to begin() and so does NOT format a non-existant file system
     if (!ESPFS.begin())
+  #else
+    if (!ESPFS.begin(true)) // Format LittleFS if its not there.
   #endif
   {
-      Serial.println(F("initialization failed!"));
+    //Serial.println(F("initialization failed!"));
   } else {
-    #ifdef SYSTEM_SPIFFS_DEBUG
-      Serial.println(F("initialization done."));
+    #ifdef SYSTEM_LITTLEFS_DEBUG
+      //Serial.println(F("initialization done."));
     #endif
-    #ifdef SYSTEM_SPIFFS_DEBUG
-      printDirectory("/"); // For debugging
+    #ifdef SYSTEM_LITTLEFS_DEBUG
+      //printDirectory("/"); // For debugging
     #endif
   }
 }

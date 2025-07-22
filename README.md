@@ -1,86 +1,117 @@
 # Frugal IoT
 A platform to enable affordable sensor networks
 
-For now see the Google Doc: [Frugal IoT - enabling low cost sensor networks](https://docs.google.com/document/d/1hOeTFgbbRpiKB_TN9R2a2KtBemCyeMDopw9q_b0-m2I/edit?usp=sharing)
-Scroll down to the bottom for links to other docs. 
-
-Also see the subdirectory ./docs
+The best source of informtion is the [Wiki here](https://github.com/mitra42/frugal-iot/wiki)
 
 ## Installation and testing POC
 
-This is still at POC stage, so installation is non-optimal, and only tested on Macs - assistance appreciated to improve that ! 
+The repo is working and on multiple devices. 
 
-Please recheck these instructions as they will probably change often as code evolves to an easier POC setup, 
-i.e. installation of each early version might be different !
+HOWEVER - there was a recent refactor and there may be issues caused by that. 
+ALSO - its only tested on Macs - so documentation for other platforms could be improved. 
+
+#### Platforms
+The intention is for this library to work in both PlatformIO and Arduino IDE. 
+
+Working in the Arduino IDE is simpler, but seriously, its like working with one hand tied behind your back. We strongly encourage installing Visual Studio with the Platform IO plugin. 
 
 ### Getting help 
 
-If you having an installation related question please check the (./docs/develper faq.md) 
+If you having an installation related question please check the
+[Wiki](https://github.com/mitra42/frugal-iot/wiki)
 and if it you cannot find the answer there, please raise a new issue at (https://github.com/mitra42/frugal-iot/issues) 
 make sure the title starts "INSTALLATION: ".
 
-Please note that if you cannot understand how to install that is probably a problem with 
-the quality of our documentation so happy to help! 
+Please note that if you cannot understand how to install then that is probably a problem with 
+the quality of our documentation so I am happy to help! 
 
 ### Test and development environment overview 
 
 There are a few components of the environment - with separate repos
 
-* [Dev board](https://www.github.com/mitra42/frugal-iot) - programmed from the Arduino IDE in C++
+* [Dev board](https://www.github.com/mitra42/frugal-iot) - This repo - programmed with PlatformIO in C++
 * MQTT Broker - currently off-the-shelf Mosquitto, with a development server running on frugaliot.naturalinnovation.org
 * [MQTT Logger](https://www.github.com/mitra42/frugal-iot-logger) logs MQTT messsages to files for later analysis and graphing.
 * [HTTP Management server](https://www.github.com/mitra42/frugal-iot-server) - programmed in Node/Javascript, tested on Macs and Linux and 
-  with a demo server at frugaliot.naturalinnovation.org:8080 which incorporates the `logger`
-* [HTTP/CSS/JS client](https://www.github.com/mitra42/frugal-iot-client). Its not dependent on any platform/framework, and uses Webcomponents 
-  for its modularity so it should run in any modern browser (including most phones)
+  with a demo server at frugaliot.naturalinnovation.org which incorporates the `logger`
+* [HTTP/CSS/JS client](https://www.github.com/mitra42/frugal-iot-client). Its not dependent on any platform/framework, and uses Webcomponents for its modularity so it should run in any modern browser (including most phones)
 * Stand alone server intended to run on sites with multiple sensors - not yet started, but it will probably be a Raspberry Pi unless we can shoe-horn it into a ESP32
 
-Because the demo servers on `https://frugaliot.naturalinnovation.org`, it is perfectly possible to develop the firmware without running your own servers, 
+Because the demo server is running on `https://frugaliot.naturalinnovation.org`, it is perfectly possible to develop the firmware without running your own servers, 
 or to fork the client, and interact with the servers.  
 
 ### Test Harware/Firmware environment
-Our current test dev board is a ESP8266 Lolin D1 Mini with a SHT30 Temp & Humidity shield, also from Lolin, 
-I expect to start testing other combinations of boards and sensors soon. 
-Instructions for other board/sensor combinations are welcome. 
-
-I also test on Lolin C3 Pico (ESP32-C3), and the code has been run on SONOFF R2 digital switches, and on the D1 Mini Pro (Green); 
+We test on a variety of environments - most often the ESP8266 Lolin D1 Mini; ESP32 S2 mini or C3 pico; and the Lilygo TTGO Lora series and Sonoff R2 switches. More details of supported hardware is on the
+[Wiki:Supported Hardware](https://github.com/mitra42/frugal-iot/wiki/Supported-Hardware)
 
 
-#### Arduino IDE basics - skip if you know what you are doing
-* In Arduino IDE 
-* Open `~/frugal-iot/`
-* Tools -> Upload Speed -> 460800
+#### Platform IO  basics - skip if you know what you are doing
+
+* In whatever directory you want ....
+* git clone https://github.com/mitra42/frugal-iot.git
+
+In PlatformIO
+* File > Open > frugal-iot > examples > sht30
+* Select the board and port on the bottom bar
+* It will install the necessary libraries and compile
+* 
+
+
+#### Arduino IDE basics - skip most of this if you know what you are doing
+
+On https://github.com/mitra42/frugal-iot
+
+* Code > Download Zip
+
+Then In Arduino IDE 
+* top menu > Sketch > Include Library > Add .ZIP file and select Zip file opened
+* This library should now be available to your own sketches
+* File > Examples > scroll down to bottom group "Examples form Custom Libraries"
+* Frugal-IoT > select any example SHT30 is simplest
+* See notes below on configuring your example
+* Tools -> Upload Speed -> 115200
 * Tools -> Manage Libraries -> Search for, and install:
   * Libraries used by almost all cases
-    * ESP-WiFiSettings by Juerd Waalboer
     * MQTT by Joel Gaehwiler
-  * Libraries only needed if you use specific sensors. 
+    * All by ESP32Async ... (careful there are some similarly named forks by other people of these three)
+    * Async TCP (for ESP32s)
+    * ESP Async TCP (for ESP8266)
+    * ESP Async WebServer
+  * Libraries only needed if you use specific sensors or actuators
     * SHT85 by Rob Tillaart;
-    * DHTNEW also by Rob Tillaart (SENSOR_DHT_WANT to enable)
-    * BH1750 from Christopher Laws (SENSOR_BH1750_WANT to enable)
+    * DHTNEW also by Rob Tillaart
+    * BH1750 from Christopher Laws
+    * Button2 by Lennart Hennigs
+    * HX711 by Rob Tillaart for Load Sensors
     * If you add more sensors make sure to add any library requirement here (TO_ADD_SENSOR)
-  * Libraries only needed if you use specific sensors. 
-    * If you add more actuators make sure to add any library requirement here (TO_ADD_ACTUATOR)
 * Tools -> Board 
   * Check you have selected the dev board
   * TODO add instructions, or a link here for adding new boards to an Arduino IDE - most will need to do this. 
 * Tools -> Port 
   * Select the port your device is plugged into
 * Tools -> Serial Monitor 
-  * This can be tricky - it should open at 460800 but might need changing after the first run at which point it should remember
+  * This can be tricky - it should open at 115200 but might need changing after the first run at which point it should remember
+
 
 ### Installing and testing on a dev board
 
 #### Basic test
-* Copy _local-template.h to _local.h. For now leave the ORGANIZATION as "dev" unless you talk to us. 
-  Add the MQTT server, userid and password, if you aren't going to use `naturalinnovation.org` 
-  Uncomment lines for any sensors you have on the board.
+* Edit around line 31 of the .ino files `addWiFi` to have your own SSID and Password, 
+* You can duplicate this line for multiple WiFi's 
+* If you do not add a WiFi that it can see, then a portal will be opened - see below. 
+* On PlatformIO there is a nicer alternative way to put the WiFi's and configuration info in data files, but TODO this needs documenting.
+* Add the MQTT server, userid and password, if you aren't going to use `naturalinnovation.org` 
+* Check the examples for how to add sensors, controls and actuators. 
 * Compile and Flash to your dev board
-* On a Wifi device such as a phone
+  * On PlatformIO this is the compile button (✔︎ and > on bottom bar)
+  * On Arduino its the ✔︎ and > on the top bar
+* If you did not add a valid WiFi
+  * On a WiFi device such as a phone
   * Connect to the wifi node of the board which will have a SSID like esp8266-12345
-  * Configure the Wifi SSID and Password of your router,
-  * Pick the name for your project (use the same one for all your boards), 
-    * Let us know by either (opening a Github issue)[https://github.com/mitra42/frugal-iot/issues/new/choose], or editing `html/server/config.yaml` and doing a Pull Request
+  * Configure the WiFi SSID and Password of your router,
+  * Pick the name for your project (use the same one for all your boards),  
+    * You can use "developers" for testing,
+    * Or pick your own and let us know by either (opening a Github issue)[https://github.com/mitra42/frugal-iot/issues/new/choose], or editing `html/server/config.yaml` and doing a Pull Request
   * Give your board a name and description
   * Click SAVE then RESTART
 * The device should now connect to the mqtt server at frugaliot.naturalinnovation.org
@@ -94,20 +125,12 @@ Open a browser to https://frugaliot.naturalinnovation
 #### Other languages
 At the moment (Nov2024) - see [issue #42](https://github.com/mitra42/frugal-iot/issues/42), language support is being added. 
 
-You can define `#define LANGUAGE_DEFAULT "de"` in `_local.h` to default to German. 
-And you can add `#define LANGUAGE_DE` to `_local.h` to *only* compile German (saving program space)
+You can define `-D LANGUAGE_DEFAULT "de"` in `platformio.ini` to default to German. 
+And you can add `-D LANGUAGE_DE` to `platformio.ini` to *only* compile German (saving program space)
 You can add multiple lines to compile multiple languages.
-
-To only compile one language (which saves memory) go into Arduino/libraries/ESP-WiFiSettings/WiFiSettings_strings.h 
-and add one or more lines at the top like `#define LANGUAGE_DE`. 
-
-Unfortunately we haven't found a way to control the library compilation from the `_local.h` file.
 
 ### Server development
 
 Because of the demo servers on frugaliot.naturalinnovation.org, it is perfectly possible to develop the firmware without running your own servers.
 But if you want to do server or client development ... see the README.md on each component's repository.
-
-
-
 

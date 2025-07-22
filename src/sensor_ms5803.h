@@ -27,9 +27,9 @@ class Sensor_ms5803 : public Sensor {
     uint8_t CRC4(uint16_t n_prom[]);
     Sensor_ms5803(const char* const id, const char * const name, uint8_t address);
     ~Sensor_ms5803(); //TODO-132
-    void setup(); 
+    void setup() override; 
     uint8_t ms5803CRC4();
-    void readAndSet(); // Override in Sensor
+    void readAndSet() override; // Override in Sensor
     void dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet);
  };
  

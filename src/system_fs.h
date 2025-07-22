@@ -4,7 +4,7 @@
 #include "_settings.h"
 #include "system_base.h"
 
-#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
+#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_LITTLEFS_DEBUG)
   #define SYSTEM_FS_DEBUG
 #endif
 
@@ -13,15 +13,8 @@
   #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
   #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
 #endif
-#ifdef SYSTEM_SPIFFS_WANT
-#ifdef ESP32
-  #define ESPFS SPIFFS // SPIFFS defind in SPIFFS.h
-  #include <SPIFFS.h>
-#elif ESP8266
-  #define ESPFS LittleFS // LittleFS defind in LittleFS.h
-  #include <LittleFS.h>
-#endif // ESP32||ESP8266
-#endif // SYSTEM_SPIFFS_WANT
+#define ESPFS LittleFS // LittleFS defind in LittleFS.h
+#include <LittleFS.h>
 
 // Define defuault SD Pin if known - constructor can use if not specified
 #ifndef SYSTEM_SD_PIN
@@ -38,16 +31,15 @@
 class System_FS : public System_Base {
   public:
     System_FS(const char* const id, const char* const name);
-    bool spurt(const String& fn, const String& content);  // TODO-110 port to SD
-    String slurp(const String& fn);  // TODO-110 port to SD
-
+    bool spurt(const String& fn, const String& content);
+    String slurp(const String& fn, const bool quietfail=false);
     // --- these are just the underlying FS methods exposed
     virtual fs::File open(const char *filename, const char *mode = "r");
     virtual fs::File open(const String &filename, const char *mode = "r");
     virtual boolean exists(const char *filename);
     virtual boolean exists(const String &filename);
 
-    // Once you have a file you should be able to append(String&) and close(); independent of whether its SPIFFS LittleFS or SD
+    // Once you have a file you should be able to append(String&) and close(); independent of whether its LittleFS LittleFS or SD
 
     #ifdef SYSTEM_FS_DEBUG
       String formatBytes(size_t bytes);
@@ -56,25 +48,25 @@ class System_FS : public System_Base {
     #endif
 };
 
-class System_SPIFFS : public System_FS {
+class System_LittleFS : public System_FS {
   public:
-    System_SPIFFS();
-    void setup();
-    fs::File open(const char *filename, const char *mode);
-    fs::File open(const String &filename, const char *mode);
-    virtual boolean exists(const char *filename);
-    virtual boolean exists(const String &filename);
-
+    System_LittleFS();
+    void pre_setup();
+    fs::File open(const char *filename, const char *mode) override;
+    fs::File open(const String &filename, const char *mode) override;
+    boolean exists(const char *filename) override;
+    boolean exists(const String &filename) override;
+    bool mkdir(const String &path);
 };
 class System_SD : public System_FS {
   public:
     uint8_t pin;
     System_SD(uint8_t pin);
-    void setup();
-    fs::File open(const char *filename, const char *mode);
-    fs::File open(const String &filename, const char *mode);
-    virtual boolean exists(const char *filename);
-    virtual boolean exists(const String &filename);
+    void setup() override;
+    fs::File open(const char *filename, const char *mode) override;
+    fs::File open(const String &filename, const char *mode) override;
+    boolean exists(const char *filename) override;
+    boolean exists(const String &filename) override;
 };
 
 #endif //SYSTEM_FS_H

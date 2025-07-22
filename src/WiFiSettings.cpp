@@ -1,3 +1,5 @@
+#ifdef OBSOLETED
+
 /* This is a copy of ESP-WiFiSettings - that library is excellent but had 
  * a number of limitations - including not supporting Indonesia. 
  * At some point, the effort to get PR's included was too much so its 
@@ -7,17 +9,13 @@
  */
 
 #include "WiFiSettings.h"
+#include "system_frugal.h" // For frugal_iot.LittleFS
+
 #ifdef ESP32
-    #define ESPFS SPIFFS
-    #define ESPMAC (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24))
-    #include <SPIFFS.h>
     #include <WiFi.h>
     #include <WebServer.h>
     #include <esp_task_wdt.h>
 #elif ESP8266
-    #define ESPFS LittleFS
-    #define ESPMAC (Sprintf("%06" PRIx32, ESP.getChipId()))
-    #include <LittleFS.h>
     #include <ESP8266WiFi.h>
     #include <ESP8266WebServer.h>
     #define WebServer ESP8266WebServer
@@ -37,22 +35,7 @@
 
 WiFiSettingsLanguage::Texts _WSL_T;
 
-#define Sprintf(f, ...) ({ char* s; asprintf(&s, f, __VA_ARGS__); String r = s; free(s); r; })
 
-    String slurp(const String& fn) {
-        File f = ESPFS.open(fn, "r");
-        String r = f.readString();
-        f.close();
-        return r;
-    }
-
-    bool spurt(const String& fn, const String& content) {
-        File f = ESPFS.open(fn, "w");
-        if (!f) return false;
-        auto w = f.print(content);
-        f.close();
-        return w == content.length();
-    }
 namespace {  // Helpers
 
     String pwgen() {
@@ -88,8 +71,8 @@ namespace {  // Helpers
         long max = LONG_MAX;
 
         String filename() { String fn = "/"; fn += name; return fn; }
-        bool store() { return (name && name.length())? spurt(filename(), value): true; }
-        void fill() { if (name && name.length()) value = slurp(filename()); }
+        bool store() { return (name && name.length())? frugal_iot.fs_LittleFS->spurt(filename(), value): true; }
+        void fill() { if (name && name.length()) value = frugal_iot.fs_LittleFS->slurp(filename()); }
         virtual void set(const String&) = 0;
         virtual String html() = 0;
     };
@@ -163,7 +146,7 @@ String WiFiSettingsClass::string(const String& name, const String& init, const S
     x->name = name;
     x->label = label.length() ? label : name;
     x->init = init;
-    x->fill();
+    x->fill(); // slurps from FS
 
     params.push_back(x);
     return x->value.length() ? x->value : x->init;
@@ -239,16 +222,8 @@ void WiFiSettingsClass::heading(const String& contents, bool escape) {
     html("h2", contents, escape);
 }
 
-void WiFiSettingsClass::rescan() {
-  // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
-  //bool async = false, bool show_hidden = false, bool passive = false, uint32_t max_ms_per_chan = 300, uint8_t channel = 0, const char *ssid = nullptr, const uint8_t *bssid = nullptr
-
-  num_networks = WiFi.scanNetworks();
-  Serial.print(num_networks, DEC);
-  Serial.println(F(" WiFi networks found."));
-}
-
 void WiFiSettingsClass::portal() {
+#ifdef ALREADYCONSIDEREDFORNEWPORTAL
     WebServer http(80);
     DNSServer dns;
   begin();
@@ -258,7 +233,6 @@ void WiFiSettingsClass::portal() {
   #else
       WiFi.disconnect(true);
   #endif
-
     Serial.println(F("Starting access point for configuration portal."));
   if (secure && password.length()) {
     Serial.printf("SSID: '%s', Password: '%s'\n", hostname.c_str(), password.c_str());
@@ -271,9 +245,11 @@ void WiFiSettingsClass::portal() {
     dns.setTTL(0);
     dns.start(53, "*", WiFi.softAPIP());
     if (onPortal) onPortal(); // Not using this
-    String ip = WiFi.softAPIP().toString();
+#endif
+    String ip = WiFi.softAPIP().toString(); // TODO-153 note how this is used by redirect 
     Serial.println(ip);
 
+    // TODO-153 may be important
     auto redirect = [&http, &ip]() {
         // iPhone doesn't deal well with redirects to http://hostname/ and
         // will wait 40 to 60 seconds before succesful retry. Works flawlessly
@@ -292,13 +268,14 @@ void WiFiSettingsClass::portal() {
     // Draws the portal, note that while this is only setup once, 
     // its a function and will be called and dynamically display current scan results each time
     http.on("/", HTTP_GET, [this, &http, &redirect]() {
-        if (redirect()) return;
+        if (redirect()) return; //TODO-153 may be important for iPhones - see definition of redirect
 
         String ua = http.header("User-Agent");
         bool interactive = !ua.startsWith(F("CaptiveNetworkSupport"));
 
+#ifdef ALREADYCONSIDEREDFORNEWPORTAL
         if (interactive && onPortalView) onPortalView(); // TODO-128 Not using this but could be way to know if user active
-        if (onUserAgent) onUserAgent(ua);
+        if (onUserAgent) onUserAgent(ua); 
 
         http.setContentLength(CONTENT_LENGTH_UNKNOWN);
         http.send(200, "text/html");
@@ -329,6 +306,8 @@ void WiFiSettingsClass::portal() {
         http.sendContent(_WSL_T.button_restart);
         http.sendContent(F("\"></form><hr><h1>"));
         http.sendContent(_WSL_T.title);
+#endif // ALREADYCONSIDEREDFORNEWPORTAL
+//TODO-153 adapt next chunk so sends  wifi/add/<ssid>=<password>
         http.sendContent(F("</h1><form method=post><label>"));
         http.sendContent(_WSL_T.ssid);
         http.sendContent(F(":<br><b class=s>"));
@@ -345,7 +324,7 @@ void WiFiSettingsClass::portal() {
             "<select name=ssid onchange=\"document.getElementsByName('password')[0].value=''\">"
         ));
 
-        ssid = slurp("/wifi-ssid");
+        ssid = frugal_iot.fs_LittleFS->slurp("/wifi-ssid");
         bool found = false;
         for (int i = 0; i < num_networks; i++) {
             String opt = F("<option value='{ssid}'{sel}>{ssid} {lock} {1x}</option>");
@@ -375,9 +354,10 @@ void WiFiSettingsClass::portal() {
 
         http.sendContent(_WSL_T.wifi_password);
         http.sendContent(F(":<br><input name=password value='"));
-        if (slurp("/wifi-password").length()) http.sendContent("##**##**##**");
+        if (frugal_iot.fs_LittleFS->slurp("/wifi-password").length()) http.sendContent("##**##**##**");
         http.sendContent(F("'></label><hr>"));
 
+//TODO-153 add dropdown of languages
         if (WiFiSettingsLanguage::multiple()) {
             http.sendContent(F("<label>")); 
             http.sendContent(_WSL_T.language); 
@@ -393,10 +373,12 @@ void WiFiSettingsClass::portal() {
             http.sendContent(F("</select></label>"));
         }
 
+//TODO-153 add display of a number of items generated by modules
         for (auto& p : params) {
             http.sendContent(p->html());
         }
 
+#ifdef ALREADYCONSIDEREDFORNEWPORTAL
         http.sendContent(F(
             "<p style='position:sticky;bottom:0;text-align:right'>"
             "<input type=submit value=\""
@@ -404,13 +386,15 @@ void WiFiSettingsClass::portal() {
         http.sendContent(_WSL_T.button_save);
         http.sendContent(F("\"style='font-size:150%'></form>"));
     });
+#endif //ALREADYCONSIDEREDFORNEWPORTAL
+
 
     http.on("/", HTTP_POST, [this, &http]() {
         bool ok = true;
-        if (! spurt("/wifi-ssid", http.arg("ssid"))) ok = false;
+        if (! frugal_iot.fs_LittleFS->spurt("/wifi-ssid", http.arg("ssid"))) ok = false;
 
         if (WiFiSettingsLanguage::multiple()) {
-            if (! spurt("/WiFiSettings-language", http.arg("language"))) ok = false;
+            if (! frugal_iot.fs_LittleFS->spurt("/WiFiSettings-language", http.arg("language"))) ok = false;
             // Don't update immediately, because there is currently
             // no mechanism for reloading param strings.
             //language = http.arg("language");
@@ -419,7 +403,7 @@ void WiFiSettingsClass::portal() {
 
         String pw = http.arg("password");
         if (pw != "##**##**##**") {
-            if (! spurt("/wifi-password", pw)) ok = false;
+            if (! frugal_iot.fs_LittleFS->spurt("/wifi-password", pw)) ok = false;
         }
 
         for (auto& p : params) {
@@ -432,7 +416,7 @@ void WiFiSettingsClass::portal() {
             http.send(302, "text/plain", "ok");
             if (onConfigSaved) onConfigSaved();
         } else {
-            // Could be missing SPIFFS.begin(), unformatted filesystem, or broken flash.
+            // Could be missing LittleFS.begin(), unformatted filesystem, or broken flash.
             http.send(500, "text/plain", _WSL_T.error_fs);
         }
     });
@@ -471,59 +455,6 @@ void WiFiSettingsClass::portal() {
   }
 }
 
-/* Deprecated for version in sysetm_wifi.cpp 
-bool WiFiSettingsClass::connect(bool portal, int wait_seconds) {
-    begin();
-
-    ssid = slurp("/wifi-ssid");
-    String pw = slurp("/wifi-password");
-    if (ssid.length() == 0) {
-        Serial.println(F("First contact!\n"));
-        this->portal(); // never exits except via restart
-    }
-
-    if (onConnect) onConnect();
-    if (connectInner(ssid, pw, wait_seconds)) {
-      if (onSuccess) onSuccess();
-      return true;
-    } else {
-      if (onFailure) onFailure();
-      if (portal) this->portal(); // Note portal never returns - it only ever restarts
-      return false;
-    }
-}
-*/
-// Seperated out so can be called by external attempt to connect to other previously seen SSIDs
-bool WiFiSettingsClass::connectInner(String ssid, String pw, int wait_seconds) {
-    // Unclear why this brute multiple setHostname calls - should be documented?
-    Serial.print(F("Connecting to WiFi SSID "));
-    Serial.print(ssid);
-    WiFi.setHostname(hostname.c_str());
-    WiFi.begin(ssid.c_str(), pw.c_str());
-    WiFi.setHostname(hostname.c_str());
-    WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);  // arduino-esp32 #2537
-    WiFi.setHostname(hostname.c_str());
-    #ifdef ESP32
-      WiFi.mode(WIFI_MODE_APSTA);  // arduino-esp32 #6278.  WIFI_MODE_STA is just station, AP is just Access Point
-    #else
-      WiFi.mode(WIFI_AP_STA);  // On ESP8266 WIFI_MODE_APSTA doesnt exist its WIFI_AP_STA or WIFI_STA
-    #endif
-    WiFi.setHostname(hostname.c_str());
-
-    unsigned long starttime = millis(); // not sleepSafeMillis - and thats probably ok
-    while (WiFi.status() != WL_CONNECTED && (wait_seconds < 0 || (millis() - starttime) < (unsigned)wait_seconds * 1000)) {
-        Serial.print(".");
-        delay(onWaitLoop ? onWaitLoop() : 300);
-    }
-
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println(F(" failed."));
-        return false;
-    }
-
-    Serial.println(WiFi.localIP().toString());
-    return true;
-}
 
 void WiFiSettingsClass::begin() {
     if (begun) return;
@@ -532,7 +463,7 @@ void WiFiSettingsClass::begin() {
     // These things can't go in the constructor because the constructor runs
     // before ESPFS.begin()
 
-    String user_language = slurp("/WiFiSettings-language");
+    String user_language = frugal_iot.fs_LittleFS->slurp("/WiFiSettings-language");
     user_language.trim();
     if (user_language.length() && WiFiSettingsLanguage::available(user_language)) {
         language = user_language;
@@ -562,19 +493,14 @@ void WiFiSettingsClass::begin() {
             params.back()->store();
         }
     }
-
-    if (hostname.endsWith("-")) hostname += ESPMAC;
+ ESPMAC;
 }
 
 WiFiSettingsClass::WiFiSettingsClass() {
-    #ifdef ESP32
-        hostname = F("esp32-");
-    #else
-        hostname = F("esp8266-");
-    #endif
-    num_networks = -1; // Set here, instead of portal so that can scan prior to entering portal
-
     language = "en";
 }
 
 WiFiSettingsClass WiFiSettings;
+
+
+#endif //OBSOLETED

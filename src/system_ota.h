@@ -24,11 +24,11 @@ class System_OTA : public System_Base {
     friend void otaEndCB(void);
     friend void otaErrorCB(int errorCode);
 
-    void setup_after_discovery();
-    void infrequently();
+    void setup_after_mqtt_setup();
+    void infrequently() override;
 
   private:
-    unsigned long nextLoopTime = SYSTEM_OTA_MS; // Dont activate on first loop - as happens in Setup  sleepSafeMillis()
+    unsigned long nextLoopTime = 0;
     bool _isOK;
     bool _checked;
     int _retryCount;

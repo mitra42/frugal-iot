@@ -11,10 +11,10 @@ class Sensor_Float : public Sensor {
     uint8_t width;
     // TODO-25 need to pass retain & qos down to OUTfloat which needs to use them.
     Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain);
-    virtual void readAndSet();
+    void readAndSet() override;
     virtual float read();
-    virtual void set(const float newvalue);
-    virtual String advertisement();
-    virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
+    void set(const float newvalue);
+    String advertisement() override;
+    virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) override;
 };
 #endif // SENSOR_FLOAT_H

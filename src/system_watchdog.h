@@ -8,8 +8,9 @@
 class System_Watchdog : public System_Base {
   public:
     System_Watchdog();
-    void setup();
-    void infrequently();
+    void setup() override;
+    void loop() override;
+    void infrequently() override;
 };
 
 #endif // SYSTEM_WATCHDOG_H

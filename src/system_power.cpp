@@ -2,20 +2,10 @@
  * Manage power and main loop 
  * 
  * Required: 
- *   SYSTEM_POWER_MODE_LOOP, 
- *   SYSTEM_POWER_MODE_XXX is used by main.cpp (currently) not here.
- * 
- *  List of power modes ... TO-ADD-POWERMODE
- * SYSTEM_POWER_MODE_LOOP     Standard loop, no waiting
- * SYSTEM_POWER_MODE_LIGHT    Does a Light sleep
- * SYSTEM_POWER_MODE_LIGHT_WIFI Like Light, but wakes on Wifi, which menas it SHOULD keep WiFi alive.
- * SYSTEM_POWER_MODE_MODEM    ESP32 Modem sleep mode - need to check waht this means
- * SYSTEM_POWER_MODE_DEEP     Does a deep sleep - resulting in a restart
  *
  * https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
  */
 
-// This will replace loop() and then parts will be put into 
 
 #include <Arduino.h> // Required to get sdkconfig.h to get CONFIG_IDF_TARGET_xxx
 // TODO may not need all these once WiFi debugged and code moved to other files
@@ -69,21 +59,21 @@ System_Power_Mode::System_Power_Mode(const char* name, unsigned long cycle_ms, u
   #endif
 }
 // ================== constructor =========== called from main.cpp::setup based on #define ========= TO-ADD-POWERMODE
-System_Power_Mode_Loop::System_Power_Mode_Loop(unsigned long cycle_ms, unsigned long wake_ms) 
+System_Power_Loop::System_Power_Loop(unsigned long cycle_ms, unsigned long wake_ms) 
 : System_Power_Mode("Power Looping", cycle_ms, wake_ms) {
 }
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-System_Power_Mode_Light::System_Power_Mode_Light(unsigned long cycle_ms, unsigned long wake_ms) 
+System_Power_Light::System_Power_Light(unsigned long cycle_ms, unsigned long wake_ms) 
 : System_Power_Mode("Power Light Sleep",cycle_ms, wake_ms) {
 }
-System_Power_Mode_Deep::System_Power_Mode_Deep(unsigned long cycle_ms, unsigned long wake_ms) 
+System_Power_Deep::System_Power_Deep(unsigned long cycle_ms, unsigned long wake_ms) 
 : System_Power_Mode("Power Deep Sleep", cycle_ms, wake_ms)
 { }
 // TODO-23 maybe ifdef out the power modes - BUT may want to shift between them.
-System_Power_Mode_LightWifi::System_Power_Mode_LightWifi(unsigned long cycle_ms, unsigned long wake_ms) 
-: System_Power_Mode("Power Light Sleep + Wifi", cycle_ms, wake_ms) {
+System_Power_LightWiFi::System_Power_LightWiFi(unsigned long cycle_ms, unsigned long wake_ms) 
+: System_Power_Mode("Power Light Sleep + WiFi", cycle_ms, wake_ms) {
 }
-System_Power_Mode_Modem::System_Power_Mode_Modem(unsigned long cycle_ms, unsigned long wake_ms) 
+System_Power_Modem::System_Power_Modem(unsigned long cycle_ms, unsigned long wake_ms) 
 : System_Power_Mode("Power Modem sleep", cycle_ms, wake_ms) {
 }
 #endif
@@ -99,8 +89,8 @@ void System_Power_Mode::setup() {
   #endif
 }
 #ifdef ESP32 // Specific to ESP32s
-//LOW: This is not a fresh start, so we are recovering from a deep sleep (should only be in System_Power_Mode_Deep but is generically true)
-void System_Power_Mode_Deep::setup() {
+//LOW: This is not a fresh start, so we are recovering from a deep sleep (should only be in System_Power_Deep but is generically true)
+void System_Power_Deep::setup() {
   if (wake_count) {
     recover(); 
   } else {
@@ -109,20 +99,24 @@ void System_Power_Mode_Deep::setup() {
 }
 #endif
 
+// TODO-141 note Arduino warning: 'esp_pm_config_esp32_t' is deprecated: please use esp_pm_config_t instead [-Wdeprecated-declarations]
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-void System_Power_Mode_LightWifi::setup() {
-  // This bit is weird - there are 5 different ESP32 config structures - all identical - note CONFIG_IDF_TARGET_ESP32xx is defined in board files
-  #if defined(CONFIG_IDF_TARGET_ESP32C3) // Defined in board files on PlatformIO untested on Arduino
-    esp_pm_config_esp32c3_t pm_config; // Seems identical structure to the default ESP32 one ! 
-  #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    esp_pm_config_esp32s2_t pm_config;
-  #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    esp_pm_config_esp32s3_t pm_config;
-  #elif defined(CONFIG_IDF_TARGET_ESP32H2)
-    esp_pm_config_esp32h2_t pm_config;
-  #else
-    esp_pm_config_esp32_t pm_config;
-  #endif
+void System_Power_LightWiFi::setup() {
+  esp_pm_config_t pm_config;
+  #ifdef DEPRECATED_OLDER_PLATFORMIO
+    // This bit is weird - there are 5 different ESP32 config structures - all identical - note CONFIG_IDF_TARGET_ESP32xx is defined in board files
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) // Defined in board files on PlatformIO untested on Arduino
+      esp_pm_config_esp32c3_t pm_config; // Seems identical structure to the default ESP32 one ! 
+    #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+      esp_pm_config_esp32s2_t pm_config;
+    #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+      esp_pm_config_esp32s3_t pm_config;
+    #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+      esp_pm_config_esp32h2_t pm_config;
+    #else
+      esp_pm_config_esp32_t pm_config; // deprecated - may also be needed above
+    #endif
+  #endif // DEPRECATED_OLDER_PLATFORMIO
   pm_config.max_freq_mhz = 240;
   pm_config.min_freq_mhz = 80;
   pm_config.light_sleep_enable = true;
@@ -154,11 +148,11 @@ void System_Power_Mode::prepare() {
   // LoRa.sleep();
   // SPI.end();
 }
-void System_Power_Mode_Loop::prepare() {
+void System_Power_Loop::prepare() {
     //System_Power_Mode::prepare(); // Not calling superclass as nothing to prepare for in Power_Mode_Loop
 }
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-void System_Power_Mode_Light::prepare() {
+void System_Power_Light::prepare() {
   System_Power_Mode::prepare();
   frugal_iot.wifi->prepareForLightSleep(); 
 }
@@ -167,11 +161,11 @@ void System_Power_Mode_Light::prepare() {
 void System_Power_Mode::sleep() {
   Serial.println(F("sleep should be defined"));
 }
-void System_Power_Mode_Loop::sleep() {
-  // Note sleep is just the "period" when in SYSTEM_POWER_MODE_LOOP
+void System_Power_Loop::sleep() {
+  // Note sleep is just the "cycle time" when in Power_Loop
 }
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-void System_Power_Mode_Light::sleep() {
+void System_Power_Light::sleep() {
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html#_CPPv421esp_light_sleep_startv
   esp_sleep_enable_timer_wakeup(sleep_us());
   esp_light_sleep_start();
@@ -180,21 +174,21 @@ void System_Power_Mode_Light::sleep() {
 // This one doesn't seem to work. Power consumption doesn't go down - looks like not entering automatic lightsleep
 // Copilot thinks a task is keeping it awake but vTaskList wont work in framework:arduino
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-void System_Power_Mode_LightWifi::sleep() {
+void System_Power_LightWiFi::sleep() {
   //esp_sleep_enable_wifi_wakeup
   Serial.print("Sleeping for "); Serial.println(sleep_ms());
-  // TODO-25 move this to prepare
+  // TODO-25 move this to prepare in the MQTT task
   frugal_iot.mqtt->client.disconnect();
   //printTaskList(); // Wont work in Arduino framework
   uart_driver_delete(UART_NUM_0); // Disable UART0 (Serial)
   delay(sleep_ms()); // Light sleep will be automatic
-  // TODO-25 move this to recover
-  Serial.begin(SERIAL_BAUD);
+  // TODO-25 move this to frugal_iot::recover
+  frugal_iot.startSerial();
   Serial.print("Waking for"); Serial.println(wake_ms);
 }
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-void System_Power_Mode_Modem::sleep() {
+void System_Power_Modem::sleep() {
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html#_CPPv421esp_light_sleep_startv
   esp_sleep_enable_timer_wakeup(sleep_us());
   esp_sleep_enable_wifi_wakeup();
@@ -202,7 +196,7 @@ void System_Power_Mode_Modem::sleep() {
 }
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-void System_Power_Mode_Deep::sleep() {
+void System_Power_Deep::sleep() {
   millis_offset = millis() + sleep_ms(); // Since millis() will reset to 0
   esp_deep_sleep(sleep_us());
   Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
@@ -221,12 +215,12 @@ void System_Power_Mode::recover() {
   #endif
 }
 
-void System_Power_Mode_Loop::recover() {
+void System_Power_Loop::recover() {
   //System_Power_Mode::recover(); // Not calling superclass as nothing to recover from in Power_Mode_Loop
   nextSleepTime = millis() + cycle_ms;
 }
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-void System_Power_Mode_Light::recover() {
+void System_Power_Light::recover() {
   // Note millis preserved during lightSleep
   nextSleepTime = millis() + wake_ms;
   System_Power_Mode::recover();
@@ -241,7 +235,7 @@ void System_Power_Mode_Light::recover() {
 }
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-void System_Power_Mode_LightWifi::recover() {
+void System_Power_LightWiFi::recover() {
   // Note millis preserved during automatic lightSleep
   nextSleepTime = millis() + wake_ms;
   System_Power_Mode::recover();
@@ -256,7 +250,7 @@ void System_Power_Mode_LightWifi::recover() {
 }
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-void System_Power_Mode_Deep::recover() {
+void System_Power_Deep::recover() {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println("Power Management: recovering from Deep Sleep: "); Serial.println(wake_count);
   #endif
@@ -273,6 +267,28 @@ bool System_Power_Mode::maybeSleep() {
     return true;
   }
   return false;
+}
+
+
+// TOD-ADD-POWER
+System_Power_Mode* System_Power_Mode::create(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
+  switch (t) {
+    case Power_Loop: 
+      return new System_Power_Loop(cycle_ms, wake_ms); 
+#ifdef ESP32 // Only Loop works on ESP8266
+    case Power_Light: 
+      return new System_Power_Light(cycle_ms, wake_ms); 
+    case Power_LightWiFi: 
+      return new System_Power_LightWiFi(cycle_ms, wake_ms); 
+    case Power_Modem: 
+      return new System_Power_Modem(cycle_ms, wake_ms); 
+    case Power_Deep: 
+      return new System_Power_Deep(cycle_ms, wake_ms); 
+#endif
+    default: 
+      Serial.println("Invalid power mode");
+      return nullptr;
+  }
 }
 
 #ifdef ESP32

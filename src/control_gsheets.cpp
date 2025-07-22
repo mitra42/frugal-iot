@@ -9,8 +9,6 @@
 */
 #include "_settings.h"
 
-#ifdef CONTROL_GSHEETS_WANT
-
 #ifdef ESP8266
   #include <ESP8266HTTPClient.h> // For ESP8266
   #include <ESP8266WiFi.h>  // for WiFiClient
@@ -25,15 +23,18 @@
 Control_Gsheets::Control_Gsheets(const char* name, String* googleSheetsUrl)
   : Control_Logger("gsheets", name), url(googleSheetsUrl)
   {}
+  
 Control_Gsheets::Control_Gsheets(const char* name, const char* const googleSheetsUrl)
   : Control_Gsheets(name,  new String(googleSheetsUrl))
   {}
+
 void Control_Gsheets::track(const char* col, String* topicPath) {
   // TODO-136 may not want to pass empty new string here
   INtext* i = new INtext(id, col, col, nullptr, "black", true); // sensorId, id, name, value, color, wireable 
   i->wireTo(topicPath); // Does a subscription
   inputs.push_back(i);
 }
+
 void Control_Gsheets::track(const char* col, const char* topicPath) {
   track(col, new String(topicPath));
 }
@@ -53,11 +54,12 @@ void Control_Gsheets::act() {
   }
   *payload += "}";
   sendGoogle(payload);
-};
+}
+
 void Control_Gsheets::sendGoogle(String* payload) {
     HTTPClient http;
   #ifdef ESP8266
-    WiFiClient client; // Assumes system_wifi has already connected to access point - note this will not run if Wifi fails to connect and goes to portal mode
+    WiFiClient client; // Assumes system_wifi has already connected to access point - note this will not run if WiFi fails to connect and goes to portal mode
     http.begin(client, *url);
   #else
     http.begin(*url);
@@ -75,4 +77,3 @@ void Control_Gsheets::sendGoogle(String* payload) {
     http.end();
 }
 
-#endif // CONTROL_GSHEETS_WANT

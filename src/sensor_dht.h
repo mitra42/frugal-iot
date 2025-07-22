@@ -37,8 +37,8 @@ public:
   DHTNEW *dht; 
   uint8_t pin;
   Sensor_DHT(const char * const name, const uint8_t pin, bool retain);
-  void setup();
-  virtual void readAndSet(); // Combines function of set(read()) since reads two values from sensor
+  void setup() override;
+  void readAndSet() override; // Combines function of set(read()) since reads two values from sensor
 };
 
 extern Sensor_DHT sensor_dht;

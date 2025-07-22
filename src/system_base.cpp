@@ -15,13 +15,58 @@
 System_Base::System_Base(const char * const id, const char * const name)
 : id(id), name(name) { };
 
-void System_Base::setup() { }; // This will get called if no setup() in subclass 
-void System_Base::infrequently() { }; // This will get called if no loop() in subclass 
-void System_Base::frequently() { }; // This will get called if no loop() in subclass 
-void System_Base::periodically() { }; // This will get called if no loop() in subclass 
+// Defaults for routines that can, but often are not, overridden in sub-class.
+void System_Base::setup() { };
+void System_Base::loop() { }; // Called frequently same as loop() in typical arduino apps
+void System_Base::periodically() { }; // Called once for each period - which might be 10 seconds, or seeral hours
+void System_Base::infrequently() { }; // Run once each period, but should check timing
+//void System_Base::captiveLines(AsyncResponseStream* response) { }; // Called by captive portal for anything to display
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void System_Base::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {};
 void System_Base::dispatchPath(const String &topicPath, const String &payload) {};
+#pragma GCC diagnostic pop
 String System_Base::advertisement() {return String();};
+
+// Basic read configuration - based on the object's "id"
+void System_Base::readConfigFromFS() {
+  // Note LittleFS should have been setup in frugal_iot constructor so this should not be null
+  String path = String("/") + id;
+  File dir = frugal_iot.fs_LittleFS->open(path, "r"); // TODO call via System_FS virtual 
+  if (dir) {
+    readConfigFromFS(dir, nullptr);
+  } else {
+    frugal_iot.fs_LittleFS->mkdir(path); // There should be a directory, so can write config received over MQTT
+  }
+}
+void System_Base::readConfigFromFS(File dir, const String* leaf) {
+  while (true) {
+    File entry = dir.openNextFile(); // ESP32 default to "r", ESP8266 takes no argument and always does "r"
+    if (!entry) {
+      // no more files
+      break;
+    }
+    // Lets presume reading a:  wifi/foo  or b:  sht/temperature or c: sht/temperature/max
+    //Serial.print(id); Serial.print("/"); Serial.print(leaf); Serial.print("/"); Serial.print(entry.name());
+    const String newleaf = (leaf ? (*leaf + "/") : "") + entry.name();
+    Serial.print(id); Serial.print(F("/")); Serial.print(newleaf);
+    if (entry.isDirectory()) { // b: entry is directory sht/temperature 
+      Serial.println("/");
+      readConfigFromFS(entry, &newleaf); 
+    } else { // a: id=wifi twiglet=nullptr entry is foo   or c: id=sht twiglet=temperature entry is max
+      String payload = entry.readString();
+      payload.trim(); // Remove leading/trailing whitespace
+      Serial.print("="); Serial.println(payload);
+      dispatchTwig(id, newleaf, payload, true);
+    }
+    entry.close();
+  }
+}
+void System_Base::writeConfigToFS(const String& topicTwig, const String& payload) {
+  String path = String("/") + id + "/" + topicTwig;
+  frugal_iot.fs_LittleFS->spurt(path, payload);
+}
 
 // ========== IO - base class for IN and OUT ===== 
 
@@ -164,9 +209,12 @@ String OUTbool::StringValue() {
   return value ? "true" : "false";
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void IO::setup(const char * const sensorname) {
     // Note topicTwig subscribed to by IN, not by OUT
 }
+#pragma GCC diagnostic pop
 
 void IN::setup(const char * const sensorname) {
   IO::setup(sensorname);
@@ -478,9 +526,7 @@ void OUTuint16::sendWired() {
   }
 }
 void OUTbool::sendWired() {
-  Serial.print("XXX sendWired " __FILE__); Serial.println(__LINE__);
   if (wiredPath && wiredPath->length() ) {
-    Serial.print("XXX sendWired " __FILE__); Serial.println(__LINE__);
     frugal_iot.mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
   }
 }
@@ -545,7 +591,7 @@ String OUTbool::advertisement(const char * const group) {
 //Not used - built for gsheets where followed by a "wireto"
 IN* IN::INxxx(IOtype t, const char* sensorId) {
   switch (t) {
-    // TO-ADD-INXXX
+    // TO-ADD-INxxx
     case BOOL:
       return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
     case UINT16:
@@ -564,7 +610,7 @@ IN* IN::INxxx(IOtype t, const char* sensorId) {
 //Not used - built for gsheets where followed by a "wireto"
 IN* IN::INxxx(IOtype t, const char* sensorId) {
   switch (t) {
-    // TO-ADD-INXXX
+    // TO-ADD-INxxx
     case BOOL:
       return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
     case UINT16:
@@ -582,6 +628,8 @@ IN* IN::INxxx(IOtype t, const char* sensorId) {
 
 // These are mostly to stop the compiler complaining about missing vtables
 void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 String IO::advertisement(const char * const group) { shouldBeDefined(); return String(); }
 float IO::floatValue() { shouldBeDefined(); return 0.0; }
 bool IO::dispatchLeaf(const String &twig, const String &p, bool isSet) { shouldBeDefined(); return false; }
@@ -589,6 +637,8 @@ String OUT::advertisement(const char * const group) { shouldBeDefined(); return 
 float OUT::floatValue() { shouldBeDefined(); return 0.0; }
 bool OUT::boolValue() { shouldBeDefined(); return false; }
 uint16_t OUT::uint16Value() { shouldBeDefined(); return 0; }
+String OUT::StringValue() { shouldBeDefined(); return ""; }
 void OUT::sendWired() { shouldBeDefined(); }
 bool IN::convertAndSet(const String &payload) { shouldBeDefined(); return false;}
 String IN::advertisement(const char * const name) { shouldBeDefined(); return String(); }
+#pragma GCC diagnostic pop

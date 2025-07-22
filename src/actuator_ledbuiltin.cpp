@@ -36,6 +36,8 @@
 
 #define ACTUATOR_LEDBUILTIN_WHITE "0xFFFFFF"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, const char* colorInit) :
   Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow"),
   #ifdef RGB_BUILTIN
@@ -47,6 +49,7 @@ Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, 
       Serial.print(F("Ledbuiltin pin=")); Serial.println(pin); 
     #endif
   }
+#pragma GCC diagnostic pop
 
 void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
   if (topicActuatorId == id) {
@@ -85,12 +88,12 @@ void Actuator_Ledbuiltin::act() {
         Serial.print(F("Actuator_Ledbuiltin::act rgb=0x")); 
         Serial.print(r, HEX); Serial.print(g,HEX); Serial.println(b, HEX); //TODO-131 0 should be "00"
       #endif
-      #ifdef PLATFORMIO
-        // TODO check if this is really grb or should use rgb
-        neopixelWrite(pin,g,r,b);   // Neopixel is g r b on Lolin- esp32-hal-rgb-led.c (or maybe was, but isnt any longer)
-      #else // neopixelWrite deprecated on Arduino IDE
+      //#ifdef PLATFORMIO
+      //  // TODO check if this is really grb or should use rgb
+      //  neopixelWrite(pin,g,r,b);   // Neopixel is g r b on Lolin- esp32-hal-rgb-led.c (or maybe was, but isnt any longer)
+      //#else // neopixelWrite deprecated on Arduino IDE
         rgbLedWrite(pin,r,g,b);   // Note this is r,g,b (Neopixel is g r b on Lolin)
-      #endif
+      //#endif
     #endif
   #else // !RGB_BUILTIN
     #ifdef ACTUATOR_LEDBUILTIN_INVERT

@@ -9,7 +9,23 @@
 #define _SETTINGS_H
 
 #include <Arduino.h> // make sure CONFIG_IDF_TARGET_ESP32C3 etc defined if on those boards
-#include "_local.h"               // Will fail if user hasn't copied _local-template.h to _local.h and edited
+
+#if !defined(PLATFORMIO)
+  // On Arduiono do not have platformio.ini so presume these standards
+  #define CONTROL_BLINKEN_DEBUG
+  #define CONTROL_LOGGERFS_DEBUG
+  #define SENSOR_ENSAHT_DEBUG
+  #define SENSOR_LOADCELL_DEBUG
+  #define SENSOR_MS5803_DEBUG
+  #define SENSOR_SHT_DEBUG
+  #define SYSTEM_DISCOVERY_DEBUG
+  #define SYSTEM_FRUGAL_DEBUG
+  #define SYSTEM_LITTLEFS_DEBUG
+  #define SYSTEM_MQTT_DEBUG
+  #define SYSTEM_TIME_DEBUG
+  #define SYSTEM_POWER_DEBUG
+  #define SYSTEM_WIFI_DEBUG
+#endif
 
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
 #if defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG)
@@ -42,14 +58,11 @@
 // TODO-110 when IO moved to base.cpp; SYSTEM_FS wont need CONTROL
 
 // TODO_ADD_SYSTEM
-#if defined(SYSTEM_LOGGER_WANT)
-  #define SYSTEM_FS_WANT
-#endif
 #if defined(SYSTEM_LOGGER_DEBUG)
   #define SYSTEM_TIME_DEBUG
   #define SYSTEM_FS_DEBUG
 #endif
-#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_SPIFFS_DEBUG)
+#if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_LITTLEFS_DEBUG)
   #define SYSTEM_FS_DEBUG
 #endif
 #if defined(CONTROL_LOGGERFS_DEBUG) || defined(CONTROL_GSHEETS_DEBUG)
@@ -61,9 +74,6 @@
 // TO_ADD_SYSTEM - there is no class hierarchy
 #if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_OLED_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG)
   #define SYSTEM_DEBUG
-#endif
-#if defined(CONTROL_GSHEETS_WANT)
-  #define SYSTEM_TIME_WANT // TODO-141 it needs to create time in main.cpp
 #endif
 
 #if defined(SENSOR_DEBUG) || defined(ACTUATOR_DEBUG) || defined(CONTROL_DEBUG) || defined(SYSTEM_DEBUG)
@@ -103,24 +113,6 @@
   #define ARDUINO_TTGO_LoRa32
 #endif
 
-//TO_ADD_BOARD  // TODO-141 see how/if using BOARDNAME
-#if !defined(SYSTEM_DISCOVERY_DEVICE_DESCRIPTION) && !defined(BOARDNAME)
-  #ifdef ESP8266_D1
-    #define BOARDNAME "ESP8266 D1"
-  #elif defined(ARDUINO_LOLIN_C3_PICO) // Must do before MINI which is erroneously defined if using PICO but setting closest board file
-    #define BOARDNAME "Lolin C3 Pico"
-  #elif defined(ARDUINO_LOLIN_C3_MINI)
-    #define BOARDNAME "Lolin C3 Mini"
-  #elif defined(ARDUINO_LOLIN_S2_MINI)
-    #define BOARDNAME "Lolin S2 Mini"
-  #elif defined(ARDUINO_TTGO_LoRa32)
-    #define BOARDNAME "TTGO Lora"
-  #else
-    #error undefined board in system_discovery.cpp #TO_ADD_BOARD
-  #endif
-#endif
-
-
 // To specify a language (for the WiFi portal) #define all the ones you want, otherwise it supports the _ALL lsit which is currerntly EN, NL, DE, ID 
 #if \
    !defined LANGUAGE_EN \
@@ -130,14 +122,10 @@
     #define LANGUAGE_ALL
 #endif
 
-#define SERIAL_DELAY 5000 // Necessary to avoid losing initial messsage in garbage, at least on ESP8266_D1_MINI
+// Always defined currently,
+#define SYSTEM_WIFI_WANT  // currently always wanted
 
-// Always defined currently, but recommend defining in _locals.h in case that decision ever changes
-#define SYSTEM_DISCOVERY_WANT // Almost always set, will tell the MQTT server about the device so the Client can find it 
-#define SERIAL_BAUD 460800 // Generally find 460800 works well - reliability on all boards tested
-#define SYSTEM_WIFI_WANT  // currently always wanted - recommend defining in _locals.h in case that decision ever changes
-#define SYSTEM_MQTT_WANT // Given the dependence on MQTT can't imagine not "wanting" it
-
+// Define boards which have built in OLED and should include automatically
 #if defined(ARDUINO_TTGO_LoRa32)
   #define SYSTEM_OLED_WANT
 #endif

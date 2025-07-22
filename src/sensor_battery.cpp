@@ -16,7 +16,7 @@
 #include "sensor_battery.h"
 
 // Note voltage divider is board specific - known defaults in sensor_battery.h
-Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider) 
+Sensor_Battery::Sensor_Battery(const uint8_t pin_init, const float voltage_divider) 
 : Sensor_Analog("battery", "Battery", pin_init, 0, 0, 4500, "green", true),
   voltage_divider(voltage_divider)
   { }
@@ -29,7 +29,7 @@ Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider)
   // e.g. ARDUINO_ESP8266_WEMOS_D1MINIPRO (V2) - batt = (130+220+100)/100 while A0 is just (220+100)/100
 
   // Note the ESP32 function returns uint32_t which makes no sense given max battery is 5000
-  uint16_t analogReadMilliVolts(uint8_t pin) {
+  uint16_t analogReadMilliVolts(const uint8_t pin) {
     /* THere may be a reason to do it this way to get float calcs ?
     const float VCC_Volt = 5.000; // ( 5v for 8bits Arduino boards, 3.3v for ESP, STM32 and SAMD )
     const analogReadRange = 1024;  // for Arduino boards
@@ -37,9 +37,9 @@ Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider)
     uint16_t milliVolts = (VCC_Volt * 1000 * analogValue) /  analogReadRange;
     */
     static const float multiplier = VCC_MILLIVOLTS / ANALOG_READ_RANGE ; 
-    float analogValue = analogRead(pin);
+    const float analogValue = analogRead(pin);
     #ifdef SENSOR_BATTERY_DEBUG
-      Serial.print("Battery read:"); Serial.print(analogValue); Serial.print(" multiplier ");  Serial.print(multiplier); Serial.print(" report "); Serial.println(analogValue * multiplier); 
+      Serial.print("Battery read:"); Serial.print(analogValue); Serial.print(F(" multiplier "));  Serial.print(multiplier); Serial.print(F(" report ")); Serial.println(analogValue * multiplier); 
     #endif
     return analogValue * multiplier;  // Note this is millivolts at A0, which has been divided by voltage_divider
   }

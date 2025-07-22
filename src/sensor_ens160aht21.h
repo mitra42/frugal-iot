@@ -2,13 +2,14 @@
 #define SENSOR_ENSAHT_H
 #include "_settings.h"  // Settings for what to include etc
 
-#ifdef SENSOR_ENSAHT_WANT
 #include <Arduino.h>
 #include "system_i2c.h"
 #include "sensor.h"
 
 class Sensor_ensaht : public Sensor {
   public:
+    //TODO - create a base class Sensor_multiple that has an outputs list and dispatchTwig iterates over them - keep these pointers as well (notice how system_frugal_iot creates things and adds to an array)
+    //TODO - then use for other multi-output sensors (like sensor_ht) and then maybe for single sensors, simplifying e,g. dispatchTwig in the process
     OUTfloat* humidity;  
     OUTfloat* temperature;
     OUTuint16* aqi;
@@ -20,8 +21,8 @@ class Sensor_ensaht : public Sensor {
     bool isENS161;
     Sensor_ensaht(const char* const id, const char* const name);
     ~Sensor_ensaht(); //TODO-101
-    void setup(); 
-    void readAndSet();
+    void setup() override; 
+    void readAndSet() override;
     void readAndSetAHT();
   private:
     // AHT
@@ -35,9 +36,8 @@ class Sensor_ensaht : public Sensor {
     bool ENScommand(uint8_t val);
     bool ENSsendAndRead(uint8_t reg, uint8_t *buf, uint8_t num);
     bool setenvdata(float temp, float hum);
-    String advertisement();
+    String advertisement() override;
     void dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet);
  };
  
-#endif // SENSOR_ENSAHT_WANT
 #endif // SENSOR_ENSAHT_H

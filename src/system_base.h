@@ -2,6 +2,8 @@
 #define BASE_H
 
 #include <Arduino.h>
+#include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
+#include "ESPAsyncWebServer.h" // for AsyncResponseStream"
 
 extern const char* valueAdvertLineFloat;
 extern const char* valueAdvertLineBool;
@@ -24,9 +26,13 @@ class System_Base {
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);
     virtual void dispatchPath(const String &topicPath, const String &payload);
     virtual String advertisement();
-    virtual void frequently();
+    void readConfigFromFS();
+    void readConfigFromFS(File dir, const String* leaf);
+    void writeConfigToFS(const String& topicTwig, const String& payload);
+    virtual void loop();
     virtual void periodically();
     virtual void infrequently();
+    virtual void captiveLines(AsyncResponseStream* response) { };
 }; // Class FrugalBase
 
 class IO {
@@ -57,29 +63,30 @@ class IO {
 class IN : public IO {
   public:
     IN(char const * const sensorId, char const * const id, char const * const name, char const *color, const bool wireable);
-    virtual String advertisement(const char * const name);
+    String advertisement(const char * const name) override;
     // TO-ADD-INxxx
     virtual float floatValue();
     virtual bool boolValue();
     virtual uint16_t uint16Value();
     virtual String StringValue();
     virtual bool convertAndSet(const String &payload);
-    virtual bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet);
+    bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet) override;
     virtual bool dispatchPath(const String &topicpath, const String &payload); 
     void setup(const char*);
 };
 class OUT : public IO {
   public:
     OUT(char const * const sensorId, char const * const id, char const * const name, char const *color, const bool wireable);
-    virtual String advertisement(const char * const name);
+    String advertisement(const char * const name) override;
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
     // TO-ADD-OUTxxx
     virtual float floatValue();
     virtual bool boolValue();
     virtual uint16_t uint16Value();
+    virtual String StringValue();
     virtual void sendWired();
-    virtual bool dispatchLeaf(const String &leaf, const String &payload, bool isSet); // Just checks control
+    bool dispatchLeaf(const String &leaf, const String &payload, bool isSet) override; // Just checks control
 };
 
 // TO-ADD-INxxx
@@ -92,10 +99,10 @@ class INfloat : public IN {
     INfloat(); 
     INfloat(char const * const sensorId, char const * const id, char const * const name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
-    float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
-    bool boolValue();
-    uint16_t uint16Value();
-    String StringValue();
+    float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
+    bool boolValue() override;
+    uint16_t uint16Value() override;
+    String StringValue() override;
 
     // Copy assignment operator
     /*
@@ -111,9 +118,9 @@ class INfloat : public IN {
       return *this;
     }
     */
-    bool convertAndSet(const String &payload);
+    bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
-    String advertisement(const char * const name);
+    String advertisement(const char * const name) override;
 };
 class INuint16 : public IN {
   public:
@@ -123,13 +130,13 @@ class INuint16 : public IN {
     //INuint16(); 
     INuint16(char const * const sensorId, char const * const id, char const * const name, uint16_t v, uint16_t min, uint16_t max, char const * const color, const bool wireable);
     INuint16(const INuint16 &other);
-    float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
-    bool boolValue();
-    uint16_t uint16Value();
-    String StringValue();
-    bool convertAndSet(const String &payload);
+    float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
+    bool boolValue() override;
+    uint16_t uint16Value() override;
+    String StringValue() override;
+    bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
-    String advertisement(const char * const name);
+    String advertisement(const char * const name) override;
 
 };
 class INbool : public IN {
@@ -138,13 +145,13 @@ class INbool : public IN {
     //INbool(); 
     INbool(char const * const sensorId, char const * const id, char const * const name, bool value, char const * const color, const bool wireable);
     INbool(const INuint16 &other);
-    float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
-    bool boolValue();
-    uint16_t uint16Value();
-    String StringValue();
-    bool convertAndSet(const String &payload);
+    float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
+    bool boolValue() override;
+    uint16_t uint16Value() override;
+    String StringValue() override;
+    bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
-    String advertisement(const char * const name);
+    String advertisement(const char * const name) override;
 };
 
 class INcolor : public IN {
@@ -156,14 +163,14 @@ class INcolor : public IN {
     INcolor(char const * const sensorId, char const * const id, char const * const name, uint8_t r, uint8_t g, uint8_t b, const bool wireable);
     INcolor(char const * const sensorId, char const * const id, char const * const name, char const * const color, const bool wireable);
     INcolor(const INcolor &other);
-    float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
-    bool boolValue();
-    uint16_t uint16Value();
-    String StringValue();
-    bool convertAndSet(const String &payload);
+    float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
+    bool boolValue() override;
+    uint16_t uint16Value() override;
+    String StringValue() override;
+    bool convertAndSet(const String &payload) override;
     bool convertAndSet(const char* payload); // Used when setting in constructor etc
     void debug(const char* const where);
-    String advertisement(const char * const name);
+    String advertisement(const char * const name) override;
 };
 
 class INtext : public IN {
@@ -172,14 +179,14 @@ class INtext : public IN {
     INtext();
     INtext(const char * const sensorId, const char * const id, const char* const name, String* value, const char* const color, const bool wireable);
     INtext(const INtext &other);
-    float floatValue(); // This is so that other subclasses e.g. INuint16 can still return a float if required
-    bool boolValue();
-    uint16_t uint16Value();
-    String StringValue();
-    bool convertAndSet(const String &payload);
+    float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
+    bool boolValue() override;
+    uint16_t uint16Value() override;
+    String StringValue() override;
+    bool convertAndSet(const String &payload) override;
     bool convertAndSet(const char* payload); // Used when setting in constructor etc
     void debug(const char* const where);
-    String advertisement(const char * const name);
+    String advertisement(const char * const name) override;
 };
 
 // TO-ADD-OUTxxx
@@ -192,14 +199,14 @@ class OUTfloat : public OUT {
     OUTfloat();
     OUTfloat(char const * const sensorId, char const * const id, char const * const name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     OUTfloat(const OUTfloat &other);
-    float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
-    bool boolValue();
-    uint16_t uint16Value();
-    String StringValue();
-    void sendWired();
+    float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
+    bool boolValue() override;
+    uint16_t uint16Value() override;
+    String StringValue() override;
+    void sendWired() override;
     void set(const float newvalue); // Set and send if changed
     void debug(const char* const where);
-    String advertisement(const char * const name);
+    String advertisement(const char * const name) override;
 };
 class OUTbool : public OUT {
   public:
@@ -207,14 +214,14 @@ class OUTbool : public OUT {
     OUTbool();
     OUTbool(char const * const sensorId, char const * const id, char const * const name, bool v, char const * const color, const bool wireable);
     OUTbool(const OUTbool &other);
-    float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
-    bool boolValue();
-    uint16_t uint16Value();
-    String StringValue();
+    float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
+    bool boolValue() override;
+    uint16_t uint16Value() override;
+    String StringValue() override;
     void set(const bool newvalue);
-    void sendWired();
+    void sendWired() override;
     void debug(const char* const where);
-    String advertisement(const char * const name);
+    String advertisement(const char * const name) override;
 };
 class OUTuint16 : public OUT {
   public:
@@ -224,14 +231,14 @@ class OUTuint16 : public OUT {
     OUTuint16();
     OUTuint16(char const * const sensorId, char const * const id, char const * const name, uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool wireable);
     OUTuint16(const OUTuint16 &other);
-    float floatValue(); // This is so that other subclasses e.g. OUTuint16 can still return a float if required
-    bool boolValue();
-    uint16_t uint16Value();
-    String StringValue();
+    float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
+    bool boolValue() override;
+    uint16_t uint16Value() override;
+    String StringValue() override;
     void set(const uint16_t newvalue);
-    void sendWired();
+    void sendWired() override;
     void debug(const char* const where);
-    String advertisement(const char * const name);
+    String advertisement(const char * const name) override;
 };
 
 #endif // BASE_H

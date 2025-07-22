@@ -1,3 +1,4 @@
+#ifdef OBSOLETED
 #include <map>
 
 namespace WiFiSettingsLanguage {
@@ -25,12 +26,6 @@ struct Texts {
     ;
 };
 
-#if \
-   !defined LANGUAGE_EN \
-&& !defined LANGUAGE_NL \
-&& !defined LANGUAGE_DE
-    #define LANGUAGE_ALL
-#endif
 
 std::map<const String, const String> languages {
 // Ordered alphabetically
@@ -153,3 +148,4 @@ bool select(Texts& T, String& language) {
 }
 
 } // namespace
+#endif //OBSOLETED

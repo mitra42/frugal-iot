@@ -18,9 +18,14 @@ Sensor_Uint16::Sensor_Uint16(const char* const id, const char * const name, cons
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16
 uint16_t Sensor_Uint16::read() { Serial.println("Sensor_Uint16::read must be subclassed"); return -1; }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 bool Sensor_Uint16::valid(uint16_t newvalue) {
   return true; // Default to true, will be subclassed e.g. for sensor_soil
 }
+#pragma GCC diagnostic pop
+
 void Sensor_Uint16::set(const uint16_t newvalue) {
 
   // Can be copy/adapted to Sensor_Float if needed

@@ -17,10 +17,10 @@ class Sensor_Uint16 : public Sensor {
     //Sensor_Uint16();
     Sensor_Uint16(const char* const id, const char * const name, const uint8_t smooth, uint16_t min, uint16_t max, const char* color, bool retain);
     virtual uint16_t read();
-    virtual void set(const uint16_t newvalue);
-    virtual void readAndSet();
-    virtual bool valid(uint16_t newvalue);
-    virtual String advertisement();
-    void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet);
+    void set(const uint16_t newvalue);
+    void readAndSet() override;
+    bool valid(uint16_t newvalue);
+    String advertisement() override;
+    void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) override;
 };
 #endif // SENSOR_UINT16_H

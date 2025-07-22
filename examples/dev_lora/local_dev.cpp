@@ -6,9 +6,6 @@
  */
 
 #include "_settings.h"  // Settings for what to include etc
-#ifdef LOCAL_DEV_WANT
-
-// Next step is usually to define any default parameters, if they aren't defined in _local.h e.g. 
 
 #include "control.h"
 #include "system_oled.h"
@@ -21,7 +18,7 @@ namespace localDev {
 // 
 // This is also good place to instantiate instances of classes as its called from frugal_iot.cpp
 // Note if you use a subclass of Actuator, Sensor or Control, then the instance's setup() will be called as part of the System_Base::setupAll() as called by frugal_iot.cpp 
-void setup() {
+void setup() override {
   // And here is an example of instantiating a custom control using that function
   //controls.push_back(new ControlHysterisis("humidity", "Humidity control", 50, 0, 100));
 
@@ -82,7 +79,7 @@ void periodically () {
   #endif // SYSTEM_LORA_SENDER_TEST || SYSTEM_LORA_RECEIVER_TEST
 }
 
-void frequently() {
+void loop() {
   // This is called frequently, so you can put code here that needs to run often
   #if defined(SYSTEM_LORA_RECEIVER_TEST)
 
@@ -124,5 +121,3 @@ void frequently() {
 void infrequently() { }
 
 } // namespace localDev
-
-#endif 

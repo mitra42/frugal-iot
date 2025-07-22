@@ -29,6 +29,7 @@
 #include "system_loramesher.h"
 #include "misc.h"  // for lprintf
 #include "system_frugal.h"
+#include "system_mqtt.h"
 
 // These settings duplicated in system_loramesher.cpp and system_lora.cpp (system_loramesher.cpp are newer)
 // For ARDUINO_TTGO_LoRa32 
@@ -56,89 +57,14 @@ System_LoraMesher::System_LoraMesher()
     config.freq = SYSTEM_LORAMESHER_BAND;
 }
 
-#if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-  uint32_t dataCounter = 0;
-  struct counterPacket {
-      uint32_t counter = 0;
-  };
-  counterPacket* helloPacket = new counterPacket;
-#elif defined(SYSTEM_LORAMESHER_TEST_STRING)
-  uint32_t dataCounter = 0;
-#else 
-  #error Must define SYSTEM_LORAMESHER_TEST_COUNTER or SYSTEM_LORAMESHER_TEST_STRING
-#endif
+  // LORAMESH-STRUCTURED: struct counterPacket {  uint32_t counter = 0; }; counterPacket* helloPacket = new counterPacket;
 
+// TODO for now this is an extern as its not going to be the final interface so its not worth putting together a way to pass a callback
 #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
-  #ifdef SYSTEM_LORAMESHER_TEST_COUNTER
-    void printCounterPacket(counterPacket data) {
-      Serial.printf("Hello Counter received nº %d\n", data.counter);
-      // Display information
-      frugal_iot.oled->display.clearDisplay();
-      frugal_iot.oled->display.setCursor(0,0);
-      frugal_iot.oled->display.print("LORA MESH RECEIVER");
-      frugal_iot.oled->display.setCursor(0,20);
-      frugal_iot.oled->display.print("Received packet:");
-      frugal_iot.oled->display.setCursor(0,30);
-      frugal_iot.oled->display.print(data.counter);
-      //frugal_iot.oled->display.setCursor(0,40);
-      //frugal_iot.oled->display.print("RSSI:");
-      //frugal_iot.oled->display.setCursor(30,40);
-      //frugal_iot.oled->display.print(rssi);
-      frugal_iot.oled->display.display();   
-    }
-    void printAppCounterPacket(AppPacket<counterPacket>* packet) {
-        Serial.printf("Packet arrived from %X with size %d\n", packet->src, packet->payloadSize);
-        //Get the payload to iterate through it
-        counterPacket* dPacket = packet->payload;
-        size_t payloadLength = packet->getPayloadLength();
-        for (size_t i = 0; i < payloadLength; i++) {
-            //Print the packet
-            printCounterPacket(dPacket[i]);
-        }
-    }
-  #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
-    void printAppData(AppPacket<uint8_t>* appPacket) {
-        Serial.printf("Packet arrived from %X with size %d\n", appPacket->src, appPacket->payloadSize);
-        //Get the payload to iterate through it
-        uint8_t* dPacket = appPacket->payload;
-        // Note - dont use appPacket->getPayloadLength - it will report number of packets=1 not length of payload
-        size_t payloadLength = appPacket->getPayloadLength()-1; // Length of string without terminator 
-        Serial.write(dPacket, payloadLength); Serial.println(); // Being conservative in case no terminating \0 
-              // Display information
-        frugal_iot.oled->display.clearDisplay();
-        frugal_iot.oled->display.setCursor(0,0);
-        frugal_iot.oled->display.print("LORA MESH RECEIVER");
-        frugal_iot.oled->display.setCursor(0,20);
-        frugal_iot.oled->display.print("Received packet:");
-        frugal_iot.oled->display.setCursor(0,30);
-        frugal_iot.oled->display.print((char*)dPacket);
-        //frugal_iot.oled->display.setCursor(0,40);
-        //frugal_iot.oled->display.print("RSSI:");
-        //frugal_iot.oled->display.setCursor(30,40);
-        //frugal_iot.oled->display.print(rssi);
-        frugal_iot.oled->display.display();   
-    }
+    // extern void printAppCounterPacket(AppPacket<counterPacket>*); // This was how we handled structured packets
+    extern void printAppData(AppPacket<uint8_t>*); //TODO-152 probably remove
 
-  #else // Start - wont work - of FrugalIoT
-    void printAppFrugal(AppPacket<FrugalIoTMessage>* packet) {
-      Serial.printf("Packet arrived from %X with size %d\n", packet->src, packet->payloadSize);
-      //Get the payload to iterate through it
-      FrugalIoTMessage* dPacket = packet->payload;
-      size_t payloadLength = packet->getPayloadLength();
-      Serial.println(*dPacket->message);
-      /*
-      for (size_t i = 0; i < payloadLength; i++) {
-          //Print the packet
-          printCounterPacket(dPacket[i]);
-      }
-      */
-    }
-  #endif
-#endif // SYSTEM_LORAMESHER_RECEIVER_TEST
-
-
-#ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
-// Function that process the received packets - it receives an AppPacket<xxx> and passes to handler
+  // Function that process the received packets - it receives an AppPacket<xxx> and passes to handler
 void processReceivedPackets(void*) {
     for (;;) {
         /* Wait for the notification of processReceivedPackets and enter blocking */
@@ -150,22 +76,10 @@ void processReceivedPackets(void*) {
             Serial.printf("Queue receiveUserData size: %d\n", frugal_iot.loramesher->radio.getReceivedQueueSize());
 
             //Get the first element inside the Received User Packets Queue
-            #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-              AppPacket<counterPacket>* packet = frugal_iot.loramesher->radio.getNextAppPzacket<counterPacket>();
-              //Print the App Packet
-              printAppCounterPacket(packet); // This is the actual handling
-            #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
-              AppPacket<uint8_t>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<uint8_t>();
-              printAppData(appPacket);
-
-            #else // Start (but wont work) of FrugalIoT packet
-              AppPacket<FrugalIoTMessage>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<FrugalIoTMessage>();
-              printAppFrugal(packet);
-              // Pull apart FrugalIoTMessage to something want to process
-              //DataMessage* dataMessage = createDataMessage(AppPacket<FrugalIoTMessage>* appPacket))
-            #endif      
-            //Delete the packet when used. It is very important to call this function to release the memory of the packet.
-            frugal_iot.loramesher->radio.deletePacket(appPacket);
+            //LORAMESHER-STRUCTURED: AppPacket<counterPacket>* packet = frugal_iot.loramesher->radio.getNextAppPzacket<counterPacket>(); printAppCounterPacket(packet); // This is the actual handling
+            // Note its <uint8_t>* because its a string
+            AppPacket<uint8_t>* appPacket = frugal_iot.loramesher->radio.getNextAppPacket<uint8_t>();
+            frugal_iot.loramesher->processReceivedPacket(appPacket);
         }
     }
 }
@@ -177,7 +91,7 @@ TaskHandle_t receiveLoRaMessage_Handle = NULL;
 // Equivalent of system_mqtt's: client.onMessage(MessageReceived)
 void createReceiveMessages() {
     int res = xTaskCreate(
-        processReceivedPackets,
+        processReceivedPackets, // TaskFunction_t
         "Receive App Task",
         4096,
         (void*) 1,
@@ -189,6 +103,55 @@ void createReceiveMessages() {
 }
 #endif // SYSTEM_LORAMESHER_RECEIVER_TEST
 
+void System_LoraMesher::publish(const String &topic, const String &payload, bool retain, int qos) {
+      // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
+      char qos_char = '0' + qos;
+      char retain_char = '0' + retain;
+      const char* stringymessage = lprintf(100, "%c%c%s:%s", 
+        qos_char, retain_char,
+        topic.c_str(), payload.c_str());
+      Serial.print(__LINE__); Serial.print(" XXX " __FILE__ " "); Serial.println(stringymessage);
+      size_t msglen = strlen(stringymessage)+1; // +1 to include terminating \0
+      // Allocate enough memory for the struct + message
+      uint8_t* msg = (uint8_t*) malloc(msglen);
+      //DataPacket* dPacket = (DataPacket*) malloc(sizeof(DataPacket) + msglen); // sendPacket wants uint8_t*
+      // Copy the string into the message array
+      memcpy(msg, stringymessage, msglen);
+      delete(stringymessage);
+      // TODO-152 - maybe could just cast stringmessage as (uint8_t*) instead of copying
+      frugal_iot.loramesher->sentPacketCounter++;
+      if (frugal_iot.loramesher->findGatewayNode()) { 
+        frugal_iot.loramesher->radio.sendPacket(frugal_iot.loramesher->gatewayNodeAddress, msg, msglen); // Will be broadcast if no node
+      } else {
+        // TODO-152 queue till have gateway (depending on qos)
+      }
+      free(msg); // msg is copied in createPacketAndSend
+}
+
+void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
+  rcvdPacketCounter++;
+  //printAppData(appPacket); // TODO-151 see note above about this being an extern
+  const uint8_t qos = appPacket->payload[0] - '0';
+  const bool retain = appPacket->payload[0] - '0'; // will be 0 or 1
+  // Assume appPacket->payload is a uint8_t* or char* and is null-terminated from [2] onward
+  const char* str = (const char*)&appPacket->payload[2];
+  String topicPath, payload;
+
+  const char* eq = strchr(str, ':');
+  if (eq) {
+      topicPath = String(str).substring(0, eq - str);
+      payload = String(eq + 1);
+  } else {
+      topicPath = String(str);
+      payload = "";
+  }
+  //Delete the packet when used. It is very important to call this function to release the memory of the packet.
+  radio.deletePacket(appPacket);
+  frugal_iot.mqtt->messageSend(topicPath, payload, retain, qos);
+}
+
+
+// addGatewayRole is called on receiver during setup, once route tables propogate this should start seeing hte gateway
 bool System_LoraMesher::findGatewayNode() {
     RouteNode* rn = radio.getClosestGateway();
     if (rn) {
@@ -200,6 +163,8 @@ bool System_LoraMesher::findGatewayNode() {
     }
 }
 
+// setup points radio at receiveLoRaMessage_Handle which is set to processReceivedPackets in createReceiveMessages()
+// Could parameterize this, but working on assumption that this will only ever point to the MQTT handler once its all working
 void System_LoraMesher::setup() {
   Serial.println("Loramesher setup");
   // Error codes are buried deep  .pio/libdeps/temploramesher/RadioLib/src/TypeDef.h
@@ -211,76 +176,11 @@ void System_LoraMesher::setup() {
   #endif
   //gpio_install_isr_service(ESP_INTR_FLAG_IRAM); // known error message - Jaimi says doesn't matter
   radio.start();     //Start LoRaMesher
-  #ifdef SYSTEM_LORAMESHER_SENDER_TEST
   if (!findGatewayNode()) {
-      Serial.println("Setup did not find a gateway node");
+      Serial.println("Setup did not find a gateway node - expect after recieve routing");
   }
-  #endif //SYSTEM_LORAMESHER_SENDER_TEST
   #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
     radio.addGatewayRole(); 
-  #endif
-}
-
-
-void System_LoraMesher::periodically() {
-  #ifdef SYSTEM_LORAMESHER_SENDER_TEST
-    Serial.print("Send packet ");  Serial.println(dataCounter);
-    if (gatewayNodeAddress == BROADCAST_ADDR) {
-      if (findGatewayNode()) {
-        Serial.println("============ XXX Now seeing gateway node ======");
-      }
-    }
-    #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-      counterPacket* data = new counterPacket;
-      data->counter = dataCounter++;
-    #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
-      const char* stringymessage = lprintf(20, "Test # %d", dataCounter++);
-      size_t msglen = strlen(stringymessage)+1; // +1 to include terminating \0
-      // Allocate enough memory for the struct + message
-      uint8_t* msg = (uint8_t*) malloc(msglen);
-      //DataPacket* dPacket = (DataPacket*) malloc(sizeof(DataPacket) + msglen); // sendPacket wants uint8_t*
-      // Copy the string into the message array
-      memcpy(msg, stringymessage, msglen);
-      delete(stringymessage);
-      // TODO - maybe could just cast stringmessage as (uint8_t*) instead of copying
-    #else // Start - not working - for FrugalIoT message
-      const char* stringymessage = "This is a test";
-      size_t msglen = strlen(stringymessage)+1;
-      // Allocate enough memory for the struct + message
-      FrugalIoTMessage* msg = (FrugalIoTMessage*) malloc(sizeof(FrugalIoTMessage) + msglen);
-      // Set messageId as needed
-      msg->messageId = dataCounter++; // or whatever value you want
-      // Copy the string into the message array
-      memcpy(msg->message, stringymessage, msglen);
-      //Serial.println(stringypacket);
-    #endif
-    frugal_iot.oled->display.clearDisplay();
-    frugal_iot.oled->display.setCursor(0,0);
-    frugal_iot.oled->display.println("LORAMESH SENDER");
-    frugal_iot.oled->display.setCursor(0,20);
-    frugal_iot.oled->display.setTextSize(1);
-    frugal_iot.oled->display.print("LoRa packet sent.");
-    frugal_iot.oled->display.setCursor(0,30);
-    #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-      frugal_iot.oled->display.print("Counter:");
-      frugal_iot.oled->display.setCursor(50,30);
-      frugal_iot.oled->display.print(dataCounter);      
-    #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
-      frugal_iot.oled->display.print("Counter:");
-      frugal_iot.oled->display.setCursor(50,30);
-      frugal_iot.oled->display.print(dataCounter-1);
-    #else // Start - wont work - for FrugalIoT
-      frugal_iot.oled->display.print(dataCounter);      
-    #endif
-    frugal_iot.oled->display.display();
-    #if defined(SYSTEM_LORAMESHER_TEST_COUNTER)
-      radio.createPacketAndSend(BROADCAST_ADDR, data, 1); // Size is number of counterPackets.
-    #elif defined(SYSTEM_LORAMESHER_TEST_STRING)
-      radio.sendPacket(gatewayNodeAddress, msg, msglen); // Will be broadcast if no node
-    #else // start - wont work - to create FrugalIoT  
-      radio.createPacketAndSend(BROADCAST_ADDR, msg, 1); // Size is number of counterPackets.
-      free(msg);
-    #endif
   #endif
 }
 

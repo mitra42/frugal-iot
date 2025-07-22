@@ -1,17 +1,9 @@
-/*
-  Blink
-  Turns on an LED on for one second, then off for one second, repeatedly.
- 
-  Based on the Blinken demo in the IDE
-
-  TODO-43 - allow the destination to be set - e.g. some other digital pin
-  TODO-43 - allow the input to be routed from somewhere (e.g. from temperature or a potentiometer )
-
+/* Frugal IoT - Blinken demo, a simple control that blinks a light
+ *
+ * Optional: CONTROL_BLINKEN_DEBUG
  */
 
 #include "_settings.h"  // Settings for what to include etc
-
-#ifdef CONTROL_BLINKEN_WANT
 
 #include <Arduino.h>
 #include "control_blinken.h"
@@ -41,11 +33,10 @@ void ControlBlinken::act() {
   nextBlinkTime = frugal_iot.powercontroller->sleepSafeMillis() + (outputs[0]->boolValue() ? blinkOn : blinkOff) ; // Blink after new blink time
 }
 
-void ControlBlinken::frequently() {
+void ControlBlinken::loop() {
   if (nextBlinkTime <= frugal_iot.powercontroller->sleepSafeMillis()) {
     bool next = !outputs[0]->boolValue();
     ((OUTbool*)outputs[0])->set(next); // Will send message
     nextBlinkTime = frugal_iot.powercontroller->sleepSafeMillis() + (next ? blinkOn : blinkOff);
   }
 }
-#endif // CONTROL_BLINKEN_WANT
