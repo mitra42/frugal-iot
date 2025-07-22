@@ -635,6 +635,7 @@ String OUT::advertisement(const char * const group) { shouldBeDefined(); return 
 float OUT::floatValue() { shouldBeDefined(); return 0.0; }
 bool OUT::boolValue() { shouldBeDefined(); return false; }
 uint16_t OUT::uint16Value() { shouldBeDefined(); return 0; }
+String OUT::StringValue() { shouldBeDefined(); return ""; }
 void OUT::sendWired() { shouldBeDefined(); }
 bool IN::convertAndSet(const String &payload) { shouldBeDefined(); return false;}
 String IN::advertisement(const char * const name) { shouldBeDefined(); return String(); }
