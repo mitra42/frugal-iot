@@ -8,6 +8,8 @@
 
 class Sensor_ensaht : public Sensor {
   public:
+    //TODO - create a base class Sensor_multiple that has an outputs list and dispatchTwig iterates over them - keep these pointers as well (notice how system_frugal_iot creates things and adds to an array)
+    //TODO - then use for other multi-output sensors (like sensor_ht) and then maybe for single sensors, simplifying e,g. dispatchTwig in the process
     OUTfloat* humidity;  
     OUTfloat* temperature;
     OUTuint16* aqi;
