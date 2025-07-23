@@ -27,15 +27,16 @@ void Sensor_HT::set(const float temp, const float humy) {
 }
 
 String Sensor_HT::advertisement() {
-  return temperature->advertisement(name) + humidity->advertisement(name); // Note using name of sensor not name of output (which is usually the same)
+  return temperature->advertisement(name.c_str()) + humidity->advertisement(name.c_str()); // Note using name of sensor not name of output (which is usually the same)
 }
-void Sensor_HT::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+void Sensor_HT::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     if (
-      temperature->dispatchLeaf(leaf, payload, isSet) ||
-      humidity->dispatchLeaf(leaf, payload, isSet)
+      temperature->dispatchLeaf(topicTwig, payload, isSet) ||
+      humidity->dispatchLeaf(topicTwig, payload, isSet)
     ) {
       // Nothing to do on Sensor
     }
+    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }

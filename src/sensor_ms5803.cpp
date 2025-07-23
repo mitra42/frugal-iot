@@ -55,7 +55,7 @@ void Sensor_ms5803::setup() {
   #ifdef SENSOR_MS5803_DEBUG
     Serial.println("MS5803 Setup");
   #endif
-  pressure->setup(name);
+  pressure->setup();
   delay(100); // TODO XXX unsure if needed
   interface.initialize();
   delay(100); // TODO XXX unsure if needed
@@ -154,13 +154,14 @@ void Sensor_ms5803::readAndSet() {
   pressure->set(( ( ( ( D1 * sensitivity ) / pow( 2, 21 ) - sensorOffset) / pow( 2, 15 ) ) / 10 ));   // in mBars
 }
 
-void Sensor_ms5803::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+void Sensor_ms5803::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     if (
-      pressure->dispatchLeaf(leaf, payload, isSet) ||
-      temperature->dispatchLeaf(leaf, payload, isSet)
+      pressure->dispatchLeaf(topicTwig, payload, isSet) ||
+      temperature->dispatchLeaf(topicTwig, payload, isSet)
     ) { // True if changed 
       // Nothing to do on Sensor
     }
+    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }

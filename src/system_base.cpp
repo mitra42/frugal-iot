@@ -12,7 +12,7 @@
 #include "misc.h"
 #include "system_frugal.h"
 
-System_Base::System_Base(const char * const id, const char * const name)
+System_Base::System_Base(const char * const id, const String name)
 : id(id), name(name) { };
 
 // Defaults for routines that can, but often are not, overridden in sub-class.
@@ -24,11 +24,21 @@ void System_Base::infrequently() { }; // Run once each period, but should check 
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-void System_Base::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {};
 void System_Base::dispatchPath(const String &topicPath, const String &payload) {};
 #pragma GCC diagnostic pop
 String System_Base::advertisement() {return String();};
 
+void System_Base::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+  if (isSet && (topicSensorId == id)) {
+    if (topicTwig == "name") {
+      name = payload;
+      writeConfigToFS(topicTwig, payload);
+    } else {
+      Serial.print(F("Ignoring /")); Serial.print(id); Serial.print(F("/")); Serial.print(topicTwig); 
+      Serial.print(F("=")); Serial.println(payload);
+    }
+  }
+}
 // Basic read configuration - based on the object's "id"
 void System_Base::readConfigFromFS() {
   // Note LittleFS should have been setup in frugal_iot constructor so this should not be null
@@ -71,14 +81,14 @@ void System_Base::writeConfigToFS(const String& topicTwig, const String& payload
 // ========== IO - base class for IN and OUT ===== 
 
 
-IO::IO(const char * const sensorId, const char * const id, const char * const name, const char* const color, const bool w)
+IO::IO(const char * const sensorId, const char * const id, const String name, const char* const color, const bool w)
 : sensorId(sensorId), id(id), name(name), topicTwig(lprintf(strlen(sensorId)+strlen(id)+2, "%s/%s", sensorId, id)), color(color), wireable(w), wiredPath(nullptr) 
 {};
 
-IN::IN(const char* sensorId, const char * const id, const char * const name, const char * const color, const bool w)
+IN::IN(const char* sensorId, const char * const id, const String name, const char * const color, const bool w)
 : IO(sensorId, id, name, color, w) { };
 
-OUT::OUT(const char* sensorId, const char * const id, const char * const name, const char * const color, const bool w)
+OUT::OUT(const char* sensorId, const char * const id, const String name, const char * const color, const bool w)
 : IO(sensorId, id, name, color, w) { };
 
 void IO::wireTo(String* topicPath) {
@@ -209,15 +219,12 @@ String OUTbool::StringValue() {
   return value ? "true" : "false";
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void IO::setup(const char * const sensorname) {
+void IO::setup() {
     // Note topicTwig subscribed to by IN, not by OUT
 }
-#pragma GCC diagnostic pop
 
-void IN::setup(const char * const sensorname) {
-  IO::setup(sensorname);
+void IN::setup() {
+  IO::setup();
   // No longer subscribes since subscribe to node/set/<sensor>/leaf
 }
 // Options eg: sht/temp set/sht/temp/wire set/sht/temp set/sht/temp/max
@@ -337,7 +344,7 @@ void OUTuint16::debug(const char* const where) {
 
 // INfloat::INfloat() {}
 // TO_ADD_INxxx
-INfloat::INfloat(const char * const sensorId, const char * const id, const char* const name, float v, uint8_t width, float mn, float mx, char const * const c, const bool w)
+INfloat::INfloat(const char * const sensorId, const char * const id, const String name, float v, uint8_t width, float mn, float mx, char const * const c, const bool w)
   :   IN(sensorId, id, name, c, w), value(v), width(width), min(mn), max(mx) {
 }
 
@@ -346,7 +353,7 @@ INfloat::INfloat(const INfloat &other)
   value(other.value),
   width(other.width)
 { }
-INuint16::INuint16(const char * const sensorId, const char * const id, const char* const name, uint16_t v, uint16_t mn, uint16_t mx, char const * const c, const bool w)
+INuint16::INuint16(const char * const sensorId, const char * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const c, const bool w)
   :   IN(sensorId, id, name, c, w), value(v), min(mn), max(mx) {
 }
 
@@ -355,7 +362,7 @@ INuint16::INuint16(const INuint16 &other)
   value = other.value;
 }
 
-INbool::INbool(const char * const sensorId, const char * const id, const char* const name, bool value, char const * const color, const bool wireable)
+INbool::INbool(const char * const sensorId, const char * const id, const String name, bool value, char const * const color, const bool wireable)
   :   IN(sensorId, id, name, color, wireable), value(value) {
 }
 
@@ -363,10 +370,10 @@ INbool::INbool(const INuint16 &other)
 : IN(other.sensorId, other.id, other.name, other.color, other.wireable) {
   value = other.value;
 }
-INcolor::INcolor(const char * const sensorId, const char * const id, const char* const name, uint8_t r, uint8_t g, uint8_t b, const bool w)
+INcolor::INcolor(const char * const sensorId, const char * const id, const String name, uint8_t r, uint8_t g, uint8_t b, const bool w)
   :   IN(sensorId, id, name, nullptr, w), r(r), g(g), b(b) {
 }
-INcolor::INcolor(const char * const sensorId, const char * const id, const char* const name, const char* color, const bool w)
+INcolor::INcolor(const char * const sensorId, const char * const id, const String name, const char* color, const bool w)
   :   IN(sensorId, id, name, nullptr, w) {
     convertAndSet(color);
 }
@@ -377,7 +384,7 @@ INcolor::INcolor(const INcolor &other)
   g = other.g;
   b = other.b;
 }
-INtext::INtext(const char * const sensorId, const char * const id, const char* const name, String* value, char const * const color, const bool wireable)
+INtext::INtext(const char * const sensorId, const char * const id, const String name, String* value, char const * const color, const bool wireable)
   :   IN(sensorId, id, name, color, wireable), value(value) {
 }
 
@@ -445,31 +452,31 @@ const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type:
 const char* valueAdvertLineText = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
 const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
 // TO_ADD_INxxx
-String INfloat::advertisement(const char * const group) {
+String INfloat::advertisement(const String group) {
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   return (topicTwig)
   ? StringF(valueAdvertLineFloat, topicTwig, name, "float", width, min, width, max, color, "slider", "w", group, wireable ? 1 : 4, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
   : String();
 }
-String INuint16::advertisement(const char * const group) {
+String INuint16::advertisement(const String group) {
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   return (topicTwig)
   ? StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "slider", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
   : String();
 }
-String INbool::advertisement(const char * const group) {
+String INbool::advertisement(const String group) {
   //"\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
   return (topicTwig)
   ? StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
   : String();
 }
-String INtext::advertisement(const char * const group) {
+String INtext::advertisement(const String group) {
   // e.g. "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
   return (topicTwig)
   ? StringF(valueAdvertLineText, topicTwig, name, "text", color, "text", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
   : String();
 }
-String INcolor::advertisement(const char * const group) {
+String INcolor::advertisement(const String group) {
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   return (topicTwig)
   ? StringF(valueAdvertLineColor, topicTwig, name, "color", color, "wheel", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
@@ -481,13 +488,13 @@ String INcolor::advertisement(const char * const group) {
 //OUTfloat::OUTfloat() {};
 //OUTbool::OUTbool() {};
 // TO_ADD_OUTxxx
-OUTbool::OUTbool(const char * const sensorId, const char* const id, const char * const name, bool v, char const * const color, const bool w)
+OUTbool::OUTbool(const char * const sensorId, const char* const id, const String name, bool v, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v)  {
 }
-OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const char * const name,  float v, uint8_t width, float mn, float mx, char const * const color, const bool w)
+OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const String name,  float v, uint8_t width, float mn, float mx, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v), width(width), min(mn), max(mx) { 
 }
-OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const char * const name,  uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool w)
+OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const String name,  uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v), min(mn), max(mx) {
 }
 
@@ -562,7 +569,7 @@ void OUTbool::set(const bool newvalue) {
 
 // TO-ADD-OUTxxx
 // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
-String OUTfloat::advertisement(const char * const group) {
+String OUTfloat::advertisement(const String group) {
   // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
   return (topicTwig)
@@ -570,14 +577,14 @@ String OUTfloat::advertisement(const char * const group) {
     : String();
 }
 // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
-String OUTuint16::advertisement(const char * const group) {
+String OUTuint16::advertisement(const String group) {
   // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
   return (topicTwig)
     ? StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "bar", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
     : String();
 }
-String OUTbool::advertisement(const char * const group) {
+String OUTbool::advertisement(const String group) {
   // "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
   return (topicTwig)
     ? StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
@@ -628,15 +635,15 @@ IN* IN::INxxx(IOtype t, const char* sensorId) {
 void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-String IO::advertisement(const char * const group) { shouldBeDefined(); return String(); }
+String IO::advertisement(const String group) { shouldBeDefined(); return String(); }
 float IO::floatValue() { shouldBeDefined(); return 0.0; }
 bool IO::dispatchLeaf(const String &twig, const String &p, bool isSet) { shouldBeDefined(); return false; }
-String OUT::advertisement(const char * const group) { shouldBeDefined(); return String(); }
+String OUT::advertisement(const String group) { shouldBeDefined(); return String(); }
 float OUT::floatValue() { shouldBeDefined(); return 0.0; }
 bool OUT::boolValue() { shouldBeDefined(); return false; }
 uint16_t OUT::uint16Value() { shouldBeDefined(); return 0; }
 String OUT::StringValue() { shouldBeDefined(); return ""; }
 void OUT::sendWired() { shouldBeDefined(); }
 bool IN::convertAndSet(const String &payload) { shouldBeDefined(); return false;}
-String IN::advertisement(const char * const name) { shouldBeDefined(); return String(); }
+String IN::advertisement(const String name) { shouldBeDefined(); return String(); }
 #pragma GCC diagnostic pop

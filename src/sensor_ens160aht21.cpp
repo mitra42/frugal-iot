@@ -99,8 +99,8 @@ void Sensor_ensaht::setupAHT() {
   #ifdef SENSOR_ENSAHT_DEBUG
     Serial.println("AHT21 Setup;");
   #endif
-  humidity->setup(name);
-  temperature->setup(name);
+  humidity->setup();
+  temperature->setup();
   aht->initialize();  // calls Wire.begin()
   // Setup the AHT21
   aht->send(AHTX0_CMD_SOFTRESET); // Just waiting for not busy
@@ -153,9 +153,9 @@ void Sensor_ensaht::setupENS() {
   #ifdef SENSOR_ENSAHT_DEBUG
     Serial.println("ENS160 Setup");
   #endif
-  eco2->setup(name);
-  aqi->setup(name);
-  tvoc->setup(name);
+  eco2->setup();
+  aqi->setup();
+  tvoc->setup();
   //ens.initialize();  // calls Wire.begin() (unnecessary since already called)
   ENSsetMode(ENS160_OPMODE_RESET);
   // TODO-101 could check and report part id if want ???
@@ -258,25 +258,26 @@ void Sensor_ensaht::readAndSet() {
 
 String Sensor_ensaht::advertisement() {
   return ( 
-    temperature->advertisement(name)
-    + humidity->advertisement(name)
-    + aqi->advertisement(name)
-    + tvoc->advertisement(name)
-    + eco2->advertisement(name)
-    + (isENS161 ? aqi500->advertisement(name) : "")
+    temperature->advertisement(name.c_str())
+    + humidity->advertisement(name.c_str())
+    + aqi->advertisement(name.c_str())
+    + tvoc->advertisement(name.c_str())
+    + eco2->advertisement(name.c_str())
+    + (isENS161 ? aqi500->advertisement(name.c_str()) : "")
   );
 }
-void Sensor_ensaht::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+void Sensor_ensaht::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     if (
-      temperature->dispatchLeaf(leaf, payload, isSet) ||
-      humidity->dispatchLeaf(leaf, payload, isSet) ||
-      aqi->dispatchLeaf(leaf, payload, isSet) ||
-      tvoc->dispatchLeaf(leaf, payload, isSet) ||
-      eco2->dispatchLeaf(leaf, payload, isSet) ||
-      aqi500->dispatchLeaf(leaf, payload, isSet)
+      temperature->dispatchLeaf(topicTwig, payload, isSet) ||
+      humidity->dispatchLeaf(topicTwig, payload, isSet) ||
+      aqi->dispatchLeaf(topicTwig, payload, isSet) ||
+      tvoc->dispatchLeaf(topicTwig, payload, isSet) ||
+      eco2->dispatchLeaf(topicTwig, payload, isSet) ||
+      aqi500->dispatchLeaf(topicTwig, payload, isSet)
     ) { // True if changed
       // Nothing to do on sensor
     }
+    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }

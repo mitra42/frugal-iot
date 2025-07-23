@@ -223,8 +223,7 @@ void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicT
       hostname = payload;
       writeConfigToFS(topicTwig, payload);
     } else {
-      Serial.print(F("Ignoring /")); Serial.print(id); Serial.print(F("/")); Serial.print(topicTwig); 
-      Serial.print(F("=")); Serial.println(payload);
+      System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
     }
   }
 }

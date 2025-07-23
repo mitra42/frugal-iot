@@ -67,6 +67,7 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
       description = payload;
     }
     writeConfigToFS(topicTwig, payload);
+    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   } else { // No point in passing on our own id for the loop
     Frugal_Group::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }

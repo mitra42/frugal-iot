@@ -39,18 +39,19 @@ void Actuator_Digital::setup() {
   Actuator::setup();
   // initialize the digital pin as an output.
   pinMode(pin, OUTPUT);
-  input->setup(name);
+  input->setup();
   act(); // Set the digital output to match initial conditions.
 }
-void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
+void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicActuatorId == id) {
-    if (input->dispatchLeaf(leaf, payload, isSet)) { // True if changed
+    if (input->dispatchLeaf(topicTwig, payload, isSet)) { // True if changed
       act();
     }
+    System_Base::dispatchTwig(topicActuatorId, topicTwig, payload, isSet);
   }
 }
 
 String Actuator_Digital::advertisement() {
-  return input->advertisement(name); // Note using name of actuator not name of input (which is usually the same)
+  return input->advertisement(name.c_str()); // Note using name of actuator not name of input (which is usually the same)
 }
 
