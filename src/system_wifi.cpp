@@ -281,6 +281,7 @@ void System_WiFi::dispatchTwig(const String &topicSensorId, const String &topicT
     if (payload.length()) {  // Only save if have a password
       addWiFi(topicTwig, payload);
     }
+    // Intentionall not //System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }
  

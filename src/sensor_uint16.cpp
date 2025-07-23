@@ -62,12 +62,13 @@ void Sensor_Uint16::readAndSet() {
     set(read()); // Will also send message via act()
 }
 String Sensor_Uint16::advertisement() {
-  return output->advertisement(name); // Note using name of sensor not name of output (which is usually the same)
+  return output->advertisement(name.c_str()); // Note using name of sensor not name of output (which is usually the same)
 }
-void Sensor_Uint16::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+void Sensor_Uint16::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
-    if (output->dispatchLeaf(leaf, payload, isSet)) { // True if changed
+    if (output->dispatchLeaf(topicTwig, payload, isSet)) { // True if changed
       // Nothing to do on Sensor
     }
+    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }
