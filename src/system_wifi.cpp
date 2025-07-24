@@ -17,6 +17,10 @@
   #include <WiFi.h> // This will be platform dependent, will work on ESP32 but most likely want configurration for other chips/boards
 #endif
 
+#ifndef SYSTEM_WIFI_SCANPERIOD
+  #define SYSTEM_WIFI_SCANPERIOD 5000
+#endif
+
 System_WiFi::System_WiFi()
 : System_Base("wifi", "WiFi")
   {}
@@ -213,7 +217,7 @@ void System_WiFi::stateMachine() {
     case WIFI_SCANNED: //6 Each time it hits this, it will try and connect to one more node if possible
       if (!connectOneAndAllNext()) { // returns either true if started connecting, or false if nothing to try
         // Came to end but none found
-        if (millis() > (statusSince + 5000)) { // Leave space between scans or portal wont work 
+        if (millis() > (statusSince + SYSTEM_WIFI_SCANPERIOD)) { // Leave space between scans or portal wont work 
           setStatus(WIFI_NEEDSCAN);
         }
         break; // Either still in WIFI_SCANNED at end of tries, OR with WIFI_NEEDSCAN

@@ -302,8 +302,9 @@ void System_MQTT::messageSendInner(const String &topicPath, const String &payloa
         //queued.emplace_front(topicPath, payload, retain, qos);
       }
     };
-  #ifdef LORAMESHER_WANT
+  #ifdef SYSTEM_LORAMESHER_WANT
     } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
+        Serial.println(F("MQTT sending via LoRaMesher"));
         frugal_iot.loramesher->publish(topicPath, payload, retain, qos);
   #endif
   } else { 

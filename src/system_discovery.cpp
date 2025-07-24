@@ -62,11 +62,15 @@ void System_Discovery::setup() {
  //TODO-23 This wont work as nextLoopTime wont be remembered in Deep Sleep
  // TODO-153 as done now will only check once (infrequently() runs once per period), and if it runs before MQTT it will fail and not retry
 void System_Discovery::infrequently() { 
-    if (frugal_iot.canMQTT() && (nextLoopTime <= (frugal_iot.powercontroller->sleepSafeMillis()))) {
-      if (!doneFullAdvertise) {
+    if  (nextLoopTime <= (frugal_iot.powercontroller->sleepSafeMillis())) {
+      if ((!doneFullAdvertise) && frugal_iot.canMQTT()) {
         fullAdvertise();
       } 
-      quickAdvertise(); // Send info about this node to server (on timer)
+      // quick can be fone if have MQTT or have LoRaMesher
+      //Serial.print("XXX" __FILE__); Serial.println(__LINE__);
+      if (frugal_iot.canMQTT() || (frugal_iot.loramesher && frugal_iot.loramesher->connected())) {
+        quickAdvertise(); // Send info about this node to server (on timer)
+      }
       nextLoopTime = frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_DISCOVERY_MS;
     }
 }

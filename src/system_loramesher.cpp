@@ -60,9 +60,10 @@ System_LoraMesher::System_LoraMesher()
   // LORAMESH-STRUCTURED: struct counterPacket {  uint32_t counter = 0; }; counterPacket* helloPacket = new counterPacket;
 
 // TODO for now this is an extern as its not going to be the final interface so its not worth putting together a way to pass a callback
-#ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
     // extern void printAppCounterPacket(AppPacket<counterPacket>*); // This was how we handled structured packets
     extern void printAppData(AppPacket<uint8_t>*); //TODO-152 probably remove
+
+#ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
 
   // Function that process the received packets - it receives an AppPacket<xxx> and passes to handler
 void processReceivedPackets(void*) {
@@ -130,7 +131,7 @@ void System_LoraMesher::publish(const String &topic, const String &payload, bool
 
 void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
   rcvdPacketCounter++;
-  //printAppData(appPacket); // TODO-151 see note above about this being an extern
+  printAppData(appPacket); // TODO-151 see note above about this being an extern
   const uint8_t qos = appPacket->payload[0] - '0';
   const bool retain = appPacket->payload[0] - '0'; // will be 0 or 1
   // Assume appPacket->payload is a uint8_t* or char* and is null-terminated from [2] onward
@@ -147,6 +148,7 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
   }
   //Delete the packet when used. It is very important to call this function to release the memory of the packet.
   radio.deletePacket(appPacket);
+  Serial.print("LoRaMesher received"); Serial.print(topicPath); Serial.println(payload);
   frugal_iot.mqtt->messageSend(topicPath, payload, retain, qos);
 }
 
@@ -155,6 +157,9 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
 bool System_LoraMesher::findGatewayNode() {
     RouteNode* rn = radio.getClosestGateway();
     if (rn) {
+      if (gatewayNodeAddress == BROADCAST_ADDR) {
+        Serial.print(F("LoRaMesher - newly found gateway node"));
+      }
       gatewayNodeAddress = rn->networkNode.address;
       return true;
     } else {
@@ -180,9 +185,10 @@ void System_LoraMesher::setup() {
   //gpio_install_isr_service(ESP_INTR_FLAG_IRAM); // known error message - Jaimi says doesn't matter
   radio.start();     //Start LoRaMesher
   if (!findGatewayNode()) {
-      Serial.println("Setup did not find a gateway node - expect after recieve routing");
+      Serial.println("Setup did not find a gateway node - expect after receive routing");
   }
   #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
+  // TODO-152 should do this automatically if have WiFi
     radio.addGatewayRole(); 
   #endif
 }

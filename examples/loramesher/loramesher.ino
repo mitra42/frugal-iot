@@ -11,7 +11,11 @@
 
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "loramesher", "LoraMesher demo");
+#ifdef LORAMESHER_SENDER_TEST
+System_Frugal frugal_iot("dev", "developers", "loramesher", "LoraMesher Sender");
+#else
+System_Frugal frugal_iot("dev", "developers", "loramesher", "LoraMesher Receiver");
+#endif
 
 void setup() {
   frugal_iot.startSerial(); // Encapsulate setting up and starting serial
@@ -47,9 +51,6 @@ void setup() {
 
 #endif // SYSTEM_LORAMESHER_SENDER_TEST
 
-
-#ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
-
     void printAppData(AppPacket<uint8_t>* appPacket) {
         Serial.printf("Packet arrived from %X with size %d\n", appPacket->src, appPacket->payloadSize);
         //Get the payload to iterate through it
@@ -60,7 +61,7 @@ void setup() {
               // Display information
         frugal_iot.oled->display.clearDisplay();
         frugal_iot.oled->display.setCursor(0,0);
-        frugal_iot.oled->display.print("LORA MESH RECEIVER");
+        frugal_iot.oled->display.print(frugal_iot.description);
         frugal_iot.oled->display.setCursor(0,20);
         frugal_iot.oled->display.print("Received packet:");
         frugal_iot.oled->display.setCursor(0,30);
@@ -71,7 +72,6 @@ void setup() {
         //frugal_iot.oled->display.print(rssi);
         frugal_iot.oled->display.display();   
     }
-#endif // SYSTEM_LORAMESHER_RECEIVER_TEST
 
 
 

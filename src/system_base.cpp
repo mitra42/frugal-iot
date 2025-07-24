@@ -34,8 +34,7 @@ void System_Base::dispatchTwig(const String &topicSensorId, const String &topicT
       name = payload;
       writeConfigToFS(topicTwig, payload);
     } else {
-      Serial.print(F("Ignoring /")); Serial.print(id); Serial.print(F("/")); Serial.print(topicTwig); 
-      Serial.print(F("=")); Serial.println(payload);
+      // Nothing wrong with no match - it might have been handled in subclass
     }
   }
 }
