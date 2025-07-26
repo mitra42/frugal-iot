@@ -17,6 +17,12 @@
 #include "LoraMesher.h"
 #include "system_base.h"
 
+class MeshSubscription {
+  const String* topicPath;
+  const uint16_t src; // The node id subscribing 
+  MeshSubscription(topicPath, src);
+}
+
 class System_LoraMesher : public System_Base {
   public:
     LoraMesher& radio;
@@ -33,6 +39,7 @@ class System_LoraMesher : public System_Base {
     void publish(const String &topicPath, const String &payload, const bool retain, const int qos);
     void processReceivedPacket(AppPacket<uint8_t>* appPacket);
     void prepareForSleep();
+    std::forward_list<MeshSubscription> meshSubscriptions;
 };
 
 // Adapted From LoRaChat/src/loramesh/loraMeshMessage.h

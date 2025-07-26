@@ -170,15 +170,25 @@ void System_MQTT::subscribe(const String& topicPath) {
   Subscription* mi = find(topicPath);
   if (mi) { // No existing subscription
     if (mi->payload) { // If have retained previous data
-      messageReceived(*mi->topicPath, *mi->payload); // TODO-25 check for loops or wasted internal duplicates
+      messageReceived(*mi->topicPath, *mi->payload);  // Need to be careful of loops but its ok currently
     }
   } else { 
-    if (!client.subscribe(topicPath)) {
-      #ifdef SYSTEM_MQTT_DEBUG
-        Serial.println(F("MQTT Subscription failed to ")); Serial.print(topicPath); Serial.print(F(" "));
-        // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
-        Serial.println(client.lastError());
-      #endif // SYSTEM_MQTT_DEBUG
+    if (connected()) {
+      if (!client.subscribe(topicPath)) {
+        // Note at this point we don't have a fallback if happen to subscribe when MQTT fails
+        #ifdef SYSTEM_MQTT_DEBUG
+          Serial.println(F("MQTT Subscription failed to ")); Serial.print(topicPath); Serial.print(F(" "));
+          // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
+          Serial.println(client.lastError());
+        #endif // SYSTEM_MQTT_DEBUG
+      }
+    #ifdef SYSTEM_LORAMESHER_WANT
+    } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
+        frugal_iot.loramesher->publish("subscribe",topicPath,0,1);
+        // Dont need to record this on the sender - as incoming messages will be formatted as MQTT with the path
+    #endif
+    } else {
+      Serial.println(F("MQTT trying to subscribe but not connected and no LoRaMesher"));
     }
     subscriptions.emplace_front(&topicPath); // Should create a Subscription
   }

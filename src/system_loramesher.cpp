@@ -44,6 +44,11 @@
   #error "Unsupported LORA configuration. Please define either ARDUINO_TTGO_LoRa32_v1 or ARDUINO_TTGO_LoRa32_v2. or define new BOARD"
 #endif
 
+// TODO-152 Consider timeout of LM subscriptions - since a node may get a different id each time it power cycles, and thus have multiple entries in the gateway's meshsubscription table.
+MeshSubscription::MeshSubscription(const String* topicPath, const uint16_t src) 
+: topicPath(topicPath), src(src) {}
+
+
 System_LoraMesher::System_LoraMesher()
 : System_Base("loramesher", "LoraMesher"),
     radio(LoraMesher::getInstance()),
@@ -142,13 +147,19 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
   if (eq) {
       topicPath = String(str).substring(0, eq - str);
       payload = String(eq + 1);
-  } else {
+  } else { // Shouldnt have this case
       topicPath = String(str);
       payload = "";
   }
   //Delete the packet when used. It is very important to call this function to release the memory of the packet.
   radio.deletePacket(appPacket);
   Serial.print("LoRaMesher received"); Serial.print(topicPath); Serial.println(payload);
+  if (topicPath == "subscribe") {
+    Serial.print("XXX " __FILE__); Serial.println("got subscribe");
+    // Need to remember the subscription before calling subscribe, because there may be retained data returned immediately
+    meshSubscriptions.emplace_front(payload, appPacket->src);
+    frugal_iot.mqtt->subscribe(payload);
+  }
   frugal_iot.mqtt->messageSend(topicPath, payload, retain, qos);
 }
 
