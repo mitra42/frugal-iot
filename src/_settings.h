@@ -130,5 +130,27 @@
   #define SYSTEM_OLED_WANT
 #endif
 
+// A number of sensors will want to default to the boards I2C, 
+// But some boards have the pre-defined SDA and SCL wrong
+// So .... these settings define I2C_SDA and I2C_SCL so that a library can be explicit about 
+// using something other than the default
+#ifndef I2C_SDA
+  #ifdef LILYGOHIGROW
+    // TODO-115 note there could be conflicts with other use of I2C and the Wire.h header which I think is where "Wire" is defined
+    // I think this is a lilygo specific thing - need to check with BH1750 on other boards
+    #define I2C_SDA                 (25)
+    #define I2C_SCL                 (26)
+  #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
+    // The T2_S3 has a small connector, same form factor as Lolin but different pins, using 10 as SDA 21 as SCL
+    #define I2C_SDA 43 // 10
+    #define I2C_SCL 44  // 21
+  #else
+    // Use system defined ones
+    #define I2C_SDA SDA
+    #define I2C_SCL SCL
+  #endif
+#endif
+
+
 
 #endif // _SETTINGS_H

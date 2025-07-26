@@ -10,7 +10,7 @@
 System_I2C::System_I2C(uint8_t addr) : addr(addr) {}
 
 void System_I2C::initialize() {
-  Wire.begin(); 
+  Wire.begin(I2C_SDA, I2C_SCL);  // typically SDA SCL unless board specific in _settings.h or overridden in platformio.ini
 }
 
 // The raw send and write. 
