@@ -219,8 +219,16 @@ void System_Captive::setup() {
   server.begin();
 }
 
-void System_Captive::string(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, uint8_t min_length, uint8_t max_length) {
-  response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlenght=" + min_length + " maxlength=" + max_length + "></label>");  
+// TODO may need to wrap labels etc in html_entities()
+void System_Captive::addString(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, uint8_t min_length, uint8_t max_length) {
+  response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlength=" + min_length + " maxlength=" + max_length + "></label>");  
+}
+/* Untested number and bool */
+void System_Captive::addNumber(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, long min, long max) {
+  response->print(String(F("<p><label>")) + label + ":<br><input type=number step=1 name='" + id + "/" + topicTwig + "' value='" + init + "' min=" + min + " max=" + max + "></label>");  
+}
+void System_Captive::addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, long min, long max) {
+  response->print(String(F("<p><label><input type=checkbox name='")) + id + "/" + topicTwig + "' value='" + init + (init ? " checked" : "") + ">" + label + "</label>");  
 }
 /* Example code to add handler
 
@@ -241,6 +249,21 @@ void System_Captive::loop() {
 
 
 #ifdef NOTINCORPORATEDYET
+
+        if (WiFiSettingsLanguage::multiple()) {
+            http.sendContent(F("<label>")); 
+            http.sendContent(_WSL_T.language); 
+            http.sendContent(F(":<br><select name=language>"));
+
+            for (auto& lang : WiFiSettingsLanguage::languages) {
+                String opt = F("<option value='{code}'{sel}>{name}</option>");
+                opt.replace("{code}", lang.first);
+                opt.replace("{name}", lang.second);
+                opt.replace("{sel}", language == lang.first ? " selected" : "");
+                http.sendContent(opt);
+            }
+            http.sendContent(F("</select></label>"));
+        }
 
 void System_WiFi::setupLanguages() {
   // TODO-39 need to make sure external for language is set prior to this - get defined from platformio.h and LANGUAGE_ALL
@@ -281,33 +304,6 @@ void System_WiFi::setupLanguages() {
     }
   #endif
 }
-
-void System_WiFi::setup() {
-  setupLanguages(); // Must come before any calls to WiFiSettings.<anything> 
-
-  // This may be confusing ! 
-  // Each line initializes a variable to the existing value, 
-  // but override from LittleFS if available, 
-  // then adds a line to the WiFi portal that can be used to set the file value, 
-  // which will be used after the reboot.
-
-  // Custom configuration variables, these will read configured values if previously set and return default values if not.
-  /*
-    int integer(String name, [long min, long max,] int init = 0, String label = name);
-    String string(String name, [[unsigned int min_length,] unsigned int max_length,] String init = "", String label = name);
-    bool checkbox(String name, bool init = false, String label = name);
-  */
-
-  frugal_iot.mqtt->hostname = WiFiSettings.string(F("mqtt/hostname"), 4,40, frugal_iot.mqtt->hostname, T.MqttServer); 
-  // TODO-29 turn projet into a dropdown, use an ifdef for the ORGANIZATION in _locals.h not support by ESPWiFi-Settings yet.
-  frugal_iot.project = WiFiSettings.string(F("frugal_iot/project"), 3,20, frugal_iot.project, T.Project); 
-  frugal_iot.device_name = WiFiSettings.string(F("frugal_iot/device_name"), 3,20, frugal_iot.device_name, T.DeviceName); 
-  #ifdef SYSTEM_WIFI_DEBUG
-    Serial.print(F("MQTT host = ")); Serial.println(frugal_iot.mqtt->hostname);
-    Serial.print(F("Project = ")); Serial.println(frugal_iot.project);
-    Serial.print(F("Device Name = ")); Serial.println(frugal_iot.device_name);
-  #endif
-
 
 // These are the language texts to use 
 struct Texts {
