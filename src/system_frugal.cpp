@@ -174,10 +174,6 @@ void System_Frugal::setup() {
     Serial.print("Setup: ");
   #endif
   readConfigFromFS(); // Reads config (project, device_name) and passes to our dispatchTwig
-  #if defined(SYSTEM_LORAMESHER_SENDER_TEST) || defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
-    //esp_log_level_set("*", ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
-    esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
-  #endif
   // Use the unique id of the ESP32 or ESP8266
   #ifdef ESP32
     nodeid =  String(F("esp32-")) + (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24));

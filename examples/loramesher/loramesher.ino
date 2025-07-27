@@ -2,7 +2,6 @@
  *  Frugal IoT example - LoRaMesher demo - a work in progress
  * 
  * Optional: 
- *  SYSTEM_LORAMESHER_SENDER_TEST or SYSTEM_LORAMESHER_RECEIVER_TEST which role it should play
  * 
  */
 
@@ -11,11 +10,7 @@
 
 // Change the parameters here to match your ... 
 // organization, project, id, description
-#ifdef LORAMESHER_SENDER_TEST
-System_Frugal frugal_iot("dev", "developers", "loramesher", "LoraMesher Sender");
-#else
-System_Frugal frugal_iot("dev", "developers", "loramesher", "LoraMesher Receiver");
-#endif
+System_Frugal frugal_iot("dev", "developers", "loramesher", "LoraMesher Node");
 
 void setup() {
   frugal_iot.startSerial(); // Encapsulate setting up and starting serial
@@ -46,32 +41,27 @@ void setup() {
   Serial.println(F("FrugalIoT Starting Loop"));
 }
 
-
-#ifdef SYSTEM_LORAMESHER_SENDER_TEST
-
-#endif // SYSTEM_LORAMESHER_SENDER_TEST
-
-    void printAppData(AppPacket<uint8_t>* appPacket) {
-        Serial.printf("Packet arrived from %X with size %d\n", appPacket->src, appPacket->payloadSize);
-        //Get the payload to iterate through it
-        uint8_t* dPacket = appPacket->payload;
-        // Note - dont use appPacket->getPayloadLength - it will report number of packets=1 not length of payload
-        size_t payloadLength = appPacket->getPayloadLength()-1; // Length of string without terminator 
-        Serial.write(dPacket, payloadLength); Serial.println(); // Being conservative in case no terminating \0 
-              // Display information
-        frugal_iot.oled->display.clearDisplay();
-        frugal_iot.oled->display.setCursor(0,0);
-        frugal_iot.oled->display.print(frugal_iot.description);
-        frugal_iot.oled->display.setCursor(0,20);
-        frugal_iot.oled->display.print("Received packet:");
-        frugal_iot.oled->display.setCursor(0,30);
-        frugal_iot.oled->display.print((char*)dPacket);
-        //frugal_iot.oled->display.setCursor(0,40);
-        //frugal_iot.oled->display.print("RSSI:");
-        //frugal_iot.oled->display.setCursor(30,40);
-        //frugal_iot.oled->display.print(rssi);
-        frugal_iot.oled->display.display();   
-    }
+void printAppData(AppPacket<uint8_t>* appPacket) {
+    Serial.printf("Packet arrived from %X with size %d\n", appPacket->src, appPacket->payloadSize);
+    //Get the payload to iterate through it
+    uint8_t* dPacket = appPacket->payload;
+    // Note - dont use appPacket->getPayloadLength - it will report number of packets=1 not length of payload
+    size_t payloadLength = appPacket->getPayloadLength()-1; // Length of string without terminator 
+    Serial.write(dPacket, payloadLength); Serial.println(); // Being conservative in case no terminating \0 
+          // Display information
+    frugal_iot.oled->display.clearDisplay();
+    frugal_iot.oled->display.setCursor(0,0);
+    frugal_iot.oled->display.print(frugal_iot.description);
+    frugal_iot.oled->display.setCursor(0,20);
+    frugal_iot.oled->display.print("Received packet:");
+    frugal_iot.oled->display.setCursor(0,30);
+    frugal_iot.oled->display.print((char*)dPacket);
+    //frugal_iot.oled->display.setCursor(0,40);
+    //frugal_iot.oled->display.print("RSSI:");
+    //frugal_iot.oled->display.setCursor(30,40);
+    //frugal_iot.oled->display.print(rssi);
+    frugal_iot.oled->display.display();   
+}
 
 
 
@@ -80,9 +70,6 @@ void loop() {
   if (frugal_iot.timeForPeriodic) {
     // Things which happen once for each sensor read period go here. 
     // This is also a good place to put things that check how long since last running
-    #ifdef SYSTEM_LORAMESHER_SENDER_TEST
-      // senderPeriodic();
-    #endif
   }
   frugal_iot.loop(); // Do not delete this call to frugal_iot.loop
 }
