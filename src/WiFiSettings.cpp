@@ -61,7 +61,6 @@ namespace {  // Helpers
         }
         return r;
     }
-
     struct WiFiSettingsParameter {
         String name;
         String label;
@@ -90,7 +89,6 @@ namespace {  // Helpers
             return h;
         }
     };
-
     struct WiFiSettingsInt : WiFiSettingsParameter {
         virtual void set(const String& v) { value = v; }
         String html() {
@@ -223,7 +221,6 @@ void WiFiSettingsClass::heading(const String& contents, bool escape) {
 }
 
 void WiFiSettingsClass::portal() {
-#ifdef ALREADYCONSIDEREDFORNEWPORTAL
     WebServer http(80);
     DNSServer dns;
   begin();
@@ -245,7 +242,7 @@ void WiFiSettingsClass::portal() {
     dns.setTTL(0);
     dns.start(53, "*", WiFi.softAPIP());
     if (onPortal) onPortal(); // Not using this
-#endif
+
     String ip = WiFi.softAPIP().toString(); // TODO-153 note how this is used by redirect 
     Serial.println(ip);
 
@@ -273,7 +270,6 @@ void WiFiSettingsClass::portal() {
         String ua = http.header("User-Agent");
         bool interactive = !ua.startsWith(F("CaptiveNetworkSupport"));
 
-#ifdef ALREADYCONSIDEREDFORNEWPORTAL
         if (interactive && onPortalView) onPortalView(); // TODO-128 Not using this but could be way to know if user active
         if (onUserAgent) onUserAgent(ua); 
 
@@ -306,7 +302,6 @@ void WiFiSettingsClass::portal() {
         http.sendContent(_WSL_T.button_restart);
         http.sendContent(F("\"></form><hr><h1>"));
         http.sendContent(_WSL_T.title);
-#endif // ALREADYCONSIDEREDFORNEWPORTAL
 //TODO-153 adapt next chunk so sends  wifi/add/<ssid>=<password>
         http.sendContent(F("</h1><form method=post><label>"));
         http.sendContent(_WSL_T.ssid);
@@ -378,7 +373,6 @@ void WiFiSettingsClass::portal() {
             http.sendContent(p->html());
         }
 
-#ifdef ALREADYCONSIDEREDFORNEWPORTAL
         http.sendContent(F(
             "<p style='position:sticky;bottom:0;text-align:right'>"
             "<input type=submit value=\""
@@ -386,7 +380,6 @@ void WiFiSettingsClass::portal() {
         http.sendContent(_WSL_T.button_save);
         http.sendContent(F("\"style='font-size:150%'></form>"));
     });
-#endif //ALREADYCONSIDEREDFORNEWPORTAL
 
 
     http.on("/", HTTP_POST, [this, &http]() {
@@ -454,8 +447,6 @@ void WiFiSettingsClass::portal() {
       #endif
   }
 }
-
-
 void WiFiSettingsClass::begin() {
     if (begun) return;
     begun = true;
@@ -493,7 +484,6 @@ void WiFiSettingsClass::begin() {
             params.back()->store();
         }
     }
- ESPMAC;
 }
 
 WiFiSettingsClass::WiFiSettingsClass() {

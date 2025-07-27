@@ -22,7 +22,9 @@ class System_Captive : public System_Base {
     System_Captive();
     void setup() override;
     void loop() override;
-    void string(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, uint8_t min_length, uint8_t max_length);
+    void addString(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, uint8_t min_length, uint8_t max_length);
+    void addNumber(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, long min, long max);
+    void addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, long min, long max);
 };
 
 #endif // SYSTEM_CAPTIVE_H

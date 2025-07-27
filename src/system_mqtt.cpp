@@ -228,7 +228,7 @@ void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicT
   }
 }
 void System_MQTT::captiveLines(AsyncResponseStream* response) {
-  frugal_iot.captive->string(response, id, "hostname", hostname, "MQTT hostname", 5, 60);
+  frugal_iot.captive->addString(response, id, "hostname", hostname, "MQTT hostname", 5, 60);
 }
 
 bool System_MQTT::resubscribeAll() {
