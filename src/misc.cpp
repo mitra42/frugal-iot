@@ -44,3 +44,59 @@ const char* lprintf(size_t buffer_size, const char* format, ...) {
   return buffer; // This buffer should stay in scope - and must be explicitly freed up by delete() if not wanted.
 }
 
+// Function to split a String into parts based on delimiter "/"
+void split(const String& str, String parts[], int& count) {
+    int start = 0;
+    int index = 0;
+
+    for (int i = 0; i <= str.length(); i++) {
+        if (i == str.length() || str.charAt(i) == '/') {
+            parts[index++] = str.substring(start, i);
+            start = i + 1;
+        }
+    }
+    count = index; // Set the number of parts split
+}
+
+// Function to match topic with pattern
+bool match_topic(const String& topic, const String& pattern) {
+    String topic_parts[10];  // Max 10 levels for simplicity - currently using 6 org/project/node/module/input/parameter
+    String pattern_parts[10];  // Max 10 levels for simplicity
+    int topic_size = 0, pattern_size = 0;
+
+    // Split the topic and pattern into parts
+    split(topic, topic_parts, topic_size);
+    split(pattern, pattern_parts, pattern_size);
+
+    int i = 0, j = 0;
+
+    // Matching the topic with the pattern
+    while (i < topic_size && j < pattern_size) {
+        if (pattern_parts[j] == "+") {
+            // + matches exactly one level, so move both indices
+            i++;
+            j++;
+        }
+        else if (pattern_parts[j] == "#") {
+            // # matches any number of levels, so return true
+            return true;
+        }
+        else if (topic_parts[i] == pattern_parts[j]) {
+            // Exact match for a topic part
+            i++;
+            j++;
+        }
+        else {
+            // No match, return false
+            return false;
+        }
+    }
+
+    // If pattern ends with #, it matches the rest of the topic
+    if (j < pattern_size && pattern_parts[j] == "#") {
+        return true;
+    }
+
+    // Check if both topic and pattern are fully matched
+    return i == topic_size && j == pattern_size;
+}

@@ -10,4 +10,7 @@ const String StringF(const char* format, ...);
 
 const char* lprintf(size_t buffer_size, const char* format, ...);
 
+void split(const String& str, String parts[], int& count); // This is currently only used in match_topic
+bool match_topic(const String& topic, const String& pattern);
+
 #endif //MISC_H

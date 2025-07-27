@@ -185,7 +185,6 @@ void System_Frugal::setup() {
 
 
 
-// TODO-152 next is blocking if WiFi fails - fix that
 Frugal_Group::setup(); // includes WiFi
   #ifdef SYSTEM_OTA_KEY
     ota->setup_after_mqtt_setup(); // Sends advertisement over MQTT

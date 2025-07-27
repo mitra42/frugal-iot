@@ -9,7 +9,6 @@
  * 
  * Explanations: (Based on limited understanding - i.e. could be wrong)
  *  LoRaMeshMessage = appPrtDst appPrtSrc messageId // as used by LoRaChat
- *  FrugalIoTMessage = message // Will evolve to what needed for MQTT
  *  AppPacket<xxx> = src dst payload=xxx
  * 
  * Required
@@ -44,8 +43,10 @@
   #error "Unsupported LORA configuration. Please define either ARDUINO_TTGO_LoRa32_v1 or ARDUINO_TTGO_LoRa32_v2. or define new BOARD"
 #endif
 
+#define INCOMINGRETAIN 12 // Special value of retain when incoming message
+
 // TODO-152 Consider timeout of LM subscriptions - since a node may get a different id each time it power cycles, and thus have multiple entries in the gateway's meshsubscription table.
-MeshSubscription::MeshSubscription(const String* topicPath, const uint16_t src) 
+MeshSubscription::MeshSubscription(const String topicPath, const uint16_t src) 
 : topicPath(topicPath), src(src) {}
 
 
@@ -67,8 +68,6 @@ System_LoraMesher::System_LoraMesher()
 // TODO for now this is an extern as its not going to be the final interface so its not worth putting together a way to pass a callback
     // extern void printAppCounterPacket(AppPacket<counterPacket>*); // This was how we handled structured packets
     extern void printAppData(AppPacket<uint8_t>*); //TODO-152 probably remove
-
-#ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
 
   // Function that process the received packets - it receives an AppPacket<xxx> and passes to handler
 void processReceivedPackets(void*) {
@@ -107,37 +106,46 @@ void createReceiveMessages() {
         Serial.printf("Error: Receive App Task creation gave error: %d\n", res);
     }
 }
-#endif // SYSTEM_LORAMESHER_RECEIVER_TEST
 
+// Common part to both relayDownstream and publush
+void System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos) {
+  // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
+  char qos_char = '0' + qos;
+  char retain_char = '0' + retain;
+  const char* stringymessage = lprintf(100, "%c%c%s:%s", 
+    qos_char, retain_char,
+    topic.c_str(), payload.c_str());
+  size_t msglen = strlen(stringymessage)+1; // +1 to include terminating \0
+  // Allocate enough memory for the struct + message
+  uint8_t* msg = (uint8_t*) malloc(msglen);
+  //DataPacket* dPacket = (DataPacket*) malloc(sizeof(DataPacket) + msglen); // sendPacket wants uint8_t*
+  // Copy the string into the message array
+  memcpy(msg, stringymessage, msglen);
+  delete(stringymessage);
+  // TODO-152 - maybe could just cast stringmessage as (uint8_t*) instead of copying
+  frugal_iot.loramesher->sentPacketCounter++;
+  frugal_iot.loramesher->radio.sendPacket(destn, msg, msglen); // Will be broadcast if no node
+  free(msg); // msg is copied in createPacketAndSend
+}
+void System_LoraMesher::relayDownstream(uint16_t destn, const String &topic, const String &payload) {
+  buildAndSend(destn, topic, payload, INCOMINGRETAIN, 0); // retain=12 gives a ascii character "<"
+}
+// This is called by System_MQTT::subscribe or System_MQTT::messageSendInner when have no WiFi 
+// but do have LoraMesher
 void System_LoraMesher::publish(const String &topic, const String &payload, bool retain, int qos) {
-      // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
-      char qos_char = '0' + qos;
-      char retain_char = '0' + retain;
-      const char* stringymessage = lprintf(100, "%c%c%s:%s", 
-        qos_char, retain_char,
-        topic.c_str(), payload.c_str());
-      Serial.print(__LINE__); Serial.print(" XXX " __FILE__ " "); Serial.println(stringymessage);
-      size_t msglen = strlen(stringymessage)+1; // +1 to include terminating \0
-      // Allocate enough memory for the struct + message
-      uint8_t* msg = (uint8_t*) malloc(msglen);
-      //DataPacket* dPacket = (DataPacket*) malloc(sizeof(DataPacket) + msglen); // sendPacket wants uint8_t*
-      // Copy the string into the message array
-      memcpy(msg, stringymessage, msglen);
-      delete(stringymessage);
-      // TODO-152 - maybe could just cast stringmessage as (uint8_t*) instead of copying
-      frugal_iot.loramesher->sentPacketCounter++;
-      if (frugal_iot.loramesher->findGatewayNode()) { 
-        frugal_iot.loramesher->radio.sendPacket(frugal_iot.loramesher->gatewayNodeAddress, msg, msglen); // Will be broadcast if no node
-      } else {
-        // TODO-152 queue till have gateway (depending on qos)
-      }
-      free(msg); // msg is copied in createPacketAndSend
+  if (frugal_iot.loramesher->findGatewayNode()) { 
+    buildAndSend(frugal_iot.loramesher->gatewayNodeAddress, topic, payload, retain, qos);
+  } else {
+    // Note currently this is ONLY called when there is a gateway Node.
+    //but if not, then should queue till have gateway (depending on qos)
+  }
 }
 
 void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
   rcvdPacketCounter++;
   printAppData(appPacket); // TODO-151 see note above about this being an extern
   const uint8_t qos = appPacket->payload[0] - '0';
+  const bool incoming = appPacket->payload[0] == ('0'+INCOMINGRETAIN);
   const bool retain = appPacket->payload[0] - '0'; // will be 0 or 1
   // Assume appPacket->payload is a uint8_t* or char* and is null-terminated from [2] onward
   const char* str = (const char*)&appPacket->payload[2];
@@ -154,13 +162,26 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
   //Delete the packet when used. It is very important to call this function to release the memory of the packet.
   radio.deletePacket(appPacket);
   Serial.print("LoRaMesher received"); Serial.print(topicPath); Serial.println(payload);
-  if (topicPath == "subscribe") {
+
+  // How do we tell if this is an message heading upstream (from node to MQTT) or downstream (from MQTT on gateway node or other node via the router)
+  // Three cases
+  // a: message incoming from Broker: src=gateway dst=thisLeaf 
+  // b: message reflected at gateway: src=gateway dst=thisLeaf
+  // c: message outgoing to us as gateway: src=anotherLeaf dst=thisLeaf/gateway
+  // Cant use src as there may be multiple gateways AND could be message reflected at gateway
+  // For now - may change this - use retain=12 (character is '<' on "a" and "b"
+   if (topicPath == "subscribe") {
     Serial.print("XXX " __FILE__); Serial.println("got subscribe");
     // Need to remember the subscription before calling subscribe, because there may be retained data returned immediately
     meshSubscriptions.emplace_front(payload, appPacket->src);
     frugal_iot.mqtt->subscribe(payload);
   }
-  frugal_iot.mqtt->messageSend(topicPath, payload, retain, qos);
+  if (incoming) {
+    Serial.print("XXX " __FILE__); Serial.print("incoming "); Serial.println(topicPath);
+    frugal_iot.mqtt->dispatchPath(topicPath, payload);
+  } else {
+   frugal_iot.mqtt->messageSend(topicPath, payload, retain, qos);
+  }
 }
 
 
@@ -182,39 +203,42 @@ bool System_LoraMesher::connected() {
   return findGatewayNode();
 }
 
+// Catch incoming messages received over WiFi by MQTT and then matching a subscription we know
+// Note - this (I think) will catch outgoing messages that also match a subscription. 
+void System_LoraMesher::dispatchPath(const String &topicPath, const String &payload) {
+  for (auto &sub : meshSubscriptions) { 
+    // Find matching subscriptions
+    if (match_topic(topicPath, sub.topicPath)) { // Allows for + and # wildcards
+      Serial.print("XXX "); Serial.print(topicPath); Serial.print(" matches "); Serial.println(topicPath);
+      // send over LoRaWan to subscriber
+      relayDownstream(sub.src, topicPath, payload);
+    }
+  }
+}
+
 // setup points radio at receiveLoRaMessage_Handle which is set to processReceivedPackets in createReceiveMessages()
 // Could parameterize this, but working on assumption that this will only ever point to the MQTT handler once its all working
 void System_LoraMesher::setup() {
   Serial.println("Loramesher setup");
-    //esp_log_level_set("*", ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
+    //esp_log_level_set("*", ESP_LOG_VERBOSE);
     esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
 
   // Error codes are buried deep  .pio/libdeps/temploramesher/RadioLib/src/TypeDef.h
   // -12 is invalid frequency usually means band and module are not matched.
   radio.begin(config);        //Init the loramesher with a configuration
-  #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
-    createReceiveMessages();    //Create the receive task and add it to the LoRaMesher
-    radio.setReceiveAppDataTaskHandle(receiveLoRaMessage_Handle); //Set the task handle to the LoRaMesher
-  #endif
+  createReceiveMessages();    //Create the receive task and add it to the LoRaMesher
+  radio.setReceiveAppDataTaskHandle(receiveLoRaMessage_Handle); //Set the task handle to the LoRaMesher
   //gpio_install_isr_service(ESP_INTR_FLAG_IRAM); // known error message - Jaimi says doesn't matter
   radio.start();     //Start LoRaMesher
   if (!findGatewayNode()) {
       Serial.println("Setup did not find a gateway node - expect after receive routing");
   }
   #ifdef SYSTEM_LORAMESHER_RECEIVER_TEST
-  // TODO-152 should do this automatically if have WiFi
+  // TODO-152 should do this automatically if have MQTT connected but note LoRamesher routing is slow
+  // so don't flap this
     radio.addGatewayRole(); 
   #endif
 }
-
-#if !defined(SYSTEM_LORAMESHER_SENDER_TEST) && !defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
-  System_LoraMesher::publish(const String &topicPath, const String &payload, const bool retain, const int qos) {
-    // Build a struc - unclear how to handle strings
-    counterPacket* data = new counterPacket;
-      TODO figure out how to build packet of Strings
-    radio.createPacketAndSend(BROADCAST_ADDR, data, 1); // Size is number of counterPackets. 
-  }
-#endif
 
  void System_LoraMesher::prepareForSleep() {
     // TODO-139 TODO-23 find where put radio and SPI to sleep - on some other libraries its LoRa.sleep() and SPI.end()

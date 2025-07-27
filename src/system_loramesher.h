@@ -14,52 +14,40 @@
 #include "_settings.h"
 #ifdef SYSTEM_LORAMESHER_WANT  // defined in platformio.ini
 
+#include <forward_list>
 #include "LoraMesher.h"
 #include "system_base.h"
 
 class MeshSubscription {
-  const String* topicPath;
-  const uint16_t src; // The node id subscribing 
-  MeshSubscription(topicPath, src);
-}
+  public:
+    const String topicPath;
+    const uint16_t src; // The node id subscribing 
+    MeshSubscription(const String topicPath, const uint16_t src);
+};
 
 class System_LoraMesher : public System_Base {
   public:
+    System_LoraMesher();
+    bool connected();
+    // Match mqtt.client profile
+    void publish(const String &topicPath, const String &payload, const bool retain, const int qos);
+    // Called from processReceivedPackets
     LoraMesher& radio;
+    void processReceivedPacket(AppPacket<uint8_t>* appPacket);
+  private:
     LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();
     uint16_t gatewayNodeAddress;
     uint16_t rcvdPacketCounter = 0;
     uint16_t sentPacketCounter = 0; 
-    System_LoraMesher();
     bool findGatewayNode();
-    bool connected();
     void setup() override;
     //void periodically() override;
-    // Match mqtt.client profile
-    void publish(const String &topicPath, const String &payload, const bool retain, const int qos);
-    void processReceivedPacket(AppPacket<uint8_t>* appPacket);
     void prepareForSleep();
     std::forward_list<MeshSubscription> meshSubscriptions;
+    void dispatchPath(const String &topicPath, const String &payload) override;
+    void buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos);
+    void relayDownstream(uint16_t destn, const String &topic, const String &payload);
 };
-
-// Adapted From LoRaChat/src/loramesh/loraMeshMessage.h
-
-#pragma pack(push, 1)
-
-/*
-enum LoRaMeshMessageType: uint8_t {
-    sendMessage = 1,
-    getRoutingTable = 2,
-};
-*/
-class FrugalIoTMessage {
-public:
-    //appPort appPortDst;  // TODO-152 where is appPort defined
-    //appPort appPortSrc;
-    uint8_t messageId;
-    uint8_t message[];
-};
-#pragma pack(pop)
 
 #endif // SYSTEM_LORAMESHER_WANT
 #endif // SYSTEM_LORAMESHER_H

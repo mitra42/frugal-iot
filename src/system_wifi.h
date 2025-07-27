@@ -7,8 +7,6 @@ enum WiFiStatusType {
   WIFI_STARTING, WIFI_DISCONNECTED, WIFI_RECONNECTING, WIFI_CONNECTED, WIFI_NEEDSCAN, WIFI_SCANNING, WIFI_SCANNED, WIFI_CONNECTING, WIFI_STABILIZING
 };
 
-//TODO-152 OTA is trying before WiFi is up
-
 class System_WiFi : public System_Base {
   public:
     WiFiStatusType status = WIFI_STARTING ;

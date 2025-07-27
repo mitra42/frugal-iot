@@ -188,7 +188,7 @@ void System_MQTT::subscribe(const String& topicPath) {
         // Dont need to record this on the sender - as incoming messages will be formatted as MQTT with the path
     #endif
     } else {
-      Serial.println(F("MQTT trying to subscribe but not connected and no LoRaMesher"));
+      Serial.println(F("MQTT trying to subscribe but not connected on WiFi and no LoRaMesher"));
     }
     subscriptions.emplace_front(&topicPath); // Should create a Subscription
   }
@@ -212,7 +212,6 @@ void System_MQTT::subscribe(const char* topicTwig) {
   subscribe(*topicPath);
 }
 void System_MQTT::dispatch(const String &topicPath, const String &payload) {
-  // TODO move this to _base.cpp
   if (topicPath.startsWith(*topicPrefix)) { // includes trailing slash
     String topicTwig = topicPath.substring(topicPrefix->length()); 
     bool isSet;
@@ -223,7 +222,7 @@ void System_MQTT::dispatch(const String &topicPath, const String &payload) {
       frugal_iot.dispatchTwig(topicTwig, payload, isSet); // Just matches twigs
     }
   }
- 
+  // Note LoRaMesher will go through this to System_LoRaMesher::dispatchPath
   frugal_iot.dispatchPath(topicPath, payload);  // Matches just paths. (Twigs and sets handled above)
 }
 // dispatch() is how MQTT handles incoming MQTT messsages, dispatchTwig is its own handler i.e. for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname
