@@ -126,7 +126,7 @@
 #define SYSTEM_WIFI_WANT  // currently always wanted
 
 // Define boards which have built in OLED and should include automatically
-#if defined(ARDUINO_TTGO_LoRa32)
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X)
   #define SYSTEM_OLED_WANT
 #endif
 

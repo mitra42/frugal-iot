@@ -30,19 +30,6 @@
 #include "system_frugal.h"
 #include "system_mqtt.h"
 
-// These settings duplicated in system_loramesher.cpp and system_lora.cpp (system_loramesher.cpp are newer)
-// For ARDUINO_TTGO_LoRa32 
-// LORA_SCK; LORA_MISO; LORA_MOSI; LORA_CS; LORA_RST; and for V21 LORA_D1 are defined correctly in
-// e.g. ~/Arduino15/packages/esp32/hardware/esp32/3.2.0/variants/ttgo-lora32-v21new/pins_arduino.h etc
-#if defined(ARDUINO_TTGO_LoRa32_v1)
-  #define LORA_D0 LORA_IRQ
-#elif defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_v21new) // V3 is almost same as V2
-  #define LORA_D0 LORA_IRQ
-  // Note on V2 but not V21 LORA_D1 is not defined and may need a physical wire to GPIO 33
-#else
-  #error "Unsupported LORA configuration. Please define either ARDUINO_TTGO_LoRa32_v1 or ARDUINO_TTGO_LoRa32_v2. or define new BOARD"
-#endif
-
 #define INCOMINGRETAIN 12 // Special value of retain when incoming message
 
 // TODO-152 Consider timeout of LM subscriptions - since a node may get a different id each time it power cycles, and thus have multiple entries in the gateway's meshsubscription table.
@@ -58,12 +45,27 @@ System_LoraMesher::System_LoraMesher()
     config.loraCs = LORA_CS;
     config.loraRst = LORA_RST;
     config.loraIrq = LORA_IRQ;
-    config.loraIo1 = LORA_D1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_v1 or _V2 but will on _V21
+    #ifdef LORA_D1  // e.g. on ttgo-lora32-v21new
+      config.loraIo1 = LORA_D1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_v1 or _V2 but will on _V21
+    #elif defined(LORA_DIO1) // e.g. on variant:lilygo_t3_s3_sx127x 
+      config.loraIo1 = LORA_DIO1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_v1 or _V2 but will on _V21
+    #else
+      #error unclear what to define loraIo1 at on this board
+    #endif
     config.module = SYSTEM_LORAMESHER_MODULE;
     config.freq = SYSTEM_LORAMESHER_BAND;
+    // This line is required because of some weirdness between different boards
+    // LoRaMesher uses a default SPI.begin which picks up SCK MISO, MOSI, CS rather than LORA_MISO etc
+    // ttgo-lora32-v21new defines LORA_SCK the same as MISO, MOSI, CS etc so it works but
+    // lilygo_t3_s3_sx127x howwever defines SCK, MISO etc as the SD's SPI so LoraMesher fails 
+    // https://github.com/LoRaMesher/LoRaMesher/pull/78 submitted so this is not needed.
+    SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
+    config.spi = &SPI;
 }
 
-  // LORAMESH-STRUCTURED: struct counterPacket {  uint32_t counter = 0; }; counterPacket* helloPacket = new counterPacket;
+
+
+// LORAMESH-STRUCTURED: struct counterPacket {  uint32_t counter = 0; }; counterPacket* helloPacket = new counterPacket;
 
 // TODO for now this is an extern as its not going to be the final interface so its not worth putting together a way to pass a callback
     // extern void printAppCounterPacket(AppPacket<counterPacket>*); // This was how we handled structured packets
@@ -223,8 +225,9 @@ void System_LoraMesher::setup() {
     //esp_log_level_set("*", ESP_LOG_VERBOSE);
     esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
 
-  // Error codes are buried deep  .pio/libdeps/temploramesher/RadioLib/src/TypeDef.h
+  // Error codes are buried deep  .pio/libdeps/*/RadioLib/src/TypeDef.h
   // -12 is invalid frequency usually means band and module are not matched.
+  // -16 is RADIOLIB_ERR_SPI_WRITE_FAILED suggesting wrong pins for SPI
   radio.begin(config);        //Init the loramesher with a configuration
   createReceiveMessages();    //Create the receive task and add it to the LoRaMesher
   radio.setReceiveAppDataTaskHandle(receiveLoRaMessage_Handle); //Set the task handle to the LoRaMesher

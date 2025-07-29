@@ -15,6 +15,7 @@
 
 // These settings duplicated in system_loramesher.cpp and system_lora.cpp
 #if defined(ARDUINO_TTGO_LoRa32_v1)
+  // These should be defined in the variant file .platformio/packages/framework-arduinoespressif32/variants/ttgo-lora32-v21new/pins_arduino.h
   #define LORA_SCK 5
   #define LORA_MISO 19
   #define LORA_MOSI 27
@@ -22,6 +23,7 @@
   #define LORA_RST 14 // Note 23 on V2
   #define LORA_DIO0 26
 #elif defined(ARDUINO_TTGO_LoRa32_v2) // V3 is same as V2
+ // These should be defined in the variant file .platformio/packages/framework-arduinoespressif32/variants/lilygo_t3_s3_sx127x/pins_arduino.h
   #define LORA_SCK 5
   #define LORA_MISO 19
   #define LORA_MOSI 27
@@ -31,7 +33,8 @@
 #else
   #error "Unsupported LORA configuration. Please define either ARDUINO_TTGO_LoRa32_v1 or ARDUINO_TTGO_LoRa32_v2. or define new BOARD"
 #endif
-#define LORA_IRQ LORA_DIO0
+// This next is true for some boards, but not all
+// #define LORA_IRQ LORA_DIO0
 
 
 // TODO note that each board only does specific bands: 

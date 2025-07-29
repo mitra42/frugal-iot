@@ -24,19 +24,28 @@
   // OLED_SDA and OLED_SCL correctly defined - OLED_RST is 16 
   // These are default I2C pins for ESP32
   #define OLED_RST_X -1 // OLED_RST is 16 but dont use on V21 as seems to freeze the display
-#else
-  #error "Unsupported OLED display configuration. Please define a new BOARD"
+#elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
+  // According to https://www.espboards.dev/esp32/lilygo-t3s3-v1-0/
+  // Note on other boards this is defined in  ~/.platformio/packages/framework-arduinoespressif32/variants
+  #define OLED_SDA 18
+  #define OLED_SCL 17 
+  #define OLED_RST_X -1 // Doesnt appear to exist on this board
+#elif !defined(OLED_SDA) || !defined(OLED_SCL)
+  #error Undefined board for OLED
 #endif
-#if defined(ARDUINO_TTGO_LoRa32) // V1 or v2
+
+// Note ARDUINO_LILYGO_T3_S3_V1_X not tested yet, but probably same as ARDUINO_TTGO_LoRa32
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) // V1 or v2
   #include <Adafruit_SSD1306.h> // For OLED display
   #define SCREEN_WIDTH 128 // OLED display width, in pixels
   #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #endif
 
-
 class System_OLED : public System_Base {
   public:
-    Adafruit_SSD1306 display; // OLED display object TODO-138 parameterize this and depend on board
+    #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) // V1 or v2
+      Adafruit_SSD1306 display; // OLED display object TODO-138 parameterize this and depend on board
+    #endif
     System_OLED(); // Constructor
     void setup() override; // Setup function to initialize the display
     //void infrequently() override; // Infrequent tasks, e.g., every 10 seconds
