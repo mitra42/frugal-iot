@@ -79,7 +79,8 @@ class System_MQTT : public System_Base {
     const char* password;
     const char* username;
     std::forward_list<Subscription> subscriptions;
-    std::forward_list<Message> queued;
+    //std::forward_list<Message> queued;
+    std::list<Message> queued;
     bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
     Subscription* find(const String &topicPath);
     void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet); // receiving message for the mqtt module
