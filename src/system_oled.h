@@ -27,8 +27,8 @@
 #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
   // According to https://www.espboards.dev/esp32/lilygo-t3s3-v1-0/
   // Note on other boards this is defined in  ~/.platformio/packages/framework-arduinoespressif32/variants
-  #define OLED_SDA 18
-  #define OLED_SCL 17 
+  #define OLED_SDA SDA
+  #define OLED_SCL SCL
   #define OLED_RST_X -1 // Doesnt appear to exist on this board
 #elif !defined(OLED_SDA) || !defined(OLED_SCL)
   #error Undefined board for OLED
