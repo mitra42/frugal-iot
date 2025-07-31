@@ -134,12 +134,12 @@ void System_LoraMesher::relayDownstream(uint16_t destn, const String &topic, con
 }
 // This is called by System_MQTT::subscribe or System_MQTT::messageSendInner when have no WiFi 
 // but do have LoraMesher
-void System_LoraMesher::publish(const String &topic, const String &payload, bool retain, int qos) {
+bool System_LoraMesher::publish(const String &topic, const String &payload, bool retain, int qos) {
   if (frugal_iot.loramesher->findGatewayNode()) { 
     buildAndSend(frugal_iot.loramesher->gatewayNodeAddress, topic, payload, retain, qos);
+    return true;
   } else {
-    // Note currently this is ONLY called when there is a gateway Node.
-    //but if not, then should queue till have gateway (depending on qos)
+    return false; // Leave on queue if no gateway node.
   }
 }
 

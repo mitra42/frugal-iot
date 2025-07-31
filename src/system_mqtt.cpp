@@ -285,40 +285,45 @@ void System_MQTT::messageReceived(const String &topicPath, const String &payload
 // These are intentionally required parameters rather than defaulting so the coder thinks about the desired behavior
 
 // Send message to MQTT client - used for both repeats and first time messages
-void System_MQTT::messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos) {
+bool System_MQTT::messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos) {
   if (connected()) {
-    if (!client.publish(topicPath, payload, retain, qos)) {
+    if (client.publish(topicPath, payload, retain, qos)) {
+      return true;
+    } else {
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.print(F("Failed to publish: ")); Serial.print(topicPath); Serial.print(F("=")); Serial.print(payload); 
         Serial.print(" qos="); Serial.print(qos);
-        // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
+      #endif
+      // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
         
-        switch (client.lastError()) {
-          case -1:
+      switch (client.lastError()) {
+        case -1:
+          #ifdef SYSTEM_MQTT_DEBUG
             Serial.print(F(" MQTT Buffer too small, message length~")); Serial.println(topicPath.length() + payload.length());
-            break;
-          case -9:
+          #endif
+          return true; // It failed, but won't succeed later so delete
+          //break;
+        case -9:
+          #ifdef SYSTEM_MQTT_DEBUG
             Serial.println(F(" Missing or Wrong packet"));
-            break;
-          default: 
+          #endif
+          break;
+        default: 
+          #ifdef SYSTEM_MQTT_DEBUG
             Serial.print(F(" err=")); Serial.println(client.lastError());
+          #endif
         }
-      #endif // SYSTEM_MQTT_DEBUG
-      if (qos > 0) {
-        // This doesn't work - if first publish failed, this does, and it loops
-        // TODO-152 maybe resurrect this, now check on client.connected()
-        //Serial.print(F("Requeuing"));
-        //queued.emplace_front(topicPath, payload, retain, qos);
-      }
+      return false;
     };
+  }
   #ifdef SYSTEM_LORAMESHER_WANT
-    } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
+    else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
         Serial.println(F("MQTT sending via LoRaMesher"));
-        frugal_iot.loramesher->publish(topicPath, payload, retain, qos);
+        return frugal_iot.loramesher->publish(topicPath, payload, retain, qos);
+    }
   #endif
-  } else { 
-    // Currently not doing anything with messages if neither WiFi->MQTT or LoraMesher // TODO-152
-    // Should probably queue till have a connection // TODO-152
+  else { 
+    return false; // Not connected either MQTT/WiFi nor LoRaMesher so leave one queue
   }
 }
 // Send or queue up a message 
@@ -327,14 +332,11 @@ void System_MQTT::messageSend(const String &topicPath, const String &payload, co
   #ifdef SYSTEM_MQTT_DEBUG
     Serial.print(F("MQTT ")); Serial.print((inReceived && qos) ? F("queue ") : F("publish ")); Serial.print(topicPath); Serial.print(F(" - ")); Serial.println(payload);
   #endif
-  if (inReceived && qos) {
-    const String* topicPathCopy = new String(topicPath); // payload will go out of scope before queue flushed
-    const String* payloadCopy = new String(payload); // payload will go out of scope before queue flushed
-    queued.emplace_front(*topicPathCopy, *payloadCopy, retain, qos);  // Implicit new Message
-  } else {
-    messageSendInner(topicPath, payload, retain, qos);
-  }
-  // Whether send to net or queue, send loopback and do the retention stuff. 
+  const String* topicPathCopy = new String(topicPath); // payload will go out of scope before queue flushed
+  const String* payloadCopy = new String(payload); // payload will go out of scope before queue flushed
+  queued.emplace_back(*topicPathCopy, *payloadCopy, retain, qos);  // Implicit new Message
+  //TODO-152Q dedupe before adding
+  // Send loopback and do the retention stuff. 
   if (retain) {
     retainPayload(topicPath, payload); // Keep a copy of outgoing, so local subscribers will see 
   }
@@ -374,11 +376,12 @@ void System_MQTT::messageSend(const char* const topicTwig, const bool value, con
   messageSend(topicTwig, foo, retain, qos);
 }
 void System_MQTT::messageSendQueued() {
-  // TODO-125 should probably check connected each time go around loop and only pop if sendInner succeeds
   while (!queued.empty()) {
     Message &m = queued.front();
-    messageSendInner(*m.topicPath, *m.payload, m.retain, m.qos);
-    queued.pop_front();
+    if (messageSendInner(*m.topicPath, *m.payload, m.retain, m.qos)) {
+      // If fail to send, leave on queue
+      queued.pop_front();
+    }
     //TODO-125 prob need to delete message popped
   }
 }

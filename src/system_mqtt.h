@@ -87,7 +87,7 @@ class System_MQTT : public System_Base {
     void captiveLines(AsyncResponseStream* response) override;
     bool resubscribeAll();
     void retainPayload(const String &topicPath, const String &payload);
-    void messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos);
+    bool messageSendInner(const String &topicPath, const String &payload, const bool retain, const int qos);
     void messageSendQueued();
     String* twig(const String &topicPath);
 };
