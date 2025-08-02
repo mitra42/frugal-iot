@@ -50,7 +50,7 @@ void Control_Gsheets::act() {
     // TODO-136 may be a problem quoting output if it, for example, is a float
     *payload += StringF(",\"%s\":\"%s\"", 
       input->id, 
-      input->StringValue());
+      input->StringValue().c_str());
   }
   *payload += "}";
   sendGoogle(payload);

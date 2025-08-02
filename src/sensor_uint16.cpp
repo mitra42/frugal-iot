@@ -46,18 +46,6 @@ void Sensor_Uint16::set(const uint16_t newvalue) {
     output->set(vv); // Set the value in the OUT object and send
   }
 }
-/*
-bool Sensor_Uint16::changed(const uint16_t newvalue) {
-  return (newvalue != output->value);
-}
-*/
-/*
-void Sensor_Uint16::act() {
-    if (topicTwig) {
-      frugal_iot.mqtt->messageSend(topicTwig, output->value, retain, qos); // Note messageSend will convert value to String and expand topicTwig
-    }
-}
-*/
 void Sensor_Uint16::readAndSet() {
     set(read()); // Will also send message via act()
 }

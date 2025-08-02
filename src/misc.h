@@ -7,6 +7,7 @@
 #define Sprintf(f, ...) ({ char* s; asprintf(&s, f, __VA_ARGS__); String r = s; free(s); r; })
 
 const String StringF(const char* format, ...);
+const String* newStringF(const char* format, ...);
 
 const char* lprintf(size_t buffer_size, const char* format, ...);
 

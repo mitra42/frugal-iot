@@ -27,6 +27,7 @@
 #ifdef ESP32
 #include "system_loramesher.h"
 #endif
+#include "system_message.h"
 #include "system_mqtt.h"
 #include "system_oled.h"
 #include "system_ota.h"
@@ -71,9 +72,8 @@ class System_Frugal : public Frugal_Group {
     #ifdef SYSTEM_LORA_WANT
       System_LoRa* lora;
     #endif
-    #ifdef SYSTEM_LORAMESHER_WANT
-      System_LoraMesher* loramesher;
-    #endif
+    System_LoraMesher* loramesher; // Will be nullptr if no loramesher
+    System_Messages* messages;
     System_MQTT* mqtt;
     #ifdef SYSTEM_OLED_WANT
       System_OLED* oled;

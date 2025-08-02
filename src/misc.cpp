@@ -28,6 +28,24 @@ const String StringF(const char* format, ...) {
     va_end(args);
     return String(buffer); // Note - string returned on stack so should be safe
 }
+//TODO-150Q for now just copying above, could refactor
+const String* newStringF(const char* format, ...) {
+    char buffer[PRINTF_BUFFER_SIZE]; // out of scope at end of this
+    va_list args;
+    va_start(args, format);
+    uint16_t len = vsnprintf(buffer, PRINTF_BUFFER_SIZE, format, args);
+    if (len >= PRINTF_BUFFER_SIZE) {
+      #ifdef STRINGS_DEBUG
+        Serial.print(F("StringF: vsnprintf buffer too small expanding to, len=")); Serial.print(len); Serial.print(F(" ")); Serial.println(buffer);
+      #endif //STRINGS_DEBUG
+      char buffer2[len + 1];
+      len = vsnprintf(buffer2, len + 1, format, args);
+      va_end(args);
+      return new String(buffer2); // Return a String from the buffer
+    }
+    va_end(args);
+    return new String(buffer); // Note - string returned on stack so should be safe
+}
 
 // Typical usage.   lprintf(strlen(a)+strlen(b)+2, "%s %s", a, b) note how add 1 for length
 const char* lprintf(size_t buffer_size, const char* format, ...) {

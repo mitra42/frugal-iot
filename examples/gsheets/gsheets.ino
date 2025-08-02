@@ -37,7 +37,7 @@ void setup() {
 
   Control_Gsheets* cg = new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);
   frugal_iot.controls->add(cg);
-  cg->track("temperature", frugal_iot.mqtt->path("sht/temperature")); // TODO-141 probably wont work as MQTT not setup
+  cg->track("temperature", frugal_iot.messages->path("sht/temperature")); // TODO-141 probably wont work as MQTT not setup
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); 

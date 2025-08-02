@@ -41,7 +41,7 @@ class IO {
     char const *sensorId; // Sensor this IO belongs to
     char const *id; // System readable id
     String name; // Human readable name of this IO within the sensor, i.e. can duplicate across sensors
-    char const *topicTwig; // Topic always listens|sends to - null (unusual) if only listens on wire
+    const String* topicTwig;
     char const *color; // String passed to UX
     bool const wireable; // True if can wire this to/from others
     const String *wiredPath; // Topic also listening|sending to when wired

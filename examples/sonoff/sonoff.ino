@@ -33,7 +33,7 @@ void setup() {
   frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", 12, "purple"));
   ControlHysterisis* cb = new ControlHysterisis("control", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.mqtt->path("relay/on"));
+  cb->outputs[0]->wireTo(frugal_iot.messages->path("relay/on"));
 
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
   Serial.println(F("FrugalIoT Starting Loop"));

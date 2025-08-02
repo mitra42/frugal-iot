@@ -12,6 +12,7 @@
 #define SYSTEM_LORAMESHER_H
 
 #include "_settings.h"
+// defined in _settings.h if board has LoRa, can also define in platformio.ini if e.g. have a LoRa shield
 #ifdef SYSTEM_LORAMESHER_WANT  // defined in platformio.ini
 
 #include <forward_list>

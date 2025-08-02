@@ -32,13 +32,13 @@ System_Discovery::System_Discovery()
 : System_Base("discovery", "Discovery") { }
 
 void System_Discovery::quickAdvertise() {
-    frugal_iot.mqtt->messageSend(*projectTopic,  frugal_iot.nodeid, false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
+    frugal_iot.messages->send(projectTopic, &frugal_iot.nodeid, false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
 }
 
 // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
 void System_Discovery::fullAdvertise() {
   // Note - this is intentionally not a global string as it can be quite big, better to create, send an free up
-  String* advertisePayload = new String( 
+  const String* advertisePayload = new String( 
     "id: " + frugal_iot.nodeid // ESP32 doesnt like F("id:") for first arg (ESP8266 is fine)
     + F("\nname: ") + frugal_iot.device_name
     + F("\ndescription: ") + frugal_iot.description
@@ -47,9 +47,9 @@ void System_Discovery::fullAdvertise() {
     #endif
     // TODO-44 add location: <gsm coords>
     + F("\ntopics:") 
+    + frugal_iot.advertisement()
   );
-  *advertisePayload += frugal_iot.advertisement();
-  frugal_iot.mqtt->messageSend(*advertiseTopic, *advertisePayload, true, 1);
+  frugal_iot.messages->send(advertiseTopic, advertisePayload, true, 1);
   doneFullAdvertise = true;
 }
 

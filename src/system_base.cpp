@@ -81,7 +81,9 @@ void System_Base::writeConfigToFS(const String& topicTwig, const String& payload
 
 
 IO::IO(const char * const sensorId, const char * const id, const String name, const char* const color, const bool w)
-: sensorId(sensorId), id(id), name(name), topicTwig(lprintf(strlen(sensorId)+strlen(id)+2, "%s/%s", sensorId, id)), color(color), wireable(w), wiredPath(nullptr) 
+: sensorId(sensorId), id(id), name(name), 
+topicTwig(newStringF("%s/%s", sensorId, id)), 
+color(color), wireable(w), wiredPath(nullptr) 
 {};
 
 IN::IN(const char* sensorId, const char * const id, const String name, const char * const color, const bool w)
@@ -94,11 +96,11 @@ void IO::wireTo(String* topicPath) {
   // TODO probably should unsubscribe from previous BUT could be subscribed elsewhere
   wiredPath = topicPath;
   if (topicPath->length() > 0) {
-frugal_iot.mqtt->subscribe(*wiredPath);
+frugal_iot.messages->subscribe(wiredPath);
   }
 }
 void IO::wireTo(IO* io) {
-  wireTo(frugal_iot.mqtt->path(io->topicTwig)); // Subscribe to the twig of the IO
+  wireTo(frugal_iot.messages->path(io->topicTwig)); // Subscribe to the twig of the IO
 }
 // TO_ADD_INxxx 
 float IN::floatValue() {
@@ -454,31 +456,31 @@ const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type
 String INfloat::advertisement(const String group) {
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   return (topicTwig)
-  ? StringF(valueAdvertLineFloat, topicTwig, name, "float", width, min, width, max, color, "slider", "w", group, wireable ? 1 : 4, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
+  ? StringF(valueAdvertLineFloat, topicTwig->c_str(), name, "float", width, min, width, max, color, "slider", "w", group, wireable ? 1 : 4, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
   : String();
 }
 String INuint16::advertisement(const String group) {
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   return (topicTwig)
-  ? StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "slider", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
+  ? StringF(valueAdvertLineUint16, topicTwig->c_str(), name, "int", min, max, color, "slider", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
   : String();
 }
 String INbool::advertisement(const String group) {
   //"\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
   return (topicTwig)
-  ? StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
+  ? StringF(valueAdvertLineBool, topicTwig->c_str(), name, "bool", color, "toggle", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
   : String();
 }
 String INtext::advertisement(const String group) {
   // e.g. "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
   return (topicTwig)
-  ? StringF(valueAdvertLineText, topicTwig, name, "text", color, "text", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
+  ? StringF(valueAdvertLineText, topicTwig->c_str(), name, "text", color, "text", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
   : String();
 }
 String INcolor::advertisement(const String group) {
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
   return (topicTwig)
-  ? StringF(valueAdvertLineColor, topicTwig, name, "color", color, "wheel", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
+  ? StringF(valueAdvertLineColor, topicTwig->c_str(), name, "color", color, "wheel", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
   : String();
 }
 
@@ -521,17 +523,18 @@ OUTuint16::OUTuint16(const OUTuint16 &other)
 // Called when either value, or wiredPath changes
 void OUTfloat::sendWired() {
   if (wiredPath && wiredPath->length() ) {
-    frugal_iot.mqtt->messageSend(*wiredPath, value, width, true, 1 ); // TODO note retain and qos=1 
+    const String* v = new String(value, (int)width);
+    frugal_iot.messages->send(wiredPath, v, true, 1 ); // TODO note retain and qos=1 
   }
 }
 void OUTuint16::sendWired() {
   if (wiredPath && wiredPath->length() ) {
-    frugal_iot.mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    frugal_iot.messages->send(wiredPath, new String(value), true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
   }
 }
 void OUTbool::sendWired() {
   if (wiredPath && wiredPath->length() ) {
-    frugal_iot.mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
+    frugal_iot.messages->send(wiredPath, new String(value), true, 1 ); // TODO, retain and qos=1 
   }
 }
 // TO-ADD-OUTxxx
@@ -541,7 +544,7 @@ void OUTfloat::set(const float newvalue) {
   #endif
   if (newvalue != value) {
     value = newvalue;
-    frugal_iot.mqtt->messageSend(topicTwig, value, width, true, 1 ); // retain and qos=1 
+    frugal_iot.messages->send(topicTwig, new String(value, (int)width), true, 1 ); // retain and qos=1 
     sendWired();
   }
 }
@@ -551,7 +554,7 @@ void OUTuint16::set(const uint16_t newvalue) {
   #endif
   if (newvalue != value) {
     value = newvalue;
-    frugal_iot.mqtt->messageSend(topicTwig, value, true, 1 ); 
+    frugal_iot.messages->send(topicTwig, new String(value), true, 1 ); 
     sendWired();
   }
 }
@@ -561,7 +564,7 @@ void OUTbool::set(const bool newvalue) {
   #endif
   if (newvalue != value) {
     value = newvalue;
-    frugal_iot.mqtt->messageSend(topicTwig, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    frugal_iot.messages->send(topicTwig, new String(value), true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
     sendWired();
   }
 }
@@ -572,7 +575,7 @@ String OUTfloat::advertisement(const String group) {
   // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
   return (topicTwig)
-    ? StringF(valueAdvertLineFloat, topicTwig, name, "float", width, min, width, max, color, "bar", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
+    ? StringF(valueAdvertLineFloat, topicTwig->c_str(), name, "float", width, min, width, max, color, "bar", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
     : String();
 }
 // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
@@ -580,13 +583,13 @@ String OUTuint16::advertisement(const String group) {
   // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
   // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
   return (topicTwig)
-    ? StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "bar", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
+    ? StringF(valueAdvertLineUint16, topicTwig->c_str(), name, "int", min, max, color, "bar", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
     : String();
 }
 String OUTbool::advertisement(const String group) {
   // "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
   return (topicTwig)
-    ? StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
+    ? StringF(valueAdvertLineBool, topicTwig->c_str(), name, "bool", color, "toggle", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
     : String();
     
 }

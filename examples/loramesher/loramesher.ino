@@ -46,6 +46,7 @@ void setup() {
   Serial.println(F("FrugalIoT Starting Loop"));
 }
 
+#ifdef SYSTEM_LORAMESHER_DEBUG
 void printAppData(AppPacket<uint8_t>* appPacket) {
     Serial.printf("Packet arrived from %X with size %d\n", appPacket->src, appPacket->payloadSize);
     //Get the payload to iterate through it
@@ -67,7 +68,7 @@ void printAppData(AppPacket<uint8_t>* appPacket) {
     //frugal_iot.oled->display.print(rssi);
     frugal_iot.oled->display.display();   
 }
-
+#endif
 
 
 // You can put custom code in here, 

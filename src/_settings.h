@@ -113,6 +113,12 @@
   #define ARDUINO_TTGO_LoRa32
 #endif
 
+// Define boards which have LoRa and should include LoRaMesher automatically
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X)
+  #define SYSTEM_LORAMESHER_WANT
+#endif
+
+
 // To specify a language (for the WiFi portal) #define all the ones you want, otherwise it supports the _ALL lsit which is currerntly EN, NL, DE, ID 
 #if \
    !defined LANGUAGE_EN \

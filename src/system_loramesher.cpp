@@ -16,7 +16,8 @@
  */
 
 #include "_settings.h"
-#ifdef SYSTEM_LORAMESHER_WANT // defined in platformio.ini - //TODO-152 remove this when code stable
+// defined in _settings.h if board has LoRa, can also define in platformio.ini if e.g. have a LoRa shield
+#ifdef SYSTEM_LORAMESHER_WANT 
 
 // This is currently only defined for ESP32, 
 // Certainly fials to complie on ESP8266 but might be fixable - I dont have a ESP8266+LoRa combo to try
@@ -30,9 +31,10 @@
 #include "system_frugal.h"
 #include "system_mqtt.h"
 
-#define INCOMINGRETAIN 12 // Special value of retain when incoming message
+#define QOS_DOWNSTREAM 12 // Special value of retain when downstream message (MQTT broker->gateway->LoRa->modules)
 
 // TODO-152 Consider timeout of LM subscriptions - since a node may get a different id each time it power cycles, and thus have multiple entries in the gateway's meshsubscription table.
+// TODO-152 OR (better) look for a change in gateway node, and if so resend,
 MeshSubscription::MeshSubscription(const String topicPath, const uint16_t src) 
 : topicPath(topicPath), src(src) {}
 
@@ -63,13 +65,11 @@ System_LoraMesher::System_LoraMesher()
     config.spi = &SPI;
 }
 
-
-
-// LORAMESH-STRUCTURED: struct counterPacket {  uint32_t counter = 0; }; counterPacket* helloPacket = new counterPacket;
-
-// TODO for now this is an extern as its not going to be the final interface so its not worth putting together a way to pass a callback
-    // extern void printAppCounterPacket(AppPacket<counterPacket>*); // This was how we handled structured packets
-    extern void printAppData(AppPacket<uint8_t>*); //TODO-152 probably remove
+#ifdef SYSTEM_LORAMESHER_DEBUG
+  // If you want to debug, provide a function in our .ino (or main.cpp) that implements this, 
+  // see examples/loramesher/loramesher.ino for an example that writes to OLED
+  extern void printAppData(AppPacket<uint8_t>*);
+#endif // SYSTEM_LORAMESHER_DEBUG
 
   // Function that process the received packets - it receives an AppPacket<xxx> and passes to handler
 void processReceivedPackets(void*) {
@@ -112,7 +112,7 @@ void createReceiveMessages() {
 // Common part to both relayDownstream and publush
 void System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos) {
   // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
-  char qos_char = '0' + qos;
+  char qos_char = '0' + qos; // 0 1 2 as for MQTT incoming=12
   char retain_char = '0' + retain;
   const char* stringymessage = lprintf(100, "%c%c%s:%s", 
     qos_char, retain_char,
@@ -130,7 +130,7 @@ void System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
   free(msg); // msg is copied in createPacketAndSend
 }
 void System_LoraMesher::relayDownstream(uint16_t destn, const String &topic, const String &payload) {
-  buildAndSend(destn, topic, payload, INCOMINGRETAIN, 0); // retain=12 gives a ascii character "<"
+  buildAndSend(destn, topic, payload, false, QOS_DOWNSTREAM); // retain=12 gives a ascii character "<"
 }
 // This is called by System_MQTT::subscribe or System_MQTT::messageSendInner when have no WiFi 
 // but do have LoraMesher
@@ -141,48 +141,55 @@ bool System_LoraMesher::publish(const String &topic, const String &payload, bool
   } else {
     return false; // Leave on queue if no gateway node.
   }
+  return false; // Shouldn't happen as shouldn't be called unless gatewayNode
+
 }
 
+// Note that received Packet could be Downstream (from MQTT broker via gateway) 
+// or Upstream (from another node)
 void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
   rcvdPacketCounter++;
-  printAppData(appPacket); // TODO-151 see note above about this being an extern
+  #ifdef SYSTEM_LORAMESHER_DEBUG
+    printAppData(appPacket); // TODO-151 see note above about this being an extern
+  #endif
   const uint8_t qos = appPacket->payload[0] - '0';
-  const bool incoming = appPacket->payload[0] == ('0'+INCOMINGRETAIN);
-  const bool retain = appPacket->payload[0] - '0'; // will be 0 or 1
+  const bool downstream = appPacket->payload[0] == ('0'+QOS_DOWNSTREAM);
+  const bool retain = appPacket->payload[1] - '0'; // will be 0 or 1
   // Assume appPacket->payload is a uint8_t* or char* and is null-terminated from [2] onward
   const char* str = (const char*)&appPacket->payload[2];
-  String topicPath, payload;
+  String* topicPath;
+  String* payload;
 
   const char* eq = strchr(str, ':');
   if (eq) {
-      topicPath = String(str).substring(0, eq - str);
-      payload = String(eq + 1);
+      topicPath = new String(String(str).substring(0, eq - str));
+      payload = (new String(eq+1));
   } else { // Shouldnt have this case
-      topicPath = String(str);
-      payload = "";
+      topicPath = new String(str);
+      payload = new String(F(""));
   }
   //Delete the packet when used. It is very important to call this function to release the memory of the packet.
   radio.deletePacket(appPacket);
-  Serial.print("LoRaMesher received"); Serial.print(topicPath); Serial.println(payload);
+  Serial.print("LoRaMesher received"); Serial.print(*topicPath); Serial.println(*payload);
 
   // How do we tell if this is an message heading upstream (from node to MQTT) or downstream (from MQTT on gateway node or other node via the router)
   // Three cases
-  // a: message incoming from Broker: src=gateway dst=thisLeaf 
+  // a: message downstream from Broker: src=gateway dst=thisLeaf 
   // b: message reflected at gateway: src=gateway dst=thisLeaf
   // c: message outgoing to us as gateway: src=anotherLeaf dst=thisLeaf/gateway
   // Cant use src as there may be multiple gateways AND could be message reflected at gateway
   // For now - may change this - use retain=12 (character is '<' on "a" and "b"
-   if (topicPath == "subscribe") {
+   if (*topicPath == "subscribe") { // Will always be UPSTREAM
     Serial.print("XXX " __FILE__); Serial.println("got subscribe");
     // Need to remember the subscription before calling subscribe, because there may be retained data returned immediately
-    meshSubscriptions.emplace_front(payload, appPacket->src);
-    frugal_iot.mqtt->subscribe(payload);
+    meshSubscriptions.emplace_front(*payload, appPacket->src);
+    frugal_iot.messages->subscribe(payload);  // Should queue for MQTT since we are the gateway
   }
-  if (incoming) {
-    Serial.print("XXX " __FILE__); Serial.print("incoming "); Serial.println(topicPath);
-    frugal_iot.mqtt->dispatchPath(topicPath, payload);
-  } else {
-   frugal_iot.mqtt->messageSend(topicPath, payload, retain, qos);
+  if (downstream) {
+    Serial.print("XXX " __FILE__); Serial.print("downstream "); Serial.println(*topicPath);
+    frugal_iot.messages->dispatch(*topicPath, *payload);
+  } else { // upstream
+    frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
   }
 }
 
@@ -205,7 +212,7 @@ bool System_LoraMesher::connected() {
   return findGatewayNode();
 }
 
-// Catch incoming messages received over WiFi by MQTT and then matching a subscription we know
+// Catch downstream messages received over WiFi by MQTT and then matching a subscription we know
 // Note - this (I think) will catch outgoing messages that also match a subscription. 
 void System_LoraMesher::dispatchPath(const String &topicPath, const String &payload) {
   for (auto &sub : meshSubscriptions) { 

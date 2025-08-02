@@ -165,10 +165,10 @@ void System_OTA::checkForUpdate() {
 
 char* System_OTA::getOTApath() {
     // Note there is no correlation between the path here, and where its stored on the server which also pays attention to dev/project/node
-    const size_t buffer_size = strlen(SYSTEM_OTA_SERVERPORTPATH) + frugal_iot.mqtt->topicPrefix->length() + strlen(SYSTEM_OTA_KEY) ;
+    const size_t buffer_size = strlen(SYSTEM_OTA_SERVERPORTPATH) + frugal_iot.messages->topicPrefix->length() + strlen(SYSTEM_OTA_KEY) ;
     char* url = new char[buffer_size];
     strcpy(url, SYSTEM_OTA_SERVERPORTPATH);
-    strcat(url, frugal_iot.mqtt->topicPrefix->c_str());
+    strcat(url, frugal_iot.messages->topicPrefix->c_str());
     strcat(url, SYSTEM_OTA_KEY);
     return url;
 }
