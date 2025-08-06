@@ -81,7 +81,7 @@ System_Power_Modem::System_Power_Modem(unsigned long cycle_ms, unsigned long wak
 // ================== setup =========== called from main.cpp::setup ========= TO-ADD-POWERMODE but usually nothing
 void System_Power_Mode::setup() {
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.printf("Setup %s: %lu of %lu\n", name, wake_ms, cycle_ms); 
+    Serial.printf("Setup %s: %lu of %lu\n", name.c_str(), wake_ms, cycle_ms); 
   #endif
   #ifdef LILYGOHIGROW
     pinMode(POWER_CTRL, OUTPUT);

@@ -33,6 +33,7 @@ constexpr auto WIFI_AUTH_WPA2_ENTERPRISE = -1337; // not available on ESP8266
 
 #include "ESPAsyncWebServer.h"
 #include "system_captive.h"
+#include "system_language.h" // for Texts
 #include "misc.h" // for Sprintf
 #include "system_frugal.h" // for frugal_iot
 
@@ -63,23 +64,25 @@ class CaptiveRequestHandler : public AsyncWebHandler {
 
   void handleRequest(AsyncWebServerRequest *request) {
     Serial.println("Captive: Handling request with captive portal");
-    Serial.print("XXX Host="); Serial.println(request->host());
-    Serial.print("XXX User-Agent:"); Serial.println(request->getHeader("User-Agent")->value());
+    //Serial.print("XXX Host="); Serial.println(request->host());
+    //Serial.print("XXX User-Agent:"); Serial.println(request->getHeader("User-Agent")->value());
     String ip = WiFi.softAPIP().toString();
-    Serial.print("XXX IP="); Serial.println(ip);
+    //Serial.print("XXX IP="); Serial.println(ip);
     if (request->host() != ip) {
       // iPhone doesn't deal well with redirects to http://hostname/ and
       // will wait 40 to 60 seconds before succesful retry. Works flawlessly
       // with http://ip/ though.
-      Serial.println("XXX Not Matching host and ip - i.e. its not accessing by IP address");  
+      //Serial.println("XXX Not Matching host and ip - i.e. its not accessing by IP address");  
       // Anecdotally (according to WiFiSettings library), some devices require a non-empty response body
       AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", ip);
       response->addHeader("Location", "http://" + ip + "/");
       request->send(response);
     } else {
-      Serial.println("XXX Matching host and ip - i.e. acessed by IP address, not name");      
+      //Serial.println("XXX Matching host and ip - i.e. acessed by IP address, not name");      
       AsyncResponseStream *response = request->beginResponseStream("text/html");
-      response->print(F("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>"));
+      response->print(F("<!DOCTYPE html><html><head><title>"));
+      response->print(T->CaptivePortal);
+      response->print(F("</title></head><body>"));
       response->print(F(
             "<meta name=viewport content='width=device-width,initial-scale=1'>"
             "<style>"
@@ -100,24 +103,26 @@ class CaptiveRequestHandler : public AsyncWebHandler {
             ".w,.i{background:#aaa;min-height:3em}"
             "</style>"
       ));
-      response->print(F( //TODO-153-TRANSLATE
-        "<form action=\"/restart\" method=post><input type=submit value=\"RESTART\"></form><hr>"
+      response->print(F("<form action=\"/restart\" method=post><input type=submit value=\""));
+      response->print(T->RESTART);
+      response->print(F("\"></form><hr>"
       ));
       //Dropdown of SSIDs (see WiFiSettings.cpp ~L310)
-      response->print(F(
-        "<h1>Connect to WiFi</h1>"
-        "<form method=post action=\"/\">"
-        "<label>WiFi Network"
-        "<select name=ssid onchange=\"document.getElementsByName('password')[0].value=''\">"
-        "<option hidden>Select one...</option>"
-      ));
+      response->print(F("<h1>"));
+      response->print(T->ConnectToWiFi);
+      response->print(F("</h1><form method=post action=\"/\"><label>"));
+      response->print(T->WiFiNetwork);
+      response->print(F("<select name=ssid onchange=\"document.getElementsByName('password')[0].value=''\">"
+        "<option hidden>"));
+      response->print(T->SelectOne);
+      response->print(F("</option>"));
       while (WiFi.scanComplete() < 0) {  }; // TODO-153 careful in case this blocks everything mid-scan   
       for (int i = 0; i < frugal_iot.wifi->num_networks; i++) {
         String s = WiFi.SSID(i);
         wifi_auth_mode_t mode = WiFi.encryptionType(i); //uint8_t on ESP8266
         response->print(F("<option value='"));
         response->print(html_entities(WiFi.SSID(i)) + F("'")); // TODO-153 make this the topic
-        if (s == WiFi.SSID()) { response->print(" selected"); }
+        if (s == WiFi.SSID()) { response->print(T->_selected); }
         response->print(F(">"));
         response->print(WiFi.SSID(i));
         response->print(mode == WIFI_AUTH_OPEN ? F("") : F("&#x1f512;")); // Lock icon
@@ -125,7 +130,9 @@ class CaptiveRequestHandler : public AsyncWebHandler {
         response->print(F("</option>"));
       }
       response->print(F("</select></label>"));
-      response->print(F("<label>Password:<input name=password value=''></label><hr>")); // TODO-153 what if have password already
+      response->print(F("<label>"));
+      response->print(T->Password);
+      response->print(F(":<input name=password value=''></label><hr>")); // TODO-153 what if have password already
 
       //TODO-153 add dropdown of languages (see WiFiSettings.cpp ~L360)
       //TODO-153 add multiple lines from modules - may actually loop here  (see WiFiSettings.cpp ~L376)
@@ -134,15 +141,10 @@ class CaptiveRequestHandler : public AsyncWebHandler {
 
       response->print(F(
         "<p style='position:sticky;bottom:0;text-align:right'>"
-        "<input type=submit value=\"SAVE\" style='font-size:150%'></form>" //TODO-TRANSLATE
+        "<input type=submit value=\""));
+      response->print(T->SAVE);
+      response->print(F("\" style='font-size:150%'></form>" //TODO-TRANSLATE
       ));
-      
-      #ifdef INSTANDARDEXAMPLENOTUSEDHERE
-        response->printf("<p>You were trying to reach: http://%s%s</p>", request->host().c_str(), request->url().c_str());
-        #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
-          response->printf("<p>Try opening <a href='http://%s'>this link</a> instead</p>", WiFi.softAPIP().toString().c_str());
-        #endif
-      #endif // INSTANDARDEXAMPLENOTUSEDHERE
       response->print("</body></html>");
       request->send(response);
     }
@@ -155,6 +157,8 @@ System_Captive::System_Captive()
 
 void System_Captive::setup() {
   Serial.println("Configuring access point...");
+  setupLanguages();
+  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig (Must come AFTER setting language strings)
 
   // Unsure what these items choose - copied from example -SOC_WIFI_SUPPORTED seems to be defined for ESP32
   #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
@@ -181,14 +185,12 @@ void System_Captive::setup() {
         if(p->isPost()){
           Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
           if (p->name() == "ssid") {
-            Serial.println("XXX Got ssid"); 
             const AsyncWebParameter* password = request->getParam("password", true);
             if (password && password->value().length()) {
-              Serial.println("XXX Adding wifi"); Serial.print(p->value()); Serial.print("="); Serial.println(password->value());
               frugal_iot.dispatchTwig("wifi", p->value(), password->value(), true);
               // TODO-153 may wish to force it to try this new one
             } else {
-              Serial.println("XXX But No password");
+              Serial.println("SSID But No password");
             }
             // Even if no password - can try switching WiFi
             frugal_iot.wifi->switchSSID(p->value());
@@ -209,25 +211,24 @@ void System_Captive::setup() {
 
   server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
     Serial.println("POST /restart");
-    request->send(200, "text/plain", "restarting .... plesae wait"); //TODO-153 translate
+    request->send(200, "text/plain",T->RestartingPleaseWait); //TODO-153 translate
     // May need a callback here to do certain things before restarting 
     ESP.restart();
   });
   server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);  // only when requested from AP
   // more handlers...
-  Serial.println("XXX " __FILE__ "starting webserver");
   server.begin();
 }
 
 // TODO may need to wrap labels etc in html_entities()
-void System_Captive::addString(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, uint8_t min_length, uint8_t max_length) {
+void System_Captive::addString(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, uint8_t min_length, uint8_t max_length) {
   response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlength=" + min_length + " maxlength=" + max_length + "></label>");  
 }
 /* Untested number and bool */
-void System_Captive::addNumber(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, long min, long max) {
+void System_Captive::addNumber(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, long min, long max) {
   response->print(String(F("<p><label>")) + label + ":<br><input type=number step=1 name='" + id + "/" + topicTwig + "' value='" + init + "' min=" + min + " max=" + max + "></label>");  
 }
-void System_Captive::addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, String& init, const char* label, long min, long max) {
+void System_Captive::addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, long min, long max) {
   response->print(String(F("<p><label><input type=checkbox name='")) + id + "/" + topicTwig + "' value='" + init + (init ? " checked" : "") + ">" + label + "</label>");  
 }
 /* Example code to add handler
@@ -243,81 +244,41 @@ auto handler = server.on("/some/path", [](AsyncWebServerRequest *request){
 
 */
 
+bool System_Captive::setLanguage(const String& payload) {
+  for (auto t : TT) {
+    if (payload == t->code) {
+      language_code = payload;
+      T = t;
+      return true;
+    }
+  }
+  return false;
+}
+
+void System_Captive::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+  if (isSet && (topicSensorId == id)) {
+    if (topicTwig == "language_code") {
+      if (setLanguage(payload)) { // Code e.g. "EN"
+        writeConfigToFS(topicTwig, payload);
+      }
+    } else {
+      System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+    }
+  }
+}
+
+void System_Captive::captiveLines(AsyncResponseStream* response) {
+  response->print(String(F("<p><label>"))
+    + T->Language // Language in the current language
+    + ":<br><select name=language_code>");
+  for (auto& t : TT) {
+    response->print(String(F("<option value='")) + t->code + "'" 
+    + ((t == T) ? "' selected" : "") + ">" 
+    + t->LanguageName + "</option>");  // name in its own language
+  }
+  response->print(String(F("</select></label>")));
+}
+
 void System_Captive::loop() {
   dnsServer.processNextRequest(); // Apparantly does nothing, and not needed
 }
-
-
-#ifdef NOTINCORPORATEDYET
-
-        if (WiFiSettingsLanguage::multiple()) {
-            http.sendContent(F("<label>")); 
-            http.sendContent(_WSL_T.language); 
-            http.sendContent(F(":<br><select name=language>"));
-
-            for (auto& lang : WiFiSettingsLanguage::languages) {
-                String opt = F("<option value='{code}'{sel}>{name}</option>");
-                opt.replace("{code}", lang.first);
-                opt.replace("{name}", lang.second);
-                opt.replace("{sel}", language == lang.first ? " selected" : "");
-                http.sendContent(opt);
-            }
-            http.sendContent(F("</select></label>"));
-        }
-
-void System_WiFi::setupLanguages() {
-  // TODO-39 need to make sure external for language is set prior to this - get defined from platformio.h and LANGUAGE_ALL
-  #ifdef LANGUAGE_DEFAULT
-    WiFiSettings.language = LANGUAGE_DEFAULT; // This must happen BEFORE WiFiSettings.begin().
-  #endif
-  WiFiSettings.begin(); // WiFi has created variables - at this point any previous ssid and language are now set
-  Serial.print(F("Language = ")); Serial.println(WiFiSettings.language);
-  #if defined LANGUAGE_EN || defined LANGUAGE_ALL
-    if (WiFiSettings.language == "en") {
-      T.MqttServer = F("MQTT server");
-      T.DeviceName = F("Device name");
-      T.Project = F("Project");
-    } 
-  #endif
-  #if defined LANGUAGE_DE || defined LANGUAGE_ALL
-    // German settings all machine translated - confirmation from native German speaker, or better translations welcome
-    if (WiFiSettings.language == "de") {
-      T.MqttServer = F("MQTT server");
-      T.DeviceName = F("Gerätename");
-      T.Project = F("Projekt");
-    }
-  #endif
-  #if defined LANGUAGE_NL || defined LANGUAGE_ALL
-    // Dutch settings all machine translated - confirmation from native Dutch speaker, or better translations welcome
-    if (WiFiSettings.language == "de") {
-      T.MqttServer = F("MQTT server");
-      T.DeviceName = F("Apparaatnaam");
-      T.Project = F("Project");
-    }
-  #endif
-  #if defined LANGUAGE_ID || defined LANGUAGE_ALL
-    // Indonesian settings all machine translated - confirmation from native Bahasa speaker, or better translations welcome
-    if (WiFiSettings.language == "id") {
-      T.MqttServer = F("MQTT server");
-      T.DeviceName = F("Nama Perangkat");
-      T.Project = F("Proyek");
-    }
-  #endif
-}
-
-// These are the language texts to use 
-struct Texts {
-    const __FlashStringHelper
-      *MqttServer,
-      *DeviceName,
-      *Project
-    ;
-    /*
-    const char
-        *init
-    ;
-    */
-};
-Texts T;
-
-#endif //NOTINCORPORATEDYET
