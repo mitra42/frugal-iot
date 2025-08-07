@@ -67,7 +67,7 @@ void split(const String& str, String parts[], int& count) {
     int start = 0;
     int index = 0;
 
-    for (int i = 0; i <= str.length(); i++) {
+    for (uint16_t i = 0; i <= str.length(); i++) {
         if (i == str.length() || str.charAt(i) == '/') {
             parts[index++] = str.substring(start, i);
             start = i + 1;

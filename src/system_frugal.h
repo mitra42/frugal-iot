@@ -15,7 +15,10 @@
  #define FRUGAL_IOT_H
 
 #include <vector>
+// Non Frugal IoT headers
 #include "ESPAsyncWebServer.h" // for AsyncResponseStream"
+// Frugal-iot headers
+#include "_settings.h" 
 #include "actuator_ledbuiltin.h"
 #include "system_base.h"
 #include "system_captive.h"
@@ -73,7 +76,9 @@ class System_Frugal : public Frugal_Group {
     #ifdef SYSTEM_LORA_WANT
       System_LoRa* lora;
     #endif
-    System_LoraMesher* loramesher; // Will be nullptr if no loramesher
+    #ifdef SYSTEM_LORAMESHER_WANT // This is automatically defined on LoRa compatable boardss
+      System_LoraMesher* loramesher; // Will be nullptr if no loramesher
+    #endif
     System_Messages* messages;
     System_MQTT* mqtt;
     #ifdef SYSTEM_OLED_WANT

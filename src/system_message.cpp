@@ -35,10 +35,13 @@ System_Message::System_Message(const String* topicPath) // For subscriptions onl
 System_Messages::System_Messages() : System_Base("messages", "Messages") {
 }
 
+// Note this setup might be done early (and called twice), rather than in frugal_iot.setup 
 void System_Messages::setup() {
-  // e.g. "dev/developers/esp32-12345/" prefix of most topics
-  topicPrefix = new String(frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/"));
-  subscribe(path("set/#"));  // Main subscription to all changes sent to this node
+  if (!topicPrefix) {
+    // e.g. "dev/developers/esp32-12345/" prefix of most topics
+    topicPrefix = new String(frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/"));
+    subscribe(path("set/#"));  // Main subscription to all changes sent to this node
+  }
 }
 
 void System_Messages::loop() {
@@ -49,6 +52,7 @@ void System_Messages::loop() {
 // Only used for the bulk subscribe to set/#
 // Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht30/temperature
 String* System_Messages::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
+  if (!topicPrefix) setup(); // Allow control wiring before setup by doing setup early
   return new String(*topicPrefix + topicTwig);
 }
 // Convert a twig e.g. sht30/temperature to path e.g. dev/developers/esp123/sht30/temperature
@@ -114,8 +118,10 @@ bool System_Message::queuedMessage() {
   if (frugal_iot.mqtt->connected()) {
     // This will be false if fail to send, true if either send or its unsendable (too big)
     return frugal_iot.mqtt->send(*topicPath, *payload, retain, qos);
+  #ifdef SYSTEM_LORAMESHER_WANT
   } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
     return frugal_iot.loramesher->publish(*topicPath, *payload, retain, qos);
+  #endif
   } else {
     return false; // Unable to send, leave on queue 
   }
@@ -125,8 +131,10 @@ bool System_Message::queuedMessage() {
 bool System_Message::queuedSubscribe() {
   if (frugal_iot.mqtt->connected()) {
     return frugal_iot.mqtt->subscribe(*topicPath);
+  #ifdef SYSTEM_LORAMESHER_WANT
   } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
     return frugal_iot.loramesher->publish("subscribe",*topicPath,0,1);
+  #endif
   } 
   return false; // Not connected, or failed to send over connection
 }

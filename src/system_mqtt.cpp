@@ -54,7 +54,7 @@ void System_MQTT::setup_after_wifi() {
   connect(); // Note if WiFi is connected, this will block till MQTT times out 
 }
 void System_MQTT::captiveLines(AsyncResponseStream* response) {
-  frugal_iot.captive->addString(response, id, "hostname", hostname, "MQTT hostname", 5, 60);
+  frugal_iot.captive->addString(response, id, "hostname", hostname, T->MQTThostname, 5, 60);
 }
 
 void System_MQTT::loop() {
@@ -128,8 +128,9 @@ void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicT
     }
   }
 }
-void System_MQTT::captiveLines(AsyncResponseStream* response) {
-  frugal_iot.captive->addString(response, id, "hostname", hostname, "MQTT hostname", 5, 60);
+bool System_MQTT::prepareForLightSleep() {
+  frugal_iot.mqtt->client.disconnect();
+  return true;
 }
 bool System_MQTT::recoverFromLightSleep() {
   return connect(); // TODO-23 Note this is blocking if WiFi is connected, which it typically won't be. 

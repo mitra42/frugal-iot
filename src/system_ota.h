@@ -35,8 +35,7 @@ class System_OTA : public System_Base {
     const char* _caCert;
     String _otaServerAddress;
     String _softwareVersion;
-    char* getOTApath();
-	
+    const String getOTApath();
 };
 
 #endif // SYSTEM_OTA_H

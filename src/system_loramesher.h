@@ -29,25 +29,35 @@ class MeshSubscription {
 class System_LoraMesher : public System_Base {
   public:
     System_LoraMesher();
-    bool connected();
-    // Match mqtt.client profile
-    bool publish(const String &topicPath, const String &payload, const bool retain, const int qos);
-    // Called from processReceivedPackets
-    LoraMesher& radio;
-    void processReceivedPacket(AppPacket<uint8_t>* appPacket);
-  private:
+    LoraMesher& radio;  // Accessed from processReceivedPackets so has to be public
+    // == INCOMING (up or downstream)
+    // == OUTGOING (up or downstream)
+      bool connected();
+      // == UPSTREAM 
+      // Match mqtt.client profile
+      bool publish(const String &topicPath, const String &payload, const bool retain, const int qos);
+      // == DOWNSTREAM 
+      // public only because called from the callback - do not use externally
+      void processReceivedPacket(AppPacket<uint8_t>* appPacket); 
+  protected:
     LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();
     uint16_t gatewayNodeAddress;
     uint16_t rcvdPacketCounter = 0;
     uint16_t sentPacketCounter = 0; 
-    bool findGatewayNode();
-    void setup() override;
-    //void periodically() override;
-    void prepareForSleep();
+    unsigned long lostMQTTat;
     std::forward_list<MeshSubscription> meshSubscriptions;
-    void dispatchPath(const String &topicPath, const String &payload) override;
-    void buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos);
-    void relayDownstream(uint16_t destn, const String &topic, const String &payload);
+    void setup() override;
+    void periodically() override;
+    void prepareForSleep();
+    // == INCOMING (up or downstream)
+    // == OUTGOING (up or downstream)
+      bool findGatewayNode();
+      void buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos);
+    // == UPSTREAM 
+    void checkRole();
+    // == DOWNSTREAM 
+      void relayDownstream(uint16_t destn, const String &topic, const String &payload);
+      void dispatchPath(const String &topicPath, const String &payload) override;
 };
 
 #endif // SYSTEM_LORAMESHER_WANT

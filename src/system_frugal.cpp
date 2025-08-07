@@ -145,6 +145,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   add(controls);
   // add(buttons); // optimizing by not adding this - its only needed for looping for infrequently()
   system->add(fs_LittleFS);
+  system->add(messages);
   system->add(wifi);
   system->add(discovery);
   system->add(new System_Watchdog());

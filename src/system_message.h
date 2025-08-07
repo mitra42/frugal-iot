@@ -6,6 +6,9 @@
 #define SYSTEM_MESSAGE_H
 
 #include <Arduino.h>
+#ifdef ESP8266
+  #include <forward_list> // Doesnt seem to be required (and may be problmatic) for ESP32
+#endif
 #include "system_base.h"
 
 class System_Messages; // to allow forward reference
@@ -28,7 +31,7 @@ class System_Message { // Only used for outgoing queued messages
     bool queuedSubscribe();
 };
 
-class System_Messages : System_Base {
+class System_Messages : public System_Base {
   public:
     System_Messages();
     String* topicPrefix;  // Also used by OTA

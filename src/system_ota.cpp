@@ -163,18 +163,13 @@ void System_OTA::checkForUpdate() {
   _retryCount -= 1;
 }
 
-char* System_OTA::getOTApath() {
+const String System_OTA::getOTApath() {
     // Note there is no correlation between the path here, and where its stored on the server which also pays attention to dev/project/node
-    const size_t buffer_size = strlen(SYSTEM_OTA_SERVERPORTPATH) + frugal_iot.messages->topicPrefix->length() + strlen(SYSTEM_OTA_KEY) ;
-    char* url = new char[buffer_size];
-    strcpy(url, SYSTEM_OTA_SERVERPORTPATH);
-    strcat(url, frugal_iot.messages->topicPrefix->c_str());
-    strcat(url, SYSTEM_OTA_KEY);
-    return url;
+    return String(SYSTEM_OTA_SERVERPORTPATH + *frugal_iot.messages->topicPrefix + SYSTEM_OTA_KEY);
 }
 
 void System_OTA::setup_after_mqtt_setup() {
-  const char* const url = getOTApath(); // Needs topicPrefix setup in MQTT::setup
+  const String url = getOTApath(); // Needs topicPrefix setup in MQTT::setup
   // Note this must run after WiFi has connected  and ideally before MQTT or Discovery except it needs xDiscovery::topicPrefix
   Serial.print("Attempt OTA from:"); Serial.println(url);
   #ifdef ESP32

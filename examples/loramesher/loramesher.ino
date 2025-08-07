@@ -36,10 +36,8 @@ void setup() {
   frugal_iot.loramesher = new System_LoraMesher(); // Held in a variable as future LoRaMesher will access it directly e.g. from MQTT
   frugal_iot.system->add(frugal_iot.loramesher);
   
-  #ifdef SYSTEM_LORAMESHER_SENDER_TEST
-    // Add sensors, actuators and controls
-    frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true));
-  #endif
+  // Add sensors, actuators and controls
+  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true));
   
   // system_oled and actuator_ledbuiltin added automatically on boards that have them.
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

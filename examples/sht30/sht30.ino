@@ -34,6 +34,10 @@ void setup() {
   // Add sensors, actuators and controls
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true));
   
+  //ControlHysterisis* cb = new ControlHysterisis("control", "Control", 50, 1, 0, 100);
+  //frugal_iot.controls->add(cb);
+  //cb->outputs[0]->wireTo(frugal_iot.mqtt->path("ledbuiltin/on"));
+
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
   Serial.println(F("FrugalIoT Starting Loop"));
