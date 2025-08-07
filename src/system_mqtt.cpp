@@ -128,9 +128,8 @@ void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicT
     }
   }
 }
-bool System_MQTT::prepareForLightSleep() {
-  frugal_iot.mqtt->client.disconnect();
-  return true;
+void System_MQTT::captiveLines(AsyncResponseStream* response) {
+  frugal_iot.captive->addString(response, id, "hostname", hostname, "MQTT hostname", 5, 60);
 }
 bool System_MQTT::recoverFromLightSleep() {
   return connect(); // TODO-23 Note this is blocking if WiFi is connected, which it typically won't be. 

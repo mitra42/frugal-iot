@@ -21,6 +21,7 @@
 #include "system_captive.h"
 #include "system_discovery.h"
 #include "system_fs.h"
+#include "system_language.h"
 #ifdef ESP32
 #include "system_lora.h"
 #endif

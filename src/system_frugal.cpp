@@ -73,9 +73,9 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
   }
 }
 void System_Frugal::captiveLines(AsyncResponseStream* response) {
-  captive->addString(response, id, "project", project, "Project", 2, 15);
-  captive->addString(response, id, "device_name", device_name, "Device Name", 3, 15);
-  captive->addString(response, id, "description", description, "Description", 3, 40);
+  captive->addString(response, id, "project", project, T->Project, 2, 15);
+  captive->addString(response, id, "device_name", device_name, T->DeviceName, 3, 15);
+  captive->addString(response, id, "description", description, T->Description, 3, 40);
   Frugal_Group::captiveLines(response);
 }
 
