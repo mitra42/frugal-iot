@@ -167,6 +167,15 @@ void System_Captive::setup() {
       return;  // Shouldn't happen
     }
     dnsServer.start(53, "*", WiFi.softAPIP());
+
+    #ifdef ESP8266
+      // TODO debugging ESP8266 this is untested code because WiFi.softAPIP below was returning "IP Unset"
+      //also read a note that migth require a password in softAP call above and has to be at least 8 chars
+      IPAddress local_ip(192,168,1,1);
+      IPAddress gateway(192,168,1,1);
+      IPAddress subnet(255,255,255,0);
+      WiFi.softAPConfig(local_ip, gateway, subnet);
+    #endif
   #endif
   String ip = WiFi.softAPIP().toString(); // TODO-153 note how this is used by redirect 
   Serial.print(F("Access point on:")); Serial.println(ip);
