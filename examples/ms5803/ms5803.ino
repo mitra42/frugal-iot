@@ -32,7 +32,7 @@ void setup() {
   frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
   
   // M<S5803 is set via jumper to 76 or 77
-  frugal_iot.sensors->add(new Sensor_ms5803("pressure", "Pressure", 0x77));
+  frugal_iot.sensors->add(new Sensor_ms5803("ms5803", "MS5803", 0x77));
   // system_oled and actuator_ledbuiltin added automatically on boards that have them.
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
   Serial.println(F("FrugalIoT Starting Loop"));
