@@ -33,6 +33,7 @@ Sensor_LoadCell::Sensor_LoadCell(const char* const id, const char * const name, 
   uint8_t DOUTpin, uint8_t SCKpin, uint8_t times, int32_t offset, int32_t scale)
   : Sensor_Float(id, name, 3, 0, max, color, retain), 
     hx711(new HX711()),
+    // TODO-C37 normalize times/offset/scale for other analog
     times(times),
     offset(offset), 
     scale(scale)
