@@ -79,7 +79,7 @@ void Control::dispatchPath(const String &topicPath, const String &payload ) {
 
 // Ouput advertisement for control - all of IN and OUTs 
 String Control::advertisement() {
-  String ad = StringF(groupAdvertLine, id.c_str(), name.c_str()); // Wrap control in a group
+  String ad = StringF(groupAdvertLine, id, name.c_str()); // Wrap control in a group
   for (auto &input : inputs) {
     ad += (input->advertisement(name.c_str()));
   }

@@ -33,8 +33,8 @@ class System_Message { // Only used for outgoing queued messages
 
 class System_Messages : public System_Base {
   public:
-    System_Messages();
     String* topicPrefix;  // Also used by OTA
+    System_Messages();
     void subscribe(const String* topicPath);
     void send(const String* topicPath, const String* payload, bool retain, uint8_t qos);
     String* path(char const * const topicTwig); // returns a new String* 

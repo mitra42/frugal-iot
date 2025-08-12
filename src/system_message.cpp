@@ -32,8 +32,10 @@ System_Message::System_Message(const String* topicPath, const String* payload, c
 System_Message::System_Message(const String* topicPath) // For subscriptions only
 : System_Message(topicPath, nullptr, false, 0, true) {}
 
-System_Messages::System_Messages() : System_Base("messages", "Messages") {
-}
+System_Messages::System_Messages() 
+: System_Base("messages", "Messages"),
+topicPrefix(nullptr)
+{ }
 
 // Note this setup might be done early (and called twice), rather than in frugal_iot.setup 
 void System_Messages::setup() {
@@ -49,10 +51,12 @@ void System_Messages::loop() {
 }
 
 // =========== Helpers =====================
-// Only used for the bulk subscribe to set/#
+// Only used for the bulk subscribe to set/# or wireTo
 // Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht30/temperature
 String* System_Messages::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
-  if (!topicPrefix) setup(); // Allow control wiring before setup by doing setup early
+  if (!topicPrefix) { 
+    setup(); // Allow control wiring before setup by doing setup early
+  }
   return new String(*topicPrefix + topicTwig);
 }
 // Convert a twig e.g. sht30/temperature to path e.g. dev/developers/esp123/sht30/temperature
