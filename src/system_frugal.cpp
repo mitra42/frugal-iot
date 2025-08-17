@@ -74,8 +74,8 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
 }
 #ifdef SYSTEM_DISCOVERY_SHORT
   void System_Frugal::discover() {
-    messages->send(leaf2path("device_name"), device_name, MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO-152A client should recognoize frugal_iot/device_name (instead of name)
-    messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO-152A client should recognoize frugal_iot/description (instead of description)
+    messages->send(leaf2path("device_name"), device_name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+    messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
     System_Base::discover();
   }
 #endif

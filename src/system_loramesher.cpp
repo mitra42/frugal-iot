@@ -262,7 +262,7 @@ bool System_LoraMesher::publish(const String &topic, const String &payload, bool
 // TODO-23 consider interaction of this with sleep modes, when come back from sleep won't have 
 // TODO-23 MQTT yet, but also unclear if want a gateway role retained during sleep
 void System_LoraMesher::checkRole() {
-  //if (!radio.isGateway() && frugal_iot.mqtt.connected()) { // TODO-152 ask on Discord why not exposed in src/LoraMesher.h
+  //if (!radio.isGateway() && frugal_iot.mqtt.connected()) { // TODO-152 pending update to loramesher being pushed
   if ( frugal_iot.mqtt->connected()) {
     radio.addGatewayRole();
 //  } else if (radio.isGateway() && (millis() > (lostMQTTat + SYSTEM_LORAMESHER_MQTTWAIT))) {

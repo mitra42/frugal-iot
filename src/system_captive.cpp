@@ -30,7 +30,9 @@ constexpr auto WIFI_AUTH_WPA2_ENTERPRISE = -1337; // not available on ESP8266
 // Untested - these just come from the example
 //#include <WiFi.h>
 #endif
-
+#ifdef ESP8266
+    #define INADDR_NONE IPAddress(0,0,0,0)
+#endif
 #include "ESPAsyncWebServer.h"
 #include "system_captive.h"
 #include "system_language.h" // for Texts
@@ -171,6 +173,7 @@ void System_Captive::setup() {
       Serial.println("Soft AP creation failed.");
       return;  // Shouldn't happen
     }
+    dnsServer.setTTL(0); // XXX grabbed from old WiFiSettings  - unclear if needed or useful
     dnsServer.start(53, "*", WiFi.softAPIP());
   #endif
   String ip = WiFi.softAPIP().toString(); // TODO-153 note how this is used by redirect 

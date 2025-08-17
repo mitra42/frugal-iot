@@ -141,7 +141,7 @@ bool System_MQTT::recoverFromLightSleep() {
 bool System_MQTT::subscribe(const String& topicPath) {
   if (connected()) {
       #ifdef SYSTEM_MQTT_DEBUG
-        Serial.print(F("MQTT Subscribe")); Serial.print(topicPath);
+        Serial.print(F("MQTT Subscribe ")); Serial.print(topicPath);
       #endif
     if (client.subscribe(topicPath)) {
       #ifdef SYSTEM_MQTT_DEBUG

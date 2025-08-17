@@ -190,7 +190,7 @@ void System_OTA::infrequently() {
 }
 #ifdef SYSTEM_DISCOVERY_SHORT
   void System_OTA::discover() {
-    frugal_iot.messages->send(leaf2path("key"), new String(SYSTEM_OTA_KEY), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO-152A client should recognoize ota/key instead of ota/key
+    frugal_iot.messages->send(leaf2path("key"), new String(SYSTEM_OTA_KEY), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO-152A client should recognoize ota/key instead of ota_key
   }
 #endif
 
