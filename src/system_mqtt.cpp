@@ -140,16 +140,22 @@ bool System_MQTT::recoverFromLightSleep() {
 
 bool System_MQTT::subscribe(const String& topicPath) {
   if (connected()) {
+      #ifdef SYSTEM_MQTT_DEBUG
+        Serial.print(F("MQTT Subscribe")); Serial.print(topicPath);
+      #endif
     if (client.subscribe(topicPath)) {
+      #ifdef SYSTEM_MQTT_DEBUG
+        Serial.println();
+      #endif
       return true; 
     } else {
       // Note at this point we don't have a fallback if happen to subscribe when MQTT fails
       #ifdef SYSTEM_MQTT_DEBUG
-        Serial.print(F("MQTT Subscription failed to ")); Serial.print(topicPath); Serial.print(F(" "));
+        Serial.print(F(" Failed"));
         // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
         Serial.println(client.lastError());
-        return false;
       #endif // SYSTEM_MQTT_DEBUG
+      // Drop thru to return false
     }
   }
   return false;
@@ -160,12 +166,18 @@ bool System_MQTT::subscribe(const String& topicPath) {
 // These are intentionally required parameters rather than defaulting so the coder thinks about the desired behavior
 bool System_MQTT::send(const String &topicPath, const String &payload, const bool retain, const int qos) {
   if (connected()) {
+    #ifdef SYSTEM_MQTT_DEBUG
+      Serial.print(topicPath); Serial.print(F("=")); Serial.print(payload); 
+      // Serial.print(" qos="); Serial.print(qos);
+    #endif
     if (client.publish(topicPath, payload, retain, qos)) {
+      #ifdef SYSTEM_MQTT_DEBUG
+        Serial.println();
+      #endif
       return true;
     } else {
       #ifdef SYSTEM_MQTT_DEBUG
-        Serial.print(F("Failed to publish: ")); Serial.print(topicPath); Serial.print(F("=")); Serial.print(payload); 
-        Serial.print(" qos="); Serial.print(qos);
+        Serial.print(F("Failed to publish: ")); 
       #endif
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
         

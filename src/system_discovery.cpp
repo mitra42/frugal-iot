@@ -32,9 +32,17 @@ System_Discovery::System_Discovery()
 : System_Base("discovery", "Discovery") { }
 
 void System_Discovery::quickAdvertise() {
-    frugal_iot.messages->send(projectTopic, &frugal_iot.nodeid, false, 0); // Don't RETAIN as other nodes also broadcasting to same topic
+    frugal_iot.messages->send(projectTopic, &frugal_iot.nodeid, MQTT_DONT_RETAIN, MQTT_QOS_ATLEAST1); // Don't RETAIN as other nodes also broadcasting to same topic
 }
 
+#ifdef SYSTEM_DISCOVERY_SHORT
+  // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
+  // Relying on short messages from modules instead of large message which won't go thru LoRaMesher
+  void System_Discovery::fullAdvertise() {
+    frugal_iot.discover();
+    doneFullAdvertise = true;
+  }
+#else
 // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
 void System_Discovery::fullAdvertise() {
   // Note - this is intentionally not a global string as it can be quite big, better to create, send an free up
@@ -49,9 +57,10 @@ void System_Discovery::fullAdvertise() {
     + F("\ntopics:") 
     + frugal_iot.advertisement()
   );
-  frugal_iot.messages->send(advertiseTopic, advertisePayload, true, 1);
+  frugal_iot.messages->send(advertiseTopic, advertisePayload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   doneFullAdvertise = true;
 }
+#endif
 
 // Done once after WiFi first connects
 void System_Discovery::setup() {

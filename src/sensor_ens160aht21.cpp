@@ -256,6 +256,16 @@ void Sensor_ensaht::readAndSet() {
     readAndSetENS();   
 }
 
+#ifdef SYSTEM_DISCOVERY_SHORT
+void Sensor_ensaht::discover() {
+    temperature->discover();
+    humidity->discover();
+    aqi->discover();
+    tvoc->discover();
+    eco2->discover();
+    if (isENS161) { aqi500->discover(); }
+}
+#else
 String Sensor_ensaht::advertisement() {
   return ( 
     temperature->advertisement(name.c_str())
@@ -266,6 +276,7 @@ String Sensor_ensaht::advertisement() {
     + (isENS161 ? aqi500->advertisement(name.c_str()) : "")
   );
 }
+#endif
 void Sensor_ensaht::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     if (

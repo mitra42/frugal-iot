@@ -59,12 +59,12 @@ void Frugal_Group::dispatchTwig(const String &topicSensorId, const String &topic
 // e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
 void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
-    if (topicTwig == "project") {
-      project = payload;
+    if (topicTwig == "project") { // TODO unclear we should be changing project on a device live
+      // project = payload;
     } else if (topicTwig == "device_name") {
-      device_name = payload;
+      device_name = new String(payload);
     } else if (topicTwig == "description") {
-      description = payload;
+      description = new String(payload);
     }
     writeConfigToFS(topicTwig, payload);
     System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
@@ -72,10 +72,17 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
     Frugal_Group::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }
+#ifdef SYSTEM_DISCOVERY_SHORT
+  void System_Frugal::discover() {
+    messages->send(leaf2path("device_name"), device_name, MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO-152A client should recognoize frugal_iot/device_name (instead of name)
+    messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO-152A client should recognoize frugal_iot/description (instead of description)
+    System_Base::discover();
+  }
+#endif
 void System_Frugal::captiveLines(AsyncResponseStream* response) {
   captive->addString(response, id, "project", project, T->Project, 2, 15);
-  captive->addString(response, id, "device_name", device_name, T->DeviceName, 3, 15);
-  captive->addString(response, id, "description", description, T->Description, 3, 40);
+  captive->addString(response, id, "device_name", *device_name, T->DeviceName, 3, 15);
+  captive->addString(response, id, "description", *description, T->Description, 3, 40);
   Frugal_Group::captiveLines(response);
 }
 
@@ -91,6 +98,13 @@ void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload,
   }
 }
 
+#ifdef SYSTEM_DISCOVERY_SHORT
+void Frugal_Group::discover() {
+  for (System_Base* fb: group) {
+    fb->discover();
+  }
+}
+#else
 String Frugal_Group::advertisement() {
   String ad = String();
   for (System_Base* fb: group) {
@@ -98,7 +112,7 @@ String Frugal_Group::advertisement() {
   }
   return ad;
 }
-
+#endif
 // These just loop over the members of the group 
 void Frugal_Group::loop()         { for (System_Base* fb: group) { fb->loop(); } }
 void Frugal_Group::periodically() { for (System_Base* fb: group) { fb->periodically();} }
@@ -113,8 +127,16 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
 : Frugal_Group("frugal_iot", "System_Frugal"),
   org(org),
   project(project),
-  description(description),
-  device_name(device_name),
+  description(new String(description)),
+  device_name(new String(device_name)),
+    // Use the unique id of the ESP32 or ESP8266 - has to be before anything calls messages.path
+  #ifdef ESP32
+    nodeid(String(F("esp32-")) + (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24))),
+  #elif defined(ESP8266)
+    nodeid(String(F("esp8266-")) + (Sprintf("%06" PRIx32, ESP.getChipId()))),
+  #else
+    #error nodeid Only defined for ESP32 and ESP8266
+  #endif
   actuators(new Frugal_Group("actuators", "Actuators")),
   sensors(new Frugal_Group("sensors", "Sensors")),
   controls(new Frugal_Group("controls", "Controls")),
@@ -176,18 +198,7 @@ void System_Frugal::setup() {
     Serial.print("Setup: ");
   #endif
   readConfigFromFS(); // Reads config (project, device_name) and passes to our dispatchTwig
-  // Use the unique id of the ESP32 or ESP8266
-  #ifdef ESP32
-    nodeid =  String(F("esp32-")) + (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24));
-  #elif defined(ESP8266)
-    nodeid = String(F("esp8266-")) + (Sprintf("%06" PRIx32, ESP.getChipId()));
-  #else
-    #error Only defined for ESP32 and ESP8266
-  #endif
-
-
-
-Frugal_Group::setup(); // includes WiFi
+  Frugal_Group::setup(); // includes WiFi
   #ifdef SYSTEM_OTA_KEY
     ota->setup_after_mqtt_setup(); // Sends advertisement over MQTT
   #endif

@@ -49,9 +49,15 @@ void Sensor_Uint16::set(const uint16_t newvalue) {
 void Sensor_Uint16::readAndSet() {
     set(read()); // Will also send message via act()
 }
+#ifdef SYSTEM_DISCOVERY_SHORT
+void Sensor_Uint16::discover() {
+  output->discover();
+}
+#else
 String Sensor_Uint16::advertisement() {
   return output->advertisement(name.c_str()); // Note using name of sensor not name of output (which is usually the same)
 }
+#endif
 void Sensor_Uint16::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     if (output->dispatchLeaf(topicTwig, payload, isSet)) { // True if changed

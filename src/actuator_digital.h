@@ -12,7 +12,11 @@ class Actuator_Digital : public Actuator {
     virtual void act();
     virtual void set(const bool v);
     virtual void setup() override;
+  #ifdef SYSTEM_DISCOVERY_SHORT
+    void discover() override;
+  #else
     String advertisement() override;
+  #endif
     void dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet);
 }; // Class Actuator_Digital
 

@@ -45,7 +45,7 @@ void System_Captive::setupLanguages() {
       F("ENREGISTRER"),
       F("redémarrage en cours... veuillez patienter")
       };
-  #endif //LANUGAGE_FR
+  #endif //LANGUAGE_FR
 
   #if defined(LANGUAGE_SP) || defined(LANGUAGE_ALL)
     TT[Language_SP] = new Texts { F("SP"), F("Espanol"),
@@ -64,7 +64,7 @@ void System_Captive::setupLanguages() {
       F("GUARDAR"),
       F("Reiniciando... espere, por favor")
       };
-  #endif //LANUGAGE_SP
+  #endif //LANGUAGE_SP
 
   #if defined(LANGUAGE_DE) || defined(LANGUAGE_ALL)
     TT[Language_DE] = new Texts { F("DE"), F("Deutches"), 
@@ -83,7 +83,7 @@ void System_Captive::setupLanguages() {
       F("Speichern"),
       F("Neustart .... Bitte warten"),
       };
-  #endif //LANUGAGE_DE
+  #endif //LANGUAGE_DE
 
   #if defined(LANGUAGE_NL) || defined(LANGUAGE_ALL)
     TT[Language_NL] = new Texts { F("NL"), F("Nederlands"), 
@@ -102,10 +102,10 @@ void System_Captive::setupLanguages() {
       F("OPSLAAN"),
       F("opnieuw opstarten.... even geduld a.u.b.")
       };
-  #endif //LANUGAGE_NL
+  #endif //LANGUAGE_NL
 
   #if defined(LANGUAGE_ID) || defined(LANGUAGE_ALL)
-    TT[Language_ID] = new Texts { F("FR"), F("Bahasa Indonesia"), 
+    TT[Language_ID] = new Texts { F("ID"), F("Bahasa Indonesia"), 
       F("Bahasa"),
       F("Proyek"),
       F("Nama Perangkat"),
@@ -121,7 +121,7 @@ void System_Captive::setupLanguages() {
       F("SIMPAN"),
       F("sedang memulai ulang .... mohon tunggu")
       };
-  #endif //LANUGAGE_ID
+  #endif //LANGUAGE_ID
 
   #if defined(LANGUAGE_HI) || defined(LANGUAGE_ALL)
     TT[Language_HI] = new Texts { F("HI"), F("Hindi"), 
@@ -140,5 +140,5 @@ void System_Captive::setupLanguages() {
     F("SAVE"),
     F("restarting .... plesae wait")
       };
-  #endif //LANUGAGE_HI
+  #endif //LANGUAGE_HI
 }

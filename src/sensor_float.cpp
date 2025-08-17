@@ -27,9 +27,16 @@ void Sensor_Float::set(const float newvalue) {
 void Sensor_Float::readAndSet() {
   set(read()); // Will also send message via output->set() in new style.
 }
+
+#ifdef SYSTEM_DISCOVERY_SHORT
+void Sensor_Float::discover() {
+  output->discover();
+}
+#else
 String Sensor_Float::advertisement() {
   return output->advertisement(name.c_str()); // Note using name of sensor not name of output (which is usually the same)
 }
+#endif
 void Sensor_Float::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     if (output->dispatchLeaf(topicTwig, payload, isSet)) { // True if changed

@@ -146,23 +146,23 @@ bool System_WiFi::recoverFromLightSleep() {
 }
 #endif // ESP32
 
+#ifdef WL_STOPPED
+  #define WL_EXPECTED_AT_STARTING WL_STOPPED
+#else
+  #define WL_EXPECTED_AT_STARTING WL_DISCONNECTED // e.g. on ESP8266
+#endif
 void System_WiFi::stateMachine() {
   // State machine
   //Serial.print(" XXX Wifi="); Serial.print(status); Serial.print(" "); Serial.println(WiFi.status());
   switch (status)
   {
     case WIFI_STARTING: //0
-      #ifdef ESP8266
-        // WL_STOPPED doesnt exist on ESP8266 - check what it should be at startup
-        Serial.print("XXX add check for WiFi.status() = "); Serial.println(WiFi.status());
-      #else
-        if (WiFi.status() != WL_STOPPED ) {
-          #ifdef SYSTEM_WIFI_DEBUG
-            Serial.print(F("XXX Should be WL_STOPPED but")); Serial.println(WiFi.status());
-            // Unsure what to do here - 
-          #endif
-        }
-      #endif
+      if (WiFi.status() != WL_DISCONNECTED ) {
+        #ifdef SYSTEM_WIFI_DEBUG
+          Serial.print(F("Unexpected WiFi.status=")); Serial.println(WiFi.status()); 
+          // Unsure what to do here - 
+        #endif
+      }
       setStatus(WIFI_NEEDSCAN);
       break;
     case WIFI_DISCONNECTED: //1

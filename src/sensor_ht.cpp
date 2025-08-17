@@ -26,9 +26,16 @@ void Sensor_HT::set(const float temp, const float humy) {
   humidity->set(humy);
 }
 
+#ifdef SYSTEM_DISCOVERY_SHORT
+void Sensor_HT::discover() {
+  temperature->discover();
+  humidity->discover();
+}
+#else
 String Sensor_HT::advertisement() {
   return temperature->advertisement(name.c_str()) + humidity->advertisement(name.c_str()); // Note using name of sensor not name of output (which is usually the same)
 }
+#endif
 void Sensor_HT::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     if (

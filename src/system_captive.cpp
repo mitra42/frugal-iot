@@ -39,6 +39,7 @@ constexpr auto WIFI_AUTH_WPA2_ENTERPRISE = -1337; // not available on ESP8266
 
 static DNSServer dnsServer;
 static AsyncWebServer server(80);
+String message; // Not in class, as accessed from Lambda functions
 
 String html_entities(const String& raw) {
     String r;
@@ -103,6 +104,10 @@ class CaptiveRequestHandler : public AsyncWebHandler {
             ".w,.i{background:#aaa;min-height:3em}"
             "</style>"
       ));
+      if (message) {
+        response->print(message);
+        message = "";
+      }
       response->print(F("<form action=\"/restart\" method=post><input type=submit value=\""));
       response->print(T->RESTART);
       response->print(F("\"></form><hr>"
@@ -161,24 +166,15 @@ void System_Captive::setup() {
   readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig (Must come AFTER setting language strings)
 
   // Unsure what these items choose - copied from example -SOC_WIFI_SUPPORTED seems to be defined for ESP32
-  #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
+  #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI || defined(ESP8266)
     if (!WiFi.softAP(frugal_iot.nodeid)) { //TODO-153 add password as option (see WiFiSettings)
       Serial.println("Soft AP creation failed.");
       return;  // Shouldn't happen
     }
     dnsServer.start(53, "*", WiFi.softAPIP());
-
-    #ifdef ESP8266
-      // TODO debugging ESP8266 this is untested code because WiFi.softAPIP below was returning "IP Unset"
-      //also read a note that migth require a password in softAP call above and has to be at least 8 chars
-      IPAddress local_ip(192,168,1,1);
-      IPAddress gateway(192,168,1,1);
-      IPAddress subnet(255,255,255,0);
-      WiFi.softAPConfig(local_ip, gateway, subnet);
-    #endif
   #endif
   String ip = WiFi.softAPIP().toString(); // TODO-153 note how this is used by redirect 
-  Serial.print(F("Access point on:")); Serial.println(ip);
+  Serial.print(F("Access point on: ")); Serial.println(ip);
 
   // Order is important - this has to come BEFORE the catch-all default portal
   server.on("/", HTTP_POST, [](AsyncWebServerRequest *request){
@@ -215,7 +211,13 @@ void System_Captive::setup() {
           }
         #endif
     } //for
-    request->send(200, "text/plain", "Settings updated");
+    // Redisplay main screen
+    //request->send(200, "text/plain", "Settings updated");
+    String ip = WiFi.softAPIP().toString();
+    AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", ip);
+    response->addHeader("Location", "http://" + ip + "/");
+    request->send(response);
+    message = F("<h4>Settings Updated<h4>");
   });
 
   server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
@@ -279,7 +281,7 @@ void System_Captive::dispatchTwig(const String &topicSensorId, const String &top
 void System_Captive::captiveLines(AsyncResponseStream* response) {
   response->print(String(F("<p><label>"))
     + T->Language // Language in the current language
-    + ":<br><select name=language_code>");
+    + ":<br><select name=captive/language_code>");
   for (auto& t : TT) {
     response->print(String(F("<option value='")) + t->code + "'" 
     + ((t == T) ? "' selected" : "") + ">" 

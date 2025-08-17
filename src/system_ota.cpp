@@ -188,5 +188,10 @@ void System_OTA::infrequently() {
     nextLoopTime = frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_OTA_MS;
   }
 }
+#ifdef SYSTEM_DISCOVERY_SHORT
+  void System_OTA::discover() {
+    frugal_iot.messages->send(leaf2path("key"), new String(SYSTEM_OTA_KEY), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO-152A client should recognoize ota/key instead of ota/key
+  }
+#endif
 
 #endif // SYSTEM_OTA_KEY

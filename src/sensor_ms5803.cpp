@@ -35,7 +35,7 @@
 #define SENSOR_CMD_ADC_4096   0x08
 #define SENSOR_CMD_COEFFICIENT0 0xA0
  
-  // TODO-132 add to discovery - hook into auto for OUT
+  // TODO-132 add to discover - hook into auto for OUT
   // TODO-132 add to mqtt
   // TODO-132 need to use a slower clock when at distance
 // Instantiate with  sensors.push_back(new Sensor_ms5803())

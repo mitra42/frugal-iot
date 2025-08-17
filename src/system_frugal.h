@@ -50,7 +50,11 @@ class Frugal_Group : public System_Base {
     void add(System_Base* fb);
     void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet); 
     void dispatchPath(const String &topicPath, const String &payload) override; // Only currently relevant on controls
+  #ifdef SYSTEM_DISCOVERY_SHORT
+    void discover() override;
+  #else
     String advertisement() override;
+  #endif
     void loop() override;
     void periodically() override;
     void infrequently() override;
@@ -62,8 +66,8 @@ class System_Frugal : public Frugal_Group {
     // Configuration strings 
     String org;
     String project;
-    String description; 
-    String device_name;
+    String* description; 
+    String* device_name;
     String nodeid; // Unique id - starts esp32- or esp8266-
     // Pointers to other Frugal_Base objects or groups of objects
     Frugal_Group* actuators;
@@ -108,7 +112,9 @@ class System_Frugal : public Frugal_Group {
     void captiveLines(AsyncResponseStream* response) override; 
     bool canOTA();
     bool canMQTT();
-
+    #ifdef SYSTEM_DISCOVERY_SHORT
+      void discover() override;
+    #endif
 };
 
 extern System_Frugal frugal_iot;

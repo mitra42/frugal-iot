@@ -39,7 +39,7 @@ topicPrefix(nullptr)
 
 // Note this setup might be done early (and called twice), rather than in frugal_iot.setup 
 void System_Messages::setup() {
-  if (!topicPrefix) {
+  if (!topicPrefix) { // Check if already done
     // e.g. "dev/developers/esp32-12345/" prefix of most topics
     topicPrefix = new String(frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/"));
     subscribe(path("set/#"));  // Main subscription to all changes sent to this node
@@ -51,18 +51,25 @@ void System_Messages::loop() {
 }
 
 // =========== Helpers =====================
-// Only used for the bulk subscribe to set/# or wireTo
 // Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht30/temperature
 String* System_Messages::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
-  if (!topicPrefix) { 
     setup(); // Allow control wiring before setup by doing setup early
-  }
   return new String(*topicPrefix + topicTwig);
 }
 // Convert a twig e.g. sht30/temperature to path e.g. dev/developers/esp123/sht30/temperature
 String* System_Messages::path(const String* topicTwig) { // TODO find other places do this and replace with call to TopicPath
+  setup(); // Allow control wiring before setup by doing setup early
   return new String(*topicPrefix + *topicTwig);
 }
+String* System_Messages::path(const char* id, char const * const twig) { // TODO find other places do this and replace with call to TopicPath
+  setup(); // Allow control wiring before setup by doing setup early
+  return new String(*topicPrefix + id + "/" + twig); // Note topicPrefix ends in "/"
+}
+String* System_Messages::path(const char* id,  const char* const leaf, const char* const leafparm) { // TODO find other places do this and replace with call to TopicPath
+  setup(); // Allow control wiring before setup by doing setup early
+  return new String(*topicPrefix + id + "/" + leaf + "/" + leafparm); // Note topicPrefix ends in "/"
+}
+
 // Convert a path e.g. /dev/developers/esp123/sht30/temperature to a twig e.g. sht30/temperature 
 String* System_Messages::twig(const String &topicPath) { 
   if (topicPath.startsWith(*topicPrefix)) {

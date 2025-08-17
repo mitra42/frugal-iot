@@ -27,6 +27,12 @@
   #define SYSTEM_WIFI_DEBUG
 #endif
 
+#define MQTT_RETAIN true
+#define MQTT_DONT_RETAIN false
+#define MQTT_QOS_NONE 0
+#define MQTT_QOS_ATLEAST1 1
+#define MQTT_QOS_EXACTLY1 2
+
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
 #if defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG)
   #define SENSOR_HT_DEBUG

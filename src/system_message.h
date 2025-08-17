@@ -37,6 +37,8 @@ class System_Messages : public System_Base {
     System_Messages();
     void subscribe(const String* topicPath);
     void send(const String* topicPath, const String* payload, bool retain, uint8_t qos);
+    String* path(const char* id, const char* const leaf, const char* const leafparm);
+    String* path(const char* id, const char* const leaf);
     String* path(char const * const topicTwig); // returns a new String* 
     String* path(const String* topicTwig); // returns a new String* 
     String* twig(const String &topicPath);

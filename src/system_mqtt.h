@@ -41,7 +41,7 @@ class System_MQTT : public System_Base {
     bool send(const String &topicPath, const String &payload, const bool retain, const int qos);
 
   protected: // TODO - some of the other methods should probably be protected
-    MQTTClient client; //was using (512,128) as discovery message was bouncing back, but no longer subscribing to "device" topic.
+    MQTTClient client; //was using (512,128) as discover message was bouncing back, but no longer subscribing to "device" topic.
     WiFiClient net;
     String hostname; 
     bool inReceived = false;

@@ -16,7 +16,7 @@
 #define SYSTEM_CAPTIVE_H
 
 #include "system_base.h"
-#include "_settings.h" // For LANUGAGE_ALL
+#include "_settings.h" // For LANGUAGE_ALL
 
 
 
@@ -33,6 +33,7 @@ class System_Captive : public System_Base {
     bool setLanguage(const String& language_code);
     void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet);
     void captiveLines(AsyncResponseStream* response);
+  protected:
   };
 
 #endif // SYSTEM_CAPTIVE_H

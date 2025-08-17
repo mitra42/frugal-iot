@@ -93,7 +93,7 @@ follow the conventions - some common ones
 Define a SENSOR_FOO_WANT, and any parameters which overwrite defaults - e.g. its common to `#define SENSOR_FOO_MS 900000` in the `.cpp` to read every 15 minutes, then `#define SENSOR_FOO_MS 10000` to read every 10 seconds when debugging.
   
 #### system_discovery.cpp
-If it should appear in UI, then needs to include its discovery string (look for TO_ADD_SENSOR) 
+If it should appear in UI, then needs to include its discover string (look for TO_ADD_SENSOR) 
 
 #### frugal_iot.ino*
 Add the following code at the different TO_ADD_SENSOR places

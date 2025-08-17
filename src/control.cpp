@@ -77,6 +77,16 @@ void Control::dispatchPath(const String &topicPath, const String &payload ) {
     }
 }
 
+#ifdef SYSTEM_DISCOVERY_SHORT
+void Control::discover() {
+  for (auto &input : inputs) {
+    input->discover();
+  }
+  for (auto &output : outputs) {
+    output->discover();
+  }
+}
+#else
 // Ouput advertisement for control - all of IN and OUTs 
 String Control::advertisement() {
   String ad = StringF(groupAdvertLine, id, name.c_str()); // Wrap control in a group
@@ -88,3 +98,4 @@ String Control::advertisement() {
   }
   return ad;
 }
+#endif
