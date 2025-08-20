@@ -30,7 +30,9 @@
 #include "system_mqtt.h"
 
 #define QOS_DOWNSTREAM 12 // Special value of retain when downstream message (MQTT broker->gateway->LoRa->modules)
-
+#ifndef SYSTEM_LORAMESHER_MAXLEGITPACKET
+  #define SYSTEM_LORAMESHER_MAXLEGITPACKET 256 // Seeing some big (1Mb) bad packets from sender
+#endif
 // =========== MeshSubscription class - only used by LoRaMesher to track subs ====
 
 // TODO-152 Consider timeout of LM subscriptions - since a node may get a different id each time it power cycles, and thus have multiple entries in the gateway's meshsubscription table.
@@ -47,7 +49,7 @@ TaskHandle_t receiveLoRaMessage_Handle = NULL;
 #ifdef SYSTEM_LORAMESHER_DEBUG
   // If you want to debug, provide a function in our .ino (or main.cpp) that implements this, 
   // see examples/loramesher/loramesher.ino for an example that writes to OLED
-  extern void printAppData(AppPacket<uint8_t>*);
+  extern void printAppData();
 #endif // SYSTEM_LORAMESHER_DEBUG
 
 // Function that process the queue of received packets - it receives an AppPacket<xxx> and passes to handler
@@ -58,8 +60,7 @@ void processReceivedPackets(void*) {
         // TODO-137 move much of this into a method on System_LoraMesher
         //Iterate through all the packets inside the Received User Packets Queue
         while (frugal_iot.loramesher->radio.getReceivedQueueSize() > 0) {
-            Serial.println("ReceivedUserData_TaskHandle notify received");
-            Serial.printf("Queue receiveUserData size: %d\n", frugal_iot.loramesher->radio.getReceivedQueueSize());
+            Serial.printf("LoRaMesher Received packets: %d\n", frugal_iot.loramesher->radio.getReceivedQueueSize());
 
             //Get the first element inside the Received User Packets Queue
             //LORAMESHER-STRUCTURED: AppPacket<counterPacket>* packet = frugal_iot.loramesher->radio.getNextAppPzacket<counterPacket>(); printAppCounterPacket(packet); // This is the actual handling
@@ -96,7 +97,7 @@ System_LoraMesher::System_LoraMesher()
     config.loraRst = LORA_RST;
     config.loraIrq = LORA_IRQ;
     #ifdef LORA_D1  // e.g. on ttgo-lora32-v21new
-      config.loraIo1 = LORA_D1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_v1 or _V2 but will on _V21
+      config.loraIo1 = LORA_D1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_V1 or _V2 but will on _V21
     #elif defined(LORA_DIO1) // e.g. on variant:lilygo_t3_s3_sx127x 
       config.loraIo1 = LORA_DIO1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_v1 or _V2 but will on _V21
     #else
@@ -132,6 +133,9 @@ void System_LoraMesher::setup() {
       Serial.println("Setup did not find a gateway node - expect after receive routing");
   }
   checkRole(); // Probably wont do anything as MQTT probably not up yet - but will repeat in periodically
+  #ifdef SYSTEM_LORAMESHER_DEBUG
+    printAppData();
+  #endif
 }
 
 void System_LoraMesher::prepareForSleep() {
@@ -148,6 +152,9 @@ void System_LoraMesher::prepareForSleep() {
 
 void System_LoraMesher::periodically() {
   checkRole(); // Adjust routing tables to reflect if we have a MQTT connection or not
+  #ifdef SYSTEM_LORAMESHER_DEBUG
+    printAppData();
+  #endif
 }
 // ========= INCOMING - UP OR DOWNSTEAM =========
 
@@ -156,48 +163,55 @@ void System_LoraMesher::periodically() {
 // or Upstream (from another node)
 void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
   rcvdPacketCounter++;
-  #ifdef SYSTEM_LORAMESHER_DEBUG
-    printAppData(appPacket); // TODO-151 see note above about this being an extern
-  #endif
-  const uint8_t qos = appPacket->payload[0] - '0';
-  const bool downstream = appPacket->payload[0] == ('0'+QOS_DOWNSTREAM);
-  const bool retain = appPacket->payload[1] - '0'; // will be 0 or 1
-  // Assume appPacket->payload is a uint8_t* or char* and is null-terminated from [2] onward
-  const char* str = (const char*)&appPacket->payload[2];
-  String* topicPath;
-  String* payload;
+  if ((appPacket->payloadSize > SYSTEM_LORAMESHER_MAXLEGITPACKET) ||(appPacket->payloadSize <= 0)) {
+    Serial.printf("LoRaMesher Received bad packet length=%d\n", appPacket->payloadSize);
+  } else {
+    Serial.print("XXX payloadSize="); Serial.println(appPacket->payloadSize);
+    #ifdef SYSTEM_LORAMESHER_DEBUG
+      lastPacket = appPacket;
+      printAppData(); // TODO-151 see note above about this being an extern
+    #endif
+    const uint8_t qos = appPacket->payload[0] - '0';
+    const bool downstream = appPacket->payload[0] == ('0'+QOS_DOWNSTREAM);
+    const bool retain = appPacket->payload[1] - '0'; // will be 0 or 1
+    // Assume appPacket->payload is a uint8_t* or char* and is null-terminated from [2] onward
+    const char* str = (const char*)&appPacket->payload[2];
+    String* topicPath;
+    String* payload;
 
-  const char* eq = strchr(str, ':');
-  if (eq) {
-      topicPath = new String(String(str).substring(0, eq - str));
-      payload = (new String(eq+1));
-  } else { // Shouldnt have this case
-      topicPath = new String(str);
-      payload = new String(F(""));
+    const char* eq = strchr(str, ':');
+    if (eq) {
+        topicPath = new String(String(str).substring(0, eq - str));
+        payload = (new String(eq+1));
+    } else { // Shouldnt have this case
+        topicPath = new String(str);
+        payload = new String(F(""));
+    }
+    Serial.print("LoRaMesher received "); Serial.print(*topicPath); Serial.print(F("=")); Serial.println(*payload);
+
+    // How do we tell if this is an message heading upstream (from node to MQTT) or downstream (from MQTT on gateway node or other node via the router)
+    // Three cases
+    // a: message downstream from Broker: src=gateway dst=thisLeaf 
+    // b: message reflected at gateway: src=gateway dst=thisLeaf
+    // c: message outgoing to us as gateway: src=anotherLeaf dst=thisLeaf/gateway
+    // Cant use src as there may be multiple gateways AND could be message reflected at gateway
+    // For now - may change this - use retain=12 (character is '<' on "a" and "b"
+    if (*topicPath == "subscribe") { // Will always be UPSTREAM
+      Serial.print("LoRaMesher forwarding subscription to MQTT "); Serial.println(*payload);
+      // Need to remember the subscription before calling subscribe, because there may be retained data returned immediately
+      meshSubscriptions.emplace_front(*payload, appPacket->src);
+      frugal_iot.messages->subscribe(payload);  // Should queue for MQTT since we are the gateway
+    }
+    if (downstream) {
+      Serial.print("XXX " __FILE__); Serial.print("downstream "); Serial.println(*topicPath);
+      frugal_iot.messages->dispatch(*topicPath, *payload);
+    } else { // upstream (not subscribe)
+      Serial.print("LoRaMesher forwarding to MQTT:"); Serial.print(*topicPath); Serial.print(F("=")); Serial.println(*payload);
+      frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
+    }
   }
   //Delete the packet when used. It is very important to call this function to release the memory of the packet.
   radio.deletePacket(appPacket);
-  Serial.print("LoRaMesher received"); Serial.print(*topicPath); Serial.println(*payload);
-
-  // How do we tell if this is an message heading upstream (from node to MQTT) or downstream (from MQTT on gateway node or other node via the router)
-  // Three cases
-  // a: message downstream from Broker: src=gateway dst=thisLeaf 
-  // b: message reflected at gateway: src=gateway dst=thisLeaf
-  // c: message outgoing to us as gateway: src=anotherLeaf dst=thisLeaf/gateway
-  // Cant use src as there may be multiple gateways AND could be message reflected at gateway
-  // For now - may change this - use retain=12 (character is '<' on "a" and "b"
-   if (*topicPath == "subscribe") { // Will always be UPSTREAM
-    Serial.print("XXX " __FILE__); Serial.println("got subscribe");
-    // Need to remember the subscription before calling subscribe, because there may be retained data returned immediately
-    meshSubscriptions.emplace_front(*payload, appPacket->src);
-    frugal_iot.messages->subscribe(payload);  // Should queue for MQTT since we are the gateway
-  }
-  if (downstream) {
-    Serial.print("XXX " __FILE__); Serial.print("downstream "); Serial.println(*topicPath);
-    frugal_iot.messages->dispatch(*topicPath, *payload);
-  } else { // upstream
-    frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
-  }
 }
 
 
@@ -209,11 +223,14 @@ bool System_LoraMesher::findGatewayNode() {
     if (rn) {
       if (gatewayNodeAddress == BROADCAST_ADDR) {
         Serial.print(F("LoRaMesher - newly found gateway node"));
+        gatewayNodeAddress = rn->networkNode.address;
       }
-      gatewayNodeAddress = rn->networkNode.address;
       return true;
     } else {
-      gatewayNodeAddress = BROADCAST_ADDR;
+      if (gatewayNodeAddress != BROADCAST_ADDR) {
+        Serial.print(F("LoRaMesher - lost gateway node"));
+        gatewayNodeAddress = BROADCAST_ADDR;
+      }
       return false;
     }
 }
@@ -261,16 +278,34 @@ bool System_LoraMesher::publish(const String &topic, const String &payload, bool
 // Check if we can act as an upstream gateway and if changes update routing tables
 // TODO-23 consider interaction of this with sleep modes, when come back from sleep won't have 
 // TODO-23 MQTT yet, but also unclear if want a gateway role retained during sleep
-void System_LoraMesher::checkRole() {
-  //if (!radio.isGateway() && frugal_iot.mqtt.connected()) { // TODO-152 pending update to loramesher being pushed
-  if ( frugal_iot.mqtt->connected()) {
-    radio.addGatewayRole();
-//  } else if (radio.isGateway() && (millis() > (lostMQTTat + SYSTEM_LORAMESHER_MQTTWAIT))) {
-  } else if (millis() > (lostMQTTat + SYSTEM_LORAMESHER_MQTTWAIT)) {
-    Serial.println(F("LoRaMesher removing gateway role as lost MQTT"));
-    radio.removeGatewayRole();
+LoraMesherMode System_LoraMesher::checkRole() {
+  if (frugal_iot.mqtt->connected()) {
+    // TODO-152 pending update to loramesher being pushed that has isGateway I've edited the library
+    if (!radio.isGatewayRole()) {
+      #ifdef SYSTEM_LORAMESHER_DEBUG
+        Serial.println("Adding gateway role"); 
+      #endif
+      radio.addGatewayRole();
+    }
+    return LORAMESHER_GATEWAY;
+  } else { // Not connected to MQTT
+    // Wait a little while before removing gateway role
+    if (radio.isGatewayRole() && (millis() > (lostMQTTat + SYSTEM_LORAMESHER_MQTTWAIT))) {
+      #ifdef SYSTEM_LORAMESHER_DEBUG
+        Serial.println(F("LoRaMesher removing gateway role as lost MQTT"));
+      #endif
+      radio.removeGatewayRole();
+    } 
+    return connected() ? LORAMESHER_NODE : LORAMESHER_UNCONNECTED;
   }
-  // else ... in intermediate state, MQTT gone away but not yet for a long time
+}
+const __FlashStringHelper* System_LoraMesher::checkRoleString() {
+  switch (checkRole()) {
+    case LORAMESHER_GATEWAY: return T->LoraMesher_Gateway;
+    case LORAMESHER_NODE: return T->LoraMesher_Node;
+    case LORAMESHER_UNCONNECTED: return T->LoraMesher_Unconnected;
+  }
+  return F("UNKNOWN");
 }
 
 // ========= DOWNSTREAM =================

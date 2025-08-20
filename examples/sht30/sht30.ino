@@ -32,7 +32,7 @@ void setup() {
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
   
   // Add sensors, actuators and controls
-  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true));
+  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
   ControlHysterisis* cb = new ControlHysterisis("control", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);

@@ -23,7 +23,10 @@ void System_Captive::setupLanguages() {
     F("Select one..."),
     F("Password"),
     F("SAVE"),
-    F("restarting .... plesae wait")
+    F("restarting .... plesae wait"),
+    F("Gateway"),
+    F("Node"),
+    F("Unconnected")
   };
 
   T = TT[Language_EN];
@@ -43,7 +46,10 @@ void System_Captive::setupLanguages() {
       F("Sélectionnez-en un..."),
       F("Mot de passe"),
       F("ENREGISTRER"),
-      F("redémarrage en cours... veuillez patienter")
+      F("redémarrage en cours... veuillez patienter"),
+    F("Gateway"),
+    F("Node"),
+    F("Unconnected")
       };
   #endif //LANGUAGE_FR
 
@@ -62,7 +68,10 @@ void System_Captive::setupLanguages() {
       F("Seleccionar una..."),
       F("Contraseña"),
       F("GUARDAR"),
-      F("Reiniciando... espere, por favor")
+      F("Reiniciando... espere, por favor"),
+    F("Gateway"),
+    F("Node"),
+    F("Unconnected")
       };
   #endif //LANGUAGE_SP
 
@@ -82,6 +91,9 @@ void System_Captive::setupLanguages() {
       F("Passwort"),
       F("Speichern"),
       F("Neustart .... Bitte warten"),
+    F("Gateway"),
+    F("Node"),
+    F("Unconnected")
       };
   #endif //LANGUAGE_DE
 
@@ -100,7 +112,10 @@ void System_Captive::setupLanguages() {
       F("Selecteer er één..."),
       F("Wachtwoord"),
       F("OPSLAAN"),
-      F("opnieuw opstarten.... even geduld a.u.b.")
+      F("opnieuw opstarten.... even geduld a.u.b."),
+    F("Gateway"),
+    F("Node"),
+    F("Unconnected")
       };
   #endif //LANGUAGE_NL
 
@@ -119,7 +134,10 @@ void System_Captive::setupLanguages() {
       F("Pilih satu..."),
       F("Kata Sandi"),
       F("SIMPAN"),
-      F("sedang memulai ulang .... mohon tunggu")
+      F("sedang memulai ulang .... mohon tunggu"),
+    F("Gateway"),
+    F("Node"),
+    F("Unconnected")
       };
   #endif //LANGUAGE_ID
 
@@ -138,7 +156,10 @@ void System_Captive::setupLanguages() {
     F("Select one..."),
     F("Password"),
     F("SAVE"),
-    F("restarting .... plesae wait")
+    F("restarting .... plesae wait"),
+    F("Gateway"),
+    F("Node"),
+    F("Unconnected")
       };
   #endif //LANGUAGE_HI
 }

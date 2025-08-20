@@ -37,7 +37,7 @@ void setup() {
   frugal_iot.system->add(frugal_iot.loramesher);
   
   // Add sensors, actuators and controls
-  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true));
+  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
   // system_oled and actuator_ledbuiltin added automatically on boards that have them.
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

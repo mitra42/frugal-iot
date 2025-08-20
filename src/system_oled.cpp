@@ -11,15 +11,16 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-System_OLED::System_OLED() 
+System_OLED::System_OLED(TwoWire* wire)
 : System_Base("oled", "OLED"),
-  display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST_X) // Allow code to access 
+  wire(wire),
+  display(SCREEN_WIDTH, SCREEN_HEIGHT, wire, OLED_RST_X) // Allow code to access 
 {}
 
 void System_OLED::setup() {
   System_Base::setup();
   // Setup code here, if needed
-  #if OLED_RST_X != -1 // If OLED_RST is defined, use it (e.g. on ARDUINO_TTGO_LoRa32_v1)
+  #if OLED_RST_X != -1 // If OLED_RST is defined, use it (e.g. on ARDUINO_TTGO_LoRa32_V1)
     //reset OLED display via software
     pinMode(OLED_RST_X, OUTPUT);
     digitalWrite(OLED_RST_X, LOW);
@@ -27,7 +28,7 @@ void System_OLED::setup() {
     digitalWrite(OLED_RST_X, HIGH);
   #endif 
     //initialize OLED
-  Wire.begin(OLED_SDA, OLED_SCL); // Note that on ARDUINO_TTGO_LoRa32_v1, this is NOT the hardware I2C pins on ESP32
+  wire->begin(OLED_SDA, OLED_SCL); // Note that on ARDUINO_TTGO_LoRa32_V1, this is NOT the hardware I2C pins on ESP32
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3c, false, false)) { // Address 0x3C for 128x32
     Serial.println(F("❌ SSD1306 allocation failed"));
   }

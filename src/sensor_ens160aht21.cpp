@@ -66,15 +66,15 @@
 #define ENS161_PARTID				    0x0161
 
 
-Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name) 
+Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name, TwoWire* wire) 
   : Sensor(id, name, false)
 { // TODO-101 try movign some of these into part above
-  aht = new System_I2C(SENSOR_ENSAHT_AHTI2C);
+  aht = new System_I2C(SENSOR_ENSAHT_AHTI2C, &I2C_WIRE);
   // AHT21
   temperature = new OUTfloat(id, "temperature", "Temperature", 0, 0, 0, 455, "red", false);
   humidity = new OUTfloat(id, "humidity", "Humidity", 0, 0, 0, 100, "blue", false);
   // ENS160
-  ens = new System_I2C(SENSOR_ENSAHT_ENSI2C); // I2C object at this address
+  ens = new System_I2C(SENSOR_ENSAHT_ENSI2C, &I2C_WIRE); // I2C object at this address
   aqi = new OUTuint16(id, "aqi", "AQI", 0, 0, 255, "purple", false); // TODO-101 set min/max
   tvoc = new OUTuint16(id, "tvoc", "TVOC", 0, 0, 99, "green", false); // TODO-101 set min/max
   eco2 = new OUTuint16(id, "co2", "eCO2", 0, 300, 900, "brown", false); // TODO-101 set min/max
@@ -101,7 +101,7 @@ void Sensor_ensaht::setupAHT() {
   #endif
   humidity->setup();
   temperature->setup();
-  aht->initialize();  // calls Wire.begin()
+  aht->initialize();  // calls wire->begin()
   // Setup the AHT21
   aht->send(AHTX0_CMD_SOFTRESET); // Just waiting for not busy
   AHTspinTillReady();
@@ -156,7 +156,7 @@ void Sensor_ensaht::setupENS() {
   eco2->setup();
   aqi->setup();
   tvoc->setup();
-  //ens.initialize();  // calls Wire.begin() (unnecessary since already called)
+  //ens.initialize();  // calls wire->begin() (unnecessary since already called)
   ENSsetMode(ENS160_OPMODE_RESET);
   // TODO-101 could check and report part id if want ???
   ENSsendAndRead(ENS160_REG_PART_ID, readbuffer, 2);

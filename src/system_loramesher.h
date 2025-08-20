@@ -26,6 +26,14 @@ class MeshSubscription {
     MeshSubscription(const String topicPath, const uint16_t src);
 };
 
+
+enum LoraMesherMode {
+    LORAMESHER_GATEWAY,
+    LORAMESHER_NODE,
+    LORAMESHER_UNCONNECTED,
+};
+
+
 class System_LoraMesher : public System_Base {
   public:
     System_LoraMesher();
@@ -34,14 +42,17 @@ class System_LoraMesher : public System_Base {
     // == OUTGOING (up or downstream)
       bool connected();
       // == UPSTREAM 
+      LoraMesherMode checkRole();
+      const __FlashStringHelper* checkRoleString();
       // Match mqtt.client profile
       bool publish(const String &topicPath, const String &payload, const bool retain, const int qos);
       // == DOWNSTREAM 
       // public only because called from the callback - do not use externally
       void processReceivedPacket(AppPacket<uint8_t>* appPacket); 
+      AppPacket<uint8_t>* lastPacket = nullptr; // Used by printAppData
   protected:
     LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();
-    uint16_t gatewayNodeAddress;
+    uint16_t gatewayNodeAddress = BROADCAST_ADDR;
     uint16_t rcvdPacketCounter = 0;
     uint16_t sentPacketCounter = 0; 
     unsigned long lostMQTTat;
@@ -54,7 +65,6 @@ class System_LoraMesher : public System_Base {
       bool findGatewayNode();
       void buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos);
     // == UPSTREAM 
-    void checkRole();
     // == DOWNSTREAM 
       void relayDownstream(uint16_t destn, const String &topic, const String &payload);
       void dispatchPath(const String &topicPath, const String &payload) override;

@@ -23,6 +23,9 @@
 #include <MQTT.h>
 #include "system_frugal.h" // for frugal_iot
 
+#ifndef SYSTEM_MQTT_BACKOFF
+  #define SYSTEM_MQTT_BACKOFF 5000 // Reasonable backoff on MQTT conncetion failure - 5 seconds (was 10ms ! )
+#endif
 // mqtt client -> System_MQTT callback
 // Note intentionally outside class, passed as callback to Mqtt client
 void MqttMessageReceived(String &topicPath, String &payload) { // cant be constant as dispatch isnt
@@ -43,6 +46,7 @@ System_MQTT::System_MQTT(const char* hostname, const char* username, const char*
 void System_MQTT::setup() {
   readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig
 }
+
 // Setup MQTT, connect and subscribe - note if WiFi is connected, this will block till MQTT times out 
 void System_MQTT::setup_after_wifi() {
   // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
@@ -68,8 +72,10 @@ void System_MQTT::loop() {
           Serial.print(F("MQTT client loop failed ")); Serial.println(client.lastError()); // lwmqtt_err
         #endif // SYSTEM_MQTT_DEBUG
       }; // Do this at end of loop so some time before checks if connected
+      nextLoopTime = millis() + SYSTEM_MQTT_MS; // Not sleepSafeMillis as this is frequent
+    } else {
+      nextLoopTime = (millis() + SYSTEM_MQTT_BACKOFF);
     }
-    nextLoopTime = millis() + SYSTEM_MQTT_MS; // Not sleepSafeMillis as this is frequent
   }
 }
 // ========== HELPERS ======================
@@ -88,6 +94,7 @@ bool System_MQTT::connect() {
     /* Not connected */
     Serial.print(F("\nMQTT connecting: to ")); Serial.print(hostname);
     // The call to client.connect is blocking 
+    // Theoretically "skip=true" should be good, dont close if connected, but leads to error code=6
     if (!client.connect(frugal_iot.nodeid.c_str(), username, password)) {
       /* Still not connected */
       Serial.print(F(" Fail "));

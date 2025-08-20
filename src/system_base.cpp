@@ -106,6 +106,9 @@ void IO::wireTo(String* topicPath) {
 frugal_iot.messages->subscribe(wiredPath);
   }
 }
+String* IO::path() {
+  return frugal_iot.messages->path(topicTwig);
+}
 void IO::wireTo(IO* io) {
   wireTo(frugal_iot.messages->path(io->topicTwig)); // Subscribe to the twig of the IO
 }
@@ -574,7 +577,7 @@ void OUTbool::sendWired() {
 }
 // TO-ADD-OUTxxx
 void OUTfloat::send() {
-    frugal_iot.messages->send(topicTwig, new String(value, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1); 
+    frugal_iot.messages->send(path(), new String(value, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1); 
 }
 void OUTfloat::set(const float newvalue) {
   #ifdef CONTROL_HUMIDITY_DEBUG
@@ -587,7 +590,7 @@ void OUTfloat::set(const float newvalue) {
   }
 }
 void OUTuint16::send() {
-  frugal_iot.messages->send(topicTwig, new String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1); 
+  frugal_iot.messages->send(path(), new String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1); 
 }
 void OUTuint16::set(const uint16_t newvalue) {
   #ifdef CONTROL_HUMIDITY_DEBUG
@@ -595,13 +598,13 @@ void OUTuint16::set(const uint16_t newvalue) {
   #endif
   if (newvalue != value) {
     value = newvalue;
-    frugal_iot.messages->send(topicTwig, new String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1); 
+    frugal_iot.messages->send(path(), new String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1); 
     send();
     sendWired();
   }
 }
 void OUTbool::send() {
-  frugal_iot.messages->send(topicTwig, new String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  frugal_iot.messages->send(path(), new String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 void OUTbool::set(const bool newvalue) {
   #ifdef CONTROL_HYSTERISIS_DEBUG

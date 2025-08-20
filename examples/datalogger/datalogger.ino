@@ -41,7 +41,7 @@ void setup() {
     System_LittleFS* fs_LittleFS = new System_LittleFS();
     frugal_iot.system->add(fs_LittleFS);
   #endif
-  Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true); // Create SHT30 sensor
+  Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true); // Create SHT30 sensor
   frugal_iot.sensors->add(ss); // Add SHT30 sensor
 
   // Must be after sensor_sht for default wiring below

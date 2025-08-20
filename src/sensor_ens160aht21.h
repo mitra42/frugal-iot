@@ -19,12 +19,13 @@ class Sensor_ensaht : public Sensor {
     System_I2C* aht; // I2C object for AHT
     System_I2C* ens; // I2C object for ENS
     bool isENS161;
-    Sensor_ensaht(const char* const id, const char* const name);
+    Sensor_ensaht(const char* const id, const char* const name, TwoWire* wire = &I2C_WIRE);
     ~Sensor_ensaht(); //TODO-101
     void setup() override; 
     void readAndSet() override;
     void readAndSetAHT();
   private:
+    TwoWire* wire;
     // AHT
     void setupAHT();
     uint8_t AHTspinTillReady();

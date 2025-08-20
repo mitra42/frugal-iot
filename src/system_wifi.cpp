@@ -157,9 +157,9 @@ void System_WiFi::stateMachine() {
   switch (status)
   {
     case WIFI_STARTING: //0
-      if (WiFi.status() != WL_DISCONNECTED ) {
+      if ((WiFi.status() != WL_DISCONNECTED) && (WiFi.status() != WL_STOPPED)) {
         #ifdef SYSTEM_WIFI_DEBUG
-          Serial.print(F("Unexpected WiFi.status=")); Serial.println(WiFi.status()); 
+          Serial.print(F("WiFi: STARTING but WiFi.status=")); Serial.println(WiFi.status()); 
           // Unsure what to do here - 
         #endif
       }
@@ -247,10 +247,11 @@ void System_WiFi::stateMachine() {
       }
       // drop thru
     case WIFI_CONNECTED: //3
-      if (WiFi.status() == WL_DISCONNECTED) {
+      if ((WiFi.status() == WL_DISCONNECTED)
+          || (WiFi.status() == WL_NO_SSID_AVAIL)) { // No idea why this happens, but seen on poor connections
         setStatus(WIFI_DISCONNECTED);
       } else if (WiFi.status() != WL_CONNECTED) {
-        Serial.print(F("WiFi: unhandled state combination CONNEcTED but WiFi.status=")); Serial.println(WiFi.status());
+        Serial.print(F("WiFi: unhandled state combination CONNECTED but WiFi.status=")); Serial.println(WiFi.status());
       }
       break;
     default:

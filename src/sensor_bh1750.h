@@ -4,21 +4,21 @@
 #include <Arduino.h>
 #include "sensor_float.h"
 #include <BH1750.h>
-
 // Can use this default in constructor in main.cpp
 #ifndef SENSOR_BH1750_ADDRESS
   #ifdef LILYGOHIGROW
     #define SENSOR_BH1750_ADDRESS (0x23)  // This may be a generally useful default ?
   #else
-    #define SENSOR_BH1750_ADDRESS 0x23  // This may be a generally useful default ?
+    #define SENSOR_BH1750_ADDRESS 0x23  // This is the default also in the BH1750 library
   #endif
 #endif
 
 class Sensor_BH1750 : public Sensor_Float {
   public:
-    uint8_t pin;
+    uint8_t addr; // I2C address
+    TwoWire* wire;
     BH1750 lightmeter;
-    Sensor_BH1750(const char* const id, const char * const name, uint8_t pin, bool retain);
+    Sensor_BH1750(const char* const id, const char * const name, uint8_t addr, TwoWire* wire, bool retain);
     void setup() override;
     float read() override;
 };

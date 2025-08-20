@@ -68,6 +68,7 @@ class IO {
   #endif
     void wireTo(String* topicPath);
     void wireTo(IO* io);
+    String* path();
 };
 class IN : public IO {
   public:

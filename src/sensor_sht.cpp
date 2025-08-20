@@ -40,9 +40,8 @@ Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *w
   //
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   // Defaults to system defined SDA and SCL 
-  // TODO this will fail if the argument `wire` is not `&Wire`
-  Wire.begin(I2C_SDA, I2C_SCL);  // These are defined in _settings.h as SDA and SCL unless there is board specifics
-  Wire.setClock(100000);
+  wire->begin(I2C_SDA, I2C_SCL);  // These are defined in _settings.h as SDA and SCL unless there is board specifics
+  wire->setClock(100000);
 
   sht = new SENSOR_SHT_DEVICE(address, wire);
   sht->begin();

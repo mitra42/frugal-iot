@@ -6,7 +6,8 @@
 class System_I2C {
   public:
     uint8_t addr;
-    System_I2C(uint8_t addr);
+    TwoWire* wire;
+    System_I2C(uint8_t addr, TwoWire* wire = &Wire);
     void initialize();
     void send(uint8_t cmd);  
     bool send(uint8_t* buf, uint8_t bytes);  

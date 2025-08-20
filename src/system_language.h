@@ -22,7 +22,10 @@ struct Texts {
         *SelectOne,
         *Password,
         *SAVE,
-        *RestartingPleaseWait
+        *RestartingPleaseWait,
+        *LoraMesher_Gateway,
+        *LoraMesher_Node,
+        *LoraMesher_Unconnected
         ;
 };
 
