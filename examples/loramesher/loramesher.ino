@@ -37,33 +37,30 @@ void setup() {
   frugal_iot.system->add(frugal_iot.loramesher);
   
   // Add sensors, actuators and controls
-  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
-  
+  #ifdef SYSTEM_LORAMESHER_SENDER
+    frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
+  #endif 
   // system_oled and actuator_ledbuiltin added automatically on boards that have them.
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
   Serial.println(F("FrugalIoT Starting Loop"));
 }
 
 #ifdef SYSTEM_LORAMESHER_DEBUG
-void printAppData(AppPacket<uint8_t>* appPacket) {
-    Serial.printf("Packet arrived from %X with size %d\n", appPacket->src, appPacket->payloadSize);
-    //Get the payload to iterate through it
-    uint8_t* dPacket = appPacket->payload;
-    // Note - dont use appPacket->getPayloadLength - it will report number of packets=1 not length of payload
-    size_t payloadLength = appPacket->getPayloadLength()-1; // Length of string without terminator 
-    Serial.write(dPacket, payloadLength); Serial.println(); // Being conservative in case no terminating \0 
-          // Display information
+void printAppData() {
     frugal_iot.oled->display.clearDisplay();
     frugal_iot.oled->display.setCursor(0,0);
-    frugal_iot.oled->display.print(frugal_iot.description);
-    frugal_iot.oled->display.setCursor(0,20);
-    frugal_iot.oled->display.print("Received packet:");
-    frugal_iot.oled->display.setCursor(0,30);
-    frugal_iot.oled->display.print((char*)dPacket);
-    //frugal_iot.oled->display.setCursor(0,40);
-    //frugal_iot.oled->display.print("RSSI:");
-    //frugal_iot.oled->display.setCursor(30,40);
-    //frugal_iot.oled->display.print(rssi);
+    frugal_iot.oled->display.print(*frugal_iot.description);
+    frugal_iot.oled->display.setCursor(0,10);
+    frugal_iot.oled->display.print(frugal_iot.loramesher->checkRoleString());
+    if (frugal_iot.loramesher->lastTopicPath) {
+      // Display information
+      frugal_iot.oled->display.setCursor(0,20);
+      frugal_iot.oled->display.print("last packet:");
+      frugal_iot.oled->display.setCursor(0,30);
+      frugal_iot.oled->display.print(frugal_iot.loramesher->lastTopicPath);
+      frugal_iot.oled->display.print(":");
+      frugal_iot.oled->display.print(frugal_iot.loramesher->lastPayload);      
+    }
     frugal_iot.oled->display.display();   
 }
 #endif

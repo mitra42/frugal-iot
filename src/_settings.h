@@ -146,7 +146,7 @@
 // But some boards have the pre-defined SDA and SCL wrong
 // So .... these settings define I2C_SDA and I2C_SCL so that a library can be explicit about 
 // using something other than the default
-#ifndef I2C_SDA
+#if !((defined I2C_WIRE) && defined(I2C_SDA))
   #ifdef LILYGOHIGROW
     // TODO-115 note there could be conflicts with other use of I2C and the Wire.h header which I think is where "Wire" is defined
     // I think this is a lilygo specific thing - need to check with BH1750 on other boards
@@ -160,6 +160,10 @@
     // Cant get it to work on this socket, read somewhere about board surgery (resistor removal or addition) required but cant find the reference now
     //#define I2C_SDA SDA1 // 10
     //#define I2C_SCL SCL1  // 21
+  #elif defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_v21new)
+    #define I2C_WIRE Wire
+    #define I2C_SDA SDA
+    #define I2C_SCL SCL
   #else
     // Use system defined ones
     #define I2C_SDA SDA

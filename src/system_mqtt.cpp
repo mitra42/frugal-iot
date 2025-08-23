@@ -217,7 +217,7 @@ bool System_MQTT::send(const String &topicPath, const String &payload, const boo
 
 void System_MQTT::messageReceived(const String &topicPath, const String &payload) { // cant be constant as dispatch isnt
   #ifdef SYSTEM_MQTT_DEBUG
-    Serial.print(F("MQTT incoming: ")); Serial.print(topicPath); Serial.print(F(" - ")); Serial.println(payload);
+    Serial.print(F("MQTT incoming: ")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
   #endif
   inReceived = true;
   // Note: Do not use the client in the callback to publish, subscribe or

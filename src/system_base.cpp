@@ -112,15 +112,13 @@ String* IO::path() {
 void IO::wireTo(IO* io) {
   wireTo(frugal_iot.messages->path(io->topicTwig)); // Subscribe to the twig of the IO
 }
+
+void IO::send() {
+  frugal_iot.messages->send(frugal_iot.messages->path(topicTwig), StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+}
 void IO::discover() {
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, "temperature/color"), new String(color), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-}
-void IN::discover() {
-  IO::discover();
-}
-void OUT::discover() {
   send();
-  IO::discover();
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "color"), new String(color), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 
 // TO_ADD_INxxx 
@@ -132,26 +130,14 @@ bool IN::boolValue() {
   Serial.println(F("IN::boolValue should be subclassed"));
   return false; 
 }
-uint16_t IN::uint16Value() {
-  Serial.println(F("IN::uint16Value should be subclassed"));
-  return 0;
-}
-String IN::StringValue() {
-  Serial.println(F("IN::uint16Value should be subclassed"));
-  return String();
-}
-
 float INuint16::floatValue() {
   return value;
 }
 bool INuint16::boolValue() {
   return value;
 }
-uint16_t INuint16::uint16Value() {
-  return value;
-}
-String INuint16::StringValue() {
-  return String(value);
+String* INuint16::StringValue() {
+  return new String(value);
 }
 
 float INfloat::floatValue() {
@@ -160,11 +146,9 @@ float INfloat::floatValue() {
 bool INfloat::boolValue() {
   return value;
 }
-uint16_t INfloat::uint16Value() {
-  return value;
-}
-String INfloat::StringValue() {
-  return String(value, (int)width);
+// TODO do we really need all these interconversions, it might be for something we never do 
+String* INfloat::StringValue() {
+  return new String(value, (int)width);
 }
 
 float INbool::floatValue() {
@@ -173,11 +157,8 @@ float INbool::floatValue() {
 bool INbool::boolValue() {
   return value;
 }
-uint16_t INbool::uint16Value() {
-  return value;
-}
-String INbool::StringValue() {
-  return value ? "true" : "false";
+String* INbool::StringValue() {
+  return new String(value ? "true" : "false");
 }
 float INcolor::floatValue() {
   return 0;
@@ -185,11 +166,8 @@ float INcolor::floatValue() {
 bool INcolor::boolValue() {
   return 0;
 }
-uint16_t INcolor::uint16Value() {
-  return 0;
-}
-String INcolor::StringValue() {
-  return ""; // TODO-136 convert
+String* INcolor::StringValue() {
+  return new String(F("")); // TODO-136 convert
 }
 float INtext::floatValue() {
   return 0; // TODO-136 convert
@@ -197,11 +175,8 @@ float INtext::floatValue() {
 bool INtext::boolValue() {
   return 0; // TODO-136 convert
 }
-uint16_t INtext::uint16Value() {
-  return 0; // TODO-136 convert
-}
-String INtext::StringValue() {
-  return *value;
+String* INtext::StringValue() { // Note this isn't a copy, but I think it will get copied if neces
+  return value;
 }
 // TO_ADD_OUTxxx
 float OUTfloat::floatValue() {
@@ -210,11 +185,8 @@ float OUTfloat::floatValue() {
 bool OUTfloat::boolValue() {
   return value;
 }
-uint16_t OUTfloat::uint16Value() {
-  return value;
-}
-String OUTfloat::StringValue() {
-  return String(value, (int)width);
+String* OUTfloat::StringValue() {
+  return new String(value, (int)width);
 }
 float OUTuint16::floatValue() {
   return value;
@@ -222,11 +194,8 @@ float OUTuint16::floatValue() {
 bool OUTuint16::boolValue() {
   return value;
 }
-uint16_t OUTuint16::uint16Value() {
-  return value;
-}
-String OUTuint16::StringValue() {
-  return String(value);
+String* OUTuint16::StringValue() {
+  return new String(value);
 }
 float OUTbool::floatValue() {
   return value;
@@ -234,11 +203,8 @@ float OUTbool::floatValue() {
 bool OUTbool::boolValue() {
   return value;
 }
-uint16_t OUTbool::uint16Value() {
-  return value;
-}
-String OUTbool::StringValue() {
-  return value ? "true" : "false";
+String* OUTbool::StringValue() {
+  return new String(value ? "true" : "false");
 }
 
 void IO::setup() {
@@ -477,6 +443,7 @@ const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type
 #endif
 // TO_ADD_INxxx
 #ifdef SYSTEM_DISCOVERY_SHORT
+
 void INfloat::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), new String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), new String(max, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
@@ -485,7 +452,7 @@ void INfloat::discover() {
 void INuint16::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), new String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), new String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  IN::discover();
+  IN::discover(); // Sends value
 }
 // TODO-152A figure out how to send wired
 // INbool and INtext, INcolor are fine witb the superclass (just sending color)
@@ -622,12 +589,12 @@ void OUTbool::set(const bool newvalue) {
 void OUTfloat::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), new String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), new String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  OUT::discover();
+  OUT::discover(); // Sends value
 }
 void OUTuint16::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), new String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), new String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  OUT::discover();
+  OUT::discover(); // Sends value
 }
 #else
 // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
@@ -708,8 +675,7 @@ float IO::floatValue() { shouldBeDefined(); return 0.0; }
 bool IO::dispatchLeaf(const String &twig, const String &p, bool isSet) { shouldBeDefined(); return false; }
 float OUT::floatValue() { shouldBeDefined(); return 0.0; }
 bool OUT::boolValue() { shouldBeDefined(); return false; }
-uint16_t OUT::uint16Value() { shouldBeDefined(); return 0; }
-String OUT::StringValue() { shouldBeDefined(); return ""; }
+String* IO::StringValue() { shouldBeDefined(); return new String(); }
 void OUT::sendWired() { shouldBeDefined(); }
 bool IN::convertAndSet(const String &payload) { shouldBeDefined(); return false;}
 #pragma GCC diagnostic pop

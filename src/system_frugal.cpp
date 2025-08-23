@@ -76,7 +76,7 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
   void System_Frugal::discover() {
     messages->send(leaf2path("device_name"), device_name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
     messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-    System_Base::discover();
+    Frugal_Group::discover();
   }
 #endif
 void System_Frugal::captiveLines(AsyncResponseStream* response) {

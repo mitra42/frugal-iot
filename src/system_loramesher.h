@@ -49,7 +49,10 @@ class System_LoraMesher : public System_Base {
       // == DOWNSTREAM 
       // public only because called from the callback - do not use externally
       void processReceivedPacket(AppPacket<uint8_t>* appPacket); 
-      AppPacket<uint8_t>* lastPacket = nullptr; // Used by printAppData
+      #ifdef SYSTEM_LORAMESHER_DEBUG
+        String lastTopicPath = String(); // Used by printAppData
+        String lastPayload = String(); // Used by printAppData
+      #endif
   protected:
     LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();
     uint16_t gatewayNodeAddress = BROADCAST_ADDR;

@@ -167,10 +167,6 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
     Serial.printf("LoRaMesher Received bad packet length=%d\n", appPacket->payloadSize);
   } else {
     Serial.print("XXX payloadSize="); Serial.println(appPacket->payloadSize);
-    #ifdef SYSTEM_LORAMESHER_DEBUG
-      lastPacket = appPacket;
-      printAppData(); // TODO-151 see note above about this being an extern
-    #endif
     const uint8_t qos = appPacket->payload[0] - '0';
     const bool downstream = appPacket->payload[0] == ('0'+QOS_DOWNSTREAM);
     const bool retain = appPacket->payload[1] - '0'; // will be 0 or 1
@@ -187,6 +183,11 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
         topicPath = new String(str);
         payload = new String(F(""));
     }
+    #ifdef SYSTEM_LORAMESHER_DEBUG
+      lastTopicPath = *topicPath;
+      lastPayload = *payload; 
+      printAppData(); // TODO-151 see note above about this being an extern
+    #endif
     Serial.print("LoRaMesher received "); Serial.print(*topicPath); Serial.print(F("=")); Serial.println(*payload);
 
     // How do we tell if this is an message heading upstream (from node to MQTT) or downstream (from MQTT on gateway node or other node via the router)
@@ -222,8 +223,8 @@ bool System_LoraMesher::findGatewayNode() {
     RouteNode* rn = radio.getClosestGateway();
     if (rn) {
       if (gatewayNodeAddress == BROADCAST_ADDR) {
-        Serial.print(F("LoRaMesher - newly found gateway node"));
         gatewayNodeAddress = rn->networkNode.address;
+        Serial.print(F("LoRaMesher - newly found gateway node ")); Serial.println(gatewayNodeAddress);
       }
       return true;
     } else {
