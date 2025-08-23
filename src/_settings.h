@@ -166,6 +166,7 @@
     #define I2C_SCL SCL
   #else
     // Use system defined ones
+    #define I2C_WIRE Wire
     #define I2C_SDA SDA
     #define I2C_SCL SCL
   #endif

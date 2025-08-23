@@ -12,7 +12,7 @@
 // Practical range of lux unknown - apparantly can go from 0.001 to 65k 
 Sensor_BH1750::Sensor_BH1750( const char* const id, const char * const name, uint8_t addr, TwoWire* wire, bool retain)
   : Sensor_Float(id, name, 3, 0, 65000, "yellow", retain), 
-    wire(wire), addr(addr), lightmeter(addr) {
+    addr(addr), wire(wire), lightmeter(addr) {
   }
 
 // TODO add to docs - BH1750 default I2C address is 0x23

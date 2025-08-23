@@ -95,8 +95,11 @@ void System_WiFi::connectInnerAsync(String ssid, String pw) {
   Serial.print(ssid);
   WiFi.setHostname(frugal_iot.nodeid.c_str());  
   WiFi.begin(ssid.c_str(), pw.c_str()); // Attempt connection - note returns immediately need to check status
-  WiFi.setHostname(frugal_iot.nodeid.c_str());  
-  WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);  // arduino-esp32 #2537 and #6278
+  WiFi.setHostname(frugal_iot.nodeid.c_str()); 
+  #ifndef ESP8266
+    // This won't work on ESP8266 which is unforgiving - if dont set all four then Serial.print(WiFi.localIP()) will report IP unset and DNS lookup will fail
+    WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);  // arduino-esp32 #2537 and #6278
+  #endif
   WiFi.setHostname(frugal_iot.nodeid.c_str());  
   // Dont drop captive portal while trying to connect
   #ifdef ESP32
@@ -157,7 +160,11 @@ void System_WiFi::stateMachine() {
   switch (status)
   {
     case WIFI_STARTING: //0
-      if ((WiFi.status() != WL_DISCONNECTED) && (WiFi.status() != WL_STOPPED)) {
+      if ((WiFi.status() != WL_DISCONNECTED) // Note that WL_DISCONNECTED is 7 on ESP8266 and 6 on ESP32
+        #ifdef ESP32
+          && (WiFi.status() != WL_STOPPED) // WL_STOPPED is not defined on ESP8266 (its 254 on ESP32)
+        #endif
+        ) {
         #ifdef SYSTEM_WIFI_DEBUG
           Serial.print(F("WiFi: STARTING but WiFi.status=")); Serial.println(WiFi.status()); 
           // Unsure what to do here - 
