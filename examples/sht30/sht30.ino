@@ -8,7 +8,7 @@
 #include "frugal_iot.h"
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "sht30", "SHT30 Temperature and Humidity Sensor"); 
+System_Frugal frugal_iot("dev", "developers", "SHT30", "SHT30 Temperature and Humidity Sensor"); 
 
 void setup() {
   frugal_iot.startSerial(); // Encapsulate setting up and starting serial

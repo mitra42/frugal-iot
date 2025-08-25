@@ -229,8 +229,12 @@ void System_Captive::setup() {
     // May need a callback here to do certain things before restarting 
     ESP.restart();
   });
-  server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);  // only when requested from AP
   // more handlers...
+  // This should be after the specific ones as it handles anything
+  server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);  // only when requested from AP
+  server.onNotFound([](AsyncWebServerRequest *request){
+    Serial.println(F("XXX NotFound handler called - shouldnt happen"));
+  });
   server.begin();
 }
 

@@ -61,8 +61,8 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
   if (isSet && (topicSensorId == id)) {
     if (topicTwig == "project") { // TODO unclear we should be changing project on a device live
       // project = payload;
-    } else if (topicTwig == "device_name") {
-      device_name = new String(payload);
+    } else if (topicTwig == "name") {
+      name = String(payload); // Note weirdness, it really needs to copy 
     } else if (topicTwig == "description") {
       description = new String(payload);
     }
@@ -74,14 +74,14 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
 }
 #ifdef SYSTEM_DISCOVERY_SHORT
   void System_Frugal::discover() {
-    messages->send(leaf2path("device_name"), device_name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+    messages->send(leaf2path("name"), &name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
     messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
     Frugal_Group::discover();
   }
 #endif
 void System_Frugal::captiveLines(AsyncResponseStream* response) {
   captive->addString(response, id, "project", project, T->Project, 2, 15);
-  captive->addString(response, id, "device_name", *device_name, T->DeviceName, 3, 15);
+  captive->addString(response, id, "name", name, T->DeviceName, 3, 15);
   captive->addString(response, id, "description", *description, T->Description, 3, 40);
   Frugal_Group::captiveLines(response);
 }
@@ -123,12 +123,11 @@ void Frugal_Group::dispatchPath(const String &topicPath, const String &payload)
   { for (System_Base* fb: group) { fb->dispatchPath(topicPath, payload); } }
 
 // Note this constructor is running BEFORE Serial is enabledd
-System_Frugal::System_Frugal(const char* org, const char* project, const char* device_name, const char* description)
-: Frugal_Group("frugal_iot", "System_Frugal"),
+System_Frugal::System_Frugal(const char* org, const char* project, const char* name, const char* description)
+: Frugal_Group("frugal_iot", name),
   org(org),
   project(project),
   description(new String(description)),
-  device_name(new String(device_name)),
     // Use the unique id of the ESP32 or ESP8266 - has to be before anything calls messages.path
   #ifdef ESP32
     nodeid(String(F("esp32-")) + (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24))),
@@ -197,7 +196,7 @@ void System_Frugal::setup() {
   #ifdef SYSTEM_FRUGAL_DEBUG
     Serial.print("Setup: ");
   #endif
-  readConfigFromFS(); // Reads config (project, device_name) and passes to our dispatchTwig
+  readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig
   Frugal_Group::setup(); // includes WiFi
   #ifdef SYSTEM_OTA_KEY
     ota->setup_after_mqtt_setup(); // Sends advertisement over MQTT

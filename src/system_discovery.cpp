@@ -48,7 +48,7 @@ void System_Discovery::fullAdvertise() {
   // Note - this is intentionally not a global string as it can be quite big, better to create, send an free up
   const String* advertisePayload = new String( 
     "id: " + frugal_iot.nodeid // ESP32 doesnt like F("id:") for first arg (ESP8266 is fine)
-    + F("\nname: ") + frugal_iot.device_name
+    + F("\nname: ") + frugal_iot.name
     + F("\ndescription: ") + frugal_iot.description
     #ifdef SYSTEM_OTA_KEY
     + F("\nota: " SYSTEM_OTA_KEY)

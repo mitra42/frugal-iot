@@ -67,7 +67,6 @@ class System_Frugal : public Frugal_Group {
     String org;
     String project;
     String* description; 
-    String* device_name;
     String nodeid; // Unique id - starts esp32- or esp8266-
     // Pointers to other Frugal_Base objects or groups of objects
     Frugal_Group* actuators;

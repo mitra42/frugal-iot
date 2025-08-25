@@ -237,7 +237,9 @@ void System_WiFi::stateMachine() {
         setStatus(WIFI_STABILIZING);
       } else if (millis() > (statusSince + 30000)) { // Give it 30 seconds to try
         // Failed to connect - if don't do this heavy disconnect it will fail to scan.
-        WiFi.disconnect(true, true); // Shouldnt need to do this //TODO-153 if keep then only oor ESP32
+        #ifdef ESP32
+          WiFi.disconnect(true, true); // Shouldnt need to do this //TODO-153 if keep then only for ESP32
+        #endif
         setStatus(WIFI_SCANNED); // Go back for next
       }
       // WiFi.status() remains at 6 during this timeout - cant tell quicker that it failed

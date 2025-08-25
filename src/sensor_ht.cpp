@@ -47,3 +47,9 @@ void Sensor_HT::dispatchTwig(const String &topicSensorId, const String &topicTwi
     System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }
+
+// TODO may extract this to a function in system_captive if have similar
+void Sensor_HT::captiveLines(AsyncResponseStream* response) {
+  response->print(String(F("<p><label>")) + name + "<br>Temperature: " + temperature->StringValue()->c_str() + " C<br>Humidity: " + humidity->StringValue()->c_str() + " %</label>");
+}
+

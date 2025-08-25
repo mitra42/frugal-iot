@@ -5,6 +5,7 @@
 
 class Sensor_HT : public Sensor {
   public:
+  protected:
     OUTfloat* temperature;
     OUTfloat* humidity;
     Sensor_HT(const char* const id, const char * const name, bool retain);
@@ -16,6 +17,7 @@ class Sensor_HT : public Sensor {
     String advertisement() override;
   #endif
     virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) override;
+    void captiveLines(AsyncResponseStream* response);
 };
 
 

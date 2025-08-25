@@ -588,12 +588,12 @@ void OUTbool::set(const bool newvalue) {
 #ifdef SYSTEM_DISCOVERY_SHORT
 void OUTfloat::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), new String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), new String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), new String(max, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   OUT::discover(); // Sends value
 }
 void OUTuint16::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), new String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), new String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), new String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   OUT::discover(); // Sends value
 }
 #else
