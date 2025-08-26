@@ -23,8 +23,10 @@ Sensor_HT::Sensor_HT(const char* const id, const char * const name, boolean reta
 void Sensor_HT::readAndSet() { Serial.println("Sensor_HT::readAndSet must be subclassed"); }
 
 void Sensor_HT::set(const float temp, const float humy) {
+  heap_print(F("Sensor_HT::set"));
   temperature->set(temp);
   humidity->set(humy);
+  heap_print(F("Sensor_HT::set after"));
 }
 
 #ifdef SYSTEM_DISCOVERY_SHORT
