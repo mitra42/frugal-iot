@@ -20,11 +20,7 @@ class Sensor_Uint16 : public Sensor {
     void set(const uint16_t newvalue);
     void readAndSet() override;
     bool valid(uint16_t newvalue);
-  #ifdef SYSTEM_DISCOVERY_SHORT
     void discover() override;
-  #else
-    String advertisement() override;
-  #endif
     void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) override;
 };
 #endif // SENSOR_UINT16_H

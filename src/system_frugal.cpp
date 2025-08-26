@@ -72,13 +72,13 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
     Frugal_Group::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }
-#ifdef SYSTEM_DISCOVERY_SHORT
-  void System_Frugal::discover() {
-    messages->send(leaf2path("name"), &name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-    messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-    Frugal_Group::discover();
-  }
-#endif
+
+void System_Frugal::discover() {
+  messages->send(leaf2path("name"), &name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  Frugal_Group::discover();
+}
+
 void System_Frugal::captiveLines(AsyncResponseStream* response) {
   captive->addString(response, id, "project", project, T->Project, 2, 15);
   captive->addString(response, id, "name", name, T->DeviceName, 3, 15);
@@ -98,21 +98,11 @@ void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload,
   }
 }
 
-#ifdef SYSTEM_DISCOVERY_SHORT
 void Frugal_Group::discover() {
   for (System_Base* fb: group) {
     fb->discover();
   }
 }
-#else
-String Frugal_Group::advertisement() {
-  String ad = String();
-  for (System_Base* fb: group) {
-    ad += (fb->advertisement());
-  }
-  return ad;
-}
-#endif
 // These just loop over the members of the group 
 void Frugal_Group::loop() {
   for (System_Base* fb: group) { 

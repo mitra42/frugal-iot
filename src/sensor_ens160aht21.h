@@ -37,11 +37,7 @@ class Sensor_ensaht : public Sensor {
     bool ENScommand(uint8_t val);
     bool ENSsendAndRead(uint8_t reg, uint8_t *buf, uint8_t num);
     bool setenvdata(float temp, float hum);
-  #ifdef SYSTEM_DISCOVERY_SHORT
     void discover() override;
-  #else
-    String advertisement() override;
-  #endif
     void dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet);
  };
  

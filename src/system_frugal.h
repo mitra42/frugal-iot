@@ -50,11 +50,7 @@ class Frugal_Group : public System_Base {
     void add(System_Base* fb);
     void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet); 
     void dispatchPath(const String &topicPath, const String &payload) override; // Only currently relevant on controls
-  #ifdef SYSTEM_DISCOVERY_SHORT
     void discover() override;
-  #else
-    String advertisement() override;
-  #endif
     void loop() override;
     void periodically() override;
     void infrequently() override;
@@ -111,9 +107,7 @@ class System_Frugal : public Frugal_Group {
     void captiveLines(AsyncResponseStream* response) override; 
     bool canOTA();
     bool canMQTT();
-    #ifdef SYSTEM_DISCOVERY_SHORT
-      void discover() override;
-    #endif
+    void discover() override;
 };
 
 extern System_Frugal frugal_iot;

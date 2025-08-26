@@ -1,20 +1,25 @@
 /* 
- *  Frugal IoT example - ENS160 AHT21 environment sensor
+ *  Frugal IoT example - SHT30 temperature and humidity sensor
  * 
+ * Optional: SENSOR_SHT_ADDRESS - defaults to 0x44, (note the D1 shields default to 0x45)
  */
 
+// defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "frugal_iot.h"
-
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "ensaht", "ENS160 AHT21 Environmental Sensor");
+System_Frugal frugal_iot("dev", "developers", "SHT30", "SHT30 Temperature and Humidity Sensor"); 
 
 void setup() {
   frugal_iot.startSerial(); // Encapsulate setting up and starting serial
   frugal_iot.fs_LittleFS->pre_setup();
+
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 
+// Soil sensor 0%=4095 100%=0 pin=3 smooth=0 color=brown
+  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil", 4095, 0, 3, 0, "brown", true));
+  
   // Configure power handling - type, cycle_ms, wake_ms 
   // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
   // Loop= awake all the time; 
@@ -30,8 +35,7 @@ void setup() {
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
   
   // Add sensors, actuators and controls
-  // system_oled and actuator_ledbuiltin added automatically on boards that have them.
-  frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS160 AHT21"));
+  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
   ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);

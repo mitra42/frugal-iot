@@ -30,9 +30,13 @@
     #define SENSOR_ANALOG_REFERENCE DEFAULT // TODO not clear if / where this is used 
   #elif defined(ESP32) // It doesnt seem to be used on ESP32s 
   #else
-    #error analogReference() is processor dependent, review the docs and online and define
+    #define SENSOR_ANALOG_UNSUPPORTED
+    //#error analogReference() is processor dependent, review the docs and online and define
   #endif
 #endif //  SENSOR_ANALOG_REFERENCE
+
+#ifndef SENSOR_ANALOG_UNSUPPORTED
+// If Analog unsupported then a linker error will be generated if try and add one. 
 
 Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, const uint8_t p, const uint8_t smooth_init, const uint16_t min, const uint16_t max, const char* color, bool r) 
 : Sensor_Uint16(id, name, smooth_init, min, max, color, r), pin(p) { };
@@ -58,4 +62,6 @@ void Sensor_Analog::setup() {
   #endif
 }
 // SensorAnalog::dispatchTwig is not needed
+
+#endif // SENSOR_ANALOG_UNSUPPORTED
 

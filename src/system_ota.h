@@ -36,9 +36,7 @@ class System_OTA : public System_Base {
     String _otaServerAddress;
     String _softwareVersion;
     const String getOTApath();
-    #ifdef SYSTEM_DISCOVERY_SHORT
-      void discover() override;
-    #endif
+    void discover() override;
 };
 
 #endif // SYSTEM_OTA_H
