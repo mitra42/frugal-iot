@@ -10,6 +10,7 @@
 #include <Arduino.h>
 #include "sensor.h"
 #include "sensor_ht.h"
+#include "misc.h" // heap_print
 
 Sensor_HT::Sensor_HT(const char* const id, const char * const name, boolean retain) 
   : Sensor(id, name, retain),

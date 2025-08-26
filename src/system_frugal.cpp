@@ -114,9 +114,22 @@ String Frugal_Group::advertisement() {
 }
 #endif
 // These just loop over the members of the group 
-void Frugal_Group::loop()         { for (System_Base* fb: group) { fb->loop(); } }
-void Frugal_Group::periodically() { for (System_Base* fb: group) { fb->periodically();} }
-void Frugal_Group::infrequently() { for (System_Base* fb: group) { fb->infrequently(); } }
+void Frugal_Group::loop() {
+  for (System_Base* fb: group) { 
+    fb->loop(); 
+  } 
+}
+void Frugal_Group::periodically() { 
+  for (System_Base* fb: group) { 
+    #ifdef SYSTEM_MEMORY_DEBUG
+      Serial.print(fb->id);  heap_print(F("Sensor_HT::set"));
+    #endif
+    fb->periodically();
+  } 
+}
+void Frugal_Group::infrequently() { for (System_Base* fb: group) { 
+  fb->infrequently(); } 
+}
 void Frugal_Group::captiveLines(AsyncResponseStream* response) 
   { for (System_Base* fb: group) { fb->captiveLines(response); } }
 void Frugal_Group::dispatchPath(const String &topicPath, const String &payload) 

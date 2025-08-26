@@ -118,3 +118,15 @@ bool match_topic(const String& topic, const String& pattern) {
     // Check if both topic and pattern are fully matched
     return i == topic_size && j == pattern_size;
 }
+
+// TODO-MEM comment out calls to this when not needed
+void heap_print(const __FlashStringHelper *msg) {
+  #ifdef SYSTEM_MEMORY_DEBUG
+    #ifdef ESP8266
+      if (msg) { Serial.print(msg); }  Serial.print(F(" heap=")); Serial.println(system_get_free_heap_size());  // https://www.esp8266.com/viewtopic.php?p=82839
+    #elif defined(ESP32) //TODO-128 should be able to find equivalent on ESP8266
+      if (msg) { Serial.print(msg); } ; Serial.print(F(" heap=")); Serial.print(esp_get_free_heap_size()); 
+      Serial.print(F(" min heap=")); Serial.println(esp_get_minimum_free_heap_size());
+    #endif //ESP32
+  #endif //SYSTEM_MEMORY_DEBUG
+}

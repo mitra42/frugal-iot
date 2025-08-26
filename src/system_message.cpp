@@ -20,17 +20,18 @@
 #include <forward_list>
 #include "system_message.h"
 #include "system_frugal.h" // for frugal_iot
+#include "misc.h" // heap_print
 #ifdef ESP32
   #include "esp_task_wdt.h" // TODO-125
 #endif
 
 
 // Note Strings passed must be safe - copy before calling this if going to go out of scope.
-System_Message::System_Message(const String* topicPath, const String* payload, const bool retain, const int qos, const bool isSubscription)
+System_Message::System_Message(const String& topicPath, const String& payload, const bool retain, const int qos, const bool isSubscription)
 : topicPath(topicPath), payload(payload), isSubscription(isSubscription), retain(retain), qos(qos) {}
 
-System_Message::System_Message(const String* topicPath) // For subscriptions only
-: System_Message(topicPath, nullptr, false, 0, true) {}
+System_Message::System_Message(const String& topicPath) // For subscriptions only
+: System_Message(topicPath, String(), false, 0, true) {}
 
 System_Messages::System_Messages() 
 : System_Base("messages", "Messages"),
@@ -86,16 +87,16 @@ String* System_Messages::twig(const String &topicPath) {
 // Upstream: module => queued
 void System_Messages::subscribe(const String* topicPath) {
   for(System_Message& sub: subscriptions) {
-    if (*sub.topicPath == *topicPath) {
+    if (sub.topicPath == *topicPath) {
       return; // Dont resubscribe
     }
   }
-  outgoing.emplace_back(topicPath); // // Implicit new Message (subscription)
+  outgoing.emplace_back(*topicPath); // // Implicit new Message (subscription)
 }
 
 // Upstream: module => queue with reflection 
 void System_Messages::send(const String* topicPath, const String* payload, bool retain, uint8_t qos) {
-  outgoing.emplace_back(topicPath, payload, retain, qos);  // Implicit new Message
+  outgoing.emplace_back(*topicPath, *payload, retain, qos);  // Implicit new Message
   //TODO-152 dedupe before adding
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
   frugal_iot.messages->dispatch(*topicPath, *payload);
@@ -128,10 +129,10 @@ void System_Messages::sendQueued() {
 bool System_Message::queuedMessage() {
   if (frugal_iot.mqtt->connected()) {
     // This will be false if fail to send, true if either send or its unsendable (too big)
-    return frugal_iot.mqtt->send(*topicPath, *payload, retain, qos);
+    return frugal_iot.mqtt->send(topicPath, payload, retain, qos);
   #ifdef SYSTEM_LORAMESHER_WANT
   } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
-    return frugal_iot.loramesher->publish(*topicPath, *payload, retain, qos);
+    return frugal_iot.loramesher->publish(topicPath, payload, retain, qos);
   #endif
   } else {
     return false; // Unable to send, leave on queue 
@@ -141,10 +142,10 @@ bool System_Message::queuedMessage() {
 // Upstream: Outgoing queue => MQTT || LoRaMesher
 bool System_Message::queuedSubscribe() {
   if (frugal_iot.mqtt->connected()) {
-    return frugal_iot.mqtt->subscribe(*topicPath);
+    return frugal_iot.mqtt->subscribe(topicPath);
   #ifdef SYSTEM_LORAMESHER_WANT
   } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
-    return frugal_iot.loramesher->publish("subscribe",*topicPath,0,1);
+    return frugal_iot.loramesher->publish("subscribe", topicPath,0,1);
   #endif
   } 
   return false; // Not connected, or failed to send over connection
@@ -156,8 +157,8 @@ bool System_Messages::reSubscribeAll() {
   // TODO-125 should probably check connected each time go around loop and only flag if sendInner succeeds
   Serial.print(F("Resubscribing: ")); 
   for (System_Message sub : subscriptions) {
-    Serial.print(*sub.topicPath); Serial.print(F(" "));
-    if (!frugal_iot.mqtt->subscribe(*sub.topicPath)) {
+    Serial.print(sub.topicPath); Serial.print(F(" "));
+    if (!frugal_iot.mqtt->subscribe(sub.topicPath)) {
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L15
       Serial.println(F("FAILED "));
       return false; // If fails there is either a coding problem. Or connection not working - don't keep pushing

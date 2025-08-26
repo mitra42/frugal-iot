@@ -15,14 +15,14 @@ class System_Messages; // to allow forward reference
 
 class System_Message { // Only used for outgoing queued messages
   public:
-    System_Message(const String* topicPath, const String* payload, const bool retain, const int qos, const bool isSubscription = false);
-    System_Message(const String* topicPath); // For subscriptions
+    System_Message(const String& topicPath, const String& payload, const bool retain, const int qos, const bool isSubscription = false);
+    System_Message(const String& topicPath); // For subscriptions
     //~System_Message();
   protected:
     friend class System_Messages;
     bool send();
-    const String* topicPath;
-    const String* payload;    // Retained payload
+    const String topicPath;
+    const String payload;    // Retained payload
     const bool isSubscription;
     const bool retain;
     const int qos;

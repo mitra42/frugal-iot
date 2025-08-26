@@ -231,7 +231,11 @@ void System_Captive::setup() {
   });
   // more handlers...
   // This should be after the specific ones as it handles anything
-  server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);  // only when requested from AP
+  #ifdef ESP8266 // debugging - suggestion by Chat GPT as note that handler called
+    server.addHandler(new CaptiveRequestHandler());  // only when requested from AP
+  #else // This version works fine on ESP32 and is probably the default
+    server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);  // only when requested from AP
+  #endif
   server.onNotFound([](AsyncWebServerRequest *request){
     Serial.println(F("XXX NotFound handler called - shouldnt happen"));
   });
