@@ -29,16 +29,26 @@ void setup() {
   // system_oled and actuator_ledbuiltin added automatically on boards that have them.
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
-  frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
-  
-  // M<S5803 is set via jumper to 76 or 77
+  //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
+
+  // Add sensors, actuators and controls
+    
+  // MS5803 is set via jumper to 76 or 77
   frugal_iot.sensors->add(new Sensor_ms5803("ms5803", "MS5803", 0x77));
-  // system_oled and actuator_ledbuiltin added automatically on boards that have them.
+  
+  // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
   Serial.println(F("FrugalIoT Starting Loop"));
 }
 
+// You can put custom code in here, 
 void loop() {
-  frugal_iot.loop();
+  if (frugal_iot.timeForPeriodic) {
+    // Things which happen once for each sensor read period go here.  
+    // But note, you do not have to put sensor loops etc here - the loop and periodic functions in
+    // each sensor and actuator and control are called from frugal_iot.loop()
+    // This is also a good place to put things that check how long since last running
+  }
+  frugal_iot.loop(); // Do not delete this call to frugal_iot.loop
 }
 
