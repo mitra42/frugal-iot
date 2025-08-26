@@ -51,12 +51,6 @@ void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String 
   }
 }
 
-#ifdef SYSTEM_DISCOVERY_SHORT
 void Actuator_Digital::discover() {
   input->discover();
 }
-#else
-String Actuator_Digital::advertisement() {
-  return input->advertisement(name.c_str());
-}
-#endif

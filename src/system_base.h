@@ -26,11 +26,7 @@ class System_Base {
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);
     virtual void dispatchPath(const String &topicPath, const String &payload);
     String* leaf2path(const char* leaf); 
-    #ifdef SYSTEM_DISCOVERY_SHORT
-      virtual void discover();
-    #else
-      virtual String advertisement();
-    #endif
+    virtual void discover();
     void readConfigFromFS();
     void readConfigFromFS(File dir, const String* leaf);
     void writeConfigToFS(const String& topicTwig, const String& payload);
@@ -63,11 +59,7 @@ class IO {
     virtual float floatValue(); // Can build these for other types and combos e.g. returning bool from a float etc
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
-  #ifdef SYSTEM_DISCOVERY_SHORT
     virtual void discover();
-  #else
-    virtual String advertisement(const String name);
-  #endif
     void wireTo(String* topicPath);
     void wireTo(IO* io);
     String* path();
@@ -75,10 +67,6 @@ class IO {
 class IN : public IO {
   public:
     IN(char const * const sensorId, char const * const id, const String name, char const *color, const bool wireable);
-  #ifdef SYSTEM_DISCOVERY_SHORT
-  #else
-    String advertisement(const String name) override;
-  #endif
     // TO-ADD-INxxx
     virtual float floatValue();
     virtual bool boolValue();
@@ -90,10 +78,6 @@ class IN : public IO {
 class OUT : public IO {
   public:
     OUT(char const * const sensorId, char const * const id, const String name, char const *color, const bool wireable);
-  #ifdef SYSTEM_DISCOVERY_SHORT
-  #else
-    String advertisement(const String name) override;
-  #endif
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
     // TO-ADD-OUTxxx
@@ -134,11 +118,7 @@ class INfloat : public IN {
     */
     bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
-  #ifdef SYSTEM_DISCOVERY_SHORT
     void discover() override;
-  #else
-    String advertisement(const String name) override;
-  #endif
 };
 class INuint16 : public IN {
   public:
@@ -153,11 +133,7 @@ class INuint16 : public IN {
     String* StringValue() override;
     bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
-  #ifdef SYSTEM_DISCOVERY_SHORT
     void discover() override;
-  #else
-    String advertisement(const String name) override;
-  #endif
 };
 class INbool : public IN {
   public:
@@ -170,11 +146,7 @@ class INbool : public IN {
     String* StringValue() override;
     bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
-  #ifdef SYSTEM_DISCOVERY_SHORT
     // void discover() override; // Use IN::discover
-  #else
-    String advertisement(const String name) override;
-  #endif
 };
 
 class INcolor : public IN {
@@ -192,11 +164,7 @@ class INcolor : public IN {
     bool convertAndSet(const String &payload) override;
     bool convertAndSet(const char* payload); // Used when setting in constructor etc
     void debug(const char* const where);
-  #ifdef SYSTEM_DISCOVERY_SHORT
-    void discover() override;
-  #else
-    String advertisement(const String name) override;
-  #endif
+    //void discover() override; // Use base class
 };
 
 class INtext : public IN {
@@ -211,11 +179,7 @@ class INtext : public IN {
     bool convertAndSet(const String &payload) override;
     bool convertAndSet(const char* payload); // Used when setting in constructor etc
     void debug(const char* const where);
-  #ifdef SYSTEM_DISCOVERY_SHORT
     void discover() override;
-  #else
-    String advertisement(const String name) override;
-  #endif
 };
 
 // TO-ADD-OUTxxx
@@ -235,11 +199,7 @@ class OUTfloat : public OUT {
     void send() override;
     void set(const float newvalue); // Set and send if changed
     void debug(const char* const where);
-  #ifdef SYSTEM_DISCOVERY_SHORT
     void discover() override;
-  #else
-    String advertisement(const String name) override;
-  #endif
 };
 class OUTbool : public OUT {
   public:
@@ -254,11 +214,7 @@ class OUTbool : public OUT {
     void sendWired() override;
     void send() override;
     void debug(const char* const where);
-  #ifdef SYSTEM_DISCOVERY_SHORT
     // void discover() override; // Use OUT::discover
-  #else
-    String advertisement(const String name) override;
-  #endif
 };
 class OUTuint16 : public OUT {
   public:
@@ -275,11 +231,7 @@ class OUTuint16 : public OUT {
     void sendWired() override;
     void send() override; 
     void debug(const char* const where);
-  #ifdef SYSTEM_DISCOVERY_SHORT
     void discover() override;
-  #else
-    String advertisement(const String name) override;
-  #endif
 };
 
 #endif // BASE_H

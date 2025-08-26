@@ -14,11 +14,7 @@ class Sensor_Float : public Sensor {
     void readAndSet() override;
     virtual float read();
     void set(const float newvalue);
-  #ifdef SYSTEM_DISCOVERY_SHORT
     void discover() override;
-  #else
-    String advertisement() override;
-  #endif
     virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) override;
 };
 #endif // SENSOR_FLOAT_H

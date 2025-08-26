@@ -6,9 +6,10 @@
 #define SYSTEM_MESSAGE_H
 
 #include <Arduino.h>
-#ifdef ESP8266
+#include "_settings.h"
+//#ifdef ESP8266
   #include <forward_list> // Doesnt seem to be required (and may be problmatic) for ESP32
-#endif
+//#endif
 #include "system_base.h"
 
 class System_Messages; // to allow forward reference

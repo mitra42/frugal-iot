@@ -26,11 +26,7 @@ void System_Base::infrequently() { }; // Run once each period, but should check 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void System_Base::dispatchPath(const String &topicPath, const String &payload) {};
 #pragma GCC diagnostic pop
-#ifdef SYSTEM_DISCOVERY_SHORT
   void System_Base::discover() {} ; // Default to do nothing
-#else
-  String System_Base::advertisement() {return String();};
-#endif
 
 void System_Base::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
@@ -167,7 +163,9 @@ bool INcolor::boolValue() {
   return 0;
 }
 String* INcolor::StringValue() {
-  return new String(F("")); // TODO-136 convert
+  // 0xRRGGBB
+  // Check that always has r, g, b as two digits
+  return new String(String("0x") + String(r, HEX) + String(g, HEX) + String(b, HEX));
 }
 float INtext::floatValue() {
   return 0; // TODO-136 convert
@@ -222,9 +220,9 @@ bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
       if (!(wiredPath && (p == *wiredPath))) { // if empty, or different
         wireTo(new String(p));
       }
-    } // TODO-130 handle other sets, like max - but at INfloat level
+    } // TODO-155 handle other sets, like max - but at INfloat level
   }
-  // For now recognizing both xxx/leaf and set/xxx/leaf or setting TODO-130 change UX
+  // For now recognizing both xxx/leaf and set/xxx/leaf (but note only subscribed to set/xxx/leaf)
   if (leaf == id) { // e.g. sht/temp set/sht/temp
     return convertAndSet(p); // Virtual - depends on type of INxxx
   }
@@ -409,6 +407,7 @@ bool INbool::convertAndSet(const String &payload) {
 bool INcolor::convertAndSet(const String &p) {
   return convertAndSet(p.c_str());
 }
+// RRGGBB or 0xRRGGBB
 bool INcolor::convertAndSet(const char* p1) {
   if (p1[0] == '0' && p1[1] == 'x') {
     p1 += 2; // Skip 0x
@@ -433,16 +432,7 @@ bool INtext::convertAndSet(const String &payload) {
   return false; // nothing changed
 }
 
-#ifndef SYSTEM_DISCOVERY_SHORT
-// TO_ADD_INxxx TO_ADD_OUTxxx
-const char* valueAdvertLineUint16 = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %d\n    max: %d\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %*f\n    max: %*f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-const char* valueAdvertLineText = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-#endif
 // TO_ADD_INxxx
-#ifdef SYSTEM_DISCOVERY_SHORT
 
 void INfloat::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), new String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
@@ -454,40 +444,13 @@ void INuint16::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), new String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   IN::discover(); // Sends value
 }
+/* Using base class
+  void INcolor::discover() {
+    IN::discover(); // Sends value as 0xRRGGBB
+  }
+*/
 // TODO-152A figure out how to send wired
 // INbool and INtext, INcolor are fine witb the superclass (just sending color)
-#else
-String INfloat::advertisement(const String group) {
-  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
-  return (topicTwig)
-  ? StringF(valueAdvertLineFloat, topicTwig->c_str(), name, "float", width, min, width, max, color, "slider", "w", group, wireable ? 1 : 4, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-  : String();
-}
-String INuint16::advertisement(const String group) {
-  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
-  return (topicTwig)
-  ? StringF(valueAdvertLineUint16, topicTwig->c_str(), name, "int", min, max, color, "slider", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-  : String();
-}
-String INbool::advertisement(const String group) {
-  //"\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-  return (topicTwig)
-  ? StringF(valueAdvertLineBool, topicTwig->c_str(), name, "bool", color, "toggle", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-  : String();
-}
-String INtext::advertisement(const String group) {
-  // e.g. "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
-  return (topicTwig)
-  ? StringF(valueAdvertLineText, topicTwig->c_str(), name, "text", color, "text", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-  : String();
-}
-String INcolor::advertisement(const String group) {
-  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
-  return (topicTwig)
-  ? StringF(valueAdvertLineColor, topicTwig->c_str(), name, "color", color, "wheel", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-  : String();
-}
-#endif
 
 // ========== OUT for some topic we are potentially sending to ===== 
 
@@ -585,7 +548,6 @@ void OUTbool::set(const bool newvalue) {
 }
 
 // TO-ADD-OUTxxx
-#ifdef SYSTEM_DISCOVERY_SHORT
 void OUTfloat::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), new String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), new String(max, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
@@ -596,31 +558,7 @@ void OUTuint16::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), new String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   OUT::discover(); // Sends value
 }
-#else
-// "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
-String OUTfloat::advertisement(const String group) {
-  // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
-  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
-  return (topicTwig)
-    ? StringF(valueAdvertLineFloat, topicTwig->c_str(), name, "float", width, min, width, max, color, "bar", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-    : String();
-}
-// "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
-String OUTuint16::advertisement(const String group) {
-  // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
-  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
-  return (topicTwig)
-    ? StringF(valueAdvertLineUint16, topicTwig->c_str(), name, "int", min, max, color, "bar", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-    : String();
-}
-String OUTbool::advertisement(const String group) {
-  // "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-  return (topicTwig)
-    ? StringF(valueAdvertLineBool, topicTwig->c_str(), name, "bool", color, "toggle", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-    : String();
-    
-}
-#endif
+
 /* 
 //Not used - built for gsheets where followed by a "wireto"
 IN* IN::INxxx(IOtype t, const char* sensorId) {
@@ -664,13 +602,7 @@ IN* IN::INxxx(IOtype t, const char* sensorId) {
 void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#ifdef SYSTEM_DISCOVERY_SHORT
-  void OUT::send() { shouldBeDefined(); }
-#else
-  String IO::advertisement(const String group) { shouldBeDefined(); return String(); }
-  String OUT::advertisement(const String group) { shouldBeDefined(); return String(); }
-  String IN::advertisement(const String name) { shouldBeDefined(); return String(); }
-#endif
+void OUT::send() { shouldBeDefined(); }
 float IO::floatValue() { shouldBeDefined(); return 0.0; }
 bool IO::dispatchLeaf(const String &twig, const String &p, bool isSet) { shouldBeDefined(); return false; }
 float OUT::floatValue() { shouldBeDefined(); return 0.0; }
