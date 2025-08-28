@@ -24,6 +24,7 @@
 #include "sensor.h"
 #include "control.h"
 #include "system_frugal.h"
+#include "misc.h"
 // For sleepSafemillis()
 #include "system_frugal.h" // for frugal_iot
 
@@ -52,7 +53,8 @@ void System_Discovery::setup() {
  // TODO-153 as done now will only check once (infrequently() runs once per period), and if it runs before MQTT it will fail and not retry
 void System_Discovery::infrequently() { 
     if  (nextLoopTime <= (frugal_iot.powercontroller->sleepSafeMillis())) {
-      if ((!doneFullAdvertise) && frugal_iot.canMQTT()) {
+      if ((!doneFullAdvertise)) { // (&& frugal_iot.canMQTT()) - should be able to do this over LoRaMesher
+        // Can queue these up even before MQTT connected as will be sent when connects
         fullAdvertise();
       } 
       // quick can be fone if have MQTT or have LoRaMesher

@@ -114,6 +114,9 @@ void IO::send() {
 }
 void IO::discover() {
   send();
+  if (wireable) {
+    frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "wired"), wiredPath, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  }
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "color"), new String(color), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 
@@ -213,12 +216,17 @@ void IN::setup() {
   IO::setup();
   // No longer subscribes since subscribe to node/set/<sensor>/leaf
 }
-// Options eg: sht/temp set/sht/temp/wire set/sht/temp set/sht/temp/max
+void IO::writeConfigToFS(const String &leaf, const String& payload) {
+  String path = String("/") + sensorId + "/" + id + "/" + leaf;
+  frugal_iot.fs_LittleFS->spurt(path, payload);
+}
+// Options eg: sht/temp set/sht/temp/wired set/sht/temp set/sht/temp/max
 bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  if (isSet) { // e.g : set/sht/temp/wire set/sht/temp set/sht/temp/max
-    if (leaf.startsWith(id) && leaf.endsWith("/wire")) {
+  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
+    if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // Nite this is the "id" of the leaf, not of the sensor
       if (!(wiredPath && (p == *wiredPath))) { // if empty, or different
         wireTo(new String(p));
+        writeConfigToFS(leaf, p);  //         
       }
     } // TODO-155 handle other sets, like max - but at INfloat level
   }
@@ -230,18 +238,21 @@ bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 }
 // Check incoming message, return true if value changed and should call act() on the control
 bool IN::dispatchPath(const String &tp, const String &p) {
-  if (wiredPath && (tp == *wiredPath)) {
+  // Note looking for wiredPath of a remote object wired, not path of this IN
+  if (wiredPath && (tp == *wiredPath)) { 
     return convertAndSet(p);
+    // Intentionally not writing config to FS here - its a runtime wiring
   }
   return false; // nothing changed
 }
 
 bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  if (isSet) { // e.g : set/sht/temp/wire set/sht/temp set/sht/temp/max
-    if (leaf.startsWith(id) && leaf.endsWith("/wire")) {
+  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
+    if (leaf.startsWith(id) && leaf.endsWith("/wired")) {
       if (!(wiredPath && (p == *wiredPath))) {
         wiredPath = new String(p);
         sendWired(); // Destination changed, send current value
+        writeConfigToFS(leaf, p);  //         
       }
     }
   }
@@ -249,6 +260,90 @@ bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
 }
 
+bool INfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+  bool dispatched = false;
+  if (leaf.startsWith(id)) {
+    float v = p.toFloat();
+    if (leaf.endsWith("/max")) {
+      max = v;
+      writeConfigToFS(leaf, p);  //         
+      dispatched = true;
+    } else if (leaf.endsWith("/min")) {
+      min = v;
+      dispatched = true;
+    }
+    if (dispatched) {
+      writeConfigToFS(leaf, p);  
+      return false; // value didnt change         
+    } 
+    // else drop through and dispatch to superclass
+  }
+  // Catch generic case like color
+  return IN::dispatchLeaf(leaf, p, isSet);
+}
+bool OUTfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+  bool dispatched = false;
+  if (leaf.startsWith(id)) {
+    float v = p.toFloat();
+    if (leaf.endsWith("/max")) {
+      max = v;
+      writeConfigToFS(leaf, p);  //         
+      dispatched = true;
+    } else if (leaf.endsWith("/min")) {
+      min = v;
+      dispatched = true;
+    }
+    if (dispatched) {
+      writeConfigToFS(leaf, p);  
+      return false; // value didnt change         
+    } 
+    // else drop through and dispatch to superclass
+  }
+  // Catch generic case like color
+  return OUT::dispatchLeaf(leaf, p, isSet);
+}
+bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+  bool dispatched = false;
+  if (leaf.startsWith(id)) {
+    float v = p.toFloat();
+    if (leaf.endsWith("/max")) {
+      max = v;
+      writeConfigToFS(leaf, p);  //         
+      dispatched = true;
+    } else if (leaf.endsWith("/min")) {
+      min = v;
+      dispatched = true;
+    }
+    if (dispatched) {
+      writeConfigToFS(leaf, p);  
+      return false; // value didnt change         
+    } 
+    // else drop through and dispatch to superclass
+  }
+  // Catch generic case like color
+  return IN::dispatchLeaf(leaf, p, isSet);
+}
+bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+    bool dispatched = false;
+  if (leaf.startsWith(id)) {
+    float v = p.toFloat();
+    if (leaf.endsWith("/max")) {
+      max = v;
+      writeConfigToFS(leaf, p);  //         
+      dispatched = true;
+    } else if (leaf.endsWith("/min")) {
+      min = v;
+      dispatched = true;
+    }
+    if (dispatched) {
+      writeConfigToFS(leaf, p);  
+      return false; // value didnt change         
+    } 
+    // else drop through and dispatch to superclass
+  }
+  // Catch generic case like color
+  return OUT::dispatchLeaf(leaf, p, isSet);
+}
 /*
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

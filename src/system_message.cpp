@@ -96,7 +96,7 @@ void System_Messages::subscribe(const String* topicPath) {
 
 // Upstream: module => queue with reflection 
 void System_Messages::send(const String* topicPath, const String* payload, bool retain, uint8_t qos) {
-  outgoing.emplace_back(*topicPath, *payload, retain, qos);  // Implicit new Message
+  outgoing.emplace_back(*topicPath, payload ? *payload : String(), retain, qos);  // Implicit new Message
   //TODO-152 dedupe before adding
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
   frugal_iot.messages->dispatch(*topicPath, *payload);

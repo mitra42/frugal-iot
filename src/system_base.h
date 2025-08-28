@@ -44,11 +44,12 @@ class IO {
     String name; // Human readable name of this IO within the sensor, i.e. can duplicate across sensors
     const String* topicTwig;
     const char* color; // String passed to UX
-    bool const wireable; // True if can wire this to/from others
+    bool const wireable; // True if can wire this to/from others - note this flag is on the control, not on the sensor or actuator
     const String *wiredPath; // Topic also listening|sending to when wired
     IO();
     IO(const char * const sensorId, const char * const id, const String name, char const *color, const bool w = true);
     virtual void setup();
+    void writeConfigToFS(const String &leaf, const String& payload);
     virtual bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet); // Just checks control
     virtual bool dispatchPath(const String &topicPath, const String &payload);
     virtual String* StringValue();
@@ -101,7 +102,7 @@ class INfloat : public IN {
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue() override;
     String* StringValue() override;
-
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
     // Copy assignment operator
     /*
     INfloat& operator=(const INfloat &other) {
@@ -134,6 +135,7 @@ class INuint16 : public IN {
     bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
     void discover() override;
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
 };
 class INbool : public IN {
   public:
@@ -200,6 +202,7 @@ class OUTfloat : public OUT {
     void set(const float newvalue); // Set and send if changed
     void debug(const char* const where);
     void discover() override;
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
 };
 class OUTbool : public OUT {
   public:
@@ -232,6 +235,7 @@ class OUTuint16 : public OUT {
     void send() override; 
     void debug(const char* const where);
     void discover() override;
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
 };
 
 #endif // BASE_H
