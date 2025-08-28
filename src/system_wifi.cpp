@@ -18,7 +18,7 @@
 #endif
 
 #ifndef SYSTEM_WIFI_SCANPERIOD
-  #define SYSTEM_WIFI_SCANPERIOD 5000
+  #define SYSTEM_WIFI_SCANPERIOD 20000
 #endif
 
 System_WiFi::System_WiFi()

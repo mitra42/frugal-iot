@@ -14,6 +14,7 @@
 #include <Arduino.h>
 #include "actuator.h"
 #include "actuator_digital.h" // defines ACUATOR_DIGITAL_DEBUG
+#include "system_frugal.h" // for frugal_iot
 
 Actuator_Digital::Actuator_Digital(const char * const id, const char * const name, const uint8_t pin, const char* color)
 : Actuator(id, name), 
@@ -53,4 +54,8 @@ void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String 
 
 void Actuator_Digital::discover() {
   input->discover();
+}
+
+void Actuator_Digital::captiveLines(AsyncResponseStream* response) {
+  frugal_iot.captive->addBool(response, id, input->id, input->value, name);
 }

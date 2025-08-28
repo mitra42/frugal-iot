@@ -96,7 +96,7 @@ class CaptiveRequestHandler : public AsyncWebHandler {
             "label{clear:both}"
             "select,input:not([type^=c]){display:block;width:100%;border:1px solid #444;padding:.3ex}"
             "input[type^=s]{display:inline;width:auto;background:#de1;padding:1ex;border:1px solid #000;border-radius:1ex}"
-            "[type^=c]{float:left;margin-left:-1.5em}"
+            "[type^=c]{float:left}"
             ":not([type^=s]):focus{outline:2px solid #d1ed1e}"
             ".w::before{content:'\\26a0\\fe0f'}"
             "p::before{margin-left:-2em;float:left;padding-top:1ex}"
@@ -244,14 +244,16 @@ void System_Captive::setup() {
 
 // TODO may need to wrap labels etc in html_entities()
 void System_Captive::addString(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, uint8_t min_length, uint8_t max_length) {
-  response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlength=" + min_length + " maxlength=" + max_length + "></label>");  
+  response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlength=" + min_length + " maxlength=" + max_length + "></label></p>");  
 }
 /* Untested number and bool */
 void System_Captive::addNumber(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, long min, long max) {
-  response->print(String(F("<p><label>")) + label + ":<br><input type=number step=1 name='" + id + "/" + topicTwig + "' value='" + init + "' min=" + min + " max=" + max + "></label>");  
+  response->print(String(F("<p><label>")) + label + ":<br><input type=number step=1 name='" + id + "/" + topicTwig + "' value='" + init + "' min=" + min + " max=" + max + "></label></p>");  
 }
-void System_Captive::addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, long min, long max) {
-  response->print(String(F("<p><label><input type=checkbox name='")) + id + "/" + topicTwig + "' value='" + init + (init ? " checked" : "") + ">" + label + "</label>");  
+void System_Captive::addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, bool init, String label) {
+  // weirdness here is because absence of check, means absence of input being sent, so send 0 with optional 1 following
+  response->print(String(F("<input type=hidden name='" ))+ id + "/" + topicTwig + "' value='0'>");  
+  response->print(String(F("<p><label>")) + label + ": <input type=checkbox name='" + id + "/" + topicTwig + "' value='1'" + (init ? " checked" : "") + "></label></p>");  
 }
 /* Example code to add handler
 
