@@ -118,8 +118,10 @@ System_LoraMesher::System_LoraMesher()
 // Could parameterize this, but working on assumption that this will only ever point to the MQTT handler once its all working
 void System_LoraMesher::setup() {
   Serial.println("Loramesher setup");
-    //esp_log_level_set("*", ESP_LOG_VERBOSE);
-    esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
+  // Nothing to read from disk so not calling readConfigFromFS 
+
+  //esp_log_level_set("*", ESP_LOG_VERBOSE);
+  esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
 
   // Error codes are buried deep  .pio/libdeps/*/RadioLib/src/TypeDef.h
   // -12 is invalid frequency usually means band and module are not matched.

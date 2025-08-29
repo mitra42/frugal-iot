@@ -49,6 +49,7 @@ void Sensor_LoadCell::tare() {
     Serial.print(__FILE__); Serial.println(__LINE__);
   }
 void Sensor_LoadCell::setup() {
+  Sensor_Float::setup(); // Will readConfigFromFS - do before setting up pins
   #ifdef SENSOR_LOADCELL_DEBUG
     Serial.println(F("Sensor_LoadCell::setup()"));
   #endif

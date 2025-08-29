@@ -18,3 +18,7 @@ void Sensor::readAndSet() {
 void Sensor::periodically() {
   readAndSet();
 }
+void Sensor::setup() {
+  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+}
+

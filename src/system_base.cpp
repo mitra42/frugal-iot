@@ -216,8 +216,10 @@ void IN::setup() {
   IO::setup();
   // No longer subscribes since subscribe to node/set/<sensor>/leaf
 }
-void IO::writeConfigToFS(const String &leaf, const String& payload) {
-  String path = String("/") + sensorId + "/" + id + "/" + leaf;
+// Leaf should be e.g. now/wired 
+void IO::writeConfigToFS(const String &leaf, const String& payload) { 
+  String path = String("/") + sensorId + "/" + leaf;
+  Serial.println("XXX Writing config to " + path + "=" + payload);
   frugal_iot.fs_LittleFS->spurt(path, payload);
 }
 // Options eg: sht/temp set/sht/temp/wired set/sht/temp set/sht/temp/max

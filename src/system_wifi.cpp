@@ -33,7 +33,7 @@ void System_WiFi::setStatus(WiFiStatusType newstatus) {
 }
 
 void System_WiFi::setup() {
-  readConfigFromFS();
+  readConfigFromFS(); // Note takes a slightly different format, as each file is a SSID with content = password
 }
 bool System_WiFi::rescan() {
   // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);

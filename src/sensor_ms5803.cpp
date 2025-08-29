@@ -52,6 +52,7 @@ Sensor_ms5803::Sensor_ms5803(const char* const id, const char * const name, uint
 }
 
 void Sensor_ms5803::setup() {
+  Sensor::setup(); // Will readConfigFromFS - do before setting up pins
   #ifdef SENSOR_MS5803_DEBUG
     Serial.println("MS5803 Setup");
   #endif

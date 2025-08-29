@@ -37,10 +37,10 @@ void Actuator_Digital::set(const bool v) {
 #pragma GCC diagnostic pop
 
 void Actuator_Digital::setup() {
-  Actuator::setup();
   // initialize the digital pin as an output.
-  pinMode(pin, OUTPUT);
   input->setup();
+  Actuator::setup(); // Read config AFTER setup inputs
+  pinMode(pin, OUTPUT);  // Set pin after reading config as may change
   act(); // Set the digital output to match initial conditions.
 }
 void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String &topicTwig, const String &payload, bool isSet) {

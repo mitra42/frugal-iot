@@ -14,3 +14,8 @@ void Actuator::dispatchTwig(const String &topicActuatorId, const String &topicLe
   Serial.println("Actuator::dispatchTwig should be subclassed");
 }
 #pragma GCC diagnostic pop
+
+void Actuator::setup() {
+  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+}
+
