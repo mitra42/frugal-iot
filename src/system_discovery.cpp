@@ -33,7 +33,7 @@ System_Discovery::System_Discovery()
 : System_Base("discovery", "Discovery") { }
 
 void System_Discovery::quickAdvertise() {
-    frugal_iot.messages->send(projectTopic, &frugal_iot.nodeid, MQTT_DONT_RETAIN, MQTT_QOS_ATLEAST1); // Don't RETAIN as other nodes also broadcasting to same topic
+    frugal_iot.messages->send(projectTopic, frugal_iot.nodeid, MQTT_DONT_RETAIN, MQTT_QOS_ATLEAST1); // Don't RETAIN as other nodes also broadcasting to same topic
 }
 
   // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
@@ -48,8 +48,8 @@ void System_Discovery::quickAdvertise() {
 // Done once after WiFi first connects
 void System_Discovery::setup() {
   // Nothing to read from disk so not calling readConfigFromFS 
-  projectTopic = new String(frugal_iot.org + "/" + frugal_iot.project );
-  advertiseTopic = new String(*projectTopic + F("/") + frugal_iot.nodeid); // e.g. "dev/developers/esp32-12345"
+  projectTopic = frugal_iot.org + "/" + frugal_iot.project;
+  advertiseTopic = projectTopic + F("/") + frugal_iot.nodeid; // e.g. "dev/developers/esp32-12345"
 }
 
  //TODO-23 This wont work as nextLoopTime wont be remembered in Deep Sleep

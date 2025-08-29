@@ -25,7 +25,7 @@ class System_Base {
     virtual void setup();
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);
     virtual void dispatchPath(const String &topicPath, const String &payload);
-    String* leaf2path(const char* leaf); 
+    String leaf2path(const char* leaf); 
     virtual void discover();
     void readConfigFromFS();
     void readConfigFromFS(File dir, const String* leaf);
@@ -42,18 +42,19 @@ class IO {
     char const *sensorId; // Sensor this IO belongs to
     char const *id; // System readable id
     String name; // Human readable name of this IO within the sensor, i.e. can duplicate across sensors
-    const String* topicTwig;
+    const String topicTwig;
     const char* color; // String passed to UX
     bool const wireable; // True if can wire this to/from others - note this flag is on the control, not on the sensor or actuator
-    const String *wiredPath; // Topic also listening|sending to when wired
+    String wiredPath; // Topic also listening|sending to when wired
+    String* wiredPathXXX; // Topic also listening|sending to when wired
     IO();
     IO(const char * const sensorId, const char * const id, const String name, char const *color, const bool w = true);
     virtual void setup();
     void writeConfigToFS(const String &leaf, const String& payload);
     virtual bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet); // Just checks control
     virtual bool dispatchPath(const String &topicPath, const String &payload);
-    virtual String* StringValue();
-    void send();
+    virtual String StringValue();
+    virtual void send();
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const where);
     #endif
@@ -61,9 +62,9 @@ class IO {
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
     virtual void discover();
-    void wireTo(String* topicPath);
+    void wireTo(String topicPath);
     void wireTo(IO* io);
-    String* path();
+    String path();
 };
 class IN : public IO {
   public:
@@ -84,7 +85,6 @@ class OUT : public IO {
     // TO-ADD-OUTxxx
     virtual float floatValue();
     virtual bool boolValue();
-    virtual void send();
     virtual void sendWired();
     bool dispatchLeaf(const String &leaf, const String &payload, bool isSet) override; // Just checks control
 };
@@ -101,7 +101,7 @@ class INfloat : public IN {
     INfloat(const INfloat &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue() override;
-    String* StringValue() override;
+    virtual String StringValue();
     bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
     // Copy assignment operator
     /*
@@ -131,7 +131,7 @@ class INuint16 : public IN {
     INuint16(const INuint16 &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue() override;
-    String* StringValue() override;
+    virtual String StringValue();
     bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
     void discover() override;
@@ -145,7 +145,7 @@ class INbool : public IN {
     INbool(const INuint16 &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue() override;
-    String* StringValue() override;
+    virtual String StringValue();
     bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
     // void discover() override; // Use IN::discover
@@ -162,7 +162,7 @@ class INcolor : public IN {
     INcolor(const INcolor &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue() override;
-    String* StringValue() override;
+    virtual String StringValue();
     bool convertAndSet(const String &payload) override;
     bool convertAndSet(const char* payload); // Used when setting in constructor etc
     void debug(const char* const where);
@@ -171,13 +171,13 @@ class INcolor : public IN {
 
 class INtext : public IN {
   public:
-    String* value;  // dont know the type of this value  and shouldnt care
+    String value;  // dont know the type of this value  and shouldnt care
     INtext();
-    INtext(const char * const sensorId, const char * const id, const String name, String* value, const char* const color, const bool wireable);
+    INtext(const char * const sensorId, const char * const id, const String name, String value, char const * const color, const bool wireable);
     INtext(const INtext &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue() override;
-    String* StringValue() override;
+    virtual String StringValue();
     bool convertAndSet(const String &payload) override;
     bool convertAndSet(const char* payload); // Used when setting in constructor etc
     void debug(const char* const where);
@@ -196,9 +196,7 @@ class OUTfloat : public OUT {
     OUTfloat(const OUTfloat &other);
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;
-    String* StringValue() override;
-    void sendWired() override;
-    void send() override;
+    virtual String StringValue();
     void set(const float newvalue); // Set and send if changed
     void debug(const char* const where);
     void discover() override;
@@ -212,9 +210,8 @@ class OUTbool : public OUT {
     OUTbool(const OUTbool &other);
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;
-    String* StringValue() override;
+    virtual String StringValue();
     void set(const bool newvalue);
-    void sendWired() override;
     void send() override;
     void debug(const char* const where);
     // void discover() override; // Use OUT::discover
@@ -229,10 +226,8 @@ class OUTuint16 : public OUT {
     OUTuint16(const OUTuint16 &other);
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;
-    String* StringValue() override;
+    virtual String StringValue();
     void set(const uint16_t newvalue);
-    void sendWired() override;
-    void send() override; 
     void debug(const char* const where);
     void discover() override;
     bool dispatchLeaf(const String &leaf, const String &p, bool isSet);

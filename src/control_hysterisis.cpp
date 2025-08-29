@@ -12,15 +12,15 @@
 void ControlHysterisis::debug(const char* const where) {
   Serial.printf("%s: ",where);
   Serial.printf(" now=%f ", inputs[0]->floatValue());
-  if (((INfloat*)inputs[0])->wiredPath) { Serial.print(*(((INfloat*)inputs[0])->wiredPath)); }
+  if (((INfloat*)inputs[0])->wiredPath) { Serial.print(((INfloat*)inputs[0])->wiredPath); }
   Serial.printf(" greater=%d ", inputs[1]->boolValue());
-  if (((INbool*)inputs[1])->wiredPath) { Serial.print(*(((INfloat*)inputs[1])->wiredPath)); }
+  if (((INfloat*)inputs[1])->wiredPath) { Serial.print(((INfloat*)inputs[1])->wiredPath); }
   Serial.printf(" limit=%f ", inputs[2]->floatValue());
-  if (((INfloat*)inputs[2])->wiredPath) { Serial.print(*(((INfloat*)inputs[2])->wiredPath)); }
+  if (((INfloat*)inputs[2])->wiredPath) { Serial.print(((INfloat*)inputs[2])->wiredPath); }
   Serial.printf(" hysterisis=%f ", inputs[3]->floatValue());
-  if (((INfloat*)inputs[3])->wiredPath) { Serial.print(*(((INfloat*)inputs[3])->wiredPath)); }
+  if (((INfloat*)inputs[3])->wiredPath) { Serial.print(((INfloat*)inputs[3])->wiredPath); }
   Serial.printf( " out=%d ", outputs[0]->boolValue());
-  if (((INfloat*)outputs[0])->wiredPath) { Serial.print(*(((INfloat*)outputs[0])->wiredPath)); }
+  if (((INbool*)outputs[0])->wiredPath) { Serial.print(((INbool*)outputs[0])->wiredPath); }
   Serial.println();
 }
 #endif //CONTROL_HYSTERISIS_DEBUG
