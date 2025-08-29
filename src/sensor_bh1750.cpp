@@ -17,6 +17,7 @@ Sensor_BH1750::Sensor_BH1750( const char* const id, const char * const name, uin
 
 // TODO add to docs - BH1750 default I2C address is 0x23
 void Sensor_BH1750::setup() {
+  Sensor_Float::setup(); // Will readConfigFromFS - do before setting up pins
   //bool BH1750::begin(Mode mode, byte addr, TwoWire* i2c
   wire->begin(I2C_SDA, I2C_SCL); // Note potential conflict with I2C on SHT. TODO-115
   //(Mode mode = CONTINUOUS_HIGH_RES_MODE, byte addr = 0x23, TwoWire* i2c = nullptr)

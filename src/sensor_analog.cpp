@@ -51,7 +51,7 @@ uint16_t Sensor_Analog::read() {
 }
 
 void Sensor_Analog::setup() {
-
+  Sensor_Uint16::setup(); // Will readConfigFromFS - do before setting up pin
   // initialize the analog pin as an input.
   pinMode(pin, INPUT); // I don't think this is needed ?
   #ifdef SENSOR_ANALOG_REFERENCE

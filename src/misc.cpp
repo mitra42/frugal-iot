@@ -28,7 +28,7 @@ const String StringF(const char* format, ...) {
     va_end(args);
     return String(buffer); // Note - string returned on stack so should be safe
 }
-//TODO-150Q for now just copying above, could refactor
+//TODO For now just copying above, could refactor
 const String* newStringF(const char* format, ...) {
     char buffer[PRINTF_BUFFER_SIZE]; // out of scope at end of this
     va_list args;

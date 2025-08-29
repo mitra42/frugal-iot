@@ -80,6 +80,8 @@ System_Power_Modem::System_Power_Modem(unsigned long cycle_ms, unsigned long wak
 
 // ================== setup =========== called from main.cpp::setup ========= TO-ADD-POWERMODE but usually nothing
 void System_Power_Mode::setup() {
+  // Nothing to read from disk so not calling readConfigFromFS  - that might change if parameterize power on/off thru UI
+
   #ifdef SYSTEM_POWER_DEBUG
     Serial.printf("Setup %s: %lu of %lu\n", name.c_str(), wake_ms, cycle_ms); 
   #endif

@@ -18,7 +18,7 @@
 #endif
 
 #ifndef SYSTEM_WIFI_SCANPERIOD
-  #define SYSTEM_WIFI_SCANPERIOD 5000
+  #define SYSTEM_WIFI_SCANPERIOD 20000
 #endif
 
 System_WiFi::System_WiFi()
@@ -33,12 +33,12 @@ void System_WiFi::setStatus(WiFiStatusType newstatus) {
 }
 
 void System_WiFi::setup() {
-  readConfigFromFS();
+  readConfigFromFS(); // Note takes a slightly different format, as each file is a SSID with content = password
 }
 bool System_WiFi::rescan() {
   // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
   //bool async = false, bool show_hidden = false, bool passive = false, uint32_t max_ms_per_chan = 300, uint8_t channel = 0, const char *ssid = nullptr, const uint8_t *bssid = nullptr
-  // TODO-153 check if need this to scan as concerned disconnects AP
+  // Have seen online that need this to scan, but not finding required, and don't want as concerned disconnects AP
   /*
   #ifdef ESP32
     WiFi.disconnect(true, true);    // reset state so .scanNetworks() works
@@ -145,7 +145,7 @@ bool System_WiFi::recoverFromLightSleep() {
      delay(100); 
   }
   return true;
-  // Recover WiFi in stateMachine // TODO-153
+  // Recover WiFi in stateMachine 
 }
 #endif // ESP32
 
@@ -238,7 +238,7 @@ void System_WiFi::stateMachine() {
       } else if (millis() > (statusSince + 30000)) { // Give it 30 seconds to try
         // Failed to connect - if don't do this heavy disconnect it will fail to scan.
         #ifdef ESP32
-          WiFi.disconnect(true, true); // Shouldnt need to do this //TODO-153 if keep then only for ESP32
+          WiFi.disconnect(true, true); // Shouldnt need to do this, if keep then only for ESP32
         #endif
         setStatus(WIFI_SCANNED); // Go back for next
       }

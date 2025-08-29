@@ -19,6 +19,7 @@ System_OLED::System_OLED(TwoWire* wire)
 
 void System_OLED::setup() {
   System_Base::setup();
+  // Nothing to read from disk so not calling readConfigFromFS 
   // Setup code here, if needed
   #if OLED_RST_X != -1 // If OLED_RST is defined, use it (e.g. on ARDUINO_TTGO_LoRa32_V1)
     //reset OLED display via software

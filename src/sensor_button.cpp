@@ -48,6 +48,7 @@ Sensor_Button* Sensor_Button::handler(Button2& button) {
   return (Sensor_Button*)frugal_iot.buttons->group[button.getID()];
 }
 void Sensor_Button::setup() {
+  Sensor::setup(); // Will readConfigFromFS - do before setting up pins
   button->begin(pin);
 }
 void Sensor_Button::loop() {

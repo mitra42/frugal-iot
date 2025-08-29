@@ -24,6 +24,7 @@
 #include "sensor.h"
 #include "control.h"
 #include "system_frugal.h"
+#include "misc.h"
 // For sleepSafemillis()
 #include "system_frugal.h" // for frugal_iot
 
@@ -38,21 +39,24 @@ void System_Discovery::quickAdvertise() {
   // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
   // Relying on short messages from modules instead of large message which won't go thru LoRaMesher
   void System_Discovery::fullAdvertise() {
+    heap_print(F("Discovery::fullAdvertise before"));
     frugal_iot.discover();
+    heap_print(F("Discovery::fullAdvertise after"));
     doneFullAdvertise = true;
   }
 
 // Done once after WiFi first connects
 void System_Discovery::setup() {
+  // Nothing to read from disk so not calling readConfigFromFS 
   projectTopic = new String(frugal_iot.org + "/" + frugal_iot.project );
   advertiseTopic = new String(*projectTopic + F("/") + frugal_iot.nodeid); // e.g. "dev/developers/esp32-12345"
 }
 
  //TODO-23 This wont work as nextLoopTime wont be remembered in Deep Sleep
- // TODO-153 as done now will only check once (infrequently() runs once per period), and if it runs before MQTT it will fail and not retry
 void System_Discovery::infrequently() { 
     if  (nextLoopTime <= (frugal_iot.powercontroller->sleepSafeMillis())) {
-      if ((!doneFullAdvertise) && frugal_iot.canMQTT()) {
+      if ((!doneFullAdvertise)) { // (&& frugal_iot.canMQTT()) - should be able to do this over LoRaMesher
+        // Can queue these up even before MQTT connected as will be sent when connects
         fullAdvertise();
       } 
       // quick can be fone if have MQTT or have LoRaMesher

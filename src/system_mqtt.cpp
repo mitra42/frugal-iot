@@ -85,7 +85,7 @@ bool System_MQTT::connected() {
 /* Connect to MQTT broker and - if necessary - resubscribe to all topics */
 // Note this is blocking if not connected, and Wifi is connected // TODO-153 flag in callers.
 bool System_MQTT::connect() {
-  if (!frugal_iot.wifi->connected()) { //TODO-150 maybe its ok if have LoRaMesher instead
+  if (!frugal_iot.wifi->connected()) {
     //Serial.print(F("MQTT waiting for WiFi"));
     return false; // State machine should be reconnecting
   }

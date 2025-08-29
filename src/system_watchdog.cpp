@@ -28,6 +28,8 @@ long unsigned internal_watchdog_last = 0; // Will be sleepSafeMillis
 System_Watchdog::System_Watchdog() : System_Base("watchdog", "Watchdog") {}
 
 void System_Watchdog::setup() {
+    // Nothing to read from disk so not calling readConfigFromFS 
+    
   //Ref: https://forum.arduino.cc/t/esp32-ram-check/871248/2
   //https://iotassistant.io/esp32/enable-hardware-watchdog-timer-esp32-arduino-ide/
   // If the TWDT was not initialized automatically on startup, manually intialize it now

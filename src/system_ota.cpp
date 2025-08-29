@@ -169,6 +169,7 @@ const String System_OTA::getOTApath() {
 }
 
 void System_OTA::setup_after_mqtt_setup() {
+  // Nothing to read from disk so not calling readConfigFromFS 
   const String url = getOTApath(); // Needs topicPrefix setup in MQTT::setup
   // Note this must run after WiFi has connected  and ideally before MQTT or Discovery except it needs xDiscovery::topicPrefix
   Serial.print("Attempt OTA from:"); Serial.println(url);
@@ -190,7 +191,7 @@ void System_OTA::infrequently() {
 }
 
 void System_OTA::discover() {
-  frugal_iot.messages->send(leaf2path("key"), new String(SYSTEM_OTA_KEY), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO-152A client should recognoize ota/key instead of ota_key
+  frugal_iot.messages->send(leaf2path("key"), new String(SYSTEM_OTA_KEY), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 
 #endif // SYSTEM_OTA_KEY

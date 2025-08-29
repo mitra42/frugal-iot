@@ -96,7 +96,7 @@ class CaptiveRequestHandler : public AsyncWebHandler {
             "label{clear:both}"
             "select,input:not([type^=c]){display:block;width:100%;border:1px solid #444;padding:.3ex}"
             "input[type^=s]{display:inline;width:auto;background:#de1;padding:1ex;border:1px solid #000;border-radius:1ex}"
-            "[type^=c]{float:left;margin-left:-1.5em}"
+            "[type^=c]{float:left}"
             ":not([type^=s]):focus{outline:2px solid #d1ed1e}"
             ".w::before{content:'\\26a0\\fe0f'}"
             "p::before{margin-left:-2em;float:left;padding-top:1ex}"
@@ -123,12 +123,12 @@ class CaptiveRequestHandler : public AsyncWebHandler {
         "<option hidden>"));
       response->print(T->SelectOne);
       response->print(F("</option>"));
-      while (WiFi.scanComplete() < 0) {  }; // TODO-153 careful in case this blocks everything mid-scan   
+      while (WiFi.scanComplete() < 0) {  }; // Careful in case this blocks everything mid-scan, seems to be ok.
       for (int i = 0; i < frugal_iot.wifi->num_networks; i++) {
         String s = WiFi.SSID(i);
         wifi_auth_mode_t mode = WiFi.encryptionType(i); //uint8_t on ESP8266
         response->print(F("<option value='"));
-        response->print(html_entities(WiFi.SSID(i)) + F("'")); // TODO-153 make this the topic
+        response->print(html_entities(WiFi.SSID(i)) + F("'"));
         if (s == WiFi.SSID()) { response->print(T->_selected); }
         response->print(F(">"));
         response->print(WiFi.SSID(i));
@@ -140,9 +140,6 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       response->print(F("<label>"));
       response->print(T->Password);
       response->print(F(":<input name=password value=''></label><hr>")); // TODO-153 what if have password already
-
-      //TODO-153 add dropdown of languages (see WiFiSettings.cpp ~L360)
-      //TODO-153 add multiple lines from modules - may actually loop here  (see WiFiSettings.cpp ~L376)
 
       frugal_iot.captiveLines(response); // Calls back to captive.string etc 
 
@@ -176,7 +173,7 @@ void System_Captive::setup() {
     dnsServer.setTTL(0); // XXX grabbed from old WiFiSettings  - unclear if needed or useful
     dnsServer.start(53, "*", WiFi.softAPIP());
   #endif
-  String ip = WiFi.softAPIP().toString(); // TODO-153 note how this is used by redirect 
+  String ip = WiFi.softAPIP().toString(); // Note how this is used by redirect 
   Serial.print(F("Access point on: ")); Serial.println(ip);
 
   // Order is important - this has to come BEFORE the catch-all default portal
@@ -225,7 +222,7 @@ void System_Captive::setup() {
 
   server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
     Serial.println("POST /restart");
-    request->send(200, "text/plain",T->RestartingPleaseWait); //TODO-153 translate
+    request->send(200, "text/plain",T->RestartingPleaseWait);
     // May need a callback here to do certain things before restarting 
     ESP.restart();
   });
@@ -244,14 +241,16 @@ void System_Captive::setup() {
 
 // TODO may need to wrap labels etc in html_entities()
 void System_Captive::addString(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, uint8_t min_length, uint8_t max_length) {
-  response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlength=" + min_length + " maxlength=" + max_length + "></label>");  
+  response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlength=" + min_length + " maxlength=" + max_length + "></label></p>");  
 }
 /* Untested number and bool */
 void System_Captive::addNumber(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, long min, long max) {
-  response->print(String(F("<p><label>")) + label + ":<br><input type=number step=1 name='" + id + "/" + topicTwig + "' value='" + init + "' min=" + min + " max=" + max + "></label>");  
+  response->print(String(F("<p><label>")) + label + ":<br><input type=number step=1 name='" + id + "/" + topicTwig + "' value='" + init + "' min=" + min + " max=" + max + "></label></p>");  
 }
-void System_Captive::addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, long min, long max) {
-  response->print(String(F("<p><label><input type=checkbox name='")) + id + "/" + topicTwig + "' value='" + init + (init ? " checked" : "") + ">" + label + "</label>");  
+void System_Captive::addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, bool init, String label) {
+  // weirdness here is because absence of check, means absence of input being sent, so send 0 with optional 1 following
+  response->print(String(F("<input type=hidden name='" ))+ id + "/" + topicTwig + "' value='0'>");  
+  response->print(String(F("<p><label>")) + label + ": <input type=checkbox name='" + id + "/" + topicTwig + "' value='1'" + (init ? " checked" : "") + "></label></p>");  
 }
 /* Example code to add handler
 

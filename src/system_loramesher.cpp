@@ -118,8 +118,10 @@ System_LoraMesher::System_LoraMesher()
 // Could parameterize this, but working on assumption that this will only ever point to the MQTT handler once its all working
 void System_LoraMesher::setup() {
   Serial.println("Loramesher setup");
-    //esp_log_level_set("*", ESP_LOG_VERBOSE);
-    esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
+  // Nothing to read from disk so not calling readConfigFromFS 
+
+  //esp_log_level_set("*", ESP_LOG_VERBOSE);
+  esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
 
   // Error codes are buried deep  .pio/libdeps/*/RadioLib/src/TypeDef.h
   // -12 is invalid frequency usually means band and module are not matched.
@@ -186,7 +188,7 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
     #ifdef SYSTEM_LORAMESHER_DEBUG
       lastTopicPath = *topicPath;
       lastPayload = *payload; 
-      printAppData(); // TODO-151 see note above about this being an extern
+      printAppData(); // See note above about this being an extern
     #endif
     Serial.print("LoRaMesher received "); Serial.print(*topicPath); Serial.print(F("=")); Serial.println(*payload);
 
@@ -281,7 +283,6 @@ bool System_LoraMesher::publish(const String &topic, const String &payload, bool
 // TODO-23 MQTT yet, but also unclear if want a gateway role retained during sleep
 LoraMesherMode System_LoraMesher::checkRole() {
   if (frugal_iot.mqtt->connected()) {
-    // TODO-152 pending update to loramesher being pushed that has isGateway I've edited the library
     if (!radio.isGatewayRole()) {
       #ifdef SYSTEM_LORAMESHER_DEBUG
         Serial.println("Adding gateway role"); 

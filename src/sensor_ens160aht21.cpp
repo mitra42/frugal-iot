@@ -186,6 +186,7 @@ void Sensor_ensaht::setupENS() {
 }
 
 void Sensor_ensaht::setup() {
+  Sensor::setup(); // Will readConfigFromFS - do before setting up pins
   setupAHT();
   setupENS();
 }

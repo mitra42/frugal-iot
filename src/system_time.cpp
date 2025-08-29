@@ -91,7 +91,8 @@ String System_Time::dateTime() {
 
 void System_Time::setup_after_wifi() {
     init(SYSTEM_TIME_ZONE);
-    sync();
+  // Nothing to read from disk so not calling readConfigFromFS 
+  sync();
 }
 
 void System_Time::infrequently() {

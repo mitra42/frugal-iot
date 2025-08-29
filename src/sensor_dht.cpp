@@ -41,7 +41,7 @@ Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, bool ret
 }
 void Sensor_DHT::setup() {
   dht->powerUp(); //TODO-POWER think about when do this
-  Sensor_HT::setup(); // Call parent setup
+  Sensor_HT::setup(); // Call parent setup - which will readConfigFromFS (not currently configuing pins, if do then may have to move before powerUp)
 }
 
 #ifdef SENSOR_DHT_DEBUG

@@ -6,7 +6,6 @@
 Texts* TT[LANGUAGE_COUNT]; // Should only need accessing in system_captive.h
 Texts* T; // extern can be accessed anywhere that includes system_language.h
 
-// TODO-153 - translate each of the language lines //TODO-COPILOT TODO-CHATGPT
 void System_Captive::setupLanguages() {
   // See other TO_ADD_LANGUAGE and TO_ADD_LOCALIZABLE_STRING
   TT[Language_EN] = new Texts { F("EN"), F("English"), 
@@ -47,9 +46,10 @@ void System_Captive::setupLanguages() {
       F("Mot de passe"),
       F("ENREGISTRER"),
       F("redémarrage en cours... veuillez patienter"),
-    F("Gateway"),
-    F("Node"),
-    F("Unconnected")
+      F("Passerelle"),
+      F("Nœud"),
+      F("Non connecté")
+
       };
   #endif //LANGUAGE_FR
 
@@ -69,10 +69,10 @@ void System_Captive::setupLanguages() {
       F("Contraseña"),
       F("GUARDAR"),
       F("Reiniciando... espere, por favor"),
-    F("Gateway"),
-    F("Node"),
-    F("Unconnected")
-      };
+      F("Puerta de enlace"),
+      F("Nodo"),
+      F("Desconectado")
+ };
   #endif //LANGUAGE_SP
 
   #if defined(LANGUAGE_DE) || defined(LANGUAGE_ALL)
@@ -91,9 +91,9 @@ void System_Captive::setupLanguages() {
       F("Passwort"),
       F("Speichern"),
       F("Neustart .... Bitte warten"),
-    F("Gateway"),
-    F("Node"),
-    F("Unconnected")
+      F("Gateway"),
+      F("Knoten"),
+      F("Nicht verbunden")
       };
   #endif //LANGUAGE_DE
 
@@ -113,9 +113,9 @@ void System_Captive::setupLanguages() {
       F("Wachtwoord"),
       F("OPSLAAN"),
       F("opnieuw opstarten.... even geduld a.u.b."),
-    F("Gateway"),
-    F("Node"),
-    F("Unconnected")
+      F("Gateway"),
+      F("Knooppunt"),
+      F("Niet verbonden")
       };
   #endif //LANGUAGE_NL
 
@@ -135,31 +135,31 @@ void System_Captive::setupLanguages() {
       F("Kata Sandi"),
       F("SIMPAN"),
       F("sedang memulai ulang .... mohon tunggu"),
-    F("Gateway"),
-    F("Node"),
-    F("Unconnected")
+      F("Gerbang"),
+      F("Node"),
+      F("Tidak Terhubung")
       };
   #endif //LANGUAGE_ID
 
   #if defined(LANGUAGE_HI) || defined(LANGUAGE_ALL)
     TT[Language_HI] = new Texts { F("HI"), F("Hindi"), 
-      F("Language"), 
-      F("Project"), 
-      F("Device Name"),
-      F("Description"), 
-      F("MQTT host name"),
-    F("Captive Portal"),
-    F("RESTART"),
-    F(" selected"), // Intentional leading space
-    F("Connect to WiFi"),
-    F("WiFi Network"),
-    F("Select one..."),
-    F("Password"),
-    F("SAVE"),
-    F("restarting .... plesae wait"),
-    F("Gateway"),
-    F("Node"),
-    F("Unconnected")
+      F("भाषा"),
+      F("प्रोजेक्ट"),
+      F("डिवाइस का नाम"),
+      F("विवरण"),
+      F("MQTT होस्ट नाम"),
+      F("कैप्टिव पोर्टल"),
+      F("पुनः प्रारंभ करें"),
+      F("चयनित"), // जानबूझकर स्पेस दिया गया है
+      F("वाई-फ़ाई से कनेक्ट करें"),
+      F("वाई-फ़ाई नेटवर्क"),
+      F("एक चुनें..."),
+      F("पासवर्ड"),
+      F("सहेजें"),
+      F("पुनः प्रारंभ हो रहा है.... कृपया प्रतीक्षा करें"),
+      F("गेटवे"),
+      F("नोड"),
+      F("असंबद्ध")
       };
   #endif //LANGUAGE_HI
 }

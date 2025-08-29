@@ -41,6 +41,7 @@ topicPrefix(nullptr)
 // Note this setup might be done early (and called twice), rather than in frugal_iot.setup 
 void System_Messages::setup() {
   if (!topicPrefix) { // Check if already done
+    // Nothing to read from disk so not calling readConfigFromFS 
     // e.g. "dev/developers/esp32-12345/" prefix of most topics
     topicPrefix = new String(frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/"));
     subscribe(path("set/#"));  // Main subscription to all changes sent to this node
@@ -96,10 +97,14 @@ void System_Messages::subscribe(const String* topicPath) {
 
 // Upstream: module => queue with reflection 
 void System_Messages::send(const String* topicPath, const String* payload, bool retain, uint8_t qos) {
+<<<<<<< HEAD
   heap_print(F("messages::send"));
   outgoing.emplace_back(*topicPath, *payload, retain, qos);  // Implicit new Message
   heap_print(F("messages::send after queue"));
 
+=======
+  outgoing.emplace_back(*topicPath, payload ? *payload : String(), retain, qos);  // Implicit new Message
+>>>>>>> main
   //TODO-152 dedupe before adding
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
   frugal_iot.messages->dispatch(*topicPath, *payload);
