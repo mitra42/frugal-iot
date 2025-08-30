@@ -10,7 +10,7 @@
 
 // TODO need a way to useful handle logarithnic values like lux - more of a UX issue than a node issue
 // Practical range of lux unknown - apparantly can go from 0.001 to 65k 
-Sensor_BH1750::Sensor_BH1750( const char* const id, const char * const name, uint8_t addr, TwoWire* wire, bool retain)
+Sensor_BH1750::Sensor_BH1750( const char* const id, const char * const name, const uint8_t addr, TwoWire* wire, const bool retain)
   : Sensor_Float(id, name, 3, 0, 65000, "yellow", retain), 
     addr(addr), wire(wire), lightmeter(addr) {
   }
@@ -23,9 +23,7 @@ void Sensor_BH1750::setup() {
   //(Mode mode = CONTINUOUS_HIGH_RES_MODE, byte addr = 0x23, TwoWire* i2c = nullptr)
   // TODO copy this pattern of public enum to other enums 
   if (!lightmeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, addr, wire)) { // (Mode mode, byte addr, TwoWire* i2c)
-    Serial.println("Warning: Failed to initialize BH1750 light sensor!"); delay(5000);
-  } else {
-    Serial.println("BH1750 light sensor init succeeded"); delay(5000);
+    Serial.println(F("Warning: Failed to initialize BH1750 light sensor!")); delay(5000);
   }
 }
 float Sensor_BH1750::read() {
@@ -35,7 +33,7 @@ float Sensor_BH1750::read() {
       v = 0.0;
   }
   #ifdef SENSOR_BH1750_DEBUG
-    Serial.print("BH1750:"); Serial.println(v);
+    Serial.print(F("BH1750:")); Serial.println(v);
   #endif
   return v;
 }

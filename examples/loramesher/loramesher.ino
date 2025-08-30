@@ -50,7 +50,7 @@ void setup() {
 void printAppData() {
     frugal_iot.oled->display.clearDisplay();
     frugal_iot.oled->display.setCursor(0,0);
-    frugal_iot.oled->display.print(*frugal_iot.description);
+    frugal_iot.oled->display.print(frugal_iot.description);
     frugal_iot.oled->display.setCursor(0,10);
     frugal_iot.oled->display.print(frugal_iot.loramesher->checkRoleString());
     if (frugal_iot.loramesher->lastTopicPath) {

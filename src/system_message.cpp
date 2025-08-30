@@ -40,7 +40,7 @@ topicPrefix()
 
 // Note this setup might be done early (and called twice), rather than in frugal_iot.setup 
 void System_Messages::setup() {
-  if (!topicPrefix) { // Check if already done
+  if (!topicPrefix.length()) { // Check if already done
     // Nothing to read from disk so not calling readConfigFromFS 
     // e.g. "dev/developers/esp32-12345/" prefix of most topics
     topicPrefix = frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/");

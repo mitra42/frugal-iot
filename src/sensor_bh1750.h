@@ -15,10 +15,11 @@
 
 class Sensor_BH1750 : public Sensor_Float {
   public:
-    uint8_t addr; // I2C address
+    Sensor_BH1750(const char* const id, const char * const name, const uint8_t addr, TwoWire* wire, const bool retain);
+  protected:
+    const uint8_t addr; // I2C address
     TwoWire* wire;
     BH1750 lightmeter;
-    Sensor_BH1750(const char* const id, const char * const name, uint8_t addr, TwoWire* wire, bool retain);
     void setup() override;
     float read() override;
 };
