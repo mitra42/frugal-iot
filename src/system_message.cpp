@@ -35,7 +35,7 @@ System_Message::System_Message(const String& topicPath) // For subscriptions onl
 
 System_Messages::System_Messages() 
 : System_Base("messages", "Messages"),
-topicPrefix(nullptr)
+topicPrefix()
 { }
 
 // Note this setup might be done early (and called twice), rather than in frugal_iot.setup 
@@ -43,7 +43,7 @@ void System_Messages::setup() {
   if (!topicPrefix) { // Check if already done
     // Nothing to read from disk so not calling readConfigFromFS 
     // e.g. "dev/developers/esp32-12345/" prefix of most topics
-    topicPrefix = new String(frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/"));
+    topicPrefix = frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/");
     subscribe(path("set/#"));  // Main subscription to all changes sent to this node
   }
 }
@@ -54,60 +54,65 @@ void System_Messages::loop() {
 
 // =========== Helpers =====================
 // Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht30/temperature
-String* System_Messages::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
+String System_Messages::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
     setup(); // Allow control wiring before setup by doing setup early
-  return new String(*topicPrefix + topicTwig);
+  return topicPrefix + topicTwig;
 }
 // Convert a twig e.g. sht30/temperature to path e.g. dev/developers/esp123/sht30/temperature
-String* System_Messages::path(const String* topicTwig) { // TODO find other places do this and replace with call to TopicPath
+String System_Messages::path(const String topicTwig) { // TODO find other places do this and replace with call to TopicPath
   setup(); // Allow control wiring before setup by doing setup early
-  return new String(*topicPrefix + *topicTwig);
+  return topicPrefix + topicTwig;
 }
-String* System_Messages::path(const char* id, char const * const twig) { // TODO find other places do this and replace with call to TopicPath
+String System_Messages::path(const char* id, char const * const twig) { // TODO find other places do this and replace with call to TopicPath
   setup(); // Allow control wiring before setup by doing setup early
-  return new String(*topicPrefix + id + "/" + twig); // Note topicPrefix ends in "/"
+  return topicPrefix + id + "/" + twig; // Note topicPrefix ends in "/"
 }
-String* System_Messages::path(const char* id,  const char* const leaf, const char* const leafparm) { // TODO find other places do this and replace with call to TopicPath
+String System_Messages::path(const char* id,  const char* const leaf, const char* const leafparm) { // TODO find other places do this and replace with call to TopicPath
   setup(); // Allow control wiring before setup by doing setup early
-  return new String(*topicPrefix + id + "/" + leaf + "/" + leafparm); // Note topicPrefix ends in "/"
+  return topicPrefix + id + "/" + leaf + "/" + leafparm; // Note topicPrefix ends in "/"
 }
 
+/* Doesnt appear to be used
 // Convert a path e.g. /dev/developers/esp123/sht30/temperature to a twig e.g. sht30/temperature 
-String* System_Messages::twig(const String &topicPath) { 
-  if (topicPath.startsWith(*topicPrefix)) {
-    String* const topicTwig = new String(topicPath); // TODO would this work with a substr ? 
-    topicTwig->remove(0, topicPrefix->length());
-    return topicTwig;
+String System_Messages::twig(const String &topicPath) { 
+  if (topicPath.startsWith(topicPrefix)) {
+    return topicPath.substring(topicPrefix.length());
   } else {
-    return nullptr;
+    return String();
   }
 }
+*/
 
 // ============ UPSTREAM ====== MODULES -> (queue -> LoRaMesher) -> queue -> MQTT -> Broker 
 
 // Upstream: module => queued
-void System_Messages::subscribe(const String* topicPath) {
+void System_Messages::subscribe(const String topicPath) {
   for(System_Message& sub: subscriptions) {
-    if (sub.topicPath == *topicPath) {
+    if (sub.topicPath == topicPath) {
       return; // Dont resubscribe
     }
   }
-  outgoing.emplace_back(*topicPath); // // Implicit new Message (subscription)
+  outgoing.emplace_back(topicPath); // // Implicit new Message (subscription)
 }
 
 // Upstream: module => queue with reflection 
+<<<<<<< HEAD
 void System_Messages::send(const String* topicPath, const String* payload, bool retain, uint8_t qos) {
   heap_print(F("messages::send"));
   Serial.print("XXX topicPath="); Serial.println(*topicPath); delay(200);
   Serial.print("XXX payload"); Serial.println(*payload); delay(200);
   outgoing.emplace_back(*topicPath, *payload, retain, qos);  // Implicit new Message
+=======
+void System_Messages::send(const String topicPath, const String payload, bool retain, uint8_t qos) {
+  heap_print(F("messages::send"));
+  outgoing.emplace_back(topicPath, payload, retain, qos);  // Implicit new Message
+>>>>>>> memleaks
   heap_print(F("messages::send after queue"));
   //TODO-152 dedupe before adding
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
-  frugal_iot.messages->dispatch(*topicPath, *payload);
+  frugal_iot.messages->dispatch(topicPath, payload);
   heap_print(F("messages::/send"));
 }
-
 
 // Upstream queued => MQTT or LoRaMesher
 // Send any messages waiting to go (subscriptions or messages)
@@ -186,8 +191,8 @@ bool System_Messages::reSubscribeAll() {
 // Downstream MQTT -> modules (note that LoRaMesher is a module that forwards based on subscriptions)
 // This is called by either the MQTT or LoRaMesher module on receiving a message
 void System_Messages::dispatch(const String &topicPath, const String &payload) {
-  if (topicPath.startsWith(*topicPrefix)) { // includes trailing slash
-    String topicTwig = topicPath.substring(topicPrefix->length()); 
+  if (topicPath.startsWith(topicPrefix)) { // includes trailing slash
+    String topicTwig = topicPath.substring(topicPrefix.length()); 
     bool isSet;
     if (topicTwig.startsWith("set/")) {
       isSet = true;

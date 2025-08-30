@@ -64,7 +64,7 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
     } else if (topicTwig == "name") {
       name = String(payload); // Note weirdness, it really needs to copy 
     } else if (topicTwig == "description") {
-      description = new String(payload);
+      description = payload;
     }
     writeConfigToFS(topicTwig, payload);
     System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
@@ -74,7 +74,7 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
 }
 
 void System_Frugal::discover() {
-  messages->send(leaf2path("name"), &name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   Frugal_Group::discover();
 }
@@ -82,7 +82,7 @@ void System_Frugal::discover() {
 void System_Frugal::captiveLines(AsyncResponseStream* response) {
   captive->addString(response, id, "project", project, T->Project, 2, 15);
   captive->addString(response, id, "name", name, T->DeviceName, 3, 15);
-  captive->addString(response, id, "description", *description, T->Description, 3, 40);
+  captive->addString(response, id, "description", description, T->Description, 3, 40);
   Frugal_Group::captiveLines(response);
 }
 
@@ -132,7 +132,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
 : Frugal_Group("frugal_iot", name),
   org(org),
   project(project),
-  description(new String(description)),
+  description(description),
     // Use the unique id of the ESP32 or ESP8266 - has to be before anything calls messages.path
   #ifdef ESP32
     nodeid(String(F("esp32-")) + (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24))),

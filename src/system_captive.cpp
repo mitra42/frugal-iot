@@ -170,7 +170,7 @@ void System_Captive::setup() {
       Serial.println("Soft AP creation failed.");
       return;  // Shouldn't happen
     }
-    dnsServer.setTTL(0); // XXX grabbed from old WiFiSettings  - unclear if needed or useful
+    dnsServer.setTTL(0); //grabbed from old WiFiSettings  - unclear if needed or useful
     dnsServer.start(53, "*", WiFi.softAPIP());
   #endif
   String ip = WiFi.softAPIP().toString(); // Note how this is used by redirect 

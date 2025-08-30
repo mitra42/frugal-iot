@@ -165,7 +165,7 @@ void System_OTA::checkForUpdate() {
 
 const String System_OTA::getOTApath() {
     // Note there is no correlation between the path here, and where its stored on the server which also pays attention to dev/project/node
-    return String(SYSTEM_OTA_SERVERPORTPATH + *frugal_iot.messages->topicPrefix + SYSTEM_OTA_KEY);
+    return String(SYSTEM_OTA_SERVERPORTPATH + frugal_iot.messages->topicPrefix + SYSTEM_OTA_KEY);
 }
 
 void System_OTA::setup_after_mqtt_setup() {
@@ -191,7 +191,7 @@ void System_OTA::infrequently() {
 }
 
 void System_OTA::discover() {
-  frugal_iot.messages->send(leaf2path("key"), new String(SYSTEM_OTA_KEY), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  frugal_iot.messages->send(leaf2path("key"), String(SYSTEM_OTA_KEY), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 
 #endif // SYSTEM_OTA_KEY

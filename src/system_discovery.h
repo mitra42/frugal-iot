@@ -12,8 +12,8 @@ class System_Discovery : public System_Base {
     void infrequently() override;
   private: 
     unsigned long nextLoopTime = 0; // sleepSafeMillis
-    String *projectTopic;
-    String *advertiseTopic;
+    String projectTopic;
+    String advertiseTopic;
     void quickAdvertise();
 };
 

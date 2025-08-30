@@ -26,9 +26,6 @@
 #include "system_fs.h"
 #include "system_language.h"
 #ifdef ESP32
-#include "system_lora.h"
-#endif
-#ifdef ESP32
 #include "system_loramesher.h"
 #endif
 #include "system_message.h"
@@ -62,8 +59,8 @@ class System_Frugal : public Frugal_Group {
     // Configuration strings 
     String org;
     String project;
-    String* description; 
-    String nodeid; // Unique id - starts esp32- or esp8266-
+    String description; 
+    const String nodeid; // Unique id - starts esp32- or esp8266-
     // Pointers to other Frugal_Base objects or groups of objects
     Frugal_Group* actuators;
     Frugal_Group* sensors;
@@ -72,9 +69,6 @@ class System_Frugal : public Frugal_Group {
     Frugal_Group* buttons;
     System_Captive* captive;
     System_Discovery* discovery;
-    #ifdef SYSTEM_LORA_WANT
-      System_LoRa* lora;
-    #endif
     #ifdef SYSTEM_LORAMESHER_WANT // This is automatically defined on LoRa compatable boardss
       System_LoraMesher* loramesher; // Will be nullptr if no loramesher
     #endif

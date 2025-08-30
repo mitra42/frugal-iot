@@ -34,15 +34,16 @@ class System_Message { // Only used for outgoing queued messages
 
 class System_Messages : public System_Base {
   public:
-    String* topicPrefix;  // Also used by OTA
+    String topicPrefix;  // Also used by OTA
     System_Messages();
-    void subscribe(const String* topicPath);
-    void send(const String* topicPath, const String* payload, bool retain, uint8_t qos);
-    String* path(const char* id, const char* const leaf, const char* const leafparm);
-    String* path(const char* id, const char* const leaf);
-    String* path(char const * const topicTwig); // returns a new String* 
-    String* path(const String* topicTwig); // returns a new String* 
-    String* twig(const String &topicPath);
+    void subscribe(const String topicPath);
+    // This will be re-overloaded as send, but keeping separate as deal with some mem leaks
+    void send(const String topicPath, const String payload, bool retain, uint8_t qos);
+    String path(const char* id, const char* const leaf, const char* const leafparm);
+    String path(const char* id, const char* const leaf);
+    String path(char const * const topicTwig);
+    String path(const String topicTwig); 
+    //String twig(const String &topicPath); // unused
     bool reSubscribeAll(); // Called by MQTT after reconnection
     void dispatch(const String &topicPath, const String &payload); // Called by MQTT and LoRaMesher
   protected:

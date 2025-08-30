@@ -168,29 +168,29 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
   if ((appPacket->payloadSize > SYSTEM_LORAMESHER_MAXLEGITPACKET) ||(appPacket->payloadSize <= 0)) {
     Serial.printf("LoRaMesher Received bad packet length=%d\n", appPacket->payloadSize);
   } else {
-    Serial.print("XXX payloadSize="); Serial.println(appPacket->payloadSize);
+    // Serial.print("XXX payloadSize="); Serial.println(appPacket->payloadSize);
     const uint8_t qos = appPacket->payload[0] - '0';
     const bool downstream = appPacket->payload[0] == ('0'+QOS_DOWNSTREAM);
     const bool retain = appPacket->payload[1] - '0'; // will be 0 or 1
     // Assume appPacket->payload is a uint8_t* or char* and is null-terminated from [2] onward
     const char* str = (const char*)&appPacket->payload[2];
-    String* topicPath;
-    String* payload;
+    String topicPath;
+    String payload;
 
     const char* eq = strchr(str, ':');
     if (eq) {
-        topicPath = new String(String(str).substring(0, eq - str));
-        payload = (new String(eq+1));
+        topicPath = String(str).substring(0, eq - str);
+        payload = eq+1;
     } else { // Shouldnt have this case
-        topicPath = new String(str);
-        payload = new String(F(""));
+        topicPath = str;
+        payload = String();
     }
     #ifdef SYSTEM_LORAMESHER_DEBUG
-      lastTopicPath = *topicPath;
-      lastPayload = *payload; 
+      lastTopicPath = topicPath;
+      lastPayload = payload; 
       printAppData(); // See note above about this being an extern
     #endif
-    Serial.print("LoRaMesher received "); Serial.print(*topicPath); Serial.print(F("=")); Serial.println(*payload);
+    Serial.print("LoRaMesher received "); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
 
     // How do we tell if this is an message heading upstream (from node to MQTT) or downstream (from MQTT on gateway node or other node via the router)
     // Three cases
@@ -199,17 +199,17 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
     // c: message outgoing to us as gateway: src=anotherLeaf dst=thisLeaf/gateway
     // Cant use src as there may be multiple gateways AND could be message reflected at gateway
     // For now - may change this - use retain=12 (character is '<' on "a" and "b"
-    if (*topicPath == "subscribe") { // Will always be UPSTREAM
-      Serial.print("LoRaMesher forwarding subscription to MQTT "); Serial.println(*payload);
+    if (topicPath == "subscribe") { // Will always be UPSTREAM
+      Serial.print("LoRaMesher forwarding subscription to MQTT "); Serial.println(payload);
       // Need to remember the subscription before calling subscribe, because there may be retained data returned immediately
-      meshSubscriptions.emplace_front(*payload, appPacket->src);
+      meshSubscriptions.emplace_front(payload, appPacket->src);
       frugal_iot.messages->subscribe(payload);  // Should queue for MQTT since we are the gateway
     }
     if (downstream) {
-      Serial.print("XXX " __FILE__); Serial.print("downstream "); Serial.println(*topicPath);
-      frugal_iot.messages->dispatch(*topicPath, *payload);
+      //Serial.print("XXX " __FILE__); Serial.print("downstream "); Serial.println(topicPath);
+      frugal_iot.messages->dispatch(topicPath, payload);
     } else { // upstream (not subscribe)
-      Serial.print("LoRaMesher forwarding to MQTT:"); Serial.print(*topicPath); Serial.print(F("=")); Serial.println(*payload);
+      Serial.print("LoRaMesher forwarding to MQTT:"); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
       frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
     }
   }
@@ -322,7 +322,7 @@ void System_LoraMesher::dispatchPath(const String &topicPath, const String &payl
   for (auto &sub : meshSubscriptions) { 
     // Find matching subscriptions
     if (match_topic(topicPath, sub.topicPath)) { // Allows for + and # wildcards
-      Serial.print("XXX "); Serial.print(topicPath); Serial.print(" matches "); Serial.println(topicPath);
+      //Serial.print("XXX "); Serial.print(topicPath); Serial.print(" matches "); Serial.println(topicPath);
       // send over LoRaWan to subscriber
       relayDownstream(sub.src, topicPath, payload);
     }
