@@ -638,45 +638,6 @@ void OUTuint16::discover() {
   OUT::discover(); // Sends value
 }
 
-/* 
-//Not used - built for gsheets where followed by a "wireto"
-IN* IN::INxxx(IOtype t, const char* sensorId) {
-  switch (t) {
-    // TO-ADD-INxxx
-    case BOOL:
-      return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
-    case UINT16:
-      return new INuint16(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
-    case FLOAT:
-      return new INfloat(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
-    case COLOR:
-      return new INcolor(sensorId, nullptr, nullptr, 0, 0, 0, true);
-    default:
-      return nullptr;
-  }
-}
-*/
-
-/* 
-//Not used - built for gsheets where followed by a "wireto"
-IN* IN::INxxx(IOtype t, const char* sensorId) {
-  switch (t) {
-    // TO-ADD-INxxx
-    case BOOL:
-      return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
-    case UINT16:
-      return new INuint16(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
-    case FLOAT:
-      return new INfloat(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
-    case COLOR:
-      return new INcolor(sensorId, nullptr, nullptr, 0, 0, 0, true);
-    default:
-      return nullptr;
-  }
-}
-*/
-
-
 // These are mostly to stop the compiler complaining about missing vtables
 void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }
 #pragma GCC diagnostic push

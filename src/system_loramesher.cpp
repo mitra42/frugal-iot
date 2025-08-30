@@ -249,12 +249,12 @@ void System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
   // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
   char qos_char = '0' + qos; // 0 1 2 as for MQTT incoming=12
   char retain_char = '0' + retain;
-  const char* stringymessage = lprintf(100, "%c%c%s:%s", 
+  const char* stringymessage = lprintf(100, "%c%c%s:%s", // Creates new buffer, exolicitly deleted below
     qos_char, retain_char,
     topic.c_str(), payload.c_str());
   size_t msglen = strlen(stringymessage)+1; // +1 to include terminating \0
   // Allocate enough memory for the struct + message
-  uint8_t* msg = (uint8_t*) malloc(msglen);
+  uint8_t* msg = (uint8_t*) malloc(msglen); // explicitly free-d below
   //DataPacket* dPacket = (DataPacket*) malloc(sizeof(DataPacket) + msglen); // sendPacket wants uint8_t*
   // Copy the string into the message array
   memcpy(msg, stringymessage, msglen);
