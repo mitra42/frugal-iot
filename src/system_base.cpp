@@ -57,16 +57,16 @@ void System_Base::readConfigFromFS(File dir, const String* leaf) {
       break;
     }
     // Lets presume reading a:  wifi/foo  or b:  sht/temperature or c: sht/temperature/max
-    //Serial.print(id); Serial.print("/"); Serial.print(leaf); Serial.print("/"); Serial.print(entry.name());
+    //Serial.print(id); Serial.print(F("/")); Serial.print(leaf); Serial.print(F("/")); Serial.print(entry.name());
     const String newleaf = (leaf ? (*leaf + "/") : "") + entry.name();
     Serial.print(id); Serial.print(F("/")); Serial.print(newleaf);
     if (entry.isDirectory()) { // b: entry is directory sht/temperature 
-      Serial.println("/");
+      Serial.println(F("/"));
       readConfigFromFS(entry, &newleaf); 
     } else { // a: id=wifi twiglet=nullptr entry is foo   or c: id=sht twiglet=temperature entry is max
       String payload = entry.readString();
       payload.trim(); // Remove leading/trailing whitespace
-      Serial.print("="); Serial.println(payload);
+      Serial.print(F("=")); Serial.println(payload);
       dispatchTwig(id, newleaf, payload, true);
     }
     entry.close();
@@ -219,7 +219,7 @@ void IN::setup() {
 // Leaf should be e.g. now/wired 
 void IO::writeConfigToFS(const String &leaf, const String& payload) { 
   String path = String("/") + sensorId + "/" + leaf;
-  //Serial.println("Writing config to " + path + "=" + payload);
+  //Serial.println(F("Writing config to " + path + "=" + payload));
   frugal_iot.fs_LittleFS->spurt(path, payload);
 }
 // Options eg: sht/temp set/sht/temp/wired set/sht/temp set/sht/temp/max
@@ -378,31 +378,31 @@ bool IO::dispatchPath(const String &topicPath, const String &payload) {
 void IO::debug(const char* const where) {
   // Note subclass needs to provide terminating println (usually after a type-dependent value)
     Serial.print(where); 
-    Serial.print(" topicTwig="); Serial.print(topicTwig ? topicTwig : "NULL"); 
-    Serial.print(" wireable"); Serial.print(wireable);
+    Serial.print(F(" topicTwig=")); Serial.print(topicTwig ? topicTwig : "NULL"); 
+    Serial.print(F(" wireable")); Serial.print(wireable);
     if (wireable) {
-      Serial.print(" wiredPath="); Serial.print(wiredPath); 
+      Serial.print(F(" wiredPath=")); Serial.print(wiredPath); 
     }
 }
 // TO_ADD_INxxx
 void INfloat::debug(const char* const where) {
     IO::debug(where);
-    Serial.print(" value="); Serial.println(value); 
+    Serial.print(F(" value=")); Serial.println(value); 
 }
 void INuint16::debug(const char* const where) {
   IO::debug(where);
-  Serial.print(" value="); Serial.println(value); 
+  Serial.print(F(" value=")); Serial.println(value); 
 }
 void INcolor::debug(const char* const where) {
   IO::debug(where);
   // TODO-131 should be xx not x for "0" 
-  Serial.print("r="); Serial.print(r, HEX); 
-  Serial.print("g="); Serial.print(g, HEX); 
-  Serial.print("b="); Serial.print(b, HEX); 
+  Serial.print(F("r=")); Serial.print(r, HEX); 
+  Serial.print(F("g=")); Serial.print(g, HEX); 
+  Serial.print(F("b=")); Serial.print(b, HEX); 
 }
 void INtext::debug(const char* const where) {
   IO::debug(where);
-  Serial.print(" value="); Serial.println(*value); 
+  Serial.print(F(" value=")); Serial.println(*value); 
 }
 void INbool::debug(const char* const where) {
   IO::debug(where);
@@ -411,15 +411,15 @@ void INbool::debug(const char* const where) {
 // TO_ADD_OUTxxx
 void OUTfloat::debug(const char* const where) {
     IO::debug(where);
-    Serial.print(" value="); Serial.println(value); 
+    Serial.print(F(" value=")); Serial.println(value); 
 }
 void OUTbool::debug(const char* const where) {
     IO::debug(where);
-    Serial.print(" value="); Serial.println(value); 
+    Serial.print(F(" value=")); Serial.println(value); 
 }
 void OUTuint16::debug(const char* const where) {
   IO::debug(where);
-  Serial.print(" value="); Serial.println(value); 
+  Serial.print(F(" value=")); Serial.println(value); 
 }
 #endif
 
@@ -593,7 +593,7 @@ void OUT::sendWired() {
 // TO-ADD-OUTxxx
 void OUTfloat::set(const float newvalue) {
   #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
   #endif
   if (newvalue != value) {
     value = newvalue;
@@ -603,7 +603,7 @@ void OUTfloat::set(const float newvalue) {
 }
 void OUTuint16::set(const uint16_t newvalue) {
   #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
   #endif
   if (newvalue != value) {
     value = newvalue;
@@ -617,7 +617,7 @@ void OUTbool::send() {
 }
 void OUTbool::set(const bool newvalue) {
   #ifdef CONTROL_HYSTERISIS_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
   #endif
   if (newvalue != value) {
     value = newvalue;

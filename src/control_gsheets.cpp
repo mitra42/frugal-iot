@@ -65,11 +65,11 @@ void Control_Gsheets::sendGoogle(String payload) {
     http.begin(url);
   #endif
     http.addHeader("Content-Type", "application/json");
-    Serial.print("📤 Sending Data to Google Sheet at:"); Serial.println(url);
+    Serial.print(F("📤 Sending Data to Google Sheet at:")); Serial.println(url);
     Serial.println(payload);  // Debug: Print JSON payload
     int httpResponseCode = http.POST(payload);  
     if (httpResponseCode >= 300 && httpResponseCode < 400) {
-        Serial.println("✅ Data Sent Successfully to Google Sheets!");
+        Serial.println(F("✅ Data Sent Successfully to Google Sheets!"));
         Serial.println(httpResponseCode);
     } else {
         Serial.printf("❌ Error Sending Data! HTTP Code: %d\n", httpResponseCode);

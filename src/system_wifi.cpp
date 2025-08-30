@@ -141,7 +141,7 @@ bool System_WiFi::recoverFromLightSleep() {
   }
    // Spin till its started
   while (WiFi.status() == WL_NO_SHIELD) {
-     /*Serial.print("w");*/ 
+     /*Serial.print(F("w"));*/ 
      delay(100); 
   }
   return true;
@@ -156,7 +156,7 @@ bool System_WiFi::recoverFromLightSleep() {
 #endif
 void System_WiFi::stateMachine() {
   // State machine
-  //Serial.print(" XXX Wifi="); Serial.print(status); Serial.print(" "); Serial.println(WiFi.status());
+  //Serial.print(F(" XXX Wifi=")); Serial.print(status); Serial.print(F(" ")); Serial.println(WiFi.status());
   switch (status)
   {
     case WIFI_STARTING: //0
@@ -196,9 +196,9 @@ void System_WiFi::stateMachine() {
     case WIFI_NEEDSCAN: //4
         if (rescan()) { // async
           setStatus(WIFI_SCANNING);
-          Serial.print("WiFi rescanning "); Serial.println(WiFi.status());
+          Serial.print(F("WiFi rescanning ")); Serial.println(WiFi.status());
         } else {
-          Serial.println("WiFi Scan failed to start");
+          Serial.println(F("WiFi Scan failed to start"));
           break; // stay in WIFI_NEEDSCAN
         }
         // drop thru
@@ -214,7 +214,7 @@ void System_WiFi::stateMachine() {
         }
         default: {
           // Weirdly WiFi.status() reports WL_DISCONNECTED rather than WL_SCAN_COMPLETED
-          Serial.print("WiFi found:"); Serial.println(num_networks);
+          Serial.print(F("WiFi found:")); Serial.println(num_networks);
           connectOneAndAllReset(); 
           status = WIFI_SCANNED;
         }

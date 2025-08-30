@@ -199,7 +199,7 @@ void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms,
 void System_Frugal::setup() {
   // By the time this is run, mqtt should have been added, and serial started in main.cpp
   #ifdef SYSTEM_FRUGAL_DEBUG
-    Serial.print("Setup: ");
+    Serial.print(F("Setup: "));
   #endif
   readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig
   Frugal_Group::setup(); // includes WiFi
@@ -235,7 +235,7 @@ void System_Frugal::periodically() {
 
 // Main loop() - call this from main.cpp
 void System_Frugal::loop() {
-  //Serial.print("⏳1");
+  //Serial.print(F("⏳1"));
   if (timeForPeriodic) {
     heap_print(F("loop periodic"));
     periodically();  // Do things run once per cycle

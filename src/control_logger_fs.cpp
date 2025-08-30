@@ -32,7 +32,7 @@ void Control_LoggerFS::setup() {
 // Basis append for logger, there might be other sets of parameters needed = extend as required.
 void Control_LoggerFS::append(const String &topicPath, const String &payload) {
   #ifdef CONTROL_LOGGERFS_DEBUG
-    Serial.print("Control_Logger::append "); Serial.print(topicPath); Serial.print(" "); Serial.println(payload);
+    Serial.print(F("Control_Logger::append ")); Serial.print(topicPath); Serial.print(F(" ")); Serial.println(payload);
   #endif
   time_t _now = frugal_iot.time->now(); 
   struct tm* tmstruct = localtime(&_now);

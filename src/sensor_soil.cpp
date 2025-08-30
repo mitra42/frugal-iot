@@ -31,7 +31,7 @@ Sensor_Soil::Sensor_Soil(const char* const id, const char * const name, const ui
 uint16_t Sensor_Soil::read() {
   const uint16_t x = analogRead(pin);
   #ifdef SENSOR_SOIL_DEBUG
-    Serial.print("Soil sensor reading:"); Serial.println(x);
+    Serial.print(F("Soil sensor reading:")); Serial.println(x);
   #endif
   if (x == 4095) { // 12 bit -1 i.e. 0xFFF
     return SENSOR_SOIL_INVALIDVALUE;

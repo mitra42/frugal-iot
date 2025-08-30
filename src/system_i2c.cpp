@@ -41,9 +41,9 @@ bool System_I2C::read(uint8_t* buf, uint8_t bytes) {
     buf[i] = wire->read(); // TODO allow for failure and return true or false.
   }
   #ifdef SYSTEM_I2C_DEBUG
-    Serial.print("I2C read");
+    Serial.print(F("I2C read"));
     for (uint8_t i = 0; i < bytes; i++) {
-      Serial.print(buf[i], HEX); Serial.print(" ");
+      Serial.print(buf[i], HEX); Serial.print(F(" "));
     }
     Serial.println();
   #endif

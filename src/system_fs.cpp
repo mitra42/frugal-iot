@@ -100,10 +100,10 @@ bool System_FS::spurt(const String& filename, const String& content) {
 }
 String System_FS::slurp(const String& fn, const bool quietfail) {
   if (quietfail && !exists(fn)) {
-    //Serial.print("XXX __FILE"); Serial.println(__LINE__);
+    //Serial.print(F("XXX __FILE")); Serial.println(__LINE__);
     return "";
   }
-  //Serial.print("XXX __FILE"); Serial.println(__LINE__);
+  //Serial.print(F("XXX __FILE")); Serial.println(__LINE__);
   File f = open(fn, "r"); // Virtual, knows what kind of FS
   String r = f.readString();
   f.close();
@@ -144,11 +144,11 @@ void System_FS::printDirectory(File dir, int numTabs) {  // e.g. "/"
     for (uint8_t i = 0; i < numTabs; i++) { Serial.print('\t'); }
     Serial.print(entry.name());
     if (entry.isDirectory()) {
-      Serial.println("/");
+      Serial.println(F("/"));
       printDirectory(entry, numTabs + 1); // TODO want the path not the name 
     } else {
       // files have sizes, directories do not
-      Serial.print("\t\t");
+      Serial.print(F("\t\t"));
       Serial.print(formatBytes(entry.size()));
       struct tm* tmstruct;
       #ifdef ESP8266

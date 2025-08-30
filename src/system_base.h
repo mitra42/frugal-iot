@@ -106,7 +106,7 @@ class INfloat : public IN {
     // Copy assignment operator
     /*
     INfloat& operator=(const INfloat &other) {
-      Serial.print("XXXXXX IN assignment __FILE__"); Serial.println(__LINE__); // Debugging here, because dont think this is used
+      Serial.print(F("XXXXXX IN assignment __FILE__")); Serial.println(__LINE__); // Debugging here, because dont think this is used
       if (this != &other) {
           value = other.value;
           name = other.name;

@@ -90,14 +90,14 @@ uint8_t Sensor_ensaht::AHTspinTillReady() {
     status = aht->send1read1(AHTX0_STATUS_REGISTER);
   } while (status & AHTX0_STATUS_BUSY);
   #ifdef SENSOR_ENSAHT_DEBUG
-    //Serial.println("AHTx ready;");
+    //Serial.println(F("AHTx ready;");
   #endif
   return status; // Will mostly be ignored
 }
 
 void Sensor_ensaht::setupAHT() {
   #ifdef SENSOR_ENSAHT_DEBUG
-    Serial.println("AHT21 Setup;");
+    Serial.println(F("AHT21 Setup;"));
   #endif
   humidity->setup();
   temperature->setup();
@@ -130,7 +130,7 @@ bool Sensor_ensaht::ENSsend2(uint8_t reg, uint8_t val) {
   bool status = ens->send(cmd, 2); // TODO-101 check sense of return code from ens-send
   #ifdef SENSOR_ENSAHT_DEBUG
     if (!status) {
-      Serial.print("ENS failed to send"); Serial.print(reg); Serial.println(val);
+      Serial.print(F("ENS failed to send")); Serial.print(reg); Serial.println(val);
     }
   #endif
   delay(ENS160_BOOTING);
@@ -151,7 +151,7 @@ bool Sensor_ensaht::ENSsendAndRead(uint8_t reg, uint8_t *buf, uint8_t num) {
 void Sensor_ensaht::setupENS() {
   uint8_t readbuffer[2];
   #ifdef SENSOR_ENSAHT_DEBUG
-    Serial.println("ENS160 Setup");
+    Serial.println(F("ENS160 Setup"));
   #endif
   eco2->setup();
   aqi->setup();
@@ -166,14 +166,14 @@ void Sensor_ensaht::setupENS() {
     switch (part_id) { 
       case ENS160_PARTID: 
         isENS161 = false;
-        Serial.println("ENS160");
+        Serial.println(F("ENS160"));
         break;
       case ENS161_PARTID:
         isENS161 = true;
         Serial.print(F("ENS160"));
         break;
       default:
-        Serial.println("Unknown");
+        Serial.println(F("Unknown"));
         break;
     }
   #endif
@@ -241,7 +241,7 @@ void Sensor_ensaht::readAndSetENS() {
     delay(1);
     status = ens->send1read1(ENS160_REG_DATA_STATUS);
     #ifdef SENSOR_ENSAHT_DEBUG
-      //Serial.print("e");
+      //Serial.print(F("e"));
     #endif
   } while (!(ENS160_DATA_STATUS_NEWDAT & status));
   ENSsendAndRead(ENS160_REG_DATA_AQI, readbuffer, 7);

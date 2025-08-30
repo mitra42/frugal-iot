@@ -66,22 +66,22 @@ class CaptiveRequestHandler : public AsyncWebHandler {
   }
 
   void handleRequest(AsyncWebServerRequest *request) {
-    Serial.println("Captive: Handling request with captive portal");
-    //Serial.print("XXX Host="); Serial.println(request->host());
-    //Serial.print("XXX User-Agent:"); Serial.println(request->getHeader("User-Agent")->value());
+    Serial.println(F("Captive: Handling request with captive portal"));
+    //Serial.print(F("XXX Host=")); Serial.println(request->host());
+    //Serial.print(F("XXX User-Agent:")); Serial.println(request->getHeader("User-Agent")->value());
     String ip = WiFi.softAPIP().toString();
-    //Serial.print("XXX IP="); Serial.println(ip);
+    //Serial.print(F("XXX IP=")); Serial.println(ip);
     if (request->host() != ip) {
       // iPhone doesn't deal well with redirects to http://hostname/ and
       // will wait 40 to 60 seconds before succesful retry. Works flawlessly
       // with http://ip/ though.
-      //Serial.println("XXX Not Matching host and ip - i.e. its not accessing by IP address");  
+      //Serial.println(F("XXX Not Matching host and ip - i.e. its not accessing by IP address"));  
       // Anecdotally (according to WiFiSettings library), some devices require a non-empty response body
       AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", ip);
       response->addHeader("Location", "http://" + ip + "/");
       request->send(response);
     } else {
-      //Serial.println("XXX Matching host and ip - i.e. acessed by IP address, not name");      
+      //Serial.println(F("XXX Matching host and ip - i.e. acessed by IP address, not name"));      
       AsyncResponseStream *response = request->beginResponseStream("text/html");
       response->print(F("<!DOCTYPE html><html><head><title>"));
       response->print(T->CaptivePortal);
@@ -160,14 +160,14 @@ System_Captive::System_Captive()
 : System_Base("captive", "Captive") {}
 
 void System_Captive::setup() {
-  Serial.println("Configuring access point...");
+  Serial.println(F("Configuring access point..."));
   setupLanguages();
   readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig (Must come AFTER setting language strings)
 
   // Unsure what these items choose - copied from example -SOC_WIFI_SUPPORTED seems to be defined for ESP32
   #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI || defined(ESP8266)
     if (!WiFi.softAP(frugal_iot.nodeid)) { //TODO-153 add password as option (see WiFiSettings)
-      Serial.println("Soft AP creation failed.");
+      Serial.println(F("Soft AP creation failed."));
       return;  // Shouldn't happen
     }
     dnsServer.setTTL(0); //grabbed from old WiFiSettings  - unclear if needed or useful
@@ -178,7 +178,7 @@ void System_Captive::setup() {
 
   // Order is important - this has to come BEFORE the catch-all default portal
   server.on("/", HTTP_POST, [](AsyncWebServerRequest *request){
-    Serial.println("POST /");
+    Serial.println(F("POST /"));
     int params = request->params();
     for(int i=0;i<params;i++){
       const AsyncWebParameter* p = request->getParam(i);
@@ -195,7 +195,7 @@ void System_Captive::setup() {
               frugal_iot.dispatchTwig("wifi", p->value(), password->value(), true);
               // TODO-153 may wish to force it to try this new one
             } else {
-              Serial.println("SSID But No password");
+              Serial.println(F("SSID But No password"));
             }
             // Even if no password - can try switching WiFi
             frugal_iot.wifi->switchSSID(p->value());
@@ -221,7 +221,7 @@ void System_Captive::setup() {
   });
 
   server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
-    Serial.println("POST /restart");
+    Serial.println(F("POST /restart"));
     request->send(200, "text/plain",T->RestartingPleaseWait);
     // May need a callback here to do certain things before restarting 
     ESP.restart();

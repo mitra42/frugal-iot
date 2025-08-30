@@ -117,7 +117,7 @@ System_LoraMesher::System_LoraMesher()
 // setup points radio at receiveLoRaMessage_Handle which is set to processReceivedPackets in createReceiveMessages()
 // Could parameterize this, but working on assumption that this will only ever point to the MQTT handler once its all working
 void System_LoraMesher::setup() {
-  Serial.println("Loramesher setup");
+  Serial.println(F("Loramesher setup"));
   // Nothing to read from disk so not calling readConfigFromFS 
 
   //esp_log_level_set("*", ESP_LOG_VERBOSE);
@@ -132,7 +132,7 @@ void System_LoraMesher::setup() {
   //gpio_install_isr_service(ESP_INTR_FLAG_IRAM); // known error message - Jaimi says doesn't matter
   radio.start();     //Start LoRaMesher
   if (!findGatewayNode()) {
-      Serial.println("Setup did not find a gateway node - expect after receive routing");
+      Serial.println(F("Setup did not find a gateway node - expect after receive routing"));
   }
   checkRole(); // Probably wont do anything as MQTT probably not up yet - but will repeat in periodically
   #ifdef SYSTEM_LORAMESHER_DEBUG
@@ -168,7 +168,7 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
   if ((appPacket->payloadSize > SYSTEM_LORAMESHER_MAXLEGITPACKET) ||(appPacket->payloadSize <= 0)) {
     Serial.printf("LoRaMesher Received bad packet length=%d\n", appPacket->payloadSize);
   } else {
-    // Serial.print("XXX payloadSize="); Serial.println(appPacket->payloadSize);
+    // Serial.print(F("XXX payloadSize=")); Serial.println(appPacket->payloadSize);
     const uint8_t qos = appPacket->payload[0] - '0';
     const bool downstream = appPacket->payload[0] == ('0'+QOS_DOWNSTREAM);
     const bool retain = appPacket->payload[1] - '0'; // will be 0 or 1
@@ -190,7 +190,7 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
       lastPayload = payload; 
       printAppData(); // See note above about this being an extern
     #endif
-    Serial.print("LoRaMesher received "); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
+    Serial.print(F("LoRaMesher received ")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
 
     // How do we tell if this is an message heading upstream (from node to MQTT) or downstream (from MQTT on gateway node or other node via the router)
     // Three cases
@@ -200,16 +200,16 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
     // Cant use src as there may be multiple gateways AND could be message reflected at gateway
     // For now - may change this - use retain=12 (character is '<' on "a" and "b"
     if (topicPath == "subscribe") { // Will always be UPSTREAM
-      Serial.print("LoRaMesher forwarding subscription to MQTT "); Serial.println(payload);
+      Serial.print(F("LoRaMesher forwarding subscription to MQTT ")); Serial.println(payload);
       // Need to remember the subscription before calling subscribe, because there may be retained data returned immediately
       meshSubscriptions.emplace_front(payload, appPacket->src);
       frugal_iot.messages->subscribe(payload);  // Should queue for MQTT since we are the gateway
     }
     if (downstream) {
-      //Serial.print("XXX " __FILE__); Serial.print("downstream "); Serial.println(topicPath);
+      //Serial.print(F("XXX " __FILE__)); Serial.print(F("downstream ")); Serial.println(topicPath);
       frugal_iot.messages->dispatch(topicPath, payload);
     } else { // upstream (not subscribe)
-      Serial.print("LoRaMesher forwarding to MQTT:"); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
+      Serial.print(F("LoRaMesher forwarding to MQTT:")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
       frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
     }
   }
@@ -285,7 +285,7 @@ LoraMesherMode System_LoraMesher::checkRole() {
   if (frugal_iot.mqtt->connected()) {
     if (!radio.isGatewayRole()) {
       #ifdef SYSTEM_LORAMESHER_DEBUG
-        Serial.println("Adding gateway role"); 
+        Serial.println(F("Adding gateway role")); 
       #endif
       radio.addGatewayRole();
     }
@@ -322,7 +322,7 @@ void System_LoraMesher::dispatchPath(const String &topicPath, const String &payl
   for (auto &sub : meshSubscriptions) { 
     // Find matching subscriptions
     if (match_topic(topicPath, sub.topicPath)) { // Allows for + and # wildcards
-      //Serial.print("XXX "); Serial.print(topicPath); Serial.print(" matches "); Serial.println(topicPath);
+      //Serial.print(F("XXX ")); Serial.print(topicPath); Serial.print(F(" matches ")); Serial.println(topicPath);
       // send over LoRaWan to subscriber
       relayDownstream(sub.src, topicPath, payload);
     }

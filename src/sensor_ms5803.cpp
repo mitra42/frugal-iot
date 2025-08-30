@@ -54,7 +54,7 @@ Sensor_ms5803::Sensor_ms5803(const char* const id, const char * const name, uint
 void Sensor_ms5803::setup() {
   Sensor::setup(); // Will readConfigFromFS - do before setting up pins
   #ifdef SENSOR_MS5803_DEBUG
-    Serial.println("MS5803 Setup");
+    Serial.println(F("MS5803 Setup"));
   #endif
   pressure->setup();
   delay(100); // TODO XXX unsure if needed
@@ -68,7 +68,7 @@ void Sensor_ms5803::setup() {
     interface.send(SENSOR_CMD_COEFFICIENT0 + ( i * 2 ));  // read coefficients    
     sensorCoefficients[ i ] = (uint16_t)interface.read(2);  // read coefficients
     #ifdef SENSOR_MS5803_DEBUG
-      Serial.print("Coefficient = ");
+      Serial.print(F("Coefficient = "));
       Serial.println(sensorCoefficients[ i ]);
     #endif 
     delay(10);

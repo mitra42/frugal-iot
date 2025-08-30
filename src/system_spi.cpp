@@ -46,7 +46,7 @@ uint32_t System_SPI::send1readN(uint8_t cmd, uint8_t bytes) {
     }
     digitalWrite( cs, HIGH );
     delay(10);
-    //Serial.print("XXX read");  Serial.println(result); 
+    //Serial.print(F("XXX read"));  Serial.println(result); 
     return result;
 }
 uint16_t System_SPI::read16(uint8_t cmd) {

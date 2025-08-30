@@ -177,7 +177,7 @@ bool System_MQTT::send(const String &topicPath, const String &payload, const boo
   if (connected()) {
     #ifdef SYSTEM_MQTT_DEBUG
       Serial.print(topicPath); Serial.print(F("=")); Serial.print(payload); 
-      // Serial.print(" qos="); Serial.print(qos);
+      // Serial.print(F(" qos=")); Serial.print(qos);
     #endif
     if (client.publish(topicPath, payload, retain, qos)) {
       #ifdef SYSTEM_MQTT_DEBUG

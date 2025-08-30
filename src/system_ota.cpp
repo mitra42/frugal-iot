@@ -97,20 +97,20 @@ void System_OTA::init(const String otaServerAddress, const String softwareVersio
 
 void otaStartCB() {
   frugal_iot.ota->_isOK = true;
-  Serial.println("OTA start");
+  Serial.println(F("OTA start"));
 }
 
 void otaProgressCB(int done, int size) {
-  Serial.print("OTA progress: Done "); Serial.print(done); Serial.print(" of "); Serial.println(size);
+  Serial.print(F("OTA progress: Done ")); Serial.print(done); Serial.print(F(" of ")); Serial.println(size);
 }
 
 void otaEndCB() {
-  Serial.println("OTA end");
+  Serial.println(F("OTA end"));
   frugal_iot.ota->_checked = true;
 }
 
 void otaErrorCB(int errorCode) {
-  Serial.print("OTA error "); Serial.println(errorCode);
+  Serial.print(F("OTA error ")); Serial.println(errorCode);
   frugal_iot.ota->_isOK = false;
 }
 
@@ -137,25 +137,25 @@ void System_OTA::checkForUpdate() {
   // but the true key to the software is the MD5 hash, which is always sent
   
   if (_otaServerAddress.length() == 0 || ! strchr(_otaServerAddress.c_str(), ':')) {
-    Serial.println("OTA ServerUrl not set");
+    Serial.println(F("OTA ServerUrl not set"));
     return;
   }
   t_httpUpdate_return ret = HTTPUPDATE.update(client, _otaServerAddress, _softwareVersion);
 
   switch (ret){
     case HTTP_UPDATE_FAILED:
-  	  Serial.print("OTA error ="); Serial.print(HTTPUPDATE.getLastError()); Serial.print(F(",")); Serial.println(HTTPUPDATE.getLastErrorString());
+  	  Serial.print(F("OTA error =")); Serial.print(HTTPUPDATE.getLastError()); Serial.print(F(",")); Serial.println(HTTPUPDATE.getLastErrorString());
       _isOK = false;
       break;
     
     case HTTP_UPDATE_NO_UPDATES:
-	    Serial.println("OTA up to date");
+	    Serial.println(F("OTA up to date"));
       _checked = true;
       _isOK = true;
       break;
     
     case HTTP_UPDATE_OK:
-	    Serial.println("OTA end");
+	    Serial.println(F("OTA end"));
       _checked = true;
       _isOK = true;
       break;
@@ -172,7 +172,7 @@ void System_OTA::setup_after_mqtt_setup() {
   // Nothing to read from disk so not calling readConfigFromFS 
   const String url = getOTApath(); // Needs topicPrefix setup in MQTT::setup
   // Note this must run after WiFi has connected  and ideally before MQTT or Discovery except it needs xDiscovery::topicPrefix
-  Serial.print("Attempt OTA from:"); Serial.println(url);
+  Serial.print(F("Attempt OTA from:")); Serial.println(url);
   #ifdef ESP32
     init(url, SYSTEM_OTA_VERSION, rootCACertificateForNaturalInnovation);
   #elif defined(ESP8266)

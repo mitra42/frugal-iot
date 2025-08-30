@@ -60,7 +60,7 @@ void System_Discovery::infrequently() {
         fullAdvertise();
       } 
       // quick can be fone if have MQTT or have LoRaMesher
-      //Serial.print("XXX" __FILE__); Serial.println(__LINE__);
+      //Serial.print(F("XXX" __FILE__)); Serial.println(__LINE__);
       if (frugal_iot.canMQTT() 
         #ifdef SYSTEM_LORAMESHER_WANT // This is automatically defined on LoRa compatable boardss
           || (frugal_iot.loramesher && frugal_iot.loramesher->connected())

@@ -39,7 +39,7 @@ Sensor_Battery::Sensor_Battery(const uint8_t pin_init, const float voltage_divid
     static const float multiplier = VCC_MILLIVOLTS / ANALOG_READ_RANGE ; 
     const float analogValue = analogRead(pin);
     #ifdef SENSOR_BATTERY_DEBUG
-      Serial.print("Battery read:"); Serial.print(analogValue); Serial.print(F(" multiplier "));  Serial.print(multiplier); Serial.print(F(" report ")); Serial.println(analogValue * multiplier); 
+      Serial.print(F("Battery read:")); Serial.print(analogValue); Serial.print(F(" multiplier "));  Serial.print(multiplier); Serial.print(F(" report ")); Serial.println(analogValue * multiplier); 
     #endif
     return analogValue * multiplier;  // Note this is millivolts at A0, which has been divided by voltage_divider
   }
