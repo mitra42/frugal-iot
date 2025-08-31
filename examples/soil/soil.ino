@@ -1,5 +1,5 @@
 /* 
- *  Frugal IoT example - SHT30 temperature and humidity sensor
+ *  Frugal IoT example - SOIL Sensor, with SHT
  * 
  * Optional: SENSOR_SHT_ADDRESS - defaults to 0x44, (note the D1 shields default to 0x45)
  */
@@ -18,8 +18,8 @@ void setup() {
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 
 // Soil sensor 0%=4095 100%=0 pin=3 smooth=0 color=brown
-  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil", 4095, 0, 3, 0, "brown", true));
-  
+  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil",3, 4095, -100.0/4095, "brown", true));
+
   // Configure power handling - type, cycle_ms, wake_ms 
   // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
   // Loop= awake all the time; 

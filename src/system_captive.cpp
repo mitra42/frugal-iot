@@ -240,10 +240,12 @@ void System_Captive::setup() {
 }
 
 // TODO may need to wrap labels etc in html_entities()
+
+// String input
 void System_Captive::addString(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, uint8_t min_length, uint8_t max_length) {
   response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlength=" + min_length + " maxlength=" + max_length + "></label></p>");  
 }
-/* Untested number and bool */
+// Untested number and bool input
 void System_Captive::addNumber(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, long min, long max) {
   response->print(String(F("<p><label>")) + label + ":<br><input type=number step=1 name='" + id + "/" + topicTwig + "' value='" + init + "' min=" + min + " max=" + max + "></label></p>");  
 }

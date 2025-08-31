@@ -7,11 +7,9 @@
 
 class Sensor_Soil : public Sensor_Analog {
   public: 
-    uint16_t map0;
-    uint16_t map100;
-    Sensor_Soil(const char* const id, const char * const name, const uint16_t map0, const uint16_t map100, const uint8_t pin_init, const uint8_t smooth_init, const char* color, bool retain);
-    uint16_t read() override;
-    bool valid(uint16_t newvalue);
+    Sensor_Soil(const char* const id, const char * const name, uint8_t pin_init, int offset, float scale, const char* color, bool retain);
+  protected:
+    bool validRaw(int v);
 };
 
 #endif // SENSOR_SOIL_H

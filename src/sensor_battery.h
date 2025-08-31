@@ -24,12 +24,11 @@
   #define SENSOR_BATTERY_VOLTAGE_DIVIDER 6.6 // From LilyGo code, not testd yet
 #endif 
 
-
 class Sensor_Battery : public Sensor_Analog {
   public: 
     const float voltage_divider;
     Sensor_Battery(const uint8_t pin, const float voltage_divider);
-    uint16_t read() override;
+    float read() override;
 };
 
 #endif // SENSOR_BATTERY_H

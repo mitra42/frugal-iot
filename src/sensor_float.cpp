@@ -10,6 +10,7 @@
 #include <forward_list>
 #include "sensor.h"
 #include "sensor_float.h"
+#include "frugal_iot.h"
 
 Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain) 
 : Sensor(id, name, retain),
@@ -32,6 +33,7 @@ void Sensor_Float::discover() {
   output->discover();
 }
 
+// Subclass this for specific fields - like max, min etc
 void Sensor_Float::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     if (output->dispatchLeaf(topicTwig, payload, isSet)) { // True if changed
@@ -41,3 +43,7 @@ void Sensor_Float::dispatchTwig(const String &topicSensorId, const String &topic
   }
 }
 
+void Sensor_Float::captiveLines(AsyncResponseStream* response) {
+  frugal_iot.captive->addNumber(response, id, "output", String(output->value,width), name, output->min, output->max);
+  // Could add Tare as button - but probably want immediate response, not waiting on SEND
+}

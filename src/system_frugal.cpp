@@ -60,18 +60,31 @@ void Frugal_Group::dispatchTwig(const String &topicSensorId, const String &topic
 void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
     if (topicTwig == "project") { // TODO unclear we should be changing project on a device live
+      project = String(payload); // Note weirdness, it really needs to copy 
       // project = payload;
     } else if (topicTwig == "name") {
       name = String(payload); // Note weirdness, it really needs to copy 
     } else if (topicTwig == "description") {
       description = payload;
     }
-    writeConfigToFS(topicTwig, payload);
+    writeConfigToFS(topicTwig, payload); // Save for next time
     System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   } else { // No point in passing on our own id for the loop
     Frugal_Group::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }
+void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
+  // topic Twig  <actuatorId>/<ioID> or  <actuatorId>/<ioID> or <actuatorId>/<ioID>/<config>
+  int8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
+  if (slashPos != -1) {
+    String id = topicTwig.substring(0, slashPos);       // Extract the part before the slash
+    String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
+    dispatchTwig(id, topicLeaf, payload, isSet); // Start the loop now its been parsed
+  } else {
+    Serial.print(F("No slash found in topic: ")); Serial.println(topicTwig);
+  }
+}
+
 
 void System_Frugal::discover() {
   messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
@@ -84,18 +97,6 @@ void System_Frugal::captiveLines(AsyncResponseStream* response) {
   captive->addString(response, id, "name", name, T->DeviceName, 3, 15);
   captive->addString(response, id, "description", description, T->Description, 3, 40);
   Frugal_Group::captiveLines(response);
-}
-
-void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
-  // topic Twig  <actuatorId>/<ioID> or  <actuatorId>/<ioID> or <actuatorId>/<ioID>/<config>
-  int8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
-  if (slashPos != -1) {
-    String id = topicTwig.substring(0, slashPos);       // Extract the part before the slash
-    String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
-    dispatchTwig(id, topicLeaf, payload, isSet);
-  } else {
-    Serial.print(F("No slash found in topic: ")); Serial.println(topicTwig);
-  }
 }
 
 void Frugal_Group::discover() {

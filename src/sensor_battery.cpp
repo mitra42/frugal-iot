@@ -15,9 +15,12 @@
 #include "sensor_analog.h"
 #include "sensor_battery.h"
 
+// TODO Currently, the offset and scale functionality of Sensor_Analog is not being used. 
+// TODO msot of the functionality below could be replaced by setting a scale at setup()
+
 // Note voltage divider is board specific - known defaults in sensor_battery.h
 Sensor_Battery::Sensor_Battery(const uint8_t pin_init, const float voltage_divider) 
-: Sensor_Analog("battery", "Battery", pin_init, 0, 0, 4500, "green", true),
+: Sensor_Analog("battery", "Battery", pin_init, 0, 0, 4.5, 0, 1000, "green", true),
   voltage_divider(voltage_divider)
   { }
 
@@ -45,7 +48,7 @@ Sensor_Battery::Sensor_Battery(const uint8_t pin_init, const float voltage_divid
   }
 #endif //ESP8266
 
-uint16_t Sensor_Battery::read() {
+float Sensor_Battery::read() {
   // Note - have tested this will do a float multiplication if voltage_divider is a float
     return analogReadMilliVolts(pin) * voltage_divider; 
 }

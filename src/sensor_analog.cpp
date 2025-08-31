@@ -15,6 +15,7 @@
 
 #include "_settings.h"  // Settings for what to include etc
 #include "sensor_analog.h"
+#include "frugal_iot.h"
 
 
 #include <Arduino.h>
@@ -38,20 +39,21 @@
 #ifndef SENSOR_ANALOG_UNSUPPORTED
 // If Analog unsupported then a linker error will be generated if try and add one. 
 
-Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, const uint8_t p, const uint8_t smooth_init, const uint16_t min, const uint16_t max, const char* color, bool r) 
-: Sensor_Uint16(id, name, smooth_init, min, max, color, r), pin(p) { };
+Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, const uint8_t p, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool r) 
+: Sensor_Float(id, name, width, min, max, color, r),
+  pin(p),
+  offset(offset),
+  scale(scale)
+{ };
+
 
 // Sensor_Uint16_t::act is obsolete
 // Sensor_Uint16_t::set is good - does optional smooth, compares and sends
 // Sensor_Uint16_t::periodically is good - does periodic read and set
 
-// Note this is virtual, and subclassed in Sensor_Battery
-uint16_t Sensor_Analog::read() {
-  return analogRead(pin);
-}
 
 void Sensor_Analog::setup() {
-  Sensor_Uint16::setup(); // Will readConfigFromFS - do before setting up pin
+  Sensor_Float::setup(); // Will readConfigFromFS - do before setting up pin
   // initialize the analog pin as an input.
   pinMode(pin, INPUT); // I don't think this is needed ?
   #ifdef SENSOR_ANALOG_REFERENCE
@@ -61,7 +63,59 @@ void Sensor_Analog::setup() {
     analogSetAttentuation(SENSOR_ANALOG_ATTENTUATION)
   #endif
 }
-// SensorAnalog::dispatchTwig is not needed
+
+// Note this is virtual, and subclassed in Sensor_Battery
+int Sensor_Analog::readRaw() {
+  return analogRead(pin); // Returns an int - which should be int16_t
+}
+// This may be specific to device being read - expect it to be subclassed
+bool Sensor_Analog::validRaw(int v) {
+  return true;
+}
+
+void Sensor_Analog::readAndSet() {
+  int v = readRaw();
+  #ifdef SENSOR_ANALOG_DEBUG
+    Serial.print(F("Analog read raw ")); Serial.print(v); Serial.print(F("->")); Serial.println((v-offset)*scale);
+  #endif
+  if (validRaw(v)) {
+    set((v-offset)*scale);
+  }
+}
+// May return a scale of an invalid value
+float Sensor_Analog::read() {
+  return (readRaw()-offset) * scale;
+}
+void Sensor_Analog::tare() {
+  // Read and use the reading as the offset for a 0 value
+  offset = readRaw();
+}
+void Sensor_Analog::calibrate(float val) {
+  // Note this could calibrate off an invalid raw value, may want to check if see this behavior
+  scale = val / (readRaw() - offset);
+}
+void Sensor_Analog::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+  if (topicSensorId == id) {
+    // Set by UX - "Tare" is weight=0  Calbrate is weight=XX
+    if (topicTwig == "output") {
+      if(payload.toFloat() == 0.0) {
+        tare(); // sets offset
+        writeConfigToFS("offset", String(offset));
+      } else {
+        calibrate(payload.toFloat()); // uses offset, sets scale
+        writeConfigToFS("scale", String(scale));
+      }
+    // offset and scale should only be seen when reading from disk
+    } else if (topicTwig == "offset") {
+      offset = payload.toInt();
+    } else if (topicTwig == "scale") {
+      scale = payload.toFloat();
+    } else {
+      Sensor_Float::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+    }
+  }
+}
+
 
 #endif // SENSOR_ANALOG_UNSUPPORTED
 

@@ -12,6 +12,7 @@
 
 #if !defined(PLATFORMIO)
   // On Arduiono do not have platformio.ini so presume these standards
+  // TO-ADD-SENSOR TO-ADD-CONTROL TO-ADD-ACTUATOR TO-ADD-SYSTEm
   #define CONTROL_BLINKEN_DEBUG
   #define CONTROL_LOGGERFS_DEBUG
   #define SENSOR_ENSAHT_DEBUG
