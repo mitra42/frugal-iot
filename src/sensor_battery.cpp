@@ -35,8 +35,8 @@
 
   #define SENSOR_BATTERY_SCALE (SENSOR_BATTERY_VOLTAGE_DIVIDER)
 
-  int readInt() {
-    return analogReadMilliVolts();  // returns uint32 
+  int Sensor_Battery::readInt() {
+    return analogReadMilliVolts(pin);  // returns uint32 
   }
 #endif //ESP8266
 

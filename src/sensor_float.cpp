@@ -60,6 +60,6 @@ void Sensor_Float::dispatchTwig(const String &topicSensorId, const String &topic
 }
 
 void Sensor_Float::captiveLines(AsyncResponseStream* response) {
-  frugal_iot.captive->addNumber(response, id, "output", String(output->value,width), name, output->min, output->max);
+  frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),(int)width), name, output->min, output->max);
   // Could add Tare as button - but probably want immediate response, not waiting on SEND
 }

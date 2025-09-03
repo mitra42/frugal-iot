@@ -18,7 +18,7 @@ class Sensor_ms5803 : public Sensor {
   public:
     Sensor_ms5803(const char* const id, const char * const name, uint8_t address, TwoWire* wire = &I2C_WIRE);
     ~Sensor_ms5803(); //TODO-132
-  private: // Since this just overrides things in the Base class, its basically all private
+  protected: // Since this just overrides things in the Base class, its basically all private
     OUTfloat* pressure;  
     OUTfloat* temperature;
     // System_SPI interface; // SPI object // Not currently working - needs revising to match system_i2c patterns
