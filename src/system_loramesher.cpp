@@ -35,8 +35,8 @@
 #endif
 // =========== MeshSubscription class - only used by LoRaMesher to track subs ====
 
-// TODO-152 Consider timeout of LM subscriptions - since a node may get a different id each time it power cycles, and thus have multiple entries in the gateway's meshsubscription table.
-// TODO-152 OR (better) look for a change in gateway node, and if so resend,
+// TODO-152A Consider timeout of LM subscriptions - since a node may get a different id each time it power cycles, and thus have multiple entries in the gateway's meshsubscription table.
+// TODO-152A OR (better) look for a change in gateway node, and if so resend,
 MeshSubscription::MeshSubscription(const String topicPath, const uint16_t src) 
 : topicPath(topicPath), src(src) {}
 
@@ -249,20 +249,21 @@ void System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
   // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
   char qos_char = '0' + qos; // 0 1 2 as for MQTT incoming=12
   char retain_char = '0' + retain;
-  const char* stringymessage = lprintf(100, "%c%c%s:%s", // Creates new buffer, exolicitly deleted below
+  const uint8_t* stringymessage = lprintf(100, "%c%c%s:%s", // Creates new buffer, exolicitly deleted below
     qos_char, retain_char,
     topic.c_str(), payload.c_str());
-  size_t msglen = strlen(stringymessage)+1; // +1 to include terminating \0
+  size_t msglen = strlen(reinterpret_cast<const char*>(stringymessage))+1; // +1 to include terminating \0
   // Allocate enough memory for the struct + message
-  uint8_t* msg = (uint8_t*) malloc(msglen); // explicitly free-d below
+  //uint8_t* msg = (uint8_t*) malloc(msglen); // explicitly free-d below
   //DataPacket* dPacket = (DataPacket*) malloc(sizeof(DataPacket) + msglen); // sendPacket wants uint8_t*
   // Copy the string into the message array
-  memcpy(msg, stringymessage, msglen);
-  delete(stringymessage);
+  //memcpy(msg, stringymessage, msglen);
+  //delete(stringymessage);
   // TODO-152 - maybe could just cast stringmessage as (uint8_t*) instead of copying
   frugal_iot.loramesher->sentPacketCounter++;
-  frugal_iot.loramesher->radio.sendPacket(destn, msg, msglen); // Will be broadcast if no node
-  free(msg); // msg is copied in createPacketAndSend
+  // TODO-152 remove the const_cast once https://github.com/LoRaMesher/LoRaMesher/pull/83 is merged
+  frugal_iot.loramesher->radio.sendPacket(destn, const_cast<uint8_t*>(stringymessage), msglen); // Will be broadcast if no node
+  delete(stringymessage); // msg is copied in createPacketAndSend
 }
 
 // ========= UPSTREAM  ==================

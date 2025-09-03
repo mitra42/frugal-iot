@@ -49,15 +49,15 @@ const String* newStringF(const char* format, ...) {
 }
 */
 // Typical usage.   lprintf(strlen(a)+strlen(b)+2, "%s %s", a, b) note how add 1 for length
-const char* lprintf(size_t buffer_size, const char* format, ...) {
+const uint8_t* lprintf(size_t buffer_size, const char* format, ...) {
   // Be careful with this, there is no compile time checking that the number of args matches the format 
   // and a mismatch will generate an Exception
-  char* buffer = new char[buffer_size];
+  uint8_t* buffer = new uint8_t[buffer_size];
   va_list args;
   va_start(args, format);
-  uint16_t len = vsnprintf(buffer, buffer_size, format, args);
+  uint16_t len = vsnprintf(reinterpret_cast<char*>(buffer), buffer_size, format, args);
   if (len >= buffer_size) {
-    Serial.print(F("lprintf: buffer too small - need ")); Serial.print(F(" ")); Serial.println(buffer);
+    Serial.print(F("lprintf: buffer too small - need ")); Serial.print(F(" ")); // Serial.println(buffer);
   }
   va_end(args);
   return buffer; // This buffer should stay in scope - and must be explicitly freed up by delete() if not wanted.
