@@ -29,7 +29,7 @@ Sensor_Soil::Sensor_Soil(const char* const id, const char * const name, uint8_t 
   { }
 
 // This may be specific to device being read - expect it to be subclassed
-bool Sensor_Soil::validRaw(int v) {
+bool Sensor_Soil::validate(int v) {
   return (v != 4095);   
 }
 

@@ -10,13 +10,14 @@
 Sensor::Sensor(const char* const id, const char* const name, bool r) 
 : System_Base(id, name), retain(r) { }
 
-// Can either sublass read(), and set() or subclass readAndSet() - use latter if more than one result e.g. in sensor_HT
-void Sensor::readAndSet() {
-  Serial.println(F("Sensor::readAndSet - should be subclassed"));
+// This is the main thing each sensor does periodically. 
+// It can be overridden, or any of its parts can be. 
+void Sensor::readValidateConvertSet() {
+  Serial.println(F("Sensor::readValidateConvertSet - should be subclassed"));
 }
 
 void Sensor::periodically() {
-  readAndSet();
+  readValidateConvertSet();
 }
 void Sensor::setup() {
   readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)

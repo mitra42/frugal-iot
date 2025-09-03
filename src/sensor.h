@@ -13,7 +13,7 @@ class Sensor : public System_Base {
 
     //Sensor();
     Sensor(const char* id, const char* const name, bool retain);
-    virtual void readAndSet();
+    virtual void readValidateConvertSet();
     void periodically() override;
     void setup() override;
 }; // Class Sensor

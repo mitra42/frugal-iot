@@ -22,7 +22,7 @@ class Sensor_ensaht : public Sensor {
     Sensor_ensaht(const char* const id, const char* const name, TwoWire* wire = &I2C_WIRE);
     ~Sensor_ensaht(); //TODO-101
     void setup() override; 
-    void readAndSet() override;
+    void readValidateConvertSet() override;
     void readAndSetAHT();
   private:
     TwoWire* wire;

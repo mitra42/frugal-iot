@@ -26,14 +26,10 @@ void Sensor_BH1750::setup() {
     Serial.println(F("Warning: Failed to initialize BH1750 light sensor!")); delay(5000);
   }
 }
-float Sensor_BH1750::read() {
-  float v;
-  v = lightmeter.readLightLevel();
-  if (isnan(v)) {
-      v = 0.0;
-  }
-  #ifdef SENSOR_BH1750_DEBUG
-    Serial.print(F("BH1750:")); Serial.println(v);
-  #endif
-  return v;
+float Sensor_BH1750::readFloat() {
+  return lightmeter.readLightLevel(); // Actual level (in Lux I think)
+}
+// actual value, so convert() not needed
+bool Sensor_BH1750::validate(float v) {
+  return (!isnan(v));
 }

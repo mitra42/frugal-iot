@@ -65,34 +65,31 @@ void Sensor_Analog::setup() {
 }
 
 // Note this is virtual, and subclassed in Sensor_Battery
-int Sensor_Analog::readRaw() {
+// Note ANalog's read int, but set float after scaling
+int Sensor_Analog::readInt() {
   return analogRead(pin); // Returns an int - which should be int16_t
 }
-// This may be specific to device being read - expect it to be subclassed
-bool Sensor_Analog::validRaw(int v) {
-  return true;
+float Sensor_Analog::convert(int v) {
+  return (v - offset) * scale;
 }
-
-void Sensor_Analog::readAndSet() {
-  int v = readRaw();
-  #ifdef SENSOR_ANALOG_DEBUG
-    Serial.print(F("Analog read raw ")); Serial.print(v); Serial.print(F("->")); Serial.println((v-offset)*scale);
-  #endif
-  if (validRaw(v)) {
-    set((v-offset)*scale);
+void Sensor_Analog::readValidateConvertSet() {
+  // Note almost identical code in Sensor_Uint16 Sensor_Float & Sensor_Analog
+  int v = readInt();           // Read raw value from sensor
+  if (validate(v)) {        // Check if its valid
+    float vv = convert(v);  // Convert - e.g. scale and offset
+    set(vv);                  // set - and send message
   }
-}
-// May return a scale of an invalid value
-float Sensor_Analog::read() {
-  return (readRaw()-offset) * scale;
+  #ifdef SENSOR_ANALOG_DEBUG
+    Serial.print(id); Serial.print(F(" raw:")); Serial.print(raw); Serial.print(F(" converted")); Serial.print(vv);
+  #endif
 }
 void Sensor_Analog::tare() {
   // Read and use the reading as the offset for a 0 value
-  offset = readRaw();
+  offset = readInt();
 }
 void Sensor_Analog::calibrate(float val) {
   // Note this could calibrate off an invalid raw value, may want to check if see this behavior
-  scale = val / (readRaw() - offset);
+  scale = val / (readInt() - offset);
 }
 void Sensor_Analog::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {

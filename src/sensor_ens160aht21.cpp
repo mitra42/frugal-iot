@@ -252,7 +252,7 @@ void Sensor_ensaht::readAndSetENS() {
     aqi500->set(((uint16_t)readbuffer[5]) | ((uint16_t)readbuffer[6] << 8));
   }
 }
-void Sensor_ensaht::readAndSet() {
+void Sensor_ensaht::readValidateConvertSet() {
     readAndSetAHT(); // Note the temp and humiity from here are sent to the ENS
     readAndSetENS();   
 }

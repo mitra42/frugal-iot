@@ -42,6 +42,13 @@ Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, bool ret
 void Sensor_DHT::setup() {
   dht->powerUp(); //TODO-POWER think about when do this
   Sensor_HT::setup(); // Call parent setup - which will readConfigFromFS (not currently configuing pins, if do then may have to move before powerUp)
+  #ifdef SENSOR_DHT_DEBUG
+    Serial.print(F("DHT"));
+    Serial.print(dht->getType());
+    Serial.print(F(" on "));
+    Serial.print(pin);
+    Serial.print(F("   "));
+  #endif
 }
 
 #ifdef SENSOR_DHT_DEBUG
@@ -84,14 +91,7 @@ void printErrorCode(int chk) {
 }
 #endif // SHT_DHT_DEBUG
 
-void Sensor_DHT::readAndSet() {
-  #ifdef SENSOR_DHT_DEBUG
-    Serial.print(F("DHT"));
-    Serial.print(dht->getType());
-    Serial.print(F(" on "));
-    Serial.print(pin);
-    Serial.print(F("   "));
-  #endif
+void Sensor_DHT::readValidateConvertSet() {
 
   int chk = dht->read();
   #ifdef SENSOR_DHT_DEBUG
@@ -102,7 +102,6 @@ void Sensor_DHT::readAndSet() {
     float temp = dht->getTemperature();
     float humy = dht->getHumidity();
 
-    // Note, not smoothing the data as it seems fairly stable and is float rather than bits anyway
     #ifdef SENSOR_DHT_DEBUG
       Serial.print(temp, 1);
       Serial.print(F("°C\t"));

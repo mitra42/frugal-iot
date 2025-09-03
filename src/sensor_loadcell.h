@@ -33,7 +33,7 @@ class Sensor_LoadCell : public Sensor_Float {
     Sensor_LoadCell(const char* const id, const char * const name, float max, const char* color, const bool retain, 
       uint8_t DOUTpin, uint8_t SCKpin, uint8_t times, int32_t offset, int32_t scale);
   protected:
-    float read() override;
+    float readFloat() override;
     void tare();
     void setup() override;
     void calibrate(float weight);

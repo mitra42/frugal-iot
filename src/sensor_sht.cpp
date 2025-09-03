@@ -53,7 +53,7 @@ Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *w
   sht->requestData(); // Initial request queued up  (loop is to read data and queue up next read)
 }
 
-void Sensor_SHT::readAndSet() {
+void Sensor_SHT::readValidateConvertSet() {
   #ifdef SENSOR_SHT_DEBUG
     Serial.print(address, HEX);
     Serial.print(F("   "));

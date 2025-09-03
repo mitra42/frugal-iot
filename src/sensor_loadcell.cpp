@@ -63,7 +63,8 @@ void Sensor_LoadCell::setup() {
   hx711->set_scale(scale); // TODO-134 
   hx711->set_median_mode(); // Use median so doesn't read e.g. 0.5kg if 1kg load added mid-cycle
 }
-float Sensor_LoadCell::read() {
+float Sensor_LoadCell::readFloat() {
+  // Retuns actual value - so validate and set are defaults
   float v = hx711->get_units(times); 
   #ifdef SENSOR_LOADCELL_DEBUG
     Serial.print(F("LoadCell: read()=")); Serial.println(v);

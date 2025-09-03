@@ -21,6 +21,7 @@ class Sensor_BH1750 : public Sensor_Float {
     TwoWire* wire;
     BH1750 lightmeter;
     void setup() override;
-    float read() override;
+    float readFloat() override;
+    bool validate(float v) override;
 };
 #endif // SENSOR_BH1750_H

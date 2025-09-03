@@ -30,7 +30,7 @@ class Sensor_ms5803 : public Sensor {
     uint8_t CRC4(uint16_t n_prom[]);
     void setup() override; 
     uint8_t ms5803CRC4();
-    void readAndSet() override; // Override in Sensor
+    void readValidateConvertSet() override; // Override in Sensor
     void dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet);
     TwoWire* wire;
  };

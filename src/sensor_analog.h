@@ -26,10 +26,10 @@ class Sensor_Analog : public Sensor_Float {
     float scale;
     //Sensor_Analog(const uint8_t p);
     virtual void setup() override;
-    float read() override;
-    bool validRaw(int v);
-    virtual int readRaw();
-    void readAndSet() override;
+    virtual int readInt(); // Not overriding - its different return
+    virtual bool validate(int v);
+    virtual float convert(int v);
+    virtual void readValidateConvertSet() override;
     void tare();
     void calibrate(float v);
     void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;

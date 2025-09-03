@@ -122,7 +122,7 @@ uint8_t Sensor_ms5803::ms5803CRC4() {
 }
 
 
-void Sensor_ms5803::readAndSet() {
+void Sensor_ms5803::readValidateConvertSet() {
   interface.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D2); 
   delay(100); // Wait for conversion to complete
   interface.send(SENSOR_CMD_ADC_READ); // read the ADC value
