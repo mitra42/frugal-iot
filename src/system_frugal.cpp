@@ -61,6 +61,7 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
   if (isSet && (topicSensorId == id)) {
     if (topicTwig == "project") { // TODO unclear we should be changing project on a device live
       project = String(payload); // Note weirdness, it really needs to copy 
+      // TODO - needs to redo stuff that uses "project"
       // project = payload;
     } else if (topicTwig == "name") {
       name = String(payload); // Note weirdness, it really needs to copy 
@@ -197,12 +198,17 @@ void System_Frugal::configure_mqtt(const char* hostname, const char* username, c
 void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
   system->add(powercontroller = System_Power_Mode::create(t, cycle_ms, wake_ms));  
 }
+void System_Frugal::pre_setup() {
+  // Early initial stuff - happens BEFORE do System_Message::setup which uses config 
+  startSerial(); // Encapsulate setting up and starting serial
+  fs_LittleFS->pre_setup();
+  readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig
+}
 void System_Frugal::setup() {
   // By the time this is run, mqtt should have been added, and serial started in main.cpp
   #ifdef SYSTEM_FRUGAL_DEBUG
     Serial.print(F("Setup: "));
   #endif
-  readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig
   Frugal_Group::setup(); // includes WiFi
   #ifdef SYSTEM_OTA_KEY
     ota->setup_after_mqtt_setup(); // Sends advertisement over MQTT

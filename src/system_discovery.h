@@ -13,7 +13,6 @@ class System_Discovery : public System_Base {
   private: 
     unsigned long nextLoopTime = 0; // sleepSafeMillis
     String projectTopic;
-    String advertiseTopic;
     void quickAdvertise();
 };
 

@@ -48,8 +48,7 @@ void System_Discovery::quickAdvertise() {
 // Done once after WiFi first connects
 void System_Discovery::setup() {
   // Nothing to read from disk so not calling readConfigFromFS 
-  projectTopic = frugal_iot.org + "/" + frugal_iot.project;
-  advertiseTopic = projectTopic + F("/") + frugal_iot.nodeid; // e.g. "dev/developers/esp32-12345"
+  projectTopic = frugal_iot.org + "/" + frugal_iot.project;// e.g. "dev/developers/esp32-12345"
 }
 
  //TODO-23 This wont work as nextLoopTime wont be remembered in Deep Sleep
