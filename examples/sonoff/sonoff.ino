@@ -6,12 +6,11 @@
 #include "frugal_iot.h"
 
 // Change the parameters here to match your ... 
-// organization, project, id, description
+// organization, project, device name, description
 System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff R2 switch");
 
 void setup() {
-  frugal_iot.startSerial(); // Encapsulate setting up and starting serial
-  frugal_iot.fs_LittleFS->pre_setup();
+  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 
@@ -43,6 +42,6 @@ void setup() {
   Serial.println(F("FrugalIoT Starting Loop"));
 }
 
-  void loop() {
+void loop() {
   frugal_iot.loop(); // Should be running watchdog.loop which will call esp_task_wdt_reset()
 }
