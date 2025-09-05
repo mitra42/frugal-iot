@@ -121,8 +121,10 @@ void Frugal_Group::periodically() {
   } 
   heap_print(F("/Periodic"));
 }
-void Frugal_Group::infrequently() { for (System_Base* fb: group) { 
-  fb->infrequently(); } 
+void Frugal_Group::infrequently() { 
+  for (System_Base* fb: group) { 
+    fb->infrequently(); 
+  } 
 }
 void Frugal_Group::captiveLines(AsyncResponseStream* response) 
   { for (System_Base* fb: group) { fb->captiveLines(response); } }
@@ -171,7 +173,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   add(actuators);
   add(sensors);
   add(controls);
-  // add(buttons); // optimizing by not adding this - its only needed for looping for infrequently()
+  add(buttons); // optimizing by not adding this - its only needed for looping for infrequently()
   system->add(fs_LittleFS);
   system->add(messages);
   system->add(wifi);
@@ -231,7 +233,6 @@ void System_Frugal::setup_after_wifi() {
 void System_Frugal::infrequently() {
   heap_print(F("infrequent"));
   Frugal_Group::infrequently();
-  buttons->infrequently(); // Not in the main group of groups as infrequently() is only thing called.
   heap_print(F("/infrequent"));
 }
 

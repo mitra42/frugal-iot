@@ -32,7 +32,8 @@ void setup() {
   // system_oled and actuator_ledbuiltin added automatically on boards that have them.
   // Relay on Sonoff is on pin 12
   frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, "purple"));
-  
+  frugal_iot.buttons->add(new Sensor_Button("button", "Button", BUTTON_BUILTIN, "red"));
+
   ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->path("relay/on")); // TODO refactor wireTo so can take a Base

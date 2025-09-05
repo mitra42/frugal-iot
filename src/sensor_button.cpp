@@ -13,7 +13,7 @@
 #include "Button2.h" // https://github.com/LennartHennigs/Button2
 
 Sensor_Button::Sensor_Button(const char * const id, const char * const name, uint8_t pin, const char* const color) :
-  Sensor(id, name, false), pin(pin) {
+  System_Base(id, name), pin(pin) {
   output = new OUTuint16(id, "out", name, empty, single_click, empty, color, false); // TODO convert this into a OUTenum - hard part is UX
   button = new Button2(pin);
   button->setClickHandler(Sensor_Button::clickHandler);
@@ -21,7 +21,6 @@ Sensor_Button::Sensor_Button(const char * const id, const char * const name, uin
   button->setDoubleClickHandler(Sensor_Button::doubleClickHandler);
   button->setTripleClickHandler(Sensor_Button::tripleClickHandler);
   button->setID(frugal_iot.buttons->group.size());
-  frugal_iot.buttons->group.push_back(this);
 }
 
 // Unclear how would use an "OUT" as its not dependent on a change
@@ -48,9 +47,9 @@ Sensor_Button* Sensor_Button::handler(Button2& button) {
   return (Sensor_Button*)frugal_iot.buttons->group[button.getID()];
 }
 void Sensor_Button::setup() {
-  Sensor::setup(); // Will readConfigFromFS - do before setting up pins
+  System_Base::setup(); // Will readConfigFromFS - do before setting up pins
   button->begin(pin);
 }
 void Sensor_Button::loop() {
-  button->loop(); // TODO-141 should probably only do every 10 MS 
+  button->loop(); // loop runs with a delay of 10ms so this is about right
 }
