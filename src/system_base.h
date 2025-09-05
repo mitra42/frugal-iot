@@ -22,6 +22,7 @@ class System_Base {
     // Most of System_Base has to be public - I think (but am not sure) because while accessed from System_Frugal on a subclass of System_Base its not the class acting on itself?
     System_Base(const char * const id, const String name);
     const char* id = nullptr; // Name of actuator, sensor or control 
+    bool connected = false; 
     virtual void setup();
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);
     virtual void dispatchPath(const String &topicPath, const String &payload);
