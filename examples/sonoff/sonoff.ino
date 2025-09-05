@@ -31,7 +31,7 @@ void setup() {
   // Add sensors, actuators and controls
   // system_oled and actuator_ledbuiltin added automatically on boards that have them.
   // Relay on Sonoff is on pin 12
-  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", 12, "purple"));
+  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, "purple"));
   
   ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
