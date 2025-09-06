@@ -12,8 +12,8 @@
  *
  * ODDITIES KNOWN AND HOW CORRECTED
  * lolin_c3_pico board definition is missing, most people use lolin_c3_mini board defs but that gets LED_BUILTIN and RGB_BUILTIN wrong - overridden below
- * SONOFF_R2 and ESP8266_D1 are inverted - 1 is off, 0 is on // TODO-141 confirm
- * SONOFF_R2 - esp01_1m defines LED_BUILTIN on 1 but have note that its on 13 and inverted  TODO-141 check
+ * ITEAD_SONOFF and ESP8266_D1 are inverted - 1 is off, 0 is on // TODO-141 confirm
+ * ITEAD_SONOFF - esp01_1m defines LED_BUILTIN on 1 but have note that its on 13 and inverted  TODO-141 check
  * Some legacy boards (Arduino Uno?) define BUILTIN_LED instead
  * 
  * Expect from platformio.ini

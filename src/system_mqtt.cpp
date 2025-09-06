@@ -206,6 +206,7 @@ bool System_MQTT::send(const String &topicPath, const String &payload, const boo
           #ifdef SYSTEM_MQTT_DEBUG
             Serial.print(F(" err=")); Serial.println(client.lastError());
           #endif
+          ;
         }
       return false;
     };

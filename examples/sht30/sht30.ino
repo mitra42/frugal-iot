@@ -7,12 +7,11 @@
 // defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "frugal_iot.h"
 // Change the parameters here to match your ... 
-// organization, project, id, description
+// organization, project, device name, description
 System_Frugal frugal_iot("dev", "developers", "SHT30", "SHT30 Temperature and Humidity Sensor"); 
 
 void setup() {
-  frugal_iot.startSerial(); // Encapsulate setting up and starting serial
-  frugal_iot.fs_LittleFS->pre_setup();
+  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
 
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");

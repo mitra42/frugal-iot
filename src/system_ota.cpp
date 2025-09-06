@@ -14,16 +14,14 @@
 #include "_settings.h"
 #ifdef SYSTEM_OTA_KEY
 
-#if ! (defined(ESP8266) || defined(ESP32))
-  #error OTA is currently only defined for ESP8266 and ESP32
-#endif
-
 #include <Arduino.h>
 #include "system_discovery.h"
 #include "system_wifi.h"
 #include "system_ota.h"
 #include "system_frugal.h"
+#include "actuator_ledbuiltin.h" // for correct LED_BUILTIN
 
+// Note that OTA will fail (no space) on devices where the code is >50% of space - currently this includes SONOFFs
 #ifdef ESP8266
   #include <ESP8266httpUpdate.h> // defines ESPhttpUpdate
   #include <ESP8266WiFi.h>  // for WiFiClient
@@ -34,9 +32,11 @@
   #include <HTTPUpdate.h> // espressif / Arduino-ESP32 library
   #include <WiFiClientSecure.h>
   #define HTTPUPDATE httpUpdate
+  #define SYSTEM_OTA_USECERT
 #else
     #error OTA only defined so far for ESP8266 and ESP32 
 #endif
+
 #include "system_frugal.h" // For sleepSafemillis()
 
 #ifndef SYSTEM_OTA_VERSION
@@ -47,7 +47,7 @@
   #define SYSTEM_OTA_SERVERPORTPATH "https://frugaliot.naturalinnovation.org/ota_update/" // Note trailing slash
 #endif
 
-#ifdef ESP32
+#ifdef SYSTEM_OTA_USECERT
 
   const char* rootCACertificateForNaturalInnovation = \
       "-----BEGIN CERTIFICATE-----\n"
@@ -92,7 +92,9 @@ void System_OTA::init(const String otaServerAddress, const String softwareVersio
   _softwareVersion = softwareVersion;
   _isOK = true;
   _retryCount = 3;
-  _caCert = caCert;
+  #ifdef SYSTEM_OTA_USECERT
+    _caCert = caCert;
+  #endif
 }
 
 void otaStartCB() {
@@ -117,9 +119,19 @@ void otaErrorCB(int errorCode) {
 void System_OTA::checkForUpdate() {
   #ifdef ESP32
     WiFiClientSecure client;
-    client.setCACert(_caCert);
   #elif defined(ESP8266)
-    WiFiClient client; // Assumes system_wifi has already connected to access point - note this will not run if WiFi fails to connect and goes to portal mode
+    WiFiClientSecure client; // Assumes system_wifi has already connected to access point - note this will not run if WiFi fails to connect and goes to portal mode
+    //TODO If we set the certificate then it throws an exception ... dont really need it. 
+    #ifdef SYSTEM_OTA_USECERT
+      #ifdef ESP32
+        client.setCACert(_caCert);
+      #elif defined(ESP8266)
+        // TODO This crashed when tested but might actually be OK 
+        client.setTrustAnchors(new X509List(_caCert));
+      #endif
+    #else
+      client.setInsecure(); // Alternative
+    #endif
   #endif
   client.setTimeout(20000);
   // Set this if you want your OTA server to be able to return a redirect to force devices to collect the firmware from e.g. githubraw
@@ -173,9 +185,9 @@ void System_OTA::setup_after_mqtt_setup() {
   const String url = getOTApath(); // Needs topicPrefix setup in MQTT::setup
   // Note this must run after WiFi has connected  and ideally before MQTT or Discovery except it needs xDiscovery::topicPrefix
   Serial.print(F("Attempt OTA from:")); Serial.println(url);
-  #ifdef ESP32
+  #ifdef SYSTEM_OTA_USECERT
     init(url, SYSTEM_OTA_VERSION, rootCACertificateForNaturalInnovation);
-  #elif defined(ESP8266)
+  #else
     init(url, SYSTEM_OTA_VERSION, nullptr);
   #endif
 

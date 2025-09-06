@@ -6,12 +6,11 @@
 #include "frugal_iot.h"
 
 // Change the parameters here to match your ... 
-// organization, project, id, description
+// organization, project, device name, description
 System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff R2 switch");
 
 void setup() {
-  frugal_iot.startSerial(); // Encapsulate setting up and starting serial
-  frugal_iot.fs_LittleFS->pre_setup();
+  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 
@@ -32,8 +31,9 @@ void setup() {
   // Add sensors, actuators and controls
   // system_oled and actuator_ledbuiltin added automatically on boards that have them.
   // Relay on Sonoff is on pin 12
-  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", 12, "purple"));
-  
+  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, "purple"));
+  frugal_iot.buttons->add(new Sensor_Button("button", "Button", BUTTON_BUILTIN, "red"));
+
   ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->path("relay/on")); // TODO refactor wireTo so can take a Base
@@ -43,6 +43,6 @@ void setup() {
   Serial.println(F("FrugalIoT Starting Loop"));
 }
 
-  void loop() {
+void loop() {
   frugal_iot.loop(); // Should be running watchdog.loop which will call esp_task_wdt_reset()
 }

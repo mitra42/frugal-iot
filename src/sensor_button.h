@@ -15,7 +15,7 @@
   #define SENSOR_BUTTON_MS 10
 #endif
  
- class Sensor_Button : public Sensor {
+ class Sensor_Button : public System_Base {
     public:
       Sensor_Button( const char * const id, const char * const name, uint8_t pin, const char * const color);
       OUTuint16* output; // TODO convert to an enum 
