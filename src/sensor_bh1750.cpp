@@ -30,6 +30,6 @@ float Sensor_BH1750::readFloat() {
   return lightmeter.readLightLevel(); // Actual level (in Lux I think)
 }
 // actual value, so convert() not needed
-bool Sensor_BH1750::validate(float v) {
+bool Sensor_BH1750::validate(const float v) {
   return (!isnan(v));
 }

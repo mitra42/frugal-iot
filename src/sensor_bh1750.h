@@ -22,6 +22,6 @@ class Sensor_BH1750 : public Sensor_Float {
     BH1750 lightmeter;
     void setup() override;
     float readFloat() override;
-    bool validate(float v) override;
+    bool validate(const float v) override;
 };
 #endif // SENSOR_BH1750_H
