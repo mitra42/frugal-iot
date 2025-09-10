@@ -31,7 +31,7 @@ void System_OLED::setup() {
     //initialize OLED
   wire->begin(OLED_SDA, OLED_SCL); // Note that on ARDUINO_TTGO_LoRa32_V1, this is NOT the hardware I2C pins on ESP32
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3c, false, false)) { // Address 0x3C for 128x32
-    Serial.println(F("❌ SSD1306 allocation failed"));
+    setupFailed();
   }
   // Some pretty boring default settings.
   display.clearDisplay();

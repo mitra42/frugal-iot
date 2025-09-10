@@ -53,9 +53,6 @@ Sensor_ms5803::Sensor_ms5803(const char* const id, const char * const name, uint
 
 void Sensor_ms5803::setup() {
   Sensor::setup(); // Will readConfigFromFS - do before setting up pins
-  #ifdef SENSOR_MS5803_DEBUG
-    Serial.println(F("MS5803 Setup"));
-  #endif
   pressure->setup();
   delay(100); // TODO XXX unsure if needed
   interface.initialize();
@@ -78,11 +75,9 @@ void Sensor_ms5803::setup() {
   // If this issue persists, you may have a bad sensor.
   if (!ms5803CRC4()) {
     Serial.println(F("MS5803 bad CRC on coefficients"));
-    // return false;
+    setupFailed();
   } else {
     // If the CRC matches, then the sensor is good to go.
-    Serial.println(F("MS5803 looks good"));
-    // return true;
   }
 }
 

@@ -21,6 +21,7 @@ class System_Base {
   public:
     System_Base(const char * const id, const String name);
     virtual void setup();
+    void setupFailed(); // Called from overrides of setup() on failure.
     const char* id = nullptr; // Name of actuator, sensor or control 
     String name; // Name of actuator, sensor or control
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);

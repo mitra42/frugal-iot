@@ -17,6 +17,9 @@ System_Base::System_Base(const char * const id, const String name)
 
 // Defaults for routines that can, but often are not, overridden in sub-class.
 void System_Base::setup() { };
+void System_Base::setupFailed() { // Call this from setup() if fails
+  Serial.print(id); Serial.println(F("Failed in setup"));
+}
 void System_Base::loop() { }; // Called frequently same as loop() in typical arduino apps
 void System_Base::periodically() { }; // Called once for each period - which might be 10 seconds, or seeral hours
 void System_Base::infrequently() { }; // Run once each period, but should check timing

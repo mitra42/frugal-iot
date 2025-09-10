@@ -181,9 +181,8 @@ void System_SD::setup() {
     SPI.begin(SYSTEM_SD_SCK, SYSTEM_SD_MISO, SYSTEM_SD_MOSI, pin); // SCK, MISO, MOSI, pin
   #endif 
   if (!SD.begin(pin)) { 
-    Serial.println(F(" failed!"));
+    setupFailed();
   } else {
-    Serial.println(F(" done."));
     #ifdef SYSTEM_SD_DEBUG
       printDirectory("/"); // For debugging
     #endif

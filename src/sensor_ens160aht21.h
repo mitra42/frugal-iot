@@ -21,7 +21,7 @@ class Sensor_ensaht : protected Sensor {
     OUTuint16* aqi500; // Only valid on ENS161
     System_I2C* aht; // I2C object for AHT
     System_I2C* ens; // I2C object for ENS
-    bool isENS161;
+    bool isENS161; // AQI is only on ENS160 not ENS160
     void setup() override; 
     void readValidateConvertSet() override;
     void readAndSetAHT();
