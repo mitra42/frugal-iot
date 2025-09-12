@@ -6,8 +6,11 @@
 #include "system_i2c.h"
 #include "sensor.h"
 
-class Sensor_ensaht : public Sensor {
+class Sensor_ensaht : protected Sensor {
   public:
+    Sensor_ensaht(const char* const id, const char* const name, TwoWire* wire = &I2C_WIRE);
+    ~Sensor_ensaht(); //TODO-101
+  protected:
     //TODO - create a base class Sensor_multiple that has an outputs list and dispatchTwig iterates over them - keep these pointers as well (notice how system_frugal_iot creates things and adds to an array)
     //TODO - then use for other multi-output sensors (like sensor_ht) and then maybe for single sensors, simplifying e,g. dispatchTwig in the process
     OUTfloat* humidity;  
@@ -18,13 +21,12 @@ class Sensor_ensaht : public Sensor {
     OUTuint16* aqi500; // Only valid on ENS161
     System_I2C* aht; // I2C object for AHT
     System_I2C* ens; // I2C object for ENS
-    bool isENS161;
-    Sensor_ensaht(const char* const id, const char* const name);
-    ~Sensor_ensaht(); //TODO-101
+    bool isENS161; // AQI is only on ENS160 not ENS160
     void setup() override; 
-    void readAndSet() override;
+    void readValidateConvertSet() override;
     void readAndSetAHT();
   private:
+    TwoWire* wire;
     // AHT
     void setupAHT();
     uint8_t AHTspinTillReady();
@@ -36,7 +38,7 @@ class Sensor_ensaht : public Sensor {
     bool ENScommand(uint8_t val);
     bool ENSsendAndRead(uint8_t reg, uint8_t *buf, uint8_t num);
     bool setenvdata(float temp, float hum);
-    String advertisement() override;
+    void discover() override;
     void dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet);
  };
  

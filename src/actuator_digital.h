@@ -12,8 +12,9 @@ class Actuator_Digital : public Actuator {
     virtual void act();
     virtual void set(const bool v);
     virtual void setup() override;
-    String advertisement() override;
+    void discover() override;
     void dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet);
+    void captiveLines(AsyncResponseStream* response);
 }; // Class Actuator_Digital
 
 #endif // ACTUATOR_DIGITAL_H

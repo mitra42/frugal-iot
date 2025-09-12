@@ -12,6 +12,7 @@
 
 #if !defined(PLATFORMIO)
   // On Arduiono do not have platformio.ini so presume these standards
+  // TO-ADD-SENSOR TO-ADD-CONTROL TO-ADD-ACTUATOR TO-ADD-SYSTEm
   #define CONTROL_BLINKEN_DEBUG
   #define CONTROL_LOGGERFS_DEBUG
   #define SENSOR_ENSAHT_DEBUG
@@ -26,6 +27,12 @@
   #define SYSTEM_POWER_DEBUG
   #define SYSTEM_WIFI_DEBUG
 #endif
+
+#define MQTT_RETAIN true
+#define MQTT_DONT_RETAIN false
+#define MQTT_QOS_NONE 0
+#define MQTT_QOS_ATLEAST1 1
+#define MQTT_QOS_EXACTLY1 2
 
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
 #if defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG)
@@ -109,9 +116,15 @@
 #endif
 
 // Difference between SX1276 and SX1278 based boards is by defined SYSTEM_LORAMESHER_MODULE in platformio.ini
-#if defined(ARDUINO_TTGO_LoRa32_v21new) || defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_v1)
+#if defined(ARDUINO_TTGO_LoRa32_v21new) || defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_V1)
   #define ARDUINO_TTGO_LoRa32
 #endif
+
+// Define boards which have LoRa and should include LoRaMesher automatically
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X)
+  #define SYSTEM_LORAMESHER_WANT
+#endif
+
 
 // To specify a language (for the WiFi portal) #define all the ones you want, otherwise it supports the _ALL lsit which is currerntly EN, NL, DE, ID 
 #if \
@@ -126,9 +139,40 @@
 #define SYSTEM_WIFI_WANT  // currently always wanted
 
 // Define boards which have built in OLED and should include automatically
-#if defined(ARDUINO_TTGO_LoRa32)
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X)
   #define SYSTEM_OLED_WANT
 #endif
+
+// A number of sensors will want to default to the boards I2C, 
+// But some boards have the pre-defined SDA and SCL wrong
+// So .... these settings define I2C_SDA and I2C_SCL so that a library can be explicit about 
+// using something other than the default
+#if !((defined I2C_WIRE) && defined(I2C_SDA))
+  #ifdef LILYGOHIGROW
+    // TODO-115 note there could be conflicts with other use of I2C and the Wire.h header which I think is where "Wire" is defined
+    // I think this is a lilygo specific thing - need to check with BH1750 on other boards
+    #define I2C_SDA                 (25)
+    #define I2C_SCL                 (26)
+  #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
+    // The T2_S3 has a small pair of connectors, same form factor as Lolin but different pins, using SDA1=10 SCL1=21 or SDA=TX=43 SCL=RX=44
+    #define I2C_WIRE Wire // Use Wire1 for the OLED
+    #define I2C_SDA TX // 43
+    #define I2C_SCL RX  // 44
+    // Cant get it to work on this socket, read somewhere about board surgery (resistor removal or addition) required but cant find the reference now
+    //#define I2C_SDA SDA1 // 10
+    //#define I2C_SCL SCL1  // 21
+  #elif defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_v21new)
+    #define I2C_WIRE Wire
+    #define I2C_SDA SDA
+    #define I2C_SCL SCL
+  #else
+    // Use system defined ones
+    #define I2C_WIRE Wire
+    #define I2C_SDA SDA
+    #define I2C_SCL SCL
+  #endif
+#endif
+
 
 
 #endif // _SETTINGS_H

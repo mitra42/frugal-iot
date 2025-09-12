@@ -17,33 +17,48 @@
 
 // Note there are differences between the TTGO LoRa V1 and V2 boards
 // On Arduino the board definitions get these pins right - not checked yet on PlatformIO
-#if defined(ARDUINO_TTGO_LoRa32_v1)
+#if defined(ARDUINO_TTGO_LoRa32_V1)
+  // Note its not clear to me what is defined for board TTGO_LoRa32_va
   // These are NOT default I2C pins for ESP32 on the V1 board but OLED_SDA and OLED_SCL correctly defined 
+  #define OLED_WIRE Wire1  // There is Wire and Wire1 defined in Wire.h and OLED_SDA = 4, OLED_SCA=15 (not same as SDA and SCL)
   #define OLED_RST_X OLED_RST // Crashes on V2
 #elif defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_v21new)
   // OLED_SDA and OLED_SCL correctly defined - OLED_RST is 16 
   // These are default I2C pins for ESP32
+  #define OLED_WIRE Wire  // Both Wire and Wire1 defined, but OLED_SDA=SDA=21 & OLED_SCL=SCL=22 in pins_arduino.h )
   #define OLED_RST_X -1 // OLED_RST is 16 but dont use on V21 as seems to freeze the display
-#else
-  #error "Unsupported OLED display configuration. Please define a new BOARD"
+#elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
+  // According to https://www.espboards.dev/esp32/lilygo-t3s3-v1-0/
+  // Note on other boards this is defined in  ~/.platformio/packages/framework-arduinoespressif32/variants
+  #define OLED_WIRE Wire1
+  #define OLED_SDA SDA
+  #define OLED_SCL SCL
+  #define OLED_RST_X -1 // Doesnt appear to exist on this board
+#elif !defined(OLED_WIRE) || !defined(OLED_SDA) || !defined(OLED_SCL)
+  #error Undefined board for OLED
 #endif
-#if defined(ARDUINO_TTGO_LoRa32) // V1 or v2
+
+// Note ARDUINO_LILYGO_T3_S3_V1_X not tested yet, but probably same as ARDUINO_TTGO_LoRa32
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) // V1 or v2
   #include <Adafruit_SSD1306.h> // For OLED display
   #define SCREEN_WIDTH 128 // OLED display width, in pixels
   #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #endif
 
-
 class System_OLED : public System_Base {
   public:
-    Adafruit_SSD1306 display; // OLED display object TODO-138 parameterize this and depend on board
-    System_OLED(); // Constructor
+    #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) // V1 or v2
+      Adafruit_SSD1306 display; // OLED display object TODO-138 parameterize this and depend on board
+    #endif
+    System_OLED(TwoWire* wire = &Wire); // Constructor
     void setup() override; // Setup function to initialize the display
     //void infrequently() override; // Infrequent tasks, e.g., every 10 seconds
     //void periodically() override; // Periodic tasks, e.g., every minute
     //void loop() override; // Frequent tasks, e.g., every 10 ms
     // TODO-149 check if needed
     void displayMessage(const String &message); // Function to display a message on the OLED
+  protected:
+    TwoWire* wire;
 };
 
 

@@ -29,7 +29,7 @@
 void printTaskList() {
   char buf[1024];
   vTaskList(buf);
-  Serial.println("Task Name\tStatus\tPrio\tStack\tNum");
+  Serial.println(F("Task Name\tStatus\tPrio\tStack\tNum"));
   Serial.println(buf);
 }
 */
@@ -80,8 +80,10 @@ System_Power_Modem::System_Power_Modem(unsigned long cycle_ms, unsigned long wak
 
 // ================== setup =========== called from main.cpp::setup ========= TO-ADD-POWERMODE but usually nothing
 void System_Power_Mode::setup() {
+  // Nothing to read from disk so not calling readConfigFromFS  - that might change if parameterize power on/off thru UI
+
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.printf("Setup %s: %lu of %lu\n", name, wake_ms, cycle_ms); 
+    Serial.printf("Setup %s: %lu of %lu\n", name.c_str(), wake_ms, cycle_ms); 
   #endif
   #ifdef LILYGOHIGROW
     pinMode(POWER_CTRL, OUTPUT);
@@ -134,7 +136,7 @@ void System_Power_LightWiFi::setup() {
 // prepare - run from loop (or maybeSleep) just before sleeping 
 void System_Power_Mode::prepare() {
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.println("Power Management: preparing");
+    Serial.println(F("Power Management: preparing"));
   #endif
   #ifdef LILYGOHIGROW
     digitalWrite(POWER_CTRL, LOW);
@@ -176,15 +178,13 @@ void System_Power_Light::sleep() {
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 void System_Power_LightWiFi::sleep() {
   //esp_sleep_enable_wifi_wakeup
-  Serial.print("Sleeping for "); Serial.println(sleep_ms());
-  // TODO-25 move this to prepare in the MQTT task
-  frugal_iot.mqtt->client.disconnect();
+  Serial.print(F("Sleeping for ")); Serial.println(sleep_ms());
   //printTaskList(); // Wont work in Arduino framework
   uart_driver_delete(UART_NUM_0); // Disable UART0 (Serial)
   delay(sleep_ms()); // Light sleep will be automatic
   // TODO-25 move this to frugal_iot::recover
   frugal_iot.startSerial();
-  Serial.print("Waking for"); Serial.println(wake_ms);
+  Serial.print(F("Waking for")); Serial.println(wake_ms);
 }
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
@@ -208,7 +208,7 @@ void System_Power_Deep::sleep() {
 
 void System_Power_Mode::recover() {
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.println("Power Management: recovering");
+    Serial.println(F("Power Management: recovering"));
   #endif
   #ifdef LILYGOHIGROW
     digitalWrite(POWER_CTRL, HIGH);
@@ -252,7 +252,7 @@ void System_Power_LightWiFi::recover() {
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 void System_Power_Deep::recover() {
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.println("Power Management: recovering from Deep Sleep: "); Serial.println(wake_count);
+    Serial.println(F("Power Management: recovering from Deep Sleep: ")); Serial.println(wake_count);
   #endif
   // TODO-23 maybe will loop through sensors and actuators here are some pointers found elsewhere...
   // or maybe presumes all reset by the restart after deep sleep
@@ -286,7 +286,7 @@ System_Power_Mode* System_Power_Mode::create(System_Power_Type t, unsigned long 
       return new System_Power_Deep(cycle_ms, wake_ms); 
 #endif
     default: 
-      Serial.println("Invalid power mode");
+      Serial.println(F("Invalid power mode"));
       return nullptr;
   }
 }

@@ -14,8 +14,7 @@
 System_Frugal frugal_iot("dev", "developers", "gsheets", "Google Sheets logger");
 
 void setup() {
-  frugal_iot.startSerial(); // Encapsulate setting up and starting serial
-  frugal_iot.fs_LittleFS->pre_setup();
+  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 
@@ -37,7 +36,7 @@ void setup() {
 
   Control_Gsheets* cg = new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);
   frugal_iot.controls->add(cg);
-  cg->track("temperature", frugal_iot.mqtt->path("sht/temperature")); // TODO-141 probably wont work as MQTT not setup
+  cg->track("temperature", frugal_iot.messages->path("sht/temperature")); // TODO-141 probably wont work as MQTT not setup
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); 

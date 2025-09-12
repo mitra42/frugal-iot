@@ -32,13 +32,14 @@
 #include <dhtnew.h>                     // https://github.com/RobTillaart/DHTNew
 
 
-class Sensor_DHT : public Sensor_HT {
+class Sensor_DHT : protected Sensor_HT {
 public:
+  Sensor_DHT(const char * const name, const uint8_t pin, bool retain);
+protected:
   DHTNEW *dht; 
   uint8_t pin;
-  Sensor_DHT(const char * const name, const uint8_t pin, bool retain);
   void setup() override;
-  void readAndSet() override; // Combines function of set(read()) since reads two values from sensor
+  void readValidateConvertSet() override; // Combines function of set(read()) since reads two values from sensor
 };
 
 extern Sensor_DHT sensor_dht;

@@ -15,15 +15,23 @@
 #define SENSOR_ANALOG_H
 
  #include "sensor.h"
- #include "sensor_uint16.h"
+ #include "sensor_float.h"
 
-class Sensor_Analog : public Sensor_Uint16 {
-  public: 
-    uint8_t pin;
-    
+class Sensor_Analog : public Sensor_Float {
+  public:
+    Sensor_Analog(const char* const id, const char * const name, const uint8_t pin, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool retain);
+  protected:
+    uint8_t pin;    
+    int offset;
+    float scale;
     //Sensor_Analog(const uint8_t p);
-    Sensor_Analog(const char* const id, const char * const name, const uint8_t pin, const uint8_t smooth, const uint16_t min, const uint16_t max, const char* color, bool retain);
     virtual void setup() override;
-    uint16_t read() override;
+    virtual int readInt(); // Not overriding - its different return
+    virtual bool validate(int v);
+    virtual float convert(int v);
+    virtual void readValidateConvertSet() override;
+    void tare();
+    void calibrate(float v);
+    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;
 }; // Class Sensor_Analog
 #endif // SENSOR_ANALOG_H

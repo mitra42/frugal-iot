@@ -31,7 +31,7 @@ There are a few components of the environment - with separate repos
 
 * [Dev board](https://www.github.com/mitra42/frugal-iot) - This repo - programmed with PlatformIO in C++
 * MQTT Broker - currently off-the-shelf Mosquitto, with a development server running on frugaliot.naturalinnovation.org
-* [MQTT Logger](https://www.github.com/mitra42/frugal-iot-logger) logs MQTT messsages to files for later analysis and graphing.
+* [MQTT Logger](https://www.github.com/mitra42/frugal-iot-logger) logs MQTT messsages to files or Google Sheets for later analysis and graphing.
 * [HTTP Management server](https://www.github.com/mitra42/frugal-iot-server) - programmed in Node/Javascript, tested on Macs and Linux and 
   with a demo server at frugaliot.naturalinnovation.org which incorporates the `logger`
 * [HTTP/CSS/JS client](https://www.github.com/mitra42/frugal-iot-client). Its not dependent on any platform/framework, and uses Webcomponents for its modularity so it should run in any modern browser (including most phones)
@@ -83,6 +83,10 @@ Then In Arduino IDE
     * BH1750 from Christopher Laws
     * Button2 by Lennart Hennigs
     * HX711 by Rob Tillaart for Load Sensors
+    * adafruit/Adafruit SSD1306@^2.5.0 - if running on a devive ith OLED 
+    * adafruit/Adafruit GFX Library@^1.10.13 - if running on a devive ith OLED 
+    * jaimi5/LoRaMesher - on LoRa compatable devices to build a mesh network
+
     * If you add more sensors make sure to add any library requirement here (TO_ADD_SENSOR)
 * Tools -> Board 
   * Check you have selected the dev board
@@ -99,7 +103,11 @@ Then In Arduino IDE
 * Edit around line 31 of the .ino files `addWiFi` to have your own SSID and Password, 
 * You can duplicate this line for multiple WiFi's 
 * If you do not add a WiFi that it can see, then a portal will be opened - see below. 
-* On PlatformIO there is a nicer alternative way to put the WiFi's and configuration info in data files, but TODO this needs documenting.
+* On PlatformIO there is a nicer alternative way to put the WiFi's and configuration info in data files
+  * Add files to the /data directory of your project - the filename is the SSID, and the content is the password
+  * PlatformIO -> Platform -> Build FileSystem Image
+  * PlatformIO -> Platform -> Upload FileSystem Image
+    * Most common cause of failure here, is having a terminal window running Ctrl-C out of it. 
 * Add the MQTT server, userid and password, if you aren't going to use `naturalinnovation.org` 
 * Check the examples for how to add sensors, controls and actuators. 
 * Compile and Flash to your dev board
@@ -123,11 +131,12 @@ If you get the configuration wrong, you'll need (for now - part of issue#22) to
 Open a browser to https://frugaliot.naturalinnovation
 
 #### Other languages
-At the moment (Nov2024) - see [issue #42](https://github.com/mitra42/frugal-iot/issues/42), language support is being added. 
+Add to system_language.cpp and system_language.h
 
 You can define `-D LANGUAGE_DEFAULT "de"` in `platformio.ini` to default to German. 
 And you can add `-D LANGUAGE_DE` to `platformio.ini` to *only* compile German (saving program space)
 You can add multiple lines to compile multiple languages.
+Once the language is selected on the portal (see above) it will be remembered
 
 ### Server development
 

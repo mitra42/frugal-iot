@@ -11,8 +11,7 @@
 System_Frugal frugal_iot("dev", "developers", "sht30", "SHT30 Temperature and Humidity Sensor"); 
 
 void setup() {
-  frugal_iot.startSerial(); // Encapsulate setting up and starting serial
-  frugal_iot.fs_LittleFS->pre_setup();
+  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
 
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
@@ -32,7 +31,10 @@ void setup() {
   frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
   
   // Add sensors, actuators and controls
-  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true));
+  // Light sensor BH1750 TODO see notes in sensor_bh1750.cpp,h about I2C pin conflicts
+  frugal_iot.sensors->add(new Sensor_BH1750("lux", "Lux", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true));
+  // Temperature and Humidity sensor (SHT30)
+  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

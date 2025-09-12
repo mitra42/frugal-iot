@@ -27,12 +27,14 @@
 #include <HX711.h> // https://registry.platformio.org/libraries/robtillaart/HX711
 #include "sensor_loadcell.h"
 #include "misc.h" // StringF
+#include "frugal_iot.h" // For frugal_iot
 
 //TODO-134 need to tell it the size of the load cell
 Sensor_LoadCell::Sensor_LoadCell(const char* const id, const char * const name, float max, const char* color, const bool retain, 
   uint8_t DOUTpin, uint8_t SCKpin, uint8_t times, int32_t offset, int32_t scale)
   : Sensor_Float(id, name, 3, 0, max, color, retain), 
     hx711(new HX711()),
+    // TODO-C37 normalize times/offset/scale for other analog
     times(times),
     offset(offset), 
     scale(scale)
@@ -41,16 +43,11 @@ Sensor_LoadCell::Sensor_LoadCell(const char* const id, const char * const name, 
   }
 // This may also get set by a button or a message
 void Sensor_LoadCell::tare() {
-  Serial.print(__FILE__); Serial.println(__LINE__);
-    hx711->tare(10); // Presume empty load cell   reading 10 tines for accuracy
-    Serial.print(__FILE__); Serial.println(__LINE__);
+  hx711->tare(10); // Presume empty load cell   reading 10 tines for accuracy
   offset = hx711->get_offset(); // Get and save the offset value 
-    Serial.print(__FILE__); Serial.println(__LINE__);
-  }
+}
 void Sensor_LoadCell::setup() {
-  #ifdef SENSOR_LOADCELL_DEBUG
-    Serial.println(F("Sensor_LoadCell::setup()"));
-  #endif
+  Sensor_Float::setup(); // Will readConfigFromFS and set offset and scale (thru to hx711), do before setting up pins
   hx711->reset(); // Set to initial state -do this because we dont know it was power cycled when dev board power cycles
   if (!hx711->get_tare()) { // Check if an offset has been set
     if (offset) {
@@ -58,31 +55,50 @@ void Sensor_LoadCell::setup() {
         Serial.print(F("Sensor_LoadCell::setup() - tare not set - using")); Serial.println(offset);
       #endif    
       hx711->set_offset(offset); // TODO-134 check this is correct
-    } else {
-      #ifdef SENSOR_LOADCELL_DEBUG
-        Serial.println(F("LoadCell: Checking tare - presumes nothing loaded"));
-      #endif
-      tare();
-      #ifdef SENSOR_LOADCELL_DEBUG
-        Serial.print(F("LoadCell: Offset=")); Serial.println(hx711->get_offset());
-      #endif
-    }
+    } 
   }
 #ifdef SENSOR_LOADCELL_DEBUG
   Serial.print(F("LoadCell: Scale=")); Serial.println(scale);
 #endif
-hx711->set_scale(scale); // TODO-134 
+  hx711->set_scale(scale); // TODO-134 
   hx711->set_median_mode(); // Use median so doesn't read e.g. 0.5kg if 1kg load added mid-cycle
 }
-float Sensor_LoadCell::read() {
+float Sensor_LoadCell::readFloat() {
+  // Retuns actual value - so validate and set are defaults
   float v = hx711->get_units(times); 
   #ifdef SENSOR_LOADCELL_DEBUG
     Serial.print(F("LoadCell: read()=")); Serial.println(v);
   #endif
   return v;
 }
-// TODO-134 this looks wrong - I think weight should be float
 void Sensor_LoadCell::calibrate(float weight) {
   hx711->calibrate_scale(weight, 15); // Use maximmum of 15 
   scale = hx711->get_scale(); // Remember the value
 }
+
+void Sensor_LoadCell::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+  if (topicSensorId == id) {
+    // Set by UX - "Tare" is weight=0  Calbrate is weight=XX
+    if (topicTwig == "output") {
+      if(payload.toFloat() == 0.0) {
+        tare(); // sets offset on hx711 and here
+        writeConfigToFS("offset", String(offset));
+      } else {
+        calibrate(payload.toFloat());
+        writeConfigToFS("scale", String(scale));
+      }
+    // offset and scale should only be seen when reading from disk
+    } else if (topicTwig == "offset") {
+      hx711->set_offset(payload.toInt());
+    } else if (topicTwig == "scale") {
+      hx711->set_scale(payload.toFloat());
+    } else {
+      Sensor_Float::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+    }
+  }
+}
+void Sensor_LoadCell::captiveLines(AsyncResponseStream* response) {
+  frugal_iot.captive->addNumber(response, id, "output", String(output->value,3), name, 0, output->max);
+  // Could add Tare as button - but probably want immediate response, not waiting on SEND
+}
+

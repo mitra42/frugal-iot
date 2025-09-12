@@ -45,7 +45,7 @@ System_Time::~System_Time() {}
 // Initialize all the time stuff - set Timezone and start asynchronous sync with NTP 
 void System_Time::init(const char* timeZone) {
   #ifdef SYSTEM_TIME_DEBUG
-    Serial.println("Time: Init");
+    Serial.println(F("Time: Init"));
   #endif
   timezone = timeZone;
 
@@ -66,7 +66,7 @@ void System_Time::init(const char* timeZone) {
 void System_Time::sync() {
   if (!getLocalTime(&_localTime)) {
     #ifdef SYSTEM_TIME_DEBUG
-      Serial.println("Time: Not yet synced");
+      Serial.println(F("Time: Not yet synced"));
     #endif
   }
 }
@@ -91,16 +91,17 @@ String System_Time::dateTime() {
 
 void System_Time::setup_after_wifi() {
     init(SYSTEM_TIME_ZONE);
-    sync();
+  // Nothing to read from disk so not calling readConfigFromFS 
+  sync();
 }
 
 void System_Time::infrequently() {
   if (nextLoopTime <= frugal_iot.powercontroller->sleepSafeMillis() ) {
     if (! isTimeSet()) {
-        Serial.print("Time since boot"); Serial.println(now());
+        Serial.print(F("Time since boot")); Serial.println(now());
     } else {
         now();
-        Serial.print("Local time = "); Serial.println(dateTime().c_str());
+        Serial.print(F("Local time = ")); Serial.println(dateTime().c_str());
     }
     nextLoopTime = (frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_TIME_MS);
     // TODO-141 check actually setting time

@@ -66,15 +66,15 @@
 #define ENS161_PARTID				    0x0161
 
 
-Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name) 
+Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name, TwoWire* wire) 
   : Sensor(id, name, false)
 { // TODO-101 try movign some of these into part above
-  aht = new System_I2C(SENSOR_ENSAHT_AHTI2C);
+  aht = new System_I2C(SENSOR_ENSAHT_AHTI2C, &I2C_WIRE);
   // AHT21
   temperature = new OUTfloat(id, "temperature", "Temperature", 0, 0, 0, 455, "red", false);
   humidity = new OUTfloat(id, "humidity", "Humidity", 0, 0, 0, 100, "blue", false);
   // ENS160
-  ens = new System_I2C(SENSOR_ENSAHT_ENSI2C); // I2C object at this address
+  ens = new System_I2C(SENSOR_ENSAHT_ENSI2C, &I2C_WIRE); // I2C object at this address
   aqi = new OUTuint16(id, "aqi", "AQI", 0, 0, 255, "purple", false); // TODO-101 set min/max
   tvoc = new OUTuint16(id, "tvoc", "TVOC", 0, 0, 99, "green", false); // TODO-101 set min/max
   eco2 = new OUTuint16(id, "co2", "eCO2", 0, 300, 900, "brown", false); // TODO-101 set min/max
@@ -90,18 +90,18 @@ uint8_t Sensor_ensaht::AHTspinTillReady() {
     status = aht->send1read1(AHTX0_STATUS_REGISTER);
   } while (status & AHTX0_STATUS_BUSY);
   #ifdef SENSOR_ENSAHT_DEBUG
-    //Serial.println("AHTx ready;");
+    //Serial.println(F("AHTx ready;");
   #endif
   return status; // Will mostly be ignored
 }
 
 void Sensor_ensaht::setupAHT() {
   #ifdef SENSOR_ENSAHT_DEBUG
-    Serial.println("AHT21 Setup;");
+    Serial.println(F("AHT21 Setup;"));
   #endif
-  humidity->setup(name);
-  temperature->setup(name);
-  aht->initialize();  // calls Wire.begin()
+  humidity->setup();
+  temperature->setup();
+  aht->initialize();  // calls wire->begin()
   // Setup the AHT21
   aht->send(AHTX0_CMD_SOFTRESET); // Just waiting for not busy
   AHTspinTillReady();
@@ -130,7 +130,7 @@ bool Sensor_ensaht::ENSsend2(uint8_t reg, uint8_t val) {
   bool status = ens->send(cmd, 2); // TODO-101 check sense of return code from ens-send
   #ifdef SENSOR_ENSAHT_DEBUG
     if (!status) {
-      Serial.print("ENS failed to send"); Serial.print(reg); Serial.println(val);
+      Serial.print(F("ENS failed to send")); Serial.print(reg); Serial.println(val);
     }
   #endif
   delay(ENS160_BOOTING);
@@ -151,12 +151,12 @@ bool Sensor_ensaht::ENSsendAndRead(uint8_t reg, uint8_t *buf, uint8_t num) {
 void Sensor_ensaht::setupENS() {
   uint8_t readbuffer[2];
   #ifdef SENSOR_ENSAHT_DEBUG
-    Serial.println("ENS160 Setup");
+    Serial.println(F("ENS160 Setup"));
   #endif
-  eco2->setup(name);
-  aqi->setup(name);
-  tvoc->setup(name);
-  //ens.initialize();  // calls Wire.begin() (unnecessary since already called)
+  eco2->setup();
+  aqi->setup();
+  tvoc->setup();
+  //ens.initialize();  // calls wire->begin() (unnecessary since already called)
   ENSsetMode(ENS160_OPMODE_RESET);
   // TODO-101 could check and report part id if want ???
   ENSsendAndRead(ENS160_REG_PART_ID, readbuffer, 2);
@@ -166,14 +166,14 @@ void Sensor_ensaht::setupENS() {
     switch (part_id) { 
       case ENS160_PARTID: 
         isENS161 = false;
-        Serial.println("ENS160");
+        Serial.println(F("ENS160"));
         break;
       case ENS161_PARTID:
         isENS161 = true;
         Serial.print(F("ENS160"));
         break;
       default:
-        Serial.println("Unknown");
+        Serial.println(F("Unknown"));
         break;
     }
   #endif
@@ -186,6 +186,7 @@ void Sensor_ensaht::setupENS() {
 }
 
 void Sensor_ensaht::setup() {
+  Sensor::setup(); // Will readConfigFromFS - do before setting up pins
   setupAHT();
   setupENS();
 }
@@ -240,7 +241,7 @@ void Sensor_ensaht::readAndSetENS() {
     delay(1);
     status = ens->send1read1(ENS160_REG_DATA_STATUS);
     #ifdef SENSOR_ENSAHT_DEBUG
-      //Serial.print("e");
+      //Serial.print(F("e"));
     #endif
   } while (!(ENS160_DATA_STATUS_NEWDAT & status));
   ENSsendAndRead(ENS160_REG_DATA_AQI, readbuffer, 7);
@@ -251,32 +252,31 @@ void Sensor_ensaht::readAndSetENS() {
     aqi500->set(((uint16_t)readbuffer[5]) | ((uint16_t)readbuffer[6] << 8));
   }
 }
-void Sensor_ensaht::readAndSet() {
+void Sensor_ensaht::readValidateConvertSet() {
     readAndSetAHT(); // Note the temp and humiity from here are sent to the ENS
     readAndSetENS();   
 }
 
-String Sensor_ensaht::advertisement() {
-  return ( 
-    temperature->advertisement(name)
-    + humidity->advertisement(name)
-    + aqi->advertisement(name)
-    + tvoc->advertisement(name)
-    + eco2->advertisement(name)
-    + (isENS161 ? aqi500->advertisement(name) : "")
-  );
+void Sensor_ensaht::discover() {
+    temperature->discover();
+    humidity->discover();
+    aqi->discover();
+    tvoc->discover();
+    eco2->discover();
+    if (isENS161) { aqi500->discover(); }
 }
-void Sensor_ensaht::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+void Sensor_ensaht::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     if (
-      temperature->dispatchLeaf(leaf, payload, isSet) ||
-      humidity->dispatchLeaf(leaf, payload, isSet) ||
-      aqi->dispatchLeaf(leaf, payload, isSet) ||
-      tvoc->dispatchLeaf(leaf, payload, isSet) ||
-      eco2->dispatchLeaf(leaf, payload, isSet) ||
-      aqi500->dispatchLeaf(leaf, payload, isSet)
+      temperature->dispatchLeaf(topicTwig, payload, isSet) ||
+      humidity->dispatchLeaf(topicTwig, payload, isSet) ||
+      aqi->dispatchLeaf(topicTwig, payload, isSet) ||
+      tvoc->dispatchLeaf(topicTwig, payload, isSet) ||
+      eco2->dispatchLeaf(topicTwig, payload, isSet) ||
+      aqi500->dispatchLeaf(topicTwig, payload, isSet)
     ) { // True if changed
       // Nothing to do on sensor
     }
+    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }

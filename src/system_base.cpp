@@ -12,11 +12,14 @@
 #include "misc.h"
 #include "system_frugal.h"
 
-System_Base::System_Base(const char * const id, const char * const name)
+System_Base::System_Base(const char * const id, const String name)
 : id(id), name(name) { };
 
 // Defaults for routines that can, but often are not, overridden in sub-class.
 void System_Base::setup() { };
+void System_Base::setupFailed() { // Call this from setup() if fails
+  Serial.print(id); Serial.println(F("Failed in setup"));
+}
 void System_Base::loop() { }; // Called frequently same as loop() in typical arduino apps
 void System_Base::periodically() { }; // Called once for each period - which might be 10 seconds, or seeral hours
 void System_Base::infrequently() { }; // Run once each period, but should check timing
@@ -24,11 +27,20 @@ void System_Base::infrequently() { }; // Run once each period, but should check 
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-void System_Base::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {};
 void System_Base::dispatchPath(const String &topicPath, const String &payload) {};
 #pragma GCC diagnostic pop
-String System_Base::advertisement() {return String();};
+  void System_Base::discover() {} ; // Default to do nothing
 
+void System_Base::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+  if (isSet && (topicSensorId == id)) {
+    if (topicTwig == "name") {
+      name = payload;
+      writeConfigToFS(topicTwig, payload);
+    } else {
+      // Nothing wrong with no match - it might have been handled in subclass
+    }
+  }
+}
 // Basic read configuration - based on the object's "id"
 void System_Base::readConfigFromFS() {
   // Note LittleFS should have been setup in frugal_iot constructor so this should not be null
@@ -48,16 +60,16 @@ void System_Base::readConfigFromFS(File dir, const String* leaf) {
       break;
     }
     // Lets presume reading a:  wifi/foo  or b:  sht/temperature or c: sht/temperature/max
-    //Serial.print(id); Serial.print("/"); Serial.print(leaf); Serial.print("/"); Serial.print(entry.name());
+    //Serial.print(id); Serial.print(F("/")); Serial.print(leaf); Serial.print(F("/")); Serial.print(entry.name());
     const String newleaf = (leaf ? (*leaf + "/") : "") + entry.name();
     Serial.print(id); Serial.print(F("/")); Serial.print(newleaf);
     if (entry.isDirectory()) { // b: entry is directory sht/temperature 
-      Serial.println("/");
+      Serial.println(F("/"));
       readConfigFromFS(entry, &newleaf); 
     } else { // a: id=wifi twiglet=nullptr entry is foo   or c: id=sht twiglet=temperature entry is max
       String payload = entry.readString();
       payload.trim(); // Remove leading/trailing whitespace
-      Serial.print("="); Serial.println(payload);
+      Serial.print(F("=")); Serial.println(payload);
       dispatchTwig(id, newleaf, payload, true);
     }
     entry.close();
@@ -68,29 +80,49 @@ void System_Base::writeConfigToFS(const String& topicTwig, const String& payload
   frugal_iot.fs_LittleFS->spurt(path, payload);
 }
 
+String System_Base::leaf2path(const char* const leaf) { 
+  return frugal_iot.messages->path(id, leaf);
+}
 // ========== IO - base class for IN and OUT ===== 
 
 
-IO::IO(const char * const sensorId, const char * const id, const char * const name, const char* const color, const bool w)
-: sensorId(sensorId), id(id), name(name), topicTwig(lprintf(strlen(sensorId)+strlen(id)+2, "%s/%s", sensorId, id)), color(color), wireable(w), wiredPath(nullptr) 
+IO::IO(const char * const sensorId, const char * const id, const String name, const char* const color, const bool w)
+: sensorId(sensorId), id(id), name(name), 
+topicTwig(StringF("%s/%s", sensorId, id)), 
+color(color), wireable(w), wiredPath()
 {};
 
-IN::IN(const char* sensorId, const char * const id, const char * const name, const char * const color, const bool w)
+IN::IN(const char* sensorId, const char * const id, const String name, const char * const color, const bool w)
 : IO(sensorId, id, name, color, w) { };
 
-OUT::OUT(const char* sensorId, const char * const id, const char * const name, const char * const color, const bool w)
+OUT::OUT(const char* sensorId, const char * const id, const String name, const char * const color, const bool w)
 : IO(sensorId, id, name, color, w) { };
 
-void IO::wireTo(String* topicPath) {
+void IO::wireTo(String topicPath) {
   // TODO probably should unsubscribe from previous BUT could be subscribed elsewhere
-  wiredPath = topicPath;
-  if (topicPath->length() > 0) {
-frugal_iot.mqtt->subscribe(*wiredPath);
+  wiredPath = topicPath; // can set to empty
+  if (topicPath.length()) {
+    frugal_iot.messages->subscribe(wiredPath);
   }
 }
-void IO::wireTo(IO* io) {
-  wireTo(frugal_iot.mqtt->path(io->topicTwig)); // Subscribe to the twig of the IO
+String IO::path() {
+  return frugal_iot.messages->path(topicTwig);
 }
+void IO::wireTo(IO* io) {
+  wireTo(frugal_iot.messages->path(io->topicTwig)); // Subscribe to the twig of the IO
+}
+
+void IO::send() {
+  frugal_iot.messages->send(path(), StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+}
+void IO::discover() {
+  send();
+  if (wireable) {
+    frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "wired"), wiredPath, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  }
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "color"), String(color), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+}
+
 // TO_ADD_INxxx 
 float IN::floatValue() {
   Serial.println(F("IN::floatValue should be subclassed"));
@@ -100,22 +132,10 @@ bool IN::boolValue() {
   Serial.println(F("IN::boolValue should be subclassed"));
   return false; 
 }
-uint16_t IN::uint16Value() {
-  Serial.println(F("IN::uint16Value should be subclassed"));
-  return 0;
-}
-String IN::StringValue() {
-  Serial.println(F("IN::uint16Value should be subclassed"));
-  return String();
-}
-
 float INuint16::floatValue() {
   return value;
 }
 bool INuint16::boolValue() {
-  return value;
-}
-uint16_t INuint16::uint16Value() {
   return value;
 }
 String INuint16::StringValue() {
@@ -128,9 +148,7 @@ float INfloat::floatValue() {
 bool INfloat::boolValue() {
   return value;
 }
-uint16_t INfloat::uint16Value() {
-  return value;
-}
+// TODO do we really need all these interconversions, it might be for something we never do 
 String INfloat::StringValue() {
   return String(value, (int)width);
 }
@@ -141,11 +159,8 @@ float INbool::floatValue() {
 bool INbool::boolValue() {
   return value;
 }
-uint16_t INbool::uint16Value() {
-  return value;
-}
 String INbool::StringValue() {
-  return value ? "true" : "false";
+  return String(value ? "true" : "false");
 }
 float INcolor::floatValue() {
   return 0;
@@ -153,32 +168,25 @@ float INcolor::floatValue() {
 bool INcolor::boolValue() {
   return 0;
 }
-uint16_t INcolor::uint16Value() {
-  return 0;
-}
 String INcolor::StringValue() {
-  return ""; // TODO-136 convert
+  // 0xRRGGBB
+  // Check that always has r, g, b as two digits
+  return String(String("0x") + String(r, HEX) + String(g, HEX) + String(b, HEX));
 }
 float INtext::floatValue() {
-  return 0; // TODO-136 convert
+  return value.toFloat();
 }
 bool INtext::boolValue() {
-  return 0; // TODO-136 convert
+  return value == "true" || value.toInt(); // TODO-136 convert
 }
-uint16_t INtext::uint16Value() {
-  return 0; // TODO-136 convert
-}
-String INtext::StringValue() {
-  return *value;
+String INtext::StringValue() { // Note this isn't a copy, but I think it will get copied if neces
+  return value;
 }
 // TO_ADD_OUTxxx
 float OUTfloat::floatValue() {
   return value;
 }
 bool OUTfloat::boolValue() {
-  return value;
-}
-uint16_t OUTfloat::uint16Value() {
   return value;
 }
 String OUTfloat::StringValue() {
@@ -190,9 +198,6 @@ float OUTuint16::floatValue() {
 bool OUTuint16::boolValue() {
   return value;
 }
-uint16_t OUTuint16::uint16Value() {
-  return value;
-}
 String OUTuint16::StringValue() {
   return String(value);
 }
@@ -202,34 +207,35 @@ float OUTbool::floatValue() {
 bool OUTbool::boolValue() {
   return value;
 }
-uint16_t OUTbool::uint16Value() {
-  return value;
-}
 String OUTbool::StringValue() {
-  return value ? "true" : "false";
+  return String(value ? "true" : "false");
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void IO::setup(const char * const sensorname) {
+void IO::setup() {
     // Note topicTwig subscribed to by IN, not by OUT
 }
-#pragma GCC diagnostic pop
 
-void IN::setup(const char * const sensorname) {
-  IO::setup(sensorname);
+void IN::setup() {
+  IO::setup();
   // No longer subscribes since subscribe to node/set/<sensor>/leaf
 }
-// Options eg: sht/temp set/sht/temp/wire set/sht/temp set/sht/temp/max
+// Leaf should be e.g. now/wired 
+void IO::writeConfigToFS(const String &leaf, const String& payload) { 
+  String path = String("/") + sensorId + "/" + leaf;
+  //Serial.println(F("Writing config to " + path + "=" + payload));
+  frugal_iot.fs_LittleFS->spurt(path, payload);
+}
+// Options eg: sht/temp set/sht/temp/wired set/sht/temp set/sht/temp/max
 bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  if (isSet) { // e.g : set/sht/temp/wire set/sht/temp set/sht/temp/max
-    if (leaf.startsWith(id) && leaf.endsWith("/wire")) {
-      if (!(wiredPath && (p == *wiredPath))) { // if empty, or different
-        wireTo(new String(p));
+  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
+    if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // Nite this is the "id" of the leaf, not of the sensor
+      if (!(p == wiredPath)) { // if empty, or different
+        wireTo(p);
+        writeConfigToFS(leaf, p);  //         
       }
-    } // TODO-130 handle other sets, like max - but at INfloat level
+    }
   }
-  // For now recognizing both xxx/leaf and set/xxx/leaf or setting TODO-130 change UX
+  // For now recognizing both xxx/leaf and set/xxx/leaf (but note only subscribed to set/xxx/leaf)
   if (leaf == id) { // e.g. sht/temp set/sht/temp
     return convertAndSet(p); // Virtual - depends on type of INxxx
   }
@@ -237,18 +243,21 @@ bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 }
 // Check incoming message, return true if value changed and should call act() on the control
 bool IN::dispatchPath(const String &tp, const String &p) {
-  if (wiredPath && (tp == *wiredPath)) {
+  // Note looking for wiredPath of a remote object wired, not path of this IN
+  if (tp == wiredPath) { 
     return convertAndSet(p);
+    // Intentionally not writing config to FS here - its a runtime wiring
   }
   return false; // nothing changed
 }
 
 bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  if (isSet) { // e.g : set/sht/temp/wire set/sht/temp set/sht/temp/max
-    if (leaf.startsWith(id) && leaf.endsWith("/wire")) {
-      if (!(wiredPath && (p == *wiredPath))) {
-        wiredPath = new String(p);
+  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
+    if (leaf.startsWith(id) && leaf.endsWith("/wired")) {
+      if (!(p == wiredPath)) {
+        wiredPath = p; // Copies p
         sendWired(); // Destination changed, send current value
+        writeConfigToFS(leaf, p);  //         
       }
     }
   }
@@ -256,6 +265,90 @@ bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
 }
 
+bool INfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+  bool dispatched = false;
+  if (leaf.startsWith(id)) {
+    float v = p.toFloat();
+    if (leaf.endsWith("/max")) {
+      max = v;
+      writeConfigToFS(leaf, p);  //         
+      dispatched = true;
+    } else if (leaf.endsWith("/min")) {
+      min = v;
+      dispatched = true;
+    }
+    if (dispatched) {
+      writeConfigToFS(leaf, p);  
+      return false; // value didnt change         
+    } 
+    // else drop through and dispatch to superclass
+  }
+  // Catch generic case like color
+  return IN::dispatchLeaf(leaf, p, isSet);
+}
+bool OUTfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+  bool dispatched = false;
+  if (leaf.startsWith(id)) {
+    float v = p.toFloat();
+    if (leaf.endsWith("/max")) {
+      max = v;
+      writeConfigToFS(leaf, p);  //         
+      dispatched = true;
+    } else if (leaf.endsWith("/min")) {
+      min = v;
+      dispatched = true;
+    }
+    if (dispatched) {
+      writeConfigToFS(leaf, p);  
+      return false; // value didnt change         
+    } 
+    // else drop through and dispatch to superclass
+  }
+  // Catch generic case like color
+  return OUT::dispatchLeaf(leaf, p, isSet);
+}
+bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+  bool dispatched = false;
+  if (leaf.startsWith(id)) {
+    float v = p.toFloat();
+    if (leaf.endsWith("/max")) {
+      max = v;
+      writeConfigToFS(leaf, p);  //         
+      dispatched = true;
+    } else if (leaf.endsWith("/min")) {
+      min = v;
+      dispatched = true;
+    }
+    if (dispatched) {
+      writeConfigToFS(leaf, p);  
+      return false; // value didnt change         
+    } 
+    // else drop through and dispatch to superclass
+  }
+  // Catch generic case like color
+  return IN::dispatchLeaf(leaf, p, isSet);
+}
+bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+    bool dispatched = false;
+  if (leaf.startsWith(id)) {
+    float v = p.toFloat();
+    if (leaf.endsWith("/max")) {
+      max = v;
+      writeConfigToFS(leaf, p);  //         
+      dispatched = true;
+    } else if (leaf.endsWith("/min")) {
+      min = v;
+      dispatched = true;
+    }
+    if (dispatched) {
+      writeConfigToFS(leaf, p);  
+      return false; // value didnt change         
+    } 
+    // else drop through and dispatch to superclass
+  }
+  // Catch generic case like color
+  return OUT::dispatchLeaf(leaf, p, isSet);
+}
 /*
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -288,31 +381,31 @@ bool IO::dispatchPath(const String &topicPath, const String &payload) {
 void IO::debug(const char* const where) {
   // Note subclass needs to provide terminating println (usually after a type-dependent value)
     Serial.print(where); 
-    Serial.print(" topicTwig="); Serial.print(topicTwig ? topicTwig : "NULL"); 
-    Serial.print(" wireable"); Serial.print(wireable);
+    Serial.print(F(" topicTwig=")); Serial.print(topicTwig ? topicTwig : "NULL"); 
+    Serial.print(F(" wireable")); Serial.print(wireable);
     if (wireable) {
-      Serial.print(" wiredPath="); Serial.print(wiredPath ? *wiredPath : "NULL"); 
+      Serial.print(F(" wiredPath=")); Serial.print(wiredPath); 
     }
 }
 // TO_ADD_INxxx
 void INfloat::debug(const char* const where) {
     IO::debug(where);
-    Serial.print(" value="); Serial.println(value); 
+    Serial.print(F(" value=")); Serial.println(value); 
 }
 void INuint16::debug(const char* const where) {
   IO::debug(where);
-  Serial.print(" value="); Serial.println(value); 
+  Serial.print(F(" value=")); Serial.println(value); 
 }
 void INcolor::debug(const char* const where) {
   IO::debug(where);
   // TODO-131 should be xx not x for "0" 
-  Serial.print("r="); Serial.print(r, HEX); 
-  Serial.print("g="); Serial.print(g, HEX); 
-  Serial.print("b="); Serial.print(b, HEX); 
+  Serial.print(F("r=")); Serial.print(r, HEX); 
+  Serial.print(F("g=")); Serial.print(g, HEX); 
+  Serial.print(F("b=")); Serial.print(b, HEX); 
 }
 void INtext::debug(const char* const where) {
   IO::debug(where);
-  Serial.print(" value="); Serial.println(*value); 
+  Serial.print(F(" value=")); Serial.println(*value); 
 }
 void INbool::debug(const char* const where) {
   IO::debug(where);
@@ -321,15 +414,15 @@ void INbool::debug(const char* const where) {
 // TO_ADD_OUTxxx
 void OUTfloat::debug(const char* const where) {
     IO::debug(where);
-    Serial.print(" value="); Serial.println(value); 
+    Serial.print(F(" value=")); Serial.println(value); 
 }
 void OUTbool::debug(const char* const where) {
     IO::debug(where);
-    Serial.print(" value="); Serial.println(value); 
+    Serial.print(F(" value=")); Serial.println(value); 
 }
 void OUTuint16::debug(const char* const where) {
   IO::debug(where);
-  Serial.print(" value="); Serial.println(value); 
+  Serial.print(F(" value=")); Serial.println(value); 
 }
 #endif
 
@@ -337,7 +430,7 @@ void OUTuint16::debug(const char* const where) {
 
 // INfloat::INfloat() {}
 // TO_ADD_INxxx
-INfloat::INfloat(const char * const sensorId, const char * const id, const char* const name, float v, uint8_t width, float mn, float mx, char const * const c, const bool w)
+INfloat::INfloat(const char * const sensorId, const char * const id, const String name, float v, uint8_t width, float mn, float mx, char const * const c, const bool w)
   :   IN(sensorId, id, name, c, w), value(v), width(width), min(mn), max(mx) {
 }
 
@@ -346,7 +439,7 @@ INfloat::INfloat(const INfloat &other)
   value(other.value),
   width(other.width)
 { }
-INuint16::INuint16(const char * const sensorId, const char * const id, const char* const name, uint16_t v, uint16_t mn, uint16_t mx, char const * const c, const bool w)
+INuint16::INuint16(const char * const sensorId, const char * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const c, const bool w)
   :   IN(sensorId, id, name, c, w), value(v), min(mn), max(mx) {
 }
 
@@ -355,7 +448,7 @@ INuint16::INuint16(const INuint16 &other)
   value = other.value;
 }
 
-INbool::INbool(const char * const sensorId, const char * const id, const char* const name, bool value, char const * const color, const bool wireable)
+INbool::INbool(const char * const sensorId, const char * const id, const String name, bool value, char const * const color, const bool wireable)
   :   IN(sensorId, id, name, color, wireable), value(value) {
 }
 
@@ -363,7 +456,7 @@ INbool::INbool(const INuint16 &other)
 : IN(other.sensorId, other.id, other.name, other.color, other.wireable) {
   value = other.value;
 }
-INcolor::INcolor(const char * const sensorId, const char * const id, const char* const name, uint8_t r, uint8_t g, uint8_t b, const bool w)
+INcolor::INcolor(const char * const sensorId, const char * const id, const String name, uint8_t r, uint8_t g, uint8_t b, const bool w)
   :   IN(sensorId, id, name, nullptr, w), r(r), g(g), b(b) {
     //TODO-130 this will fail as IN needs color set for discovery. 
 }
@@ -378,13 +471,13 @@ INcolor::INcolor(const INcolor &other)
   g = other.g;
   b = other.b;
 }
-INtext::INtext(const char * const sensorId, const char * const id, const char* const name, String* value, char const * const color, const bool wireable)
+INtext::INtext(const char * const sensorId, const char * const id, const String name, String value, char const * const color, const bool wireable)
   :   IN(sensorId, id, name, color, wireable), value(value) {
 }
 
 INtext::INtext(const INtext &other) : 
   IN(other.sensorId, other.id, other.name, other.color, other.wireable),
-  value(new String(*other.value)) {
+  value(other.value) {
 }
 
 // TO_ADD_INxxx
@@ -416,6 +509,7 @@ bool INbool::convertAndSet(const String &payload) {
 bool INcolor::convertAndSet(const String &p) {
   return convertAndSet(p.c_str());
 }
+// RRGGBB or 0xRRGGBB
 bool INcolor::convertAndSet(const char* p1) {
   if (p1[0] == '0' && p1[1] == 'x') {
     p1 += 2; // Skip 0x
@@ -433,63 +527,44 @@ bool INcolor::convertAndSet(const char* p1) {
   return false; // nothing changed
 }
 bool INtext::convertAndSet(const String &payload) {
-  if (!(value && payload == *value)) {
-    value = new String(payload); // TODO possibly memory leak for old string 
+  if (!(payload == value)) {
+    value = payload; 
     return true; // Need to rerun calcs
   }
   return false; // nothing changed
 }
 
-// TO_ADD_INxxx TO_ADD_OUTxxx
-const char* valueAdvertLineUint16 = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %d\n    max: %d\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-const char* valueAdvertLineFloat = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    min: %*f\n    max: %*f\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-const char* valueAdvertLineBool = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-const char* valueAdvertLineText = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-const char* valueAdvertLineColor = "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
 // TO_ADD_INxxx
-String INfloat::advertisement(const char * const group) {
-  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
-  return (topicTwig)
-  ? StringF(valueAdvertLineFloat, topicTwig, name, "float", width, min, width, max, color, "slider", "w", group, wireable ? 1 : 4, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-  : String();
+
+void INfloat::discover() {
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  IN::discover();
 }
-String INuint16::advertisement(const char * const group) {
-  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
-  return (topicTwig)
-  ? StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "slider", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-  : String();
+void INuint16::discover() {
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  IN::discover(); // Sends value
 }
-String INbool::advertisement(const char * const group) {
-  //"\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-  return (topicTwig)
-  ? StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-  : String();
-}
-String INtext::advertisement(const char * const group) {
-  // e.g. "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s";
-  return (topicTwig)
-  ? StringF(valueAdvertLineText, topicTwig, name, "text", color, "text", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-  : String();
-}
-String INcolor::advertisement(const char * const group) {
-  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w"
-  return (topicTwig)
-  ? StringF(valueAdvertLineColor, topicTwig, name, "color", color, "wheel", "w", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-  : String();
-}
+/* Using base class
+  void INcolor::discover() {
+    IN::discover(); // Sends value as 0xRRGGBB
+  }
+*/
+// INbool and INtext, INcolor are fine witb the superclass (just sending color)
 
 // ========== OUT for some topic we are potentially sending to ===== 
 
 //OUTfloat::OUTfloat() {};
 //OUTbool::OUTbool() {};
 // TO_ADD_OUTxxx
-OUTbool::OUTbool(const char * const sensorId, const char* const id, const char * const name, bool v, char const * const color, const bool w)
+OUTbool::OUTbool(const char * const sensorId, const char* const id, const String name, bool v, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v)  {
 }
-OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const char * const name,  float v, uint8_t width, float mn, float mx, char const * const color, const bool w)
+OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const String name,  float v, uint8_t width, float mn, float mx, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v), width(width), min(mn), max(mx) { 
 }
-OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const char * const name,  uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool w)
+OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const String name,  uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v), min(mn), max(mx) {
 }
 
@@ -515,130 +590,67 @@ OUTuint16::OUTuint16(const OUTuint16 &other)
 
 // TO_ADD_OUTxxx
 // Called when either value, or wiredPath changes
-void OUTfloat::sendWired() {
-  if (wiredPath && wiredPath->length() ) {
-    frugal_iot.mqtt->messageSend(*wiredPath, value, width, true, 1 ); // TODO note retain and qos=1 
-  }
-}
-void OUTuint16::sendWired() {
-  if (wiredPath && wiredPath->length() ) {
-    frugal_iot.mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
-  }
-}
-void OUTbool::sendWired() {
-  if (wiredPath && wiredPath->length() ) {
-    frugal_iot.mqtt->messageSend(*wiredPath, value, true, 1 ); // TODO, retain and qos=1 
+void OUT::sendWired() {
+  if (wiredPath.length()) {
+    frugal_iot.messages->send(wiredPath, StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
   }
 }
 // TO-ADD-OUTxxx
 void OUTfloat::set(const float newvalue) {
   #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
   #endif
   if (newvalue != value) {
     value = newvalue;
-    frugal_iot.mqtt->messageSend(topicTwig, value, width, true, 1 ); // retain and qos=1 
+    send();
     sendWired();
   }
 }
 void OUTuint16::set(const uint16_t newvalue) {
   #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
   #endif
   if (newvalue != value) {
     value = newvalue;
-    frugal_iot.mqtt->messageSend(topicTwig, value, true, 1 ); 
+    send();
     sendWired();
   }
 }
+void OUTbool::send() {
+  // String(value) will send 0 or 1, while StringValue() would send "true" or "false"
+  frugal_iot.messages->send(path(), String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+}
 void OUTbool::set(const bool newvalue) {
   #ifdef CONTROL_HYSTERISIS_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(" old="); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
+    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
   #endif
   if (newvalue != value) {
     value = newvalue;
-    frugal_iot.mqtt->messageSend(topicTwig, value, true, 1 ); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    send();
     sendWired();
   }
 }
 
 // TO-ADD-OUTxxx
-// "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
-String OUTfloat::advertisement(const char * const group) {
-  // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
-  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
-  return (topicTwig)
-    ? StringF(valueAdvertLineFloat, topicTwig, name, "float", width, min, width, max, color, "bar", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-    : String();
+void OUTfloat::discover() {
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  OUT::discover(); // Sends value
 }
-// "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w"
-String OUTuint16::advertisement(const char * const group) {
-  // "\n  -\n    topic: wire_humidity_control_out\n    name: Output to\n    type: topic\n    options: bool\n    display: dropdown\n    rw: w\n    group: %s"
-  // e.g. "\n  -\n    topic: humidity_limit\n    name: Maximum value\n    type: float\n    min: 1\n    max: 100\n    display: slider\n    rw: w\n    group: %s"
-  return (topicTwig)
-    ? StringF(valueAdvertLineUint16, topicTwig, name, "int", min, max, color, "bar", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-    : String();
+void OUTuint16::discover() {
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  OUT::discover(); // Sends value
 }
-String OUTbool::advertisement(const char * const group) {
-  // "\n  -\n    topic: %s\n    name: %s\n    type: %s\n    color: %s\n    display: %s\n    rw: %s\n    group: %s\n    wireable: %d\n    wired: %s";
-  return (topicTwig)
-    ? StringF(valueAdvertLineBool, topicTwig, name, "bool", color, "toggle", "r", group, wireable, (wireable && wiredPath) ? wiredPath->c_str() : "NULL")
-    : String();
-    
-}
-
-/* 
-//Not used - built for gsheets where followed by a "wireto"
-IN* IN::INxxx(IOtype t, const char* sensorId) {
-  switch (t) {
-    // TO-ADD-INxxx
-    case BOOL:
-      return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
-    case UINT16:
-      return new INuint16(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
-    case FLOAT:
-      return new INfloat(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
-    case COLOR:
-      return new INcolor(sensorId, nullptr, nullptr, 0, 0, 0, true);
-    default:
-      return nullptr;
-  }
-}
-*/
-
-/* 
-//Not used - built for gsheets where followed by a "wireto"
-IN* IN::INxxx(IOtype t, const char* sensorId) {
-  switch (t) {
-    // TO-ADD-INxxx
-    case BOOL:
-      return new INbool(sensorId, nullptr, nullptr, false, nullptr, true);
-    case UINT16:
-      return new INuint16(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
-    case FLOAT:
-      return new INfloat(sensorId, nullptr, nullptr, 0, 0, 0, nullptr, true);
-    case COLOR:
-      return new INcolor(sensorId, nullptr, nullptr, 0, 0, 0, true);
-    default:
-      return nullptr;
-  }
-}
-*/
-
 
 // These are mostly to stop the compiler complaining about missing vtables
 void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-String IO::advertisement(const char * const group) { shouldBeDefined(); return String(); }
 float IO::floatValue() { shouldBeDefined(); return 0.0; }
 bool IO::dispatchLeaf(const String &twig, const String &p, bool isSet) { shouldBeDefined(); return false; }
-String OUT::advertisement(const char * const group) { shouldBeDefined(); return String(); }
 float OUT::floatValue() { shouldBeDefined(); return 0.0; }
 bool OUT::boolValue() { shouldBeDefined(); return false; }
-uint16_t OUT::uint16Value() { shouldBeDefined(); return 0; }
-String OUT::StringValue() { shouldBeDefined(); return ""; }
-void OUT::sendWired() { shouldBeDefined(); }
+String IO::StringValue() { shouldBeDefined(); return String(); }
 bool IN::convertAndSet(const String &payload) { shouldBeDefined(); return false;}
-String IN::advertisement(const char * const name) { shouldBeDefined(); return String(); }
 #pragma GCC diagnostic pop

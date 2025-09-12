@@ -21,7 +21,7 @@ class Control : public System_Base {
     Control(const char * const id, const char * const name, std::vector<IN*> i, std::vector<OUT*> o); 
     void setup() override;
     virtual void act();
-    String advertisement() override;
+    void discover() override;
     void dispatchTwig(const String &topicControlId, const String &topicLeaf, const String &payload, bool isSet);
     void dispatchPath(const String &topicPath, const String &payload) override;
     #ifdef CONTROL_DEBUG

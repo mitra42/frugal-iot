@@ -11,6 +11,8 @@
 #endif
 #include "system_watchdog.h"
 #include "system_frugal.h"
+#include "misc.h" // heap_print
+
 
 // TODO-125
 // This pair of functions is intended to debug the freezes being seen on ESP32's 
@@ -26,6 +28,8 @@ long unsigned internal_watchdog_last = 0; // Will be sleepSafeMillis
 System_Watchdog::System_Watchdog() : System_Base("watchdog", "Watchdog") {}
 
 void System_Watchdog::setup() {
+    // Nothing to read from disk so not calling readConfigFromFS 
+    
   //Ref: https://forum.arduino.cc/t/esp32-ram-check/871248/2
   //https://iotassistant.io/esp32/enable-hardware-watchdog-timer-esp32-arduino-ide/
   // If the TWDT was not initialized automatically on startup, manually intialize it now
@@ -50,7 +54,7 @@ void System_Watchdog::loop() {
   static uint16_t watchcount = 0;
   if (watchcount++ >= 10000 ) {
     watchcount = 0;
-    Serial.print("⏳");
+    Serial.print(F("⏳"));
   }
   #ifdef ESP32
     esp_task_wdt_reset();
@@ -61,12 +65,7 @@ void System_Watchdog::infrequently() {
   // TODO move this to infrequent() on something
   if (frugal_iot.powercontroller->sleepSafeMillis() > (internal_watchdog_last + SYSTEM_WATCHDOG_MEM_MS)) {
     #ifdef SYSTEM_MEMORY_DEBUG
-      #ifdef ESP8266
-        Serial.print(F("heap=")); Serial.println(system_get_free_heap_size());  // https://www.esp8266.com/viewtopic.php?p=82839
-      #elif defined(ESP32) //TODO-128 should be able to find equivalent on ESP8266
-        Serial.print(F("heap=")); Serial.print(esp_get_free_heap_size()); 
-        Serial.print(F(" min heap=")); Serial.println(esp_get_minimum_free_heap_size());
-      #endif //ESP32
+      heap_print(F("watchdog infrequent"));
     #endif
     internal_watchdog_last = frugal_iot.powercontroller->sleepSafeMillis(); 
   }

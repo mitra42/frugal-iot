@@ -14,16 +14,14 @@
 #include "_settings.h"
 #ifdef SYSTEM_OTA_KEY
 
-#if ! (defined(ESP8266) || defined(ESP32))
-  #error OTA is currently only defined for ESP8266 and ESP32
-#endif
-
 #include <Arduino.h>
 #include "system_discovery.h"
 #include "system_wifi.h"
 #include "system_ota.h"
 #include "system_frugal.h"
+#include "actuator_ledbuiltin.h" // for correct LED_BUILTIN
 
+// Note that OTA will fail (no space) on devices where the code is >50% of space - currently this includes SONOFFs
 #ifdef ESP8266
   #include <ESP8266httpUpdate.h> // defines ESPhttpUpdate
   #include <ESP8266WiFi.h>  // for WiFiClient
@@ -34,9 +32,11 @@
   #include <HTTPUpdate.h> // espressif / Arduino-ESP32 library
   #include <WiFiClientSecure.h>
   #define HTTPUPDATE httpUpdate
+  #define SYSTEM_OTA_USECERT
 #else
     #error OTA only defined so far for ESP8266 and ESP32 
 #endif
+
 #include "system_frugal.h" // For sleepSafemillis()
 
 #ifndef SYSTEM_OTA_VERSION
@@ -47,7 +47,7 @@
   #define SYSTEM_OTA_SERVERPORTPATH "https://frugaliot.naturalinnovation.org/ota_update/" // Note trailing slash
 #endif
 
-#ifdef ESP32
+#ifdef SYSTEM_OTA_USECERT
 
   const char* rootCACertificateForNaturalInnovation = \
       "-----BEGIN CERTIFICATE-----\n"
@@ -92,34 +92,46 @@ void System_OTA::init(const String otaServerAddress, const String softwareVersio
   _softwareVersion = softwareVersion;
   _isOK = true;
   _retryCount = 3;
-  _caCert = caCert;
+  #ifdef SYSTEM_OTA_USECERT
+    _caCert = caCert;
+  #endif
 }
 
 void otaStartCB() {
   frugal_iot.ota->_isOK = true;
-  Serial.println("OTA start");
+  Serial.println(F("OTA start"));
 }
 
 void otaProgressCB(int done, int size) {
-  Serial.print("OTA progress: Done "); Serial.print(done); Serial.print(" of "); Serial.println(size);
+  Serial.print(F("OTA progress: Done ")); Serial.print(done); Serial.print(F(" of ")); Serial.println(size);
 }
 
 void otaEndCB() {
-  Serial.println("OTA end");
+  Serial.println(F("OTA end"));
   frugal_iot.ota->_checked = true;
 }
 
 void otaErrorCB(int errorCode) {
-  Serial.print("OTA error "); Serial.println(errorCode);
+  Serial.print(F("OTA error ")); Serial.println(errorCode);
   frugal_iot.ota->_isOK = false;
 }
 
 void System_OTA::checkForUpdate() {
   #ifdef ESP32
     WiFiClientSecure client;
-    client.setCACert(_caCert);
   #elif defined(ESP8266)
-    WiFiClient client; // Assumes system_wifi has already connected to access point - note this will not run if WiFi fails to connect and goes to portal mode
+    WiFiClientSecure client; // Assumes system_wifi has already connected to access point - note this will not run if WiFi fails to connect and goes to portal mode
+    //TODO If we set the certificate then it throws an exception ... dont really need it. 
+    #ifdef SYSTEM_OTA_USECERT
+      #ifdef ESP32
+        client.setCACert(_caCert);
+      #elif defined(ESP8266)
+        // TODO This crashed when tested but might actually be OK 
+        client.setTrustAnchors(new X509List(_caCert));
+      #endif
+    #else
+      client.setInsecure(); // Alternative
+    #endif
   #endif
   client.setTimeout(20000);
   // Set this if you want your OTA server to be able to return a redirect to force devices to collect the firmware from e.g. githubraw
@@ -137,25 +149,25 @@ void System_OTA::checkForUpdate() {
   // but the true key to the software is the MD5 hash, which is always sent
   
   if (_otaServerAddress.length() == 0 || ! strchr(_otaServerAddress.c_str(), ':')) {
-    Serial.println("OTA ServerUrl not set");
+    Serial.println(F("OTA ServerUrl not set"));
     return;
   }
   t_httpUpdate_return ret = HTTPUPDATE.update(client, _otaServerAddress, _softwareVersion);
 
   switch (ret){
     case HTTP_UPDATE_FAILED:
-  	  Serial.print("OTA error ="); Serial.print(HTTPUPDATE.getLastError()); Serial.print(F(",")); Serial.println(HTTPUPDATE.getLastErrorString());
+  	  Serial.print(F("OTA error =")); Serial.print(HTTPUPDATE.getLastError()); Serial.print(F(",")); Serial.println(HTTPUPDATE.getLastErrorString());
       _isOK = false;
       break;
     
     case HTTP_UPDATE_NO_UPDATES:
-	    Serial.println("OTA up to date");
+	    Serial.println(F("OTA up to date"));
       _checked = true;
       _isOK = true;
       break;
     
     case HTTP_UPDATE_OK:
-	    Serial.println("OTA end");
+	    Serial.println(F("OTA end"));
       _checked = true;
       _isOK = true;
       break;
@@ -163,23 +175,19 @@ void System_OTA::checkForUpdate() {
   _retryCount -= 1;
 }
 
-char* System_OTA::getOTApath() {
+const String System_OTA::getOTApath() {
     // Note there is no correlation between the path here, and where its stored on the server which also pays attention to dev/project/node
-    const size_t buffer_size = strlen(SYSTEM_OTA_SERVERPORTPATH) + frugal_iot.mqtt->topicPrefix->length() + strlen(SYSTEM_OTA_KEY) ;
-    char* url = new char[buffer_size];
-    strcpy(url, SYSTEM_OTA_SERVERPORTPATH);
-    strcat(url, frugal_iot.mqtt->topicPrefix->c_str());
-    strcat(url, SYSTEM_OTA_KEY);
-    return url;
+    return String(SYSTEM_OTA_SERVERPORTPATH + frugal_iot.messages->topicPrefix + SYSTEM_OTA_KEY);
 }
 
 void System_OTA::setup_after_mqtt_setup() {
-  const char* const url = getOTApath(); // Needs topicPrefix setup in MQTT::setup
+  // Nothing to read from disk so not calling readConfigFromFS 
+  const String url = getOTApath(); // Needs topicPrefix setup in MQTT::setup
   // Note this must run after WiFi has connected  and ideally before MQTT or Discovery except it needs xDiscovery::topicPrefix
-  Serial.print("Attempt OTA from:"); Serial.println(url);
-  #ifdef ESP32
+  Serial.print(F("Attempt OTA from:")); Serial.println(url);
+  #ifdef SYSTEM_OTA_USECERT
     init(url, SYSTEM_OTA_VERSION, rootCACertificateForNaturalInnovation);
-  #elif defined(ESP8266)
+  #else
     init(url, SYSTEM_OTA_VERSION, nullptr);
   #endif
 
@@ -192,6 +200,10 @@ void System_OTA::infrequently() {
     checkForUpdate();
     nextLoopTime = frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_OTA_MS;
   }
+}
+
+void System_OTA::discover() {
+  frugal_iot.messages->send(leaf2path("key"), String(SYSTEM_OTA_KEY), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 
 #endif // SYSTEM_OTA_KEY

@@ -32,14 +32,16 @@ class Sensor_LoadCell : public Sensor_Float {
   public:
     Sensor_LoadCell(const char* const id, const char * const name, float max, const char* color, const bool retain, 
       uint8_t DOUTpin, uint8_t SCKpin, uint8_t times, int32_t offset, int32_t scale);
-    float read() override;
+  protected:
+    float readFloat() override;
     void tare();
     void setup() override;
     void calibrate(float weight);
-  private:
     HX711 *hx711;
     uint8_t times; // How often to read the load cell for each reported reading
     int32_t offset;
-    int32_t scale;
+    float scale;
+    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;
+    void captiveLines(AsyncResponseStream* response);
 };
 #endif // SENSOR_LOADCELL_H

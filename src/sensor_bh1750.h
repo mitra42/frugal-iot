@@ -4,27 +4,24 @@
 #include <Arduino.h>
 #include "sensor_float.h"
 #include <BH1750.h>
-
 // Can use this default in constructor in main.cpp
 #ifndef SENSOR_BH1750_ADDRESS
   #ifdef LILYGOHIGROW
     #define SENSOR_BH1750_ADDRESS (0x23)  // This may be a generally useful default ?
   #else
-    #define SENSOR_BH1750_ADDRESS 0x23  // This may be a generally useful default ?
+    #define SENSOR_BH1750_ADDRESS 0x23  // This is the default also in the BH1750 library
   #endif
 #endif
 
-// TODO-115 note there could be conflicts with other use of I2C and the Wire.h header which I think is where "Wire" is defined
-// I think this is a lilygo specific thing - need to check with BH1750 on other boards
-#define I2C_SDA                 (25)
-#define I2C_SCL                 (26)
-
 class Sensor_BH1750 : public Sensor_Float {
   public:
-    uint8_t pin;
+    Sensor_BH1750(const char* const id, const char * const name, const uint8_t addr, TwoWire* wire, const bool retain);
+  protected:
+    const uint8_t addr; // I2C address
+    TwoWire* wire;
     BH1750 lightmeter;
-    Sensor_BH1750(const char* const id, const char * const name, uint8_t pin, bool retain);
     void setup() override;
-    float read() override;
+    float readFloat() override;
+    bool validate(const float v) override;
 };
 #endif // SENSOR_BH1750_H

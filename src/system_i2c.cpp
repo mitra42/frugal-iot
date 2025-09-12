@@ -7,42 +7,43 @@
 #include <Wire.h>
 #include "system_i2c.h"
 
-System_I2C::System_I2C(uint8_t addr) : addr(addr) {}
+System_I2C::System_I2C(uint8_t addr, TwoWire* wire) 
+:  addr(addr), wire(wire) {}
 
 void System_I2C::initialize() {
-  Wire.begin(); 
+  wire->begin(I2C_SDA, I2C_SCL);  // typically SDA SCL unless board specific in _settings.h or overridden in platformio.ini
 }
 
 // The raw send and write. 
 // Send a single byte
   void System_I2C::send(uint8_t cmd) {
   // TODO-101 check for failure in write
-  Wire.beginTransmission(addr);
-  Wire.write(cmd);
-  Wire.endTransmission();
+  wire->beginTransmission(addr);
+  wire->write(cmd);
+  wire->endTransmission();
 }
 // Send buffer to I2C - arbitrary length
 bool System_I2C::send(uint8_t* buf, uint8_t bytes) {
   // TODO-101 check for failure in write
-  Wire.beginTransmission(addr);
+  wire->beginTransmission(addr);
   for (uint8_t i = 0; i < bytes; i++) {
-    if (Wire.write(buf[i]) != 1) {
+    if (wire->write(buf[i]) != 1) {
       return false;
     }
   }
-  Wire.endTransmission(); //TODO-101 want to return this value, but need to check others dont rely on inverse (1 = success)
+  wire->endTransmission(); //TODO-101 want to return this value, but need to check others dont rely on inverse (1 = success)
   return true;
 }
 // Read buffer from I2C - arbitrary length
 bool System_I2C::read(uint8_t* buf, uint8_t bytes) {
-  Wire.requestFrom(addr, bytes);
+  wire->requestFrom(addr, bytes);
   for (uint8_t i = 0; i < bytes; i++) {
-    buf[i] = Wire.read(); // TODO allow for failure and return true or false.
+    buf[i] = wire->read(); // TODO allow for failure and return true or false.
   }
   #ifdef SYSTEM_I2C_DEBUG
-    Serial.print("I2C read");
+    Serial.print(F("I2C read"));
     for (uint8_t i = 0; i < bytes; i++) {
-      Serial.print(buf[i], HEX); Serial.print(" ");
+      Serial.print(buf[i], HEX); Serial.print(F(" "));
     }
     Serial.println();
   #endif
@@ -50,11 +51,11 @@ bool System_I2C::read(uint8_t* buf, uint8_t bytes) {
 }
 // Read from I2C - up to 4 bytes into a uint32_t
 uint32_t System_I2C::read(uint8_t bytes) {
-  Wire.requestFrom(addr, bytes);
+  wire->requestFrom(addr, bytes);
   uint32_t result = 0;
   for (uint8_t i = 0; i < bytes; i++) {
     result = result << 8;
-    result |= Wire.read();
+    result |= wire->read();
   }
   #ifdef SYSTEM_I2C_DEBUG
     Serial.print(F()"I2C read"));  Serial.println(result); 

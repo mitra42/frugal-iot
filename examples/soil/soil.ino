@@ -1,20 +1,23 @@
 /* 
- *  Frugal IoT example - MS5803 pressure sensor
+ *  Frugal IoT example - SOIL Sensor, with SHT
  * 
- * Note that code appears to work, but testing gets nonsense readings - maybe a faulty device
- * 
+ * Optional: SENSOR_SHT_ADDRESS - defaults to 0x44, (note the D1 shields default to 0x45)
  */
 
+// defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "frugal_iot.h"
-
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "ms5803", "MS5803 Pressure sensor");
+System_Frugal frugal_iot("dev", "developers", "SHT30", "SHT30 Temperature and Humidity Sensor"); 
 
 void setup() {
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
+
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
+
+// Soil sensor 0%=4095 100%=0 pin=3 smooth=0 color=brown
+  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil",3, 4095, -100.0/4095, "brown", true));
 
   // Configure power handling - type, cycle_ms, wake_ms 
   // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
@@ -29,25 +32,20 @@ void setup() {
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
-
-  // Add sensors, actuators and controls
-    
-  // MS5803 is set via jumper to 76 or 77
-  frugal_iot.sensors->add(new Sensor_ms5803("ms5803", "MS5803", 0x77));
   
+  // Add sensors, actuators and controls
+  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
+  
+  ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
+  frugal_iot.controls->add(cb);
+  cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/on"));
+
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
   Serial.println(F("FrugalIoT Starting Loop"));
 }
 
-// You can put custom code in here, 
 void loop() {
-  if (frugal_iot.timeForPeriodic) {
-    // Things which happen once for each sensor read period go here.  
-    // But note, you do not have to put sensor loops etc here - the loop and periodic functions in
-    // each sensor and actuator and control are called from frugal_iot.loop()
-    // This is also a good place to put things that check how long since last running
-  }
-  frugal_iot.loop(); // Do not delete this call to frugal_iot.loop
+  frugal_iot.loop(); // Should be running watchdog.loop which will call esp_task_wdt_reset()
 }
 

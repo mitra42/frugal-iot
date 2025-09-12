@@ -59,61 +59,92 @@ void Frugal_Group::dispatchTwig(const String &topicSensorId, const String &topic
 // e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
 void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
-    if (topicTwig == "project") {
-      project = payload;
-    } else if (topicTwig == "device_name") {
-      device_name = payload;
+    if (topicTwig == "project") { // TODO unclear we should be changing project on a device live
+      project = String(payload); // Note weirdness, it really needs to copy 
+      // TODO - needs to redo stuff that uses "project"
+      // project = payload;
+    } else if (topicTwig == "name") {
+      name = String(payload); // Note weirdness, it really needs to copy 
     } else if (topicTwig == "description") {
       description = payload;
     }
-    writeConfigToFS(topicTwig, payload);
+    writeConfigToFS(topicTwig, payload); // Save for next time
+    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   } else { // No point in passing on our own id for the loop
     Frugal_Group::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }
-void System_Frugal::captiveLines(AsyncResponseStream* response) {
-  captive->string(response, id, "project", project, "Project", 2, 15);
-  captive->string(response, id, "device_name", device_name, "Device Name", 3, 15);
-  captive->string(response, id, "description", description, "Description", 3, 40);
-  Frugal_Group::captiveLines(response);
-}
-
 void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
   // topic Twig  <actuatorId>/<ioID> or  <actuatorId>/<ioID> or <actuatorId>/<ioID>/<config>
   int8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
   if (slashPos != -1) {
     String id = topicTwig.substring(0, slashPos);       // Extract the part before the slash
     String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
-    dispatchTwig(id, topicLeaf, payload, isSet);
+    dispatchTwig(id, topicLeaf, payload, isSet); // Start the loop now its been parsed
   } else {
     Serial.print(F("No slash found in topic: ")); Serial.println(topicTwig);
   }
 }
 
-String Frugal_Group::advertisement() {
-  String ad = String();
-  for (System_Base* fb: group) {
-    ad += (fb->advertisement());
-  }
-  return ad;
+
+void System_Frugal::discover() {
+  messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  Frugal_Group::discover();
 }
 
+void System_Frugal::captiveLines(AsyncResponseStream* response) {
+  captive->addString(response, id, "project", project, T->Project, 2, 15);
+  captive->addString(response, id, "name", name, T->DeviceName, 3, 15);
+  captive->addString(response, id, "description", description, T->Description, 3, 40);
+  Frugal_Group::captiveLines(response);
+}
+
+void Frugal_Group::discover() {
+  for (System_Base* fb: group) {
+    fb->discover();
+  }
+}
 // These just loop over the members of the group 
-void Frugal_Group::loop()         { for (System_Base* fb: group) { fb->loop(); } }
-void Frugal_Group::periodically() { for (System_Base* fb: group) { fb->periodically();} }
-void Frugal_Group::infrequently() { for (System_Base* fb: group) { fb->infrequently(); } }
+void Frugal_Group::loop() {
+  for (System_Base* fb: group) { 
+    fb->loop(); 
+  } 
+}
+void Frugal_Group::periodically() { 
+  heap_print(F("Periodic"));
+  for (System_Base* fb: group) { 
+    #ifdef SYSTEM_MEMORY_DEBUG
+      Serial.print(fb->id);  heap_print(F("Sensor_HT::set"));
+    #endif
+    fb->periodically();
+  } 
+  heap_print(F("/Periodic"));
+}
+void Frugal_Group::infrequently() { 
+  for (System_Base* fb: group) { 
+    fb->infrequently(); 
+  } 
+}
 void Frugal_Group::captiveLines(AsyncResponseStream* response) 
   { for (System_Base* fb: group) { fb->captiveLines(response); } }
 void Frugal_Group::dispatchPath(const String &topicPath, const String &payload) 
   { for (System_Base* fb: group) { fb->dispatchPath(topicPath, payload); } }
 
 // Note this constructor is running BEFORE Serial is enabledd
-System_Frugal::System_Frugal(const char* org, const char* project, const char* device_name, const char* description)
-: Frugal_Group("frugal_iot", "System_Frugal"),
+System_Frugal::System_Frugal(const char* org, const char* project, const char* name, const char* description)
+: Frugal_Group("frugal_iot", name),
   org(org),
   project(project),
   description(description),
-  device_name(device_name),
+    // Use the unique id of the ESP32 or ESP8266 - has to be before anything calls messages.path
+  #ifdef ESP32
+    nodeid(String(F("esp32-")) + (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24))),
+  #elif defined(ESP8266)
+    nodeid(String(F("esp8266-")) + (Sprintf("%06" PRIx32, ESP.getChipId()))),
+  #else
+    #error nodeid Only defined for ESP32 and ESP8266
+  #endif
   actuators(new Frugal_Group("actuators", "Actuators")),
   sensors(new Frugal_Group("sensors", "Sensors")),
   controls(new Frugal_Group("controls", "Controls")),
@@ -124,9 +155,10 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   #ifdef SYSTEM_LORA_WANT
     lora(new System_LoRa()),
   #endif
-  // mqtt is added in main.cp > configure_mqtt(host,user,password)
+    messages(new System_Messages()),
+  // mqtt is added in main.cpp > configure_mqtt(host,user,password)
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
-    oled(new System_OLED()),
+    oled(new System_OLED(&OLED_WIRE)),
   #endif // SYSTEM_OLED_WANT
   #ifdef SYSTEM_OTA_KEY
     ota(new System_OTA()),
@@ -141,8 +173,9 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* d
   add(actuators);
   add(sensors);
   add(controls);
-  // add(buttons); // optimizing by not adding this - its only needed for looping for infrequently()
+  add(buttons); // optimizing by not adding this - its only needed for looping for infrequently()
   system->add(fs_LittleFS);
+  system->add(messages);
   system->add(wifi);
   system->add(discovery);
   system->add(new System_Watchdog());
@@ -167,29 +200,18 @@ void System_Frugal::configure_mqtt(const char* hostname, const char* username, c
 void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
   system->add(powercontroller = System_Power_Mode::create(t, cycle_ms, wake_ms));  
 }
+void System_Frugal::pre_setup() {
+  // Early initial stuff - happens BEFORE do System_Message::setup which uses config 
+  startSerial(); // Encapsulate setting up and starting serial
+  fs_LittleFS->pre_setup();
+  readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig
+}
 void System_Frugal::setup() {
   // By the time this is run, mqtt should have been added, and serial started in main.cpp
   #ifdef SYSTEM_FRUGAL_DEBUG
-    Serial.print("Setup: ");
+    Serial.print(F("Setup: "));
   #endif
-  readConfigFromFS(); // Reads config (project, device_name) and passes to our dispatchTwig
-  #if defined(SYSTEM_LORAMESHER_SENDER_TEST) || defined(SYSTEM_LORAMESHER_RECEIVER_TEST)
-    //esp_log_level_set("*", ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
-    esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
-  #endif
-  // Use the unique id of the ESP32 or ESP8266
-  #ifdef ESP32
-    nodeid =  String(F("esp32-")) + (Sprintf("%06" PRIx64, ESP.getEfuseMac() >> 24));
-  #elif defined(ESP8266)
-    nodeid = String(F("esp8266-")) + (Sprintf("%06" PRIx32, ESP.getChipId()));
-  #else
-    #error Only defined for ESP32 and ESP8266
-  #endif
-
-
-
-// TODO-152 next is blocking if WiFi fails - fix that
-Frugal_Group::setup(); // includes WiFi
+  Frugal_Group::setup(); // includes WiFi
   #ifdef SYSTEM_OTA_KEY
     ota->setup_after_mqtt_setup(); // Sends advertisement over MQTT
   #endif
@@ -209,8 +231,9 @@ void System_Frugal::setup_after_wifi() {
   }
 }
 void System_Frugal::infrequently() {
+  heap_print(F("infrequent"));
   Frugal_Group::infrequently();
-  buttons->infrequently(); // Not in the main group of groups as infrequently() is only thing called.
+  heap_print(F("/infrequent"));
 }
 
 // These are things done one time per period - where a period is the time set in powercontroller->cycle_ms
@@ -220,11 +243,13 @@ void System_Frugal::periodically() {
 
 // Main loop() - call this from main.cpp
 void System_Frugal::loop() {
-  //Serial.print("⏳1");
+  //Serial.print(F("⏳1"));
   if (timeForPeriodic) {
+    heap_print(F("loop periodic"));
     periodically();  // Do things run once per cycle
     infrequently();  // Do things that keep their own track of time
     timeForPeriodic = false;
+    heap_print(F("/loop periodic"));
   }
   Frugal_Group::loop(); // Do things like MQTT which run frequently with their own clock
   if (powercontroller->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP

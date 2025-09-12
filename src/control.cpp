@@ -34,29 +34,31 @@ void Control::debug(const char* const where) {
 
 void Control::setup() {
     for (auto &input : inputs) {
-        input->setup(name);
+        input->setup();
     }
     for (auto &output : outputs) {
-        output->setup(name);
+        output->setup();
     }
+    readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
   }
 
 void Control::act() {
     // Default is to do nothing - though that will rarely be correct
 }
-void Control::dispatchTwig(const String &topicControlId, const String &leaf, const String &payload, bool isSet) {
+void Control::dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet) {
     bool changed = false;
     if (topicControlId == id) {
       for (auto &input : inputs) {
-        if (input->dispatchLeaf(leaf, payload, isSet)) {
+        if (input->dispatchLeaf(topicTwig, payload, isSet)) {
           changed = true; // Changed an input, call act()
         }
       }
       for (auto &output : outputs) {
-        if (output->dispatchLeaf(leaf, payload, isSet)) { // Will send value if wiredPath changed
+        if (output->dispatchLeaf(topicTwig, payload, isSet)) { // Will send value if wiredPath changed
           changed = true; // Shouldnt happen - changing outputs shouldnt cause process, but here for completeness.
         }; 
       }
+      System_Base::dispatchTwig(topicControlId, topicTwig, payload, isSet);
     }
     if (changed) { 
       act(); // Likely to be subclassed
@@ -76,14 +78,11 @@ void Control::dispatchPath(const String &topicPath, const String &payload ) {
     }
 }
 
-// Ouput advertisement for control - all of IN and OUTs 
-String Control::advertisement() {
-  String ad = StringF(groupAdvertLine, name, name); // Wrap control in a group
+void Control::discover() {
   for (auto &input : inputs) {
-    ad += (input->advertisement(name));
+    input->discover();
   }
   for (auto &output : outputs) {
-    ad += (output->advertisement(name));
+    output->discover();
   }
-  return ad;
 }

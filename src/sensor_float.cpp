@@ -10,6 +10,7 @@
 #include <forward_list>
 #include "sensor.h"
 #include "sensor_float.h"
+#include "frugal_iot.h"
 
 Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain) 
 : Sensor(id, name, retain),
@@ -18,23 +19,47 @@ Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_
 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16 and sensor_ht
-float Sensor_Float::read() { Serial.println("Sensor_Float::read must be subclassed"); return -1; }
-
+float Sensor_Float::readFloat() { 
+  Serial.println(F("Sensor_Float::read must be subclassed")); return -1; 
+}
+// Check if the raw value from the sensor is valid - defaults to true, but overridden for each sensor
+bool validate(float v) {
+  return true;
+}
+// Convert sensor to actual value - this is typically overriden, for example to apply a scale. 
+float convert(float v) {
+  return v;
+}
 void Sensor_Float::set(const float newvalue) {
   output->set(newvalue);
 }
-// Can either sublass read(), and set() or subclass readAndSet() - use latter if more than one result e.g. in sensor_HT
-void Sensor_Float::readAndSet() {
-  set(read()); // Will also send message via output->set() in new style.
+void Sensor_Float::readValidateConvertSet() {
+  // Note almost identical code in Sensor_Uint16 Sensor_Float & Sensor_Analog
+  float v = readFloat();               // Read raw value from sensor
+  if (validate(v)) {              // Check if its valid
+    float vv = convert(v);        // Convert - e.g. scale and offset
+    set(vv);                        // set - and send message
+  }
+  #ifdef SENSOR_FLOAT_DEBUG
+    Serial.print(id); Serial.print(F(" raw:")); Serial.print(raw); Serial.print(F(" converted")); Serial.print(vv);
+  #endif
 }
-String Sensor_Float::advertisement() {
-  return output->advertisement(name); // Note using name of sensor not name of output (which is usually the same)
+
+void Sensor_Float::discover() {
+  output->discover();
 }
-void Sensor_Float::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+
+// Subclass this for specific fields - like max, min etc
+void Sensor_Float::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
-    if (output->dispatchLeaf(leaf, payload, isSet)) { // True if changed
+    if (output->dispatchLeaf(topicTwig, payload, isSet)) { // True if changed
       // Nothing to do on Sensor
     }
+    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }
 
+void Sensor_Float::captiveLines(AsyncResponseStream* response) {
+  frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),(int)width), name, output->min, output->max);
+  // Could add Tare as button - but probably want immediate response, not waiting on SEND
+}

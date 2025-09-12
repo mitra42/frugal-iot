@@ -14,8 +14,7 @@
 System_Frugal frugal_iot("dev", "developers", "datalogger", "Data Logger");
 
 void setup() {
-  frugal_iot.startSerial(); // Encapsulate setting up and starting serial
-  frugal_iot.fs_LittleFS->pre_setup();
+  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 
@@ -41,7 +40,7 @@ void setup() {
     System_LittleFS* fs_LittleFS = new System_LittleFS();
     frugal_iot.system->add(fs_LittleFS);
   #endif
-  Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &Wire, true); // Create SHT30 sensor
+  Sensor_SHT* ss = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true); // Create SHT30 sensor
   frugal_iot.sensors->add(ss); // Add SHT30 sensor
 
   // Must be after sensor_sht for default wiring below

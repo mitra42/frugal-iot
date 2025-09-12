@@ -35,16 +35,16 @@
 #define SENSOR_CMD_ADC_4096   0x08
 #define SENSOR_CMD_COEFFICIENT0 0xA0
  
-  // TODO-132 add to discovery - hook into auto for OUT
+  // TODO-132 add to discover - hook into auto for OUT
   // TODO-132 add to mqtt
   // TODO-132 need to use a slower clock when at distance
 // Instantiate with  sensors.push_back(new Sensor_ms5803())
-Sensor_ms5803::Sensor_ms5803(const char* const id, const char * const name, uint8_t address) : 
+Sensor_ms5803::Sensor_ms5803(const char* const id, const char * const name, uint8_t address, TwoWire* wire) : 
   Sensor(id, name, false),
   // system_spi not currently working - needs revising to match system_i2c patterns
   //#ifdef SENSOR_MS5803_SPI
   //  interface(SENSOR_MS5803_SPI, SPI_CLOCK_DIV64) // uses default pins
-  interface(address) 
+  interface(address, wire) 
 {
  
   pressure = new OUTfloat(id, "pressure", "Pressure", 0, 1, 0, 99, "blue", false);
@@ -52,10 +52,8 @@ Sensor_ms5803::Sensor_ms5803(const char* const id, const char * const name, uint
 }
 
 void Sensor_ms5803::setup() {
-  #ifdef SENSOR_MS5803_DEBUG
-    Serial.println("MS5803 Setup");
-  #endif
-  pressure->setup(name);
+  Sensor::setup(); // Will readConfigFromFS - do before setting up pins
+  pressure->setup();
   delay(100); // TODO XXX unsure if needed
   interface.initialize();
   delay(100); // TODO XXX unsure if needed
@@ -67,7 +65,7 @@ void Sensor_ms5803::setup() {
     interface.send(SENSOR_CMD_COEFFICIENT0 + ( i * 2 ));  // read coefficients    
     sensorCoefficients[ i ] = (uint16_t)interface.read(2);  // read coefficients
     #ifdef SENSOR_MS5803_DEBUG
-      Serial.print("Coefficient = ");
+      Serial.print(F("Coefficient = "));
       Serial.println(sensorCoefficients[ i ]);
     #endif 
     delay(10);
@@ -77,11 +75,9 @@ void Sensor_ms5803::setup() {
   // If this issue persists, you may have a bad sensor.
   if (!ms5803CRC4()) {
     Serial.println(F("MS5803 bad CRC on coefficients"));
-    // return false;
+    setupFailed();
   } else {
     // If the CRC matches, then the sensor is good to go.
-    Serial.println(F("MS5803 looks good"));
-    // return true;
   }
 }
 
@@ -121,7 +117,7 @@ uint8_t Sensor_ms5803::ms5803CRC4() {
 }
 
 
-void Sensor_ms5803::readAndSet() {
+void Sensor_ms5803::readValidateConvertSet() {
   interface.send(SENSOR_CMD_ADC_CONV | SENSOR_CMD_ADC_4096 | SENSOR_CMD_ADC_D2); 
   delay(100); // Wait for conversion to complete
   interface.send(SENSOR_CMD_ADC_READ); // read the ADC value
@@ -154,13 +150,14 @@ void Sensor_ms5803::readAndSet() {
   pressure->set(( ( ( ( D1 * sensitivity ) / pow( 2, 21 ) - sensorOffset) / pow( 2, 15 ) ) / 10 ));   // in mBars
 }
 
-void Sensor_ms5803::dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet) {
+void Sensor_ms5803::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     if (
-      pressure->dispatchLeaf(leaf, payload, isSet) ||
-      temperature->dispatchLeaf(leaf, payload, isSet)
+      pressure->dispatchLeaf(topicTwig, payload, isSet) ||
+      temperature->dispatchLeaf(topicTwig, payload, isSet)
     ) { // True if changed 
       // Nothing to do on Sensor
     }
+    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
   }
 }
