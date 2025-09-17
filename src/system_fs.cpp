@@ -178,6 +178,7 @@ void System_SD::setup() {
   // Library is SS=D8=15 fails;  old sketch was 4 some online says 8 but that fatals. D4=GPIO0=2 worked on Lolin Relay with no solder bridge
   Serial.println(F("SD initialization on CS pin ")); Serial.print(pin);
   #ifdef SYSTEM_SD_SCK // esp on ARDUINO_LOLIN_C3_PICO default pins are wrong - not those used on the shield 
+    // THis is no longer true - with the variant file for lolin_c3_pico,  SCK, MISO, MOSI are all correct
     SPI.begin(SYSTEM_SD_SCK, SYSTEM_SD_MISO, SYSTEM_SD_MOSI, pin); // SCK, MISO, MOSI, pin
   #endif 
   if (!SD.begin(pin)) { 

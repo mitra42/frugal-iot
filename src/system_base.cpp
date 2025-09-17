@@ -460,7 +460,7 @@ INcolor::INcolor(const char * const sensorId, const char * const id, const Strin
   :   IN(sensorId, id, name, nullptr, w), r(r), g(g), b(b) {
     //TODO-130 this will fail as IN needs color set for discovery. 
 }
-INcolor::INcolor(const char * const sensorId, const char * const id, const char* const name, const char* color, const bool w)
+INcolor::INcolor(const char * const sensorId, const char * const id, const String name, const char* const color, const bool w)
   :   IN(sensorId, id, name, color, w) {
     convertAndSet(color);
 }
@@ -511,7 +511,9 @@ bool INcolor::convertAndSet(const String &p) {
 }
 // RRGGBB or 0xRRGGBB
 bool INcolor::convertAndSet(const char* p1) {
-  if (p1[0] == '0' && p1[1] == 'x') {
+  if (p1[0] == '#') {
+    p1 += 1; // Skip # in #x030a1
+  } else if (p1[0] == '0' && p1[1] == 'x') {
     p1 += 2; // Skip 0x
   }
   uint32_t rgb = strtoul(p1, nullptr, 16);

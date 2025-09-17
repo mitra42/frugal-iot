@@ -41,15 +41,23 @@
 Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, const char* colorInit) :
   Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow"),
   #ifdef RGB_BUILTIN
-    color(new INcolor("led", "color", "LED color", colorInit, false)), //TODO-131 color of UX should reflect color of LED
+    color(new INcolor("ledbuiltin", "color", "LED color", colorInit, false)), //TODO-131 color of UX should reflect color of LED
   #endif
-  brightness(new INuint16("led", "brightness", "Brightness", brightness, 0, 255, colorInit, false))
+  brightness(new INuint16("ledbuiltin", "brightness", "Brightness", brightness, 0, 255, colorInit, false))
   { 
     #ifdef ACTUATOR_LEDBUILTIN_DEBUG
       Serial.print(F("Ledbuiltin pin=")); Serial.println(pin); 
     #endif
   }
 #pragma GCC diagnostic pop
+
+void Actuator_Ledbuiltin::setup() {
+  Actuator_Digital::setup(); // Read config AFTER setup inputs
+  brightness->setup();
+  #ifdef ACTUATOR_LEDBUILTIN_DEBUG
+    color->setup();
+  #endif
+}
 
 void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
   if (topicActuatorId == id) {
@@ -73,7 +81,7 @@ void Actuator_Ledbuiltin::act() {
       Serial.println(F("Do not have code for RGB LED on ESP8266")); 
     #else
       // TODO-131 should set brightness based on input message 
-      const uint16_t m = input->value ? brightness->uint16Value() : 0;
+      const uint16_t m = input->value ? brightness->value : 0;
       uint8_t r, g, b;
       if (m == 0xFF) {
         r = color->r;
@@ -102,4 +110,11 @@ void Actuator_Ledbuiltin::act() {
       digitalWrite(pin, input->value ? HIGH : LOW); // LED pin is not inverted, e.g. on Lolin S3 mini
     #endif
   #endif 
+}
+void Actuator_Ledbuiltin::discover() {
+  #ifdef RGB_BUILTIN
+    color->discover();
+  #endif
+  brightness->discover();
+  Actuator_Digital::discover();
 }

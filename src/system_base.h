@@ -133,6 +133,8 @@ class INuint16 : public IN {
     //INuint16(); 
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, char const * const color, const bool wireable);
     INuint16(const INuint16 &other);
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
+    void discover() override;
   protected:
     uint16_t min;
     uint16_t max;
@@ -141,8 +143,6 @@ class INuint16 : public IN {
     virtual String StringValue();
     bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
-    void discover() override;
-    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
 };
 class INbool : public IN {
   public:
@@ -164,11 +164,12 @@ class INcolor : public IN {
     INcolor(); 
     INcolor(char const * const sensorId, char const * const id, const String name, uint8_t r, uint8_t g, uint8_t b, const bool wireable);
     INcolor(char const * const sensorId, char const * const id, const String name, char const * const color, const bool wireable);
+  
     INcolor(const INcolor &other);
-  protected:
     uint8_t r;
     uint8_t g;
     uint8_t b;
+  protected:
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue() override;
     virtual String StringValue();
