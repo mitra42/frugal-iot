@@ -5,7 +5,7 @@
 #include "system_base.h"
 #include "sensor.h"
 
-class Sensor_Float : protected Sensor {
+class Sensor_Float : public Sensor {
   public:
     Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain);
   protected:

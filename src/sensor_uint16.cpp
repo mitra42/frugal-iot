@@ -40,12 +40,18 @@ void Sensor_Uint16::set(uint16_t vv) {
 void Sensor_Uint16::readValidateConvertSet() {
   // Note almost identical code in Sensor_Uint16 Sensor_Float & Sensor_Analog
   uint16_t v = readUint16();               // Read raw value from sensor
+  #ifdef SENSOR_UINT16_DEBUG
+    Serial.print(id); Serial.print(F(" raw:")); Serial.print(v);
+  #endif
   if (validate(v)) {              // Check if its valid
     uint16_t vv = convert(v);        // Convert - e.g. scale and offset
     set(vv);                        // set - and send message
+    #ifdef SENSOR_UINT16_DEBUG
+      Serial.print(F(" converted ")); Serial.print(vv);
+    #endif
   }
-  #ifdef SENSOR_FLOAT_DEBUG
-    Serial.print(id); Serial.print(F(" raw:")); Serial.print(raw); Serial.print(F(" converted")); Serial.print(vv);
+  #ifdef SENSOR_UINT16_DEBUG
+    Serial.println();
   #endif
 }
 

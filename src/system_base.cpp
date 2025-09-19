@@ -50,6 +50,7 @@ void System_Base::readConfigFromFS() {
     readConfigFromFS(dir, nullptr);
   } else {
     frugal_iot.fs_LittleFS->mkdir(path); // There should be a directory, so can write config received over MQTT
+    Serial.println(F("Creating:")); Serial.println(path);
   }
 }
 void System_Base::readConfigFromFS(File dir, const String* leaf) {
@@ -496,7 +497,7 @@ bool INuint16::convertAndSet(const String &p) {
 }
 bool INbool::convertAndSet(const String &payload) {
   const bool v = payload.toInt();
-  Serial.print("XXX "); Serial.print(id); Serial.print(F(" converted ")); Serial.print(payload); Serial.print(F(" to ")); Serial.println(v);
+  //Serial.print("XXX "); Serial.print(id); Serial.print(F(" converted ")); Serial.print(payload); Serial.print(F(" to ")); Serial.println(v);
   if (v != value) {
     value = v;
     return true; // Need to rerun calcs

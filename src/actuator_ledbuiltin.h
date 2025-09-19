@@ -46,7 +46,8 @@
 
 #if defined(LILYGOHIGROW)
   #define LED_BUILTIN 18 // TODO test if this actually works - see notes that have failed - also try as Neopixel 
-  //#define RGB_BUILTIN lED_BUILTIN
+  //#define LED_BUILTIN 18+SOC_GPIO_PIN_COUNT // TODO test if this actually works - see notes that have failed - also try as Neopixel 
+  #define RGB_BUILTIN LED_BUILTIN
 #endif
 
 #ifndef LED_BUILTIN

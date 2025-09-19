@@ -79,15 +79,17 @@ System_Power_Modem::System_Power_Modem(unsigned long cycle_ms, unsigned long wak
 #endif
 
 // ================== setup =========== called from main.cpp::setup ========= TO-ADD-POWERMODE but usually nothing
+void System_Power_Mode::pre_setup() {
+  #ifdef LILYGOHIGROW
+    pinMode(POWER_CTRL, OUTPUT);
+    digitalWrite(POWER_CTRL, HIGH); // TODO-115 this is for power control - may need other board specific stuff somewhere
+  #endif
+}
 void System_Power_Mode::setup() {
   // Nothing to read from disk so not calling readConfigFromFS  - that might change if parameterize power on/off thru UI
 
   #ifdef SYSTEM_POWER_DEBUG
     Serial.printf("Setup %s: %lu of %lu\n", name.c_str(), wake_ms, cycle_ms); 
-  #endif
-  #ifdef LILYGOHIGROW
-    pinMode(POWER_CTRL, OUTPUT);
-    digitalWrite(POWER_CTRL, HIGH); // TODO-115 this is for power control - may need other board specific stuff somewhere
   #endif
 }
 #ifdef ESP32 // Specific to ESP32s

@@ -46,8 +46,7 @@ void Sensor_DHT::setup() {
     Serial.print(F("DHT"));
     Serial.print(dht->getType());
     Serial.print(F(" on "));
-    Serial.print(pin);
-    Serial.print(F("   "));
+    Serial.println(pin);
   #endif
 }
 

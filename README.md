@@ -1,14 +1,13 @@
 # Frugal IoT
 A platform to enable affordable sensor networks
 
-The best source of informtion is the [Wiki here](https://github.com/mitra42/frugal-iot/wiki)
+The best source of information is the [Wiki here](https://github.com/mitra42/frugal-iot/wiki)
 
 ## Installation and testing POC
 
 The repo is working and on multiple devices. 
 
-HOWEVER - there was a recent refactor and there may be issues caused by that. 
-ALSO - its only tested on Macs - so documentation for other platforms could be improved. 
+NOTE - its only tested on Macs - so documentation for other platforms could be improved. 
 
 #### Platforms
 The intention is for this library to work in both PlatformIO and Arduino IDE. 
@@ -19,11 +18,10 @@ Working in the Arduino IDE is simpler, but seriously, its like working with one 
 
 If you having an installation related question please check the
 [Wiki](https://github.com/mitra42/frugal-iot/wiki)
-and if it you cannot find the answer there, please raise a new issue at (https://github.com/mitra42/frugal-iot/issues) 
+and if you cannot find the answer there, please raise a new issue at (https://github.com/mitra42/frugal-iot/issues) 
 make sure the title starts "INSTALLATION: ".
 
-Please note that if you cannot understand how to install then that is probably a problem with 
-the quality of our documentation so I am happy to help! 
+Please note that if you cannot understand how to install then that is probably a problem with the quality of our documentation so I am happy to help! 
 
 ### Test and development environment overview 
 
@@ -35,7 +33,7 @@ There are a few components of the environment - with separate repos
 * [HTTP Management server](https://www.github.com/mitra42/frugal-iot-server) - programmed in Node/Javascript, tested on Macs and Linux and 
   with a demo server at frugaliot.naturalinnovation.org which incorporates the `logger`
 * [HTTP/CSS/JS client](https://www.github.com/mitra42/frugal-iot-client). Its not dependent on any platform/framework, and uses Webcomponents for its modularity so it should run in any modern browser (including most phones)
-* Stand alone server intended to run on sites with multiple sensors - not yet started, but it will probably be a Raspberry Pi unless we can shoe-horn it into a ESP32
+* Stand alone server intended to run on sites with multiple sensors - this project has not yet started, but it will probably be a Raspberry Pi unless we can shoe-horn it into a ESP32
 
 Because the demo server is running on `https://frugaliot.naturalinnovation.org`, it is perfectly possible to develop the firmware without running your own servers, 
 or to fork the client, and interact with the servers.  
@@ -131,7 +129,8 @@ If you get the configuration wrong, you'll need (for now - part of issue#22) to
 Open a browser to https://frugaliot.naturalinnovation
 
 #### Other languages
-Add to system_language.cpp and system_language.h
+Add to system_language.cpp and system_language.h 
+and in [the client repo](https://www.github.com/mitra42/frugal-iot-client) add to `webcomponents.js`
 
 You can define `-D LANGUAGE_DEFAULT "de"` in `platformio.ini` to default to German. 
 And you can add `-D LANGUAGE_DE` to `platformio.ini` to *only* compile German (saving program space)

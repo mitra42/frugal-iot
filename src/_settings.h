@@ -151,8 +151,9 @@
   #ifdef LILYGOHIGROW
     // TODO-115 note there could be conflicts with other use of I2C and the Wire.h header which I think is where "Wire" is defined
     // I think this is a lilygo specific thing - need to check with BH1750 on other boards
-    #define I2C_SDA                 (25)
-    #define I2C_SCL                 (26)
+    #define I2C_SDA (25)
+    #define I2C_SCL (26)
+    #define I2C_WIRE Wire
   #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
     // The T2_S3 has a small pair of connectors, same form factor as Lolin but different pins, using SDA1=10 SCL1=21 or SDA=TX=43 SCL=RX=44
     #define I2C_WIRE Wire // Use Wire1 for the OLED

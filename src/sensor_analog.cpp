@@ -69,18 +69,29 @@ void Sensor_Analog::setup() {
 int Sensor_Analog::readInt() {
   return analogRead(pin); // Returns an int - which should be int16_t
 }
+// Check if its valid, typically this will be overridden
+bool Sensor_Analog::validate(int v) {
+  return true;
+}
+
 float Sensor_Analog::convert(int v) {
   return (v - offset) * scale;
 }
 void Sensor_Analog::readValidateConvertSet() {
   // Note almost identical code in Sensor_Uint16 Sensor_Float & Sensor_Analog
   int v = readInt();           // Read raw value from sensor
+  #ifdef SENSOR_ANALOG_DEBUG
+    Serial.print(id); Serial.print(F(" raw:")); Serial.print(v);
+  #endif
   if (validate(v)) {        // Check if its valid
     float vv = convert(v);  // Convert - e.g. scale and offset
     set(vv);                  // set - and send message
+    #ifdef SENSOR_ANALOG_DEBUG
+      Serial.print(F(" converted ")); Serial.print(vv);
+    #endif
   }
   #ifdef SENSOR_ANALOG_DEBUG
-    Serial.print(id); Serial.print(F(" raw:")); Serial.print(raw); Serial.print(F(" converted")); Serial.print(vv);
+    Serial.println();
   #endif
 }
 void Sensor_Analog::tare() {

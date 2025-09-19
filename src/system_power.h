@@ -22,6 +22,7 @@ class System_Power_Mode : public System_Base {
     unsigned long cycle_ms; // Time for each cycle (wake + sleep)
     unsigned long wake_ms; // Time to stay awake during each cycle
     System_Power_Mode(const char* name, unsigned long cycle_ms, unsigned long wake_ms);
+    void pre_setup();
     void setup() override;
     unsigned long sleep_ms() { return cycle_ms - wake_ms; }
     unsigned long sleep_us() { return sleep_ms() * 1000ULL; }

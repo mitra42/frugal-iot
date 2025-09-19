@@ -204,6 +204,7 @@ void System_Frugal::pre_setup() {
   // Early initial stuff - happens BEFORE do System_Message::setup which uses config 
   startSerial(); // Encapsulate setting up and starting serial
   fs_LittleFS->pre_setup();
+  powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
   readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig
 }
 void System_Frugal::setup() {

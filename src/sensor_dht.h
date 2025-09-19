@@ -32,7 +32,7 @@
 #include <dhtnew.h>                     // https://github.com/RobTillaart/DHTNew
 
 
-class Sensor_DHT : protected Sensor_HT {
+class Sensor_DHT : public Sensor_HT {
 public:
   Sensor_DHT(const char * const name, const uint8_t pin, bool retain);
 protected:
