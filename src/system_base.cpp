@@ -169,9 +169,9 @@ bool INcolor::boolValue() {
   return 0;
 }
 String INcolor::StringValue() {
-  // 0xRRGGBB
+  // #RRGGBB
   // Check that always has r, g, b as two digits
-  return String(String("0x") + String(r, HEX) + String(g, HEX) + String(b, HEX));
+  return StringF("#%02x%02x%02x",r,g,b);
 }
 float INtext::floatValue() {
   return value.toFloat();
@@ -236,7 +236,8 @@ bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     }
   }
   // For now recognizing both xxx/leaf and set/xxx/leaf (but note only subscribed to set/xxx/leaf)
-  if (leaf == id) { // e.g. sht/temp set/sht/temp
+  if (leaf == id) {
+    writeConfigToFS(leaf, p);  // e.g. sht/temp set/sht/temp
     return convertAndSet(p); // Virtual - depends on type of INxxx
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
@@ -270,8 +271,7 @@ bool INfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (leaf.startsWith(id)) {
     float v = p.toFloat();
     if (leaf.endsWith("/max")) {
-      max = v;
-      writeConfigToFS(leaf, p);  //         
+      max = v;      
       dispatched = true;
     } else if (leaf.endsWith("/min")) {
       min = v;
@@ -291,8 +291,7 @@ bool OUTfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (leaf.startsWith(id)) {
     float v = p.toFloat();
     if (leaf.endsWith("/max")) {
-      max = v;
-      writeConfigToFS(leaf, p);  //         
+      max = v;      
       dispatched = true;
     } else if (leaf.endsWith("/min")) {
       min = v;
@@ -312,8 +311,7 @@ bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (leaf.startsWith(id)) {
     float v = p.toFloat();
     if (leaf.endsWith("/max")) {
-      max = v;
-      writeConfigToFS(leaf, p);  //         
+      max = v;        
       dispatched = true;
     } else if (leaf.endsWith("/min")) {
       min = v;
@@ -333,8 +331,7 @@ bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (leaf.startsWith(id)) {
     float v = p.toFloat();
     if (leaf.endsWith("/max")) {
-      max = v;
-      writeConfigToFS(leaf, p);  //         
+      max = v;      
       dispatched = true;
     } else if (leaf.endsWith("/min")) {
       min = v;
@@ -509,7 +506,7 @@ bool INbool::convertAndSet(const String &payload) {
 bool INcolor::convertAndSet(const String &p) {
   return convertAndSet(p.c_str());
 }
-// RRGGBB or 0xRRGGBB
+// #RRGGBB (also works on 0xRRGGBB)
 bool INcolor::convertAndSet(const char* p1) {
   if (p1[0] == '#') {
     p1 += 1; // Skip # in #x030a1
@@ -548,9 +545,9 @@ void INuint16::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   IN::discover(); // Sends value
 }
-/* Using base class
+/* Using base class's which calls class's StringValue
   void INcolor::discover() {
-    IN::discover(); // Sends value as 0xRRGGBB
+    IN::discover(); // Sends value as #RRGGBB
   }
 */
 // INbool and INtext, INcolor are fine witb the superclass (just sending color)

@@ -34,7 +34,7 @@
 #include "actuator_ledbuiltin.h"
 #include "actuator_digital.h"
 
-#define ACTUATOR_LEDBUILTIN_WHITE "0xFFFFFF"
+#define ACTUATOR_LEDBUILTIN_WHITE "#FFFFFF"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -93,8 +93,7 @@ void Actuator_Ledbuiltin::act() {
         b = (m * color->b) >> 8;
       }
       #ifdef ACTUATOR_LEDBUILTIN_DEBUG
-        Serial.print(F("Actuator_Ledbuiltin::act rgb=0x")); 
-        Serial.print(r, HEX); Serial.print(g,HEX); Serial.println(b, HEX); //TODO-131 0 should be "00"
+        Serial.print(F("Actuator_Ledbuiltin::act rgb=")); Serial.print(StringF("#%02x%02x%02x",r,g,b));
       #endif
       //#ifdef PLATFORMIO
       //  // TODO check if this is really grb or should use rgb
