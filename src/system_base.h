@@ -53,6 +53,7 @@ class IO {
     IO(const char * const sensorId, const char * const id, const String name, char const *color, const bool w = true);
     virtual void setup();
     void writeConfigToFS(const String &leaf, const String& payload);
+    void writeValueToFS(const String &leaf, const String& payload);
     virtual bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet); // Just checks control
     virtual bool dispatchPath(const String &topicPath, const String &payload);
     virtual String StringValue();

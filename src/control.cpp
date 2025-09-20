@@ -47,7 +47,7 @@ void Control::act() {
 }
 void Control::dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet) {
     bool changed = false;
-    if (topicControlId == id) {
+    if (topicControlId == id) { // matches this control
       for (auto &input : inputs) {
         if (input->dispatchLeaf(topicTwig, payload, isSet)) {
           changed = true; // Changed an input, call act()

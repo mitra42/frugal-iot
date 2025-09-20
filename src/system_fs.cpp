@@ -49,8 +49,12 @@ boolean System_FS::exists(const char *filename) {
   Serial.print(F("should be subclassed")); return false;
 }
 boolean System_FS::exists(const String &filename) {
+  Serial.print(F("should be subclassed")); return false; // TODO make the should-be standard, use or copy the function in system_base.cpp
+}
+bool System_FS::remove(const String &filename) { 
   Serial.print(F("should be subclassed")); return false;
 }
+
 #pragma GCC diagnostic pop
 
 // Basic file ops // 
@@ -68,6 +72,10 @@ boolean System_SD::exists(const char *filename) {
 boolean System_SD::exists(const String &filename) {
   return SD.exists(filename);
 }
+bool System_SD::remove(const String &filename) { 
+  return SD.remove(filename);
+}
+
 fs::File System_LittleFS::open(const char *filename, const char *mode) { 
   return ESPFS.open(filename, mode);
 }
@@ -82,6 +90,9 @@ boolean System_LittleFS::exists(const char *filename) {
 }
 boolean System_LittleFS::exists(const String &filename) {
   return ESPFS.exists(filename);
+}
+bool System_LittleFS::remove(const String &filename) { 
+  return ESPFS.remove(filename);
 }
 
 // Copied from system_wifi.cpp which got it from ESP-WiFiSettings library

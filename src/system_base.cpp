@@ -47,12 +47,13 @@ void System_Base::readConfigFromFS() {
   String path = String("/") + id;
   File dir = frugal_iot.fs_LittleFS->open(path, "r"); // TODO call via System_FS virtual 
   if (dir) {
-    readConfigFromFS(dir, nullptr);
+    readConfigFromFS(dir, nullptr); // closes directory
   } else {
     frugal_iot.fs_LittleFS->mkdir(path); // There should be a directory, so can write config received over MQTT
     Serial.println(F("Creating:")); Serial.println(path);
   }
 }
+// dir could be sht or one level lower e.g. sht/temperature
 void System_Base::readConfigFromFS(File dir, const String* leaf) {
   while (true) {
     File entry = dir.openNextFile(); // ESP32 default to "r", ESP8266 takes no argument and always does "r"
@@ -66,15 +67,16 @@ void System_Base::readConfigFromFS(File dir, const String* leaf) {
     Serial.print(id); Serial.print(F("/")); Serial.print(newleaf);
     if (entry.isDirectory()) { // b: entry is directory sht/temperature 
       Serial.println(F("/"));
-      readConfigFromFS(entry, &newleaf); 
+      readConfigFromFS(entry, &newleaf);  // will close entry
     } else { // a: id=wifi twiglet=nullptr entry is foo   or c: id=sht twiglet=temperature entry is max
       String payload = entry.readString();
+      entry.close(); // Must close before dispatchTwig which might delete the file
       payload.trim(); // Remove leading/trailing whitespace
       Serial.print(F("=")); Serial.println(payload);
       dispatchTwig(id, newleaf, payload, true);
     }
-    entry.close();
   }
+  dir.close();
 }
 void System_Base::writeConfigToFS(const String& topicTwig, const String& payload) {
   String path = String("/") + id + "/" + topicTwig;
@@ -226,6 +228,27 @@ void IO::writeConfigToFS(const String &leaf, const String& payload) {
   //Serial.println(F("Writing config to " + path + "=" + payload));
   frugal_iot.fs_LittleFS->spurt(path, payload);
 }
+// Leaf should be e.g. control/limit and will append value
+void IO::writeValueToFS(const String &leaf, const String& payload) { 
+  String dirPath = String("/") + sensorId + "/" + leaf;
+  String path = dirPath + "/value";
+  // Checking and removing legacy file when want a directory
+  // This shouldnt be needed long - when all devices have updated code this will run the first time they readConfigFromFS (e.g. erase Nov 2025)
+  if (frugal_iot.fs_LittleFS->exists(dirPath)) {
+    bool needsRemoval;
+    {
+      File f = frugal_iot.fs_LittleFS->open(dirPath, "r");
+      needsRemoval = !f.isDirectory();
+      f.close();
+    }
+    if (needsRemoval) {
+      frugal_iot.fs_LittleFS->remove(dirPath); // XX may not be accurage
+    }
+  }
+  // End of legacy code
+  frugal_iot.fs_LittleFS->spurt(path, payload);
+}
+
 // Options eg: sht/temp set/sht/temp/wired set/sht/temp set/sht/temp/max
 bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
@@ -237,8 +260,9 @@ bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     }
   }
   // For now recognizing both xxx/leaf and set/xxx/leaf (but note only subscribed to set/xxx/leaf)
-  if (leaf == id) {
-    writeConfigToFS(leaf, p);  // e.g. sht/temp set/sht/temp
+  // Also recognize leaf/value which is how will be written to disk or get problems with directories vs files
+  if (leaf == id || (leaf.startsWith(id) && leaf.endsWith("/value"))) {
+    writeValueToFS(id, p);  // e.g. ledbuiltin/on or set/ledbuiltin/on
     return convertAndSet(p); // Virtual - depends on type of INxxx
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
@@ -310,7 +334,7 @@ bool OUTfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   bool dispatched = false;
   if (leaf.startsWith(id)) {
-    float v = p.toFloat();
+    uint16_t v = p.toInt(); // TODO is this really toFloat ? 
     if (leaf.endsWith("/max")) {
       max = v;        
       dispatched = true;
@@ -330,7 +354,7 @@ bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     bool dispatched = false;
   if (leaf.startsWith(id)) {
-    float v = p.toFloat();
+    uint16_t v = p.toInt(); // TODO is this really toFloat ? 
     if (leaf.endsWith("/max")) {
       max = v;      
       dispatched = true;

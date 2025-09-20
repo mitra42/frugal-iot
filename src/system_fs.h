@@ -38,6 +38,7 @@ class System_FS : public System_Base {
     virtual fs::File open(const String &filename, const char *mode = "r");
     virtual boolean exists(const char *filename);
     virtual boolean exists(const String &filename);
+    virtual boolean remove(const String &filename);
 
     // Once you have a file you should be able to append(String&) and close(); independent of whether its LittleFS LittleFS or SD
 
@@ -56,6 +57,7 @@ class System_LittleFS : public System_FS {
     fs::File open(const String &filename, const char *mode) override;
     boolean exists(const char *filename) override;
     boolean exists(const String &filename) override;
+    boolean remove(const String &filename);
     bool mkdir(const String &path);
 };
 class System_SD : public System_FS {
@@ -67,6 +69,7 @@ class System_SD : public System_FS {
     fs::File open(const String &filename, const char *mode) override;
     boolean exists(const char *filename) override;
     boolean exists(const String &filename) override;
+    boolean remove(const String &filename);
 };
 
 #endif //SYSTEM_FS_H
