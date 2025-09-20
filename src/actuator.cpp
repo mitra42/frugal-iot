@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include "actuator.h"
+#include "misc.h" // for shouldBeDefined
 
 Actuator::Actuator(const char * const id, const char * const name) 
 : System_Base(id, name) { } 
@@ -11,7 +12,7 @@ Actuator::Actuator(const char * const id, const char * const name)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void Actuator::dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet) {
-  Serial.println(F("Actuator::dispatchTwig should be subclassed"));
+  shouldBeDefined();
 }
 #pragma GCC diagnostic pop
 

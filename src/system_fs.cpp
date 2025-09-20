@@ -40,19 +40,23 @@ System_FS::System_FS(const char* const id, const char* const name)
 #pragma GCC diagnostic ignored "-Wreturn-type" 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 fs::File System_FS::open(const char *filename, const char *mode) { 
-  Serial.print(F("should be subclassed"));
+  shouldBeDefined();
 }
 fs::File System_FS::open(const String &filename, const char *mode ) { 
-  Serial.print(F("should be subclassed")); 
+  shouldBeDefined();
+  return fs::File();
 }
 boolean System_FS::exists(const char *filename) {
-  Serial.print(F("should be subclassed")); return false;
+  shouldBeDefined();
+  return false;
 }
 boolean System_FS::exists(const String &filename) {
-  Serial.print(F("should be subclassed")); return false; // TODO make the should-be standard, use or copy the function in system_base.cpp
+  shouldBeDefined();
+  return false; // TODO make the should-be standard, use or copy the function in system_base.cpp
 }
 bool System_FS::remove(const String &filename) { 
-  Serial.print(F("should be subclassed")); return false;
+  shouldBeDefined();
+  return false;
 }
 
 #pragma GCC diagnostic pop
@@ -77,10 +81,10 @@ bool System_SD::remove(const String &filename) {
 }
 
 fs::File System_LittleFS::open(const char *filename, const char *mode) { 
-  return ESPFS.open(filename, mode);
+  return ESPFS.open(filename, mode, true);
 }
 fs::File System_LittleFS::open(const String &filename, const char *mode) { 
-  return ESPFS.open(filename, mode);
+  return ESPFS.open(filename, mode, true);
 }
 bool System_LittleFS::mkdir(const String &path) { 
   return ESPFS.mkdir(path);

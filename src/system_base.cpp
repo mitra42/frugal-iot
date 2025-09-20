@@ -128,11 +128,11 @@ void IO::discover() {
 
 // TO_ADD_INxxx 
 float IN::floatValue() {
-  Serial.println(F("IN::floatValue should be subclassed"));
+  shouldBeDefined();
   return 0.0; 
 }
 bool IN::boolValue() {
-  Serial.println(F("IN::boolValue should be subclassed"));
+  shouldBeDefined();
   return false; 
 }
 float INuint16::floatValue() {
@@ -378,7 +378,7 @@ bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 void IO::set(const float newvalue) {  
 #pragma GCC diagnostic pop
   #ifdef CONTROL_DEBUG
-    Serial.print(F("IO::set float should be subclassed for ")); Serial.println(name);
+    shouldBeDefined();
   #endif
 }
 #pragma GCC diagnostic push
@@ -386,7 +386,7 @@ void IO::set(const float newvalue) {
 void IO::set(const bool newvalue) {  
 #pragma GCC diagnostic pop
   #ifdef CONTROL_DEBUG
-    Serial.print(F("IO::set bool should be subclassed for ")); Serial.println(name);
+    shouldBeDefined();
   #endif
 }
 */
@@ -394,9 +394,7 @@ void IO::set(const bool newvalue) {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 bool IO::dispatchPath(const String &topicPath, const String &payload) {
 #pragma GCC diagnostic pop
-  #ifdef CONTROL_DEBUG
-    Serial.println(F("IO::dispatchPath should be subclassed"));
-  #endif
+  shouldBeDefined();
   return false;
 }
 
@@ -669,7 +667,6 @@ void OUTuint16::discover() {
 }
 
 // These are mostly to stop the compiler complaining about missing vtables
-void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 float IO::floatValue() { shouldBeDefined(); return 0.0; }
