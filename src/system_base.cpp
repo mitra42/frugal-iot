@@ -250,19 +250,20 @@ void IO::writeValueToFS(const String &leaf, const String& payload) {
 }
 
 // Options eg: sht/temp set/sht/temp/wired set/sht/temp set/sht/temp/max
+// maybe rewrite as dispatchParm and override where required
 bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
     if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // Nite this is the "id" of the leaf, not of the sensor
       if (!(p == wiredPath)) { // if empty, or different
         wireTo(p);
-        writeConfigToFS(leaf, p);  //         
+        writeConfigToFS(leaf, p);  // TODO need to make sure directory exists   -
       }
     }
   }
   // For now recognizing both xxx/leaf and set/xxx/leaf (but note only subscribed to set/xxx/leaf)
   // Also recognize leaf/value which is how will be written to disk or get problems with directories vs files
   if (leaf == id || (leaf.startsWith(id) && leaf.endsWith("/value"))) {
-    writeValueToFS(id, p);  // e.g. ledbuiltin/on or set/ledbuiltin/on
+    writeValueToFS(id, p);  // e.g. ledbuiltin/on or set/ledbuiltin/on.  // TODO need to make sure directory exists   
     return convertAndSet(p); // Virtual - depends on type of INxxx
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
@@ -272,7 +273,7 @@ bool IN::dispatchPath(const String &tp, const String &p) {
   // Note looking for wiredPath of a remote object wired, not path of this IN
   if (tp == wiredPath) { 
     return convertAndSet(p);
-    // Intentionally not writing config to FS here - its a runtime wiring
+    // Intentionally not writing config to FS here - its a value sent to runtime wiring
   }
   return false; // nothing changed
 }
