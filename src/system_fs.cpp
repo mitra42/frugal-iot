@@ -96,6 +96,9 @@ bool System_FS::spurt(const String& filename, const String& content) {
     if (w != content.length()) {
       Serial.print(F("Failed to write to ")); Serial.println(filename);
     }
+    #ifdef SYSTEM_FS_DEBUG
+      Serial.print(F("Written to:")); Serial.print(filename); Serial.print(F("=")); Serial.println(content);
+    #endif
     return w == content.length();
 }
 String System_FS::slurp(const String& fn, const bool quietfail) {
@@ -110,7 +113,7 @@ String System_FS::slurp(const String& fn, const bool quietfail) {
   return r;
 }
 
-#ifdef SYSTEM_FS_DEBUG
+#ifdef SYSTEM_FS_DEBUG_DIR
   String System_FS::formatBytes(size_t bytes) {
     if (bytes < 1024){
       return String(bytes);
@@ -122,10 +125,10 @@ String System_FS::slurp(const String& fn, const bool quietfail) {
       return String(bytes/1024.0/1024.0/1024.0)+"G";
     }
   }
-#endif //SYSTEM_FS_DEBUG
+#endif //SYSTEM_FS_DEBUG_DIR
 
 
-#ifdef SYSTEM_FS_DEBUG
+#ifdef SYSTEM_FS_DEBUG_DIR
 void System_FS::printDirectory(const char* path, int numTabs) {  // e.g. "/" 
   File dir = open(path); // TODO call via System_FS virtual 
   if (!dir) {
@@ -165,7 +168,7 @@ void System_FS::printDirectory(File dir, int numTabs) {  // e.g. "/"
   }
 }
 
-#endif // SYSTEM_FS_DEBUG
+#endif // SYSTEM_FS_DEBUG_DIR
 
 System_SD::System_SD(uint8_t pin) 
 : System_FS("sd", "SD"),
@@ -184,7 +187,7 @@ void System_SD::setup() {
   if (!SD.begin(pin)) { 
     setupFailed();
   } else {
-    #ifdef SYSTEM_SD_DEBUG
+    #ifdef SYSTEM_SD_DEBUG_DIR
       printDirectory("/"); // For debugging
     #endif
   }
@@ -193,7 +196,7 @@ void System_SD::setup() {
 // If need to debug, uncomment the Serial's below, and move the call of this to main.cpp AFTER Serial started
 void System_LittleFS::pre_setup() {
   #ifdef SYSTEM_LITTLEFS_DEBUG
-    //Serial.print(F("LittleFS "));
+    Serial.print(F("LittleFS "));
   #endif
   #ifdef ESP8266
     // On ESP8266 it uses ESP8266/FS.cpp  which has no parameters to begin() and so does NOT format a non-existant file system
@@ -205,10 +208,10 @@ void System_LittleFS::pre_setup() {
     //Serial.println(F("initialization failed!"));
   } else {
     #ifdef SYSTEM_LITTLEFS_DEBUG
-      //Serial.println(F("initialization done."));
+      Serial.println(F("initialization done."));
     #endif
-    #ifdef SYSTEM_LITTLEFS_DEBUG
-      //printDirectory("/"); // For debugging
+    #ifdef SYSTEM_LITTLEFS_DEBUG_DIR
+      printDirectory("/"); // For debugging
     #endif
   }
 }
