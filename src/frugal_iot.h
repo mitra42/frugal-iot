@@ -4,7 +4,7 @@
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #include "actuator_ledbuiltin.h"
 
-//TO-ADD-SENSOR - add any new sensors here
+//TO-ADD-SENSOR - add any new sensors here (in alphabetical order)
 #include "sensor_soil.h"
 #include "sensor_battery.h"
 #include "sensor_sht.h"
@@ -16,9 +16,9 @@
 #include "sensor_ens160aht21.h"
 
 //TO-ADD-CONTROL
+#include "control.h"
 #include "control_blinken.h"
 #include "control_gsheets.h"
-#include "control.h"
 #include "control_hysterisis.h"
 #include "control_logger_fs.h"
 
