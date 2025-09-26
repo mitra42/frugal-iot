@@ -27,7 +27,7 @@
 #endif    
 
 
-#include "_settings.h" // Note - ideally shouldnt be dependent on anything here, or at least not in _local.h
+#include "_settings.h" // Note - ideally shouldnt be dependent on anything here
 #include "system_frugal.h"
 #include "misc.h"
 
