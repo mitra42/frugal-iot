@@ -104,6 +104,11 @@ OUT::OUT(const char* sensorId, const char * const id, const String name, const c
 void IO::wireTo(String topicPath) {
   // TODO probably should unsubscribe from previous BUT could be subscribed elsewhere
   wiredPath = topicPath; // can set to empty
+  // Intentionally not subscribing out to its wired path, leads to unnecessary loopback
+}
+void IN::wireTo(String topicPath) {
+  // TODO probably should unsubscribe from previous BUT could be subscribed elsewhere
+  IO::wireTo(topicPath);
   if (topicPath.length()) {
     frugal_iot.messages->subscribe(wiredPath);
   }
@@ -114,7 +119,6 @@ String IO::path() {
 void IO::wireTo(IO* io) {
   wireTo(frugal_iot.messages->path(io->topicTwig)); // Subscribe to the twig of the IO
 }
-
 void IO::send() {
   frugal_iot.messages->send(path(), StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
@@ -211,7 +215,10 @@ bool OUTbool::boolValue() {
   return value;
 }
 String OUTbool::StringValue() {
-  return String(value ? "true" : "false");
+  return String(value ? "1" : "0");
+  // Not sure why was returning strings like true or false 
+  // Since INbool::convert only does toInt it needs to be "1' and "0"
+  //return String(value ? "true" : "false");
 }
 
 void IO::setup() {

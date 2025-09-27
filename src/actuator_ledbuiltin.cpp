@@ -54,7 +54,7 @@ Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, 
 void Actuator_Ledbuiltin::setup() {
   Actuator_Digital::setup(); // Read config AFTER setup inputs
   brightness->setup();
-  #ifdef ACTUATOR_LEDBUILTIN_DEBUG
+  #ifdef RGB_BUILTIN
     color->setup();
   #endif
 }

@@ -80,6 +80,7 @@ class IN : public IO {
     bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet) override;
     virtual bool dispatchPath(const String &topicpath, const String &payload); 
     void setup();
+    void wireTo(String topicPath);
   protected: // Most of IN appears to need to be public
 };
 class OUT : public IO {

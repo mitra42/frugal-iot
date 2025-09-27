@@ -80,11 +80,23 @@ bool System_SD::remove(const String &filename) {
   return SD.remove(filename);
 }
 
-fs::File System_LittleFS::open(const char *filename, const char *mode) { 
-  return ESPFS.open(filename, mode, true);
+fs::File System_LittleFS::open(const char *filename, const char *mode) {
+  #ifdef ESP32
+    return ESPFS.open(filename, mode, true);
+  #elif defined(ESP8266)
+    return ESPFS.open(filename, mode); // TODO need to check this creates dirs if needed for e.g. temperature/max
+  #else 
+    #error Need to check above for which works with any other processor
+  #endif
 }
 fs::File System_LittleFS::open(const String &filename, const char *mode) { 
-  return ESPFS.open(filename, mode, true);
+  #ifdef ESP32
+    return ESPFS.open(filename, mode, true);
+  #elif defined(ESP8266)
+    return ESPFS.open(filename, mode); // TODO need to check this creates dirs if needed for e.g. temperature/max
+  #else 
+    #error Need to check above for which works with any other processor
+  #endif
 }
 bool System_LittleFS::mkdir(const String &path) { 
   return ESPFS.mkdir(path);
