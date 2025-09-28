@@ -31,7 +31,6 @@ class Sensor_ms5803 : public Sensor {
     void setup() override; 
     uint8_t ms5803CRC4();
     void readValidateConvertSet() override; // Override in Sensor
-    void dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet);
     TwoWire* wire;
  };
  

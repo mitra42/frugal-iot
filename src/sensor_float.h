@@ -17,8 +17,6 @@ class Sensor_Float : public Sensor {
     virtual float convert(float v);
     virtual void set(const float vv);
     void readValidateConvertSet();
-    void discover() override;
-    virtual void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) override;
     void captiveLines(AsyncResponseStream* response) override;
 };
 #endif // SENSOR_FLOAT_H

@@ -11,7 +11,7 @@
 //Sensor_Uint16::Sensor_Uint16() : Sensor() {  };
 Sensor_Uint16::Sensor_Uint16(const char* const id, const char * const name, const uint8_t smooth_init, uint16_t min, uint16_t max, const char* color, bool retain)
   : Sensor(id, name, retain), smooth(smooth_init) {
-    output = new OUTuint16(id, id, name, 0, min, max, color, false); //TODO-25-22apr pass color
+    outputs.push_back(output = new OUTuint16(id, id, name, 0, min, max, color, false)); //TODO-25-22apr pass color
   }
     
 
@@ -53,16 +53,4 @@ void Sensor_Uint16::readValidateConvertSet() {
   #ifdef SENSOR_UINT16_DEBUG
     Serial.println();
   #endif
-}
-
-void Sensor_Uint16::discover() {
-  output->discover();
-}
-void Sensor_Uint16::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (topicSensorId == id) {
-    if (output->dispatchLeaf(topicTwig, payload, isSet)) { // True if changed
-      // Nothing to do on Sensor
-    }
-    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
-  }
 }

@@ -38,8 +38,6 @@ class Sensor_ensaht : protected Sensor {
     bool ENScommand(uint8_t val);
     bool ENSsendAndRead(uint8_t reg, uint8_t *buf, uint8_t num);
     bool setenvdata(float temp, float hum);
-    void discover() override;
-    void dispatchTwig(const String &topicSensorId, const String &leaf, const String &payload, bool isSet);
  };
  
 #endif // SENSOR_ENSAHT_H

@@ -71,14 +71,14 @@ Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name, TwoWi
 { // TODO-101 try movign some of these into part above
   aht = new System_I2C(SENSOR_ENSAHT_AHTI2C, &I2C_WIRE);
   // AHT21
-  temperature = new OUTfloat(id, "temperature", "Temperature", 0, 0, 0, 455, "red", false);
-  humidity = new OUTfloat(id, "humidity", "Humidity", 0, 0, 0, 100, "blue", false);
+  outputs.push_back(temperature = new OUTfloat(id, "temperature", "Temperature", 0, 0, 0, 455, "red", false));
+  outputs.push_back(humidity = new OUTfloat(id, "humidity", "Humidity", 0, 0, 0, 100, "blue", false));
   // ENS160
   ens = new System_I2C(SENSOR_ENSAHT_ENSI2C, &I2C_WIRE); // I2C object at this address
-  aqi = new OUTuint16(id, "aqi", "AQI", 0, 0, 255, "purple", false); // TODO-101 set min/max
-  tvoc = new OUTuint16(id, "tvoc", "TVOC", 0, 0, 99, "green", false); // TODO-101 set min/max
-  eco2 = new OUTuint16(id, "co2", "eCO2", 0, 300, 900, "brown", false); // TODO-101 set min/max
-  aqi500 = new OUTuint16(id, "aqi500", "AQI500", 0, 0, 99, "brown", false); // Only valid on ENS161  // TODO-101 set min/max
+  outputs.push_back(aqi = new OUTuint16(id, "aqi", "AQI", 0, 0, 255, "purple", false)); // TODO-101 set min/max
+  outputs.push_back(tvoc = new OUTuint16(id, "tvoc", "TVOC", 0, 0, 99, "green", false)); // TODO-101 set min/max
+  outputs.push_back(eco2 = new OUTuint16(id, "co2", "eCO2", 0, 300, 900, "brown", false)); // TODO-101 set min/max
+  outputs.push_back(aqi500 = new OUTuint16(id, "aqi500", "AQI500", 0, 0, 99, "brown", false)); // Only valid on ENS161  // TODO-101 set min/max
 }
 
 //Sensor_ensaht::~Sensor_ensaht; //TODO-101
@@ -165,11 +165,11 @@ void Sensor_ensaht::setupENS() {
     Serial.print(F("ENS160 partid="));
     switch (part_id) { 
       case ENS160_PARTID: 
-        isENS161 = false;
+        isENS161 = false; // TODO we probably want to do this anyway
         Serial.println(F("ENS160"));
         break;
       case ENS161_PARTID:
-        isENS161 = true;
+        isENS161 = true; // TODO we probably want to do this anyway
         Serial.print(F("ENS160"));
         break;
       default:
@@ -257,6 +257,8 @@ void Sensor_ensaht::readValidateConvertSet() {
     readAndSetENS();   
 }
 
+/* 
+// TODO Using superclass which loops over all outputs, but should really delete aqi500 if !isENS161
 void Sensor_ensaht::discover() {
     temperature->discover();
     humidity->discover();
@@ -265,18 +267,4 @@ void Sensor_ensaht::discover() {
     eco2->discover();
     if (isENS161) { aqi500->discover(); }
 }
-void Sensor_ensaht::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (topicSensorId == id) {
-    if (
-      temperature->dispatchLeaf(topicTwig, payload, isSet) ||
-      humidity->dispatchLeaf(topicTwig, payload, isSet) ||
-      aqi->dispatchLeaf(topicTwig, payload, isSet) ||
-      tvoc->dispatchLeaf(topicTwig, payload, isSet) ||
-      eco2->dispatchLeaf(topicTwig, payload, isSet) ||
-      aqi500->dispatchLeaf(topicTwig, payload, isSet)
-    ) { // True if changed
-      // Nothing to do on sensor
-    }
-    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
-  }
-}
+*/

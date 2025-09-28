@@ -15,7 +15,9 @@
 Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain) 
 : Sensor(id, name, retain),
   output(new OUTfloat(id, id, name, 0, width, min, max, color, false)), // Note id same as sensor id
-  width(width) { };
+  width(width) { 
+    outputs.push_back(output);
+  };
 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16 and sensor_ht
@@ -49,20 +51,6 @@ void Sensor_Float::readValidateConvertSet() {
   #ifdef SENSOR_FLOAT_DEBUG
     Serial.println();
   #endif
-}
-
-void Sensor_Float::discover() {
-  output->discover();
-}
-
-// Subclass this for specific fields - like max, min etc
-void Sensor_Float::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (topicSensorId == id) {
-    if (output->dispatchLeaf(topicTwig, payload, isSet)) { // True if changed
-      // Nothing to do on Sensor
-    }
-    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
-  }
 }
 
 void Sensor_Float::captiveLines(AsyncResponseStream* response) {

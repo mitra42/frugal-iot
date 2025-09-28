@@ -22,7 +22,5 @@ class Sensor_Uint16 : public Sensor {
     uint16_t convert(uint16_t newvalue);
     void set(const uint16_t newvalue);
     void readValidateConvertSet() override;
-    void discover() override;
-    void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) override;
 };
 #endif // SENSOR_UINT16_H

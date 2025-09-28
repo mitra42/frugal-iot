@@ -15,6 +15,7 @@
   #define SENSOR_BUTTON_MS 10
 #endif
  
+// Note this is a subclass of System_Base, not of Sensor 
  class Sensor_Button : public System_Base {
     public:
       Sensor_Button( const char * const id, const char * const name, uint8_t pin, const char * const color);
