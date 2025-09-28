@@ -38,41 +38,18 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, const char* colorInit) :
-  Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow"),
-  #ifdef RGB_BUILTIN
-    color(new INcolor("ledbuiltin", "color", "LED color", colorInit, false)), //TODO-131 color of UX should reflect color of LED
-  #endif
-  brightness(new INuint16("ledbuiltin", "brightness", "Brightness", brightness, 0, 255, colorInit, false))
+Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightnessInit, const char* colorInit) :
+  Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow")
   { 
+    #ifdef RGB_BUILTIN
+      inputs.push_back(color = new INcolor("ledbuiltin", "color", "LED color", colorInit, false)); //TODO-131 color of UX should reflect color of LED
+    #endif
+    inputs.push_back(brightness = new INuint16("ledbuiltin", "brightness", "Brightness", brightnessInit, 0, 255, colorInit, false));
     #ifdef ACTUATOR_LEDBUILTIN_DEBUG
       Serial.print(F("Ledbuiltin pin=")); Serial.println(pin); 
     #endif
   }
 #pragma GCC diagnostic pop
-
-void Actuator_Ledbuiltin::setup() {
-  Actuator_Digital::setup(); // Read config AFTER setup inputs
-  brightness->setup();
-  #ifdef RGB_BUILTIN
-    color->setup();
-  #endif
-}
-
-void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
-  if (topicActuatorId == id) {
-    if (
-      #ifdef RGB_BUILTIN
-        color->dispatchLeaf(leaf, payload, isSet) ||
-      #endif
-      brightness->dispatchLeaf(leaf, payload, isSet)
-    )
-    { // True if changed
-      act();
-    }
-    Actuator_Digital::dispatchTwig(topicActuatorId, leaf, payload, isSet); // Call parent to handle "input"
-  }
-}
   
 void Actuator_Ledbuiltin::act() {
   #ifdef RGB_BUILTIN
@@ -109,11 +86,4 @@ void Actuator_Ledbuiltin::act() {
       digitalWrite(pin, input->value ? HIGH : LOW); // LED pin is not inverted, e.g. on Lolin S3 mini
     #endif
   #endif 
-}
-void Actuator_Ledbuiltin::discover() {
-  #ifdef RGB_BUILTIN
-    color->discover();
-  #endif
-  brightness->discover();
-  Actuator_Digital::discover();
 }

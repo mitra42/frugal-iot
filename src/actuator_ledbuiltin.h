@@ -85,9 +85,6 @@ class Actuator_Ledbuiltin : public Actuator_Digital {
     #ifdef RGB_BUILTIN
       INcolor* color;
     #endif
-    void dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet);
-    void setup() override;
-    void discover() override;
 };
 
 #endif // ACTUATOR_LEDBUILTIN_H

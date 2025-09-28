@@ -20,7 +20,9 @@ Actuator_Digital::Actuator_Digital(const char * const id, const char * const nam
 : Actuator(id, name), 
   pin(pin),
   input(new INbool(id, "on", "On", false, color, false))
-{};
+{ 
+  inputs.push_back(input);
+};
 
 void Actuator_Digital::act() {
   digitalWrite(pin, input->value ? HIGH : LOW); // Relay pin on Wemos shield is NOT inverted
@@ -37,23 +39,10 @@ void Actuator_Digital::set(const bool v) {
 #pragma GCC diagnostic pop
 
 void Actuator_Digital::setup() {
-  // initialize the digital pin as an output.
-  input->setup();
   Actuator::setup(); // Read config AFTER setup inputs
+  // initialize the digital pin as an output.
   pinMode(pin, OUTPUT);  // Set pin after reading config as may change
   act(); // Set the digital output to match initial conditions.
-}
-void Actuator_Digital::dispatchTwig(const String &topicActuatorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (topicActuatorId == id) {
-    if (input->dispatchLeaf(topicTwig, payload, isSet)) { // True if changed
-      act();
-    }
-    System_Base::dispatchTwig(topicActuatorId, topicTwig, payload, isSet);
-  }
-}
-
-void Actuator_Digital::discover() {
-  input->discover();
 }
 
 void Actuator_Digital::captiveLines(AsyncResponseStream* response) {
