@@ -23,7 +23,7 @@ class System_Message { // Only used for outgoing queued messages
     friend class System_Messages;
     bool send();
     const String topicPath;
-    const String payload;    // Retained payload
+    String payload;    // Retained payload
     const bool isSubscription;
     const bool retain;
     const int qos;

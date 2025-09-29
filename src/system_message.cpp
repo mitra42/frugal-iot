@@ -97,6 +97,14 @@ void System_Messages::subscribe(const String topicPath) {
 
 // Upstream: module => queue with reflection 
 void System_Messages::send(const String topicPath, const String payload, bool retain, uint8_t qos) {
+  // Instead of pushing a new message, update the payload
+  for(System_Message sm: outgoing) {
+    if (sm.topicPath == topicPath) {
+      sm.payload = payload; 
+      Serial.print(F("XXX updating queued")); Serial.print(topicPath); Serial.print(" "); Serial.print(sm.payload); Serial.print("->"); Serial.println(payload);  
+      return; // Don't push
+    }
+  }
   //heap_print(F("messages::send"));
   outgoing.emplace_back(topicPath, payload, retain, qos);  // Implicit new Message
   //heap_print(F("messages::send after queue"));
