@@ -112,14 +112,14 @@ void Frugal_Group::loop() {
   } 
 }
 void Frugal_Group::periodically() { 
-  heap_print(F("Periodic"));
+  //heap_print(F("Periodic"));
   for (System_Base* fb: group) { 
     #ifdef SYSTEM_MEMORY_DEBUG
-      Serial.print(fb->id);  heap_print(F("Sensor_HT::set"));
+      Serial.print(fb->id);  //heap_print(F("Sensor_HT::set"));
     #endif
     fb->periodically();
   } 
-  heap_print(F("/Periodic"));
+  //heap_print(F("/Periodic"));
 }
 void Frugal_Group::infrequently() { 
   for (System_Base* fb: group) { 
@@ -232,9 +232,9 @@ void System_Frugal::setup_after_wifi() {
   }
 }
 void System_Frugal::infrequently() {
-  heap_print(F("infrequent"));
+  //heap_print(F("infrequent"));
   Frugal_Group::infrequently();
-  heap_print(F("/infrequent"));
+  //heap_print(F("/infrequent"));
 }
 
 // These are things done one time per period - where a period is the time set in powercontroller->cycle_ms
@@ -246,11 +246,11 @@ void System_Frugal::periodically() {
 void System_Frugal::loop() {
   //Serial.print(F("⏳1"));
   if (timeForPeriodic) {
-    heap_print(F("loop periodic"));
+    //heap_print(F("loop periodic"));
     periodically();  // Do things run once per cycle
     infrequently();  // Do things that keep their own track of time
     timeForPeriodic = false;
-    heap_print(F("/loop periodic"));
+    //heap_print(F("/loop periodic"));
   }
   Frugal_Group::loop(); // Do things like MQTT which run frequently with their own clock
   if (powercontroller->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP

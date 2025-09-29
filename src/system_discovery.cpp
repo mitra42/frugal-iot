@@ -39,9 +39,9 @@ void System_Discovery::quickAdvertise() {
   // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
   // Relying on short messages from modules instead of large message which won't go thru LoRaMesher
   void System_Discovery::fullAdvertise() {
-    heap_print(F("Discovery::fullAdvertise before"));
+    //heap_print(F("Discovery::fullAdvertise before"));
     frugal_iot.discover();
-    heap_print(F("Discovery::fullAdvertise after"));
+    //heap_print(F("Discovery::fullAdvertise after"));
     doneFullAdvertise = true;
   }
 

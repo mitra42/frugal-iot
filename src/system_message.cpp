@@ -97,13 +97,13 @@ void System_Messages::subscribe(const String topicPath) {
 
 // Upstream: module => queue with reflection 
 void System_Messages::send(const String topicPath, const String payload, bool retain, uint8_t qos) {
-  heap_print(F("messages::send"));
+  //heap_print(F("messages::send"));
   outgoing.emplace_back(topicPath, payload, retain, qos);  // Implicit new Message
-  heap_print(F("messages::send after queue"));
+  //heap_print(F("messages::send after queue"));
   //TODO-152B dedupe before adding
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
   frugal_iot.messages->dispatch(topicPath, payload);
-  heap_print(F("messages::/send"));
+  //heap_print(F("messages::/send"));
 }
 
 // Upstream queued => MQTT or LoRaMesher
@@ -113,18 +113,18 @@ void System_Messages::sendQueued() {
     System_Message &m = outgoing.front();
     if (m.isSubscription) {
       if (m.queuedSubscribe()) {
-        heap_print(F("popping sub"));
+        //heap_print(F("popping sub"));
         subscriptions.push_front(m);
-        heap_print(F("/popping sub"));
+        //heap_print(F("/popping sub"));
         outgoing.pop_front(); // Note this should delete m and free up the memory
       } else {
         return; // Dont block if not connected
       }
     } else {
       if (m.queuedMessage()) {
-        heap_print(F("popping"));
+        //heap_print(F("popping"));
         outgoing.pop_front(); // Note this should delete m and free up the memory
-        heap_print(F("/popping"));
+        //heap_print(F("/popping"));
       } else {
         return; // Dont block if not connected
       }

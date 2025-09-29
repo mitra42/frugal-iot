@@ -26,10 +26,10 @@ Sensor_HT::Sensor_HT(const char* const id, const char * const name, boolean reta
 void Sensor_HT::readValidateConvertSet() { Serial.println(F("Sensor_HT::readAndSet must be subclassed")); }
 
 void Sensor_HT::set(const float temp, const float humy) {
-  heap_print(F("Sensor_HT::set"));
+  //heap_print(F("Sensor_HT::set"));
   temperature->set(temp);
   humidity->set(humy);
-  heap_print(F("Sensor_HT::set after"));
+  //heap_print(F("Sensor_HT::set after"));
 }
 
 // TODO may extract this to a function in system_captive if have similar
