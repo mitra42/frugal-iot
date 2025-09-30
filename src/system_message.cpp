@@ -101,7 +101,9 @@ void System_Messages::send(const String topicPath, const String payload, bool re
   for(System_Message sm: outgoing) {
     if (sm.topicPath == topicPath) {
       sm.payload = payload; 
-      Serial.print(F("XXX updating queued")); Serial.print(topicPath); Serial.print(" "); Serial.print(sm.payload); Serial.print("->"); Serial.println(payload);  
+      #ifdef SYSTEM_MESSAGE_DEBUG
+        Serial.print(F("Updating queued")); Serial.print(topicPath); Serial.print(" "); Serial.print(sm.payload); Serial.print("->"); Serial.println(payload);  
+      #endif
       return; // Don't push
     }
   }
