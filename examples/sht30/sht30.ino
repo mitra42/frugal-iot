@@ -5,7 +5,7 @@
  */
 
 // defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
-#include "frugal_iot.h"
+#include "Frugal-IoT.h"
 // Change the parameters here to match your ... 
 // organization, project, device name, description
 System_Frugal frugal_iot("dev", "developers", "SHT30", "SHT30 Temperature and Humidity Sensor"); 

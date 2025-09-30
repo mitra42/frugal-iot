@@ -27,7 +27,7 @@
 #include <HX711.h> // https://registry.platformio.org/libraries/robtillaart/HX711
 #include "sensor_loadcell.h"
 #include "misc.h" // StringF
-#include "frugal_iot.h" // For frugal_iot
+#include "Frugal-IoT.h" // For frugal_iot
 
 //TODO-134 need to tell it the size of the load cell
 Sensor_LoadCell::Sensor_LoadCell(const char* const id, const char * const name, float max, const char* color, const bool retain, 

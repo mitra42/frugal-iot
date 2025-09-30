@@ -4,7 +4,7 @@
  * Optional: SENSOR_SHT_ADDRESS - defaults to 0x44, (note the D1 shields default to 0x45)
  */
 
-#include "frugal_iot.h"
+#include "Frugal-IoT.h"
 
 // Change the parameters here to match your ... 
 // organization, project, id, description

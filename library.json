@@ -1,6 +1,6 @@
 {
     "name": "Frugal-IoT",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "A platform for affordable easily built sensors",
     "keywords": "frugal, arduino, esp32, iot, sensors",
     "authors": [
@@ -29,6 +29,6 @@
         "url": "https://github.com/mitra42/frugal-iot"
     },
     "homepage": "https://ithub.com/mitra42/frugal-iot/",
-    "headers": "frugal-iot.h",
+    "headers": "Frugal-IoT.h",
     "license": "MIT"
 }

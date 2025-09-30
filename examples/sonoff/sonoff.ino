@@ -3,7 +3,7 @@
  * Optional: 
  */
 
-#include "frugal_iot.h"
+#include "Frugal-IoT.h"
 
 // Change the parameters here to match your ... 
 // organization, project, device name, description

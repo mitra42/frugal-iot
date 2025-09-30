@@ -5,7 +5,7 @@
  * 
  */
 
-#include "frugal_iot.h"
+#include "Frugal-IoT.h"
 #include "system_mqtt.h"
 
 // Change the parameters here to match your ... 

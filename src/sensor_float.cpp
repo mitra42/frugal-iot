@@ -10,7 +10,7 @@
 #include <forward_list>
 #include "sensor.h"
 #include "sensor_float.h"
-#include "frugal_iot.h"
+#include "Frugal-IoT.h"
 
 Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain) 
 : Sensor(id, name, retain),

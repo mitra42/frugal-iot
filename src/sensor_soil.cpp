@@ -22,7 +22,7 @@
 
 #include <Arduino.h>
 #include "sensor_soil.h"
-#include "frugal_iot.h"
+#include "Frugal-IoT.h"
 
 Sensor_Soil::Sensor_Soil(const char* const id, const char * const name, uint8_t pin_init, int offset, float scale, const char* color, bool retain) 
   : Sensor_Analog(id, name, pin_init, 0, 0, 100, offset, scale, color, retain)

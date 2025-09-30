@@ -6,7 +6,7 @@
  * 
  */
 
-#include "frugal_iot.h"
+#include "Frugal-IoT.h"
 // Change the parameters here to match your ... 
 // organization, project, device name, description
 System_Frugal frugal_iot("dev", "developers", "Power", "Power control development"); 

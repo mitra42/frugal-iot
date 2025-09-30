@@ -15,7 +15,7 @@
 
 #include "_settings.h"  // Settings for what to include etc
 #include "sensor_analog.h"
-#include "frugal_iot.h"
+#include "Frugal-IoT.h"
 
 
 #include <Arduino.h>
