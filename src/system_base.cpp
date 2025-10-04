@@ -29,7 +29,7 @@ void System_Base::infrequently() { }; // Run once each period, but should check 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void System_Base::dispatchPath(const String &topicPath, const String &payload) {};
 #pragma GCC diagnostic pop
-  void System_Base::discover() {} ; // Default to do nothing
+void System_Base::discover() {} ; // Default to do nothing
 
 void System_Base::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
