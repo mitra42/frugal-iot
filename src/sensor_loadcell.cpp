@@ -84,13 +84,16 @@ float Sensor_LoadCell::readFloat() {
 void Sensor_LoadCell::calibrate(float weight) {
   hx711->calibrate_scale(weight, 15); // Use maximmum of 15 
   scale = hx711->get_scale(); // Remember the value
+  #ifdef SENSOR_LOADCELL_DEBUG
+    Serial.print(F("LoadCell: scale=")); Serial.println(scale);
+  #endif
 }
 
 void Sensor_LoadCell::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicSensorId == id) {
     // Set by UX - "Tare" is weight=0  Calbrate is weight=XX
     if (topicTwig == "output") {
-      if(true) { //payload.toFloat() == 0.0) {
+      if(payload.toFloat() == 0.0) {
         tare(); // sets offset on hx711 and here
         writeConfigToFS("offset", String(offset));
       } else {
