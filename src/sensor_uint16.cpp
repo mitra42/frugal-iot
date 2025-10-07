@@ -7,6 +7,7 @@
 #include <forward_list>
 #include "sensor.h"
 #include "sensor_uint16.h"
+#include "misc.h" // shouldBeDefined
 
 //Sensor_Uint16::Sensor_Uint16() : Sensor() {  };
 Sensor_Uint16::Sensor_Uint16(const char* const id, const char * const name, const uint8_t smooth_init, uint16_t min, uint16_t max, const char* color, bool retain)
@@ -16,7 +17,7 @@ Sensor_Uint16::Sensor_Uint16(const char* const id, const char * const name, cons
     
 
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16
-uint16_t Sensor_Uint16::readUint16() { Serial.println(F("Sensor_Uint16::read must be subclassed")); return -1; }
+uint16_t Sensor_Uint16::readUint16() { shouldBeDefined(); return -1; }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

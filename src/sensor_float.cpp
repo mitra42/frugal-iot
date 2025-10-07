@@ -21,9 +21,8 @@ Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_
 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16 and sensor_ht
-float Sensor_Float::readFloat() { 
-  Serial.println(F("Sensor_Float::read must be subclassed")); return -1; 
-}
+float Sensor_Float::readFloat() {  shouldBeDefined(); return -1; }
+
 // Check if the raw value from the sensor is valid - defaults to true, but overridden for each sensor
 bool Sensor_Float::validate(float v) {
   return true;

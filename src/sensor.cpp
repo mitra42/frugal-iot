@@ -6,15 +6,14 @@
 #include <Arduino.h>
 #include <vector>
 #include "sensor.h"
+#include "misc.h" // shouldBeDefined
 
 Sensor::Sensor(const char* const id, const char* const name, bool r) 
 : System_Base(id, name), retain(r) { }
 
 // This is the main thing each sensor does periodically. 
 // It can be overridden, or any of its parts can be. 
-void Sensor::readValidateConvertSet() {
-  Serial.println(F("Sensor::readValidateConvertSet - should be subclassed"));
-}
+void Sensor::readValidateConvertSet() { shouldBeDefined(); }
 
 void Sensor::periodically() {
   readValidateConvertSet();

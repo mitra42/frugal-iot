@@ -10,7 +10,7 @@
 #include <Arduino.h>
 #include "sensor.h"
 #include "sensor_ht.h"
-#include "misc.h" // heap_print
+#include "misc.h" // heap_print shouldBeDefined
 
 Sensor_HT::Sensor_HT(const char* const id, const char * const name, boolean retain) 
   : Sensor(id, name, retain),
@@ -23,7 +23,7 @@ Sensor_HT::Sensor_HT(const char* const id, const char * const name, boolean reta
 
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16 and sensor_ht
-void Sensor_HT::readValidateConvertSet() { Serial.println(F("Sensor_HT::readAndSet must be subclassed")); }
+void Sensor_HT::readValidateConvertSet() { shouldBeDefined() ; }
 
 void Sensor_HT::set(const float temp, const float humy) {
   //heap_print(F("Sensor_HT::set"));
