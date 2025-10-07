@@ -24,10 +24,11 @@ class System_Message { // Only used for outgoing queued messages
     bool send();
     const String topicPath;
     String payload;    // Retained payload
+    // Only relevant/accurate on outgoing
     const bool isSubscription;
     const bool retain;
     const int qos;
-
+    void dispatch();
     bool queuedMessage();
     bool queuedSubscribe();
 };
@@ -45,12 +46,16 @@ class System_Messages : public System_Base {
     String path(const String topicTwig); 
     //String twig(const String &topicPath); // unused
     bool reSubscribeAll(); // Called by MQTT after reconnection
-    void dispatch(const String &topicPath, const String &payload); // Called by MQTT and LoRaMesher
+    void queueIncoming(const String &topicPath, const String &payload); // Called by MQTT and LoRaMesher
+    void queueFromCaptive(const String &twig, const String &payload);
   protected:
     friend class System_Message;
     std::list<System_Message> outgoing;
+    std::list<System_Message> incoming;
     std::forward_list<System_Message> subscriptions;
-    void sendQueued();
+    void sendOutgoingQueued();
+    void dispatchIncomingQueued();
+    void queueLoopback(const String &topicPath, const String &payload);
     void setup();
     void loop();
 };

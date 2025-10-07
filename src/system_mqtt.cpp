@@ -227,7 +227,7 @@ void System_MQTT::messageReceived(const String &topicPath, const String &payload
   // unsubscribe as it may cause deadlocks when other things arrive while
   // sending and receiving acknowledgments. Instead, change a global variable,
   // or push to a queue and handle it in the loop after calling `client.loop()`.
-  frugal_iot.messages->dispatch(topicPath, payload);
+  frugal_iot.messages->queueIncoming(topicPath, payload);
   inReceived = false;
 }
 

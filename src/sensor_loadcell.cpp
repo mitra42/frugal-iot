@@ -45,6 +45,9 @@ Sensor_LoadCell::Sensor_LoadCell(const char* const id, const char * const name, 
 void Sensor_LoadCell::tare() {
   hx711->tare(10); // Presume empty load cell   reading 10 tines for accuracy
   offset = hx711->get_offset(); // Get and save the offset value 
+  #ifdef SENSOR_LOADCELL_DEBUG
+    Serial.print(F("Loadcell tare: offset=")); Serial.println(offset);
+  #endif
 }
 void Sensor_LoadCell::setup() {
   Sensor_Float::setup(); // Will readConfigFromFS and set offset and scale (thru to hx711), do before setting up pins
@@ -62,12 +65,19 @@ void Sensor_LoadCell::setup() {
 #endif
   hx711->set_scale(scale); // TODO-134 
   hx711->set_median_mode(); // Use median so doesn't read e.g. 0.5kg if 1kg load added mid-cycle
+
+#ifdef SENSOR_LOADCELL_DEBUG
+  Serial.print(F("Loadcell: Raw read=")); Serial.println(hx711->read());
+  Serial.println(F("Loadcell: Put some weight on the scale in next 5 secs")); delay(5000);
+  Serial.print(F("Loadcell: Raw read with weight=")); Serial.println(hx711->read());
+  Serial.println(F("Loadcell get_units=")); Serial.println(hx711->get_units(1));
+#endif
 }
 float Sensor_LoadCell::readFloat() {
   // Retuns actual value - so validate and set are defaults
   float v = hx711->get_units(times); 
   #ifdef SENSOR_LOADCELL_DEBUG
-    Serial.print(F("LoadCell: read()=")); Serial.println(v);
+    Serial.print(F("LoadCell: get_units=")); Serial.println(v);
   #endif
   return v;
 }
@@ -80,7 +90,7 @@ void Sensor_LoadCell::dispatchTwig(const String &topicSensorId, const String &to
   if (topicSensorId == id) {
     // Set by UX - "Tare" is weight=0  Calbrate is weight=XX
     if (topicTwig == "output") {
-      if(payload.toFloat() == 0.0) {
+      if(true) { //payload.toFloat() == 0.0) {
         tare(); // sets offset on hx711 and here
         writeConfigToFS("offset", String(offset));
       } else {

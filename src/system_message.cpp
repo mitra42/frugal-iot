@@ -49,7 +49,8 @@ void System_Messages::setup() {
 }
 
 void System_Messages::loop() {
-  sendQueued(); // Upstream
+  sendOutgoingQueued(); // Upstream
+  dispatchIncomingQueued();
 }
 
 // =========== Helpers =====================
@@ -112,13 +113,13 @@ void System_Messages::send(const String topicPath, const String payload, bool re
   //heap_print(F("messages::send after queue"));
   //TODO-152B dedupe before adding
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
-  frugal_iot.messages->dispatch(topicPath, payload);
+  queueLoopback(topicPath, payload);
   //heap_print(F("messages::/send"));
 }
 
 // Upstream queued => MQTT or LoRaMesher
 // Send any messages waiting to go (subscriptions or messages)
-void System_Messages::sendQueued() {
+void System_Messages::sendOutgoingQueued() {
   while (!outgoing.empty()) {
     System_Message &m = outgoing.front();
     if (m.isSubscription) {
@@ -128,7 +129,7 @@ void System_Messages::sendQueued() {
         //heap_print(F("/popping sub"));
         outgoing.pop_front(); // Note this should delete m and free up the memory
       } else {
-        return; // Dont block if not connected
+        return; // Dont block or keep looping if not connected
       }
     } else {
       if (m.queuedMessage()) {
@@ -136,7 +137,7 @@ void System_Messages::sendQueued() {
         outgoing.pop_front(); // Note this should delete m and free up the memory
         //heap_print(F("/popping"));
       } else {
-        return; // Dont block if not connected
+        return; // Dont block or keep looping if not connected
       }
     }
     // If succeeded then try and send any other queued messages
@@ -191,21 +192,39 @@ bool System_Messages::reSubscribeAll() {
 // ============ DOWNSTREAM ====== Broker -> MQTT -> (LoRaMesher) -> Modules
 
 // Downstream MQTT -> modules (note that LoRaMesher is a module that forwards based on subscriptions)
-// This is called by either the MQTT or LoRaMesher module on receiving a message
-void System_Messages::dispatch(const String &topicPath, const String &payload) {
-  if (topicPath.startsWith(topicPrefix)) { // includes trailing slash
-    String topicTwig = topicPath.substring(topicPrefix.length()); 
+void System_Message::dispatch() {
+  if (topicPath.startsWith(frugal_iot.messages->topicPrefix)) { // includes trailing slash
+    String topicTwig = topicPath.substring(frugal_iot.messages->topicPrefix.length()); 
     bool isSet;
     if (topicTwig.startsWith("set/")) {
       isSet = true;
       topicTwig.remove(0, 4); // Remove set/ from start
       // At the moment it looks like all dispatchTwig are isSet, because control subscribes to full path for its wired.
-      frugal_iot.dispatchTwig(topicTwig, payload, isSet); // Just matches twigs
+      frugal_iot.dispatchTwig(topicTwig, payload, isSet); // Just matches twigs e.g. sht/temperature or sht/temperature/max
     }
   }
   // Note LoRaMesher will go through this to System_LoRaMesher::dispatchPath
   frugal_iot.dispatchPath(topicPath, payload);  // Matches just paths. (Twigs and sets handled above)
 }
 
-
-
+// Downstream queued => dispatch
+// Send any messages incoming
+void System_Messages::dispatchIncomingQueued() {
+  while (!incoming.empty()) {
+    System_Message &m = incoming.front();
+    m.dispatch();
+    incoming.pop_front(); // Note this should delete m and free up the memory
+  }
+}
+// Downstream queued => dispatch
+// This is called by either the MQTT or LoRaMesher module on receiving a message
+// also by send to implement a loopBack, and by captive
+void System_Messages::queueIncoming(const String &topicPath, const String &payload) {
+  incoming.emplace_back(topicPath, payload, false, 0);  // Implicit new Message (freed in dispatch)
+}
+void System_Messages::queueFromCaptive(const String &twig, const String &payload) {
+  queueIncoming(path(twig), payload);
+}
+void System_Messages::queueLoopback(const String &topicPath, const String &payload) {
+  queueIncoming(topicPath, payload);
+}

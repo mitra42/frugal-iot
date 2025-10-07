@@ -207,7 +207,7 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
     }
     if (downstream) {
       //Serial.print(F("XXX " __FILE__)); Serial.print(F("downstream ")); Serial.println(topicPath);
-      frugal_iot.messages->dispatch(topicPath, payload);
+      frugal_iot.messages->queueIncoming(topicPath, payload);
     } else { // upstream (not subscribe)
       Serial.print(F("LoRaMesher forwarding to MQTT:")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
       frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway

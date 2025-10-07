@@ -50,7 +50,7 @@ void System_Base::readConfigFromFS() {
     readConfigFromFS(dir, nullptr); // closes directory
   } else {
     frugal_iot.fs_LittleFS->mkdir(path); // There should be a directory, so can write config received over MQTT
-    Serial.println(F("Creating:")); Serial.println(path);
+    Serial.print(F("Creating:")); Serial.println(path);
   }
 }
 // dir could be sht or one level lower e.g. sht/temperature
@@ -78,9 +78,9 @@ void System_Base::readConfigFromFS(File dir, const String* leaf) {
   }
   dir.close();
 }
-void System_Base::writeConfigToFS(const String& topicTwig, const String& payload) {
-  String path = String("/") + id + "/" + topicTwig;
-  frugal_iot.fs_LittleFS->spurt(path, payload);
+void System_Base::writeConfigToFS(const String& topicLeaf, const String& payload) {
+  String filepath = String("/") + id + "/" + topicLeaf;
+  frugal_iot.fs_LittleFS->spurt(filepath, payload);
 }
 
 String System_Base::leaf2path(const char* const leaf) { 

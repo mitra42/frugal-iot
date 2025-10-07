@@ -161,7 +161,7 @@ send	KEYWORD2
 send1read1	KEYWORD2
 sendAndRead	KEYWORD2
 sendGoogle	KEYWORD2
-sendQueued	KEYWORD2
+sendOutgoingQueued	KEYWORD2
 sendWired	KEYWORD2
 set	KEYWORD2
 setLanguage	KEYWORD2

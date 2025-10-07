@@ -192,7 +192,7 @@ void System_Captive::setup() {
           if (p->name() == "ssid") {
             const AsyncWebParameter* password = request->getParam("password", true);
             if (password && password->value().length()) {
-              frugal_iot.dispatchTwig("wifi", p->value(), password->value(), true);
+              frugal_iot.messages->queueFromCaptive("set/wifi/" + p->value(), password->value());
               // TODO-153 may wish to force it to try this new one
             } else {
               Serial.println(F("SSID But No password"));
@@ -202,7 +202,7 @@ void System_Captive::setup() {
           } else if (p->name() == "password") {
             // Ignore - will be read by "ssid" above
           } else {
-            frugal_iot.dispatchTwig(p->name(), p->value(), true);
+            frugal_iot.messages->queueFromCaptive("set/" + p->name(), p->value());
           }
         }
         #ifdef ASYNCWEBSERVER_NEEDS_FILE_GETPARAMETERS

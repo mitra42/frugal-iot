@@ -57,21 +57,21 @@ void Frugal_Group::dispatchTwig(const String &topicSensorId, const String &topic
 
 // Handle messages at top level - check for own, and if not loop through all other modules
 // e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
-void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
-    if (topicTwig == "project") { // TODO unclear we should be changing project on a device live
+    if (topicLeaf == "project") { // TODO unclear we should be changing project on a device live
       project = String(payload); // Note weirdness, it really needs to copy 
       // TODO - needs to redo stuff that uses "project"
       // project = payload;
-    } else if (topicTwig == "name") {
+    } else if (topicLeaf == "name") {
       name = String(payload); // Note weirdness, it really needs to copy 
-    } else if (topicTwig == "description") {
+    } else if (topicLeaf == "description") {
       description = payload;
     }
-    writeConfigToFS(topicTwig, payload); // Save for next time
-    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+    writeConfigToFS(topicLeaf, payload); // Save for next time
+    System_Base::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   } else { // No point in passing on our own id for the loop
-    Frugal_Group::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+    Frugal_Group::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   }
 }
 void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
