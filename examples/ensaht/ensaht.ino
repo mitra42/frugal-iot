@@ -7,7 +7,7 @@
 
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "ensaht", "ENS160 AHT21 Environmental Sensor");
+System_Frugal frugal_iot("dev", "developers", "ENS160 AHT21", "ENS160 AHT21 Environmental Sensor");
 
 void setup() {
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config

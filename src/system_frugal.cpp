@@ -160,7 +160,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
     oled(new System_OLED(&OLED_WIRE)),
   #endif // SYSTEM_OLED_WANT
-  #ifdef SYSTEM_OTA_KEY
+  #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     ota(new System_OTA()),
   #endif
   fs_LittleFS(new System_LittleFS()),
@@ -182,7 +182,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #ifdef SYSTEM_OLED_WANT
     system->add(oled);
   #endif
-  #ifdef SYSTEM_OTA_KEY
+  #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     system->add(ota);
   #endif
   #ifdef SYSTEM_LORA_WANT
@@ -213,7 +213,7 @@ void System_Frugal::setup() {
     Serial.print(F("Setup: "));
   #endif
   Frugal_Group::setup(); // includes WiFi
-  #ifdef SYSTEM_OTA_KEY
+  #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     ota->setup_after_mqtt_setup(); // Sends advertisement over MQTT
   #endif
   #ifdef SYSTEM_FRUGAL_DEBUG

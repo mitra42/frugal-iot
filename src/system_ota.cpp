@@ -4,7 +4,10 @@
 * and https://github.com/mitra42/frugal-iot/issues/37
 *
 * Configuration
-* Required: SYSTEM_OTA_KEY short string (defined by "org") for different boards
+
+* Required: SYSTEM_OTA_PREFIX short string for different apps e.g. sht30
+* Required: SYSTEM_OTA_SUFFIX short string for boards e.g. d1_mini
+* Note these replace previous use of SYSTEM_OTA_KEY which was e.g. sht30_d1_mini
 * Optional: SYSTEM_OTA_DEBUG SYSTEM_OTA_MS SYSTEM_OTA_SERVERPORTPATH 
 * 
 * OTA was a pain to implement - had to move server to https, then it wouldn't connect and most of the published 
@@ -12,7 +15,7 @@
 */
 
 #include "_settings.h"
-#ifdef SYSTEM_OTA_KEY
+#if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
 
 #include <Arduino.h>
 #include "system_discovery.h"
@@ -177,7 +180,7 @@ void System_OTA::checkForUpdate() {
 
 const String System_OTA::getOTApath() {
     // Note there is no correlation between the path here, and where its stored on the server which also pays attention to dev/project/node
-    return String(SYSTEM_OTA_SERVERPORTPATH + frugal_iot.messages->topicPrefix + SYSTEM_OTA_KEY);
+    return String(SYSTEM_OTA_SERVERPORTPATH + frugal_iot.messages->topicPrefix + SYSTEM_OTA_PREFIX "_" SYSTEM_OTA_SUFFIX);
 }
 
 void System_OTA::setup_after_mqtt_setup() {
@@ -203,7 +206,7 @@ void System_OTA::infrequently() {
 }
 
 void System_OTA::discover() {
-  frugal_iot.messages->send(leaf2path("key"), String(SYSTEM_OTA_KEY), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  frugal_iot.messages->send(leaf2path("key"), String(SYSTEM_OTA_PREFIX "_" SYSTEM_OTA_SUFFIX ), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 
-#endif // SYSTEM_OTA_KEY
+#endif // SYSTEM_OTA_PREFIX && SYSTEM_OTA_SUFFIX
