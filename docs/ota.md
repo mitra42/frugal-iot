@@ -1,5 +1,7 @@
 # OTA - Over The Air updates
 
+# NOTE THIS IS OBSOLETE AND NEEDS A REWRITE (AS OF WELL BEFORE OCT 2025)
+
 The Frugal-IoT project supports Over The Air updates.
 
 This means, developers can (with one temporary restriction) compile code, upload to the server, and expect nodes 

@@ -77,7 +77,7 @@ class System_Frugal : public Frugal_Group {
     #ifdef SYSTEM_OLED_WANT
       System_OLED* oled;
     #endif
-    #ifdef SYSTEM_OTA_KEY
+    #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
       System_OTA* ota;
     #endif
     System_Power_Mode* powercontroller;

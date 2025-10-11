@@ -6,7 +6,7 @@
 #include "system_i2c.h"
 #include "sensor.h"
 
-class Sensor_ensaht : protected Sensor {
+class Sensor_ensaht : public Sensor {
   public:
     Sensor_ensaht(const char* const id, const char* const name, TwoWire* wire = &I2C_WIRE);
     ~Sensor_ensaht(); //TODO-101
