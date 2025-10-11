@@ -77,7 +77,7 @@ Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name, TwoWi
   ens = new System_I2C(SENSOR_ENSAHT_ENSI2C, &I2C_WIRE); // I2C object at this address
   outputs.push_back(aqi = new OUTuint16(id, "aqi", "AQI", 0, 0, 255, "purple", false)); // TODO-101 set min/max
   outputs.push_back(tvoc = new OUTuint16(id, "tvoc", "TVOC", 0, 0, 99, "green", false)); // TODO-101 set min/max
-  outputs.push_back(eco2 = new OUTuint16(id, "co2", "eCO2", 0, 300, 900, "brown", false)); // TODO-101 set min/max
+  outputs.push_back(eco2 = new OUTuint16(id, "eco2", "eCO2", 0, 300, 900, "brown", false)); // TODO-101 set min/max
   outputs.push_back(aqi500 = new OUTuint16(id, "aqi500", "AQI500", 0, 0, 99, "brown", false)); // Only valid on ENS161  // TODO-101 set min/max
 }
 
@@ -108,8 +108,10 @@ void Sensor_ensaht::setupAHT() {
   uint8_t cmd[3] = { AHTX0_CMD_CALIBRATE, 0x08, 0x00 };
   // TODO-101 Note the Adafruit library spins till it gets a status not 0x80 then reads next byte - not sure why but maybe need to do the same.
   // TODO-101 and KO105 says to read the status register first (0x71) till not busy
-  if (!aht->send(cmd, 3)) {  // See note on Adafruit about Calibratye not working on newer AHT20s
-    Serial.println(F("AHT calibrate failed")); // TODO not sure how to handle the error - maybe fail out completely.
+  if (!aht->send(cmd, 3)) {  // See note on Adafruit about Calibrate not working on newer AHT20s
+    #ifdef SENSOR_ENSAHT_DEBUG
+      Serial.println(F("AHT calibrate failed")); // TODO not sure how to handle the error - maybe fail out completely.
+    #endif
   };
   #ifdef SENSOR_ENSAHT_DEBUG
     uint8_t status = 
@@ -165,15 +167,15 @@ void Sensor_ensaht::setupENS() {
     Serial.print(F("ENS160 partid="));
     switch (part_id) { 
       case ENS160_PARTID: 
-        isENS161 = false; // TODO we probably want to do this anyway
+        isENS161 = false;
         Serial.println(F("ENS160"));
         break;
       case ENS161_PARTID:
-        isENS161 = true; // TODO we probably want to do this anyway
-        Serial.print(F("ENS160"));
+        isENS161 = true;
+          Serial.print(F("ENS161"));
         break;
       default:
-        Serial.println(F("Unknown"));
+          Serial.println(F("ENS type Unknown"));
         break;
     }
   #endif
@@ -201,7 +203,9 @@ void Sensor_ensaht::readAndSetAHT() {
   AHTspinTillReady();
   status = aht->read(data, 6);
   if (!status) {
-    Serial.print(F("AHT fail to read")); // Do this even if not debugging
+    #ifdef SENSOR_ENSAHT_DEBUG
+      Serial.print(F("AHT fail to read")); // Do this even if not debugging
+    #endif
   }
   // From the Adafruit library
   // ((uint32_t)rx[1] << 12) | ((uint32_t)rx[2] << 4) | (rx[3] >> 4); // From KO105 agrees
@@ -248,6 +252,9 @@ void Sensor_ensaht::readAndSetENS() {
   aqi->set(readbuffer[0]);
   tvoc->set(readbuffer[1] | ((uint16_t)readbuffer[2] << 8));
   eco2->set(readbuffer[3] | ((uint16_t)readbuffer[4] << 8));
+  #ifdef SENSOR_ENSAHT_DEBUG
+    Serial.print("XXX eco2="); Serial.println(eco2->value);
+  #endif
   if (isENS161) {
     aqi500->set(((uint16_t)readbuffer[5]) | ((uint16_t)readbuffer[6] << 8));
   }
