@@ -627,9 +627,6 @@ void OUT::sendWired() {
 }
 // TO-ADD-OUTxxx
 void OUTfloat::set(const float newvalue) {
-  #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
-  #endif
   if (newvalue != value) {
     value = newvalue;
     send();
@@ -637,9 +634,6 @@ void OUTfloat::set(const float newvalue) {
   }
 }
 void OUTuint16::set(const uint16_t newvalue) {
-  #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
-  #endif
   if (newvalue != value) {
     value = newvalue;
     send();
@@ -651,9 +645,6 @@ void OUTbool::send() {
   frugal_iot.messages->send(path(), String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 void OUTbool::set(const bool newvalue) {
-  #ifdef CONTROL_HYSTERISIS_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
-  #endif
   if (newvalue != value) {
     value = newvalue;
     send();

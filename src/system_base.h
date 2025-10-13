@@ -9,14 +9,6 @@ extern const char* valueAdvertLineFloat;
 extern const char* valueAdvertLineBool;
 extern const char* wireAdvertLine;
 
-// Not used yet
-/*
-// TO-ADD-INXXX TO-ADD-OUTXXX
-enum IOtype { 
-  BOOL, UINT16, FLOAT, COLOR, TEXT
-};
-*/
-
 class System_Base {
   public:
     System_Base(const char * const id, const String name);
@@ -48,7 +40,6 @@ class IO {
     const char* color; // String passed to UX
     bool const wireable; // True if can wire this to/from others - note this flag is on the control, not on the sensor or actuator
     String wiredPath; // Topic also listening|sending to when wired
-    String* wiredPathXXX; // Topic also listening|sending to when wired
     IO();
     IO(const char * const sensorId, const char * const id, const String name, char const *color, const bool w = true);
     virtual void setup();
