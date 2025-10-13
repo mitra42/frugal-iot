@@ -93,7 +93,7 @@
 // ARDUINO_LOLIN_C3_MINI ARDUINO_LOLIN_S2_MINI ARDUINO_ESP8266_WEMOS_D1MINI ARDUINO_ESP8266_WEMOS_D1MINIPRO ARDUINO_ESP8266_ESP01
 // These boards use a more generic board definition so need defining in platformio.dev
 // LilyGo HiGrow uses esp32dev which defines ARDUINO_ESP32_DEV TODO-140 define something
-// Sonoff uses esp01_1m which defines ARDUINO_ESP8266_ESP01 - define ITEAD_SONOFF if reqd
+// Sonoff uses sonoff_basic which defines ARDUINO_ESP8266_SONOFF_BASIC
 // ttgo-lora32-v21 defines ARDUINO_TTGO_LoRa32_v21new; but also need whether SX1276 or SX1278 so TODO-140 define that
 // And in the arduino core code ESP32 or ESP8266
 //
