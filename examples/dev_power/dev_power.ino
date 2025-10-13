@@ -42,8 +42,8 @@ void setup() {
   //frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
   // If required, add a control - this is just an example
-  // TODO-23 test ControlBlinken 
-  ControlBlinken* cb = new ControlBlinken("controlblinken", "Control Blinken", 5, 1);
+  // TODO-23 test Control_Blinken 
+  Control_Blinken* cb = new Control_Blinken("controlblinken", "Control Blinken", 5, 1);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->path("set/ledbuiltin/on"));
 

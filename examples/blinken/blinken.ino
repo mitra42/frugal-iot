@@ -34,7 +34,7 @@ void setup() {
   
   // Dont change above here - should be before setup the actuators, controls and sensors
 
-  Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
+  Control* cb = new Control_Blinken("blinken", "Blinken", 5, 2);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/id"));
 

@@ -6,7 +6,7 @@ Actuator	KEYWORD1
 Actuator_Digital	KEYWORD1
 Actuator_Ledbuiltin	KEYWORD1
 Control	KEYWORD1
-ControlBlinken	KEYWORD1
+Control_Blinken	KEYWORD1
 ControlHysterisis	KEYWORD1
 Control_Gsheets	KEYWORD1
 Control_Logger	KEYWORD1
