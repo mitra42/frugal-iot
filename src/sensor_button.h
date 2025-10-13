@@ -9,7 +9,7 @@
  #include <vector>
  #include "Button2.h" // https://github.com/LennartHennigs/Button2
  #include "sensor.h"
- #include "system_frugal.h"
+ //#include "system_frugal.h"
 
  #ifndef SENSOR_BUTTON_MS
   #define SENSOR_BUTTON_MS 10
@@ -19,15 +19,14 @@
  class Sensor_Button : public System_Base {
     public:
       Sensor_Button( const char * const id, const char * const name, uint8_t pin, const char * const color);
-      OUTuint16* output; // TODO convert to an enum 
+      //OUTuint16* output; // TODO convert to an enum 
+      OUTuint16* singleClick;
+      OUTuint16* longClick;
+      OUTuint16* doubleClick;
+      OUTuint16* tripleClick;
       void setup() override;
       void loop() override;
       void clickHandlerInner(clickType type);
-      static void clickHandler(Button2& btn);
-      static void longClickHandler(Button2& btn);
-      static void doubleClickHandler(Button2& btn);
-      static void tripleClickHandler(Button2& btn);
-      static Sensor_Button* handler(Button2& button);
     private:
       Button2* button;
       uint8_t pin;

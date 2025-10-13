@@ -54,6 +54,17 @@ class Frugal_Group : public System_Base {
     void captiveLines(AsyncResponseStream* response) override; 
 };
 
+// TODO-159 own file ? 
+class System_Buttons : public Frugal_Group {
+  public:
+    std::vector<OUT*> outputs; // Vector of outputs
+    System_Buttons(const char* const id, const char* const name);
+  protected:
+    void setup();
+    void dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet);
+    void discover();
+};
+
 class System_Frugal : public Frugal_Group {
   public:
     // Configuration strings 
@@ -66,7 +77,7 @@ class System_Frugal : public Frugal_Group {
     Frugal_Group* sensors;
     Frugal_Group* controls;
     Frugal_Group* system;
-    Frugal_Group* buttons;
+    System_Buttons* buttons;
     System_Captive* captive;
     System_Discovery* discovery;
     #ifdef SYSTEM_LORAMESHER_WANT // This is automatically defined on LoRa compatable boardss

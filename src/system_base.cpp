@@ -369,6 +369,10 @@ bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     } else if (leaf.endsWith("/min")) {
       min = v;
       dispatched = true;
+    } else if (leaf.endsWith("/cycle")) {
+      value += v; // TODO-159 need to handle negative value
+      while (value > max) { value -= ((max-min)+1); };
+      while (value < min) { value += ((max-min)+1); };
     }
     if (dispatched) {
       writeConfigToFS(leaf, p);  

@@ -131,6 +131,33 @@ void Frugal_Group::captiveLines(AsyncResponseStream* response)
 void Frugal_Group::dispatchPath(const String &topicPath, const String &payload) 
   { for (System_Base* fb: group) { fb->dispatchPath(topicPath, payload); } }
 
+
+System_Buttons::System_Buttons (const char* const id, const char * const name) 
+: Frugal_Group(id, name), outputs(std::vector<OUT*> { })
+{
+};
+void System_Buttons::setup() {
+  for (auto &output : outputs) {
+      output->setup();
+  }
+  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+}
+
+void System_Buttons::dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet) {
+    if (topicControlId == id) { // matches this control
+      for (auto &output : outputs) {
+        output->dispatchLeaf(topicTwig, payload, isSet); // Will send value if wiredPath changed
+      }
+      System_Base::dispatchTwig(topicControlId, topicTwig, payload, isSet);
+    }
+}
+void System_Buttons::discover() {
+  for (auto &output : outputs) {
+    output->discover();
+  }
+}
+
+
 // Note this constructor is running BEFORE Serial is enabledd
 System_Frugal::System_Frugal(const char* org, const char* project, const char* name, const char* description)
 : Frugal_Group("frugal_iot", name),
@@ -149,7 +176,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   sensors(new Frugal_Group("sensors", "Sensors")),
   controls(new Frugal_Group("controls", "Controls")),
   system(new Frugal_Group("system", "System")),
-  buttons(new Frugal_Group("buttons", "Buttons")),
+  buttons(new System_Buttons("buttons", "Buttons")),
   captive(new System_Captive()),
   discovery(new System_Discovery()), 
   #ifdef SYSTEM_LORA_WANT

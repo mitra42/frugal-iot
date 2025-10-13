@@ -9,6 +9,8 @@
 // organization, project, device name, description
 System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff R2 switch");
 
+enum sonoff_state_t {  SONOFF_OFF, SONOFF_AUTO, SONOFF_ON };
+
 void setup() {
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
@@ -32,11 +34,18 @@ void setup() {
   // system_oled and actuator_ledbuiltin added automatically on boards that have them.
   // Relay on Sonoff is on pin 12
   frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, "purple"));
-  frugal_iot.buttons->add(new Sensor_Button("button", "Button", BUTTON_BUILTIN, "red"));
 
-  ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
-  frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->path("relay/on")); // TODO refactor wireTo so can take a Base
+  ControlHysterisis* ch = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
+  frugal_iot.controls->add(ch);
+  ch->outputs[0]->wireTo(frugal_iot.messages->path("relay/on")); // TODO refactor wireTo so can take a Base
+
+  // https://github.com/mitra42/frugal-iot/issues/159
+
+  Sensor_Button* button = new Sensor_Button("button", "Button", BUILTIN_BUTTON, "red");
+  frugal_iot.buttons->add(button);
+  frugal_iot.buttons->outputs.push_back(new OUTuint16(frugal_iot.buttons->id, "state", "State", SONOFF_OFF, SONOFF_OFF, SONOFF_ON, "black", true));
+  button->longClick->wireTo(frugal_iot.messages->path("frugal-iot/reboot"));
+  button->singleClick->wireTo(frugal_iot.messages->path("buttons/state/cycle"));
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
