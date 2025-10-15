@@ -7,8 +7,8 @@
 // defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "Frugal-IoT.h"
 // Change the parameters here to match your ... 
-// organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "SHT30", "SHT30 Temperature and Humidity Sensor"); 
+// organization, project, device name, description
+System_Frugal frugal_iot("dev", "developers", "Soil", "Soil probe"); 
 
 void setup() {
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
@@ -36,6 +36,7 @@ void setup() {
   // Add sensors, actuators and controls
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
+  // If required, add a control - this is just an example
   ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/on"));

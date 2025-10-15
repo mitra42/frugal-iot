@@ -108,9 +108,15 @@ void Sensor_Analog::dispatchTwig(const String &topicSensorId, const String &topi
     if (topicTwig == "output") {
       if(payload.toFloat() == 0.0) {
         tare(); // sets offset
+        #ifdef SENSOR_ANALOG_DEBUG
+          Serial.print(F("Tare offset=")); Serial.println(offset);
+        #endif
         writeConfigToFS("offset", String(offset));
       } else {
         calibrate(payload.toFloat()); // uses offset, sets scale
+        #ifdef SENSOR_ANALOG_DEBUG
+          Serial.print(F("Calibrate scale=")); Serial.println(scale);
+        #endif
         writeConfigToFS("scale", String(scale));
       }
     // offset and scale should only be seen when reading from disk
