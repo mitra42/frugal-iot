@@ -106,8 +106,9 @@ void System_Power_Deep::setup() {
 // TODO-141 note Arduino warning: 'esp_pm_config_esp32_t' is deprecated: please use esp_pm_config_t instead [-Wdeprecated-declarations]
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 void System_Power_LightWiFi::setup() {
-  esp_pm_config_t pm_config;
-  #ifdef DEPRECATED_OLDER_PLATFORMIO
+  #ifndef DEPRECATED_OLDER_PLATFORMIO
+    esp_pm_config_t pm_config;
+  #else // This version changed somewhere between Platform Espressif32 6.8.0 and 6.11.0 PlatformiO->HOME->Platforms->Updates to update
     // This bit is weird - there are 5 different ESP32 config structures - all identical - note CONFIG_IDF_TARGET_ESP32xx is defined in board files
     #if defined(CONFIG_IDF_TARGET_ESP32C3) // Defined in board files on PlatformIO untested on Arduino
       esp_pm_config_esp32c3_t pm_config; // Seems identical structure to the default ESP32 one ! 
