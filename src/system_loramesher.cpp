@@ -260,8 +260,7 @@ void System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
   //memcpy(msg, stringymessage, msglen);
   //delete(stringymessage);
   frugal_iot.loramesher->sentPacketCounter++;
-  // TODO-152C remove the const_cast once https://github.com/LoRaMesher/LoRaMesher/pull/83 is merged
-  frugal_iot.loramesher->radio.sendPacket(destn, const_cast<uint8_t*>(stringymessage), msglen); // Will be broadcast if no node
+  frugal_iot.loramesher->radio.sendPacket(destn, stringymessage, msglen); // Will be broadcast if no node
   delete(stringymessage); // msg is copied in createPacketAndSend
 }
 

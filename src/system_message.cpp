@@ -108,13 +108,9 @@ void System_Messages::send(const String topicPath, const String payload, bool re
       return; // Don't push
     }
   }
-  //heap_print(F("messages::send"));
   outgoing.emplace_back(topicPath, payload, retain, qos);  // Implicit new Message
-  //heap_print(F("messages::send after queue"));
-  //TODO-152B dedupe before adding
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
   queueLoopback(topicPath, payload);
-  //heap_print(F("messages::/send"));
 }
 
 // Upstream queued => MQTT or LoRaMesher
