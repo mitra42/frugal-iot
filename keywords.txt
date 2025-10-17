@@ -106,6 +106,7 @@ dateTime	KEYWORD2
 debug	KEYWORD2
 discover	KEYWORD2
 dispatch	KEYWORD2
+dispatchIncomingQueued	KEYWORD2
 dispatchLeaf	KEYWORD2
 dispatchPath	KEYWORD2
 dispatchTwig	KEYWORD2
@@ -139,6 +140,9 @@ prepareForSleep	KEYWORD2
 printDirectory	KEYWORD2
 processReceivedPacket	KEYWORD2
 publish	KEYWORD2
+queueFromCaptive	KEYWORD2
+queueIncoming	KEYWORD2
+queueLoopback	KEYWORD2
 queuedMessage	KEYWORD2
 queuedSubscribe	KEYWORD2
 quickAdvertise	KEYWORD2
