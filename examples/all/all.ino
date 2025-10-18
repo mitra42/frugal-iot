@@ -1,14 +1,12 @@
 /* 
- *  Frugal IoT example - SHT30 temperature and humidity sensor
+ *  Frugal IoT example - All modules - this is just for compilation testing
  * 
- * Optional: SENSOR_SHT_ADDRESS - defaults to 0x44, (note the D1 shields default to 0x45)
  */
 
-// defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "Frugal-IoT.h"
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "sht30", "SHT30 Temperature and Humidity Sensor"); 
+System_Frugal frugal_iot("dev", "developers", "all", "All sensors - just for testing"); 
 
 void setup() {
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
@@ -34,8 +32,49 @@ void setup() {
   // Light sensor BH1750 TODO see notes in sensor_bh1750.cpp,h about I2C pin conflicts
   frugal_iot.sensors->add(new Sensor_BH1750("lux", "Lux", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true));
   // Temperature and Humidity sensor (SHT30)
-  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
+  Sensor_SHT* sht;
+  frugal_iot.sensors->add(sht = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
+  // Controls that can be wire here, or in the UX
+  Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
+  frugal_iot.controls->add(cb);
+  cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/id"));
+
+
+  // Add time if needed, which is currently only for data logging.
+  frugal_iot.system->add(frugal_iot.time = new System_Time());
+  #ifdef SYSTEM_SD_WANT
+    System_SD* fs_SD = new System_SD(SYSTEM_SD_PIN);
+    frugal_iot.system->add(fs_SD);
+  #else // If no SD then use LittleFS
+    // LittleFS is always added - for configuration
+    /*
+    System_LittleFS* fs_LittleFS = new System_LittleFS();
+    frugal_iot.system->add(fs_LittleFS);
+    */
+  #endif
+
+  // Must be after sensor_sht for default wiring below
+  Control_Logger* clfs = new Control_LoggerFS(
+    "Logger",
+    #ifdef SYSTEM_SD_WANT
+      fs_SD, // Use SD card for logging
+    #else
+      frugal_iot.fs_LittleFS, // TODO-110 Using LittleFS for testing for now
+    #endif
+    "/",
+    0x02, // Single log.csv with topicPath, time, value
+    std::vector<IN*> {
+    
+      //INtext(const char * const sensorId, const char * const id, const char* const name, String* value, const char* const color, const bool wireable)
+      new INtext("Logger", "log1", "log1", String(), "black", true),
+      new INtext("Logger", "log2", "log2", String(), "black", true),
+      new INtext("Logger", "log3", "log3", String(), "black", true)
+      });
+  frugal_iot.controls->add(clfs);
+  // Wire the logger to the temperature sensor, it could be left blank and wired in the UX to a remote sensor
+  clfs->inputs[0]->wireTo(sht->temperature->path()); // Wired to the temperatur sensor  // TODO-141 probably breaks as MQTT wont have setup yet
+
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
   Serial.println(F("FrugalIoT Starting Loop"));
