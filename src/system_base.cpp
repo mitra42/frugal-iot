@@ -433,7 +433,7 @@ void INcolor::debug(const char* const where) {
 }
 void INtext::debug(const char* const where) {
   IO::debug(where);
-  Serial.print(F(" value=")); Serial.println(*value); 
+  Serial.print(F(" value=")); Serial.println(value); 
 }
 void INbool::debug(const char* const where) {
   IO::debug(where);

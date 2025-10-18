@@ -194,7 +194,7 @@ class INtext : public IN {
     bool convertAndSet(const String &payload) override;
     bool convertAndSet(const char* payload); // Used when setting in constructor etc
     void debug(const char* const where);
-    void discover() override;
+    //void discover() override;
 };
 
 // TO-ADD-OUTxxx
