@@ -27,24 +27,99 @@ void setup() {
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
-  
+
+  #ifdef SYSTEM_LORA_WANT
+    //esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
+    frugal_iot.loramesher = new System_LoraMesher(); // Held in a variable as future LoRaMesher will access it directly e.g. from MQTT
+    frugal_iot.system->add(frugal_iot.loramesher);
+  #endif
+
   // Add sensors, actuators and controls
+
+  // Battery sensor on pin 33 - but note LilyGo HiGrow battery didnt arrive so not tested TODO test
+  frugal_iot.sensors->add(new Sensor_Battery(33));
+
   // Light sensor BH1750 TODO see notes in sensor_bh1750.cpp,h about I2C pin conflicts
   frugal_iot.sensors->add(new Sensor_BH1750("lux", "Lux", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true));
+    
+  // Button on pin 35 - not sure if this is tested yet
+  frugal_iot.sensors->add(new Sensor_Button("button", "Button", 35, "purple"));
+
+  #ifndef SENSOR_DHT_PIN
+    #ifdef GPIO_NUM_16
+      #define SENSOR_DHT_PIN GPIO_NUM_16 // Lilygo HiGrow
+    #else 
+      #define SENSOR_DHT_PIN 16 // For esp8266 its often D0 - could really be on any digital pin
+    #endif
+  #endif
+  frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, true));
+  
+  frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS160 AHT21"));
+
+  // Add a new loadcell sensor max=2000, color="pink", retain=true, DOUTpin=0, SCKpin=1, times=10, offset=0, scale=2000
+  // Define default pins, can override in platformio.ini
+  #ifndef SENSOR_LOADCELL_DOUTPIN
+    #define SENSOR_LOADCELL_DOUTPIN 4
+  #endif
+  #ifndef SENSOR_LOADCELL_SCKPIN
+    #define SENSOR_LOADCELL_SCKPIN 5
+  #endif
+  // How many measurements to take for a reading - it will take the median of these
+  #ifndef SENSOR_LOADCELL_TIMES
+    #define SENSOR_LOADCELL_TIMES 9
+  #endif
+  // Can put default calibration here, or override in platformio.ini - will be overridden later by calibration
+  #ifndef SENSOR_LOADCELL_OFFSET
+    #define SENSOR_LOADCELL_OFFSET 0
+  #endif
+  #ifndef SENSOR_LOADCELL_SCALE
+    #define SENSOR_LOADCELL_SCALE 2000
+  #endif
+  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 100000, "pink", true,
+    SENSOR_LOADCELL_DOUTPIN, SENSOR_LOADCELL_SCKPIN, SENSOR_LOADCELL_TIMES, SENSOR_LOADCELL_OFFSET, SENSOR_LOADCELL_SCALE)); // DOUT, SCK, times, offset, scale
+
+  // MS5803 is set via jumper to 76 or 77
+  frugal_iot.sensors->add(new Sensor_ms5803("ms5803", "MS5803", 0x77));
+
   // Temperature and Humidity sensor (SHT30)
   Sensor_SHT* sht;
   frugal_iot.sensors->add(sht = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
+  // Soil sensor 0%=4095 100%=0 pin=32 smooth=0 color=brown
+  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil", 32, 4095, -100.0/4095, "brown", true));
+  
+  // The salt sensor (for LilyGo HiGrow) does not seem to work - got incorrect readings. TODO debug
+  // Salt sensor 0%=0 100%=5000 pin=34 color=green
+  frugal_iot.sensors->add(new Sensor_Analog("salt", "Salt", 34, 1, 0, 100, 0, 0.02, "green", true));
+  
+
+  // ========= Actuators  ==============
+  // Note Actuator_LedBuiltin added automatically if a pin is defined
+
+  // TODO-115 there is also a relay pin 19 on LilyGo - haven't tested it yet 
+  #ifndef ACTUATOR_DIGITAL_PIN
+    #ifdef RELAY_BUILTIN
+      #define ACTUATOR_DIGITAL_PIN RELAY_BUILTIN
+    #else
+      #define ACTUATOR_DIGITAL_PIN 19
+    #endif
+  #endif
+  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", ACTUATOR_DIGITAL_PIN, "purple"));
+
   // Controls that can be wire here, or in the UX
   Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/id"));
 
+  ControlHysterisis* ch = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
+  frugal_iot.controls->add(ch);
+  ch->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/on"));
 
+  //=================================LOGGER======
   // Add time if needed, which is currently only for data logging.
   frugal_iot.system->add(frugal_iot.time = new System_Time());
   #ifdef SYSTEM_SD_WANT
-    System_SD* fs_SD = new System_SD(SYSTEM_SD_PIN);
+    System_SD* fs_SD = new System_SD(SYSTEM_SD_PIN); 
     frugal_iot.system->add(fs_SD);
   #else // If no SD then use LittleFS
     // LittleFS is always added - for configuration
@@ -74,6 +149,18 @@ void setup() {
   frugal_iot.controls->add(clfs);
   // Wire the logger to the temperature sensor, it could be left blank and wired in the UX to a remote sensor
   clfs->inputs[0]->wireTo(sht->temperature->path()); // Wired to the temperatur sensor  // TODO-141 probably breaks as MQTT wont have setup yet
+  // ==== GSHEETS 
+
+  #ifndef CONTROL_GSHEETS_URL
+    #define CONTROL_GSHEETS_URL "12345" // just for compilation testing
+  #endif
+  Control_Gsheets* cg = new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);
+  frugal_iot.controls->add(cg);
+  cg->track("temperature", frugal_iot.messages->path("sht/temperature")); // TODO-141 probably wont work as MQTT not setup
+  // TODO backport this level of simplicity to Logger
+
+
+ 
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
