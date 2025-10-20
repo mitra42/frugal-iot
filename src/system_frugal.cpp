@@ -90,6 +90,8 @@ void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload,
 void System_Frugal::discover() {
   messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  // Commented out because already sending ota_key which contains it.
+  //messages->send(leaf2path("board"), SYSTEM_OTA_SUFFIX, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   Frugal_Group::discover();
 }
 

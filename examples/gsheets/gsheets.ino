@@ -1,9 +1,9 @@
 /* 
- *  Frugal IoT example - Data Logger
+ *  Frugal IoT example - Google Sheets Logger
  *
  * This is a Work in Progress - it works but may not be useful yet.
  * 
- * See https//github.com/frugal-iot/issues/110 for more information.
+ * See https//github.com/frugal-iot/issues/136 for more information.
  * 
  */
 
