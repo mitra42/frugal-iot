@@ -75,10 +75,10 @@ Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name, TwoWi
   outputs.push_back(humidity = new OUTfloat(id, "humidity", "Humidity", 0, 0, 0, 100, "blue", false));
   // ENS160
   ens = new System_I2C(SENSOR_ENSAHT_ENSI2C, &I2C_WIRE); // I2C object at this address
-  outputs.push_back(aqi = new OUTuint16(id, "aqi", "AQI", 0, 0, 255, "purple", false)); // TODO-101 set min/max
-  outputs.push_back(tvoc = new OUTuint16(id, "tvoc", "TVOC", 0, 0, 99, "green", false)); // TODO-101 set min/max
+  outputs.push_back(aqi = new OUTuint16(id, "aqi", "AQI", 0, 0, 5, "purple", false)); // TODO-101 set min/max
+  outputs.push_back(tvoc = new OUTuint16(id, "tvoc", "TVOC", 0, 0, 200, "green", false)); // TODO-101 set min/max
   outputs.push_back(eco2 = new OUTuint16(id, "eco2", "eCO2", 0, 300, 900, "brown", false)); // TODO-101 set min/max
-  outputs.push_back(aqi500 = new OUTuint16(id, "aqi500", "AQI500", 0, 0, 99, "brown", false)); // Only valid on ENS161  // TODO-101 set min/max
+  outputs.push_back(aqi500 = new OUTuint16(id, "aqi500", "AQI500", 0, 0, 500, "brown", false)); // Only valid on ENS161  // TODO-101 set min/max
 }
 
 //Sensor_ensaht::~Sensor_ensaht; //TODO-101
@@ -252,9 +252,6 @@ void Sensor_ensaht::readAndSetENS() {
   aqi->set(readbuffer[0]);
   tvoc->set(readbuffer[1] | ((uint16_t)readbuffer[2] << 8));
   eco2->set(readbuffer[3] | ((uint16_t)readbuffer[4] << 8));
-  #ifdef SENSOR_ENSAHT_DEBUG
-    Serial.print("XXX eco2="); Serial.println(eco2->value);
-  #endif
   if (isENS161) {
     aqi500->set(((uint16_t)readbuffer[5]) | ((uint16_t)readbuffer[6] << 8));
   }
