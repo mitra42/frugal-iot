@@ -18,16 +18,17 @@
 // Note this is a subclass of System_Base, not of Sensor 
  class Sensor_Button : public System_Base {
     public:
-      Sensor_Button( const char * const id, const char * const name, uint8_t pin, const char * const color);
+      Sensor_Button( const char * const id, const char * const name, const uint8_t pin, const char * const color);
+    protected: // Its ok to "unprotect" these if useful
       OUTuint16* output; // TODO convert to an enum 
       void setup() override;
       void loop() override;
-      void clickHandlerInner(clickType type);
-      static void clickHandler(Button2& btn);
-      static void longClickHandler(Button2& btn);
-      static void doubleClickHandler(Button2& btn);
-      static void tripleClickHandler(Button2& btn);
-      static Sensor_Button* handler(Button2& button);
+      void clickHandlerInner(const clickType type);
+      static void clickHandler(const Button2& btn);
+      static void longClickHandler(const Button2& btn);
+      static void doubleClickHandler(const Button2& btn);
+      static void tripleClickHandler(const Button2& btn);
+      static Sensor_Button* handler(const Button2& button);
     private:
       Button2* button;
       uint8_t pin;
