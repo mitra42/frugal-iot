@@ -43,7 +43,7 @@ void Control::setup() {
   }
 
 void Control::act() {
-    // Default is to do nothing - though that will rarely be correct
+    // Default is to do nothing - though that will rarely be correct - expect this to be overridden
 }
 void Control::dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet) {
     bool changed = false;

@@ -1,7 +1,7 @@
 /* Frugal IoT - OLED Display hanler
  * This is a port of code from demo for TTGO Lora board - expand as needed
  * 
- * See https://github.com/mitra42/frugal-iot/issues/149 
+ * See https://github.com/mitra42/frugal-iot/issues/149
  */
 #include "_settings.h"
 #ifdef SYSTEM_OLED_WANT
