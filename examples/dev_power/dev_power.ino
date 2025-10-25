@@ -31,7 +31,7 @@ void setup() {
                         //  - restest - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
 
   //   frugal_iot.configure_power(Power_LightWiFi, 20000, 10000); 
-  frugal_iot.configure_power(Power_Loop, 30000, 30000); 
+  frugal_iot.configure_power(Power_Deep, 70000, 60000); 
 
   // system_oled and actuator_ledbuiltin added automatically on boards that have them.
 
@@ -43,7 +43,7 @@ void setup() {
   
   // If required, add a control - this is just an example
   // TODO-23 test ControlBlinken 
-  ControlBlinken* cb = new ControlBlinken("controlblinken", "Control Blinken", 5, 1);
+  ControlBlinken* cb = new ControlBlinken("controlblinken", "Control Blinken", 3, 3);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->path("set/ledbuiltin/on"));
 
