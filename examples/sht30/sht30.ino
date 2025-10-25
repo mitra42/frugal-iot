@@ -6,6 +6,11 @@
 
 // defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "Frugal-IoT.h"
+
+#ifdef SYSTEM_OLED_WANT
+  #include "control_oled_sht.h" // Custom display handler
+#endif
+
 // Change the parameters here to match your ... 
 // organization, project, device name, description
 System_Frugal frugal_iot("dev", "developers", "SHT30", "SHT30 Temperature and Humidity Sensor"); 
@@ -34,9 +39,16 @@ void setup() {
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
   // If required, add a control - this is just an example
-  ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
-  frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/on"));
+  //ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
+  //frugal_iot.controls->add(cb);
+  //cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/on"));
+
+  #ifdef SYSTEM_OLED_WANT
+    Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED");
+    frugal_iot.controls->add(cos);
+    cos->temperature->wireTo(frugal_iot.messages->path("sht/temperature"));
+    cos->humidity->wireTo(frugal_iot.messages->path("sht/humidity"));  
+  #endif
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

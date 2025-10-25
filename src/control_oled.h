@@ -13,12 +13,5 @@ class Control_Oled : public Control {
     //void setup() override; 
   };  
 
-class Control_Oled_SHT : public Control_Oled {
-  public:
-    INfloat* temperature;
-    INfloat* humidity;
-    Control_Oled_SHT(const char* name);
-    void act() override;
-};
 
 #endif // CONTROL_OLED_H

@@ -103,9 +103,9 @@ class INfloat : public IN {
     INfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
+    uint8_t width;
   protected:
     float value;
-    uint8_t width;
     float min;
     float max;
     bool boolValue() override;
