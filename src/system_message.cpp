@@ -96,8 +96,8 @@ void System_Messages::subscribe(const String topicPath) {
   outgoing.emplace_back(topicPath); // // Implicit new Message (subscription)
 }
 
-// Upstream: module => queue with reflection 
-void System_Messages::send(const String topicPath, const String payload, bool retain, uint8_t qos) {
+// Upstream: module => queue outgoing (no reflection)
+void System_Messages::sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos) {
   // Instead of pushing a new message, update the payload
   for(System_Message sm: outgoing) {
     if (sm.topicPath == topicPath) {
@@ -109,6 +109,12 @@ void System_Messages::send(const String topicPath, const String payload, bool re
     }
   }
   outgoing.emplace_back(topicPath, payload, retain, qos);  // Implicit new Message
+}
+
+
+// Upstream: module => queue with reflection 
+void System_Messages::send(const String topicPath, const String payload, bool retain, uint8_t qos) {
+  sendRemote(topicPath, payload, retain, qos);
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
   queueLoopback(topicPath, payload);
 }
