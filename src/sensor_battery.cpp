@@ -41,6 +41,6 @@
 #endif //ESP8266
 
 Sensor_Battery::Sensor_Battery(const uint8_t pin_init) 
-: Sensor_Analog("battery", "Battery", pin_init, 0, 0, 4.5, 0, SENSOR_BATTERY_SCALE, "green", true)
+: Sensor_Analog("battery", "Battery", pin_init, 0, 0, 4.5, 0, SENSOR_BATTERY_SCALE, "green", true) //TODO-1
   { }
 
