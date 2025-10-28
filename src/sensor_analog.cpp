@@ -74,17 +74,17 @@ bool Sensor_Analog::validate(int v) {
   return true;
 }
 
-float Sensor_Analog::convert(int v) {
+float Sensor_Analog::convert(const int v) {
   return (v - offset) * scale;
 }
 void Sensor_Analog::readValidateConvertSet() {
   // Note almost identical code in Sensor_Uint16 Sensor_Float & Sensor_Analog
-  int v = readInt();           // Read raw value from sensor
+  const int v = readInt();           // Read raw value from sensor
   #ifdef SENSOR_ANALOG_DEBUG
     Serial.print(id); Serial.print(F(" raw:")); Serial.print(v);
   #endif
   if (validate(v)) {        // Check if its valid
-    float vv = convert(v);  // Convert - e.g. scale and offset
+    const float vv = convert(v);  // Convert - e.g. scale and offset
     set(vv);                  // set - and send message
     #ifdef SENSOR_ANALOG_DEBUG
       Serial.print(F(" converted ")); Serial.print(vv);
@@ -98,11 +98,11 @@ void Sensor_Analog::tare() {
   // Read and use the reading as the offset for a 0 value
   offset = readInt();
 }
-void Sensor_Analog::calibrate(float val) {
+void Sensor_Analog::calibrate(const float val) {
   // Note this could calibrate off an invalid raw value, may want to check if see this behavior
   scale = val / (readInt() - offset);
 }
-void Sensor_Analog::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+void Sensor_Analog::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, const bool isSet) {
   if (topicSensorId == id) {
     // Set by UX - "Tare" is weight=0  Calbrate is weight=XX
     if (topicTwig == "output") {
