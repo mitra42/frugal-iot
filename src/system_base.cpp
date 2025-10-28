@@ -220,6 +220,16 @@ String OUTbool::StringValue() {
   // Since INbool::convert only does toInt it needs to be "1' and "0"
   //return String(value ? "true" : "false");
 }
+/*float OUTtext::floatValue() {
+  return value;
+}
+bool OUTtext::boolValue() {
+  return value;
+}
+*/
+String OUTtext::StringValue() {
+  return value;
+}
 
 void IO::setup() {
     // Note topicTwig subscribed to by IN, not by OUT
@@ -379,6 +389,7 @@ bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   // Catch generic case like color
   return OUT::dispatchLeaf(leaf, p, isSet);
 }
+// OUTtext::dispatchLeaf -> OUT::dispatchLeaf
 /*
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -449,6 +460,10 @@ void OUTbool::debug(const char* const where) {
     Serial.print(F(" value=")); Serial.println(value); 
 }
 void OUTuint16::debug(const char* const where) {
+  IO::debug(where);
+  Serial.print(F(" value=")); Serial.println(value); 
+}
+void OUTtext::debug(const char* const where) {
   IO::debug(where);
   Serial.print(F(" value=")); Serial.println(value); 
 }
@@ -597,6 +612,9 @@ OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const Stri
 OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const String name,  uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v), min(mn), max(mx) {
 }
+OUTtext::OUTtext(const char * const sensorId, const char* const id, const String name,  const String v, char const * const color, const bool w)
+  :   OUT(sensorId, id, name, color, w), value(v) {
+}
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
 // OUT::dispatchPath() - wont be called from Control::dispatchPath.
@@ -637,9 +655,13 @@ void OUTfloat::set(const float newvalue) {
   }
 }
 void OUTuint16::set(const uint16_t newvalue) {
-  #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
-  #endif
+  if (newvalue != value) {
+    value = newvalue;
+    send();
+    sendWired();
+  }
+}
+void OUTtext::set(const String newvalue) {
   if (newvalue != value) {
     value = newvalue;
     send();
@@ -672,6 +694,7 @@ void OUTuint16::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   OUT::discover(); // Sends value
 }
+// OUTtext::discover -> OUT::discover
 
 // These are mostly to stop the compiler complaining about missing vtables
 #pragma GCC diagnostic push
