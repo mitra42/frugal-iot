@@ -265,9 +265,12 @@ void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
   // Encapsulate setting up and starting serial
   #ifdef ANY_DEBUG
     Serial.begin(baud);
+    /*
     while (!Serial) { 
       ; // wait for serial port to connect. Needed for Arduino Leonardo only
     }
+    */
+    //TODO-23 remove this delay when coming back from deep sleep.
     delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
     Serial.println(F("FrugalIoT Starting"));
   #endif // ANY_DEBUG  
