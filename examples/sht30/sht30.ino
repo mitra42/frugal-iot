@@ -38,6 +38,8 @@ void setup() {
   // Add sensors, actuators and controls
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
+  //frugal_iot.sensors->add(new Sensor_Battery());
+
   // If required, add a control - this is just an example
   //ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
   //frugal_iot.controls->add(cb);
@@ -48,6 +50,7 @@ void setup() {
     frugal_iot.controls->add(cos);
     cos->temperature->wireTo(frugal_iot.messages->path("sht/temperature"));
     cos->humidity->wireTo(frugal_iot.messages->path("sht/humidity"));  
+    cos->battery->wireTo(frugal_iot.messages->path("battery/battery"));
   #endif
 
   // Dont change below here - should be after setup the actuators, controls and sensors

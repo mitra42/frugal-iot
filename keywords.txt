@@ -11,6 +11,7 @@ ControlHysterisis	KEYWORD1
 Control_Gsheets	KEYWORD1
 Control_Logger	KEYWORD1
 Control_LoggerFS	KEYWORD1
+Control_Oled	KEYWORD1
 Frugal_Group	KEYWORD1
 IN	KEYWORD1
 INbool	KEYWORD1
@@ -92,6 +93,7 @@ checkForUpdate	KEYWORD2
 checkRole	KEYWORD2
 checked	KEYWORD2
 clickHandlerInner	KEYWORD2
+color565	KEYWORD2
 configure_mqtt	KEYWORD2
 configure_power	KEYWORD2
 connect	KEYWORD2
@@ -166,6 +168,7 @@ send1read1	KEYWORD2
 sendAndRead	KEYWORD2
 sendGoogle	KEYWORD2
 sendOutgoingQueued	KEYWORD2
+sendRemote	KEYWORD2
 sendWired	KEYWORD2
 set	KEYWORD2
 setLanguage	KEYWORD2
@@ -190,6 +193,9 @@ subscribe	KEYWORD2
 switchSSID	KEYWORD2
 sync	KEYWORD2
 tare	KEYWORD2
+timer_expired	KEYWORD2
+timer_next	KEYWORD2
+timer_set	KEYWORD2
 track	KEYWORD2
 validate	KEYWORD2
 wireTo	KEYWORD2

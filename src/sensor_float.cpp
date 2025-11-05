@@ -11,6 +11,7 @@
 #include "sensor.h"
 #include "sensor_float.h"
 #include "Frugal-IoT.h"
+#include "cmath" // for std::isnan
 
 Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain) 
 : Sensor(id, name, retain),
@@ -25,11 +26,12 @@ float Sensor_Float::readFloat() {  shouldBeDefined(); return -1; }
 
 // Check if the raw value from the sensor is valid - defaults to true, but overridden for each sensor
 bool Sensor_Float::validate(float v) {
+
   return true;
 }
 // Convert sensor to actual value - this is typically overriden, for example to apply a scale. 
 float Sensor_Float::convert(float v) {
-  return v;
+  return !std::isnan(v);
 }
 void Sensor_Float::set(const float newvalue) {
   output->set(newvalue);
