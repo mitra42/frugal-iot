@@ -51,6 +51,7 @@ Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *w
     Serial.println();
   #endif // SENSOR_SHT_DEBUG
   sht->requestData(); // Initial request queued up  (loop is to read data and queue up next read)
+  // TODO-23 this looks wrong in the case of a longer loop, we'll be returning a wrong answer from a previous read. 
 }
 
 void Sensor_SHT::readValidateConvertSet() {
