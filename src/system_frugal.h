@@ -20,6 +20,7 @@
 // Frugal-iot headers
 #include "_settings.h" 
 #include "actuator_ledbuiltin.h"
+#include "sensor_health.h"
 #include "system_base.h"
 #include "system_captive.h"
 #include "system_discovery.h"

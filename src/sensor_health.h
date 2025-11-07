@@ -12,14 +12,14 @@
 
 #include "sensor.h"
 
-class Sensor_health : public Sensor {
+class Sensor_Health : public Sensor {
   public:
-    Sensor_health(const char* const id, const char* const name);
+    Sensor_Health(const char* const id, const char* const name);
   protected:
     OUTuint16* wifistrength;
     OUTtext* wifissid;
     // TODO-116 more outputs to come here: uptime 
-    void setup() override; 
+    //void setup() override; 
     void readValidateConvertSet() override; 
   private:
  };

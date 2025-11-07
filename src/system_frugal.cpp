@@ -172,6 +172,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #ifdef LED_BUILTIN // defined by board or _settings.h
     actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN)); // Default LED builtin actuator at default brightness and white
   #endif
+  sensors->add(new Sensor_Health("health", "System"));
   add(actuators);
   add(sensors);
   add(controls);
