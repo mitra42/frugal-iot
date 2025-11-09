@@ -81,6 +81,7 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       response->addHeader("Location", "http://" + ip + "/");
       request->send(response);
     } else {
+      // BULD THE CAPTIVE PORTAL HERE
       //Serial.println(F("XXX Matching host and ip - i.e. acessed by IP address, not name"));      
       AsyncResponseStream *response = request->beginResponseStream("text/html");
       response->print(F("<!DOCTYPE html><html><head><title>"));
@@ -106,18 +107,20 @@ class CaptiveRequestHandler : public AsyncWebHandler {
             ".w,.i{background:#aaa;min-height:3em}"
             "</style>"
       ));
+      response->print(F("<script>function s(form){fetch(form.action,{method:'POST',body:new FormData(form),credentials:'same-origin'}).catch(e=>console.error(e));};</script>"));
       if (message) {
         response->print(message);
         message = "";
       }
       response->print(F("<form action=\"/restart\" method=post><input type=submit value=\""));
       response->print(T->RESTART);
-      response->print(F("\"></form><hr>"
-      ));
+      response->print(F("\"></form><hr>"));
+
       //Dropdown of SSIDs (see WiFiSettings.cpp ~L310)
-      response->print(F("<h1>"));
-      response->print(T->ConnectToWiFi);
-      response->print(F("</h1><form method=post action=\"/\"><label>"));
+      //response->print(F("<h1>"));
+      //response->print(T->ConnectToWiFi);
+      //response->print(F("</h1>"));
+      response->print(F("<form method=post action=\"/\"><label>"));
       response->print(T->WiFiNetwork);
       response->print(F("<select name=ssid onchange=\"document.getElementsByName('password')[0].value=''\">"
         "<option hidden>"));
@@ -139,17 +142,26 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       response->print(F("</select></label>"));
       response->print(F("<label>"));
       response->print(T->Password);
-      response->print(F(":<input name=password value=''></label><hr>")); // TODO-153 what if have password already
+      response->print(F(":<input name=password value=''></label>")); // TODO-153 what if have password already - maybe prefill with *** if known and check for this
+      response->print(F(
+        "<input type=submit value=\""));
+      response->print(T->SETWIFI);
+      response->print(F("\" style='font-size:100%'></form><hr>"));
 
+      // Start another form for collected captive lines
+      response->print(F("<form method=post action=\"/\">"));
+
+      // Each captive line should be of form from addString etc below 
+      // <p><label>...:<br><input...></label></p>  
       frugal_iot.captiveLines(response); // Calls back to captive.string etc 
-
+      /*
       response->print(F(
         "<p style='position:sticky;bottom:0;text-align:right'>"
         "<input type=submit value=\""));
       response->print(T->SAVE);
-      response->print(F("\" style='font-size:150%'></form>" //TODO-TRANSLATE
-      ));
-      response->print("</body></html>");
+      response->print(F("\" style='font-size:150%'>"));
+      */
+      response->print(F("</form></body></html>"));
       request->send(response);
     }
   }
@@ -162,7 +174,7 @@ System_Captive::System_Captive()
 void System_Captive::setup() {
   Serial.println(F("Configuring access point..."));
   setupLanguages();
-  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig (Must come AFTER setting language strings)
+  readConfigFromFS(); // Reads config (language_code) and passes to our dispatchTwig (Must come AFTER setting language strings)
 
   // Unsure what these items choose - copied from example -SOC_WIFI_SUPPORTED seems to be defined for ESP32
   #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI || defined(ESP8266)
@@ -202,6 +214,10 @@ void System_Captive::setup() {
           } else if (p->name() == "password") {
             // Ignore - will be read by "ssid" above
           } else {
+            // Special case language as need before resend captive portal in new language, but still queue as cannot write to disk inside request handler.
+            if (p->name() == "captive/language_code") {
+              frugal_iot.captive->setLanguage(p->value());
+            }
             frugal_iot.messages->queueFromCaptive("set/" + p->name(), p->value());
           }
         }
@@ -216,8 +232,11 @@ void System_Captive::setup() {
     String ip = WiFi.softAPIP().toString();
     AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", ip);
     response->addHeader("Location", "http://" + ip + "/");
+    Serial.println("XXX redirecting to GET");
+    // TODO rebuilding new screen before process queued incoming 
+
     request->send(response);
-    message = F("<h4>Settings Updated<h4>");
+    message = F("<h4>Settings Updated<h4>"); //TODO-TRANSLATE
   });
 
   server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
@@ -243,16 +262,17 @@ void System_Captive::setup() {
 
 // String input
 void System_Captive::addString(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, uint8_t min_length, uint8_t max_length) {
-  response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlength=" + min_length + " maxlength=" + max_length + "></label></p>");  
+  response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlength=" + min_length + " maxlength=" + max_length + " onchange=\"s(this.form)\"></label></p>");  
+  // Chat GPT suggested:   + "onkeydown=\"if(event.key==='Enter'||event.keyCode==13){s(this.form);event.preventDefault();return false;}\">"  
 }
 // Untested number and bool input
 void System_Captive::addNumber(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, long min, long max) {
-  response->print(String(F("<p><label>")) + label + ":<br><input type=number step=1 name='" + id + "/" + topicTwig + "' value='" + init + "' min=" + min + " max=" + max + "></label></p>");  
+  response->print(String(F("<p><label>")) + label + ":<br><input type=number step=1 name='" + id + "/" + topicTwig + "' value='" + init + "' min=" + min + " max=" + max + " onchange=\"s(this.form)\"></label></p>");  
 }
 void System_Captive::addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, bool init, String label) {
   // weirdness here is because absence of check, means absence of input being sent, so send 0 with optional 1 following
   response->print(String(F("<input type=hidden name='" ))+ id + "/" + topicTwig + "' value='0'>");  
-  response->print(String(F("<p><label>")) + label + ": <input type=checkbox name='" + id + "/" + topicTwig + "' value='1'" + (init ? " checked" : "") + "></label></p>");  
+  response->print(String(F("<p><label>")) + label + ": <input type=checkbox name='" + id + "/" + topicTwig + "' value='1'" + (init ? " checked" : "") + " onchange=\"s(this.form)\"></label></p>");  
 }
 /* Example code to add handler
 
@@ -281,6 +301,7 @@ bool System_Captive::setLanguage(const String& payload) {
 void System_Captive::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
     if (topicTwig == "language_code") {
+      Serial.print("XXX Setting language to"); Serial.println(payload);
       if (setLanguage(payload)) { // Code e.g. "EN"
         writeConfigToFS(topicTwig, payload);
       }
@@ -293,7 +314,8 @@ void System_Captive::dispatchTwig(const String &topicSensorId, const String &top
 void System_Captive::captiveLines(AsyncResponseStream* response) {
   response->print(String(F("<p><label>"))
     + T->Language // Language in the current language
-    + ":<br><select name=captive/language_code>");
+    // Note intentionally want a submit, as want to redraw in new language
+    + ":<br><select name=captive/language_code onchange=\"this.form.submit()\">"); 
   for (auto& t : TT) {
     response->print(String(F("<option value='")) + t->code + "'" 
     + ((t == T) ? "' selected" : "") + ">" 

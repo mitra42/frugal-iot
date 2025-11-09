@@ -41,7 +41,7 @@ void Control::setup() {
   for (auto &output : outputs) {
       output->setup();
   }
-  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+  readConfigFromFS(); // Reads config (inputs or outputs) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
 }
 
 void Control::act() {

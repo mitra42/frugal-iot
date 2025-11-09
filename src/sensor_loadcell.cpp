@@ -111,6 +111,7 @@ void Sensor_LoadCell::dispatchTwig(const String &topicSensorId, const String &to
   }
 }
 void Sensor_LoadCell::captiveLines(AsyncResponseStream* response) {
+  //TODO add specific Tare button
   frugal_iot.captive->addNumber(response, id, "output", String(output->value,3), name, 0, output->max);
   // Could add Tare as button - but probably want immediate response, not waiting on SEND
 }
