@@ -26,7 +26,9 @@ struct Texts {
         *LoraMesher_Gateway,
         *LoraMesher_Node,
         *LoraMesher_Unconnected,
-        *SETWIFI
+        *SETWIFI,
+        *Tare,
+        *Calibrate
         ;
 };
 

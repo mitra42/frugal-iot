@@ -26,7 +26,9 @@ void System_Captive::setupLanguages() {
     F("Gateway"),
     F("Node"),
     F("Unconnected"),
-    F("Set WiFi")
+    F("Set WiFi"),
+    F("Tare"),
+    F("Calibrate")
   };
 
   T = TT[Language_EN];
@@ -50,7 +52,9 @@ void System_Captive::setupLanguages() {
       F("Passerelle"),
       F("Nœud"),
       F("Non connecté"),
-      F("Set WiFi") //TODO-TRANSlATE
+      F("Set WiFi"),
+    F("Tare"),
+    F("Calibrate") //TODO-TRANSlATE
       };
   #endif //LANGUAGE_FR
 
@@ -73,7 +77,9 @@ void System_Captive::setupLanguages() {
       F("Puerta de enlace"),
       F("Nodo"),
       F("Desconectado"),
-      F("Set WiFi") //TODO-TRANSlATE
+      F("Set WiFi"),
+    F("Tare"),
+    F("Calibrate") //TODO-TRANSlATE
  };
   #endif //LANGUAGE_SP
 
@@ -96,7 +102,9 @@ void System_Captive::setupLanguages() {
       F("Gateway"),
       F("Knoten"),
       F("Nicht verbunden"),
-      F("Set WiFi") //TODO-TRANSlATE
+      F("Set WiFi"),
+    F("Tare"),
+    F("Calibrate") //TODO-TRANSlATE
       };
   #endif //LANGUAGE_DE
 
@@ -119,7 +127,9 @@ void System_Captive::setupLanguages() {
       F("Gateway"),
       F("Knooppunt"),
       F("Niet verbonden"),
-      F("Set WiFi") //TODO-TRANSlATE
+      F("Set WiFi"),
+    F("Tare"),
+    F("Calibrate") //TODO-TRANSlATE
       };
   #endif //LANGUAGE_NL
 
@@ -142,7 +152,9 @@ void System_Captive::setupLanguages() {
       F("Gerbang"),
       F("Node"),
       F("Tidak Terhubung"),
-      F("Set WiFi") //TODO-TRANSlATE
+      F("Set WiFi"),
+    F("Tare"),
+    F("Calibrate") //TODO-TRANSlATE
       };
   #endif //LANGUAGE_ID
 
@@ -165,7 +177,9 @@ void System_Captive::setupLanguages() {
       F("गेटवे"),
       F("नोड"),
       F("असंबद्ध"),
-      F("Set WiFi") //TODO-TRANSlATE
+      F("Set WiFi"),
+    F("Tare"),
+    F("Calibrate") //TODO-TRANSlATE
       };
   #endif //LANGUAGE_HI
 }

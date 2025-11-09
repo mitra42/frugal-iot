@@ -39,7 +39,7 @@ Sensor_LoadCell::Sensor_LoadCell(const char* const id, const char * const name, 
     offset(offset), 
     scale(scale)
   {
-    hx711->begin(DOUTpin, SCKpin);
+    hx711->begin(DOUTpin, SCKpin, true); // TODO unclear what "fastprocessor" is.
   }
 // This may also get set by a button or a message
 void Sensor_LoadCell::tare() {
@@ -70,14 +70,14 @@ void Sensor_LoadCell::setup() {
   Serial.print(F("Loadcell: Raw read=")); Serial.println(hx711->read());
   Serial.println(F("Loadcell: Put some weight on the scale in next 5 secs")); delay(5000);
   Serial.print(F("Loadcell: Raw read with weight=")); Serial.println(hx711->read());
-  Serial.println(F("Loadcell get_units=")); Serial.println(hx711->get_units(1));
+  Serial.print(F("Loadcell get_units=")); Serial.println(hx711->get_units(1));
 #endif
 }
 float Sensor_LoadCell::readFloat() {
   // Retuns actual value - so validate and set are defaults
   float v = hx711->get_units(times); 
   #ifdef SENSOR_LOADCELL_DEBUG
-    Serial.print(F("LoadCell: get_units=")); Serial.println(v);
+    Serial.print(F("LoadCell: read=")); Serial.print(hx711->read()); Serial.print(F(" get_units=")); Serial.println(v); 
   #endif
   return v;
 }
@@ -102,17 +102,18 @@ void Sensor_LoadCell::dispatchTwig(const String &topicSensorId, const String &to
       }
     // offset and scale should only be seen when reading from disk
     } else if (topicTwig == "offset") {
-      hx711->set_offset(payload.toInt());
+      offset=payload.toInt();
+      hx711->set_offset(offset);
     } else if (topicTwig == "scale") {
-      hx711->set_scale(payload.toFloat());
+      scale=payload.toFloat();
+      hx711->set_scale(scale);
     } else {
       Sensor_Float::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
     }
   }
 }
 void Sensor_LoadCell::captiveLines(AsyncResponseStream* response) {
-  //TODO add specific Tare button
-  frugal_iot.captive->addNumber(response, id, "output", String(output->value,3), name, 0, output->max);
-  // Could add Tare as button - but probably want immediate response, not waiting on SEND
+  frugal_iot.captive->addButton(response, id, "output", "0", "Tare"); //TODO-TRANSLATE
+  frugal_iot.captive->addNumber(response, id, "output", String(output->value,3), "Calibrate", 0, output->max);
 }
 
