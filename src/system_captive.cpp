@@ -109,7 +109,9 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       ));
       response->print(F("<script>function s(name,value){let fd=new FormData();fd.set(name,value);fetch('/',{method:'POST',body:fd,credentials:'same-origin'}).catch(e=>console.error(e));};</script>"));
       if (message) {
+        response->print(F("<h4>"));
         response->print(message);
+        response->print(F("</h4>"));
         message = "";
       }
       response->print(F("<form action=\"/restart\" method=post><input type=submit value=\""));
@@ -222,7 +224,7 @@ void System_Captive::setup() {
     // TODO rebuilding new screen before process queued incoming 
 
     request->send(response);
-    message = F("<h4>Settings Updated<h4>"); //TODO-TRANSLATE
+    message = T->SettingsUpdated;
   });
 
   server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){

@@ -78,6 +78,7 @@ StringValue	KEYWORD2
 act	KEYWORD2
 add	KEYWORD2
 addBool	KEYWORD2
+addButton	KEYWORD2
 addNumber	KEYWORD2
 addString	KEYWORD2
 addWiFi	KEYWORD2

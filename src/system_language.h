@@ -28,7 +28,8 @@ struct Texts {
         *LoraMesher_Unconnected,
         *SETWIFI,
         *Tare,
-        *Calibrate
+        *Calibrate,
+        *SettingsUpdated
         ;
 };
 

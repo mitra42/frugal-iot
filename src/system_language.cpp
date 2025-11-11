@@ -28,7 +28,8 @@ void System_Captive::setupLanguages() {
     F("Unconnected"),
     F("Set WiFi"),
     F("Tare"),
-    F("Calibrate")
+    F("Calibrate"),
+    F("Settings Updated")
   };
 
   T = TT[Language_EN];
@@ -52,9 +53,10 @@ void System_Captive::setupLanguages() {
       F("Passerelle"),
       F("Nœud"),
       F("Non connecté"),
-      F("Set WiFi"),
-    F("Tare"),
-    F("Calibrate") //TODO-TRANSlATE
+      F("Définir le WiFi"),
+      F("Tare"),
+      F("Étalonner"),
+      F("Paramètres mis à jour")
       };
   #endif //LANGUAGE_FR
 
@@ -77,9 +79,10 @@ void System_Captive::setupLanguages() {
       F("Puerta de enlace"),
       F("Nodo"),
       F("Desconectado"),
-      F("Set WiFi"),
-    F("Tare"),
-    F("Calibrate") //TODO-TRANSlATE
+      F("Configurar WiFi"),
+      F("Tara"),
+      F("Calibrar"),
+      F("Configuración actualizada")
  };
   #endif //LANGUAGE_SP
 
@@ -102,9 +105,10 @@ void System_Captive::setupLanguages() {
       F("Gateway"),
       F("Knoten"),
       F("Nicht verbunden"),
-      F("Set WiFi"),
-    F("Tare"),
-    F("Calibrate") //TODO-TRANSlATE
+      F("WLAN einstellen"),
+      F("Tara"),
+      F("Kalibrieren"),
+      F("Einstellungen aktualisiert")
       };
   #endif //LANGUAGE_DE
 
@@ -127,9 +131,10 @@ void System_Captive::setupLanguages() {
       F("Gateway"),
       F("Knooppunt"),
       F("Niet verbonden"),
-      F("Set WiFi"),
-    F("Tare"),
-    F("Calibrate") //TODO-TRANSlATE
+      F("WiFi instellen"),
+      F("Tarra"),
+      F("Kalibreren"),
+      F("Instellingen bijgewerkt")
       };
   #endif //LANGUAGE_NL
 
@@ -152,9 +157,10 @@ void System_Captive::setupLanguages() {
       F("Gerbang"),
       F("Node"),
       F("Tidak Terhubung"),
-      F("Set WiFi"),
-    F("Tare"),
-    F("Calibrate") //TODO-TRANSlATE
+      F("Atur WiFi"),
+      F("Tara"),
+      F("Kalibrasi"),
+      F("Pengaturan diperbarui")
       };
   #endif //LANGUAGE_ID
 
@@ -177,9 +183,10 @@ void System_Captive::setupLanguages() {
       F("गेटवे"),
       F("नोड"),
       F("असंबद्ध"),
-      F("Set WiFi"),
-    F("Tare"),
-    F("Calibrate") //TODO-TRANSlATE
+      F("वाईफाई सेट करें"),
+      F("तार"),
+      F("कैलिब्रेट करें"),
+      F("सेटिंग्स अपडेट की गईं")
       };
   #endif //LANGUAGE_HI
 }
