@@ -19,7 +19,7 @@ void Sensor::periodically() {
   readValidateConvertSet();
 }
 void Sensor::setup() {
-  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+  readConfigFromFS(); // Reads config (one of the outputs) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
 }
 
 void Sensor::discover() {

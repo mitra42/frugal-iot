@@ -25,7 +25,11 @@ void System_Captive::setupLanguages() {
     F("restarting .... plesae wait"),
     F("Gateway"),
     F("Node"),
-    F("Unconnected")
+    F("Unconnected"),
+    F("Set WiFi"),
+    F("Tare"),
+    F("Calibrate"),
+    F("Settings Updated")
   };
 
   T = TT[Language_EN];
@@ -48,8 +52,11 @@ void System_Captive::setupLanguages() {
       F("redémarrage en cours... veuillez patienter"),
       F("Passerelle"),
       F("Nœud"),
-      F("Non connecté")
-
+      F("Non connecté"),
+      F("Définir le WiFi"),
+      F("Tare"),
+      F("Étalonner"),
+      F("Paramètres mis à jour")
       };
   #endif //LANGUAGE_FR
 
@@ -71,7 +78,11 @@ void System_Captive::setupLanguages() {
       F("Reiniciando... espere, por favor"),
       F("Puerta de enlace"),
       F("Nodo"),
-      F("Desconectado")
+      F("Desconectado"),
+      F("Configurar WiFi"),
+      F("Tara"),
+      F("Calibrar"),
+      F("Configuración actualizada")
  };
   #endif //LANGUAGE_SP
 
@@ -93,7 +104,11 @@ void System_Captive::setupLanguages() {
       F("Neustart .... Bitte warten"),
       F("Gateway"),
       F("Knoten"),
-      F("Nicht verbunden")
+      F("Nicht verbunden"),
+      F("WLAN einstellen"),
+      F("Tara"),
+      F("Kalibrieren"),
+      F("Einstellungen aktualisiert")
       };
   #endif //LANGUAGE_DE
 
@@ -115,7 +130,11 @@ void System_Captive::setupLanguages() {
       F("opnieuw opstarten.... even geduld a.u.b."),
       F("Gateway"),
       F("Knooppunt"),
-      F("Niet verbonden")
+      F("Niet verbonden"),
+      F("WiFi instellen"),
+      F("Tarra"),
+      F("Kalibreren"),
+      F("Instellingen bijgewerkt")
       };
   #endif //LANGUAGE_NL
 
@@ -137,7 +156,11 @@ void System_Captive::setupLanguages() {
       F("sedang memulai ulang .... mohon tunggu"),
       F("Gerbang"),
       F("Node"),
-      F("Tidak Terhubung")
+      F("Tidak Terhubung"),
+      F("Atur WiFi"),
+      F("Tara"),
+      F("Kalibrasi"),
+      F("Pengaturan diperbarui")
       };
   #endif //LANGUAGE_ID
 
@@ -159,7 +182,11 @@ void System_Captive::setupLanguages() {
       F("पुनः प्रारंभ हो रहा है.... कृपया प्रतीक्षा करें"),
       F("गेटवे"),
       F("नोड"),
-      F("असंबद्ध")
+      F("असंबद्ध"),
+      F("वाईफाई सेट करें"),
+      F("तार"),
+      F("कैलिब्रेट करें"),
+      F("सेटिंग्स अपडेट की गईं")
       };
   #endif //LANGUAGE_HI
 }
