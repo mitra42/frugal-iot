@@ -18,6 +18,7 @@
         { "name": "BH1750", "owner": "claws"},
         { "name": "Button2", "owner": "lennarthennigs"},
         { "name": "DHTNEW", "owner": "robtillaart"},
+        { "name": "SHT4x", "owner": "robtillaart"},
         { "name": "SHT85", "owner": "robtillaart"},
         { "name": "HX711", "owner": "robtillaart"},
         { "name": "ESPAsyncWebServer", "owner": "ESP32Async", "platforms": ["espressif8266", "espressif32"]}

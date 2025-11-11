@@ -82,7 +82,7 @@ float Sensor_LoadCell::readFloat() {
   return v;
 }
 void Sensor_LoadCell::calibrate(float weight) {
-  hx711->calibrate_scale(weight, 15); // Use maximmum of 15 
+  hx711->calibrate_scale(weight, 15); // Use maximmum of 15 readings
   scale = hx711->get_scale(); // Remember the value
   #ifdef SENSOR_LOADCELL_DEBUG
     Serial.print(F("LoadCell: scale=")); Serial.println(scale);
