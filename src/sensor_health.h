@@ -16,7 +16,7 @@ class Sensor_Health : public Sensor {
   public:
     Sensor_Health(const char* const id, const char* const name);
   protected:
-    OUTuint16* wifistrength;
+    OUTuint16* wifibars;
     OUTtext* wifissid;
     // TODO-116 more outputs to come here: uptime 
     //void setup() override; 

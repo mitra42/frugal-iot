@@ -11,10 +11,10 @@
 
 Sensor_Health::Sensor_Health(const char* const id, const char* const name) 
 : Sensor(id, name, true),
-  wifistrength(new OUTuint16(id, "wifistrength", "WiFi Strength", 0, 0, 5, "#000000", false)),
-  wifissid(new OUTtext(id, "wifibars", "WiFi SSID", "" ))
+  wifibars(new OUTuint16(id, "wifibars", "WiFi Strength", 0, 0, 5, "#000000", false)),
+  wifissid(new OUTtext(id, "wifissid", "WiFi SSID", "" ))
 {
-  outputs.push_back(wifistrength);
+  outputs.push_back(wifibars);
   outputs.push_back(wifissid);
 }
 
@@ -23,6 +23,6 @@ Sensor_Health::Sensor_Health(const char* const id, const char* const name)
 void Sensor_Health::readValidateConvertSet() {
   // TODO-116 get wifi strenght and SSID
   // 4 bars for -55 dBm or higher, 3 bars for -56 to -66 dBm, 2 bars for -67 to -77 dBm, 1 bar for -78 to -88 dBm, and 0 bars for -89 dBm or lower
-  wifistrength->set(frugal_iot.wifi->bars());
+  wifibars->set(frugal_iot.wifi->bars());
   wifissid->set(frugal_iot.wifi->SSID());
 }

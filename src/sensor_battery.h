@@ -10,7 +10,7 @@
  * Lilygo T3S3 is on GPIO4 (IO04) (from google, not in pins.arduino.h)
  * 
  * Note that BAT_VOLT is defined in /Users/mitra/.platformio/packages/framework-arduinoespressif32/variants/lilygo_t3_s3_sx1262/pins_arduino.h and maybe useful as a semi-standard
- * grep BAT_VOLT /Users/mitra/.platformio/packages/framework-arduinoespressif32/variants/*./pins_arduino.h shows VBAT_VOLTAGE BAT_VOLTS or BAT_VOLT BAT_MEASURE VBAT_SENSE BATT_ADC_PIN BAT_ADC_PIN BAT_ADC BATT_MONITOR BAT_MEASURE BAT_LV on different boards
+ * grep BAT_VOLT /Users/mitra/.platformio/packages/framework-arduinoespressif32/variants/\*./pins_arduino.h shows VBAT_VOLTAGE BAT_VOLTS or BAT_VOLT BAT_MEASURE VBAT_SENSE BATT_ADC_PIN BAT_ADC_PIN BAT_ADC BATT_MONITOR BAT_MEASURE BAT_LV on different boards
  */
 
 #ifndef SENSOR_BATTERY_H
