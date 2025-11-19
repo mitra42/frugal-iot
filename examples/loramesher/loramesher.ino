@@ -8,9 +8,15 @@
 #include "Frugal-IoT.h"
 #include "system_mqtt.h"
 
+#ifdef SYSTEM_OLED_WANT
+  #include "control_oled_loramesher.h"
+  Control_Oled_LoRaMesher* col;
+#endif
+
 // Change the parameters here to match your ... 
 // organization, project, id, description
 System_Frugal frugal_iot("dev", "developers", "loramesher", "LoraMesher Node");
+
 
 void setup() {
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
@@ -34,7 +40,14 @@ void setup() {
   //esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
   frugal_iot.loramesher = new System_LoraMesher(); // Held in a variable as future LoRaMesher will access it directly e.g. from MQTT
   frugal_iot.system->add(frugal_iot.loramesher);
+
   
+  #ifdef SYSTEM_OLED_WANT
+    col = new Control_Oled_LoRaMesher("Control OLED");
+    frugal_iot.controls->add(col);
+    col->battery->wireTo(frugal_iot.messages->path("battery/battery"));
+  #endif
+
   // Add sensors, actuators and controls
   #ifdef SYSTEM_LORAMESHER_SENDER
     frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
@@ -47,21 +60,9 @@ void setup() {
 
 #ifdef SYSTEM_LORAMESHER_DEBUG
 void printAppData() {
-    frugal_iot.oled->display.clearDisplay();
-    frugal_iot.oled->display.setCursor(0,0);
-    frugal_iot.oled->display.print(frugal_iot.description);
-    frugal_iot.oled->display.setCursor(0,10);
-    frugal_iot.oled->display.print(frugal_iot.loramesher->checkRoleString());
-    if (frugal_iot.loramesher->lastTopicPath) {
-      // Display information
-      frugal_iot.oled->display.setCursor(0,20);
-      frugal_iot.oled->display.print("last packet:");
-      frugal_iot.oled->display.setCursor(0,30);
-      frugal_iot.oled->display.print(frugal_iot.loramesher->lastTopicPath);
-      frugal_iot.oled->display.print(":");
-      frugal_iot.oled->display.print(frugal_iot.loramesher->lastPayload);      
-    }
-    frugal_iot.oled->display.display();   
+  Serial.println("XXX before col->act");
+    col->act(); // Redisplay
+  Serial.println("XXX after col->act");
 }
 #endif
 

@@ -27,20 +27,23 @@
   #define SENSOR_BATTERY_VOLTAGE_DIVIDER 6.6 // From LilyGo code, not testd yet
 #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
   #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Almost certainly wrong ! Define for this board TO-ADD-BOARD
+#elif defined(ARDUINO_heltec_wifi_lora_32_V3)
+  #define SENSOR_BATTERY_VOLTAGE_DIVIDER 4.9
 #else 
   #define SENSOR_BATTERY_VOLTAGE_DIVIDER 1 // Almost certainly wrong ! Define for this board TO-ADD-BOARD
 #endif 
 
 #ifndef SENSOR_BATTERY_PIN
-  #ifdef ARDUINO_LILYGO_T3_S3_V1_X
-  //#define SENSOR_BATTERY_PIN BAT_VOLT // a static const uint8_t
-   #define SENSOR_BATTERY_PIN BAT_VOLT_PIN
+  #if defined BAT_VOLT_PIN // Have submitted a PR that has not gone live yet that defines this for all boards that support it
+    #define SENSOR_BATTERY_PIN BAT_VOLT_PIN
+  #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
+    #define SENSOR_BATTERY_PIN BAT_VOLT // a static const uint8_t
+  #elif defined(ARDUINO_heltec_wifi_lora_32_V3)
+    #define SENSOR_BATTERY_PIN 1 // see schematics linked at https://heltec.org/project/wifi-lora-32-v3/#FAQ    
   // TO-ADD-BOARD
   // Feel free to add #defines for whatever board you are using 
   // - look in e.g. ~/.platformio/platforms/espressif32/boards/lilygo-t3-s3.json for the board name define and variant file name
   // - look in ~/.platformio/packages/framework-arduinoespressif32/variants/lilygo_t3_s3_sx127x/pins_arduino.h for which way it defines the battery pin
-  //#elif defined(XXX)
-  // #define SENSOR_BATTER_PIN VBATT 
   #else 
     #define SENSOR_BATTERY_PIN 255 // Wont be on this pin, but allows code to compile on unknown board
   #endif

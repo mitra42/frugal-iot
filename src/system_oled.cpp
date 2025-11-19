@@ -14,7 +14,7 @@
 System_OLED::System_OLED(TwoWire* wire)
 : System_Base("oled", "OLED"),
   wire(wire),
-  display(SCREEN_WIDTH, SCREEN_HEIGHT, wire, OLED_RST_X) // Allow code to access 
+  display(DISPLAY_WIDTH, DISPLAY_HEIGHT, wire, OLED_RST_X) // Allow code to access 
 {}
 
 void System_OLED::setup() {

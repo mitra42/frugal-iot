@@ -34,21 +34,38 @@
   #define OLED_SDA SDA
   #define OLED_SCL SCL
   #define OLED_RST_X -1 // Doesnt appear to exist on this board
+#elif defined(ARDUINO_heltec_wifi_lora_32_V3)
+  // SDA=41 SCL=42 - assume that is "Wire" and used for LoRa, assume this is Wire1
+  #define OLED_WIRE Wire1
+  #define OLED_SDA SDA_OLED //TODO submit a PR to make this consistent across boards
+  #define OLED_SCL SCL_OLED //TODO submit a PR to make this consistent across boards
+  #define OLED_RST_X RST_OLED 
 #elif !defined(OLED_WIRE) || !defined(OLED_SDA) || !defined(OLED_SCL)
   #error Undefined board for OLED
 #endif
 
 // Note ARDUINO_LILYGO_T3_S3_V1_X not tested yet, but probably same as ARDUINO_TTGO_LoRa32
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) // V1 or v2
+#ifndef DISPLAY_HEIGHT // defined on ARDUINO_heltec_wifi_lora_32_V3
+  #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) // V1 or v2
+    #define DISPLAY_WIDTH 128 // OLED display width, in pixels
+    #define DISPLAY_HEIGHT 64 // OLED display height, in pixels
+  #else
+    #error Have not defined Display size
+  #endif
+#endif
+// What chip is driving the OLED
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) // V1 or v2
   #include <Adafruit_SSD1306.h> // For OLED display
-  #define SCREEN_WIDTH 128 // OLED display width, in pixels
-  #define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#else
+  #error have not defined OLED chip driver
 #endif
 
 class System_OLED : public System_Base {
   public:
-    #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) // V1 or v2
+    #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) // V1 or v2
       Adafruit_SSD1306 display; // OLED display object TODO-138 parameterize this and depend on board
+    #else
+      #error need to add "display" for appropriate OLED
     #endif
     System_OLED(TwoWire* wire = &Wire); // Constructor
     void setup() override; // Setup function to initialize the display

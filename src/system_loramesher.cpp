@@ -33,6 +33,16 @@
 #ifndef SYSTEM_LORAMESHER_MAXLEGITPACKET
   #define SYSTEM_LORAMESHER_MAXLEGITPACKET 256 // Seeing some big (1Mb) bad packets from sender
 #endif
+
+#ifndef LORA_RST
+  #ifdef ARDUINO_heltec_wifi_lora_32_V3
+    #define LORA_RST RST_LoRa
+    #define LORA_CS SS
+    #define LORA_IRQ BUSY_LoRa
+  #endif
+  // Dont error, as on other boards these may have been defined as const uint8 in pins_arduino.h
+#endif
+
 // =========== MeshSubscription class - only used by LoRaMesher to track subs ====
 
 // TODO-152A Consider timeout of LM subscriptions - since a node may get a different id each time it power cycles, and thus have multiple entries in the gateway's meshsubscription table.
@@ -100,6 +110,8 @@ System_LoraMesher::System_LoraMesher()
       config.loraIo1 = LORA_D1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_V1 or _V2 but will on _V21
     #elif defined(LORA_DIO1) // e.g. on variant:lilygo_t3_s3_sx127x 
       config.loraIo1 = LORA_DIO1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_v1 or _V2 but will on _V21
+    #elif defined(ARDUINO_heltec_wifi_lora_32_V3) // SX1262
+      config.loraIo1 = DIO0;
     #else
       #error unclear what to define loraIo1 at on this board
     #endif
@@ -110,7 +122,8 @@ System_LoraMesher::System_LoraMesher()
     // ttgo-lora32-v21new defines LORA_SCK the same as MISO, MOSI, CS etc so it works but
     // lilygo_t3_s3_sx127x howwever defines SCK, MISO etc as the SD's SPI so LoraMesher fails 
     // https://github.com/LoRaMesher/LoRaMesher/pull/78 submitted so this is not needed.
-    SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
+    //SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
+    SPI.begin(SCK, MISO, MOSI, LORA_CS); //TODO-176 check and recheck if/why needed -
     config.spi = &SPI;
 }
 
