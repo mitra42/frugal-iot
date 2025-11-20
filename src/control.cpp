@@ -67,6 +67,8 @@ void Control::dispatchTwig(const String &topicControlId, const String &topicTwig
     }
 }
 
+// dispatchPath is called so can check for wired connections to other devices i.e. inputs 
+// are checking "is this coming from the thing I am wired to"
 void Control::dispatchPath(const String &topicPath, const String &payload ) {
     bool changed = false;
     for (auto &input : inputs) {

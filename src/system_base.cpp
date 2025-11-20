@@ -474,13 +474,13 @@ void OUTtext::debug(const char* const where) {
 // INfloat::INfloat() {}
 // TO_ADD_INxxx
 INfloat::INfloat(const char * const sensorId, const char * const id, const String name, float v, uint8_t width, float mn, float mx, char const * const c, const bool w)
-  :   IN(sensorId, id, name, c, w), value(v), width(width), min(mn), max(mx) {
+  :   IN(sensorId, id, name, c, w), width(width), value(v), min(mn), max(mx) {
 }
 
 INfloat::INfloat(const INfloat &other)
 : IN(other.sensorId, other.id, other.name, other.color, other.wireable), 
-  value(other.value),
-  width(other.width)
+  width(other.width),
+  value(other.value)
 { }
 INuint16::INuint16(const char * const sensorId, const char * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const c, const bool w)
   :   IN(sensorId, id, name, c, w), value(v), min(mn), max(mx) {
@@ -607,7 +607,7 @@ OUTbool::OUTbool(const char * const sensorId, const char* const id, const String
   :   OUT(sensorId, id, name, color, w), value(v)  {
 }
 OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const String name,  float v, uint8_t width, float mn, float mx, char const * const color, const bool w)
-  :   OUT(sensorId, id, name, color, w), value(v), width(width), min(mn), max(mx) { 
+  :   OUT(sensorId, id, name, color, w), width(width), min(mn), max(mx), value(v) { 
 }
 OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const String name,  uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v), min(mn), max(mx) {

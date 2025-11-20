@@ -114,6 +114,6 @@ void Sensor_LoadCell::dispatchTwig(const String &topicSensorId, const String &to
 }
 void Sensor_LoadCell::captiveLines(AsyncResponseStream* response) {
   frugal_iot.captive->addButton(response, id, "output", "0", "Tare"); //TODO-TRANSLATE
-  frugal_iot.captive->addNumber(response, id, "output", String(output->value,3), "Calibrate", 0, output->max);
+  frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),3), "Calibrate", 0, output->max);
 }
 

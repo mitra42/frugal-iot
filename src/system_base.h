@@ -103,7 +103,7 @@ class INfloat : public IN {
     INfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
-    uint8_t width;
+    uint8_t width; // Cant be protected because used in e.g. control_oled_sht.cpp 
   protected:
     float value;
     float min;
@@ -200,10 +200,9 @@ class INtext : public IN {
 // TO-ADD-OUTxxx
 class OUTfloat : public OUT {
   public:
-    float value;
-    uint8_t width;
-    float min;
-    float max;
+    uint8_t width; // Not protected because used in e.g. captive or OLED output
+    float min; // Not protected cos used in e.g. captive lines 
+    float max; // Not protected cos used in e.g. captive lines 
     OUTfloat();
     OUTfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     OUTfloat(const OUTfloat &other);
@@ -214,6 +213,7 @@ class OUTfloat : public OUT {
     bool boolValue() override;
     virtual String StringValue();
   protected:
+    float value;
     void debug(const char* const where);
 };
 class OUTbool : public OUT {

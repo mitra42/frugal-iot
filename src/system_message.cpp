@@ -112,7 +112,7 @@ void System_Messages::sendRemote(const String topicPath, const String payload, b
 }
 
 
-// Upstream: module => queue with reflection 
+// Upstream: module => queue for MQTT and queue loopback
 void System_Messages::send(const String topicPath, const String payload, bool retain, uint8_t qos) {
   sendRemote(topicPath, payload, retain, qos);
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
