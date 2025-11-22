@@ -21,7 +21,9 @@
         { "name": "SHT4x", "owner": "robtillaart"},
         { "name": "SHT85", "owner": "robtillaart"},
         { "name": "HX711", "owner": "robtillaart"},
-        { "name": "ESPAsyncWebServer", "owner": "ESP32Async", "platforms": ["espressif8266", "espressif32"]}
+        { "name": "ESPAsyncWebServer", "owner": "ESP32Async", "platforms": ["espressif8266", "espressif32"]},
+        { "name": "DallasTemperature", "owner": "milesburton" },
+        { "name": "OneWire", "owner": "paulstoffregen" }
     ],
     "frameworks": "arduino",
     "platforms": ["espressif32","espressif8266"],
