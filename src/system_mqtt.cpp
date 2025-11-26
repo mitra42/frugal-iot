@@ -152,7 +152,8 @@ bool System_MQTT::subscribe(const String& topicPath) {
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.print(F("MQTT Subscribe ")); Serial.print(topicPath);
       #endif
-    if (client.subscribe(topicPath)) {
+    // Uses QOS=1 as usually incoming volume is low (except for controls), lets see if causes problem, symptom probably memory use at server or long list of incoming after sleep
+    if (client.subscribe(topicPath, 1)) { 
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.println();
       #endif
