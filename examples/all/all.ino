@@ -54,6 +54,8 @@ void setup() {
   #endif
   frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, true));
   
+  frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", 5, 0, true));
+
   frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS160 AHT21"));
 
   // Add a new loadcell sensor max=2000, color="pink", retain=true, DOUTpin=0, SCKpin=1, times=10, offset=0, scale=2000
