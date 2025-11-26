@@ -37,7 +37,7 @@
 #ifndef LORA_RST
   #ifdef ARDUINO_heltec_wifi_lora_32_V3
     #define LORA_RST RST_LoRa
-    #define LORA_CS SS
+    #define LORA_CS SS            // GPIO8
     #define LORA_IRQ BUSY_LoRa
   #endif
   // Dont error, as on other boards these may have been defined as const uint8 in pins_arduino.h
@@ -140,7 +140,9 @@ void System_LoraMesher::setup() {
   // -12 is invalid frequency usually means band and module are not matched.
   // -16 is RADIOLIB_ERR_SPI_WRITE_FAILED suggesting wrong pins for SPI
   radio.begin(config);        //Init the loramesher with a configuration
+  Serial.println("XXX after radio.begin in " __FILE__);
   createReceiveMessages();    //Create the receive task and add it to the LoRaMesher
+  Serial.println("XXX after crm in " __FILE__);
   radio.setReceiveAppDataTaskHandle(receiveLoRaMessage_Handle); //Set the task handle to the LoRaMesher
   //gpio_install_isr_service(ESP_INTR_FLAG_IRAM); // known error message - Jaimi says doesn't matter
   radio.start();     //Start LoRaMesher

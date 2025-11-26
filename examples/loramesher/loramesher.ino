@@ -60,9 +60,7 @@ void setup() {
 
 #ifdef SYSTEM_LORAMESHER_DEBUG
 void printAppData() {
-  Serial.println("XXX before col->act");
     col->act(); // Redisplay
-  Serial.println("XXX after col->act");
 }
 #endif
 

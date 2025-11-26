@@ -40,6 +40,7 @@
   #define OLED_SDA SDA_OLED //TODO submit a PR to make this consistent across boards
   #define OLED_SCL SCL_OLED //TODO submit a PR to make this consistent across boards
   #define OLED_RST_X RST_OLED 
+  #define OLED_ENABLE_LOW Vext // Need to set this low to turn on OLED
 #elif !defined(OLED_WIRE) || !defined(OLED_SDA) || !defined(OLED_SCL)
   #error Undefined board for OLED
 #endif
