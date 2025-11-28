@@ -121,7 +121,7 @@
 #endif
 
 // Define boards which have LoRa and should include LoRaMesher automatically
-#if defined(SYSTEM_LORAMESHER_MODULE) // || defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) 
+#if defined(SYSTEM_LORAMESHER_BAND) // || defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) 
   #define SYSTEM_LORAMESHER_WANT
 #endif
 
