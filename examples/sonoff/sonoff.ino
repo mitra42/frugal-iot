@@ -1,5 +1,6 @@
 /* 
- *  Frugal IoT example - Sonoff - R2 switch
+ *  Frugal IoT example - Sonoff - Basic R2 or R4 switch
+ *
  * Optional: 
  */
 
