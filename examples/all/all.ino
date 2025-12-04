@@ -36,7 +36,7 @@ void setup() {
 
   // Add sensors, actuators and controls
 
-  // Battery sensor on pin 33 - but note LilyGo HiGrow battery didnt arrive so not tested TODO test
+  // Battery sensor on pin 33
   frugal_iot.sensors->add(new Sensor_Battery(33));
 
   // Light sensor BH1750 TODO see notes in sensor_bh1750.cpp,h about I2C pin conflicts
