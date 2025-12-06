@@ -31,7 +31,7 @@
 #endif
 #include "system_message.h"
 #include "system_mqtt.h"
-#include "system_oled.h"
+#include "actuator_oled.h"
 #include "system_ota.h"
 #include "system_power.h"
 #include "system_time.h"
@@ -76,7 +76,7 @@ class System_Frugal : public Frugal_Group {
     System_Messages* messages;
     System_MQTT* mqtt;
     #ifdef SYSTEM_OLED_WANT
-      System_OLED* oled;
+      Actuator_OLED* oled;
     #endif
     #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
       System_OTA* ota;

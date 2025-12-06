@@ -22,7 +22,7 @@ void setup() {
   //   frugal_iot.configure_power(Power_LightWiFi, 20000, 10000); 
   frugal_iot.configure_power(Power_Deep, 70000, 60000); 
 
-  // system_oled and actuator_ledbuiltin added automatically on boards that have them.
+  // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));

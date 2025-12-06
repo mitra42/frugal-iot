@@ -61,14 +61,14 @@
   #error have not defined OLED chip driver
 #endif
 
-class System_OLED : public System_Base {
+class Actuator_OLED : public System_Base {
   public:
     #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) // V1 or v2
       Adafruit_SSD1306 display; // OLED display object TODO-138 parameterize this and depend on board
     #else
       #error need to add "display" for appropriate OLED
     #endif
-    System_OLED(TwoWire* wire = &Wire); // Constructor
+    Actuator_OLED(TwoWire* wire = &Wire); // Constructor
     void setup() override; // Setup function to initialize the display
     //void infrequently() override; // Infrequent tasks, e.g., every 10 seconds
     //void periodically() override; // Periodic tasks, e.g., every minute

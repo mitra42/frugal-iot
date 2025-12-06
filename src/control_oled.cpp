@@ -19,6 +19,7 @@ Control_Oled::Control_Oled(const char* id, const char* name, std::vector<IN*> ii
 Control_Oled::Control_Oled(const char* const id, const char* const name)
   : Control_Oled(id, name,  std::vector<IN*> {})
   {}
+// TODO-149 Untested as dont have any color OLEDs to test on
 uint16_t Control_Oled::color565(const char* p1) {
     if (p1[0] == '#') {
     p1 += 1; // Skip # in #x030a1

@@ -53,7 +53,7 @@ System_LoraMesher	KEYWORD1
 System_MQTT	KEYWORD1
 System_Message	KEYWORD1
 System_Messages	KEYWORD1
-System_OLED	KEYWORD1
+Actuator_OLED	KEYWORD1
 System_OTA	KEYWORD1
 System_Power_Deep	KEYWORD1
 System_Power_Light	KEYWORD1

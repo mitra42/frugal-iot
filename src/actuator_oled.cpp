@@ -5,19 +5,19 @@
  */
 #include "_settings.h"
 #ifdef SYSTEM_OLED_WANT
-#include "system_oled.h"
+#include "actuator_oled.h"
 //Libraries for OLED Display
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-System_OLED::System_OLED(TwoWire* wire)
+Actuator_OLED::Actuator_OLED(TwoWire* wire)
 : System_Base("oled", "OLED"),
   wire(wire),
   display(DISPLAY_WIDTH, DISPLAY_HEIGHT, wire, OLED_RST_X) // Allow code to access 
 {}
 
-void System_OLED::setup() {
+void Actuator_OLED::setup() {
   System_Base::setup();
 
   // TODO experimenting for heltec - parameterize this 
