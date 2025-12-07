@@ -77,7 +77,7 @@ float Sensor_LoadCell::readFloat() {
   // Retuns actual value - so validate and set are defaults
   float v = hx711->get_units(times); 
   #ifdef SENSOR_LOADCELL_DEBUG
-    Serial.print(F("LoadCell: read=")); Serial.print(hx711->read()); Serial.print(F(" get_units=")); Serial.println(v); 
+    Serial.print(F("LoadCell: read=")); Serial.print(hx711->read()); Serial.print(F(" offset=")); Serial.print(hx711->get_offset()); Serial.print(F(" scale=")); Serial.print(hx711->get_scale()); Serial.print(F(" get_units=")); Serial.println(v); 
   #endif
   return v;
 }
