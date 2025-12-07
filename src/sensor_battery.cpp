@@ -7,6 +7,8 @@
  * ARDUINO_LOLIN_C3_MINI there is no battery pin
  * ESP8266 D1 shields can only use A0 as it is the only analog pin, D1 shields use this
  * LilyGo HiGrow uses pin 33
+ * 
+ * Heltec is complex - see https://digitalconcepts.net.au/arduino/index.php?op=Battery#wifilora3 and note V3 and v3.2 are different
  *
  */
 
