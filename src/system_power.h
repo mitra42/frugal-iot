@@ -18,6 +18,10 @@ enum System_Power_Type {
 
 class System_Power_Mode : public System_Base {
   public:
+    uint8_t timer_next(); // Return an index to a timer that can be used
+    unsigned long timer(uint8_t i); // Return value of timer
+    void timer_set(uint8_t i, unsigned long t);
+    bool timer_expired(uint8_t i); 
     unsigned long nextSleepTime = 0; // Next time to sleep in millis() (NOT offseted) - set in constructor, updated in maybeSleep()
     unsigned long cycle_ms; // Time for each cycle (wake + sleep)
     unsigned long wake_ms; // Time to stay awake during each cycle
@@ -37,6 +41,8 @@ class System_Power_Mode : public System_Base {
     #else // Only needed/valid on ESP32 where have saved millis_offset in RTCs memory
       unsigned long sleepSafeMillis() { return millis(); }
     #endif
+  private:
+    uint8_t timer_index;
 };
 class System_Power_Loop : public System_Power_Mode {
   public:

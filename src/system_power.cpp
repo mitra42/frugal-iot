@@ -36,10 +36,17 @@ void printTaskList() {
 
 System_Power_Mode* powerController;
 
+#define TIMER_LENGTH 4 // Can make this longer (and add to initialization) if ever need >4 timers.
 #ifdef ESP32
-  RTC_DATA_ATTR unsigned long wake_count = 0; // If 1 per minute, uint_16 would just be 45 days
-  RTC_DATA_ATTR unsigned long millis_offset = 0;  // Cumulative time in deep sleep with millis() being reset
+  RTC_DATA_ATTR unsigned long wake_count = 0L; // If 1 per minute, uint_16 would just be 45 days
+  RTC_DATA_ATTR unsigned long millis_offset = 0L;  // Cumulative time in deep sleep with millis() being reset
+  // This is an array of timers, available to modules
+  RTC_DATA_ATTR unsigned long timers[TIMER_LENGTH] = {0L,0L,0L,0L}; // Array used by entities
+#else
+  unsigned long timers[TIMER_LENGTH] = {0L,0L,0L,0L}; // Array used by entities
 #endif
+//TODO-23 think about roll-over of timers and routines that test against a number maybe not rolled over
+
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 // Note how this is placed in RTC code space so it can be executed prior to the restart
 void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
@@ -52,13 +59,29 @@ System_Power_Mode::System_Power_Mode(const char* name, unsigned long cycle_ms, u
 : System_Base("power", name),
   nextSleepTime(millis() + wake_ms), // not sleepSafeMillis() as by definition dont sleep before this
   cycle_ms(cycle_ms),
-  wake_ms(wake_ms)
+  wake_ms(wake_ms),
+  timer_index(0)
 {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.printf("%s: %lu of %lu\n", name, wake_ms, cycle_ms); 
   #endif
 }
 // ================== constructor =========== called from main.cpp::setup based on #define ========= TO-ADD-POWERMODE
+uint8_t System_Power_Mode::timer_next() {
+  if (timer_index >= TIMER_LENGTH) { 
+    Serial.println(F("ERROR - using too many timers"));
+  }
+  return timer_index++;
+}
+unsigned long System_Power_Mode::timer(uint8_t i) {
+  return timers[i];
+}
+void System_Power_Mode::timer_set(uint8_t i, unsigned long t) {
+    timers[i] = sleepSafeMillis() + t ;
+}
+bool System_Power_Mode::timer_expired(uint8_t i) {
+  return (timer(timer_index) <= sleepSafeMillis());
+}
 System_Power_Loop::System_Power_Loop(unsigned long cycle_ms, unsigned long wake_ms) 
 : System_Power_Mode("Power Looping", cycle_ms, wake_ms) {
 }
@@ -106,8 +129,9 @@ void System_Power_Deep::setup() {
 // TODO-141 note Arduino warning: 'esp_pm_config_esp32_t' is deprecated: please use esp_pm_config_t instead [-Wdeprecated-declarations]
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 void System_Power_LightWiFi::setup() {
-  esp_pm_config_t pm_config;
-  #ifdef DEPRECATED_OLDER_PLATFORMIO
+  #ifndef DEPRECATED_OLDER_PLATFORMIO
+    esp_pm_config_t pm_config;   // If this line fails it typically means you are running the wrong "platform" in platformio.ini
+  #else // This version changed somewhere between Platform Espressif32 6.8.0 and 6.11.0 PlatformiO->HOME->Platforms->Updates to update
     // This bit is weird - there are 5 different ESP32 config structures - all identical - note CONFIG_IDF_TARGET_ESP32xx is defined in board files
     #if defined(CONFIG_IDF_TARGET_ESP32C3) // Defined in board files on PlatformIO untested on Arduino
       esp_pm_config_esp32c3_t pm_config; // Seems identical structure to the default ESP32 one ! 
@@ -199,7 +223,7 @@ void System_Power_Modem::sleep() {
 #endif
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 void System_Power_Deep::sleep() {
-  millis_offset = millis() + sleep_ms(); // Since millis() will reset to 0
+  millis_offset = millis() + millis_offset + sleep_ms(); // Since millis() will reset to 0
   esp_deep_sleep(sleep_us());
   Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
 }
@@ -256,6 +280,8 @@ void System_Power_Deep::recover() {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println(F("Power Management: recovering from Deep Sleep: ")); Serial.println(wake_count);
   #endif
+  // TODO-23 be smarter about doneFullAdvertise, for example could have powered up, failed to get comms, then slept. 
+  frugal_iot.discovery->doneFullAdvertise = true; // Assume did this before sleep
   // TODO-23 maybe will loop through sensors and actuators here are some pointers found elsewhere...
   // or maybe presumes all reset by the restart after deep sleep
 }

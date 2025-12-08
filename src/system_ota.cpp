@@ -7,7 +7,6 @@
 
 * Required: SYSTEM_OTA_PREFIX short string for different apps e.g. sht30
 * Required: SYSTEM_OTA_SUFFIX short string for boards e.g. d1_mini
-* Note these replace previous use of SYSTEM_OTA_KEY which was e.g. sht30_d1_mini
 * Optional: SYSTEM_OTA_DEBUG SYSTEM_OTA_MS SYSTEM_OTA_SERVERPORTPATH 
 * 
 * OTA was a pain to implement - had to move server to https, then it wouldn't connect and most of the published 

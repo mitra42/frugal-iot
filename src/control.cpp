@@ -18,7 +18,9 @@
 const char* groupAdvertLine  = "\n  -\n    group: %s\n    name: %s";
 
 Control::Control(const char * const id, const char* const name, std::vector<IN*> i, std::vector<OUT*> o)
-    : System_Base(id, name), inputs(i), outputs(o) { }
+  : System_Base(id, name), inputs(i), outputs(o) 
+  { 
+  }
 
 #ifdef CONTROL_DEBUG
 void Control::debug(const char* const where) {
@@ -33,17 +35,17 @@ void Control::debug(const char* const where) {
 #endif
 
 void Control::setup() {
-    for (auto &input : inputs) {
-        input->setup();
-    }
-    for (auto &output : outputs) {
-        output->setup();
-    }
-    readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+  for (auto &input : inputs) {
+      input->setup();
   }
+  for (auto &output : outputs) {
+      output->setup();
+  }
+  readConfigFromFS(); // Reads config (inputs or outputs) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+}
 
 void Control::act() {
-    // Default is to do nothing - though that will rarely be correct
+    // Default is to do nothing - though that will rarely be correct - expect this to be overridden
 }
 void Control::dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet) {
     bool changed = false;
@@ -65,6 +67,8 @@ void Control::dispatchTwig(const String &topicControlId, const String &topicTwig
     }
 }
 
+// dispatchPath is called so can check for wired connections to other devices i.e. inputs 
+// are checking "is this coming from the thing I am wired to"
 void Control::dispatchPath(const String &topicPath, const String &payload ) {
     bool changed = false;
     for (auto &input : inputs) {

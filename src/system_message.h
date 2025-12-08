@@ -21,7 +21,7 @@ class System_Message { // Only used for outgoing queued messages
     //~System_Message();
   protected:
     friend class System_Messages;
-    bool send();
+    bool send(); 
     const String topicPath;
     String payload;    // Retained payload
     // Only relevant/accurate on outgoing
@@ -39,7 +39,7 @@ class System_Messages : public System_Base {
     System_Messages();
     void subscribe(const String topicPath);
     // This will be re-overloaded as send, but keeping separate as deal with some mem leaks
-    void send(const String topicPath, const String payload, bool retain, uint8_t qos);
+    void send(const String topicPath, const String payload, bool retain, uint8_t qos);     // send and loopback
     String path(const char* id, const char* const leaf, const char* const leafparm);
     String path(const char* id, const char* const leaf);
     String path(char const * const topicTwig);
@@ -53,6 +53,7 @@ class System_Messages : public System_Base {
     std::list<System_Message> outgoing;
     std::list<System_Message> incoming;
     std::forward_list<System_Message> subscriptions;
+    void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos); // Only remote send, no loopback
     void sendOutgoingQueued();
     void dispatchIncomingQueued();
     void queueLoopback(const String &topicPath, const String &payload);

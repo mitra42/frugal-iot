@@ -25,6 +25,11 @@
     #define SYSTEM_SD_MISO 0
     #define SYSTEM_SD_MOSI 4
     #define SYSTEM_SD_PIN 6 // Default pin on the shield - if override theres a solder bridge to change
+  #else  // On S3T3 its SS, MOSI, MISO SCK but these are const's so cant #ifdef them - just try it and see if compiles
+    #define SYSTEMS_SD_SCK SCK
+    #define SYSTEM_SD_MISO MISO
+    #define SYSTEM_SD_MOSI MOSI
+    #define SYSTEM_SD_PIN SS
   #endif
 #endif
 

@@ -25,7 +25,11 @@ struct Texts {
         *RestartingPleaseWait,
         *LoraMesher_Gateway,
         *LoraMesher_Node,
-        *LoraMesher_Unconnected
+        *LoraMesher_Unconnected,
+        *SETWIFI,
+        *Tare,
+        *Calibrate,
+        *SettingsUpdated
         ;
 };
 

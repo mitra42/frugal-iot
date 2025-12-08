@@ -93,15 +93,15 @@ class INfloat : public IN {
     INfloat(); 
     INfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
+    float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
+    uint8_t width; // Cant be protected because used in e.g. control_oled_sht.cpp 
   protected:
     float value;
-    uint8_t width;
     float min;
     float max;
-    float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue() override;
     virtual String StringValue();
-    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     // Copy assignment operator
     /*
     INfloat& operator=(const INfloat &other) {
@@ -126,7 +126,7 @@ class INuint16 : public IN {
     //INuint16(); 
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, char const * const color, const bool wireable);
     INuint16(const INuint16 &other);
-    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void discover() override;
   protected:
     uint16_t min;
@@ -185,26 +185,26 @@ class INtext : public IN {
     bool convertAndSet(const String &payload) override;
     bool convertAndSet(const char* payload); // Used when setting in constructor etc
     void debug(const char* const where);
-    void discover() override;
+    //void discover() override;
 };
 
 // TO-ADD-OUTxxx
 class OUTfloat : public OUT {
   public:
-    float value;
-    uint8_t width;
-    float min;
-    float max;
+    uint8_t width; // Not protected because used in e.g. captive or OLED output
+    float min; // Not protected cos used in e.g. captive lines 
+    float max; // Not protected cos used in e.g. captive lines 
     OUTfloat();
     OUTfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     OUTfloat(const OUTfloat &other);
     void set(const float newvalue); // Set and send if changed
-    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void discover() override;
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;
     virtual String StringValue();
   protected:
+    float value;
     void debug(const char* const where);
 };
 class OUTbool : public OUT {
@@ -231,13 +231,26 @@ class OUTuint16 : public OUT {
     OUTuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool wireable);
     OUTuint16(const OUTuint16 &other);
     void set(const uint16_t newvalue);
-    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void discover() override;
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;
     virtual String StringValue();
   protected:
     void debug(const char* const where);
+};
+class OUTtext : public OUT {
+  public:
+    String value;
+    OUTtext(char const * const sensorId, char const * const id, const String name, const String v, char const * const color="#000000", const bool wireable=false);
+    void set(const String newvalue);
+    //bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
+    //void discover() override;
+    //float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
+    //bool boolValue() override;
+    virtual String StringValue();
+  protected:
+    //void debug(const char* const where);
 };
 
 #endif // BASE_H

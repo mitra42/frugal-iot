@@ -90,6 +90,8 @@ void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload,
 void System_Frugal::discover() {
   messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  // Commented out because already sending ota_key which contains it.
+  //messages->send(leaf2path("board"), SYSTEM_OTA_SUFFIX, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   Frugal_Group::discover();
 }
 
@@ -185,7 +187,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
     messages(new System_Messages()),
   // mqtt is added in main.cpp > configure_mqtt(host,user,password)
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
-    oled(new System_OLED(&OLED_WIRE)),
+    oled(new Actuator_OLED(&OLED_WIRE)),
   #endif // SYSTEM_OLED_WANT
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     ota(new System_OTA()),
@@ -197,6 +199,10 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #ifdef LED_BUILTIN // defined by board or _settings.h
     actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN)); // Default LED builtin actuator at default brightness and white
   #endif
+  #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
+    actuators->add(oled);
+  #endif
+  sensors->add(new Sensor_Health("health", "System"));
   add(actuators);
   add(sensors);
   add(controls);
@@ -206,9 +212,6 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   system->add(wifi);
   system->add(discovery);
   system->add(new System_Watchdog());
-  #ifdef SYSTEM_OLED_WANT
-    system->add(oled);
-  #endif
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     system->add(ota);
   #endif
@@ -290,18 +293,24 @@ void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
   // Encapsulate setting up and starting serial
   #ifdef ANY_DEBUG
     Serial.begin(baud);
+    /*
     while (!Serial) { 
       ; // wait for serial port to connect. Needed for Arduino Leonardo only
     }
+    */
+    //TODO-23 remove this delay when coming back from deep sleep.
     delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
     Serial.println(F("FrugalIoT Starting"));
   #endif // ANY_DEBUG  
 }
+#ifndef SERIAL_BAUD
+  #define SERIAL_BAUD 460800
+#endif
   
 void System_Frugal::startSerial() {
   // At least on my mac, Arduino has problems at higher speeds like 460800
   #ifdef PLATFORMIO
-    startSerial(460800, 5000);
+    startSerial(SERIAL_BAUD, 5000);
   #else
     startSerial(115200, 5000);
   #endif

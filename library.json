@@ -1,6 +1,6 @@
 {
     "name": "Frugal-IoT",
-    "version": "0.0.4",
+    "version": "0.0.9",
     "description": "A platform for affordable easily built sensors",
     "keywords": "frugal, arduino, esp32, iot, sensors",
     "authors": [
@@ -18,12 +18,15 @@
         { "name": "BH1750", "owner": "claws"},
         { "name": "Button2", "owner": "lennarthennigs"},
         { "name": "DHTNEW", "owner": "robtillaart"},
+        { "name": "SHT4x", "owner": "robtillaart"},
         { "name": "SHT85", "owner": "robtillaart"},
         { "name": "HX711", "owner": "robtillaart"},
-        { "name": "ESPAsyncWebServer", "owner": "ESP32Async", "platforms": ["espressif8266", "espressif32"]}
+        { "name": "ESPAsyncWebServer", "owner": "ESP32Async", "platforms": ["espressif8266", "espressif32"]},
+        { "name": "DallasTemperature", "owner": "milesburton" },
+        { "name": "OneWire", "owner": "paulstoffregen" }
     ],
     "frameworks": "arduino",
-    "platforms": "*",
+    "platforms": ["espressif32","espressif8266"],
     "repository": {
         "type": "git",
         "url": "https://github.com/mitra42/frugal-iot"

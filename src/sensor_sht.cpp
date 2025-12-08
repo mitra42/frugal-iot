@@ -29,28 +29,30 @@
 #include "_settings.h"  // Settings for what to include etc
 
 #include <Arduino.h>
-#include <SHT85.h>
 #include "sensor_sht.h"
 
-// TODO Add alternative constructor with id e.g. sht1, sht2 etc
-Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, bool retain) 
+Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, bool retain)
   : Sensor_HT("sht", name, retain), 
     address(address_init) {
-  //TODO move most of this to setup rather than constructor
-  //
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   // Defaults to system defined SDA and SCL 
   wire->begin(I2C_SDA, I2C_SCL);  // These are defined in _settings.h as SDA and SCL unless there is board specifics
-  wire->setClock(100000);
-
+  wire->setClock(100000); // Can probably go faster - as fast as 850k on SHT40
   sht = new SENSOR_SHT_DEVICE(address, wire);
+}
+
+void Sensor_SHT::setup() {
+  Sensor_HT::setup(); 
   sht->begin();
   #ifdef SENSOR_SHT_DEBUG
     Serial.print(F("address: ")); Serial.print(address, HEX);
-    Serial.print(F(" status: ")); Serial.print(sht->readStatus(), HEX);
+    #ifndef SENSOR_SHT_SHT4x
+      Serial.print(F(" status: ")); Serial.print(sht->readStatus(), HEX); // Wont work on SHT4x
+    #endif
     Serial.println();
   #endif // SENSOR_SHT_DEBUG
   sht->requestData(); // Initial request queued up  (loop is to read data and queue up next read)
+  // TODO-23 this looks wrong in the case of a longer loop, we'll be returning a wrong answer from a previous read. 
 }
 
 void Sensor_SHT::readValidateConvertSet() {

@@ -44,7 +44,7 @@
 #if defined(SENSOR_ANALOG_DEBUG) 
   #define SENSOR_UINT16_DEBUG
 #endif
-#if defined(SENSOR_BH1750_DEBUG)
+#if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
 #if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)
@@ -121,7 +121,7 @@
 #endif
 
 // Define boards which have LoRa and should include LoRaMesher automatically
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X)
+#if defined(SYSTEM_LORAMESHER_BAND) // || defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) 
   #define SYSTEM_LORAMESHER_WANT
 #endif
 
@@ -139,7 +139,7 @@
 #define SYSTEM_WIFI_WANT  // currently always wanted
 
 // Define boards which have built in OLED and should include automatically
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X)
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(OLED_SDA)
   #define SYSTEM_OLED_WANT
 #endif
 
@@ -162,11 +162,7 @@
     // Cant get it to work on this socket, read somewhere about board surgery (resistor removal or addition) required but cant find the reference now
     //#define I2C_SDA SDA1 // 10
     //#define I2C_SCL SCL1  // 21
-  #elif defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_v21new)
-    #define I2C_WIRE Wire
-    #define I2C_SDA SDA
-    #define I2C_SCL SCL
-  #else
+  #else // confirmed for ARDUINO_TTGO_LoRa32_v2, ARDUINO_TTGO_LoRa32_v21new
     // Use system defined ones
     #define I2C_WIRE Wire
     #define I2C_SDA SDA

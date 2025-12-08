@@ -4,6 +4,8 @@
  * to a Google Sheet
  * 
  * See https://github.com/mitra42/frugal-iot/issues/136
+ * This was never completed becaause the functionality is already there in frugal-iot-logger and operating at the 
+ * server side. 
  * 
  * Thanks to Abrar at Kopernik for the idea
 */
