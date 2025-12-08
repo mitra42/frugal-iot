@@ -49,29 +49,6 @@ Sensor_Button::Sensor_Button(const char * const id, const char * const name, uin
   button->setID(frugal_iot.buttons->group.size());
 }
 
-// Unclear how would use an "OUT" as its not dependent on a change
-void Sensor_Button::clickHandlerInner(const clickType type) {
-  output->set(type);
-}
-void Sensor_Button::clickHandler(const Button2& btn) {
-  handler(btn)->clickHandlerInner(single_click);
-}
-
-void Sensor_Button::longClickHandler(const Button2& btn) {
-  handler(btn)->clickHandlerInner(long_click);
-}
-
-void Sensor_Button::doubleClickHandler(const Button2& btn) {
-  handler(btn)->clickHandlerInner(double_click);
-}
-
-void Sensor_Button::tripleClickHandler(const Button2& btn) {
-  handler(btn)->clickHandlerInner(triple_click);
-}
-// Map a button id (inside a Button2) to a Sensor_Button (from the frugal_iot.buttons group).
-Sensor_Button* Sensor_Button::handler(const Button2& button) {
-  return (Sensor_Button*)frugal_iot.buttons->group[button.getID()];
-}
 void Sensor_Button::setup() {
   System_Base::setup(); // Will readConfigFromFS - do before setting up pins
   button->begin(pin);
