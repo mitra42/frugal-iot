@@ -26,15 +26,11 @@ Control_Blinken::Control_Blinken (const char* const id, const char * const name,
   #endif
 };
 
-void ControlBlinken::timer_set(unsigned long t) {
+void Control_Blinken::timer_set(unsigned long t) {
   frugal_iot.powercontroller->timer_set(timer_index, t);
 }
 
-void ControlBlinken::timer_set(unsigned long t) {
-  frugal_iot.powercontroller->timer_set(timer_index, t);
-}
-
-void ControlBlinken::act() {
+void Control_Blinken::act() {
   // If calling act, then we know blinkSpeed changed
   blinkOn = inputs[0]->floatValue() * 1000;
   blinkOff = inputs[1]->floatValue() * 1000;
