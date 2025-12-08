@@ -13,9 +13,9 @@
 #include "Frugal-IoT.h"
 #include "cmath" // for std::isnan
 
-Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain) 
-: Sensor(id, name, retain),
-  output(new OUTfloat(id, id, name, 0, width, min, max, color, false)), // Note id same as sensor id
+Sensor_Float::Sensor_Float(const char* const moduleId, const char* const leafId, const char * const moduleName,const char * const leafName, uint8_t width, float min, float max, const char* color, bool retain)
+: Sensor(moduleId, moduleName, retain),
+  output(new OUTfloat(moduleId, leafId, leafName, 0, width, min, max, color, false)), // Note id same as sensor id
   width(width) { 
     outputs.push_back(output);
   };

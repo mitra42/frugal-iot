@@ -19,7 +19,7 @@
 
 class Sensor_Analog : public Sensor_Float {
   public:
-    Sensor_Analog(const char* const id, const char * const name, const uint8_t pin, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool retain);
+    Sensor_Analog(const char* const moduleId, const char * const moduleName, const char * const leafId, const char * const leafName, const uint8_t pin, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool retain);
   protected:
     uint8_t pin;    
     int offset;

@@ -32,7 +32,7 @@
 //TODO-134 need to tell it the size of the load cell
 Sensor_LoadCell::Sensor_LoadCell(const char* const id, const char * const name, float max, const char* color, const bool retain, 
   uint8_t DOUTpin, uint8_t SCKpin, uint8_t times, int32_t offset, int32_t scale)
-  : Sensor_Float(id, name, 3, 0, max, color, retain), 
+  : Sensor_Float(id, "weight", name, "Weight", 3, 0, max, color, retain), 
     hx711(new HX711()),
     // TODO-C37 normalize times/offset/scale for other analog
     times(times),

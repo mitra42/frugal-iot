@@ -92,7 +92,7 @@ void setup() {
   
   // The salt sensor (for LilyGo HiGrow) does not seem to work - got incorrect readings. TODO debug
   // Salt sensor 0%=0 100%=5000 pin=34 color=green
-  frugal_iot.sensors->add(new Sensor_Analog("salt", "Salt", 34, 1, 0, 100, 0, 0.02, "green", true));
+  frugal_iot.sensors->add(new Sensor_Analog("salt", "salt", "Salt", "Salt", 34, 1, 0, 100, 0, 0.02, "green", true));
   
 
   // ========= Actuators  ==============

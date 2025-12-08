@@ -7,7 +7,7 @@
 
 class Sensor_Float : public Sensor {
   public:
-    Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain);
+    Sensor_Float(const char* const moduleId, const char* const leafId, const char * const moduleName,const char * const leafName, uint8_t width, float min, float max, const char* color, bool retain);
   protected:
     OUTfloat* output;
     uint8_t width;

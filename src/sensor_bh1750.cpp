@@ -11,7 +11,7 @@
 // TODO need a way to useful handle logarithnic values like lux - more of a UX issue than a node issue
 // Practical range of lux unknown - apparantly can go from 0.001 to 65k 
 Sensor_BH1750::Sensor_BH1750( const char* const id, const char * const name, const uint8_t addr, TwoWire* wire, const bool retain)
-  : Sensor_Float(id, name, 3, 0, 65000, "yellow", retain), 
+  : Sensor_Float(id, "lumens", name, "Lumens", 3, 0, 65000, "yellow", retain), 
     addr(addr), wire(wire), lightmeter(addr) {
   }
 
