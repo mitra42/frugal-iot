@@ -182,7 +182,9 @@ void System_Power_Loop::prepare() {
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 void System_Power_Light::prepare() {
   System_Power_Mode::prepare();
-  frugal_iot.wifi->prepareForLightSleep(); 
+  if (frugal_iot.wifi != nullptr) {
+    frugal_iot.wifi->prepareForLightSleep();
+  } 
 }
 #endif
 // ================== sleep =========== called from maybeSleep ========= TO-ADD-POWERMODE
@@ -255,7 +257,7 @@ void System_Power_Light::recover() {
     frugal_iot.oled->display.print("Recovering from Light Sleep");  
     frugal_iot.oled->display.display();
   #endif
-  if (frugal_iot.wifi->recoverFromLightSleep()) {
+  if (frugal_iot.wifi != nullptr && frugal_iot.wifi->recoverFromLightSleep()) {
     frugal_iot.mqtt->recoverFromLightSleep(); // New or old session
   } 
 }

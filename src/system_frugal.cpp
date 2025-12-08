@@ -167,7 +167,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #endif
   fs_LittleFS(new System_LittleFS()),
   time(nullptr), // time is optional and setup by main.cpp if needed
-  wifi(new System_WiFi())
+  wifi(nullptr)  // Delay WiFi creation until pre_setup() to avoid lwip_init crash during global construction
 {
   #ifdef LED_BUILTIN // defined by board or _settings.h
     actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN)); // Default LED builtin actuator at default brightness and white
@@ -178,7 +178,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   add(buttons); // optimizing by not adding this - its only needed for looping for infrequently()
   system->add(fs_LittleFS);
   system->add(messages);
-  system->add(wifi);
+  // wifi will be added in pre_setup() to avoid lwip_init crash during global construction
   system->add(discovery);
   system->add(new System_Watchdog());
   #ifdef SYSTEM_OLED_WANT
@@ -207,6 +207,13 @@ void System_Frugal::pre_setup() {
   startSerial(); // Encapsulate setting up and starting serial
   fs_LittleFS->pre_setup();
   powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
+  
+  // Create WiFi object now (after Serial is initialized) to avoid lwip_init crash during global construction
+  if (wifi == nullptr) {
+    wifi = new System_WiFi();
+    system->add(wifi);
+  }
+  
   readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig
 }
 void System_Frugal::setup() {
@@ -278,16 +285,16 @@ void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
   
 void System_Frugal::startSerial() {
   // At least on my mac, Arduino has problems at higher speeds like 460800
-  #ifdef PLATFORMIO
-    startSerial(460800, 5000);
-  #else
-    startSerial(115200, 5000);
-  #endif
+  // #ifdef PLATFORMIO
+    
+  // #else
+  startSerial(115200, 5000);
+  // startSerial(460800, 5000);
 }
 
 // Called by OTA byt checking other modules
 bool System_Frugal::canOTA() {
-  return wifi->connected();
+  return wifi != nullptr && wifi->connected();
 }
 bool System_Frugal::canMQTT() {
   return mqtt->connected();
