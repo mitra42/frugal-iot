@@ -5,6 +5,7 @@
 Actuator	KEYWORD1
 Actuator_Digital	KEYWORD1
 Actuator_Ledbuiltin	KEYWORD1
+Actuator_OLED	KEYWORD1
 Control	KEYWORD1
 Control_Blinken	KEYWORD1
 ControlHysterisis	KEYWORD1
@@ -53,7 +54,6 @@ System_LoraMesher	KEYWORD1
 System_MQTT	KEYWORD1
 System_Message	KEYWORD1
 System_Messages	KEYWORD1
-Actuator_OLED	KEYWORD1
 System_OTA	KEYWORD1
 System_Power_Deep	KEYWORD1
 System_Power_Light	KEYWORD1
