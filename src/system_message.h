@@ -49,15 +49,15 @@ class System_Messages : public System_Base {
     bool reSubscribeAll(); // Called by MQTT after reconnection
     void queueIncoming(const String &topicPath, const String &payload); // Called by MQTT and LoRaMesher
     void queueFromCaptive(const String &twig, const String &payload);
+    void queueLoopback(const String &topicPath, const String &payload);
+    void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos); // Only remote send, no loopback
   protected:
     friend class System_Message;
     std::list<System_Message> outgoing;
     std::list<System_Message> incoming;
     std::forward_list<System_Message> subscriptions;
-    void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos); // Only remote send, no loopback
     void sendOutgoingQueued();
     void dispatchIncomingQueued();
-    void queueLoopback(const String &topicPath, const String &payload);
     void setup();
     void loop();
 };

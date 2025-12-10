@@ -5,6 +5,8 @@
 #include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
 #include "ESPAsyncWebServer.h" // for AsyncResponseStream"
 
+#include "_settings.h" // For MQTT_RETAIN
+
 extern const char* valueAdvertLineFloat;
 extern const char* valueAdvertLineBool;
 extern const char* wireAdvertLine;
@@ -82,7 +84,7 @@ class OUT : public IO {
     // TO-ADD-OUTxxx
     virtual float floatValue();
     virtual bool boolValue();
-    virtual void sendWired();
+    virtual void sendWired(bool retain = MQTT_RETAIN, uint8_t qos = MQTT_QOS_ATLEAST1);
     bool dispatchLeaf(const String &leaf, const String &payload, bool isSet) override; // Just checks control
   protected: // Most of IN appears to need to be public
 };

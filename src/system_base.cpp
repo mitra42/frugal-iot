@@ -372,17 +372,19 @@ bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     bool dispatched = false;
   if (leaf.startsWith(id)) {
-    uint16_t v = p.toInt(); // TODO is this really toFloat ? 
+    uint16_t v = p.toInt();
     if (leaf.endsWith("/max")) {
       max = v;      
       dispatched = true;
     } else if (leaf.endsWith("/min")) {
       min = v;
       dispatched = true;
-    } else if (leaf.endsWith("/cycle")) {
-      value += v; // TODO-159 need to handle negative value
-      while (value > max) { value -= ((max-min)+1); };
-      while (value < min) { value += ((max-min)+1); };
+    } else if (leaf.endsWith("/cycle")) { //TODO move to a function of OUTuint16
+      // Complexity here is because this is a uint16 and cycling below min may go negative 
+      int16_t newvalue = value + (int16_t)v;
+      if (newvalue > max) { newvalue = min;};
+      if (newvalue < min) { newvalue = max;};
+      value = (uint16_t)newvalue;
     }
     if (dispatched) {
       writeConfigToFS(leaf, p);  
@@ -642,9 +644,18 @@ OUTuint16::OUTuint16(const OUTuint16 &other)
 
 // TO_ADD_OUTxxx
 // Called when either value, or wiredPath changes
-void OUT::sendWired() {
+void OUT::sendWired(bool retain, uint8_t qos) {
   if (wiredPath.length()) {
-    frugal_iot.messages->send(wiredPath, StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    // Three possibilities = normal = send+loop qos=2 & local = loopback; qos=2 & remote = sendRemote
+    if (qos == MQTT_QOS_EXACTLY1) {
+      if (wiredPath.startsWith(frugal_iot.messages->topicPrefix)) {
+        frugal_iot.messages->queueLoopback(wiredPath, StringValue());
+      } else {
+        frugal_iot.messages->sendRemote(wiredPath, StringValue(), retain, qos);
+      }
+    } else {
+      frugal_iot.messages->send(wiredPath, StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    }
   }
 }
 // TO-ADD-OUTxxx

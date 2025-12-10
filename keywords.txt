@@ -13,7 +13,7 @@ Control_Gsheets	KEYWORD1
 Control_Logger	KEYWORD1
 Control_LoggerFS	KEYWORD1
 Control_Oled	KEYWORD1
-Frugal_Group	KEYWORD1
+System_Group	KEYWORD1
 IN	KEYWORD1
 INbool	KEYWORD1
 INcolor	KEYWORD1

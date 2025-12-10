@@ -22,9 +22,11 @@
 #include "actuator_ledbuiltin.h"
 #include "sensor_health.h"
 #include "system_base.h"
+#include "system_buttons.h"
 #include "system_captive.h"
 #include "system_discovery.h"
 #include "system_fs.h"
+#include "system_group.h"
 #include "system_language.h"
 #ifdef ESP32
 #include "system_loramesher.h"
@@ -38,35 +40,7 @@
 #include "system_watchdog.h"
 #include "system_wifi.h"
 
-class Frugal_Group : public System_Base {
-  public:
-    std::vector<System_Base*> group;
-    Frugal_Group(const char * const id, const char * const name);
-    void setup();
-    void setup_after_wifi();
-    void setup_after_mqtt();
-    void add(System_Base* fb);
-    void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet); 
-    void dispatchPath(const String &topicPath, const String &payload) override; // Only currently relevant on controls
-    void discover() override;
-    void loop() override;
-    void periodically() override;
-    void infrequently() override;
-    void captiveLines(AsyncResponseStream* response) override; 
-};
-
-// TODO-159 own file ? 
-class System_Buttons : public Frugal_Group {
-  public:
-    std::vector<OUT*> outputs; // Vector of outputs
-    System_Buttons(const char* const id, const char* const name);
-  protected:
-    void setup();
-    void dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet);
-    void discover();
-};
-
-class System_Frugal : public Frugal_Group {
+class System_Frugal : public System_Group {
   public:
     // Configuration strings 
     String org;
@@ -74,10 +48,10 @@ class System_Frugal : public Frugal_Group {
     String description; 
     const String nodeid; // Unique id - starts esp32- or esp8266-
     // Pointers to other Frugal_Base objects or groups of objects
-    Frugal_Group* actuators;
-    Frugal_Group* sensors;
-    Frugal_Group* controls;
-    Frugal_Group* system;
+    System_Group* actuators;
+    System_Group* sensors;
+    System_Group* controls;
+    System_Group* system;
     System_Buttons* buttons;
     System_Captive* captive;
     System_Discovery* discovery;

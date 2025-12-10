@@ -18,19 +18,19 @@ Sensor_Button* button(Button2& button) {
 }
 
 void clickHandler(Button2& btn) {
-  button(btn)->singleClick->sendWired();
+  button(btn)->singleClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
 }
 
 void longClickHandler(Button2& btn) {
-  button(btn)->longClick->sendWired();
+  button(btn)->longClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
 }
 
 void doubleClickHandler(Button2& btn) {
-  button(btn)->doubleClick->sendWired();
+  button(btn)->doubleClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
 }
 
 void tripleClickHandler(Button2& btn) {
-  button(btn)->tripleClick->sendWired();
+  button(btn)->tripleClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
 }
 
 

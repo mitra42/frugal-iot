@@ -171,5 +171,10 @@
 #endif
 
 
+// Pin definitions that should really be in the variant files could submit PR
+#ifdef ARDUINO_LOLIN_S2_MINI
+  #define BUILTIN_BUTTON 0 // This is GPIO0, on pin 5, 
+#endif
+
 
 #endif // _SETTINGS_H
