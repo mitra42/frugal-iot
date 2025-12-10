@@ -36,7 +36,7 @@ void setup() {
 
   ControlHysterisis* ch = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(ch);
-  ch->outputs[0]->wireTo(frugal_iot.messages->path("relay/on")); // TODO refactor wireTo so can take a Base
+  ch->outputs[0]->wireTo(frugal_iot.messages->setPath("relay/on")); // TODO refactor wireTo so can take a Base
 
   // https://github.com/mitra42/frugal-iot/issues/159
 

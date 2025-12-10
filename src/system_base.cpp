@@ -297,7 +297,7 @@ bool IN::dispatchPath(const String &tp, const String &p) {
 
 bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
-    if (leaf.startsWith(id) && leaf.endsWith("/wired")) {
+    if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // We are changing the path, not sending a value
       if (!(p == wiredPath)) {
         wiredPath = p; // Copies p
         sendWired(); // Destination changed, send current value

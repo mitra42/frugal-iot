@@ -130,6 +130,7 @@ void Frugal_Group::infrequently() {
 }
 void Frugal_Group::captiveLines(AsyncResponseStream* response) 
   { for (System_Base* fb: group) { fb->captiveLines(response); } }
+  
 void Frugal_Group::dispatchPath(const String &topicPath, const String &payload) 
   { for (System_Base* fb: group) { fb->dispatchPath(topicPath, payload); } }
 

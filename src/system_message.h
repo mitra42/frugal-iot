@@ -41,6 +41,7 @@ class System_Messages : public System_Base {
     // This will be re-overloaded as send, but keeping separate as deal with some mem leaks
     void send(const String topicPath, const String payload, bool retain, uint8_t qos);     // send and loopback
     String path(const char* id, const char* const leaf, const char* const leafparm);
+    String setPath(char const * const topicTwig);
     String path(const char* id, const char* const leaf);
     String path(char const * const topicTwig);
     String path(const String topicTwig); 

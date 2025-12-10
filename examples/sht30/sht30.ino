@@ -43,7 +43,7 @@ void setup() {
   // If required, add a control - this is just an example
   //ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
   //frugal_iot.controls->add(cb);
-  //cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/on"));
+  //cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
   #ifdef SYSTEM_OLED_WANT
     Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED");
