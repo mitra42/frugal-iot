@@ -54,7 +54,7 @@
 
 class Sensor_Battery : public Sensor_Analog {
   public: 
-    Sensor_Battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider);
+    Sensor_Battery(const uint8_t pin, float_t voltage_divider);
     #if defined(SENSOR_BATTERY_VOLTAGE_DIVIDER) && defined(SENSOR_BATTERY_PIN)
       Sensor_Battery(); // Where SENSOR_BATTERY_PIN and SENSOR_BATTERY_VOLTAGE_DIVIDER defined 
     #endif

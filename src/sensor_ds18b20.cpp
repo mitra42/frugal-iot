@@ -42,7 +42,7 @@ void Sensor_DS18B20::setup() {
  * @param v The temperature value to validate
  * @return bool True if the value is valid, false otherwise
  */
-bool Sensor_DS18B20_Validated::validate(float v) {
+bool Sensor_DS18B20::validate(float v) {
     return !std::isnan(v) && (v < 80);
 }
 

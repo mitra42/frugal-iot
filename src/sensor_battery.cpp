@@ -50,7 +50,4 @@ Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider)
     : Sensor_Battery(SENSOR_BATTERY_PIN, SENSOR_BATTERY_SCALE)
       { }
 
-
-
-
 #endif // SENSOR_BATTERY_VOLTAGE_DIVIDER && SENSOR_BATTERY_PIN
