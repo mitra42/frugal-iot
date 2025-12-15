@@ -18,20 +18,22 @@
 
 #include "sensor_analog.h"
 
- // Defines defaults - can use SENSOR_BATTERY_VOLTAGE_DIVIDER in main.cpp
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINIPRO // Note only works on D1 mini pro V2 (the Green one)
-  #define SENSOR_BATTERY_VOLTAGE_DIVIDER 4.5 // (130+220+100)/100 i.e. 1V on A0 when 4.5 on batt 
-#elif defined(ARDUINO_LOLIN_C3_PICO)
-  #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Maybe board specific but most I see have 2 equal resistors
-#elif defined(LILYGOHIGROW)
-  #define SENSOR_BATTERY_VOLTAGE_DIVIDER 6.6 // From LilyGo code, not testd yet
-#elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
-  #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Almost certainly wrong ! Define for this board TO-ADD-BOARD
-#elif defined(ARDUINO_heltec_wifi_lora_32_V3)
-  #define SENSOR_BATTERY_VOLTAGE_DIVIDER 4.9
-#else 
-  #define SENSOR_BATTERY_VOLTAGE_DIVIDER 1 // Almost certainly wrong ! Define for this board TO-ADD-BOARD
-#endif 
+#ifndef SENSOR_BATTERY_VOLTAGE_DIVIDER
+  // Defines defaults - can use SENSOR_BATTERY_VOLTAGE_DIVIDER in main.cpp
+  #ifdef ARDUINO_ESP8266_WEMOS_D1MINIPRO // Note only works on D1 mini pro V2 (the Green one)
+    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 4.5 // (130+220+100)/100 i.e. 1V on A0 when 4.5 on batt 
+  #elif defined(ARDUINO_LOLIN_C3_PICO)
+    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Maybe board specific but most I see have 2 equal resistors
+  #elif defined(LILYGOHIGROW)
+    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 6.6 // From LilyGo code, not testd yet
+  #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
+    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Almost certainly wrong ! Define for this board TO-ADD-BOARD
+  #elif defined(ARDUINO_heltec_wifi_lora_32_V3)
+    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 4.9
+  #else 
+    //Leave undefined and don't allow default constructor
+  #endif 
+#endif
 
 #ifndef SENSOR_BATTERY_PIN
   #if defined BAT_VOLT_PIN // Have submitted a PR that has not gone live yet that defines this for all boards that support it
@@ -45,14 +47,17 @@
   // - look in e.g. ~/.platformio/platforms/espressif32/boards/lilygo-t3-s3.json for the board name define and variant file name
   // - look in ~/.platformio/packages/framework-arduinoespressif32/variants/lilygo_t3_s3_sx127x/pins_arduino.h for which way it defines the battery pin
   #else 
-    #define SENSOR_BATTERY_PIN 255 // Wont be on this pin, but allows code to compile on unknown board
+    //Leave undefined and don't allow default constructor
   #endif
   // See https://github.com/espressif/arduino-esp32/issues/11953 for suggestion to fix this problem
 #endif
 
 class Sensor_Battery : public Sensor_Analog {
   public: 
-    Sensor_Battery(const uint8_t pin = SENSOR_BATTERY_PIN);
+    Sensor_Battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider);
+    #if defined(SENSOR_BATTERY_VOLTAGE_DIVIDER) && defined(SENSOR_BATTERY_PIN)
+      Sensor_Battery(); // Where SENSOR_BATTERY_PIN and SENSOR_BATTERY_VOLTAGE_DIVIDER defined 
+    #endif
   protected:
     #ifdef ESP32
       int readInt() override;
