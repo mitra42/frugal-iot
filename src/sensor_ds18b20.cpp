@@ -26,8 +26,7 @@ void Sensor_DS18B20::setup() {
     // Set 12-bit resolution for full precision (0.0625°C)
     _sensors.setResolution(12);
     #ifdef SENSOR_DS18B20_DEBUG
-        Serial.print(F("DS18B20 sensor initialized on index ")); 
-        Serial.print(_index);
+        Serial.print(F("DS18B20 sensor initialized on index ")); Serial.println(_index);
         Serial.print(F(" with resolution: "));
         Serial.println(_sensors.getResolution());
     #endif
@@ -49,7 +48,22 @@ bool Sensor_DS18B20::validate(float v) {
 }
 
 /**
- * @brief Reads temperature from the specified DS18B20 sensor with full precision
+ * @brief Validates the temperature reading
+ * 
+ * The DS18B20 sensor returns 85°C as its power-on reset value, which indicates
+ * an error or uninitialized state. This override rejects:
+ * - NaN values (disconnected sensor)
+ * - Values >= 80°C (likely power-on reset or error values)
+ * 
+ * @param v The temperature value to validate
+ * @return bool True if the value is valid, false otherwise
+ */
+bool Sensor_DS18B20::validate(float v) {
+    return !std::isnan(v) && (v < 80);
+}
+
+/**
+ * @brief Reads temperature from the specified DS18B20 sensor with full precision with full precision
  * 
  * Requests temperature data from all devices on the OneWire bus and then
  * retrieves the temperature for the configured sensor index.

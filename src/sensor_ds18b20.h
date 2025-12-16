@@ -1,5 +1,8 @@
 // DS18B20 waterproof temperature sensor for soil or environment monitoring
 // Supports multiple sensors on a single OneWire bus using sensor index.
+// The DS18B20 sensor returns 85°C as its power-on reset value, which is invalid.
+// This class overrides validate() to filter out these bad readings and
+// returns full precision temperature values (no rounding).
 
 #ifndef SENSOR_DS18B20_H
 #define SENSOR_DS18B20_H
@@ -8,6 +11,13 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+/**
+ * @brief DS18B20 sensor with validation and full precision
+ * 
+ * Inherits from Sensor_Float and provides:
+ * - Validation to reject NaN and values >= 80°C (power-on reset is 85°C)
+ * - Full precision temperature readings (no rounding)
+ */
 class Sensor_DS18B20 : public Sensor_Float {
 public:
     /**
@@ -26,7 +36,7 @@ public:
 
 protected:
     /**
-     * @brief Reads the current temperature in Celsius
+     * @brief Reads the current temperature in Celsius with full precision
      * @return float Temperature value or NAN if disconnected
      */
     float readFloat() override;
