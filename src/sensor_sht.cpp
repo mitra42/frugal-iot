@@ -57,13 +57,7 @@ void Sensor_SHT::setup() {
 
 bool Sensor_SHT::validate(float temp, float humy) {
     // Reject if both temperature and humidity are zero simultaneously
-    if (temp == 0.0f && humy == 0.0f) {
-        #ifdef SENSOR_SHT_DEBUG
-            Serial.println(F("SHT Validated: Rejecting invalid reading (both temp and humidity are zero)"));
-        #endif
-        return false;
-    }
-    return true;
+    return !(temp == 0.0f && humy == 0.0f);
 }
 void Sensor_SHT::readValidateConvertSet() {
   #ifdef SENSOR_SHT_DEBUG

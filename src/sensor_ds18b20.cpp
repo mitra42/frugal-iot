@@ -1,4 +1,5 @@
 #include "sensor_ds18b20.h"
+#include <cmath>
 
 /**
  * @brief Constructor
@@ -8,7 +9,7 @@
  * Color label "orange" for UI or visualization systems.
  */
 Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain)
-    : Sensor_Float(id, name, 2, -55, 125, "orange", retain),
+    : Sensor_Float(id, name, 1, -55, 125, "orange", retain),  // width=1 for 1 decimal place
       _oneWire(pin),
       _sensors(&_oneWire),
       _index(index) {}
@@ -47,7 +48,22 @@ bool Sensor_DS18B20::validate(float v) {
 }
 
 /**
- * @brief Reads temperature from the specified DS18B20 sensor with full precision
+ * @brief Validates the temperature reading
+ * 
+ * The DS18B20 sensor returns 85°C as its power-on reset value, which indicates
+ * an error or uninitialized state. This override rejects:
+ * - NaN values (disconnected sensor)
+ * - Values >= 80°C (likely power-on reset or error values)
+ * 
+ * @param v The temperature value to validate
+ * @return bool True if the value is valid, false otherwise
+ */
+bool Sensor_DS18B20::validate(float v) {
+    return !std::isnan(v) && (v < 80);
+}
+
+/**
+ * @brief Reads temperature from the specified DS18B20 sensor with full precision with full precision
  * 
  * Requests temperature data from all devices on the OneWire bus and then
  * retrieves the temperature for the configured sensor index.
