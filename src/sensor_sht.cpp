@@ -76,7 +76,14 @@ void Sensor_SHT::readValidateConvertSet() {
         Serial.println(F("%"));
       #endif
 
-      set(temp, humy); // Set the values in the OUT object and send
+      // Validate: reject if both temperature and humidity are zero (indicates sensor error)
+      if (temp == 0.0f && humy == 0.0f) {
+        #ifdef SENSOR_SHT_DEBUG
+          Serial.println(F("SHT: Rejecting invalid reading (both temp and humidity are zero)"));
+        #endif
+      } else {
+        set(temp, humy); // Set the values in the OUT object and send
+      }
 
       // Note only request more Data if was dataReady
       sht->requestData(); // Request next one

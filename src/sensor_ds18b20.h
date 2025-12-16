@@ -32,6 +32,14 @@ protected:
     float readFloat() override;
 
     /**
+     * @brief Validates the temperature reading
+     * Rejects NaN values and values >= 80°C (DS18B20 power-on reset is 85°C)
+     * @param v The temperature value to validate
+     * @return bool True if the value is valid
+     */
+    bool validate(float v) override;
+
+    /**
      * @brief Initializes the sensor bus and prepares communication
      */
     void setup() override;
