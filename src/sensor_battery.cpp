@@ -24,22 +24,27 @@ Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider)
 : Sensor_Analog("battery", "Battery", pin_init, 0, 0, 4.5, 0, voltage_divider, "green", true) //TODO-1
   { }
 
+// ESP32 readInt() override - must be outside conditional block to avoid vtable errors
+// when using the 2-parameter constructor on boards without default SENSOR_BATTERY_PIN/VOLTAGE_DIVIDER
+#ifdef ESP32
+int Sensor_Battery::readInt() {
+  return analogReadMilliVolts(pin);  // returns uint32 
+}
+#endif // ESP32
+
 #if defined(SENSOR_BATTERY_VOLTAGE_DIVIDER) && defined(SENSOR_BATTERY_PIN)
   #ifdef ESP8266 // analogReadMilliVolts not available
 
-    #define ANALOG_READ_RANGE 1024 // THis can be board/chip specific, 
+    #define ANALOG_READ_RANGE 1024 // This can be board/chip specific, 
     #define VCC_MILLIVOLTS 1000.0 // Voltage at chip pin at which we get ANALOG_READ_RANGE
     // Note that on some boards -  the voltage divider for the battery is different than for pin A0
     // e.g. ARDUINO_ESP8266_WEMOS_D1MINIPRO (V2) - batt = (130+220+100)/100 while A0 is just (220+100)/100
 
     #define SENSOR_BATTERY_SCALE (SENSOR_BATTERY_VOLTAGE_DIVIDER * VCC_MILLIVOLTS) / ANALOG_READ_RANGE 
 
-    // readInt() will defautl to read this pin
+    // readInt() will default to read this pin
     // convert() will apply scale
   #else  // ESP32
-    int Sensor_Battery::readInt() {
-      return analogReadMilliVolts(pin);  // returns uint32 
-    }
     #ifdef SENSOR_BATTERY_VOLTAGE_DIVIDER
       #define SENSOR_BATTERY_SCALE (SENSOR_BATTERY_VOLTAGE_DIVIDER)
     #endif
