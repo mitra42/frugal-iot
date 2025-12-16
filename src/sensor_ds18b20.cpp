@@ -48,21 +48,6 @@ bool Sensor_DS18B20::validate(float v) {
 }
 
 /**
- * @brief Validates the temperature reading
- * 
- * The DS18B20 sensor returns 85°C as its power-on reset value, which indicates
- * an error or uninitialized state. This override rejects:
- * - NaN values (disconnected sensor)
- * - Values >= 80°C (likely power-on reset or error values)
- * 
- * @param v The temperature value to validate
- * @return bool True if the value is valid, false otherwise
- */
-bool Sensor_DS18B20::validate(float v) {
-    return !std::isnan(v) && (v < 80);
-}
-
-/**
  * @brief Reads temperature from the specified DS18B20 sensor with full precision with full precision
  * 
  * Requests temperature data from all devices on the OneWire bus and then
