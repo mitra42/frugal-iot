@@ -12,6 +12,7 @@
 #include "sensor_bh1750.h"
 #include "sensor_button.h"
 #include "sensor_ds18b20.h"
+#include "sensor_ina219.h"
 #include "sensor_ms5803.h"
 #include "sensor_loadcell.h"
 #include "sensor_ens160aht21.h"
