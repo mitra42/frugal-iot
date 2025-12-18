@@ -35,16 +35,18 @@ void Sensor_DS18B20::setup() {
 /**
  * @brief Validates the temperature reading
  * 
- * The DS18B20 sensor returns 85°C as its power-on reset value, which indicates
- * an error or uninitialized state. This override rejects:
- * - NaN values (disconnected sensor)
- * - Values >= 80°C (likely power-on reset or error values)
+ * The DS18B20 sensor can return invalid values:
+ * - 85°C: power-on reset value (sensor not initialized)
+ * - 0°C: sometimes returned during startup before sensor is ready
+ * - NaN: sensor disconnected
+ * 
+ * This override rejects all these invalid readings.
  * 
  * @param v The temperature value to validate
  * @return bool True if the value is valid, false otherwise
  */
 bool Sensor_DS18B20::validate(float v) {
-    return !std::isnan(v) && (v < 80);
+    return !std::isnan(v) && (v != 0.0f) && (v < 80);
 }
 
 /**
