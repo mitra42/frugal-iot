@@ -1,3 +1,5 @@
+// WARNING - THIS COMPILES BUT IS UNTESTED 
+
 // INA219 Current/Voltage/Power Monitor Sensor
 // Adafruit INA219 Guide: https://learn.adafruit.com/adafruit-ina219-current-sensor-breakout
 // INA219 Datasheet: https://cdn-shop.adafruit.com/datasheets/ina219.pdf
