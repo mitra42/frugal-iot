@@ -48,7 +48,7 @@ System_Power_Mode* powerController;
 //TODO-23 think about roll-over of timers and routines that test against a number maybe not rolled over
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-// Note how this is placed in RTC code space so it can be executed prior to the restart
+// Note how this is placed in RTC code space so it can be executed prior to the restart - it has to be short, but not sure how short
 void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
     esp_default_wake_deep_sleep();
     wake_count++;
@@ -66,6 +66,34 @@ System_Power_Mode::System_Power_Mode(const char* name, unsigned long cycle_ms, u
     Serial.printf("%s: %lu of %lu\n", name, wake_ms, cycle_ms); 
   #endif
 }
+// This is for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname
+void System_Power_Mode::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+  //TODO-23 allow changing type of power mgmt - e.g. from Deep to Loop
+  if (isSet && (topicSensorId == id)) {
+    bool dispatched = false;
+    float v = payload.toFloat(); // Maybe NaN if string malformed
+    if (topicTwig == "wake") {      
+      wake_ms = v;
+      dispatched = true;
+    } else if (topicTwig == "cycle") {
+      cycle_ms = v;
+      dispatched = true;
+    } else {
+      System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+      // Drops through, dispatched=false
+    }
+    if (dispatched) {
+      writeConfigToFS(topicTwig, payload);
+    } 
+  }
+}
+
+void System_Power_Mode::captiveLines(AsyncResponseStream* response) {
+  frugal_iot.captive->addNumber(response, id, "cycle", String(cycle_ms), "Cycle time (ms)", 0, (60*60*1000));
+  frugal_iot.captive->addNumber(response, id, "wake", String(wake_ms), "Wake time (ms)", 20000, cycle_ms);
+}
+
+
 // ================== constructor =========== called from main.cpp::setup based on #define ========= TO-ADD-POWERMODE
 uint8_t System_Power_Mode::timer_next() {
   if (timer_index >= TIMER_LENGTH) { 
@@ -110,7 +138,7 @@ void System_Power_Mode::pre_setup() {
 }
 void System_Power_Mode::setup() {
   // Nothing to read from disk so not calling readConfigFromFS  - that might change if parameterize power on/off thru UI
-
+  readConfigFromFS(); // Reads config (type, wake, cycle) and passes to our dispatchTwig
   #ifdef SYSTEM_POWER_DEBUG
     Serial.printf("Setup %s: %lu of %lu\n", name.c_str(), wake_ms, cycle_ms); 
   #endif
@@ -275,7 +303,9 @@ void System_Power_LightWiFi::recover() {
   //} 
 }
 #endif
-#ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
+#ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32 
+// Memory will have been wiped by the sleep, what can we assume. 
+// Note if required - can store stuff in RTC memory or on disk, but careful about overusing (writes) flash
 void System_Power_Deep::recover() {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println(F("Power Management: recovering from Deep Sleep: ")); Serial.println(wake_count);

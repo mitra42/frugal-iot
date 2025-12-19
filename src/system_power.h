@@ -42,6 +42,8 @@ class System_Power_Mode : public System_Base {
     virtual void prepare();
     virtual void sleep();
     virtual void recover();
+    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;
+    void captiveLines(AsyncResponseStream* response) override;
   private:
     uint8_t timer_index;
 };
