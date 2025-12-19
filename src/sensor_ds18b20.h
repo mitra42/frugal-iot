@@ -43,7 +43,7 @@ protected:
 
     /**
      * @brief Validates the temperature reading
-     * Rejects NaN values and values >= 80°C (DS18B20 power-on reset is 85°C)
+     * Rejects NaN, 0°C (startup error), and values >= 80°C (power-on reset is 85°C)
      * @param v The temperature value to validate
      * @return bool True if the value is valid
      */
