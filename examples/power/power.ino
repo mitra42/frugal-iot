@@ -32,9 +32,9 @@ void setup() {
   
   // If required, add a control - this is just an example
   // TODO-23 test Control_Blinken 
-  Control_Blinken* cb = new Control_Blinken("controlblinken", "Control Blinken", 5, 1);
-  frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+  //Control_Blinken* cb = new Control_Blinken("controlblinken", "Control Blinken", 5, 1);
+  //frugal_iot.controls->add(cb);
+  //cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

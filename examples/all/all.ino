@@ -37,7 +37,7 @@ void setup() {
   // Add sensors, actuators and controls
 
   // Battery sensor on pin 33
-  frugal_iot.sensors->add(new Sensor_Battery(33));
+  frugal_iot.sensors->add(new Sensor_Battery(33, 2));
 
   // Light sensor BH1750 TODO see notes in sensor_bh1750.cpp,h about I2C pin conflicts
   frugal_iot.sensors->add(new Sensor_BH1750("lux", "Lux", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true));

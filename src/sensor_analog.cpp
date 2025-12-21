@@ -64,8 +64,8 @@ void Sensor_Analog::setup() {
   #endif
 }
 
-// Note this is virtual, and subclassed in Sensor_Battery
-// Note ANalog's read int, but set float after scaling
+// Note this is virtual, and overridden in Sensor_Battery
+// Note Analog's read int, but set float after scaling
 int Sensor_Analog::readInt() {
   return analogRead(pin); // Returns an int - which should be int16_t
 }
