@@ -32,8 +32,7 @@ void setup() {
   // Add sensors, actuators and controls
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
   // Relay on Sonoff is on pin 12
-  // DISABLED WHILE TESTING BUTTONS - TODO UNCOMMENT
-  //frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, "purple"));
+  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, "purple"));
 
   ControlHysterisis* ch = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(ch);
@@ -47,6 +46,8 @@ void setup() {
   button->longClick->wireTo(frugal_iot.messages->setPath("frugal-iot/reboot"));
   button->singleClick->wireTo(frugal_iot.messages->setPath("buttons/state/cycle"));
   button->singleClick->value = 1;
+  button->doubleClick->wireTo(frugal_iot.messages->setPath("buttons/state/cycle"));
+  button->doubleClick->value = -1;
   
 
   // Dont change below here - should be after setup the actuators, controls and sensors
