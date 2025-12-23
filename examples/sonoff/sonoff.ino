@@ -8,7 +8,7 @@
 
 // Change the parameters here to match your ... 
 // organization, project, device name, description
-System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff R2 switch");
+System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff switch");
 
 void setup() {
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
