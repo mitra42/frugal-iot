@@ -32,7 +32,7 @@
 #include "sensor_dht.h"
 
 // Add alternative constructor with id e.g. dht1, dht2 etc
-Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, bool retain) 
+Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, const bool retain) 
   : Sensor_HT("dht", name, retain), 
     dht(new DHTNEW(pin_init)),
    pin(pin_init) {
@@ -92,14 +92,14 @@ void printErrorCode(int chk) {
 
 void Sensor_DHT::readValidateConvertSet() {
 
-  int chk = dht->read();
+  const int chk = dht->read();
   #ifdef SENSOR_DHT_DEBUG
     printErrorCode(chk);
   #endif
   if (!chk) { // Dont read if error
 
-    float temp = dht->getTemperature();
-    float humy = dht->getHumidity();
+    const float temp = dht->getTemperature();
+    const float humy = dht->getHumidity();
 
     #ifdef SENSOR_DHT_DEBUG
       Serial.print(temp, 1);
