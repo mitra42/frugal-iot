@@ -21,7 +21,7 @@
 
 Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider) 
 //(id, name, pin, width, min, max, offset, scale, color, retain) 
-: Sensor_Analog("battery", "Battery", pin_init, 0, 0, 4.5, 0, voltage_divider, "green", true) //TODO-1
+: Sensor_Analog("battery", "Battery", "voltage", "Voltage", pin_init, 0, 0, 4.5, 0, voltage_divider, "green", true) //TODO-1
   { }
 
 // ESP32 readInt() override - must be outside conditional block to avoid vtable errors
@@ -50,8 +50,9 @@ int Sensor_Battery::readInt() {
     #endif
   #endif //ESP8266
 
-Sensor_Battery::Sensor_Battery(const uint8_t pin_init) 
-: Sensor_Analog("battery", "Battery", "voltage", "Voltage", pin_init, 0, 0, 4.5, 0, SENSOR_BATTERY_SCALE, "green", true) //TODO-1
-  { }
+  // On both ESP32 and ESP8266 if have definitions for pin and scale, then allow default constructor
+    Sensor_Battery::Sensor_Battery() 
+    : Sensor_Battery(SENSOR_BATTERY_PIN, SENSOR_BATTERY_SCALE)
+      { }
 
 #endif // SENSOR_BATTERY_VOLTAGE_DIVIDER && SENSOR_BATTERY_PIN
