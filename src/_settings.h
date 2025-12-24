@@ -143,6 +143,10 @@
   #define SYSTEM_OLED_WANT
 #endif
 
+#if defined(ARDUINO_heltec_wifi_lora_32_V3)
+  #define BUTTON_BUILTIN (0)
+#endif
+
 // A number of sensors will want to default to the boards I2C, 
 // But some boards have the pre-defined SDA and SCL wrong
 // So .... these settings define I2C_SDA and I2C_SCL so that a library can be explicit about 

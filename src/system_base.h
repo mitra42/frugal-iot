@@ -13,23 +13,25 @@ extern const char* wireAdvertLine;
 
 class System_Base {
   public:
+    // Most of System_Base has to be public - I think (but am not sure) because while accessed from System_Frugal on a subclass of System_Base its not the class acting on itself?
     System_Base(const char * const id, const String name);
-    virtual void setup();
     void setupFailed(); // Called from overrides of setup() on failure.
     const char* id = nullptr; // Name of actuator, sensor or control 
-    String name; // Name of actuator, sensor or control
+    bool connected = false; 
+    virtual void setup();
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);
     virtual void dispatchPath(const String &topicPath, const String &payload);
-    String leaf2path(const char* leaf); 
     virtual void discover();
-    void readConfigFromFS();
     void readConfigFromFS(File dir, const String* leaf);
     void writeConfigToFS(const String& topicTwig, const String& payload);
     virtual void loop();
     virtual void periodically();
     virtual void captiveLines(AsyncResponseStream* response) { };
     virtual void infrequently();
-  protected: // Most of System_Base has to be public - I'm not sure I understand why
+  protected: 
+    String name; // Name of actuator, sensor or control
+    String leaf2path(const char* leaf); 
+    void readConfigFromFS();
 }; // Class FrugalBase
 
 class IO {

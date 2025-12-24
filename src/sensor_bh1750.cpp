@@ -31,5 +31,5 @@ float Sensor_BH1750::readFloat() {
 }
 // actual value, so convert() not needed
 bool Sensor_BH1750::validate(const float v) {
-  return (!isnan(v));
+  return (!isnan(v) && (v >= 0));
 }

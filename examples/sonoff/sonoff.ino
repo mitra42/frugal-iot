@@ -8,7 +8,7 @@
 
 // Change the parameters here to match your ... 
 // organization, project, device name, description
-System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff R2 switch");
+System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff switch");
 
 enum sonoff_state_t {  SONOFF_OFF, SONOFF_AUTO, SONOFF_ON };
 

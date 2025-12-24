@@ -38,6 +38,8 @@
 #ifndef SENSOR_BATTERY_PIN
   #if defined BAT_VOLT_PIN // Have submitted a PR that has not gone live yet that defines this for all boards that support it
     #define SENSOR_BATTERY_PIN BAT_VOLT_PIN
+  #elif defined(ARDUINO_LOLIN_C3_PICO)
+    #define SENSOR_BATTERY_PIN 3     // On C3 Pico there is a solder bridge point adjacent to pin 3
   #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
     #define SENSOR_BATTERY_PIN BAT_VOLT // a static const uint8_t
   #elif defined(ARDUINO_heltec_wifi_lora_32_V3)
