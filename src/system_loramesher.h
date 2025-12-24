@@ -62,7 +62,7 @@ class System_LoraMesher : public System_Base {
     std::forward_list<MeshSubscription> meshSubscriptions;
     void setup() override;
     void periodically() override;
-    void prepareForSleep();
+    void prepareForLightSleep();
     // == INCOMING (up or downstream)
     // == OUTGOING (up or downstream)
       bool findGatewayNode();
