@@ -15,7 +15,7 @@
 
 #include "_settings.h"  // Settings for what to include etc
 #include "sensor_analog.h"
-#include "frugal_iot.h"
+#include "Frugal-IoT.h"
 
 
 #include <Arduino.h>
@@ -64,42 +64,59 @@ void Sensor_Analog::setup() {
   #endif
 }
 
-// Note this is virtual, and subclassed in Sensor_Battery
-// Note ANalog's read int, but set float after scaling
+// Note this is virtual, and overridden in Sensor_Battery
+// Note Analog's read int, but set float after scaling
 int Sensor_Analog::readInt() {
   return analogRead(pin); // Returns an int - which should be int16_t
 }
-float Sensor_Analog::convert(int v) {
+// Check if its valid, typically this will be overridden
+bool Sensor_Analog::validate(int v) {
+  return true;
+}
+
+float Sensor_Analog::convert(const int v) {
   return (v - offset) * scale;
 }
 void Sensor_Analog::readValidateConvertSet() {
   // Note almost identical code in Sensor_Uint16 Sensor_Float & Sensor_Analog
-  int v = readInt();           // Read raw value from sensor
+  const int v = readInt();           // Read raw value from sensor
+  #ifdef SENSOR_ANALOG_DEBUG
+    Serial.print(id); Serial.print(F(" raw:")); Serial.print(v);
+  #endif
   if (validate(v)) {        // Check if its valid
-    float vv = convert(v);  // Convert - e.g. scale and offset
+    const float vv = convert(v);  // Convert - e.g. scale and offset
     set(vv);                  // set - and send message
+    #ifdef SENSOR_ANALOG_DEBUG
+      Serial.print(F(" converted ")); Serial.print(vv);
+    #endif
   }
   #ifdef SENSOR_ANALOG_DEBUG
-    Serial.print(id); Serial.print(F(" raw:")); Serial.print(raw); Serial.print(F(" converted")); Serial.print(vv);
+    Serial.println();
   #endif
 }
 void Sensor_Analog::tare() {
   // Read and use the reading as the offset for a 0 value
   offset = readInt();
 }
-void Sensor_Analog::calibrate(float val) {
+void Sensor_Analog::calibrate(const float val) {
   // Note this could calibrate off an invalid raw value, may want to check if see this behavior
   scale = val / (readInt() - offset);
 }
-void Sensor_Analog::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+void Sensor_Analog::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, const bool isSet) {
   if (topicSensorId == id) {
     // Set by UX - "Tare" is weight=0  Calbrate is weight=XX
     if (topicTwig == "output") {
       if(payload.toFloat() == 0.0) {
         tare(); // sets offset
+        #ifdef SENSOR_ANALOG_DEBUG
+          Serial.print(F("Tare offset=")); Serial.println(offset);
+        #endif
         writeConfigToFS("offset", String(offset));
       } else {
         calibrate(payload.toFloat()); // uses offset, sets scale
+        #ifdef SENSOR_ANALOG_DEBUG
+          Serial.print(F("Calibrate scale=")); Serial.println(scale);
+        #endif
         writeConfigToFS("scale", String(scale));
       }
     // offset and scale should only be seen when reading from disk

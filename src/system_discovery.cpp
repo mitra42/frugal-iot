@@ -39,9 +39,9 @@ void System_Discovery::quickAdvertise() {
   // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
   // Relying on short messages from modules instead of large message which won't go thru LoRaMesher
   void System_Discovery::fullAdvertise() {
-    heap_print(F("Discovery::fullAdvertise before"));
+    //heap_print(F("Discovery::fullAdvertise before"));
     frugal_iot.discover();
-    heap_print(F("Discovery::fullAdvertise after"));
+    //heap_print(F("Discovery::fullAdvertise after"));
     doneFullAdvertise = true;
   }
 
@@ -58,15 +58,8 @@ void System_Discovery::infrequently() {
         // Can queue these up even before MQTT connected as will be sent when connects
         fullAdvertise();
       } 
-      // quick can be fone if have MQTT or have LoRaMesher
-      //Serial.print(F("XXX" __FILE__)); Serial.println(__LINE__);
-      if (frugal_iot.canMQTT() 
-        #ifdef SYSTEM_LORAMESHER_WANT // This is automatically defined on LoRa compatable boardss
-          || (frugal_iot.loramesher && frugal_iot.loramesher->connected())
-        #endif
-      ) {
-        quickAdvertise(); // Send info about this node to server (on timer)
-      }
+      // Even if MQTT down (no WiFi or LoRa) queue up one of these to send when reconnect so UX knows we exist
+      quickAdvertise(); // Send info about this node to server (on timer)
       nextLoopTime = frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_DISCOVERY_MS;
     }
 }

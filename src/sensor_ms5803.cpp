@@ -47,15 +47,12 @@ Sensor_ms5803::Sensor_ms5803(const char* const id, const char * const name, uint
   interface(address, wire) 
 {
  
-  pressure = new OUTfloat(id, "pressure", "Pressure", 0, 1, 0, 99, "blue", false);
-  temperature = new OUTfloat(id, "temperature", "Temperature", 0, 1, 0, 99, "red", false);
+  outputs.push_back(pressure = new OUTfloat(id, "pressure", "Pressure", 0, 1, 0, 99, "blue", false));
+  outputs.push_back(temperature = new OUTfloat(id, "temperature", "Temperature", 0, 1, 0, 99, "red", false));
 }
 
 void Sensor_ms5803::setup() {
   Sensor::setup(); // Will readConfigFromFS - do before setting up pins
-  #ifdef SENSOR_MS5803_DEBUG
-    Serial.println(F("MS5803 Setup"));
-  #endif
   pressure->setup();
   delay(100); // TODO XXX unsure if needed
   interface.initialize();
@@ -78,11 +75,9 @@ void Sensor_ms5803::setup() {
   // If this issue persists, you may have a bad sensor.
   if (!ms5803CRC4()) {
     Serial.println(F("MS5803 bad CRC on coefficients"));
-    // return false;
+    setupFailed();
   } else {
     // If the CRC matches, then the sensor is good to go.
-    Serial.println(F("MS5803 looks good"));
-    // return true;
   }
 }
 
@@ -155,14 +150,3 @@ void Sensor_ms5803::readValidateConvertSet() {
   pressure->set(( ( ( ( D1 * sensitivity ) / pow( 2, 21 ) - sensorOffset) / pow( 2, 15 ) ) / 10 ));   // in mBars
 }
 
-void Sensor_ms5803::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (topicSensorId == id) {
-    if (
-      pressure->dispatchLeaf(topicTwig, payload, isSet) ||
-      temperature->dispatchLeaf(topicTwig, payload, isSet)
-    ) { // True if changed 
-      // Nothing to do on Sensor
-    }
-    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
-  }
-}

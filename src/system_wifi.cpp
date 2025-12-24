@@ -269,6 +269,7 @@ void System_WiFi::stateMachine() {
   }
   //WiFi.softAPgetStationNum() maybe relevant - but prob not - its number connected to captive portal
 }
+// This should not "yield" or "delay" as called from inside Captive, if that is a problem queue it as a message
 void System_WiFi::switchSSID(const String ssid) {
   if (ssid != WiFi.SSID()) {
     WiFi.disconnect(); // Disconnect if connected.
@@ -279,6 +280,21 @@ void System_WiFi::switchSSID(const String ssid) {
   }
 }
 
+int8_t System_WiFi::RSSI() { // Negative number if decibel-milliwatts
+  return WiFi.RSSI(); 
+}
+
+uint8_t System_WiFi::bars() {
+  const int8_t rssi = WiFi.RSSI();
+  if (rssi > -55) return 4;
+  if (rssi > -66) return 3;
+  if (rssi > -77) return 2;
+  if (rssi > -88) return 1;
+  return 0;
+}
+String System_WiFi::SSID() {
+  return WiFi.SSID();
+}
 bool System_WiFi::connected() {
   return (status == WIFI_CONNECTED); 
 }

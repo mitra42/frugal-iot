@@ -10,12 +10,14 @@
 
 class ControlBlinken : public Control {
   public:
-    unsigned long nextBlinkTime = 0;
     unsigned long blinkOn = 0; // in milliseconds (converted from seconds in act)
     unsigned long blinkOff = 0; // in milliseconds (converted from seconds in act)
     ControlBlinken(const char* const id, const char* const name, float secsOn, float secsOff);
     void act() override; // Override in Control
     void loop() override; // Override in FrugalBase
+  private:
+    uint8_t timer_index; // Index into RTC timer array 
+    void timer_set(unsigned long t);
 };
 
 #endif // CONTROL_BLINKEN_H

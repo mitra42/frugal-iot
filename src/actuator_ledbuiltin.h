@@ -46,7 +46,8 @@
 
 #if defined(LILYGOHIGROW)
   #define LED_BUILTIN 18 // TODO test if this actually works - see notes that have failed - also try as Neopixel 
-  //#define RGB_BUILTIN lED_BUILTIN
+  //#define LED_BUILTIN 18+SOC_GPIO_PIN_COUNT // TODO test if this actually works - see notes that have failed - also try as Neopixel 
+  #define RGB_BUILTIN LED_BUILTIN
 #endif
 
 #ifndef LED_BUILTIN
@@ -62,24 +63,28 @@
 #endif
 
 #ifdef ARDUINO_LOLIN_C3_PICO
-  #undef LED_BUILTIN
-  //static const uint8_t LED_BUILTIN = 7+SOC_GPIO_PIN_COUNT;
-  #define BUILTIN_LED  LED_BUILTIN // backward compatibility
-  #define LED_BUILTIN (7+SOC_GPIO_PIN_COUNT)  // allow testing #ifdef LED_BUILTIN
-  #define RGB_BUILTIN LED_BUILTIN
-  #define RGB_BRIGHTNESS 64
+  #ifdef NOLONGERNEEDED_COS_IN_VARIANT_FILE
+    #undef LED_BUILTIN
+    //static const uint8_t LED_BUILTIN = 7+SOC_GPIO_PIN_COUNT;
+    #define BUILTIN_LED  LED_BUILTIN // backward compatibility
+    #define LED_BUILTIN (7+SOC_GPIO_PIN_COUNT)  // allow testing #ifdef LED_BUILTIN
+    #define RGB_BUILTIN LED_BUILTIN
+    #define RGB_BRIGHTNESS 64
+  #endif
+  // Note this has to be defined in Platformio as required to compile rgbledwrite correctly
+  //#define RGB_BUILTIN_LED_COLOR_ORDER LED_COLOR_ORDER_RGB // default (or GRB) is wrong TODO-131 get fixed in variant file
 #endif
 
 class Actuator_Ledbuiltin : public Actuator_Digital {
   // Actuator_Digital value is on/off for LED
   public: 
     Actuator_Ledbuiltin(const uint8_t p, uint8_t brightness = 255, const char* color = "0xFFFFFF");
+  protected:
     void act() override;
-    uint8_t brightness; // Brightness of LED  0-255
+    INuint16* brightness; // Brightness of LED  0-255  // TODO-INuint8
     #ifdef RGB_BUILTIN
       INcolor* color;
     #endif
-    void dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet);
 };
 
 #endif // ACTUATOR_LEDBUILTIN_H

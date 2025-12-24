@@ -33,6 +33,37 @@
 #ifndef SYSTEM_LORAMESHER_MAXLEGITPACKET
   #define SYSTEM_LORAMESHER_MAXLEGITPACKET 256 // Seeing some big (1Mb) bad packets from sender
 #endif
+
+
+// ===== BOARD DEPENDENT DEFINES ======
+// This is a section, that IMHO should be inside LoraMesher, so it works with all the different boards with 
+// inconsistent pins_arduino.h
+
+// Note that SYTEM_LORAMESHER_BAND has to be defined in platformio.ini and is region specific 
+
+#if defined(ARDUINO_TTGO_LoRa32_v21new) // V2 and V1 dont define LORA_D1 so unsure what they need
+  // Defines LORA_RST LORA_IRQ LORA_SCK LORA_MISO LORA_MOSI LORA_CS in pins_arduino.h
+  #define LORA_IO1 LORA_D1
+  #define SYSTEM_LORAMESHER_MODULE LoraMesher::LoraModules::SX1276_MOD // There are other variants of V21new with different modules
+#elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
+  // Defines LORA_RST LORA_IRQ LORA_SCK LORA_MISO LORA_MOSI LORA_CS in pins_arduino.h
+  #define LORA_IO1 LORA_DIO1
+  #define SYSTEM_LORAMESHER_MODULE LoraMesher::LoraModules::SX1276_MOD //THere are other variants of T3 S3 with different modules
+#elif defined(ARDUINO_heltec_wifi_lora_32_V3)
+  // Defines: SCK MISO MOSI SS, which it uses for the SPI to the LoRa which LoRamesher picks up correctly since LORA_SCK etc not defined
+  #define SYSTEM_LORAMESHER_MODULE LoraMesher::LoraModules::SX1262_MOD
+  #define LORA_RST RST_LoRa
+  #define LORA_CS SS            // GPIO8
+  #define LORA_IRQ DIO0         // Bizarre swap with Busy - not sure if documentation error or what but heltecs have notoriously faulty docs
+  #define LORA_IO1 BUSY_LoRa 
+#elif defined(LORA_CS)
+  // assume all defined in platformio.ini
+#else 
+  #error LORA parameters not defined. So probably SYSTEM_LORAMESHER_WANT also wont be defined and this error never hit! 
+#endif
+
+// By this point you should have all the LORA_ defines needed. 
+
 // =========== MeshSubscription class - only used by LoRaMesher to track subs ====
 
 // TODO-152A Consider timeout of LM subscriptions - since a node may get a different id each time it power cycles, and thus have multiple entries in the gateway's meshsubscription table.
@@ -96,22 +127,13 @@ System_LoraMesher::System_LoraMesher()
     config.loraCs = LORA_CS;
     config.loraRst = LORA_RST;
     config.loraIrq = LORA_IRQ;
-    #ifdef LORA_D1  // e.g. on ttgo-lora32-v21new
-      config.loraIo1 = LORA_D1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_V1 or _V2 but will on _V21
-    #elif defined(LORA_DIO1) // e.g. on variant:lilygo_t3_s3_sx127x 
-      config.loraIo1 = LORA_DIO1;  // Requirement for D1 may mean it won't work on ARDUINO_TTGO_LoRa32_v1 or _V2 but will on _V21
-    #else
-      #error unclear what to define loraIo1 at on this board
-    #endif
+    config.loraIo1 = LORA_IO1; 
     config.module = SYSTEM_LORAMESHER_MODULE;
     config.freq = SYSTEM_LORAMESHER_BAND;
-    // This line is required because of some weirdness between different boards
-    // LoRaMesher uses a default SPI.begin which picks up SCK MISO, MOSI, CS rather than LORA_MISO etc
-    // ttgo-lora32-v21new defines LORA_SCK the same as MISO, MOSI, CS etc so it works but
-    // lilygo_t3_s3_sx127x howwever defines SCK, MISO etc as the SD's SPI so LoraMesher fails 
-    // https://github.com/LoRaMesher/LoRaMesher/pull/78 submitted so this is not needed.
-    SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
-    config.spi = &SPI;
+    // Loramesher will initialize SPI on LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS (if config.spi is unset)
+    // if need to override then best to set those values, else can override here on a per-board basis 
+    //SPI.begin(SCK, MISO, MOSI, LORA_CS); //TODO-176 check and recheck if/why needed -
+    //config.spi = &SPI;
 }
 
 // setup points radio at receiveLoRaMessage_Handle which is set to processReceivedPackets in createReceiveMessages()
@@ -124,6 +146,7 @@ void System_LoraMesher::setup() {
   esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
 
   // Error codes are buried deep  .pio/libdeps/*/RadioLib/src/TypeDef.h
+  // -2 is chip not found 
   // -12 is invalid frequency usually means band and module are not matched.
   // -16 is RADIOLIB_ERR_SPI_WRITE_FAILED suggesting wrong pins for SPI
   radio.begin(config);        //Init the loramesher with a configuration
@@ -140,7 +163,7 @@ void System_LoraMesher::setup() {
   #endif
 }
 
-void System_LoraMesher::prepareForSleep() {
+void System_LoraMesher::prepareForLightSleep() {
     // TODO-139 TODO-23 find where put radio and SPI to sleep - on some other libraries its LoRa.sleep() and SPI.end()
 }
 
@@ -207,7 +230,7 @@ void System_LoraMesher::processReceivedPacket(AppPacket<uint8_t>* appPacket) {
     }
     if (downstream) {
       //Serial.print(F("XXX " __FILE__)); Serial.print(F("downstream ")); Serial.println(topicPath);
-      frugal_iot.messages->dispatch(topicPath, payload);
+      frugal_iot.messages->queueIncoming(topicPath, payload);
     } else { // upstream (not subscribe)
       Serial.print(F("LoRaMesher forwarding to MQTT:")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
       frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
@@ -260,8 +283,7 @@ void System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
   //memcpy(msg, stringymessage, msglen);
   //delete(stringymessage);
   frugal_iot.loramesher->sentPacketCounter++;
-  // TODO-152C remove the const_cast once https://github.com/LoRaMesher/LoRaMesher/pull/83 is merged
-  frugal_iot.loramesher->radio.sendPacket(destn, const_cast<uint8_t*>(stringymessage), msglen); // Will be broadcast if no node
+  frugal_iot.loramesher->radio.sendPacket(destn, stringymessage, msglen); // Will be broadcast if no node
   delete(stringymessage); // msg is copied in createPacketAndSend
 }
 

@@ -131,3 +131,5 @@ void heap_print(const __FlashStringHelper *msg) {
     #endif //ESP32
   #endif //SYSTEM_MEMORY_DEBUG
 }
+
+void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }

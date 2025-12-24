@@ -25,6 +25,11 @@
     #define SYSTEM_SD_MISO 0
     #define SYSTEM_SD_MOSI 4
     #define SYSTEM_SD_PIN 6 // Default pin on the shield - if override theres a solder bridge to change
+  #else  // On S3T3 its SS, MOSI, MISO SCK but these are const's so cant #ifdef them - just try it and see if compiles
+    #define SYSTEMS_SD_SCK SCK
+    #define SYSTEM_SD_MISO MISO
+    #define SYSTEM_SD_MOSI MOSI
+    #define SYSTEM_SD_PIN SS
   #endif
 #endif
 
@@ -38,6 +43,7 @@ class System_FS : public System_Base {
     virtual fs::File open(const String &filename, const char *mode = "r");
     virtual boolean exists(const char *filename);
     virtual boolean exists(const String &filename);
+    virtual boolean remove(const String &filename);
 
     // Once you have a file you should be able to append(String&) and close(); independent of whether its LittleFS LittleFS or SD
 
@@ -56,6 +62,7 @@ class System_LittleFS : public System_FS {
     fs::File open(const String &filename, const char *mode) override;
     boolean exists(const char *filename) override;
     boolean exists(const String &filename) override;
+    boolean remove(const String &filename);
     bool mkdir(const String &path);
 };
 class System_SD : public System_FS {
@@ -67,6 +74,7 @@ class System_SD : public System_FS {
     fs::File open(const String &filename, const char *mode) override;
     boolean exists(const char *filename) override;
     boolean exists(const String &filename) override;
+    boolean remove(const String &filename);
 };
 
 #endif //SYSTEM_FS_H

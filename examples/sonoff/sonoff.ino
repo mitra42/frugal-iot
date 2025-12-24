@@ -1,13 +1,14 @@
 /* 
- *  Frugal IoT example - Sonoff - R2 switch
+ *  Frugal IoT example - Sonoff - Basic R2 or R4 switch
+ *
  * Optional: 
  */
 
-#include "frugal_iot.h"
+#include "Frugal-IoT.h"
 
 // Change the parameters here to match your ... 
 // organization, project, device name, description
-System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff R2 switch");
+System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff switch");
 
 void setup() {
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
@@ -23,13 +24,11 @@ void setup() {
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
   frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
 
-  // system_oled and actuator_ledbuiltin added automatically on boards that have them.
-
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
   
   // Add sensors, actuators and controls
-  // system_oled and actuator_ledbuiltin added automatically on boards that have them.
+  // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
   // Relay on Sonoff is on pin 12
   frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, "purple"));
   frugal_iot.buttons->add(new Sensor_Button("button", "Button", BUTTON_BUILTIN, "red"));

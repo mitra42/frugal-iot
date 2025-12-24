@@ -23,13 +23,13 @@ void Sensor_BH1750::setup() {
   //(Mode mode = CONTINUOUS_HIGH_RES_MODE, byte addr = 0x23, TwoWire* i2c = nullptr)
   // TODO copy this pattern of public enum to other enums 
   if (!lightmeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, addr, wire)) { // (Mode mode, byte addr, TwoWire* i2c)
-    Serial.println(F("Warning: Failed to initialize BH1750 light sensor!")); delay(5000);
+    setupFailed();
   }
 }
 float Sensor_BH1750::readFloat() {
   return lightmeter.readLightLevel(); // Actual level (in Lux I think)
 }
 // actual value, so convert() not needed
-bool Sensor_BH1750::validate(float v) {
+bool Sensor_BH1750::validate(const float v) {
   return (!isnan(v) && (v >= 0));
 }

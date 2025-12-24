@@ -40,17 +40,25 @@ System_FS::System_FS(const char* const id, const char* const name)
 #pragma GCC diagnostic ignored "-Wreturn-type" 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 fs::File System_FS::open(const char *filename, const char *mode) { 
-  Serial.print(F("should be subclassed"));
+  shouldBeDefined();
 }
 fs::File System_FS::open(const String &filename, const char *mode ) { 
-  Serial.print(F("should be subclassed")); 
+  shouldBeDefined();
+  return fs::File();
 }
 boolean System_FS::exists(const char *filename) {
-  Serial.print(F("should be subclassed")); return false;
+  shouldBeDefined();
+  return false;
 }
 boolean System_FS::exists(const String &filename) {
-  Serial.print(F("should be subclassed")); return false;
+  shouldBeDefined();
+  return false; // TODO make the should-be standard, use or copy the function in system_base.cpp
 }
+bool System_FS::remove(const String &filename) { 
+  shouldBeDefined();
+  return false;
+}
+
 #pragma GCC diagnostic pop
 
 // Basic file ops // 
@@ -68,11 +76,27 @@ boolean System_SD::exists(const char *filename) {
 boolean System_SD::exists(const String &filename) {
   return SD.exists(filename);
 }
-fs::File System_LittleFS::open(const char *filename, const char *mode) { 
-  return ESPFS.open(filename, mode);
+bool System_SD::remove(const String &filename) { 
+  return SD.remove(filename);
+}
+
+fs::File System_LittleFS::open(const char *filename, const char *mode) {
+  #ifdef ESP32
+    return ESPFS.open(filename, mode, true);
+  #elif defined(ESP8266)
+    return ESPFS.open(filename, mode); // TODO need to check this creates dirs if needed for e.g. temperature/max
+  #else 
+    #error Need to check above for which works with any other processor
+  #endif
 }
 fs::File System_LittleFS::open(const String &filename, const char *mode) { 
-  return ESPFS.open(filename, mode);
+  #ifdef ESP32
+    return ESPFS.open(filename, mode, true);
+  #elif defined(ESP8266)
+    return ESPFS.open(filename, mode); // TODO need to check this creates dirs if needed for e.g. temperature/max
+  #else 
+    #error Need to check above for which works with any other processor
+  #endif
 }
 bool System_LittleFS::mkdir(const String &path) { 
   return ESPFS.mkdir(path);
@@ -82,6 +106,9 @@ boolean System_LittleFS::exists(const char *filename) {
 }
 boolean System_LittleFS::exists(const String &filename) {
   return ESPFS.exists(filename);
+}
+bool System_LittleFS::remove(const String &filename) { 
+  return ESPFS.remove(filename);
 }
 
 // Copied from system_wifi.cpp which got it from ESP-WiFiSettings library
@@ -96,6 +123,9 @@ bool System_FS::spurt(const String& filename, const String& content) {
     if (w != content.length()) {
       Serial.print(F("Failed to write to ")); Serial.println(filename);
     }
+    #ifdef SYSTEM_FS_DEBUG
+      Serial.print(F("Written to:")); Serial.print(filename); Serial.print(F("=")); Serial.println(content);
+    #endif
     return w == content.length();
 }
 String System_FS::slurp(const String& fn, const bool quietfail) {
@@ -110,7 +140,7 @@ String System_FS::slurp(const String& fn, const bool quietfail) {
   return r;
 }
 
-#ifdef SYSTEM_FS_DEBUG
+#ifdef SYSTEM_FS_DEBUG_DIR
   String System_FS::formatBytes(size_t bytes) {
     if (bytes < 1024){
       return String(bytes);
@@ -122,10 +152,10 @@ String System_FS::slurp(const String& fn, const bool quietfail) {
       return String(bytes/1024.0/1024.0/1024.0)+"G";
     }
   }
-#endif //SYSTEM_FS_DEBUG
+#endif //SYSTEM_FS_DEBUG_DIR
 
 
-#ifdef SYSTEM_FS_DEBUG
+#ifdef SYSTEM_FS_DEBUG_DIR
 void System_FS::printDirectory(const char* path, int numTabs) {  // e.g. "/" 
   File dir = open(path); // TODO call via System_FS virtual 
   if (!dir) {
@@ -165,7 +195,7 @@ void System_FS::printDirectory(File dir, int numTabs) {  // e.g. "/"
   }
 }
 
-#endif // SYSTEM_FS_DEBUG
+#endif // SYSTEM_FS_DEBUG_DIR
 
 System_SD::System_SD(uint8_t pin) 
 : System_FS("sd", "SD"),
@@ -178,13 +208,13 @@ void System_SD::setup() {
   // Library is SS=D8=15 fails;  old sketch was 4 some online says 8 but that fatals. D4=GPIO0=2 worked on Lolin Relay with no solder bridge
   Serial.println(F("SD initialization on CS pin ")); Serial.print(pin);
   #ifdef SYSTEM_SD_SCK // esp on ARDUINO_LOLIN_C3_PICO default pins are wrong - not those used on the shield 
+    // THis is no longer true - with the variant file for lolin_c3_pico,  SCK, MISO, MOSI are all correct
     SPI.begin(SYSTEM_SD_SCK, SYSTEM_SD_MISO, SYSTEM_SD_MOSI, pin); // SCK, MISO, MOSI, pin
   #endif 
   if (!SD.begin(pin)) { 
-    Serial.println(F(" failed!"));
+    setupFailed();
   } else {
-    Serial.println(F(" done."));
-    #ifdef SYSTEM_SD_DEBUG
+    #ifdef SYSTEM_SD_DEBUG_DIR
       printDirectory("/"); // For debugging
     #endif
   }
@@ -193,7 +223,7 @@ void System_SD::setup() {
 // If need to debug, uncomment the Serial's below, and move the call of this to main.cpp AFTER Serial started
 void System_LittleFS::pre_setup() {
   #ifdef SYSTEM_LITTLEFS_DEBUG
-    //Serial.print(F("LittleFS "));
+    Serial.print(F("LittleFS "));
   #endif
   #ifdef ESP8266
     // On ESP8266 it uses ESP8266/FS.cpp  which has no parameters to begin() and so does NOT format a non-existant file system
@@ -205,10 +235,10 @@ void System_LittleFS::pre_setup() {
     //Serial.println(F("initialization failed!"));
   } else {
     #ifdef SYSTEM_LITTLEFS_DEBUG
-      //Serial.println(F("initialization done."));
+      Serial.println(F("initialization done."));
     #endif
-    #ifdef SYSTEM_LITTLEFS_DEBUG
-      //printDirectory("/"); // For debugging
+    #ifdef SYSTEM_LITTLEFS_DEBUG_DIR
+      printDirectory("/"); // For debugging
     #endif
   }
 }

@@ -65,7 +65,7 @@ void System_Watchdog::infrequently() {
   // TODO move this to infrequent() on something
   if (frugal_iot.powercontroller->sleepSafeMillis() > (internal_watchdog_last + SYSTEM_WATCHDOG_MEM_MS)) {
     #ifdef SYSTEM_MEMORY_DEBUG
-      heap_print(F("watchdog infrequent"));
+      //heap_print(F("watchdog infrequent"));
     #endif
     internal_watchdog_last = frugal_iot.powercontroller->sleepSafeMillis(); 
   }

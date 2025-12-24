@@ -34,35 +34,22 @@
 #include "actuator_ledbuiltin.h"
 #include "actuator_digital.h"
 
-#define ACTUATOR_LEDBUILTIN_WHITE "0xFFFFFF"
+#define ACTUATOR_LEDBUILTIN_WHITE "#FFFFFF"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightness, const char* color) :
-  Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow"),
-  #ifdef RGB_BUILTIN
-    color(new INcolor("led", "color", "LED color", color, false)), //TODO-131 color of UX should reflect color of LED
-  #endif
-  brightness(brightness) 
+Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightnessInit, const char* colorInit) :
+  Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow")
   { 
+    #ifdef RGB_BUILTIN
+      inputs.push_back(color = new INcolor("ledbuiltin", "color", "LED color", colorInit, false)); //TODO-131 color of UX should reflect color of LED
+    #endif
+    inputs.push_back(brightness = new INuint16("ledbuiltin", "brightness", "Brightness", brightnessInit, 0, 255, colorInit, false));
     #ifdef ACTUATOR_LEDBUILTIN_DEBUG
       Serial.print(F("Ledbuiltin pin=")); Serial.println(pin); 
     #endif
   }
 #pragma GCC diagnostic pop
-
-void Actuator_Ledbuiltin::dispatchTwig(const String &topicActuatorId, const String &leaf, const String &payload, bool isSet) {
-  if (topicActuatorId == id) {
-    #ifdef RGB_BUILTIN
-      if (
-          color->dispatchLeaf(leaf, payload, isSet)
-      ) { // True if changed
-        act();
-      }
-    #endif
-    Actuator_Digital::dispatchTwig(topicActuatorId, leaf, payload, isSet); // Call parent to handle "input"
-  }
-}
   
 void Actuator_Ledbuiltin::act() {
   #ifdef RGB_BUILTIN
@@ -70,10 +57,10 @@ void Actuator_Ledbuiltin::act() {
       // Fix this if encounter a ESP8266 board with RGB LED
       Serial.println(F("Do not have code for RGB LED on ESP8266")); 
     #else
-    // TODO-131 should set brightness based on input message 
-    const uint16_t m = input->value ? brightness : 0;
-    uint8_t r, g, b;
-    if (m == 0xFF) {
+      // TODO-131 should set brightness based on input message 
+      const uint16_t m = input->value ? brightness->value : 0;
+      uint8_t r, g, b;
+      if (m == 0xFF) {
         r = color->r;
         g = color->g;
         b = color->b;
@@ -83,8 +70,7 @@ void Actuator_Ledbuiltin::act() {
         b = (m * color->b) >> 8;
       }
       #ifdef ACTUATOR_LEDBUILTIN_DEBUG
-        Serial.print(F("Actuator_Ledbuiltin::act rgb=0x")); 
-        Serial.print(r, HEX); Serial.print(g,HEX); Serial.println(b, HEX); //TODO-131 0 should be "00"
+        Serial.print(F("Actuator_Ledbuiltin::act rgb=")); Serial.print(StringF("#%02x%02x%02x",r,g,b));
       #endif
       //#ifdef PLATFORMIO
       //  // TODO check if this is really grb or should use rgb

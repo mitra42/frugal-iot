@@ -152,7 +152,8 @@ bool System_MQTT::subscribe(const String& topicPath) {
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.print(F("MQTT Subscribe ")); Serial.print(topicPath);
       #endif
-    if (client.subscribe(topicPath)) {
+    // Uses QOS=1 as usually incoming volume is low (except for controls), lets see if causes problem, symptom probably memory use at server or long list of incoming after sleep
+    if (client.subscribe(topicPath, 1)) { 
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.println();
       #endif
@@ -227,7 +228,7 @@ void System_MQTT::messageReceived(const String &topicPath, const String &payload
   // unsubscribe as it may cause deadlocks when other things arrive while
   // sending and receiving acknowledgments. Instead, change a global variable,
   // or push to a queue and handle it in the loop after calling `client.loop()`.
-  frugal_iot.messages->dispatch(topicPath, payload);
+  frugal_iot.messages->queueIncoming(topicPath, payload);
   inReceived = false;
 }
 

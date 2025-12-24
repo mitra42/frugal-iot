@@ -21,13 +21,14 @@ class System_Message { // Only used for outgoing queued messages
     //~System_Message();
   protected:
     friend class System_Messages;
-    bool send();
+    bool send(); 
     const String topicPath;
-    const String payload;    // Retained payload
+    String payload;    // Retained payload
+    // Only relevant/accurate on outgoing
     const bool isSubscription;
     const bool retain;
     const int qos;
-
+    void dispatch();
     bool queuedMessage();
     bool queuedSubscribe();
 };
@@ -38,19 +39,24 @@ class System_Messages : public System_Base {
     System_Messages();
     void subscribe(const String topicPath);
     // This will be re-overloaded as send, but keeping separate as deal with some mem leaks
-    void send(const String topicPath, const String payload, bool retain, uint8_t qos);
+    void send(const String topicPath, const String payload, bool retain, uint8_t qos);     // send and loopback
     String path(const char* id, const char* const leaf, const char* const leafparm);
     String path(const char* id, const char* const leaf);
     String path(char const * const topicTwig);
     String path(const String topicTwig); 
     //String twig(const String &topicPath); // unused
     bool reSubscribeAll(); // Called by MQTT after reconnection
-    void dispatch(const String &topicPath, const String &payload); // Called by MQTT and LoRaMesher
+    void queueIncoming(const String &topicPath, const String &payload); // Called by MQTT and LoRaMesher
+    void queueFromCaptive(const String &twig, const String &payload);
   protected:
     friend class System_Message;
     std::list<System_Message> outgoing;
+    std::list<System_Message> incoming;
     std::forward_list<System_Message> subscriptions;
-    void sendQueued();
+    void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos); // Only remote send, no loopback
+    void sendOutgoingQueued();
+    void dispatchIncomingQueued();
+    void queueLoopback(const String &topicPath, const String &payload);
     void setup();
     void loop();
 };

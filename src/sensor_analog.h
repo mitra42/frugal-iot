@@ -11,7 +11,7 @@
  * Its ESP32 specific, but looks like a range of capabilities that could be integrated.
  */
 
- #ifndef SENSOR_ANALOG_H
+#ifndef SENSOR_ANALOG_H
 #define SENSOR_ANALOG_H
 
  #include "sensor.h"

@@ -27,7 +27,7 @@
 #endif    
 
 
-#include "_settings.h" // Note - ideally shouldnt be dependent on anything here, or at least not in _local.h
+#include "_settings.h" // Note - ideally shouldnt be dependent on anything here
 #include "system_frugal.h"
 #include "misc.h"
 
@@ -57,21 +57,21 @@ void Frugal_Group::dispatchTwig(const String &topicSensorId, const String &topic
 
 // Handle messages at top level - check for own, and if not loop through all other modules
 // e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
-void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
-    if (topicTwig == "project") { // TODO unclear we should be changing project on a device live
+    if (topicLeaf == "project") { // TODO unclear we should be changing project on a device live
       project = String(payload); // Note weirdness, it really needs to copy 
       // TODO - needs to redo stuff that uses "project"
       // project = payload;
-    } else if (topicTwig == "name") {
+    } else if (topicLeaf == "name") {
       name = String(payload); // Note weirdness, it really needs to copy 
-    } else if (topicTwig == "description") {
+    } else if (topicLeaf == "description") {
       description = payload;
     }
-    writeConfigToFS(topicTwig, payload); // Save for next time
-    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+    writeConfigToFS(topicLeaf, payload); // Save for next time
+    System_Base::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   } else { // No point in passing on our own id for the loop
-    Frugal_Group::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+    Frugal_Group::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   }
 }
 void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
@@ -90,6 +90,8 @@ void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload,
 void System_Frugal::discover() {
   messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  // Commented out because already sending ota_key which contains it.
+  //messages->send(leaf2path("board"), SYSTEM_OTA_SUFFIX, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   Frugal_Group::discover();
 }
 
@@ -112,14 +114,14 @@ void Frugal_Group::loop() {
   } 
 }
 void Frugal_Group::periodically() { 
-  heap_print(F("Periodic"));
+  //heap_print(F("Periodic"));
   for (System_Base* fb: group) { 
     #ifdef SYSTEM_MEMORY_DEBUG
-      Serial.print(fb->id);  heap_print(F("Sensor_HT::set"));
+      Serial.print(fb->id);  //heap_print(F("Sensor_HT::set"));
     #endif
     fb->periodically();
   } 
-  heap_print(F("/Periodic"));
+  //heap_print(F("/Periodic"));
 }
 void Frugal_Group::infrequently() { 
   for (System_Base* fb: group) { 
@@ -158,9 +160,9 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
     messages(new System_Messages()),
   // mqtt is added in main.cpp > configure_mqtt(host,user,password)
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
-    oled(new System_OLED(&OLED_WIRE)),
+    oled(new Actuator_OLED(&OLED_WIRE)),
   #endif // SYSTEM_OLED_WANT
-  #ifdef SYSTEM_OTA_KEY
+  #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     ota(new System_OTA()),
   #endif
   fs_LittleFS(new System_LittleFS()),
@@ -170,6 +172,10 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #ifdef LED_BUILTIN // defined by board or _settings.h
     actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN)); // Default LED builtin actuator at default brightness and white
   #endif
+  #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
+    actuators->add(oled);
+  #endif
+  sensors->add(new Sensor_Health("health", "System"));
   add(actuators);
   add(sensors);
   add(controls);
@@ -179,10 +185,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   system->add(wifi);
   system->add(discovery);
   system->add(new System_Watchdog());
-  #ifdef SYSTEM_OLED_WANT
-    system->add(oled);
-  #endif
-  #ifdef SYSTEM_OTA_KEY
+  #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     system->add(ota);
   #endif
   #ifdef SYSTEM_LORA_WANT
@@ -204,6 +207,7 @@ void System_Frugal::pre_setup() {
   // Early initial stuff - happens BEFORE do System_Message::setup which uses config 
   startSerial(); // Encapsulate setting up and starting serial
   fs_LittleFS->pre_setup();
+  powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
   readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig
 }
 void System_Frugal::setup() {
@@ -212,7 +216,7 @@ void System_Frugal::setup() {
     Serial.print(F("Setup: "));
   #endif
   Frugal_Group::setup(); // includes WiFi
-  #ifdef SYSTEM_OTA_KEY
+  #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     ota->setup_after_mqtt_setup(); // Sends advertisement over MQTT
   #endif
   #ifdef SYSTEM_FRUGAL_DEBUG
@@ -231,9 +235,9 @@ void System_Frugal::setup_after_wifi() {
   }
 }
 void System_Frugal::infrequently() {
-  heap_print(F("infrequent"));
+  //heap_print(F("infrequent"));
   Frugal_Group::infrequently();
-  heap_print(F("/infrequent"));
+  //heap_print(F("/infrequent"));
 }
 
 // These are things done one time per period - where a period is the time set in powercontroller->cycle_ms
@@ -245,11 +249,11 @@ void System_Frugal::periodically() {
 void System_Frugal::loop() {
   //Serial.print(F("⏳1"));
   if (timeForPeriodic) {
-    heap_print(F("loop periodic"));
+    //heap_print(F("loop periodic"));
     periodically();  // Do things run once per cycle
     infrequently();  // Do things that keep their own track of time
     timeForPeriodic = false;
-    heap_print(F("/loop periodic"));
+    //heap_print(F("/loop periodic"));
   }
   Frugal_Group::loop(); // Do things like MQTT which run frequently with their own clock
   if (powercontroller->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
@@ -262,18 +266,24 @@ void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
   // Encapsulate setting up and starting serial
   #ifdef ANY_DEBUG
     Serial.begin(baud);
+    /*
     while (!Serial) { 
       ; // wait for serial port to connect. Needed for Arduino Leonardo only
     }
+    */
+    //TODO-23 remove this delay when coming back from deep sleep.
     delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
     Serial.println(F("FrugalIoT Starting"));
   #endif // ANY_DEBUG  
 }
+#ifndef SERIAL_BAUD
+  #define SERIAL_BAUD 460800
+#endif
   
 void System_Frugal::startSerial() {
   // At least on my mac, Arduino has problems at higher speeds like 460800
   #ifdef PLATFORMIO
-    startSerial(460800, 5000);
+    startSerial(SERIAL_BAUD, 5000);
   #else
     startSerial(115200, 5000);
   #endif

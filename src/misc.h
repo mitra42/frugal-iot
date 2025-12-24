@@ -16,4 +16,5 @@ bool match_topic(const String& topic, const String& pattern);
 
 void heap_print(const __FlashStringHelper *msg);
 
+void shouldBeDefined();
 #endif //MISC_H
