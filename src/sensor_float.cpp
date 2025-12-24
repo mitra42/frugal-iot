@@ -26,7 +26,7 @@ float Sensor_Float::readFloat() {  shouldBeDefined(); return -1; }
 
 // Check if the raw value from the sensor is valid - defaults to true, but overridden for each sensor
 bool Sensor_Float::validate(float v) {
-  return !std::isnan(v);;
+  return !std::isnan(v);
 }
 // Convert sensor to actual value - this is typically overriden, for example to apply a scale. 
 float Sensor_Float::convert(float v) {

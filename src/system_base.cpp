@@ -297,7 +297,7 @@ bool IN::dispatchPath(const String &tp, const String &p) {
 
 bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
-    if (leaf.startsWith(id) && leaf.endsWith("/wired")) {
+    if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // We are changing the path, not sending a value
       if (!(p == wiredPath)) {
         wiredPath = p; // Copies p
         sendWired(); // Destination changed, send current value
@@ -372,13 +372,19 @@ bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     bool dispatched = false;
   if (leaf.startsWith(id)) {
-    uint16_t v = p.toInt(); // TODO is this really toFloat ? 
+    uint16_t v = p.toInt();
     if (leaf.endsWith("/max")) {
       max = v;      
       dispatched = true;
     } else if (leaf.endsWith("/min")) {
       min = v;
       dispatched = true;
+    } else if (leaf.endsWith("/cycle")) { //TODO move to a function of OUTuint16
+      // Complexity here is because this is a uint16 and cycling below min may go negative 
+      int16_t newvalue = value + (int16_t)v;
+      if (newvalue > max) { newvalue = min;};
+      if (newvalue < min) { newvalue = max;};
+      value = (uint16_t)newvalue;
     }
     if (dispatched) {
       writeConfigToFS(leaf, p);  
@@ -638,16 +644,22 @@ OUTuint16::OUTuint16(const OUTuint16 &other)
 
 // TO_ADD_OUTxxx
 // Called when either value, or wiredPath changes
-void OUT::sendWired() {
+void OUT::sendWired(bool retain, uint8_t qos) {
   if (wiredPath.length()) {
-    frugal_iot.messages->send(wiredPath, StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    // Three possibilities = normal = send+loop qos=2 & local = loopback; qos=2 & remote = sendRemote
+    if (qos == MQTT_QOS_EXACTLY1) {
+      if (wiredPath.startsWith(frugal_iot.messages->topicPrefix)) {
+        frugal_iot.messages->queueLoopback(wiredPath, StringValue());
+      } else {
+        frugal_iot.messages->sendRemote(wiredPath, StringValue(), retain, qos);
+      }
+    } else {
+      frugal_iot.messages->send(wiredPath, StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    }
   }
 }
 // TO-ADD-OUTxxx
 void OUTfloat::set(const float newvalue) {
-  #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
-  #endif
   if (newvalue != value) {
     value = newvalue;
     send();
@@ -673,9 +685,6 @@ void OUTbool::send() {
   frugal_iot.messages->send(path(), String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 void OUTbool::set(const bool newvalue) {
-  #ifdef CONTROL_HYSTERISIS_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
-  #endif
   if (newvalue != value) {
     value = newvalue;
     send();

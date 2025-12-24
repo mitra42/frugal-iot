@@ -37,7 +37,7 @@ void setup() {
   // Add sensors, actuators and controls
 
   // Battery sensor on pin 33
-  frugal_iot.sensors->add(new Sensor_Battery(33));
+  frugal_iot.sensors->add(new Sensor_Battery(33, 2));
 
   // Light sensor BH1750 TODO see notes in sensor_bh1750.cpp,h about I2C pin conflicts
   frugal_iot.sensors->add(new Sensor_BH1750("lux", "Lux", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true));
@@ -111,11 +111,11 @@ void setup() {
   // Controls that can be wire here, or in the UX
   Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
   frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/id"));
+  cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/id"));
 
   ControlHysterisis* ch = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(ch);
-  ch->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/on"));
+  ch->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
   //=================================LOGGER======
   // Add time if needed, which is currently only for data logging.

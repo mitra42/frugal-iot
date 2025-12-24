@@ -32,7 +32,7 @@
 #include "sensor_sht.h"
 
 Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, bool retain)
-  : Sensor_HT("sht", name, retain), 
+    : Sensor_HT("sht", name, retain),
     address(address_init) {
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   // Defaults to system defined SDA and SCL 
@@ -55,6 +55,10 @@ void Sensor_SHT::setup() {
   // TODO-23 this looks wrong in the case of a longer loop, we'll be returning a wrong answer from a previous read. 
 }
 
+bool Sensor_SHT::validate(float temp, float humy) {
+    // Reject if both temperature and humidity are zero simultaneously
+    return !(temp == 0.0f && humy == 0.0f);
+}
 void Sensor_SHT::readValidateConvertSet() {
   #ifdef SENSOR_SHT_DEBUG
     Serial.print(address, HEX);
@@ -76,8 +80,10 @@ void Sensor_SHT::readValidateConvertSet() {
         Serial.println(F("%"));
       #endif
 
-      set(temp, humy); // Set the values in the OUT object and send
-
+      // Only set values if they pass validation
+      if (validate(temp, humy)) {
+          set(temp, humy);
+      }
       // Note only request more Data if was dataReady
       sht->requestData(); // Request next one
 

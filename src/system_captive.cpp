@@ -83,7 +83,7 @@ class CaptiveRequestHandler : public AsyncWebHandler {
     } else {
       // BULD THE CAPTIVE PORTAL HERE
       //Serial.println(F("XXX Matching host and ip - i.e. acessed by IP address, not name"));      
-      AsyncResponseStream *response = request->beginResponseStream("text/html");
+      AsyncResponseStream *response = request->beginResponseStream("text/html; charset=utf-8");
       response->print(F("<!DOCTYPE html><html><head><title>"));
       response->print(T->CaptivePortal);
       response->print(F("</title></head><body>"));

@@ -12,8 +12,7 @@
  *
  * ODDITIES KNOWN AND HOW CORRECTED
  * lolin_c3_pico board definition is missing - its provided in boards/ and defines LED_BUILTIN=RGB_BUILTIN=29 (7+SOC_GPIO_PIN_COUNT)
- * ITEAD_SONOFF and ESP8266_D1 are inverted - 1 is off, 0 is on // TODO-141 confirm
- * ITEAD_SONOFF - esp01_1m defines LED_BUILTIN on 1 but have note that its on 13 and inverted  TODO-141 check
+ * ITEAD_ARDUINO_ESP8266_SONOFF_BASIC SONOFF and ESP8266_D1 are inverted - 1 is off, 0 is on // TODO-141 confirm
  * Some legacy boards (Arduino Uno?) define BUILTIN_LED instead
  * 
  * Expect from platformio.ini
@@ -58,7 +57,7 @@
 // Oddity - some digital boards are inverted 
 // TODO-141 reconfirm this  - including checking definition of HIGH and LOW 
 // Also check which pin SONOFF is on and make sure set somewhere as LED_BUILTIN probably wrong
-#if defined(ITEAD_SONOFF) || defined(ESP8266_D1) 
+#if defined(ARDUINO_ESP8266_SONOFF_BASIC) || defined(ESP8266_D1) 
   #define ACTUATOR_LEDBUILTIN_INVERT 
 #endif
 

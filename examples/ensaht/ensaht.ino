@@ -32,7 +32,7 @@ void setup() {
   
   ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/on"));
+  cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

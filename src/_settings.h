@@ -93,7 +93,7 @@
 // ARDUINO_LOLIN_C3_MINI ARDUINO_LOLIN_S2_MINI ARDUINO_ESP8266_WEMOS_D1MINI ARDUINO_ESP8266_WEMOS_D1MINIPRO ARDUINO_ESP8266_ESP01
 // These boards use a more generic board definition so need defining in platformio.dev
 // LilyGo HiGrow uses esp32dev which defines ARDUINO_ESP32_DEV TODO-140 define something
-// Sonoff uses esp01_1m which defines ARDUINO_ESP8266_ESP01 - define ITEAD_SONOFF if reqd
+// Sonoff uses sonoff_basic which defines ARDUINO_ESP8266_SONOFF_BASIC
 // ttgo-lora32-v21 defines ARDUINO_TTGO_LoRa32_v21new; but also need whether SX1276 or SX1278 so TODO-140 define that
 // And in the arduino core code ESP32 or ESP8266
 //
@@ -143,6 +143,10 @@
   #define SYSTEM_OLED_WANT
 #endif
 
+#if defined(ARDUINO_heltec_wifi_lora_32_V3)
+  #define BUTTON_BUILTIN (0)
+#endif
+
 // A number of sensors will want to default to the boards I2C, 
 // But some boards have the pre-defined SDA and SCL wrong
 // So .... these settings define I2C_SDA and I2C_SCL so that a library can be explicit about 
@@ -170,6 +174,11 @@
   #endif
 #endif
 
+
+// Pin definitions that should really be in the variant files could submit PR
+#ifdef ARDUINO_LOLIN_S2_MINI
+  #define BUILTIN_BUTTON 0 // This is GPIO0, on pin 5, 
+#endif
 
 
 #endif // _SETTINGS_H

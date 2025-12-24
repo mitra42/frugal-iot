@@ -5,37 +5,33 @@
 #include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
 #include "ESPAsyncWebServer.h" // for AsyncResponseStream"
 
+#include "_settings.h" // For MQTT_RETAIN
+
 extern const char* valueAdvertLineFloat;
 extern const char* valueAdvertLineBool;
 extern const char* wireAdvertLine;
 
-// Not used yet
-/*
-// TO-ADD-INXXX TO-ADD-OUTXXX
-enum IOtype { 
-  BOOL, UINT16, FLOAT, COLOR, TEXT
-};
-*/
-
 class System_Base {
   public:
+    // Most of System_Base has to be public - I think (but am not sure) because while accessed from System_Frugal on a subclass of System_Base its not the class acting on itself?
     System_Base(const char * const id, const String name);
-    virtual void setup();
     void setupFailed(); // Called from overrides of setup() on failure.
     const char* id = nullptr; // Name of actuator, sensor or control 
-    String name; // Name of actuator, sensor or control
+    bool connected = false; 
+    virtual void setup();
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);
     virtual void dispatchPath(const String &topicPath, const String &payload);
-    String leaf2path(const char* leaf); 
     virtual void discover();
-    void readConfigFromFS();
     void readConfigFromFS(File dir, const String* leaf);
     void writeConfigToFS(const String& topicTwig, const String& payload);
     virtual void loop();
     virtual void periodically();
     virtual void captiveLines(AsyncResponseStream* response) { };
     virtual void infrequently();
-  protected: // Most of System_Base has to be public - I'm not sure I understand why
+  protected: 
+    String name; // Name of actuator, sensor or control
+    String leaf2path(const char* leaf); 
+    void readConfigFromFS();
 }; // Class FrugalBase
 
 class IO {
@@ -48,7 +44,6 @@ class IO {
     const char* color; // String passed to UX
     bool const wireable; // True if can wire this to/from others - note this flag is on the control, not on the sensor or actuator
     String wiredPath; // Topic also listening|sending to when wired
-    String* wiredPathXXX; // Topic also listening|sending to when wired
     IO();
     IO(const char * const sensorId, const char * const id, const String name, char const *color, const bool w = true);
     virtual void setup();
@@ -91,7 +86,7 @@ class OUT : public IO {
     // TO-ADD-OUTxxx
     virtual float floatValue();
     virtual bool boolValue();
-    virtual void sendWired();
+    virtual void sendWired(bool retain = MQTT_RETAIN, uint8_t qos = MQTT_QOS_ATLEAST1);
     bool dispatchLeaf(const String &leaf, const String &payload, bool isSet) override; // Just checks control
   protected: // Most of IN appears to need to be public
 };
