@@ -22,7 +22,13 @@
 // This is currently only defined for ESP32, 
 // Certainly fials to complie on ESP8266 but might be fixable - I dont have a ESP8266+LoRa combo to try
 #ifdef ESP32
+// ====== BUILDING LoraMesher 1.0.0 above here
 
+
+
+
+
+// ====== BUILDING LoraMesher 1.0.0 above here
 #include "LoraMesher.h"
 #include "system_loramesher.h"
 #include "misc.h"  // for lprintf
