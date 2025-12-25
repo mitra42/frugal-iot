@@ -34,7 +34,7 @@ void setup() {
   // Relay on Sonoff is on pin 12
   frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, "purple"));
 
-  ControlHysterisis* ch = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
+  Control_Hysterisis* ch = new Control_Hysterisis("Control_Hysterisis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(ch);
   ch->outputs[0]->wireTo(frugal_iot.messages->setPath("relay/on")); // TODO refactor wireTo so can take a Base
 
