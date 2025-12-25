@@ -8,12 +8,23 @@
 #include "system_base.h"
 
 // TO-ADD-POWER
+
+// If need an extra bit, can assume WakeOnTimer = LightSleep
+#define PauseWiFi 0x01
+#define PauseMQTT 0x02
+#define PauseUART 0x04
+#define DeepSleep 0x08
+#define DelaySleep 0x10
+#define LightSleep 0x20
+#define WakeOnTimer 0x40
+#define WakeOnWiFi 0x80
+
 enum System_Power_Type { 
   Power_Loop = 0,     // Standard loop, no waiting
-  Power_Light,        // Does a Light sleep
-  Power_LightWiFi,    // Like Light, but wakes on WiFi, which menas it SHOULD keep WiFi alive. (poor power savings currently - possibly because of Uart=Serial)
-  Power_Modem,        // ESP32 Modem sleep mode - need to check what this means
-  Power_Deep          // Does a deep sleep - resulting in a restart
+  Power_Light = LightSleep | PauseWiFi | PauseMQTT | WakeOnTimer,        // Does a Light sleep
+  Power_LightWiFi = DelaySleep | PauseMQTT,     // Like Light, but wakes on WiFi, which menas it SHOULD keep WiFi alive. (poor power savings currently - possibly because of Uart=Serial)
+  Power_Modem = LightSleep | WakeOnTimer | WakeOnWiFi,       // ESP32 Modem sleep mode - need to check what this means
+  Power_Deep = DeepSleep         // Does a deep sleep - resulting in a restart
 };
 
 class System_Power_Mode : public System_Base {

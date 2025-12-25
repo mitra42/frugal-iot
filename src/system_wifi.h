@@ -30,8 +30,8 @@ class System_WiFi : public System_Base {
     bool rescan();
     //void periodically() override;
     void loop() override;
-    bool prepareForLightSleep();
-    bool recoverFromLightSleep();
+    bool pause();
+    bool recover();
     void setup() override;
     void addWiFi(String ssid, String password);
     void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;

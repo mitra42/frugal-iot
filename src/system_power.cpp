@@ -14,16 +14,13 @@
   #include "esp_wifi.h"
   #include "esp_sleep.h"
   #include "driver/uart.h"   // To allow disabling UART
-  // To allow printing task list
+  // To allow printing task list - which doesnt work anyway!
   //#include "freertos/FreeRTOS.h"
   //#include "freertos/task.h"
 #endif
 #include "_settings.h"
 #include "system_power.h"
 #include "system_frugal.h"
-
-/* TODO-23x stuff maybe to configure
-  What to do with WiFi - Light=pause Modem=wakeOn 
 
 /*
 // Wont work in Arduino framework 
@@ -130,7 +127,7 @@ void System_Power_Mode::setup() {
   if (wake_count) {
     // Only time wake_coint is non-zero is if recovering from a deep sleep - its false at startup and its false when recovering from other modes but setup() isn't run in those cases.
     recover(); 
-  } else if (mode == Power_LightWiFi){
+  } else if (mode & DelaySleep) { // We'll use conditions to auto enter sleep (doesnt work yet)
     LightWifi_setup();
   }
 #endif
@@ -167,25 +164,20 @@ void System_Power_Mode::prepare() {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println(F("Power Management: preparing"));
   #endif
-  if (mode != Power_Loop) {
+  if (mode) {
     // Some things wont be done if just looping
     #ifdef LILYGOHIGROW
       digitalWrite(POWER_CTRL, LOW);
     #endif
-    #ifdef ESP32
-      if (mode == Power_LightWiFi) {
-        // Need to turn anything off that could keep it awake
-        // So far that isn't working - some background task I can't find is stopping it sleeping
-        uart_driver_delete(UART_NUM_0); // Disable UART0 (Serial)
-      }
-    #endif
-    #ifdef ESP32
-      if (mode == Power_Light) {
-        frugal_iot.wifi->prepareForLightSleep();  // Disconnect WiFi gracefully - will lose it during sleep anyway
-        // TODO-23 note that mqtt and loramesher both define prepareForLightSleep but it isn't called
-      }
-    #endif
-
+    if (mode & PauseUART) {
+      // Need to turn anything off that could keep it awake
+      // So far that isn't working - some background task I can't find is stopping it sleeping
+      uart_driver_delete(UART_NUM_0); // Disable UART0 (Serial)
+    }
+    if (mode & PauseWiFi) {
+      frugal_iot.wifi->pause();  // Disconnect WiFi gracefully - will lose it during sleep anyway
+      // TODO-23 note that mqtt and loramesher both define prepareForLightSleep but it isn't called
+    }
   }
   // TODO-23 will loop through sensors and actuators here are some pointers found elsewhere...
   // WIFI 
@@ -200,26 +192,26 @@ void System_Power_Mode::prepare() {
 void System_Power_Mode::sleep() {
   if (mode) { // != Power_Loop
     #ifdef ESP32
-      if ((mode == Power_Light) || (mode == Power_Modem)) {
+      if (mode & WakeOnTimer) {
         #ifdef SYSTEM_POWER_DEBUG
           Serial.print(F("Sleeping for ")); Serial.println(sleep_ms());
         #endif
         esp_sleep_enable_timer_wakeup(sleep_us()); // Wake on clock
       }
-      if ((mode == Power_Modem)) {
+      if (mode & WakeOnWiFi) {
         esp_sleep_enable_wifi_wakeup();
       }
     #endif
     #ifdef ESP32
-      if ((mode == Power_Light) || (mode == Power_Modem)) {
+      if (mode & LightSleep) {
         // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html#_CPPv421esp_light_sleep_startv
         esp_light_sleep_start();
       }
       // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html#_CPPv421esp_light_sleep_startv
-      if (mode == Power_LightWiFi) {
+      if (mode & DelaySleep) {
         delay(sleep_ms()); // Light sleep will be automatic
       }
-      if (mode == Power_Deep) {
+      if (mode & DeepSleep) {
         millis_offset = millis() + millis_offset + sleep_ms(); // Since millis() will reset to 0
         esp_deep_sleep(sleep_us());
         Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
@@ -227,8 +219,6 @@ void System_Power_Mode::sleep() {
     #endif
   }
 }
-
-// TODO-23x REVIEW NEW POWER ORG DONE ABOVE DO BELOW \/ 
 
 // ================== recover =========== called from maybeSleep ========= TO-ADD-POWERMODE
 // This should undo anything done in prepare - e.g. turning devices back on
@@ -238,8 +228,8 @@ void System_Power_Mode::recover() {
   // For Power_Loop wake_ms = cycle_ms; for Deep millis is ~0 so this is good for all modes
   nextSleepTime = (millis() + wake_ms); // not sleepSafeMillis() as by definition dont sleep before this
 
-  if (mode != 0) { //TODO-23x make sure during deep recovery, we know the mode by here
-    if (mode == Power_LightWiFi) {
+  if (mode) {
+    if (mode & PauseUART) {
       frugal_iot.startSerial(); // Note turned UART off in prepare or sleep
     }
     #ifdef LILYGOHIGROW
@@ -255,12 +245,14 @@ void System_Power_Mode::recover() {
     #endif
     #ifdef ESP32
       // Restore comms: Power_Loop & Power_Modem do not need it; and Power_Deep does it in setup
-      if (mode == Power_LightWiFi || (mode == Power_Light && frugal_iot.wifi->recoverFromLightSleep())) {
-        // TODO-23 note dont appear to be calling mqtt prepareForLightSleep
+      bool WiFiOK = true;
+      if (mode & PauseWiFi) {
+        WiFiOK = frugal_iot.wifi->recover();
+      }
+      if (WiFiOK & PauseMQTT) { // Note MQTT not being explicitly paused
         frugal_iot.mqtt->recoverFromLightSleep(); // New or old session
       }
-
-      if (mode == Power_Deep) {
+      if (mode & DeepSleep) {
         // Memory will have been wiped by the sleep, what can we assume?
         // Note if required - can store stuff in RTC memory or on disk, but careful about overusing (writes) flash
         // Note this is called from setup() which will also call other sensors & actuators to repeat setup()
