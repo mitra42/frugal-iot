@@ -369,6 +369,22 @@ bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   // Catch generic case like color
   return IN::dispatchLeaf(leaf, p, isSet);
 }
+bool OUTbool::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+  bool dispatched = false;
+  if (leaf.startsWith(id)) {
+    bool v = p.toInt();
+    if (leaf.endsWith("/cycle")) { 
+      set(!value);
+    }
+    if (dispatched) {
+      writeConfigToFS(leaf, p);  
+      return false; // value didnt change
+    } 
+    // else drop through and dispatch to superclass
+  }
+  // Catch generic case like color
+  return OUT::dispatchLeaf(leaf, p, isSet);
+}
 bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     bool dispatched = false;
   if (leaf.startsWith(id)) {
@@ -384,7 +400,7 @@ bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
       int16_t newvalue = value + (int16_t)v;
       if (newvalue > max) { newvalue = min;};
       if (newvalue < min) { newvalue = max;};
-      value = (uint16_t)newvalue;
+      set((uint16_t)newvalue);
     }
     if (dispatched) {
       writeConfigToFS(leaf, p);  
