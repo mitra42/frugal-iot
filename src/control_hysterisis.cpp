@@ -51,6 +51,7 @@ Control_Hysterisis::Control_Hysterisis (const char* const id, const char * const
     new INfloat(id, "hysterisis", "Hysterisis", 0, width, 0, max/2, "black", false)
   },
   std::vector<OUT*> {
+    // Note assumptions here, and in superclasses e.g. Control_Sonoff that output[0]="out" and is the output
     new OUTbool(id, "out", "Out", false, "black", true)
   }
 ) {

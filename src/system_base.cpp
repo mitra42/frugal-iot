@@ -251,6 +251,7 @@ void IO::writeValueToFS(const String &leaf, const String& payload) {
   String path = dirPath + "/value";
   // Checking and removing legacy file when want a directory
   // This shouldnt be needed long - when all devices have updated code this will run the first time they readConfigFromFS (e.g. erase Nov 2025)
+  /*
   if (frugal_iot.fs_LittleFS->exists(dirPath)) {
     bool needsRemoval;
     {
@@ -262,6 +263,7 @@ void IO::writeValueToFS(const String &leaf, const String& payload) {
       frugal_iot.fs_LittleFS->remove(dirPath); // XX may not be accurage
     }
   }
+  */
   // End of legacy code
   frugal_iot.fs_LittleFS->spurt(path, payload);
 }
@@ -372,7 +374,6 @@ bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 bool OUTbool::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   bool dispatched = false;
   if (leaf.startsWith(id)) {
-    bool v = p.toInt();
     if (leaf.endsWith("/cycle")) { 
       set(!value);
     }
@@ -382,7 +383,7 @@ bool OUTbool::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     } 
     // else drop through and dispatch to superclass
   }
-  // Catch generic case like color
+  // Catch generic case - currently just /wired  (specifically I don't think it handles /value)
   return OUT::dispatchLeaf(leaf, p, isSet);
 }
 bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
@@ -408,7 +409,7 @@ bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     } 
     // else drop through and dispatch to superclass
   }
-  // Catch generic case like color
+  // Catch generic case - currently just /wired (specifically I don't think it handles /value)
   return OUT::dispatchLeaf(leaf, p, isSet);
 }
 // OUTtext::dispatchLeaf -> OUT::dispatchLeaf

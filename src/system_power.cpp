@@ -54,8 +54,8 @@ void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
 
 System_Power_Mode::System_Power_Mode(const System_Power_Type mode, unsigned long cycle_ms, unsigned long wake_ms)
 : System_Base("power", "Power Controller"),
-  nextSleepTime(millis() + wake_ms), // not sleepSafeMillis() as by definition dont sleep before this
   mode(mode),
+  nextSleepTime(millis() + wake_ms), // not sleepSafeMillis() as by definition dont sleep before this
   cycle_ms(cycle_ms),
   wake_ms(wake_ms),
   timer_index(0)
@@ -169,15 +169,19 @@ void System_Power_Mode::prepare() {
     #ifdef LILYGOHIGROW
       digitalWrite(POWER_CTRL, LOW);
     #endif
-    if (mode & PauseUART) {
-      // Need to turn anything off that could keep it awake
-      // So far that isn't working - some background task I can't find is stopping it sleeping
-      uart_driver_delete(UART_NUM_0); // Disable UART0 (Serial)
-    }
-    if (mode & PauseWiFi) {
-      frugal_iot.wifi->pause();  // Disconnect WiFi gracefully - will lose it during sleep anyway
-      // TODO-23 note that mqtt and loramesher both define prepareForLightSleep but it isn't called
-    }
+    #ifdef ESP32 // ESP8266 does not define UART_NUM_0 may be different way to shut down if relevant
+      if (mode & PauseUART) {
+        // Need to turn anything off that could keep it awake
+        // So far that isn't working - some background task I can't find is stopping it sleeping
+        uart_driver_delete(UART_NUM_0); // Disable UART0 (Serial)
+      }
+    #endif
+    #ifdef ESP32 // Not built yet to pause WiFi on ESP8266
+      if (mode & PauseWiFi) {
+        frugal_iot.wifi->pause();  // Disconnect WiFi gracefully - will lose it during sleep anyway
+        // TODO-23 note that mqtt and loramesher both define prepareForLightSleep but it isn't called
+      }
+    #endif
   }
   // TODO-23 will loop through sensors and actuators here are some pointers found elsewhere...
   // WIFI 
