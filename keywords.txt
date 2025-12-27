@@ -8,7 +8,7 @@ Actuator_Ledbuiltin	KEYWORD1
 Actuator_OLED	KEYWORD1
 Control	KEYWORD1
 Control_Blinken	KEYWORD1
-ControlHysterisis	KEYWORD1
+Control_Hysterisis	KEYWORD1
 Control_Gsheets	KEYWORD1
 Control_Logger	KEYWORD1
 Control_LoggerFS	KEYWORD1

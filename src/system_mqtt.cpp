@@ -138,6 +138,7 @@ void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicT
   }
 }
 bool System_MQTT::prepareForLightSleep() {
+  //TODO-23 this doesnt appear to be called, its not sure if it should or not
   frugal_iot.mqtt->client.disconnect();
   return true;
 }

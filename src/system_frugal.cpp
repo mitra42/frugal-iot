@@ -148,7 +148,7 @@ void System_Frugal::configure_mqtt(const char* hostname, const char* username, c
   system->add(mqtt = new System_MQTT(hostname, username, password));  
 }
 void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
-  system->add(powercontroller = System_Power_Mode::create(t, cycle_ms, wake_ms));  
+  system->add(powercontroller = new System_Power_Mode(t, cycle_ms, wake_ms));  
 }
 void System_Frugal::pre_setup() {
   // Early initial stuff - happens BEFORE do System_Message::setup which uses config 

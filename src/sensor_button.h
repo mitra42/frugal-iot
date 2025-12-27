@@ -20,10 +20,10 @@
     public:
       Sensor_Button( const char * const id, const char * const name, uint8_t pin, const char * const color);
       //OUTuint16* output; // TODO convert to an enum 
-      OUTuint16* singleClick;
-      OUTuint16* longClick;
-      OUTuint16* doubleClick;
-      OUTuint16* tripleClick;
+      OUTtext* singleClick;
+      OUTtext* longClick;
+      OUTtext* doubleClick;
+      OUTtext* tripleClick;
       void setup() override;
       void loop() override;
       void clickHandlerInner(clickType type);
