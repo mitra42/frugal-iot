@@ -37,10 +37,10 @@ void tripleClickHandler(Button2& btn) {
 Sensor_Button::Sensor_Button(const char * const id, const char * const name, uint8_t pin, const char* const color) :
   System_Base(id, name), pin(pin) {
   //output = new OUTuint16(id, "out", name, empty, single_click, empty, color, false); // TODO convert this into a OUTenum - hard part is UX
-  singleClick = new OUTuint16(id, "click", "Single Click", 0, 0, 0xFFFF, "black", true);
-  longClick = new OUTuint16(id, "long", "Long Click", 0, 0, 0xFFFF, "black", true);
-  doubleClick = new OUTuint16(id, "double", "Double CLick", 0, 0, 0xFFFF, "black", true);
-  tripleClick = new OUTuint16(id, "triple", "Triple Click", 0, 0, 0xFFFF, "black", true);
+  singleClick = new OUTtext(id, "click", "Single Click", "1", "black", true);
+  longClick = new OUTtext(id, "long", "Long Click", "1", "black", true);
+  doubleClick = new OUTtext(id, "double", "Double CLick", "1", "black", true);
+  tripleClick = new OUTtext(id, "triple", "Triple Click", "1", "black", true);
   button = new Button2(pin);
   button->setClickHandler(clickHandler);
   button->setLongClickHandler(longClickHandler);

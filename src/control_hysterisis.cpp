@@ -1,4 +1,4 @@
-/* Frugal IoT - ControlHysterisis - Parameterised control with hysterisis built in.
+/* Frugal IoT - Control_Hysterisis - Parameterised control with hysterisis built in.
  *
  */
 
@@ -9,7 +9,7 @@
 #include "control_hysterisis.h"
 
 #ifdef CONTROL_HYSTERISIS_DEBUG
-void ControlHysterisis::debug(const char* const where) {
+void Control_Hysterisis::debug(const char* const where) {
   Serial.printf("%s: ",where);
   Serial.printf(" now=%f ", inputs[0]->floatValue());
   if (((INfloat*)inputs[0])->wiredPath) { Serial.print(((INfloat*)inputs[0])->wiredPath); }
@@ -25,7 +25,7 @@ void ControlHysterisis::debug(const char* const where) {
 }
 #endif //CONTROL_HYSTERISIS_DEBUG
 
-void ControlHysterisis::act() {
+void Control_Hysterisis::act() {
   const float now = inputs[0]->floatValue();
   const float greater = inputs[1]->boolValue();
   const float lim = inputs[2]->floatValue();
@@ -37,12 +37,12 @@ void ControlHysterisis::act() {
     ((OUTbool*)outputs[0])->set(false);
   }
   #ifdef CONTROL_HYSTERISIS_DEBUG
-    debug("ControlHysterisis after act");
+    debug("Control_Hysterisis after act");
   #endif
   // If  lim-histerisis < hum < lim+histerisis then don't change setting (or reverse if !greater)
 };
 
-ControlHysterisis::ControlHysterisis (const char* const id, const char * const name, float now, uint8_t width, float min, float max) 
+Control_Hysterisis::Control_Hysterisis (const char* const id, const char * const name, float now, uint8_t width, float min, float max) 
 : Control(id, name,
   std::vector<IN*> {
     new INfloat(id, "now", "Now", now, width, min, max, "black", true),
@@ -51,11 +51,12 @@ ControlHysterisis::ControlHysterisis (const char* const id, const char * const n
     new INfloat(id, "hysterisis", "Hysterisis", 0, width, 0, max/2, "black", false)
   },
   std::vector<OUT*> {
+    // Note assumptions here, and in superclasses e.g. Control_Sonoff that output[0]="out" and is the output
     new OUTbool(id, "out", "Out", false, "black", true)
   }
 ) {
   #ifdef CONTROL_HYSTERISIS_DEBUG
-    debug("ControlHysterisis after instantiation");
+    debug("Control_Hysterisis after instantiation");
   #endif
 };
 
