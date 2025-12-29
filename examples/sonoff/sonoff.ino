@@ -19,6 +19,7 @@ class Control_Sonoff : public Control_Hysterisis {
     void act() override;
 };
 
+// Build on the Hysterisis control, expand it so the long button drops it out of manual. 
 Control_Sonoff::Control_Sonoff() : 
   Control_Hysterisis("controlhysterisis", "Control", 50, 1, 0, 100),
   manual(new OUTbool(id, "manual", "Manual",false,"red",true)) {
@@ -70,13 +71,14 @@ void setup() {
   // Relay on Sonoff is on pin 12
   frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, "purple"));
 
-   // If required, add a control - this is just an example
+  // Add the control and wire to the relay and the LED.
   Control_Sonoff* cs = new Control_Sonoff();
   frugal_iot.controls->add(cs);
   cs->outputs[0]->wireTo(frugal_iot.messages->setPath("relay/on")); // TODO refactor wireTo so can take a Base
   cs->outputs[1]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on")); // Turn on LED if manual (TODO-187 may want inverse) 
   // https://github.com/mitra42/frugal-iot/issues/159
 
+  // Create a button, and wire its single and long clicks to the control.
   Sensor_Button* button = new Sensor_Button("button", "Button", BUILTIN_BUTTON, "red");
   frugal_iot.buttons->add(button);
   //frugal_iot.buttons->outputs.push_back(new OUTuint16(frugal_iot.buttons->id, "state", "State", SONOFF_OFF, SONOFF_OFF, SONOFF_ON, "black", true));
