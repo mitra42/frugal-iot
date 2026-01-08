@@ -164,6 +164,7 @@ void System_LoraMesher::setup() {
 }
 
 void System_LoraMesher::prepareForLightSleep() {
+    //TODO-23 this doesnt appear to be called, its not sure if it should or not
     // TODO-139 TODO-23 find where put radio and SPI to sleep - on some other libraries its LoRa.sleep() and SPI.end()
 }
 

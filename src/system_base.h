@@ -222,6 +222,7 @@ class OUTbool : public OUT {
     bool boolValue() override;
     virtual String StringValue();
   protected:
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void send() override;
     void debug(const char* const where);
     // void discover() override; // Use OUT::discover
@@ -235,12 +236,12 @@ class OUTuint16 : public OUT {
     OUTuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool wireable);
     OUTuint16(const OUTuint16 &other);
     void set(const uint16_t newvalue);
-    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void discover() override;
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;
     virtual String StringValue();
   protected:
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void debug(const char* const where);
 };
 class OUTtext : public OUT {

@@ -128,13 +128,13 @@ void System_WiFi::addWiFi(String ssid, String password) {
 }
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-bool System_WiFi::prepareForLightSleep() {
+bool System_WiFi::pause() {
    return (esp_wifi_stop() == ESP_OK); // Suggested to reduce dropping WiFi connection
 }
 #endif
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-bool System_WiFi::recoverFromLightSleep() {
+bool System_WiFi::recover() {
   if (esp_wifi_start() != ESP_OK) {
     Serial.println(F("Failed to restart esp_wifi"));
     return false;

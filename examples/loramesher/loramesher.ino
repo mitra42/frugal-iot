@@ -37,7 +37,11 @@ void setup() {
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
   
-  esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
+  #ifdef BUTTON_BUILTIN
+    frugal_iot.buttons->add(new Sensor_Button("button", "Button", BUTTON_BUILTIN, "red"));
+  #endif
+
+  //esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
   frugal_iot.loramesher = new System_LoraMesher(); // Held in a variable as future LoRaMesher will access it directly e.g. from MQTT
   frugal_iot.system->add(frugal_iot.loramesher);
 
