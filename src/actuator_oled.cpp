@@ -5,37 +5,17 @@
  */
 #include "_settings.h"
 #include <Wire.h>
-
-#ifdef ARDUINO_C3_OLED_72x40
-  TwoWire* Wire1_OLED_ptr = nullptr;  // Pointer that will be initialized at runtime
-#endif
-
 #ifdef SYSTEM_OLED_WANT
 #include "actuator_oled.h"
 //Libraries for OLED Display
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-// Helper function to get or create Wire1_OLED
-TwoWire* getWire1_OLED() {
-  #ifdef ARDUINO_C3_OLED_72x40
-    if (Wire1_OLED_ptr == nullptr) {
-      Wire1_OLED_ptr = new TwoWire(1);
-    }
-    return Wire1_OLED_ptr;
-  #else
-    return &Wire;
-  #endif
-}
-
 Actuator_OLED::Actuator_OLED(TwoWire* wire)
 : System_Base("oled", "OLED"),
-  wire(wire)
-  //display(DISPLAY_WIDTH, DISPLAY_HEIGHT, wire, OLED_RST_X) // Allow code to access 
-{
-  wire->begin(OLED_SDA, OLED_SCL); // Note that on ARDUINO_TTGO_LoRa32_V1, this is NOT the hardware I2C pins on ESP32
-  display = Adafruit_SSD1306(DISPLAY_WIDTH, DISPLAY_HEIGHT, wire, OLED_RST_X);
-}
+  wire(wire),
+  display(DISPLAY_WIDTH, DISPLAY_HEIGHT, wire, OLED_RST_X) // Allow code to access 
+{}
 
 void Actuator_OLED::setup() {
   System_Base::setup();
@@ -58,7 +38,7 @@ void Actuator_OLED::setup() {
     //initialize OLED
   Serial.println("XXX pre Wire begin");
   //Serial.printf("Wire pointer: %p, Wire1 address: %p\n", wire, &Wire1);
-  //wire->begin(OLED_SDA, OLED_SCL); // Note that on ARDUINO_TTGO_LoRa32_V1, this is NOT the hardware I2C pins on ESP32
+  wire->begin(OLED_SDA, OLED_SCL); // Note that on ARDUINO_TTGO_LoRa32_V1, this is NOT the hardware I2C pins on ESP32
   Serial.println("XXX after Wire begin");
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3c, false, false)) { // Address 0x3C for 128x32 (also seems to be for 128x64 and C3_OLED_72x40)
     setupFailed();

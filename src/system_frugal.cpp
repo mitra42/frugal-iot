@@ -107,7 +107,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
     messages(new System_Messages()),
   // mqtt is added in main.cpp > configure_mqtt(host,user,password)
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
-    oled(new Actuator_OLED(getWire1_OLED())),
+    oled(new Actuator_OLED(&OLED_WIRE)),
   #endif // SYSTEM_OLED_WANT
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     ota(new System_OTA()),

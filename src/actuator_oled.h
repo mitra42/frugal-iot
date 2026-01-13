@@ -49,10 +49,7 @@
 #elif defined(ARDUINO_C3_OLED_72x40) 
   // Cheap OLED C3 board that is a bit odd in how display gets used
   // Code borrowed from https://github.com/AlexYeryomin/ESP32C3-OLED-72x40/blob/main/ESP32C3-OLED-72x40.ino
-  // Note: Wire1_OLED is lazily created at runtime in actuator_oled.cpp
-  extern TwoWire* getWire1_OLED();  // Function to get Wire1_OLED (created at runtime)
-  #define OLED_WIRE getWire1_OLED()
-  //#define OLED_WIRE Wire
+  #define OLED_WIRE Wire // THere is no Wire1 on C3_Pico
   #define OLED_SDA 5 // On GPIO5
   #define OLED_SCL 6 // On GPIO6
   #define OLED_RST_X -1 // Doesnt appear to exist on this board
