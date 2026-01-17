@@ -1,6 +1,13 @@
+/* Frugal-IoT DS18B20 sensor
+
+It should be noted, that it seems to require an  ~4.7k resistor between data and positive.
+Our test are run at 3.3V though it is supposed to also run at 5V.
+
+*/
 #include "sensor_ds18b20.h"
 #include <cmath>
 
+#define SENSOR_DS18B20_DEBUG
 /**
  * @brief Constructor
  * 
