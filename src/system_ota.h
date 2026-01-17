@@ -28,7 +28,7 @@ class System_OTA : public System_Base {
     void infrequently() override;
 
   private:
-    unsigned long nextLoopTime = 0;
+    uint8_t timer_index;
     bool _isOK;
     bool _checked;
     int _retryCount;

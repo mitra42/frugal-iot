@@ -100,7 +100,8 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   system(new System_Group("system", "System")),
   buttons(new System_Buttons("buttons", "Buttons")),
   captive(new System_Captive()),
-  discovery(new System_Discovery()), 
+  powercontroller(new System_Power()), // Must be before Discovery and OTA
+  discovery(new System_Discovery()),  // Must be after Power (for timers)
   #ifdef SYSTEM_LORA_WANT
     lora(new System_LoRa()),
   #endif
@@ -110,12 +111,13 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
     oled(new Actuator_OLED(&OLED_WIRE)),
   #endif // SYSTEM_OLED_WANT
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
-    ota(new System_OTA()),
+    ota(new System_OTA()), // Must be after Power (for timers)
   #endif
   fs_LittleFS(new System_LittleFS()),
   time(nullptr), // time is optional and setup by main.cpp if needed
   wifi(new System_WiFi())
 {
+  // Note order that things are added is significant - this is the order they will be run in each call that goes thru groups.
   #ifdef LED_BUILTIN // defined by board or _settings.h
     actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN)); // Default LED builtin actuator at default brightness and white
   #endif
@@ -130,6 +132,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   system->add(fs_LittleFS);
   system->add(messages);
   system->add(wifi);
+  system->add(powercontroller);
   system->add(discovery);
   system->add(new System_Watchdog());
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
@@ -140,31 +143,29 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #endif // SYSTEM_LORA_WANT
   system->add(captive);
   add(system);
-  // These things should really be in setup() but we want them to run before the rest of the main.cpp setup()
-  // Note this is running BEFORE Serial is enabled
 }
 
 void System_Frugal::configure_mqtt(const char* hostname, const char* username, const char* password) {
   system->add(mqtt = new System_MQTT(hostname, username, password));  
 }
 void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
-  system->add(powercontroller = new System_Power_Mode(t, cycle_ms, wake_ms));  
+  powercontroller->configure(t, cycle_ms, wake_ms);
 }
 void System_Frugal::pre_setup() {
   // Early initial stuff - happens BEFORE do System_Message::setup which uses config 
   startSerial(); // Encapsulate setting up and starting serial
   fs_LittleFS->pre_setup();
   powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
-  readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig
+  readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig TODO-194 maybe should do this in setup AFTER actuators/sensors/controllers added
 }
 void System_Frugal::setup() {
-  // By the time this is run, mqtt should have been added, and serial started in main.cpp
+  // By the time this is run, mqtt should have been added, and serial started in main.cpp -> pre_setup
   #ifdef SYSTEM_FRUGAL_DEBUG
     Serial.print(F("Setup: "));
   #endif
   System_Group::setup(); // includes WiFi
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
-    ota->setup_after_mqtt_setup(); // Sends advertisement over MQTT
+    ota->setup_after_mqtt_setup(); // just initializes - and not totally sure why doe here and not in setup_after_wifi
   #endif
   #ifdef SYSTEM_FRUGAL_DEBUG
      Serial.println();

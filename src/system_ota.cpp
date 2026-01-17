@@ -85,7 +85,10 @@
   "-----END CERTIFICATE-----\n";
 #endif
 
-System_OTA::System_OTA() : System_Base("ota", "OTA") { }
+System_OTA::System_OTA() 
+: System_Base("ota", "OTA"), 
+  timer_index(frugal_iot.powercontroller->timer_next()) 
+{ }
 
 System_OTA::~System_OTA() { }
 
@@ -197,10 +200,11 @@ void System_OTA::setup_after_mqtt_setup() {
   //checkForUpdate();
 }
 
+//TODO-194 needs testing
 void System_OTA::infrequently() {
-  if (frugal_iot.canOTA() && (nextLoopTime <= frugal_iot.powercontroller->sleepSafeMillis())) {
+  if (frugal_iot.canOTA() && frugal_iot.powercontroller->timer_expired(timer_index)) {
     checkForUpdate();
-    nextLoopTime = frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_OTA_MS;
+    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_OTA_MS);
   }
 }
 

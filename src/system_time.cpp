@@ -95,6 +95,8 @@ void System_Time::setup_after_wifi() {
   sync();
 }
 
+// TODO-23 wont work in deep sleep as resets nextLoopTime - expect to run each time after Deep Sleep
+// maybe fix to use a time from RTC ? I'm not sure if there is any drift once set.
 void System_Time::infrequently() {
   if (nextLoopTime <= frugal_iot.powercontroller->sleepSafeMillis() ) {
     if (! isTimeSet()) {

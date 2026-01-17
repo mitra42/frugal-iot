@@ -27,7 +27,7 @@ enum System_Power_Type {
   Power_Deep = DeepSleep         // Does a deep sleep - resulting in a restart
 };
 
-class System_Power_Mode : public System_Base {
+class System_Power : public System_Base {
   public:
     System_Power_Type mode; 
     uint8_t timer_next(); // Return an index to a timer that can be used
@@ -40,7 +40,8 @@ class System_Power_Mode : public System_Base {
     #else // Only needed/valid on ESP32 where have saved millis_offset in RTCs memory
       unsigned long sleepSafeMillis() { return millis(); }
     #endif
-    System_Power_Mode(const System_Power_Type mode, unsigned long cycle_ms, unsigned long wake_ms);
+    System_Power();
+    void configure(System_Power_Type mode_init, unsigned long cycle_ms_init, unsigned long wake_ms_init);
   protected: // Move any of these needed to public above
     unsigned long timer(uint8_t i); // Return value of timer
     unsigned long nextSleepTime = 0; // Next time to sleep in millis() (NOT offseted) - set in constructor, updated in maybeSleep()
