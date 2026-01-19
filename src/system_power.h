@@ -24,7 +24,8 @@ enum System_Power_Type {
   Power_Light = LightSleep | PauseWiFi | PauseMQTT | WakeOnTimer,        // Does a Light sleep
   Power_LightWiFi = DelaySleep | PauseMQTT,     // Like Light, but wakes on WiFi, which menas it SHOULD keep WiFi alive. (poor power savings currently - possibly because of Uart=Serial)
   Power_Modem = LightSleep | WakeOnTimer | WakeOnWiFi,       // ESP32 Modem sleep mode - need to check what this means
-  Power_Deep = DeepSleep         // Does a deep sleep - resulting in a restart
+  Power_Deep = DeepSleep | WakeOnTimer,         // Does a deep sleep - resulting in a restart
+  Power_Panic = DeepSleep
 };
 
 class System_Power : public System_Base {
@@ -42,7 +43,9 @@ class System_Power : public System_Base {
     #endif
     System_Power();
     void configure(System_Power_Type mode_init, unsigned long cycle_ms_init, unsigned long wake_ms_init);
+    void checkLevel();
   protected: // Move any of these needed to public above
+  private:
     unsigned long timer(uint8_t i); // Return value of timer
     unsigned long nextSleepTime = 0; // Next time to sleep in millis() (NOT offseted) - set in constructor, updated in maybeSleep()
     unsigned long cycle_ms; // Time for each cycle (wake + sleep)
@@ -50,15 +53,14 @@ class System_Power : public System_Base {
     void setup() override;
     void LightWifi_setup();
     unsigned long sleep_ms() { return cycle_ms - wake_ms; }
-    unsigned long sleep_us() { return sleep_ms() * 1000ULL; }
+    uint8_t timer_index;
     //virtual void configure(); // Typically called from setup() but might also be called if switch modes
     virtual void prepare();
-    virtual void sleep();
+    virtual void sleep(System_Power_Type forceMode = Power_Loop, unsigned long sleep_millisecs = 0);
     virtual void recover();
+    // Override virtuals - so can be private 
     void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;
     void captiveLines(AsyncResponseStream* response) override;
-  private:
-    uint8_t timer_index;
 };
 
 #endif // SYSTEM_POWER_H

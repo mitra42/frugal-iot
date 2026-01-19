@@ -25,7 +25,6 @@
 #include "control.h"
 #include "system_frugal.h"
 #include "misc.h"
-// For sleepSafemillis()
 #include "system_frugal.h" // for frugal_iot
 
 
@@ -55,12 +54,12 @@ void System_Discovery::setup() {
 
 void System_Discovery::infrequently() { 
   if (frugal_iot.powercontroller->timer_expired(timer_index)) {
-      if ((!doneFullAdvertise)) { // (&& frugal_iot.canMQTT()) - should be able to do this over LoRaMesher
-        // Can queue these up even before MQTT connected as will be sent when connects
-        fullAdvertise();
-      } 
-      // Even if MQTT down (no WiFi or LoRa) queue up one of these to send when reconnect so UX knows we exist
-      quickAdvertise(); // Send info about this node to server (on timer)
-      frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_DISCOVERY_MS);
-    }
+    if ((!doneFullAdvertise)) { // (&& frugal_iot.canMQTT()) - should be able to do this over LoRaMesher
+      // Can queue these up even before MQTT connected as will be sent when connects
+      fullAdvertise();
+    } 
+    // Even if MQTT down (no WiFi or LoRa) queue up one of these to send when reconnect so UX knows we exist
+    quickAdvertise(); // Send info about this node to server (on timer)
+    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_DISCOVERY_MS);
+  }
 }

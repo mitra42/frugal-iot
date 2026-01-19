@@ -22,6 +22,18 @@
 #include "system_power.h"
 #include "system_frugal.h"
 
+#ifndef SYSTEM_POWER_LOW_MV
+  #define SYSTEM_POWER_LOW_MV 3400.0
+#endif
+//#define SYSTEM_POWER_LOW_MS 10000
+#ifndef SYSTEM_POWER_LOW_MS
+  #define SYSTEM_POWER_LOW_MS (60 * 60 * 1000) // Presume solar - lets go for 1 hour intervals - TODO-194 try longer or shorter levels
+#endif
+/* Not using - without a better indicator it could just leave the chip in a deep-sleep state
+#ifndef SYSTEM_POWER_PANIC_MV
+  #define SYSTEM_POWER_PANIC_MV 3300.0 // Still droppong 
+#endif
+*/
 /*
 // Wont work in Arduino framework 
 void printTaskList() {
@@ -31,13 +43,12 @@ void printTaskList() {
   Serial.println(buf);
 }
 */
-
-#define TIMER_LENGTH 4 // Can make this longer (and add to initialization) if ever need >4 timers.
+#define TIMER_LENGTH 8 // Can make this longer (and add to initialization) if ever need >4 timers.
 #ifdef ESP32
   RTC_DATA_ATTR unsigned long wake_count = 0L; // If 1 per minute, uint_16 would just be 45 days
   RTC_DATA_ATTR unsigned long millis_offset = 0L;  // Cumulative time in deep sleep with millis() being reset
   // This is an array of timers, available to modules
-  RTC_DATA_ATTR unsigned long timers[TIMER_LENGTH] = {0L,0L,0L,0L}; // Array used by entities - currently using max three (OTA, Disovery. Blinken)
+  RTC_DATA_ATTR unsigned long timers[TIMER_LENGTH] = {0L,0L,0L,0L,0L,0L,0L,0L}; // Array used by entities - currently using max five (OTA, Disovery. Blinken, time, Watchdog)
 #else
   unsigned long timers[TIMER_LENGTH] = {0L,0L,0L,0L}; // Array used by entities
 #endif
@@ -61,7 +72,7 @@ System_Power::System_Power()
   timer_index(0)
 { }
 // This is for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname
-void System_Power::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+void System_Power::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, const bool isSet) {
   //TODO-23 allow changing type of power mgmt - e.g. from Deep to Loop
   if (isSet && (topicSensorId == id)) {
     bool dispatched = false;
@@ -103,16 +114,42 @@ uint8_t System_Power::timer_next() {
 unsigned long System_Power::timer(uint8_t i) {
   return timers[i];
 }
-void System_Power::timer_set(uint8_t i, unsigned long t) {
+void System_Power::timer_set(const uint8_t i, const unsigned long t) {
     timers[i] = sleepSafeMillis() + t ;
 }
-bool System_Power::timer_expired(uint8_t i) {
-  return (timer(timer_index) <= sleepSafeMillis());
+bool System_Power::timer_expired(const uint8_t i) {
+  return (timer(i) <= sleepSafeMillis());
 }
 
 
 // ================== setup =========== called from main.cpp::setup ========
 // This section can contain ifdef-ed parts that manage things like power at the board level such as on LILYGOHIGROW
+
+void System_Power::checkLevel() {
+  // Note Serial is not enabled at this point
+  // TODO-194 handle case where no battery measurement possible
+  if (frugal_iot.battery) {
+    const float vv = frugal_iot.battery->readValidateConvert(); // Millivolts
+    #ifdef SYSTEM_POWER_DEBUG
+      Serial.print("Checking power at startup"); Serial.print(vv);
+    #endif
+    #ifdef SYSTEM_POWER_PANIC_MV // Not currently using
+      if ( (vv > 1.0) && (vv < SYSTEM_POWER_PANIC_MV)) { // If its less than 1 (typically 0) then its a bad reading, ignore it
+        // Low enough to risk RTC brownout and not coming back, deep sleep hard, only come back when voltage recovers
+        // Not clear what happens if device just sits here at e.g. 3.1V then comes up slowly
+        sleep(Power_Panic);
+      } else 
+    #endif // SYSTEM_POWER_PANIC_MV
+    #ifdef SYSTEM_POWER_LOW_MV
+      if ( (vv > 1.0) && (vv < SYSTEM_POWER_LOW_MV)) {
+        Serial.println(" low power going sleep");
+        // options here could be .... send readings, but with long gaps; just deep sleep now for longer time (so e.g. check every 60 mins for power back)
+        sleep(Power_Deep, SYSTEM_POWER_LOW_MS);
+      }
+    #endif
+  }
+}
+
 void System_Power::pre_setup() {
   #ifdef LILYGOHIGROW
     pinMode(POWER_CTRL, OUTPUT);
@@ -122,7 +159,7 @@ void System_Power::pre_setup() {
 void System_Power::setup() {
 #ifdef ESP32 // Specific to ESP32s
   if (wake_count) {
-    // Only time wake_coint is non-zero is if recovering from a deep sleep - its false at startup and its false when recovering from other modes but setup() isn't run in those cases.
+    // Only time wake_count is non-zero is if recovering from a deep sleep - its false at startup and its false when recovering from other modes but setup() isn't run in those cases.
     recover(); 
   } else if (mode & DelaySleep) { // We'll use conditions to auto enter sleep (doesnt work yet)
     LightWifi_setup();
@@ -151,17 +188,19 @@ void System_Power::LightWifi_setup() {
   // Enable modem sleep (WiFi will automatically enter modem sleep when possible)
   esp_wifi_set_ps(WIFI_PS_MIN_MODEM); // or WIFI_PS_MAX_MODEM for more savings
 }
-void System_Power::configure(System_Power_Type mode_init, unsigned long cycle_ms_init, unsigned long wake_ms_init) {
+#endif
+// Currently on ESP8266 just support Power_Loop
+void System_Power::configure(const System_Power_Type mode_init, const unsigned long cycle_ms_init, const unsigned long wake_ms_init) {
   mode = mode_init;
   cycle_ms = cycle_ms_init;
   wake_ms = wake_ms_init;
   nextSleepTime = (millis() + wake_ms); // not sleepSafeMillis() as by definition dont sleep before this
+  /* Serial not enabled yet
   #ifdef SYSTEM_POWER_DEBUG
     Serial.printf("%s: %lu of %lu\n", name.c_str(), wake_ms, cycle_ms); 
   #endif
+  */
 }
-
-#endif
 
 // ================== prepare =========== called from maybeSleep ========= TO-ADD-POWERMODE
 
@@ -171,7 +210,7 @@ void System_Power::prepare() {
   #ifdef SYSTEM_POWER_DEBUG
     Serial.println(F("Power Management: preparing"));
   #endif
-  if (mode) {
+  if (mode) { // Not set here ! 
     // Some things wont be done if just looping
     #ifdef LILYGOHIGROW
       digitalWrite(POWER_CTRL, LOW);
@@ -200,33 +239,42 @@ void System_Power::prepare() {
 }
 // ================== sleep =========== called from maybeSleep ========= TO-ADD-POWERMODE
 
-// TODO-194 smarter about low battery
-void System_Power::sleep() {
-  if (mode) { // != Power_Loop
+void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millisecs) {
+  if (!forceMode) {
+    forceMode = mode; 
+  }
+  if (!sleep_millisecs) { 
+    sleep_millisecs = sleep_ms(); 
+  };
+  if (forceMode) { // != Power_Loop
     #ifdef ESP32
-      if (mode & WakeOnTimer) {
-        #ifdef SYSTEM_POWER_DEBUG
-          Serial.print(F("Sleeping for ")); Serial.println(sleep_ms());
-        #endif
-        esp_sleep_enable_timer_wakeup(sleep_us()); // Wake on clock
-      }
-      if (mode & WakeOnWiFi) {
-        esp_sleep_enable_wifi_wakeup();
+      if (forceMode & LightSleep) {
+        if (forceMode & WakeOnTimer) {
+          #ifdef SYSTEM_POWER_DEBUG
+            Serial.print(F("Sleeping for ")); Serial.println(sleep_ms());
+          #endif
+          esp_sleep_enable_timer_wakeup(sleep_millisecs * 1000UL); // Wake on clock
+        }
+        if (forceMode & WakeOnWiFi) {
+          esp_sleep_enable_wifi_wakeup();
+        }
       }
     #endif
     #ifdef ESP32
-      if (mode & LightSleep) {
-        // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html#_CPPv421esp_light_sleep_startv
-        esp_light_sleep_start();
-      }
       // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html#_CPPv421esp_light_sleep_startv
-      if (mode & DelaySleep) {
-        delay(sleep_ms()); // Light sleep will be automatic
+      if (forceMode & DelaySleep) {
+        delay(sleep_millisecs); // Light sleep will be automatic
       }
-      if (mode & DeepSleep) {
-        millis_offset = millis() + millis_offset + sleep_ms(); // Since millis() will reset to 0
-        esp_deep_sleep(sleep_us());
-        Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
+    #endif
+    #ifdef ESP32
+      if (forceMode & DeepSleep) {
+        if (forceMode & WakeOnTimer) {
+          millis_offset = millis() + millis_offset + sleep_millisecs; // Since millis() will reset to 0 - stored in RTC
+          esp_deep_sleep(sleep_millisecs * 1000UL);
+          Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
+        } else {  // Currently this is just to avoid brownout - deep_sleep with no wakeup and is not used due to worries it will never come back from deep_sleep unless power drops to 0
+          esp_deep_sleep_start();
+        }
       }
     #endif
   }
@@ -282,6 +330,9 @@ void System_Power::recover() {
 // ================== maybeSleep =========== called from main::loop() = doesnt return if deep-sleep ===
 bool System_Power::maybeSleep() {
   if (nextSleepTime <= millis()) {
+    #ifdef SYSTEM_POWER_DEBUG
+      Serial.println(F("XXX Sleeping")); delay(1000);
+    #endif
     prepare();
     sleep();
     recover(); // Never gets here in deep sleep - in that case recover is called from setup

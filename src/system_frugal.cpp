@@ -151,12 +151,24 @@ void System_Frugal::configure_mqtt(const char* hostname, const char* username, c
 void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
   powercontroller->configure(t, cycle_ms, wake_ms);
 }
+void System_Frugal::configure_battery(const uint8_t pin, float_t voltage_divider) {
+  sensors->add(battery = new Sensor_Battery(pin, voltage_divider));
+} 
+
 void System_Frugal::pre_setup() {
   // Early initial stuff - happens BEFORE do System_Message::setup which uses config 
-  startSerial(); // Encapsulate setting up and starting serial
+  #ifdef SYSTEM_POWER_DEBUG
+    // Need serial for debugging
+    startSerial(); // Encapsulate setting up and starting serial
+    powercontroller->checkLevel(); // Check voltage level
+  #else
+    // Shut down before enable startSerial to keep power draw minimal
+    powercontroller->checkLevel();
+    startSerial(); // Encapsulate setting up and starting serial
+  #endif
   fs_LittleFS->pre_setup();
   powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
-  readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig TODO-194 maybe should do this in setup AFTER actuators/sensors/controllers added
+  readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig - note this just reads frugal_iot/ not other directories which are read in actuator,sensor,control,system_xxx.setup
 }
 void System_Frugal::setup() {
   // By the time this is run, mqtt should have been added, and serial started in main.cpp -> pre_setup
@@ -180,6 +192,7 @@ void System_Frugal::setup_after_wifi() {
       time->setup_after_wifi();
     }
     mqtt->setup_after_wifi();
+    ota->setup_after_wifi(); // Check for new software if its time
   }
 }
 void System_Frugal::infrequently() {
@@ -196,7 +209,7 @@ void System_Frugal::periodically() {
 // Main loop() - call this from main.cpp
 void System_Frugal::loop() {
   //Serial.print(F("⏳1"));
-  if (timeForPeriodic) {
+  if (timeForPeriodic) { // Note it is true at first time thru this loop
     //heap_print(F("loop periodic"));
     periodically();  // Do things run once per cycle
     infrequently();  // Do things that keep their own track of time
@@ -209,20 +222,27 @@ void System_Frugal::loop() {
   }
   delay(10); // Slow down and let other things run
 }
-extern unsigned long wake_count;
+#ifdef ESP32 // Its in the RTC, no meaning in ESP8266
+  extern unsigned long wake_count;
+#endif
 void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
   // Encapsulate setting up and starting serial
   #ifdef ANY_DEBUG
     Serial.begin(baud);
     /*
+    // Don't wait for serial - it will block if there is no USB connected. 
     while (!Serial) { 
       ; // wait for serial port to connect. Needed for Arduino Leonardo only
     }
     */
-    if (!wake_count) {
-      //TODO-23 remove this delay when coming back from deep sleep.
-      delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
-    }
+    #ifdef ESP32
+      if (!wake_count) {
+    #endif
+        //TODO-23 remove this delay when coming back from deep sleep.
+        delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
+    #ifdef ESP32
+      }
+    #endif
     Serial.println(F("FrugalIoT Starting"));
   #endif // ANY_DEBUG  
 }

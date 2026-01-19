@@ -20,6 +20,7 @@
 // Frugal-iot headers
 #include "_settings.h" 
 #include "actuator_ledbuiltin.h"
+#include "sensor_battery.h"
 #include "sensor_health.h"
 #include "system_base.h"
 #include "system_buttons.h"
@@ -54,7 +55,8 @@ class System_Frugal : public System_Group {
     System_Group* system;
     System_Buttons* buttons;
     System_Captive* captive;
-    System_Discovery* discovery;
+    System_Power* powercontroller; // Must be before discovery
+    System_Discovery* discovery; // Must be after powercontroller
     #ifdef SYSTEM_LORAMESHER_WANT // This is automatically defined on LoRa compatable boardss
       System_LoraMesher* loramesher; // Will be nullptr if no loramesher
     #endif
@@ -66,7 +68,7 @@ class System_Frugal : public System_Group {
     #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
       System_OTA* ota;
     #endif
-    System_Power* powercontroller;
+    Sensor_Battery* battery;
     System_LittleFS* fs_LittleFS; 
     System_Time* time; // Optional - may be nullptr if not set up
     System_WiFi* wifi;
@@ -75,6 +77,11 @@ class System_Frugal : public System_Group {
     System_Frugal(const char* org, const char* project, const char* id, const char* name);
     void configure_mqtt(const char* hostname, const char* username, const char* password);
     void configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms);
+    #if defined(SENSOR_BATTERY_PIN) && defined(SENSOR_BATTERY_VOLTAGE_DIVIDER) // Only support default constructor if PIN and DIVIDER defined
+      void configure_battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_VOLTAGE_DIVIDER);
+    #else
+      void configure_battery(const uint8_t pin, float_t voltage_divider);
+    #endif
     void startSerial(uint32_t baud, uint16_t serial_delay);
     void startSerial(); // Encapsulate setting up and starting serial
     void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) override; // this is for local messages for ths obj

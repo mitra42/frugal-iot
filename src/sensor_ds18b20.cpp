@@ -7,7 +7,7 @@ Our test are run at 3.3V though it is supposed to also run at 5V.
 #include "sensor_ds18b20.h"
 #include <cmath>
 
-#define SENSOR_DS18B20_DEBUG
+//#define SENSOR_DS18B20_DEBUG
 /**
  * @brief Constructor
  * 
@@ -33,9 +33,8 @@ void Sensor_DS18B20::setup() {
     // Set 12-bit resolution for full precision (0.0625°C)
     _sensors.setResolution(12);
     #ifdef SENSOR_DS18B20_DEBUG
-        Serial.print(F("DS18B20 sensor initialized on index ")); Serial.println(_index);
-        Serial.print(F(" with resolution: "));
-        Serial.println(_sensors.getResolution());
+        Serial.print(F("DS18B20 sensor initialized on index ")); Serial.print(_index); 
+        Serial.print(F(" with resolution: ")); Serial.println(_sensors.getResolution());
     #endif
 }
 
@@ -70,6 +69,9 @@ float Sensor_DS18B20::readFloat() {
     float tempC = _sensors.getTempCByIndex(_index); // Read temperature for specific index
 
     if (tempC != DEVICE_DISCONNECTED_C) {
+        #ifdef SENSOR_DS18B20_DEBUG
+            Serial.print(F("DS18b20 returned:")); Serial.println(tempC);
+        #endif
         return tempC;  // Return full precision temperature (no rounding!)
     } else {
         #ifdef SENSOR_DS18B20_DEBUG

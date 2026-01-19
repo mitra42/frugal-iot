@@ -39,7 +39,7 @@
     #error OTA only defined so far for ESP8266 and ESP32 
 #endif
 
-#include "system_frugal.h" // For sleepSafemillis()
+#include "system_frugal.h"
 
 #ifndef SYSTEM_OTA_VERSION
   #define SYSTEM_OTA_VERSION "0.0.0" // We dont use versions, we are using MD5
@@ -189,7 +189,7 @@ void System_OTA::setup_after_mqtt_setup() {
   // Nothing to read from disk so not calling readConfigFromFS 
   const String url = getOTApath(); // Needs topicPrefix setup in MQTT::setup
   // Note this must run after WiFi has connected  and ideally before MQTT or Discovery except it needs xDiscovery::topicPrefix
-  Serial.print(F("Attempt OTA from:")); Serial.println(url);
+  Serial.print(F("OTA url=:")); Serial.println(url);
   #ifdef SYSTEM_OTA_USECERT
     init(url, SYSTEM_OTA_VERSION, rootCACertificateForNaturalInnovation);
   #else
@@ -200,12 +200,20 @@ void System_OTA::setup_after_mqtt_setup() {
   //checkForUpdate();
 }
 
-//TODO-194 needs testing
-void System_OTA::infrequently() {
+void System_OTA::maybe_ota() {
   if (frugal_iot.canOTA() && frugal_iot.powercontroller->timer_expired(timer_index)) {
+    Serial.println(F("Check for OTA"));
     checkForUpdate();
     frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_OTA_MS);
   }
+}
+
+void System_OTA::setup_after_wifi() {
+  maybe_ota();
+}
+
+void System_OTA::infrequently() {
+  maybe_ota();
 }
 
 void System_OTA::discover() {

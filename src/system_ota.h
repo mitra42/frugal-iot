@@ -15,6 +15,8 @@ class System_OTA : public System_Base {
     ~System_OTA();
     void init(const String otaServerAddress, const String softwareVersion, const char* caCert);
     void checkForUpdate(void);
+    void setup_after_wifi(void);
+    void maybe_ota(void);
 	  bool isOK() { return _isOK; }
 	  bool canRetry() { return _retryCount > 0; }
 	  bool checked() { return _checked; }
