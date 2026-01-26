@@ -23,11 +23,11 @@
   #ifdef ARDUINO_ESP8266_WEMOS_D1MINIPRO // Note only works on D1 mini pro V2 (the Green one)
     #define SENSOR_BATTERY_VOLTAGE_DIVIDER 4.5 // (130+220+100)/100 i.e. 1V on A0 when 4.5 on batt 
   #elif defined(ARDUINO_LOLIN_C3_PICO)
-    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Maybe board specific but most I see have 2 equal resistors
+    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2.0 // Maybe board specific but most I see have 2 equal resistors
   #elif defined(LILYGOHIGROW)
     #define SENSOR_BATTERY_VOLTAGE_DIVIDER 6.6 // From LilyGo code, not testd yet
   #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
-    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Almost certainly wrong ! Define for this board TO-ADD-BOARD
+    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2.0 // Almost certainly wrong ! Define for this board TO-ADD-BOARD
   #elif defined(ARDUINO_heltec_wifi_lora_32_V3)
     #define SENSOR_BATTERY_VOLTAGE_DIVIDER 4.9
   #else 
@@ -54,11 +54,28 @@
   // See https://github.com/espressif/arduino-esp32/issues/11953 for suggestion to fix this problem
 #endif
 
+#ifdef ESP8266 // analogReadMilliVolts not available
+
+    #define ANALOG_READ_RANGE 1024 // This can be board/chip specific, 
+    #define VCC_MILLIVOLTS 1000.0 // Voltage at chip pin at which we get ANALOG_READ_RANGE
+    // Note that on some boards -  the voltage divider for the battery is different than for pin A0
+    // e.g. ARDUINO_ESP8266_WEMOS_D1MINIPRO (V2) - batt = (130+220+100)/100 while A0 is just (220+100)/100
+
+    #ifdef SENSOR_BATTERY_VOLTAGE_DIVIDER
+      #define SENSOR_BATTERY_SCALE (SENSOR_BATTERY_VOLTAGE_DIVIDER * VCC_MILLIVOLTS) / ANALOG_READ_RANGE 
+    #endif
+#else // ESP32
+  #ifdef SENSOR_BATTERY_VOLTAGE_DIVIDER
+    #define SENSOR_BATTERY_SCALE SENSOR_BATTERY_VOLTAGE_DIVIDER
+  #endif
+#endif
+
 class Sensor_Battery : public Sensor_Analog {
   public: 
-    Sensor_Battery(const uint8_t pin, float_t voltage_divider);
-    #if defined(SENSOR_BATTERY_VOLTAGE_DIVIDER) && defined(SENSOR_BATTERY_PIN)
-      Sensor_Battery(); // Where SENSOR_BATTERY_PIN and SENSOR_BATTERY_VOLTAGE_DIVIDER defined 
+    #if defined(SENSOR_BATTERY_SCALE) && defined(SENSOR_BATTERY_PIN)
+      Sensor_Battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_SCALE); // Where SENSOR_BATTERY_PIN and SENSOR_BATTERY_VOLTAGE_DIVIDER defined 
+    #else
+      Sensor_Battery(const uint8_t pin, float_t voltage_divider);
     #endif
   protected:
     #ifdef ESP32

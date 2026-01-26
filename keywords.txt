@@ -56,7 +56,7 @@ System_MQTT	KEYWORD1
 System_Message	KEYWORD1
 System_Messages	KEYWORD1
 System_OTA	KEYWORD1
-System_Power_Mode	KEYWORD1
+System_Power	KEYWORD1
 System_SD	KEYWORD1
 System_SPI	KEYWORD1
 System_Time	KEYWORD1

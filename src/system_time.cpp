@@ -22,7 +22,7 @@
 #endif
 #include "system_time.h"
 #include "misc.h" // for StringF
-#include "system_frugal.h" // For sleepSafemillis()
+#include "system_frugal.h"
 
 // Could pass time zone in constructor, but do not yet have any applications where local time is relevant 
 #ifndef SYSTEM_TIME_ZONE
@@ -39,7 +39,11 @@
 #define JAN_01_2024 1704070861L
 // #define TEN_MINS 600
 
-System_Time::System_Time() : System_Base("time","Time") {}
+System_Time::System_Time() 
+: System_Base("time","Time"),
+  timer_index(frugal_iot.powercontroller->timer_next())
+  {}
+
 System_Time::~System_Time() {}
 
 // Initialize all the time stuff - set Timezone and start asynchronous sync with NTP 
@@ -95,16 +99,18 @@ void System_Time::setup_after_wifi() {
   sync();
 }
 
+// TODO-23 wont work in deep sleep as resets nextLoopTime - expect to run each time after Deep Sleep
+// maybe fix to use a time from RTC ? I'm not sure if there is any drift once set.
 void System_Time::infrequently() {
-  if (nextLoopTime <= frugal_iot.powercontroller->sleepSafeMillis() ) {
+  if (frugal_iot.powercontroller->timer_expired(timer_index)) {
     if (! isTimeSet()) {
         Serial.print(F("Time since boot")); Serial.println(now());
     } else {
         now();
         Serial.print(F("Local time = ")); Serial.println(dateTime().c_str());
     }
-    nextLoopTime = (frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_TIME_MS);
     // TODO-141 check actually setting time
     configTime(0, 0, "foo","bar","bax"); // TODO this cant be right, which servers are we using ?
+    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_TIME_MS);
   }
 }

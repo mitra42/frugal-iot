@@ -19,7 +19,9 @@ Control_Blinken::Control_Blinken (const char* const id, const char * const name,
   std::vector<OUT*> {
     new OUTbool(id, "out", name, false, "black", true), 
   }
-), blinkOn(secsOn * 1000), blinkOff(secsOff * 1000), timer_index(frugal_iot.powercontroller->timer_next()) {
+), blinkOn(secsOn * 1000), blinkOff(secsOff * 1000),
+   timer_index(frugal_iot.powercontroller->timer_next())
+{
   #ifdef CONTROL_BLINKEN_DEBUG
     debug("Control_Blinken after instantiation");
     Serial.print(F("Control_Blinken: blinkOn: ")); Serial.print(blinkOn); Serial.print(F(" blinkOff: ")); Serial.println(blinkOff);

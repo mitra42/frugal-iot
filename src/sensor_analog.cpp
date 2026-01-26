@@ -55,7 +55,7 @@ Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, cons
 void Sensor_Analog::setup() {
   Sensor_Float::setup(); // Will readConfigFromFS - do before setting up pin
   // initialize the analog pin as an input.
-  pinMode(pin, INPUT); // I don't think this is needed ?
+  pinMode(pin, INPUT); // I don't think this is needed ? - note Sensor_Battery also does this because reads before setup
   #ifdef SENSOR_ANALOG_REFERENCE
     analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
   #endif 
@@ -77,7 +77,7 @@ bool Sensor_Analog::validate(int v) {
 float Sensor_Analog::convert(const int v) {
   return (v - offset) * scale;
 }
-void Sensor_Analog::readValidateConvertSet() {
+float Sensor_Analog::readValidateConvert() {
   // Note almost identical code in Sensor_Uint16 Sensor_Float & Sensor_Analog
   const int v = readInt();           // Read raw value from sensor
   #ifdef SENSOR_ANALOG_DEBUG
@@ -85,14 +85,15 @@ void Sensor_Analog::readValidateConvertSet() {
   #endif
   if (validate(v)) {        // Check if its valid
     const float vv = convert(v);  // Convert - e.g. scale and offset
-    set(vv);                  // set - and send message
     #ifdef SENSOR_ANALOG_DEBUG
-      Serial.print(F(" converted ")); Serial.print(vv);
+      Serial.print(F(" converted ")); Serial.println(vv);
     #endif
+    return vv;
   }
   #ifdef SENSOR_ANALOG_DEBUG
     Serial.println();
   #endif
+  return NAN;
 }
 void Sensor_Analog::tare() {
   // Read and use the reading as the offset for a 0 value
@@ -100,7 +101,11 @@ void Sensor_Analog::tare() {
 }
 void Sensor_Analog::calibrate(const float val) {
   // Note this could calibrate off an invalid raw value, may want to check if see this behavior
-  scale = val / (readInt() - offset);
+  int v = readInt();
+  #ifdef SENSOR_ANALOG_DEBUG
+    Serial.println(F("Calibrating val=")); Serial.print(val); Serial.print(F(" read=")); Serial.print(v); Serial.print(F(" offset=")); Serial.print(offset); Serial.println("scale = val/(reading-offset)");
+  #endif
+  scale = val / (v - offset);
 }
 void Sensor_Analog::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, const bool isSet) {
   if (topicSensorId == id) {

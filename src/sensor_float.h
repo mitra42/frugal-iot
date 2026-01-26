@@ -8,6 +8,7 @@
 class Sensor_Float : public Sensor {
   public:
     Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain);
+    virtual float readValidateConvert();
   protected:
     OUTfloat* output;
     uint8_t width;
@@ -16,7 +17,7 @@ class Sensor_Float : public Sensor {
     virtual bool validate(float v);
     virtual float convert(float v);
     virtual void set(const float vv);
-    void readValidateConvertSet();
+    void readValidateConvertSet() override;
     void captiveLines(AsyncResponseStream* response) override;
 };
 #endif // SENSOR_FLOAT_H

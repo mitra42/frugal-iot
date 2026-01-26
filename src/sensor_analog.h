@@ -20,6 +20,7 @@
 class Sensor_Analog : public Sensor_Float {
   public:
     Sensor_Analog(const char* const id, const char * const name, const uint8_t pin, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool retain);
+    float readValidateConvert() override;
   protected:
     uint8_t pin;    
     int offset;
@@ -29,7 +30,6 @@ class Sensor_Analog : public Sensor_Float {
     virtual int readInt(); // Not overriding - its different return
     virtual bool validate(int v);
     virtual float convert(int v);
-    virtual void readValidateConvertSet() override;
     void tare();
     void calibrate(float v);
     void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;
