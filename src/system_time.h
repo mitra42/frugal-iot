@@ -7,7 +7,7 @@
 
 class System_Time : public System_Base {
   public:
-    unsigned long nextLoopTime = 0; // sleepSafeMillis
+    uint8_t timer_index = 0;
     System_Time();
     ~System_Time();
     const char* timezone;

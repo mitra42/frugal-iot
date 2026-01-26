@@ -1,6 +1,8 @@
 /* Frugal IoT - Watchdog
  * 
  * Can be used to monitor different internal functions - here it is watching Heap but that might change
+ * 
+ * NOTE - this is not currently included anywhere - can add to System_Frugal like other system classes
  */
 
 #ifdef ESP32
@@ -23,9 +25,10 @@
 #endif
 #define SYSTEM_WATCHDOG_MEM_MS 10000 // 10 seconds, much too fast once tested 
 
-long unsigned internal_watchdog_last = 0; // Will be sleepSafeMillis 
-
-System_Watchdog::System_Watchdog() : System_Base("watchdog", "Watchdog") {}
+System_Watchdog::System_Watchdog() 
+: System_Base("watchdog", "Watchdog"),
+  timer_index(frugal_iot.powercontroller->timer_next())
+ {}
 
 void System_Watchdog::setup() {
     // Nothing to read from disk so not calling readConfigFromFS 
@@ -61,12 +64,13 @@ void System_Watchdog::loop() {
   #endif
 }
 
+#if defined(SYSTEM_MEMORY_DEBUG)
 void System_Watchdog::infrequently() {
-  // TODO move this to infrequent() on something
-  if (frugal_iot.powercontroller->sleepSafeMillis() > (internal_watchdog_last + SYSTEM_WATCHDOG_MEM_MS)) {
+  if (frugal_iot.powercontroller->timer_expired(timer_index)) { // 
     #ifdef SYSTEM_MEMORY_DEBUG
       //heap_print(F("watchdog infrequent"));
     #endif
-    internal_watchdog_last = frugal_iot.powercontroller->sleepSafeMillis(); 
+    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_WATCHDOG_MEM_MS);
   }
 }
+#endif

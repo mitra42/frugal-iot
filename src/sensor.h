@@ -13,7 +13,6 @@ class Sensor : public System_Base {
     std::vector<OUT*> outputs; // Vector of outputs
     const bool retain = false;
     const int qos = 0; // Default to no guarrantee of delivery
-    unsigned long nextLoopTime = 0;
     
     virtual void readValidateConvertSet();
     void periodically() override;

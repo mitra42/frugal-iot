@@ -35,22 +35,29 @@ float Sensor_Float::convert(float v) {
 void Sensor_Float::set(const float newvalue) {
   output->set(newvalue);
 }
-void Sensor_Float::readValidateConvertSet() {
+float Sensor_Float::readValidateConvert() {
   // Note almost identical code in Sensor_Uint16 Sensor_Float & Sensor_Analog
   float v = readFloat();               // Read raw value from sensor
   #ifdef SENSOR_FLOAT_DEBUG
     Serial.print(id); Serial.print(F(" raw:")); Serial.print(v);
   #endif
   if (validate(v)) {              // Check if its valid
-    float vv = convert(v);        // Convert - e.g. scale and offset
-    set(vv);                        // set - and send message
+    const float vv = convert(v);        // Convert - e.g. scale and offset
     #ifdef SENSOR_FLOAT_DEBUG
-      Serial.print(F(" converted ")); Serial.print(vv);
+      Serial.print(F(" converted ")); Serial.println(vv);
     #endif
+    return vv;
   }
   #ifdef SENSOR_FLOAT_DEBUG
     Serial.println();
   #endif
+  return NAN;
+}
+void Sensor_Float::readValidateConvertSet() {
+  float vv = readValidateConvert();
+  if (!isnan(vv)) {
+    set(vv);                  // set - and send message
+  }
 }
 
 void Sensor_Float::captiveLines(AsyncResponseStream* response) {

@@ -42,6 +42,6 @@ class Sensor_LoadCell : public Sensor_Float {
     int32_t offset;
     float scale;
     void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;
-    void captiveLines(AsyncResponseStream* response);
+    void captiveLines(AsyncResponseStream* response) override;
 };
 #endif // SENSOR_LOADCELL_H

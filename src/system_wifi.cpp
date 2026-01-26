@@ -251,7 +251,7 @@ void System_WiFi::stateMachine() {
       // TODO-153 Waiting for stabilization - maybe could be shorter but noticed at 1000 that first MQTT connect often faiks
       } else if (millis() > (statusSince + 2000)) {
         setStatus(WIFI_CONNECTED);
-        frugal_iot.setup_after_wifi(); // Callback to MQTT as first connected
+        frugal_iot.setup_after_wifi(); // Callback to MQTT, Time and OTA as first connected
         //drop thru
       }
       // drop thru
