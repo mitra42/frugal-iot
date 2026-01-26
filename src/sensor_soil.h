@@ -10,6 +10,7 @@ class Sensor_Soil : public Sensor_Analog {
     Sensor_Soil(const char* const id, const char * const name, uint8_t pin_init, int offset, float scale, const char* color, bool retain);
   protected:
     bool validate(int v) override;
+    void captiveLines(AsyncResponseStream* response) override;
 };
 
 #endif // SENSOR_SOIL_H
