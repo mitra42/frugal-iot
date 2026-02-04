@@ -16,19 +16,25 @@
 System_Frugal frugal_iot("dev", "developers", "SHT30", "SHT30 Temperature and Humidity Sensor"); 
 
 void setup() {
-  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
+  // Battery sensor has to come before pre_setup, all others should come after TODO-194 make this change on other .ino
+  #ifdef SENSOR_BATTERY_PIN
+    frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
+  #endif
+
+    // Configure power handling - type, cycle_ms, wake_ms 
+  // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
+  // Power_Loop= awake all the time; 
+  // Power_Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
+  frugal_iot.configure_power(Power_Deep, 600000, 30000); // Take a reading every 10 mins deep sleep between
+  //frugal_iot.configure_power(Power_Loop, 10000, 10000); // For debugging sensors - 10 second loop
+  
+  // Encapsulate setting up and starting serial and read main config also checks power ok.
+  // This has to happen AFTER battery and power are setup, and before mqtt and adding sensors actuators etc. 
+  frugal_iot.pre_setup();
 
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 
-  // Configure power handling - type, cycle_ms, wake_ms 
-  // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
-  // Loop= awake all the time; 
-  // Light = Light Sleep; 
-  // LightWiFi=Light + WiFi on (not working); 
-  // Modem=Modem sleep - works but negligable power saving
-  // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
-  frugal_iot.configure_power(Power_Deep, 300000, 30000); // Take a reading every 10 mins deep sleep between
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
@@ -37,8 +43,6 @@ void setup() {
   
   // Add sensors, actuators and controls
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
-  
-  //frugal_iot.sensors->add(new Sensor_Battery());
 
   // If required, add a control - this is just an example
   //Control_Hysterisis* cb = new Control_Hysterisis("Control_Hysterisis", "Control", 50, 1, 0, 100);
