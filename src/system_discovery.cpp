@@ -25,12 +25,13 @@
 #include "control.h"
 #include "system_frugal.h"
 #include "misc.h"
-// For sleepSafemillis()
 #include "system_frugal.h" // for frugal_iot
 
 
 System_Discovery::System_Discovery()
-: System_Base("discovery", "Discovery") { }
+: System_Base("discovery", "Discovery"),
+   timer_index(frugal_iot.powercontroller->timer_next())
+{ }
 
 void System_Discovery::quickAdvertise() {
     frugal_iot.messages->send(projectTopic, frugal_iot.nodeid, MQTT_DONT_RETAIN, MQTT_QOS_ATLEAST1); // Don't RETAIN as other nodes also broadcasting to same topic
@@ -51,22 +52,14 @@ void System_Discovery::setup() {
   projectTopic = frugal_iot.org + "/" + frugal_iot.project;// e.g. "dev/developers/esp32-12345"
 }
 
- //TODO-23 This wont work as nextLoopTime wont be remembered in Deep Sleep
 void System_Discovery::infrequently() { 
-    if  (nextLoopTime <= (frugal_iot.powercontroller->sleepSafeMillis())) {
-      if ((!doneFullAdvertise)) { // (&& frugal_iot.canMQTT()) - should be able to do this over LoRaMesher
-        // Can queue these up even before MQTT connected as will be sent when connects
-        fullAdvertise();
-      } 
-      // quick can be fone if have MQTT or have LoRaMesher
-      //Serial.print(F("XXX" __FILE__)); Serial.println(__LINE__);
-      if (frugal_iot.canMQTT() 
-        #ifdef SYSTEM_LORAMESHER_WANT // This is automatically defined on LoRa compatable boardss
-          || (frugal_iot.loramesher && frugal_iot.loramesher->connected())
-        #endif
-      ) {
-        quickAdvertise(); // Send info about this node to server (on timer)
-      }
-      nextLoopTime = frugal_iot.powercontroller->sleepSafeMillis() + SYSTEM_DISCOVERY_MS;
-    }
+  if (frugal_iot.powercontroller->timer_expired(timer_index)) {
+    if ((!doneFullAdvertise)) { // (&& frugal_iot.canMQTT()) - should be able to do this over LoRaMesher
+      // Can queue these up even before MQTT connected as will be sent when connects
+      fullAdvertise();
+    } 
+    // Even if MQTT down (no WiFi or LoRa) queue up one of these to send when reconnect so UX knows we exist
+    quickAdvertise(); // Send info about this node to server (on timer)
+    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_DISCOVERY_MS);
+  }
 }

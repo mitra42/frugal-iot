@@ -23,7 +23,7 @@ void setup() {
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
   frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
 
-  // system_oled and actuator_ledbuiltin added automatically on boards that have them.
+  // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
@@ -36,8 +36,8 @@ void setup() {
 
   // Add sensors, actuators and controls
 
-  // Battery sensor on pin 33 - but note LilyGo HiGrow battery didnt arrive so not tested TODO test
-  frugal_iot.sensors->add(new Sensor_Battery(33));
+  // Battery sensor on pin 33
+  frugal_iot.sensors->add(new Sensor_Battery(33, 2));
 
   // Light sensor BH1750 TODO see notes in sensor_bh1750.cpp,h about I2C pin conflicts
   frugal_iot.sensors->add(new Sensor_BH1750("lux", "Lux", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true));
@@ -54,6 +54,8 @@ void setup() {
   #endif
   frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, true));
   
+  frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", 5, 0, true));
+
   frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS160 AHT21"));
 
   // Add a new loadcell sensor max=2000, color="pink", retain=true, DOUTpin=0, SCKpin=1, times=10, offset=0, scale=2000
@@ -109,11 +111,11 @@ void setup() {
   // Controls that can be wire here, or in the UX
   Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
   frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/id"));
+  cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/id"));
 
-  ControlHysterisis* ch = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
+  Control_Hysterisis* ch = new Control_Hysterisis("Control_Hysterisis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(ch);
-  ch->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/on"));
+  ch->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
   //=================================LOGGER======
   // Add time if needed, which is currently only for data logging.

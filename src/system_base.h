@@ -5,37 +5,33 @@
 #include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
 #include "ESPAsyncWebServer.h" // for AsyncResponseStream"
 
+#include "_settings.h" // For MQTT_RETAIN
+
 extern const char* valueAdvertLineFloat;
 extern const char* valueAdvertLineBool;
 extern const char* wireAdvertLine;
 
-// Not used yet
-/*
-// TO-ADD-INXXX TO-ADD-OUTXXX
-enum IOtype { 
-  BOOL, UINT16, FLOAT, COLOR, TEXT
-};
-*/
-
 class System_Base {
   public:
+    // Most of System_Base has to be public - I think (but am not sure) because while accessed from System_Frugal on a subclass of System_Base its not the class acting on itself?
     System_Base(const char * const id, const String name);
-    virtual void setup();
     void setupFailed(); // Called from overrides of setup() on failure.
     const char* id = nullptr; // Name of actuator, sensor or control 
-    String name; // Name of actuator, sensor or control
+    bool connected = false; 
+    virtual void setup();
     virtual void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet);
     virtual void dispatchPath(const String &topicPath, const String &payload);
-    String leaf2path(const char* leaf); 
     virtual void discover();
-    void readConfigFromFS();
     void readConfigFromFS(File dir, const String* leaf);
     void writeConfigToFS(const String& topicTwig, const String& payload);
     virtual void loop();
     virtual void periodically();
     virtual void captiveLines(AsyncResponseStream* response) { };
     virtual void infrequently();
-  protected: // Most of System_Base has to be public - I'm not sure I understand why
+  protected: 
+    String name; // Name of actuator, sensor or control
+    String leaf2path(const char* leaf); 
+    void readConfigFromFS();
 }; // Class FrugalBase
 
 class IO {
@@ -48,7 +44,6 @@ class IO {
     const char* color; // String passed to UX
     bool const wireable; // True if can wire this to/from others - note this flag is on the control, not on the sensor or actuator
     String wiredPath; // Topic also listening|sending to when wired
-    String* wiredPathXXX; // Topic also listening|sending to when wired
     IO();
     IO(const char * const sensorId, const char * const id, const String name, char const *color, const bool w = true);
     virtual void setup();
@@ -91,7 +86,7 @@ class OUT : public IO {
     // TO-ADD-OUTxxx
     virtual float floatValue();
     virtual bool boolValue();
-    virtual void sendWired();
+    virtual void sendWired(bool retain = MQTT_RETAIN, uint8_t qos = MQTT_QOS_ATLEAST1);
     bool dispatchLeaf(const String &leaf, const String &payload, bool isSet) override; // Just checks control
   protected: // Most of IN appears to need to be public
 };
@@ -103,14 +98,14 @@ class INfloat : public IN {
     INfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
-    uint8_t width;
+    uint8_t width; // Cant be protected because used in e.g. control_oled_sht.cpp 
   protected:
     float value;
     float min;
     float max;
     bool boolValue() override;
     virtual String StringValue();
-    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     // Copy assignment operator
     /*
     INfloat& operator=(const INfloat &other) {
@@ -135,7 +130,7 @@ class INuint16 : public IN {
     //INuint16(); 
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, char const * const color, const bool wireable);
     INuint16(const INuint16 &other);
-    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void discover() override;
   protected:
     uint16_t min;
@@ -200,20 +195,20 @@ class INtext : public IN {
 // TO-ADD-OUTxxx
 class OUTfloat : public OUT {
   public:
-    float value;
-    uint8_t width;
-    float min;
-    float max;
+    uint8_t width; // Not protected because used in e.g. captive or OLED output
+    float min; // Not protected cos used in e.g. captive lines 
+    float max; // Not protected cos used in e.g. captive lines 
     OUTfloat();
     OUTfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
     OUTfloat(const OUTfloat &other);
     void set(const float newvalue); // Set and send if changed
-    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void discover() override;
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;
     virtual String StringValue();
   protected:
+    float value;
     void debug(const char* const where);
 };
 class OUTbool : public OUT {
@@ -227,6 +222,7 @@ class OUTbool : public OUT {
     bool boolValue() override;
     virtual String StringValue();
   protected:
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void send() override;
     void debug(const char* const where);
     // void discover() override; // Use OUT::discover
@@ -240,13 +236,26 @@ class OUTuint16 : public OUT {
     OUTuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool wireable);
     OUTuint16(const OUTuint16 &other);
     void set(const uint16_t newvalue);
-    bool dispatchLeaf(const String &leaf, const String &p, bool isSet);
     void discover() override;
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;
     virtual String StringValue();
   protected:
+    bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void debug(const char* const where);
+};
+class OUTtext : public OUT {
+  public:
+    String value;
+    OUTtext(char const * const sensorId, char const * const id, const String name, const String v, char const * const color="#000000", const bool wireable=false);
+    void set(const String newvalue);
+    //bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
+    //void discover() override;
+    //float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
+    //bool boolValue() override;
+    virtual String StringValue();
+  protected:
+    //void debug(const char* const where);
 };
 
 #endif // BASE_H

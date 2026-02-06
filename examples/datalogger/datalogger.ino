@@ -27,7 +27,7 @@ void setup() {
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
   frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
 
-  // system_oled and actuator_ledbuiltin added automatically on boards that have them.
+  // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
@@ -69,7 +69,7 @@ void setup() {
       });
   frugal_iot.controls->add(clfs);
   // Wire the logger to the temperature sensor, it could be left blank and wired in the UX to a remote sensor
-  clfs->inputs[0]->wireTo(sht->temperature->path()); // Wired to the temperatur sensor  // TODO-141 probably breaks as MQTT wont have setup yet
+  clfs->inputs[0]->wireTo(sht->temperature->path()); // Wired to the temperatur sensor 
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

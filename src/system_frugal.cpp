@@ -30,30 +30,8 @@
 #include "_settings.h" // Note - ideally shouldnt be dependent on anything here
 #include "system_frugal.h"
 #include "misc.h"
+#include "system_group.h"
 
-Frugal_Group::Frugal_Group(const char * const id, const char * const name)
-: System_Base(id, name)
-{}
-
-void Frugal_Group::add(System_Base* fb) {
-  group.push_back(fb);
-}
-
-
-void Frugal_Group::setup() {
-  for (System_Base* fb: group) {
-    #ifdef SYSTEM_FRUGAL_DEBUG
-      Serial.println(fb->id);
-    #endif
-    fb->setup();
-  }
-}
-
-void Frugal_Group::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
-  for (System_Base* fb: group) {
-    fb->dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
-  }
-};
 
 // Handle messages at top level - check for own, and if not loop through all other modules
 // e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
@@ -71,7 +49,7 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
     writeConfigToFS(topicLeaf, payload); // Save for next time
     System_Base::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   } else { // No point in passing on our own id for the loop
-    Frugal_Group::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
+    System_Group::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   }
 }
 void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
@@ -92,50 +70,19 @@ void System_Frugal::discover() {
   messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   // Commented out because already sending ota_key which contains it.
   //messages->send(leaf2path("board"), SYSTEM_OTA_SUFFIX, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  Frugal_Group::discover();
+  System_Group::discover();
 }
 
 void System_Frugal::captiveLines(AsyncResponseStream* response) {
   captive->addString(response, id, "project", project, T->Project, 2, 15);
   captive->addString(response, id, "name", name, T->DeviceName, 3, 15);
   captive->addString(response, id, "description", description, T->Description, 3, 40);
-  Frugal_Group::captiveLines(response);
+  System_Group::captiveLines(response);
 }
-
-void Frugal_Group::discover() {
-  for (System_Base* fb: group) {
-    fb->discover();
-  }
-}
-// These just loop over the members of the group 
-void Frugal_Group::loop() {
-  for (System_Base* fb: group) { 
-    fb->loop(); 
-  } 
-}
-void Frugal_Group::periodically() { 
-  //heap_print(F("Periodic"));
-  for (System_Base* fb: group) { 
-    #ifdef SYSTEM_MEMORY_DEBUG
-      Serial.print(fb->id);  //heap_print(F("Sensor_HT::set"));
-    #endif
-    fb->periodically();
-  } 
-  //heap_print(F("/Periodic"));
-}
-void Frugal_Group::infrequently() { 
-  for (System_Base* fb: group) { 
-    fb->infrequently(); 
-  } 
-}
-void Frugal_Group::captiveLines(AsyncResponseStream* response) 
-  { for (System_Base* fb: group) { fb->captiveLines(response); } }
-void Frugal_Group::dispatchPath(const String &topicPath, const String &payload) 
-  { for (System_Base* fb: group) { fb->dispatchPath(topicPath, payload); } }
 
 // Note this constructor is running BEFORE Serial is enabledd
 System_Frugal::System_Frugal(const char* org, const char* project, const char* name, const char* description)
-: Frugal_Group("frugal_iot", name),
+: System_Group("frugal_iot", name),
   org(org),
   project(project),
   description(description),
@@ -147,43 +94,47 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #else
     #error nodeid Only defined for ESP32 and ESP8266
   #endif
-  actuators(new Frugal_Group("actuators", "Actuators")),
-  sensors(new Frugal_Group("sensors", "Sensors")),
-  controls(new Frugal_Group("controls", "Controls")),
-  system(new Frugal_Group("system", "System")),
-  buttons(new Frugal_Group("buttons", "Buttons")),
+  actuators(new System_Group("actuators", "Actuators")),
+  sensors(new System_Group("sensors", "Sensors")),
+  controls(new System_Group("controls", "Controls")),
+  system(new System_Group("system", "System")),
+  buttons(new System_Buttons("buttons", "Buttons")),
   captive(new System_Captive()),
-  discovery(new System_Discovery()), 
+  powercontroller(new System_Power()), // Must be before Discovery and OTA
+  discovery(new System_Discovery()),  // Must be after Power (for timers)
   #ifdef SYSTEM_LORA_WANT
     lora(new System_LoRa()),
   #endif
     messages(new System_Messages()),
   // mqtt is added in main.cpp > configure_mqtt(host,user,password)
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
-    oled(new System_OLED(&OLED_WIRE)),
+    oled(new Actuator_OLED(&OLED_WIRE)),
   #endif // SYSTEM_OLED_WANT
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
-    ota(new System_OTA()),
+    ota(new System_OTA()), // Must be after Power (for timers)
   #endif
   fs_LittleFS(new System_LittleFS()),
   time(nullptr), // time is optional and setup by main.cpp if needed
   wifi(nullptr)  // Delay WiFi creation until pre_setup() to avoid lwip_init crash during global construction
 {
+  // Note order that things are added is significant - this is the order they will be run in each call that goes thru groups.
   #ifdef LED_BUILTIN // defined by board or _settings.h
     actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN)); // Default LED builtin actuator at default brightness and white
   #endif
+  #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
+    actuators->add(oled);
+  #endif
+  sensors->add(new Sensor_Health("health", "System"));
   add(actuators);
   add(sensors);
   add(controls);
-  add(buttons); // optimizing by not adding this - its only needed for looping for infrequently()
+  add(buttons); 
   system->add(fs_LittleFS);
   system->add(messages);
   // wifi will be added in pre_setup() to avoid lwip_init crash during global construction
+  system->add(powercontroller);
   system->add(discovery);
   system->add(new System_Watchdog());
-  #ifdef SYSTEM_OLED_WANT
-    system->add(oled);
-  #endif
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     system->add(ota);
   #endif
@@ -192,38 +143,48 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #endif // SYSTEM_LORA_WANT
   system->add(captive);
   add(system);
-  // These things should really be in setup() but we want them to run before the rest of the main.cpp setup()
-  // Note this is running BEFORE Serial is enabled
 }
 
 void System_Frugal::configure_mqtt(const char* hostname, const char* username, const char* password) {
   system->add(mqtt = new System_MQTT(hostname, username, password));  
 }
 void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
-  system->add(powercontroller = System_Power_Mode::create(t, cycle_ms, wake_ms));  
+  powercontroller->configure(t, cycle_ms, wake_ms);
 }
+void System_Frugal::configure_battery(const uint8_t pin, float_t voltage_divider) {
+  sensors->add(battery = new Sensor_Battery(pin, voltage_divider));
+} 
+
 void System_Frugal::pre_setup() {
   // Early initial stuff - happens BEFORE do System_Message::setup which uses config 
-  startSerial(); // Encapsulate setting up and starting serial
+  #ifdef SYSTEM_POWER_DEBUG
+    // Need serial for debugging
+    startSerial(); // Encapsulate setting up and starting serial
+    powercontroller->checkLevel(); // Check voltage level
+  #else
+    // Shut down before enable startSerial to keep power draw minimal
+    powercontroller->checkLevel();
+    startSerial(); // Encapsulate setting up and starting serial
+  #endif
   fs_LittleFS->pre_setup();
   powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
-  
+
   // Create WiFi object now (after Serial is initialized) to avoid lwip_init crash during global construction
   if (wifi == nullptr) {
     wifi = new System_WiFi();
     system->add(wifi);
   }
-  
-  readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig
+
+  readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig - note this just reads frugal_iot/ not other directories which are read in actuator,sensor,control,system_xxx.setup
 }
 void System_Frugal::setup() {
-  // By the time this is run, mqtt should have been added, and serial started in main.cpp
+  // By the time this is run, mqtt should have been added, and serial started in main.cpp -> pre_setup
   #ifdef SYSTEM_FRUGAL_DEBUG
     Serial.print(F("Setup: "));
   #endif
-  Frugal_Group::setup(); // includes WiFi
+  System_Group::setup(); // includes WiFi
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
-    ota->setup_after_mqtt_setup(); // Sends advertisement over MQTT
+    ota->setup_after_mqtt_setup(); // just initializes - and not totally sure why doe here and not in setup_after_wifi
   #endif
   #ifdef SYSTEM_FRUGAL_DEBUG
      Serial.println();
@@ -238,58 +199,71 @@ void System_Frugal::setup_after_wifi() {
       time->setup_after_wifi();
     }
     mqtt->setup_after_wifi();
+    ota->setup_after_wifi(); // Check for new software if its time
   }
 }
 void System_Frugal::infrequently() {
   //heap_print(F("infrequent"));
-  Frugal_Group::infrequently();
+  System_Group::infrequently();
   //heap_print(F("/infrequent"));
 }
 
 // These are things done one time per period - where a period is the time set in powercontroller->cycle_ms
 void System_Frugal::periodically() {
-  Frugal_Group::periodically();
+  System_Group::periodically();
 }
 
 // Main loop() - call this from main.cpp
 void System_Frugal::loop() {
   //Serial.print(F("⏳1"));
-  if (timeForPeriodic) {
+  if (timeForPeriodic) { // Note it is true at first time thru this loop
     //heap_print(F("loop periodic"));
     periodically();  // Do things run once per cycle
     infrequently();  // Do things that keep their own track of time
     timeForPeriodic = false;
     //heap_print(F("/loop periodic"));
   }
-  Frugal_Group::loop(); // Do things like MQTT which run frequently with their own clock
+  System_Group::loop(); // Do things like MQTT which run frequently with their own clock
   if (powercontroller->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
     timeForPeriodic = true; // reset after sleep (note deep sleep comes in at top again)
   }
   delay(10); // Slow down and let other things run
 }
-
+#ifdef ESP32 // Its in the RTC, no meaning in ESP8266
+  extern unsigned long wake_count;
+#endif
 void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
   // Encapsulate setting up and starting serial
   #ifdef ANY_DEBUG
     Serial.begin(baud);
     /*
+    // Don't wait for serial - it will block if there is no USB connected. 
     while (!Serial) { 
       ; // wait for serial port to connect. Needed for Arduino Leonardo only
     }
     */
-    //TODO-23 remove this delay when coming back from deep sleep.
-    delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
+    #ifdef ESP32
+      if (!wake_count) {
+    #endif
+        //TODO-23 remove this delay when coming back from deep sleep.
+        delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
+    #ifdef ESP32
+      }
+    #endif
     Serial.println(F("FrugalIoT Starting"));
   #endif // ANY_DEBUG  
 }
+#ifndef SERIAL_BAUD
+  #define SERIAL_BAUD 460800
+#endif
   
 void System_Frugal::startSerial() {
   // At least on my mac, Arduino has problems at higher speeds like 460800
-  // #ifdef PLATFORMIO
-    
-  // #else
-  startSerial(115200, 5000);
-  // startSerial(460800, 5000);
+  #ifdef PLATFORMIO
+    startSerial(SERIAL_BAUD, 5000);
+  #else
+    startSerial(115200, 5000);
+  #endif
 }
 
 // Called by OTA byt checking other modules

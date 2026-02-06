@@ -8,11 +8,11 @@
 
 #include "control.h"
 
-class ControlBlinken : public Control {
+class Control_Blinken : public Control {
   public:
     unsigned long blinkOn = 0; // in milliseconds (converted from seconds in act)
     unsigned long blinkOff = 0; // in milliseconds (converted from seconds in act)
-    ControlBlinken(const char* const id, const char* const name, float secsOn, float secsOff);
+    Control_Blinken(const char* const id, const char* const name, float secsOn, float secsOff);
     void act() override; // Override in Control
     void loop() override; // Override in FrugalBase
   private:

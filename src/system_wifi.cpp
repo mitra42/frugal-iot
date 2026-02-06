@@ -128,13 +128,13 @@ void System_WiFi::addWiFi(String ssid, String password) {
 }
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-bool System_WiFi::prepareForLightSleep() {
+bool System_WiFi::pause() {
    return (esp_wifi_stop() == ESP_OK); // Suggested to reduce dropping WiFi connection
 }
 #endif
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-bool System_WiFi::recoverFromLightSleep() {
+bool System_WiFi::recover() {
   if (esp_wifi_start() != ESP_OK) {
     Serial.println(F("Failed to restart esp_wifi"));
     return false;
@@ -251,7 +251,7 @@ void System_WiFi::stateMachine() {
       // TODO-153 Waiting for stabilization - maybe could be shorter but noticed at 1000 that first MQTT connect often faiks
       } else if (millis() > (statusSince + 2000)) {
         setStatus(WIFI_CONNECTED);
-        frugal_iot.setup_after_wifi(); // Callback to MQTT as first connected
+        frugal_iot.setup_after_wifi(); // Callback to MQTT, Time and OTA as first connected
         //drop thru
       }
       // drop thru
@@ -280,6 +280,21 @@ void System_WiFi::switchSSID(const String ssid) {
   }
 }
 
+int8_t System_WiFi::RSSI() { // Negative number if decibel-milliwatts
+  return WiFi.RSSI(); 
+}
+
+uint8_t System_WiFi::bars() {
+  const int8_t rssi = WiFi.RSSI();
+  if (rssi > -55) return 4;
+  if (rssi > -66) return 3;
+  if (rssi > -77) return 2;
+  if (rssi > -88) return 1;
+  return 0;
+}
+String System_WiFi::SSID() {
+  return WiFi.SSID();
+}
 bool System_WiFi::connected() {
   return (status == WIFI_CONNECTED); 
 }

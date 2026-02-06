@@ -28,9 +28,9 @@ void setup() {
   // LightWiFi=Light + WiFi on (not working); 
   // Modem=Modem sleep - works but negligable power saving
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
-  frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
+  frugal_iot.configure_power(Power_Deep, 300000, 30000); // Take a reading every 10 mins deep sleep between
 
-  // system_oled and actuator_ledbuiltin added automatically on boards that have them.
+  // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
@@ -41,9 +41,9 @@ void setup() {
   //frugal_iot.sensors->add(new Sensor_Battery());
 
   // If required, add a control - this is just an example
-  //ControlHysterisis* cb = new ControlHysterisis("controlhysterisis", "Control", 50, 1, 0, 100);
+  //Control_Hysterisis* cb = new Control_Hysterisis("Control_Hysterisis", "Control", 50, 1, 0, 100);
   //frugal_iot.controls->add(cb);
-  //cb->outputs[0]->wireTo(frugal_iot.messages->path("ledbuiltin/on"));
+  //cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
   #ifdef SYSTEM_OLED_WANT
     Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED");

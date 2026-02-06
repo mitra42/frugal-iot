@@ -220,6 +220,16 @@ String OUTbool::StringValue() {
   // Since INbool::convert only does toInt it needs to be "1' and "0"
   //return String(value ? "true" : "false");
 }
+/*float OUTtext::floatValue() {
+  return value;
+}
+bool OUTtext::boolValue() {
+  return value;
+}
+*/
+String OUTtext::StringValue() {
+  return value;
+}
 
 void IO::setup() {
     // Note topicTwig subscribed to by IN, not by OUT
@@ -241,6 +251,7 @@ void IO::writeValueToFS(const String &leaf, const String& payload) {
   String path = dirPath + "/value";
   // Checking and removing legacy file when want a directory
   // This shouldnt be needed long - when all devices have updated code this will run the first time they readConfigFromFS (e.g. erase Nov 2025)
+  /*
   if (frugal_iot.fs_LittleFS->exists(dirPath)) {
     bool needsRemoval;
     {
@@ -252,6 +263,7 @@ void IO::writeValueToFS(const String &leaf, const String& payload) {
       frugal_iot.fs_LittleFS->remove(dirPath); // XX may not be accurage
     }
   }
+  */
   // End of legacy code
   frugal_iot.fs_LittleFS->spurt(path, payload);
 }
@@ -287,7 +299,7 @@ bool IN::dispatchPath(const String &tp, const String &p) {
 
 bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
-    if (leaf.startsWith(id) && leaf.endsWith("/wired")) {
+    if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // We are changing the path, not sending a value
       if (!(p == wiredPath)) {
         wiredPath = p; // Copies p
         sendWired(); // Destination changed, send current value
@@ -359,16 +371,37 @@ bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   // Catch generic case like color
   return IN::dispatchLeaf(leaf, p, isSet);
 }
+bool OUTbool::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+  bool dispatched = false;
+  if (leaf.startsWith(id)) {
+    if (leaf.endsWith("/cycle")) { 
+      set(!value);
+    }
+    if (dispatched) {
+      writeConfigToFS(leaf, p);  
+      return false; // value didnt change
+    } 
+    // else drop through and dispatch to superclass
+  }
+  // Catch generic case - currently just /wired  (specifically I don't think it handles /value)
+  return OUT::dispatchLeaf(leaf, p, isSet);
+}
 bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     bool dispatched = false;
   if (leaf.startsWith(id)) {
-    uint16_t v = p.toInt(); // TODO is this really toFloat ? 
+    uint16_t v = p.toInt();
     if (leaf.endsWith("/max")) {
       max = v;      
       dispatched = true;
     } else if (leaf.endsWith("/min")) {
       min = v;
       dispatched = true;
+    } else if (leaf.endsWith("/cycle")) { //TODO move to a function of OUTuint16
+      // Complexity here is because this is a uint16 and cycling below min may go negative 
+      int16_t newvalue = value + (int16_t)v;
+      if (newvalue > max) { newvalue = min;};
+      if (newvalue < min) { newvalue = max;};
+      set((uint16_t)newvalue);
     }
     if (dispatched) {
       writeConfigToFS(leaf, p);  
@@ -376,9 +409,10 @@ bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
     } 
     // else drop through and dispatch to superclass
   }
-  // Catch generic case like color
+  // Catch generic case - currently just /wired (specifically I don't think it handles /value)
   return OUT::dispatchLeaf(leaf, p, isSet);
 }
+// OUTtext::dispatchLeaf -> OUT::dispatchLeaf
 /*
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -452,6 +486,10 @@ void OUTuint16::debug(const char* const where) {
   IO::debug(where);
   Serial.print(F(" value=")); Serial.println(value); 
 }
+void OUTtext::debug(const char* const where) {
+  IO::debug(where);
+  Serial.print(F(" value=")); Serial.println(value); 
+}
 #endif
 
 // ========== IN for some topic we are monitoring and the most recent value ===== 
@@ -459,13 +497,13 @@ void OUTuint16::debug(const char* const where) {
 // INfloat::INfloat() {}
 // TO_ADD_INxxx
 INfloat::INfloat(const char * const sensorId, const char * const id, const String name, float v, uint8_t width, float mn, float mx, char const * const c, const bool w)
-  :   IN(sensorId, id, name, c, w), value(v), width(width), min(mn), max(mx) {
+  :   IN(sensorId, id, name, c, w), width(width), value(v), min(mn), max(mx) {
 }
 
 INfloat::INfloat(const INfloat &other)
 : IN(other.sensorId, other.id, other.name, other.color, other.wireable), 
-  value(other.value),
-  width(other.width)
+  width(other.width),
+  value(other.value)
 { }
 INuint16::INuint16(const char * const sensorId, const char * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const c, const bool w)
   :   IN(sensorId, id, name, c, w), value(v), min(mn), max(mx) {
@@ -592,10 +630,13 @@ OUTbool::OUTbool(const char * const sensorId, const char* const id, const String
   :   OUT(sensorId, id, name, color, w), value(v)  {
 }
 OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const String name,  float v, uint8_t width, float mn, float mx, char const * const color, const bool w)
-  :   OUT(sensorId, id, name, color, w), value(v), width(width), min(mn), max(mx) { 
+  :   OUT(sensorId, id, name, color, w), width(width), min(mn), max(mx), value(v) { 
 }
 OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const String name,  uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v), min(mn), max(mx) {
+}
+OUTtext::OUTtext(const char * const sensorId, const char* const id, const String name,  const String v, char const * const color, const bool w)
+  :   OUT(sensorId, id, name, color, w), value(v) {
 }
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
@@ -620,16 +661,22 @@ OUTuint16::OUTuint16(const OUTuint16 &other)
 
 // TO_ADD_OUTxxx
 // Called when either value, or wiredPath changes
-void OUT::sendWired() {
+void OUT::sendWired(bool retain, uint8_t qos) {
   if (wiredPath.length()) {
-    frugal_iot.messages->send(wiredPath, StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    // Three possibilities = normal = send+loop qos=2 & local = loopback; qos=2 & remote = sendRemote
+    if (qos == MQTT_QOS_EXACTLY1) {
+      if (wiredPath.startsWith(frugal_iot.messages->topicPrefix)) {
+        frugal_iot.messages->queueLoopback(wiredPath, StringValue());
+      } else {
+        frugal_iot.messages->sendRemote(wiredPath, StringValue(), retain, qos);
+      }
+    } else {
+      frugal_iot.messages->send(wiredPath, StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+    }
   }
 }
 // TO-ADD-OUTxxx
 void OUTfloat::set(const float newvalue) {
-  #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
-  #endif
   if (newvalue != value) {
     value = newvalue;
     send();
@@ -637,9 +684,13 @@ void OUTfloat::set(const float newvalue) {
   }
 }
 void OUTuint16::set(const uint16_t newvalue) {
-  #ifdef CONTROL_HUMIDITY_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
-  #endif
+  if (newvalue != value) {
+    value = newvalue;
+    send();
+    sendWired();
+  }
+}
+void OUTtext::set(const String newvalue) {
   if (newvalue != value) {
     value = newvalue;
     send();
@@ -651,9 +702,6 @@ void OUTbool::send() {
   frugal_iot.messages->send(path(), String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 void OUTbool::set(const bool newvalue) {
-  #ifdef CONTROL_HYSTERISIS_DEBUG
-    Serial.print(F("Setting ")); Setting.print(topicTwig); Serial.print(F(" old=")); Serial.print(value); Serial.print(F(" new=")); Serial.println(newvalue);
-  #endif
   if (newvalue != value) {
     value = newvalue;
     send();
@@ -672,6 +720,7 @@ void OUTuint16::discover() {
   frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   OUT::discover(); // Sends value
 }
+// OUTtext::discover -> OUT::discover
 
 // These are mostly to stop the compiler complaining about missing vtables
 #pragma GCC diagnostic push

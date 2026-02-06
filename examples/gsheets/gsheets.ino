@@ -27,7 +27,7 @@ void setup() {
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
   frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
 
-  // system_oled and actuator_ledbuiltin added automatically on boards that have them.
+  // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
@@ -36,7 +36,7 @@ void setup() {
 
   Control_Gsheets* cg = new Control_Gsheets("gsheets demo", CONTROL_GSHEETS_URL);
   frugal_iot.controls->add(cg);
-  cg->track("temperature", frugal_iot.messages->path("sht/temperature")); // TODO-141 probably wont work as MQTT not setup
+  cg->track("temperature", frugal_iot.messages->path("sht/temperature"));
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); 
