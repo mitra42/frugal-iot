@@ -11,6 +11,7 @@
 #include "sensor.h"
 #include "sensor_float.h"
 #include "Frugal-IoT.h"
+#include "cmath" // for std::isnan
 
 Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain) 
 : Sensor(id, name, retain),
@@ -25,7 +26,7 @@ float Sensor_Float::readFloat() {  shouldBeDefined(); return -1; }
 
 // Check if the raw value from the sensor is valid - defaults to true, but overridden for each sensor
 bool Sensor_Float::validate(float v) {
-  return true;
+  return !std::isnan(v);
 }
 // Convert sensor to actual value - this is typically overriden, for example to apply a scale. 
 float Sensor_Float::convert(float v) {
@@ -34,22 +35,29 @@ float Sensor_Float::convert(float v) {
 void Sensor_Float::set(const float newvalue) {
   output->set(newvalue);
 }
-void Sensor_Float::readValidateConvertSet() {
+float Sensor_Float::readValidateConvert() {
   // Note almost identical code in Sensor_Uint16 Sensor_Float & Sensor_Analog
   float v = readFloat();               // Read raw value from sensor
   #ifdef SENSOR_FLOAT_DEBUG
     Serial.print(id); Serial.print(F(" raw:")); Serial.print(v);
   #endif
   if (validate(v)) {              // Check if its valid
-    float vv = convert(v);        // Convert - e.g. scale and offset
-    set(vv);                        // set - and send message
+    const float vv = convert(v);        // Convert - e.g. scale and offset
     #ifdef SENSOR_FLOAT_DEBUG
-      Serial.print(F(" converted ")); Serial.print(vv);
+      Serial.print(F(" converted ")); Serial.println(vv);
     #endif
+    return vv;
   }
   #ifdef SENSOR_FLOAT_DEBUG
     Serial.println();
   #endif
+  return NAN;
+}
+void Sensor_Float::readValidateConvertSet() {
+  float vv = readValidateConvert();
+  if (!isnan(vv)) {
+    set(vv);                  // set - and send message
+  }
 }
 
 void Sensor_Float::captiveLines(AsyncResponseStream* response) {

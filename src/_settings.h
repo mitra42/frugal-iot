@@ -44,7 +44,7 @@
 #if defined(SENSOR_ANALOG_DEBUG) 
   #define SENSOR_UINT16_DEBUG
 #endif
-#if defined(SENSOR_BH1750_DEBUG)
+#if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
 #if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)
@@ -93,7 +93,7 @@
 // ARDUINO_LOLIN_C3_MINI ARDUINO_LOLIN_S2_MINI ARDUINO_ESP8266_WEMOS_D1MINI ARDUINO_ESP8266_WEMOS_D1MINIPRO ARDUINO_ESP8266_ESP01
 // These boards use a more generic board definition so need defining in platformio.dev
 // LilyGo HiGrow uses esp32dev which defines ARDUINO_ESP32_DEV TODO-140 define something
-// Sonoff uses esp01_1m which defines ARDUINO_ESP8266_ESP01 - define ITEAD_SONOFF if reqd
+// Sonoff uses sonoff_basic which defines ARDUINO_ESP8266_SONOFF_BASIC
 // ttgo-lora32-v21 defines ARDUINO_TTGO_LoRa32_v21new; but also need whether SX1276 or SX1278 so TODO-140 define that
 // And in the arduino core code ESP32 or ESP8266
 //
@@ -121,7 +121,7 @@
 #endif
 
 // Define boards which have LoRa and should include LoRaMesher automatically
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X)
+#if defined(SYSTEM_LORAMESHER_BAND) // || defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) 
   #define SYSTEM_LORAMESHER_WANT
 #endif
 
@@ -139,8 +139,12 @@
 #define SYSTEM_WIFI_WANT  // currently always wanted
 
 // Define boards which have built in OLED and should include automatically
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X)
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(OLED_SDA)
   #define SYSTEM_OLED_WANT
+#endif
+
+#if defined(ARDUINO_heltec_wifi_lora_32_V3)
+  #define BUTTON_BUILTIN (0)
 #endif
 
 // A number of sensors will want to default to the boards I2C, 
@@ -162,11 +166,7 @@
     // Cant get it to work on this socket, read somewhere about board surgery (resistor removal or addition) required but cant find the reference now
     //#define I2C_SDA SDA1 // 10
     //#define I2C_SCL SCL1  // 21
-  #elif defined(ARDUINO_TTGO_LoRa32_v2) || defined(ARDUINO_TTGO_LoRa32_v21new)
-    #define I2C_WIRE Wire
-    #define I2C_SDA SDA
-    #define I2C_SCL SCL
-  #else
+  #else // confirmed for ARDUINO_TTGO_LoRa32_v2, ARDUINO_TTGO_LoRa32_v21new
     // Use system defined ones
     #define I2C_WIRE Wire
     #define I2C_SDA SDA
@@ -174,6 +174,11 @@
   #endif
 #endif
 
+
+// Pin definitions that should really be in the variant files could submit PR
+#ifdef ARDUINO_LOLIN_S2_MINI
+  #define BUILTIN_BUTTON 0 // This is GPIO0, on pin 5, 
+#endif
 
 
 #endif // _SETTINGS_H

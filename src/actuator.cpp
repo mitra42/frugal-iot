@@ -15,7 +15,7 @@ void Actuator::setup() {
   for (auto &input : inputs) {
     input->setup();
   }
-  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+  readConfigFromFS(); // Reads config (matching one of the Inputs) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
 }
 
 void Actuator::act() { } // Can be do nothing or overridden

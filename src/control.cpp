@@ -41,7 +41,7 @@ void Control::setup() {
   for (auto &output : outputs) {
       output->setup();
   }
-  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+  readConfigFromFS(); // Reads config (inputs or outputs) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
 }
 
 void Control::act() {
@@ -67,6 +67,8 @@ void Control::dispatchTwig(const String &topicControlId, const String &topicTwig
     }
 }
 
+// dispatchPath is called so can check for wired connections to other devices i.e. inputs 
+// are checking "is this coming from the thing I am wired to"
 void Control::dispatchPath(const String &topicPath, const String &payload ) {
     bool changed = false;
     for (auto &input : inputs) {

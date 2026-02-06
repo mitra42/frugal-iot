@@ -15,6 +15,9 @@ class System_WiFi : public System_Base {
     int32_t minRSSI; // Minimum RSSI we are trying to connect to in this cycle of state Machine
     int nextNetwork;
     System_WiFi();
+    int8_t RSSI();
+    uint8_t bars();
+    String SSID();
     void switchSSID(const String ssid);
     bool connectOne(String ssid, int32_t rssi = 0);
     void connectInnerAsync(String ssid, String pw);
@@ -27,8 +30,10 @@ class System_WiFi : public System_Base {
     bool rescan();
     //void periodically() override;
     void loop() override;
-    bool prepareForLightSleep();
-    bool recoverFromLightSleep();
+    #ifdef ESP32
+      bool pause();
+      bool recover();
+    #endif
     void setup() override;
     void addWiFi(String ssid, String password);
     void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;

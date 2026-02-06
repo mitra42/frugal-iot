@@ -12,40 +12,43 @@
 #include "system_frugal.h"
 #include "Button2.h" // https://github.com/LennartHennigs/Button2
 
-Sensor_Button::Sensor_Button(const char * const id, const char * const name, const uint8_t pin, const char* const color) :
+// Map a button id (inside a Button2) to a Sensor_Button (from the frugal_iot.buttons group).
+Sensor_Button* button(Button2& button) {
+  return (Sensor_Button*)frugal_iot.buttons->group[button.getID()];
+}
+
+void clickHandler(Button2& btn) {
+  button(btn)->singleClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
+}
+
+void longClickHandler(Button2& btn) {
+  button(btn)->longClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
+}
+
+void doubleClickHandler(Button2& btn) {
+  button(btn)->doubleClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
+}
+
+void tripleClickHandler(Button2& btn) {
+  button(btn)->tripleClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
+}
+
+
+Sensor_Button::Sensor_Button(const char * const id, const char * const name, uint8_t pin, const char* const color) :
   System_Base(id, name), pin(pin) {
-  output = new OUTuint16(id, "out", name, empty, single_click, empty, color, false); // TODO convert this into a OUTenum - hard part is UX
+  //output = new OUTuint16(id, "out", name, empty, single_click, empty, color, false); // TODO convert this into a OUTenum - hard part is UX
+  singleClick = new OUTtext(id, "click", "Single Click", "1", "black", true);
+  longClick = new OUTtext(id, "long", "Long Click", "1", "black", true);
+  doubleClick = new OUTtext(id, "double", "Double CLick", "1", "black", true);
+  tripleClick = new OUTtext(id, "triple", "Triple Click", "1", "black", true);
   button = new Button2(pin);
-  button->setClickHandler(Sensor_Button::clickHandler);
-  button->setLongClickHandler(Sensor_Button::longClickHandler);
-  button->setDoubleClickHandler(Sensor_Button::doubleClickHandler);
-  button->setTripleClickHandler(Sensor_Button::tripleClickHandler);
+  button->setClickHandler(clickHandler);
+  button->setLongClickHandler(longClickHandler);
+  button->setDoubleClickHandler(doubleClickHandler);
+  button->setTripleClickHandler(tripleClickHandler);
   button->setID(frugal_iot.buttons->group.size());
 }
 
-// Unclear how would use an "OUT" as its not dependent on a change
-void Sensor_Button::clickHandlerInner(const clickType type) {
-  output->set(type);
-}
-void Sensor_Button::clickHandler(const Button2& btn) {
-  handler(btn)->clickHandlerInner(single_click);
-}
-
-void Sensor_Button::longClickHandler(const Button2& btn) {
-  handler(btn)->clickHandlerInner(long_click);
-}
-
-void Sensor_Button::doubleClickHandler(const Button2& btn) {
-  handler(btn)->clickHandlerInner(double_click);
-}
-
-void Sensor_Button::tripleClickHandler(const Button2& btn) {
-  handler(btn)->clickHandlerInner(triple_click);
-}
-// Map a button id (inside a Button2) to a Sensor_Button (from the frugal_iot.buttons group).
-Sensor_Button* Sensor_Button::handler(const Button2& button) {
-  return (Sensor_Button*)frugal_iot.buttons->group[button.getID()];
-}
 void Sensor_Button::setup() {
   System_Base::setup(); // Will readConfigFromFS - do before setting up pins
   button->begin(pin);

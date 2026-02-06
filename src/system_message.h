@@ -41,6 +41,7 @@ class System_Messages : public System_Base {
     // This will be re-overloaded as send, but keeping separate as deal with some mem leaks
     void send(const String topicPath, const String payload, bool retain, uint8_t qos);     // send and loopback
     String path(const char* id, const char* const leaf, const char* const leafparm);
+    String setPath(char const * const topicTwig);
     String path(const char* id, const char* const leaf);
     String path(char const * const topicTwig);
     String path(const String topicTwig); 
@@ -48,15 +49,15 @@ class System_Messages : public System_Base {
     bool reSubscribeAll(); // Called by MQTT after reconnection
     void queueIncoming(const String &topicPath, const String &payload); // Called by MQTT and LoRaMesher
     void queueFromCaptive(const String &twig, const String &payload);
+    void queueLoopback(const String &topicPath, const String &payload);
+    void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos); // Only remote send, no loopback
   protected:
     friend class System_Message;
     std::list<System_Message> outgoing;
     std::list<System_Message> incoming;
     std::forward_list<System_Message> subscriptions;
-    void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos); // Only remote send, no loopback
     void sendOutgoingQueued();
     void dispatchIncomingQueued();
-    void queueLoopback(const String &topicPath, const String &payload);
     void setup();
     void loop();
 };

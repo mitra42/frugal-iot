@@ -22,7 +22,7 @@ class Control : public System_Base {
     void setup() override;
     virtual void act();
     void discover() override;
-    void dispatchTwig(const String &topicControlId, const String &topicLeaf, const String &payload, bool isSet);
+    void dispatchTwig(const String &topicControlId, const String &topicLeaf, const String &payload, bool isSet) override;
     void dispatchPath(const String &topicPath, const String &payload) override;
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const blah);
