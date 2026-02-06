@@ -122,8 +122,8 @@ void setup() {
   frugal_iot.controls->add(cc);
   cc->inputs[0]->wireTo(sht->temperature->path());
   cc->inputs[3]->wireTo(sht->humidity->path());
-  cc->outputs[0]->wireTo(frugal_iot.messages->path("relay/on"));
-  cc->outputs[1]->wireTo(frugal_iot.messages->path("ledbuiltin/on"));
+  cc->outputs[0]->wireTo(frugal_iot.messages->setPath("relay/on"));
+  cc->outputs[1]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
   //=================================LOGGER======
   // Add time if needed, which is currently only for data logging.

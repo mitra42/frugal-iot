@@ -67,8 +67,8 @@ void setup() {
   cc->inputs[3]->wireTo(sht->humidity->path());      // SHT humidity -> climate humidity input
 
   // Wire control outputs to actuator inputs
-  cc->outputs[0]->wireTo(frugal_iot.messages->path("heating/on"));     // temp_out -> heating relay
-  cc->outputs[1]->wireTo(frugal_iot.messages->path("humidifier/on"));  // humidity_out -> humidifier relay
+  cc->outputs[0]->wireTo(frugal_iot.messages->setPath("heating/on"));     // temp_out -> heating relay
+  cc->outputs[1]->wireTo(frugal_iot.messages->setPath("humidifier/on"));  // humidity_out -> humidifier relay
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
