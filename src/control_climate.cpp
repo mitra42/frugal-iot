@@ -1,14 +1,16 @@
 /* Frugal IoT - Control_Climate - Dual-channel hysteresis for temperature and humidity control.
  *
- * Inputs:
- *   0: temperature      - current temp reading (wired to sensor)
- *   1: temp_setpoint    - target temperature
- *   2: temp_hysteresis  - temperature deadband
- *   3: humidity         - current humidity reading (wired to sensor)
- *   4: humidity_setpoint - target humidity %
- *   5: humidity_hysteresis - humidity deadband
+ * Follows the same pattern as Control_Hysterisis but with two independent channels.
  *
- * Outputs:
+ * Inputs (INfloat):
+ *   0: temperature         - current temp reading in C (wireable, wired to sensor)
+ *   1: temp_setpoint       - target temperature in C
+ *   2: temp_hysteresis     - temperature deadband in C
+ *   3: humidity            - current humidity reading in % (wireable, wired to sensor)
+ *   4: humidity_setpoint   - target humidity in %
+ *   5: humidity_hysteresis - humidity deadband in %
+ *
+ * Outputs (OUTbool):
  *   0: temp_out     - drives heating actuator (ON when too cold)
  *   1: humidity_out - drives humidifier actuator (ON when too dry)
  */
@@ -35,7 +37,10 @@ void Control_Climate::debug(const char* const where) {
 #endif //CONTROL_CLIMATE_DEBUG
 
 void Control_Climate::act() {
-  // Temperature channel
+  // Temperature channel — hysteresis logic (same as Control_Hysterisis::act)
+  // ON when temp falls below setpoint-hysteresis (too cold, needs heating)
+  // OFF when temp rises above setpoint+hysteresis (warm enough)
+  // No change within the deadband to avoid relay chatter
   const float temp = inputs[0]->floatValue();
   const float temp_setpoint = inputs[1]->floatValue();
   const float temp_hyst = inputs[2]->floatValue();
@@ -46,7 +51,9 @@ void Control_Climate::act() {
     ((OUTbool*)outputs[0])->set(false);
   }
 
-  // Humidity channel
+  // Humidity channel — same hysteresis logic
+  // ON when humidity falls below setpoint-hysteresis (too dry, needs humidifying)
+  // OFF when humidity rises above setpoint+hysteresis (humid enough)
   const float hum = inputs[3]->floatValue();
   const float hum_setpoint = inputs[4]->floatValue();
   const float hum_hyst = inputs[5]->floatValue();

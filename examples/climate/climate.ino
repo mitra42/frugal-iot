@@ -59,14 +59,19 @@ void setup() {
 
   // ========= Controls ==============
   // Climate control: temp_setpoint=22C, temp_hysteresis=1C, humidity_setpoint=50%, humidity_hysteresis=5%
+  // Args: id, name, temp_setpoint(C), temp_hysteresis(C), humidity_setpoint(%), humidity_hysteresis(%)
   Control_Climate* cc = new Control_Climate("climate", "Climate Control", 22.0, 1.0, 50.0, 5.0);
   frugal_iot.controls->add(cc);
 
   // Wire sensor outputs to control inputs
+  // Control_Climate has 6 inputs: [0]=temperature, [1]=temp_setpoint, [2]=temp_hysteresis,
+  //                                [3]=humidity,    [4]=humidity_setpoint, [5]=humidity_hysteresis
+  // We wire [0] and [3] (the live readings); setpoints and hysteresis use constructor defaults
   cc->inputs[0]->wireTo(sht->temperature->path());  // SHT temperature -> climate temperature input
   cc->inputs[3]->wireTo(sht->humidity->path());      // SHT humidity -> climate humidity input
 
   // Wire control outputs to actuator inputs
+  // Control_Climate has 2 outputs: [0]=temp_out (heating), [1]=humidity_out (humidifier)
   cc->outputs[0]->wireTo(frugal_iot.messages->setPath("heating/on"));     // temp_out -> heating relay
   cc->outputs[1]->wireTo(frugal_iot.messages->setPath("humidifier/on"));  // humidity_out -> humidifier relay
 
