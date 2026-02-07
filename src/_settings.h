@@ -75,7 +75,7 @@
 #if defined(CONTROL_LOGGERFS_DEBUG) || defined(CONTROL_GSHEETS_DEBUG)
   #define CONTROL_LOGGER_DEBUG 
 #endif
-#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_LOGGER_DEBUG) || defined(CONTROL_CLIMATE_DEBUG)
+#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_LOGGER_DEBUG) 
   #define CONTROL_DEBUG
 #endif
 // TO_ADD_SYSTEM - there is no class hierarchy

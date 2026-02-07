@@ -117,17 +117,6 @@ void setup() {
   frugal_iot.controls->add(ch);
   ch->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
-  // Climate control: dual-channel hysteresis for temperature + humidity
-  // Args: id, name, temp_setpoint(C), temp_hysteresis(C), humidity_setpoint(%), humidity_hysteresis(%)
-  Control_Climate* cc = new Control_Climate("climate", "Climate Control", 22.0, 1.0, 50.0, 5.0);
-  frugal_iot.controls->add(cc);
-  // inputs[0]=temperature, [1]=temp_setpoint, [2]=temp_hysteresis, [3]=humidity, [4]=humidity_setpoint, [5]=humidity_hysteresis
-  cc->inputs[0]->wireTo(sht->temperature->path());
-  cc->inputs[3]->wireTo(sht->humidity->path());
-  // outputs[0]=temp_out (heating), [1]=humidity_out (humidifier)
-  cc->outputs[0]->wireTo(frugal_iot.messages->setPath("relay/on"));
-  cc->outputs[1]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
-
   //=================================LOGGER======
   // Add time if needed, which is currently only for data logging.
   frugal_iot.system->add(frugal_iot.time = new System_Time());
