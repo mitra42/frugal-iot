@@ -1,6 +1,6 @@
 /* 
  *  Frugal IoT example - Sonoff - Basic R2 or R4 switch
- *
+ * 
  * Optional: 
  */
 
@@ -55,9 +55,8 @@ void setup() {
   // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
   // Power_Loop= awake all the time; 
   // Power_Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
-  frugal_iot.configure_power(Power_Deep, 600000, 30000); // Take a reading every 10 mins deep sleep between
-  //frugal_iot.configure_power(Power_Loop, 10000, 10000); // For debugging sensors - 10 second loop
-  
+  frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
+
   // Encapsulate setting up and starting serial and read main config also checks power ok.
   // This has to happen AFTER battery and power are setup, and before mqtt and adding sensors actuators etc. 
   frugal_iot.pre_setup();
