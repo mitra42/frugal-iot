@@ -15,6 +15,7 @@
 #include "Frugal-IoT.h"
 
 // Pin definitions - override in platformio.ini if needed
+// TODO these probably belong in platformio.ini
 #ifndef HEATING_PIN
   #ifdef ESP8266
     #define HEATING_PIN D1
