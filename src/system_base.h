@@ -255,7 +255,7 @@ class OUTtext : public OUT {
     //bool boolValue() override;
     virtual String StringValue();
   protected:
-    //void debug(const char* const where);
+    void debug(const char* const where); // Uncommented: implementation exists in system_base.cpp but declaration was commented out
 };
 
 #endif // BASE_H
