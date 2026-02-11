@@ -79,7 +79,7 @@
 //     ${common.build_flags_library}
 
 // lib_deps = 
-//     Frugal-IoT@^0.0.14
+//     Frugal-IoT@^0.0.15
     // Libraries specific to this hardware - sensor, actuator, etc
     
 // selecting a platform for board descriotions
