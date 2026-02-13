@@ -81,7 +81,7 @@
 //     ${common.build_flags_loramesher}
 
 // lib_deps = 
-//     Frugal-IoT@^0.0.15
+//     Frugal-IoT@^0.0.16
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
     //Comment/Uncomment below two lines to switch between live and "new" version
