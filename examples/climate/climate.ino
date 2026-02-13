@@ -13,6 +13,7 @@
  */
 
 #include "Frugal-IoT.h"
+#include "control_climate.h"
 
 // Pin definitions - override in platformio.ini if needed
 // TODO these probably belong in platformio.ini

@@ -74,15 +74,15 @@ Control_Climate::Control_Climate(const char* const id, const char* const name,
   float humidity_setpoint, float humidity_hysteresis)
 : Control(id, name,
   std::vector<IN*> {
-    new INfloat(id, "temperature", "Temperature", temp_setpoint, 1, -40, 80, "black", true),
-    new INfloat(id, "temp_setpoint", "Temp Setpoint", temp_setpoint, 1, -40, 80, "black", false),
-    new INfloat(id, "temp_hysteresis", "Temp Hysteresis", temp_hysteresis, 1, 0, 20, "black", false),
-    new INfloat(id, "humidity", "Humidity", humidity_setpoint, 1, 0, 100, "black", true),
+    new INfloat(id, "temperature_now", "Temperature", temp_setpoint, 1, -40, 80, "black", true),
+    new INfloat(id, "temperature_setpoint", "Temp Setpoint", temp_setpoint, 1, -40, 80, "black", false),
+    new INfloat(id, "temperature_hysteresis", "Temp Hysteresis", temp_hysteresis, 1, 0, 20, "black", false),
+    new INfloat(id, "humidity_now", "Humidity", humidity_setpoint, 1, 0, 100, "black", true),
     new INfloat(id, "humidity_setpoint", "Humidity Setpoint", humidity_setpoint, 1, 0, 100, "black", false),
     new INfloat(id, "humidity_hysteresis", "Humidity Hysteresis", humidity_hysteresis, 1, 0, 50, "black", false)
   },
   std::vector<OUT*> {
-    new OUTbool(id, "temp_out", "Heating", false, "black", true),
+    new OUTbool(id, "temperature_out", "Heating", false, "black", true),
     new OUTbool(id, "humidity_out", "Humidifier", false, "black", true)
   }
 ) {
