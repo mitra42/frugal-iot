@@ -42,12 +42,14 @@ int Sensor_Battery::readInt() {
     // Note that on some boards -  the voltage divider for the battery is different than for pin A0
     // e.g. ARDUINO_ESP8266_WEMOS_D1MINIPRO (V2) - batt = (130+220+100)/100 while A0 is just (220+100)/100
 
-    #define SENSOR_BATTERY_SCALE (SENSOR_BATTERY_VOLTAGE_DIVIDER * VCC_MILLIVOLTS) / ANALOG_READ_RANGE 
+    #ifndef SENSOR_BATTERY_SCALE
+      #define SENSOR_BATTERY_SCALE (SENSOR_BATTERY_VOLTAGE_DIVIDER * VCC_MILLIVOLTS) / ANALOG_READ_RANGE 
+    #endif
 
     // readInt() will default to read this pin
     // convert() will apply scale
   #else  // ESP32
-    #ifdef SENSOR_BATTERY_VOLTAGE_DIVIDER
+    #if defined(SENSOR_BATTERY_VOLTAGE_DIVIDER) && !defined(SENSOR_BATTERY_SCALE)
       #define SENSOR_BATTERY_SCALE (SENSOR_BATTERY_VOLTAGE_DIVIDER)
     #endif
   #endif //ESP8266
