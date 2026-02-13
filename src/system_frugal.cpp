@@ -115,7 +115,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #endif
   fs_LittleFS(new System_LittleFS()),
   time(nullptr), // time is optional and setup by main.cpp if needed
-  wifi(new System_WiFi())
+  wifi(nullptr)  // Delay WiFi creation until pre_setup() to avoid lwip_init crash during global construction
 {
   // Note order that things are added is significant - this is the order they will be run in each call that goes thru groups.
   #ifdef LED_BUILTIN // defined by board or _settings.h
@@ -131,7 +131,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   add(buttons); 
   system->add(fs_LittleFS);
   system->add(messages);
-  system->add(wifi);
+  // wifi will be added in pre_setup() to avoid lwip_init crash during global construction
   system->add(powercontroller);
   system->add(discovery);
   system->add(new System_Watchdog());
@@ -168,6 +168,13 @@ void System_Frugal::pre_setup() {
   #endif
   fs_LittleFS->pre_setup();
   powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
+
+  // Create WiFi object now (after Serial is initialized) to avoid lwip_init crash during global construction
+  if (wifi == nullptr) {
+    wifi = new System_WiFi();
+    system->add(wifi);
+  }
+
   readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig - note this just reads frugal_iot/ not other directories which are read in actuator,sensor,control,system_xxx.setup
 }
 void System_Frugal::setup() {
@@ -263,7 +270,7 @@ void System_Frugal::startSerial() {
 
 // Called by OTA byt checking other modules
 bool System_Frugal::canOTA() {
-  return wifi->connected();
+  return wifi != nullptr && wifi->connected();
 }
 bool System_Frugal::canMQTT() {
   return mqtt->connected();
