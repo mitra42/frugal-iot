@@ -145,11 +145,11 @@
 #ifdef ARDUINO_LILYGO_T3_S3_V1_X
 // platform = ${common.platform_esp32}
 // board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
-// board_build.variant = lilygo-t3-s3-sx127x
+// board_build.variant = lilygo_t3_s3_sx127x
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_PREFIX "lorasender"
-#define SYSTEM_OTA_SUFFIX "lilygo-t3-s3-sx127x"
+#define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x"
 #define SYSTEM_WIFI_SCANPERIOD 50000 ; Scan infrequently else hard to debug // Scan infrequently else hard to debug#define SYSTEM_LORAMESHER_SENDER
 // Need min_spiffs.csv as SSD and GFX push it over the size
 // board_build.partitions = min_spiffs.csv
