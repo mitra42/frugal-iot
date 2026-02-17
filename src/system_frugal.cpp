@@ -192,7 +192,9 @@ void System_Frugal::setup_after_wifi() {
       time->setup_after_wifi();
     }
     mqtt->setup_after_wifi();
-    ota->setup_after_wifi(); // Check for new software if its time
+    #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
+      ota->setup_after_wifi(); // Check for new software if its time
+    #endif
   }
 }
 void System_Frugal::infrequently() {

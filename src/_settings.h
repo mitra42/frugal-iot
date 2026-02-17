@@ -10,6 +10,10 @@
 
 #include <Arduino.h> // make sure CONFIG_IDF_TARGET_ESP32C3 etc defined if on those boards
 
+#ifndef PLATFORMIO // Defined automatically on PlatformIO
+  #include "platform.h" // should hold defines for Arduino that would, on PlatformIO, be in PlatformIO.ini
+#endif
+
 #if !defined(PLATFORMIO)
   // On Arduiono do not have platformio.ini so presume these standards
   // TO-ADD-SENSOR TO-ADD-CONTROL TO-ADD-ACTUATOR TO-ADD-SYSTEm
@@ -121,7 +125,8 @@
 #endif
 
 // Define boards which have LoRa and should include LoRaMesher automatically
-#if defined(SYSTEM_LORAMESHER_BAND) // || defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) 
+// was defined(SYSTEM_LORAMESHER_BAND) // but that is a touch tricky to convert for arduino IDE
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) 
   #define SYSTEM_LORAMESHER_WANT
 #endif
 
