@@ -21,6 +21,8 @@
   #define SYSTEM_WIFI_SCANPERIOD 20000
 #endif
 
+// Note the equivalent of System_WiFi::captiveLines is part of system_captive.cpp
+
 System_WiFi::System_WiFi()
 : System_Base("wifi", "WiFi")
   {}
@@ -284,13 +286,17 @@ int8_t System_WiFi::RSSI() { // Negative number if decibel-milliwatts
   return WiFi.RSSI(); 
 }
 
-uint8_t System_WiFi::bars() {
-  const int8_t rssi = WiFi.RSSI();
-  if (rssi > -55) return 4;
-  if (rssi > -66) return 3;
-  if (rssi > -77) return 2;
+uint8_t System_WiFi::rssi_to_bars(int8_t rssi) {
+  // There is no standard but various searches turned up this range
+  if (rssi > -43) return 5;
+  if (rssi > -60) return 4;
+  if (rssi > -68) return 3;
+  if (rssi > -75) return 2;
   if (rssi > -88) return 1;
   return 0;
+}
+uint8_t System_WiFi::bars() {
+  return rssi_to_bars(WiFi.RSSI());
 }
 String System_WiFi::SSID() {
   return WiFi.SSID();

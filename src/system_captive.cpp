@@ -128,13 +128,19 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       while (WiFi.scanComplete() < 0) {  }; // Careful in case this blocks everything mid-scan, seems to be ok.
       for (int i = 0; i < frugal_iot.wifi->num_networks; i++) {
         String s = WiFi.SSID(i);
+        uint8_t bars =  frugal_iot.wifi->rssi_to_bars(WiFi.RSSI(i));
         wifi_auth_mode_t mode = WiFi.encryptionType(i); //uint8_t on ESP8266
         response->print(F("<option value='"));
-        response->print(html_entities(WiFi.SSID(i)) + F("'"));
-        if (s == WiFi.SSID()) { response->print(T->_selected); }
+        response->print(html_entities(WiFi.SSID(i)));
+        response->print(F("'"));
+        if (s == WiFi.SSID()) { response->print(F(" selected")); }
         response->print(F(">"));
         response->print(WiFi.SSID(i));
-        response->print(mode == WIFI_AUTH_OPEN ? F("") : F("&#x1f512;")); // Lock icon
+        if (!WIFI_AUTH_OPEN) { response->print(F(" &#x1f512;")); }  // Lock icon
+        const char* bb[] = {" ", "&#x2804", "&#x2806", "&#x2807", "&#x2847", "&#x283f" };
+        for (uint8_t b = 0; b <= bars; b++) {
+          response->print(bb[b]); // e.g. .))) if three bars (ugly but saves images on device)
+        }
         if (mode == WIFI_AUTH_WPA2_ENTERPRISE) { response->print(F(" unsupported 802.1x")); }
         response->print(F("</option>"));
       }
