@@ -41,7 +41,23 @@ Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *w
   sht = new SENSOR_SHT_DEVICE(address, wire);
 }
 
+#ifndef SENSOR_SHT_POWER0_PIN
+  #define SENSOR_SHT_POWER0_PIN 0xff
+#endif
+#ifndef SENSOR_SHT_POWER3v3_PIN
+  #define SENSOR_SHT_POWER3v3_PIN 0xff
+#endif
+
+void Sensor_SHT::powerUp() {
+  System_Base::powerUp(SENSOR_SHT_3v3_PIN,SENSOR_SHT_0v_PIN);
+}
+
+void Sensor_SHT::powerDown() {
+  // To power down, go to high impedance input
+  System_Base::powerDown(SENSOR_SHT_3v3_PIN,SENSOR_SHT_0v_PIN);
+}
 void Sensor_SHT::setup() {
+  powerUp(); //TODO-202 add powerDown to prepare & powerUp to recover
   Sensor_HT::setup(); 
   sht->begin();
   #ifdef SENSOR_SHT_DEBUG

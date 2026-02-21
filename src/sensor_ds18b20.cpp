@@ -29,6 +29,7 @@ Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, ui
  * Sets resolution to 12-bit for full precision (0.0625°C).
  */
 void Sensor_DS18B20::setup() {
+    powerUp(); //TODO-202 add powerDown to prepare & powerUp to recover
     _sensors.begin();
     // Set 12-bit resolution for full precision (0.0625°C)
     _sensors.setResolution(12);
@@ -36,6 +37,15 @@ void Sensor_DS18B20::setup() {
         Serial.print(F("DS18B20 sensor initialized on index ")); Serial.print(_index); 
         Serial.print(F(" with resolution: ")); Serial.println(_sensors.getResolution());
     #endif
+}
+
+void Sensor_DS18B20::powerUp() {
+  System_Base::powerUp(SENSOR_DS18B20_3v3_PIN,SENSOR_DS18B20_0v_PIN);
+}
+
+void Sensor_DS18B20::powerDown() {
+  // To power down, go to high impedance input
+  System_Base::powerDown(SENSOR_DS18B20_3v3_PIN,SENSOR_DS18B20_0v_PIN);
 }
 
 /**

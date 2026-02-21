@@ -86,6 +86,26 @@ void System_Base::writeConfigToFS(const String& topicLeaf, const String& payload
 String System_Base::leaf2path(const char* const leaf) { 
   return frugal_iot.messages->path(id, leaf);
 }
+void System_Base::powerUp(uint8_t pin3v3, uint8_t pin0v) {
+  if (pin0v != 0xFF) {
+    pinMode(pin0v, OUTPUT);  // Set pin after reading config as may change
+    digitalWrite(pin0v, LOW);
+  }
+  if (pin3v3 != 0xFF) {
+    pinMode(pin3v3, OUTPUT);  // Set pin after reading config as may change
+    digitalWrite(pin3v3, HIGH);
+  }
+}
+void System_Base::powerDown(uint8_t pin3v3, uint8_t pin0v) {
+  // To power down, go to high impedance input
+  if (pin3v3 != 0xFF) {
+    pinMode(pin3v3, INPUT); 
+  }
+  if (pin0v != 0xFF) {
+    pinMode(pin0v, INPUT);
+  }
+}
+
 // ========== IO - base class for IN and OUT ===== 
 
 

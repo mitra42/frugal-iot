@@ -53,6 +53,8 @@ class Sensor_SHT : public Sensor_HT {
   public:
     Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, bool retain);
   protected:
+    void powerUp(); // Note superclass is powerUp(pin3v3, pin0v)
+    void powerDown();  // Note superclass is powerDown(pin3v3, pin0v)
     uint8_t address;
     SENSOR_SHT_DEVICE *sht; 
     void setup() override;
