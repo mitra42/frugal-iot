@@ -44,9 +44,12 @@ void setup() {
   
   // Add sensors, actuators and controls
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
+  #ifdef SENSOR_DS18B20_PIN
   frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", SENSOR_DS18B20_PIN, 0, true));
+  #endif
+  #ifdef SENSOR_SOIL_PIN
   frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil",SENSOR_SOIL_PIN, 4095, -100.0/4095, "brown", true));
-
+  #endif
   // If required, add a control - this is just an example
   //Control_Hysterisis* cb = new Control_Hysterisis("controlhysteresis", "Control", 50, 1, 0, 100);
   //frugal_iot.controls->add(cb);

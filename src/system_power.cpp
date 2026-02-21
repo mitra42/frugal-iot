@@ -331,7 +331,7 @@ void System_Power::recover() {
 bool System_Power::maybeSleep() {
   if (nextSleepTime <= millis()) {
     #ifdef SYSTEM_POWER_DEBUG
-      Serial.println(F("XXX Sleeping")); delay(1000);
+      Serial.println(F("Sleeping")); delay(1000);
     #endif
     prepare();
     sleep();
