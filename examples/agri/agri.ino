@@ -48,7 +48,7 @@ void setup() {
   frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil",SENSOR_SOIL_PIN, 4095, -100.0/4095, "brown", true));
 
   // If required, add a control - this is just an example
-  //Control_Hysterisis* cb = new Control_Hysterisis("Control_Hysterisis", "Control", 50, 1, 0, 100);
+  //Control_Hysterisis* cb = new Control_Hysterisis("controlhysteresis", "Control", 50, 1, 0, 100);
   //frugal_iot.controls->add(cb);
   //cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
