@@ -160,6 +160,8 @@ void System_Frugal::pre_setup() {
   #ifdef SYSTEM_POWER_DEBUG
     // Need serial for debugging
     startSerial(); // Encapsulate setting up and starting serial
+    
+    Serial.println("Serial started");
     powercontroller->checkLevel(); // Check voltage level
   #else
     // Shut down before enable startSerial to keep power draw minimal
