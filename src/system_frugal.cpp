@@ -36,7 +36,7 @@
 // Handle messages at top level - check for own, and if not loop through all other modules
 // e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
 void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) {
+  if (isSet && (topicSensorId == id)) { //TODO-200set review carefully - probably send all
     if (topicLeaf == "project") { // TODO unclear we should be changing project on a device live
       project = String(payload); // Note weirdness, it really needs to copy 
       // TODO - needs to redo stuff that uses "project"
@@ -160,7 +160,7 @@ void System_Frugal::pre_setup() {
   #ifdef SYSTEM_POWER_DEBUG
     // Need serial for debugging
     startSerial(); // Encapsulate setting up and starting serial
-    
+
     Serial.println("Serial started");
     powercontroller->checkLevel(); // Check voltage level
   #else

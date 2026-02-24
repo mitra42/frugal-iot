@@ -32,7 +32,7 @@ void System_Base::dispatchPath(const String &topicPath, const String &payload) {
 void System_Base::discover() {} ; // Default to do nothing
 
 void System_Base::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) {
+  if (isSet && (topicSensorId == id)) {  //TODO-200set - should send out
     if (topicTwig == "name") {
       name = payload;
       writeConfigToFS(topicTwig, payload);
@@ -291,7 +291,8 @@ void IO::writeValueToFS(const String &leaf, const String& payload) {
 // Options eg: sht/temp set/sht/temp/wired set/sht/temp set/sht/temp/max
 // maybe rewrite as dispatchParm and override where required
 bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
+  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max  //TODO-200set
+    // TODO-200set obviously this doesn handle /max so not sure where does
     if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // Nite this is the "id" of the leaf, not of the sensor
       if (!(p == wiredPath)) { // if empty, or different
         wireTo(p);
@@ -318,7 +319,7 @@ bool IN::dispatchPath(const String &tp, const String &p) {
 }
 
 bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
+  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max  //TODO-200set should send
     if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // We are changing the path, not sending a value
       if (!(p == wiredPath)) {
         wiredPath = p; // Copies p

@@ -297,7 +297,7 @@ bool System_Captive::setLanguage(const String& payload) {
 }
 
 void System_Captive::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) {
+  if (isSet && (topicSensorId == id)) { //TODO-200set should send
     if (topicTwig == "language_code") {
       if (setLanguage(payload)) { // Code e.g. "EN"
         writeConfigToFS(topicTwig, payload);

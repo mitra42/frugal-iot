@@ -74,7 +74,7 @@ System_Power::System_Power()
 // This is for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname
 void System_Power::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, const bool isSet) {
   //TODO-23 allow changing type of power mgmt - e.g. from Deep to Loop
-  if (isSet && (topicSensorId == id)) {
+  if (isSet && (topicSensorId == id)) { //TODO-200set. should send 
     bool dispatched = false;
     float v = payload.toFloat(); // Maybe NaN if string malformed
     if (topicTwig == "wake") {      

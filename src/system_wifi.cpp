@@ -312,7 +312,7 @@ void System_WiFi::loop() {
   } 
 }
 void System_WiFi::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) {
+  if (isSet && (topicSensorId == id)) { //TODO-200set probably OK WiFi is special case
     // topicTwig is ssid payload is password
     if (payload.length()) {  // Only save if have a password
       addWiFi(topicTwig, payload);
