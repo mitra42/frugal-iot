@@ -40,12 +40,18 @@ void Sensor_DS18B20::setup() {
 }
 
 void Sensor_DS18B20::powerUp() {
+#if defined(SENSOR_DS18B20_3v3_PIN) && defined(SENSOR_DS18B20_0v_PIN)
+  // TODO handle the case of one pin defined and hte other not
   System_Base::powerUp(SENSOR_DS18B20_3v3_PIN,SENSOR_DS18B20_0v_PIN);
+#endif
 }
 
 void Sensor_DS18B20::powerDown() {
+#if defined(SENSOR_DS18B20_3v3_PIN) && defined(SENSOR_DS18B20_0v_PIN)
+  // TODO handle the case of one pin defined and hte other not
   // To power down, go to high impedance input
   System_Base::powerDown(SENSOR_DS18B20_3v3_PIN,SENSOR_DS18B20_0v_PIN);
+#endif
 }
 
 /**
