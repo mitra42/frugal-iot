@@ -20,6 +20,7 @@ class PlatformIOConverter:
             "d1_mini": "ARDUINO_ESP8266_WEMOS_D1MINI",
             "ttgo-lora32-v21": "ARDUINO_TTGO_LoRa32_v21new",
             "lilygo-t3-s3": "ARDUINO_LILYGO_T3_S3_V1_X",
+            "esp32-c3-devkitm-1": "ARDUINO_ESP32C3_DEV",
         }
 
     def read_file(self):

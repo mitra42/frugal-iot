@@ -60,6 +60,8 @@ class System_Messages : public System_Base {
     void dispatchIncomingQueued();
     void setup();
     void loop();
+  private:
+    void buildTopicPrefix(); // TODO-205 may need to be public for call by frugal_iot.dispatch
 };
 
 #endif

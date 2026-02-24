@@ -37,8 +37,10 @@
 // e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
 void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
-    if (topicLeaf == "project") { // TODO unclear we should be changing project on a device live
+    if (topicLeaf == "project") { 
+      // Unclear we should be changing project on a device live
       project = String(payload); // Note weirdness, it really needs to copy 
+      // TODO needs to restart if the value changes - so 
       // TODO - needs to redo stuff that uses "project"
       // project = payload;
     } else if (topicLeaf == "name") {

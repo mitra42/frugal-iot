@@ -88,6 +88,7 @@ append	KEYWORD2
 bars	KEYWORD2
 boolValue	KEYWORD2
 buildAndSend	KEYWORD2
+buildTopicPrefix	KEYWORD2
 calibrate	KEYWORD2
 canMQTT	KEYWORD2
 canOTA	KEYWORD2
@@ -144,6 +145,8 @@ open	KEYWORD2
 path	KEYWORD2
 pause	KEYWORD2
 periodically	KEYWORD2
+powerDown	KEYWORD2
+powerUp	KEYWORD2
 pre_setup	KEYWORD2
 prepare	KEYWORD2
 prepareForLightSleep	KEYWORD2
@@ -172,6 +175,7 @@ recoverFromLightSleep	KEYWORD2
 relayDownstream	KEYWORD2
 remove	KEYWORD2
 rescan	KEYWORD2
+rssi_to_bars	KEYWORD2
 send	KEYWORD2
 send1read1	KEYWORD2
 sendAndRead	KEYWORD2

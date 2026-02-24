@@ -52,7 +52,7 @@
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
 #define SENSOR_SHT_DEBUG
-// #define SENSOR_DS18B20_DEBUG
+#define SENSOR_DS18B20_DEBUG
 // #define SENSOR_SHT_ADDRESS 0x45 ; 0x44 (default) or 0x45 for D1 shields
 // #define SENSOR_SOIL_DEBUG
 // #define DEBUG_DNSSERVER
@@ -111,6 +111,7 @@
 // platform = ${common.platform_esp32}
 // board = lolin_c3_mini ; use c3_mini board defs - but note define below which is special cased
 // board_build.variant = lolin_c3_pico
+// board_build.partitions = min_spiffs.csv
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "c3_pico_1"
@@ -123,8 +124,6 @@
 #define SENSOR_SOIL_PIN 4
 #define SENSOR_DS18B20_PIN 6
 #define SENSOR_BATTERY_PIN 3 ; Default battery pin is 3, defined in board file // Default battery pin is 3, defined in board file
-// board_build.partitions = min_spiffs.csv
-
 // This is a test unit working with a power-pack that offers a separate lead to measure battery voltage. Here connected to pin 0
 #endif // ARDUINO_LOLIN_C3_PICO
 
@@ -132,6 +131,7 @@
 // platform = ${common.platform_esp32}
 // board = lolin_c3_mini ; use c3_mini board defs - but note define below which is special cased
 // board_build.variant = lolin_c3_pico
+// board_build.partitions = min_spiffs.csv
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "c3_pico_2"
@@ -141,15 +141,15 @@
     // See Home(bottom left)/Platforms/espresif32/updates (none as of 2025sep23 even though PR merged)
 // #define RGB_BUILTIN_LED_COLOR_ORDER LED_COLOR_ORDER_RGB
 // #define SYSTEM_POWER_DEBUG
-#define SENSOR_SOIL_PIN 4
+#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)#define SENSOR_SOIL_PIN 4
 #define SENSOR_DS18B20_PIN 6
-#define SENSOR_BATTERY_PIN 0 ; Read battery voltage on pin 0 as its external (note pin 5 failed for some reason) // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)#define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 ; Power 1 & 2 are both 100k+100k // Power 1 & 2 are both 100k+100k// board_build.partitions = min_spiffs.csv
-
+#define SENSOR_BATTERY_PIN 0 ; Read battery voltage on pin 0 as its external (note pin 5 failed for some reason) // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)#define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 ; Power 1 & 2 are both 100k+100k // Power 1 & 2 are both 100k+100k
 #endif // ARDUINO_LOLIN_C3_PICO
 
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
 // board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
+// board_build.partitions = min_spiffs.csv
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "s2_mini_1"
@@ -157,8 +157,32 @@
 #define SENSOR_SOIL_PIN 8 ; orange labeled A // orange labeled A #define SENSOR_DS18B20_PIN 6 ; yellow labeled B // yellow labeled B#define SENSOR_BATTERY_PIN 10 ; Read battery voltage on pin 5 as its external // Read battery voltage on pin 5 as its external#define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 ; Power 1 & 2 are both 100k+100k // Power 1 & 2 are both 100k+100k#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)#define SENSOR_DS18B20_DEBUG
 #define SENSOR_SOIL_DEBUG
 #define SENSOR_SHT_DEBUG
-// board_build.partitions = min_spiffs.csv
 
 // To add another board, copy example from another examples/*/platform.ini and edit in pins etc.
+
+
+// This is a test unit (for WeDoo), generic C3, 
 #endif // ARDUINO_LOLIN_S2_MINI
+
+#ifdef ARDUINO_ESP32C3_DEV
+// platform = ${common.platform_esp32}
+// board = esp32-c3-devkitm-1
+// board_build.partitions = min_spiffs.csv
+// build_flags = 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "c3_wedoo"
+#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)#define SYSTEM_POWER_DEBUG
+// #define SENSOR_SOIL_PIN 4
+#define ARDUINO_USB_MODE 1
+#define ARDUINO_USB_CDC_ON_BOOT 1
+#define SENSOR_SHT_3v3_PIN 0
+    // SDA=8 SCL=9(grey) is the standard for esp32-c3-devkitm-1 but 8 is LED, so override with I2C_SDA and I2C_SCL
+#define I2C_WIRE Wire
+#define I2C_SDA 1
+#define I2C_SCL 2
+#define SENSOR_SHT_0v_PIN 3
+#define SENSOR_DS18B20_3v3_PIN 6
+#define SENSOR_DS18B20_PIN 5
+#define SENSOR_DS18B20_0v_PIN 7
+#endif // ARDUINO_ESP32C3_DEV
 

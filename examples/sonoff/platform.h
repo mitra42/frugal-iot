@@ -122,7 +122,7 @@
 
 #endif // TODO_SONOFF_BASIC
 
-#ifdef TODO_ESP32_C3_DEVKITM_1
+#ifdef ARDUINO_ESP32C3_DEV
 // platform = ${common.platform_esp32}
 // board = esp32-c3-devkitm-1
 // There is no sonoff_basicr4 variant file - so define locally and will submit PR when tested
@@ -145,7 +145,7 @@
 #define SS -1
 
 // JUST FOR TESTING DO NOT COPY BACK INTO SONOFF/PLATFORM.INI
-#endif // TODO_ESP32_C3_DEVKITM_1
+#endif // ARDUINO_ESP32C3_DEV
 
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
