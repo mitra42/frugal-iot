@@ -1,6 +1,6 @@
 {
     "name": "Frugal-IoT",
-    "version": "0.0.16",
+    "version": "0.0.17",
     "description": "A platform for affordable easily built sensors",
     "keywords": "frugal, arduino, esp32, iot, sensors",
     "authors": [

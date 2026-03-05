@@ -36,24 +36,28 @@
 // Handle messages at top level - check for own, and if not loop through all other modules
 // e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
 void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) { //TODO-200set review carefully - probably send all
-    if (topicLeaf == "project") { // TODO unclear we should be changing project on a device live
+  if (isSet && (topicSensorId == id)) {
+    if (topicLeaf == "project") { // TODO-205 unclear we should be changing project on a device live
+      // Unclear we should be changing project on a device live
       project = String(payload); // Note weirdness, it really needs to copy 
+      // TODO needs to restart if the value changes - so 
       // TODO - needs to redo stuff that uses "project"
       // project = payload;
     } else if (topicLeaf == "name") {
-      name = String(payload); // Note weirdness, it really needs to copy 
+      name = String(payload); // Note weirdness, it really needs to copy
     } else if (topicLeaf == "description") {
       description = payload;
     }
     writeConfigToFS(topicLeaf, payload); // Save for next time
+    // TODO-206 echo (not logged, but for other UX)
     System_Base::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   } else { // No point in passing on our own id for the loop
     System_Group::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   }
 }
 void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
-  // topic Twig  <actuatorId>/<ioID> or  <actuatorId>/<ioID> or <actuatorId>/<ioID>/<config>
+  // topic Twig  <actuatorId>/<ioID> or <actuatorId>/<ioID>/<param>
+  // e.g. sht/temperature or sht/temperature/max
   int8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
   if (slashPos != -1) {
     String id = topicTwig.substring(0, slashPos);       // Extract the part before the slash

@@ -38,13 +38,17 @@ System_Messages::System_Messages()
 topicPrefix()
 { }
 
+void System_Messages::buildTopicPrefix() {
+    topicPrefix = frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/");
+    subscribe(path("set/#"));  // Main subscription to all changes sent to this node
+  // TODO-205 trigger on change to frugal_iot.project and check where projectTopic used
+}
 // Note this setup might be done early (and called twice), rather than in frugal_iot.setup 
 void System_Messages::setup() {
   if (!topicPrefix.length()) { // Check if already done
     // Nothing to read from disk so not calling readConfigFromFS 
     // e.g. "dev/developers/esp32-12345/" prefix of most topics
-    topicPrefix = frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/");
-    subscribe(path("set/#"));  // Main subscription to all changes sent to this node
+    buildTopicPrefix();
   }
 }
 

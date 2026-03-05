@@ -25,6 +25,12 @@
 #ifndef SYSTEM_POWER_LOW_MV
   #define SYSTEM_POWER_LOW_MV 3400.0
 #endif
+#ifndef SYSTEM_POWER_BAD_READING_MV
+  // Any readinhs below this point are likely bad readings as device wouldnt be alive at 2V 
+  // This may need tweaking with experience
+  // Examples seen: C3Pico pin3 floating = 1792 
+  #define SYSTEM_POWER_BAD_READING_MV 2500.0
+#endif
 //#define SYSTEM_POWER_LOW_MS 10000
 #ifndef SYSTEM_POWER_LOW_MS
   #define SYSTEM_POWER_LOW_MS (60 * 60 * 1000) // Presume solar - lets go for 1 hour intervals - TODO-194 try longer or shorter levels
@@ -141,7 +147,7 @@ void System_Power::checkLevel() {
       } else 
     #endif // SYSTEM_POWER_PANIC_MV
     #ifdef SYSTEM_POWER_LOW_MV
-      if ( (vv > 1.0) && (vv < SYSTEM_POWER_LOW_MV)) {
+      if ( (vv > SYSTEM_POWER_BAD_READING_MV) && (vv < SYSTEM_POWER_LOW_MV)) {
         Serial.println(" low power going sleep");
         // options here could be .... send readings, but with long gaps; just deep sleep now for longer time (so e.g. check every 60 mins for power back)
         sleep(Power_Deep, SYSTEM_POWER_LOW_MS);

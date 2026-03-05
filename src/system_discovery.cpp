@@ -49,6 +49,7 @@ void System_Discovery::quickAdvertise() {
 // Done once after WiFi first connects
 void System_Discovery::setup() {
   // Nothing to read from disk so not calling readConfigFromFS 
+  // TODO-205 trigger on change to frugal_iot.project and check where projectTopic used
   projectTopic = frugal_iot.org + "/" + frugal_iot.project;// e.g. "dev/developers/esp32-12345"
 }
 

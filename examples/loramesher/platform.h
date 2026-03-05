@@ -81,12 +81,12 @@
 //     ${common.build_flags_loramesher}
 
 // lib_deps = 
-//     Frugal-IoT@^0.0.16
+//     Frugal-IoT@^0.0.17
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
     //Comment/Uncomment below two lines to switch between live and "new" version
-//     jaimi5/LoRaMesher
-    //https://github.com/mitra42/LoRaMesher.git#new_loramesher
+    //jaimi5/LoRaMesher
+//     https://github.com/mitra42/LoRaMesher.git#new_loramesher
 // selecting a platform for board descriotions
 //platform_esp32 = espressif32 ; this is the default
 // platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
