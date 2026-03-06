@@ -24,6 +24,7 @@ class System_Base {
     virtual void discover();
     void readConfigFromFS(File dir, const String* leaf);
     void writeConfigToFS(const String& topicTwig, const String& payload);
+    void writeConfigToFSandEcho(const String& topicTwig, const String& payload);
     virtual void loop();
     virtual void periodically();
     virtual void captiveLines(AsyncResponseStream* response) { };
@@ -32,7 +33,8 @@ class System_Base {
     void powerDown(uint8_t pin3v3, uint8_t pin0v);
   protected: 
     String name; // Name of actuator, sensor or control
-    String leaf2path(const char* leaf); 
+    String leaf2path(const char* leaf);  // eg. sht/temperature or sht/temperature/max -> dev/lotus/esp123/sht/temperature ...
+    String leaf2path(const String& leaf); 
     void readConfigFromFS();
 }; // Class FrugalBase
 
@@ -42,7 +44,7 @@ class IO {
     char const *sensorId; // Sensor this IO belongs to
     char const *id; // System readable id
     String name; // Human readable name of this IO within the sensor, i.e. can duplicate across sensors
-    const String topicTwig;
+    const String topicTwig; // e.g. sht/temperature
     const char* color; // String passed to UX
     bool const wireable; // True if can wire this to/from others - note this flag is on the control, not on the sensor or actuator
     String wiredPath; // Topic also listening|sending to when wired
@@ -50,7 +52,8 @@ class IO {
     IO(const char * const sensorId, const char * const id, const String name, char const *color, const bool w = true);
     virtual void setup();
     void writeConfigToFS(const String &leaf, const String& payload);
-    void writeValueToFS(const String &leaf, const String& payload);
+    void writeConfigToFSandEcho(const String &leaf, const String& payload);
+    void writeValueToFSandEcho(const String &leaf, const String& payload);
     virtual bool dispatchLeaf(const String &topicLeaf, const String &payload, bool isSet); // Just checks control
     virtual bool dispatchPath(const String &topicPath, const String &payload);
     virtual String StringValue();

@@ -31,7 +31,7 @@ void Control_Sonoff::dispatchTwig(const String &topicControlId, const String &to
     if (topicTwig == "out/cycle") {
       // If cycling state then also set to manual
       manual->set(true);
-      manual->writeValueToFS(manual->id, manual->StringValue());
+      manual->writeValueToFSandEcho(manual->id, manual->StringValue());
     }
     Control_Hysterisis::dispatchTwig(topicControlId, topicTwig, payload, isSet); // Pass on to normal handle of manual - not clear if it writes out/on to FS
   }

@@ -132,6 +132,7 @@ void Sensor_Analog::dispatchTwig(const String &topicSensorId, const String &topi
     } else {
       Sensor_Float::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
     }
+    // At this point, not echoing back as output is a bit odd and offset/scale only come from SPIFFS
   }
 }
 

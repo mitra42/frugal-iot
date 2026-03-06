@@ -35,7 +35,7 @@ void System_WiFi::setStatus(WiFiStatusType newstatus) {
 }
 
 void System_WiFi::setup() {
-  readConfigFromFS(); // Note takes a slightly different format, as each file is a SSID with content = password
+  readConfigFromFS(); // Note takes a slightly different format, as each file is a SSID with content = password (calls dispatchTwig with each ssid/password pair)
 }
 bool System_WiFi::rescan() {
   // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
@@ -312,7 +312,10 @@ void System_WiFi::loop() {
   } 
 }
 void System_WiFi::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) { //TODO-200set probably OK WiFi is special case
+  // Setting on wifi e.g. esp1234/set/wifi/foo/bar is setting the wifi password to "bar" for ssid=foo
+  // No need to echo this to the UX
+  // Note this can only be set from the captive, or the SPIFFS
+  if (isSet && (topicSensorId == id)) {
     // topicTwig is ssid payload is password
     if (payload.length()) {  // Only save if have a password
       addWiFi(topicTwig, payload);

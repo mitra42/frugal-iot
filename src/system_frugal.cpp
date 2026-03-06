@@ -37,20 +37,27 @@
 // e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
 void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
+    bool dispatched = false;
     if (topicLeaf == "project") { // TODO-205 unclear we should be changing project on a device live
       // Unclear we should be changing project on a device live
       project = String(payload); // Note weirdness, it really needs to copy 
       // TODO needs to restart if the value changes - so 
       // TODO - needs to redo stuff that uses "project"
       // project = payload;
-    } else if (topicLeaf == "name") {
-      name = String(payload); // Note weirdness, it really needs to copy
+      dispatched = true;
+    // Handled by System_Base
+    //} else if (topicLeaf == "name") {
+    //  name = String(payload); // Note weirdness, it really needs to copy
+    //  dispatched = true;
     } else if (topicLeaf == "description") {
       description = payload;
+      dispatched = true;
     }
-    writeConfigToFS(topicLeaf, payload); // Save for next time
-    // TODO-206 echo (not logged, but for other UX)
-    System_Base::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
+    if (dispatched) {
+      writeConfigToFSandEcho(topicLeaf, payload); // Save for next time (echo though not logged, so saved on MQTT server)
+    } else {
+      System_Base::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
+    }
   } else { // No point in passing on our own id for the loop
     System_Group::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   }
@@ -174,6 +181,13 @@ void System_Frugal::pre_setup() {
   #endif
   fs_LittleFS->pre_setup();
   powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
+  // Project BEFORE it builds the prefix for topics, which will happen when reads first entry in readConfigFromFS()
+  String newProject = fs_LittleFS->slurp("/frugal_iot/project", true); // ignores if not found
+  if (newProject.length()) {
+    Serial.print(F("Project set to:")); Serial.println(project);
+    project = newProject;
+  }
+  // Note this will read project again
   readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig - note this just reads frugal_iot/ not other directories which are read in actuator,sensor,control,system_xxx.setup
 }
 void System_Frugal::setup() {

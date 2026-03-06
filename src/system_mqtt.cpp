@@ -128,10 +128,12 @@ bool System_MQTT::connect() {
 }
 // This is for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname
 void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) { //TODO-200set should send
+  // TODO-206 no need to resend, but *do* need to test changing via SPIFFS
+  if (isSet && (topicSensorId == id)) {
     if (topicTwig == "hostname") {
       hostname = payload;
       writeConfigToFS(topicTwig, payload);
+      // Could echo here but dont need to
     } else {
       System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
     }

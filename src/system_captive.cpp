@@ -286,23 +286,23 @@ auto handler = server.on("/some/path", [](AsyncWebServerRequest *request){
 */
 
 bool System_Captive::setLanguage(const String& payload) {
-  for (auto t : TT) {
-    if (payload == t->code) {
-      language_code = payload;
-      T = t;
-      return true;
+  for (auto t : TT) { // Iterate across languages
+    if (payload == t->code) { // Found matching language
+      language_code = payload;  // save it (won't save if node does not support language)
+      T = t; // Language array to use is this one
+      return true; // found it 
     }
   }
-  return false;
+  return false; // not found
 }
 
 void System_Captive::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) { //TODO-200set should send
+  if (isSet && (topicSensorId == id)) {
     if (topicTwig == "language_code") {
-      if (setLanguage(payload)) { // Code e.g. "EN"
-        writeConfigToFS(topicTwig, payload);
+      if (setLanguage(payload)) { // Code e.g. "EN". true if language supported
+        writeConfigToFSandEcho(topicTwig, payload);
       }
-    } else {
+    } else { // e.g. "name"
       System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
     }
   }

@@ -34,7 +34,7 @@ void Actuator_Digital::set(const bool v) {
   #ifdef ACTUATOR_DIGITAL_DEBUG
     Serial.print(F("\nSetting ")); Serial.print(name); Serial.println(v ? F(" on") : F(" off"));
   #endif
-  act();
+  act(); // Note act() will also be called if reads any values from file and 'sets' them
 }
 #pragma GCC diagnostic pop
 

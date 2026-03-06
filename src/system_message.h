@@ -43,6 +43,7 @@ class System_Messages : public System_Base {
     String path(const char* id, const char* const leaf, const char* const leafparm);
     String setPath(char const * const topicTwig);
     String path(const char* id, const char* const leaf);
+    String path(const char* id, const String& leaf);
     String path(char const * const topicTwig);
     String path(const String topicTwig); 
     //String twig(const String &topicPath); // unused
@@ -61,7 +62,7 @@ class System_Messages : public System_Base {
     void setup();
     void loop();
   private:
-    void buildTopicPrefix(); // TODO-205 may need to be public for call by frugal_iot.dispatch
+    void buildTopicPrefix();
 };
 
 #endif

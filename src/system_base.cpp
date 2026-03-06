@@ -32,10 +32,10 @@ void System_Base::dispatchPath(const String &topicPath, const String &payload) {
 void System_Base::discover() {} ; // Default to do nothing
 
 void System_Base::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) {  //TODO-200set - should send out
+  if (isSet && (topicSensorId == id)) {
     if (topicTwig == "name") {
       name = payload;
-      writeConfigToFS(topicTwig, payload);
+      writeConfigToFSandEcho(topicTwig, payload);
     } else {
       // Nothing wrong with no match - it might have been handled in subclass
     }
@@ -78,12 +78,20 @@ void System_Base::readConfigFromFS(File dir, const String* leaf) {
   }
   dir.close();
 }
+// Note there is also a IO::writeConfigToFS
 void System_Base::writeConfigToFS(const String& topicLeaf, const String& payload) {
   String filepath = String("/") + id + "/" + topicLeaf;
   frugal_iot.fs_LittleFS->spurt(filepath, payload);
 }
-
+// Write to FileSystem, but also echo to MQTT - typically this is take a "set" message and echoing as a regular one
+void System_Base::writeConfigToFSandEcho(const String& topicLeaf, const String& payload) {
+  frugal_iot.messages->send(leaf2path(topicLeaf), payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  writeConfigToFS(topicLeaf, payload);
+}
 String System_Base::leaf2path(const char* const leaf) { 
+  return frugal_iot.messages->path(id, leaf);
+}
+String System_Base::leaf2path(const String& leaf) { 
   return frugal_iot.messages->path(id, leaf);
 }
 void System_Base::powerUp(uint8_t pin3v3, uint8_t pin0v) {
@@ -187,7 +195,7 @@ bool INbool::boolValue() {
   return value;
 }
 String INbool::StringValue() {
-  return String(value ? "true" : "false");
+  return String(value ? "1" : "0");
 }
 float INcolor::floatValue() {
   return 0;
@@ -265,45 +273,39 @@ void IO::writeConfigToFS(const String &leaf, const String& payload) {
   //Serial.println(F("Writing config to " + path + "=" + payload));
   frugal_iot.fs_LittleFS->spurt(path, payload);
 }
+// Leaf should be e.g. temperature or temperature/max or temperature/wired
+void IO::writeConfigToFSandEcho(const String &leaf, const String& payload) { 
+  Serial.print("XXX 206 " __FILE__ " tt should be sht/temp ");Serial.println(__LINE__); 
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, leaf), payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  writeConfigToFS(leaf, payload);
+}
+
 // Leaf should be e.g. control/limit and will append value
-void IO::writeValueToFS(const String &leaf, const String& payload) { 
+void IO::writeValueToFSandEcho(const String &leaf, const String& payload) { 
   String dirPath = String("/") + sensorId + "/" + leaf;
-  String path = dirPath + "/value";
-  // Checking and removing legacy file when want a directory
-  // This shouldnt be needed long - when all devices have updated code this will run the first time they readConfigFromFS (e.g. erase Nov 2025)
-  /*
-  if (frugal_iot.fs_LittleFS->exists(dirPath)) {
-    bool needsRemoval;
-    {
-      File f = frugal_iot.fs_LittleFS->open(dirPath, "r");
-      needsRemoval = !f.isDirectory();
-      f.close();
-    }
-    if (needsRemoval) {
-      frugal_iot.fs_LittleFS->remove(dirPath); // XX may not be accurage
-    }
-  }
-  */
-  // End of legacy code
-  frugal_iot.fs_LittleFS->spurt(path, payload);
+  String valuePath = dirPath + "/value";
+  frugal_iot.fs_LittleFS->spurt(valuePath, payload);
+  frugal_iot.messages->send(path(),payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 
 // Options eg: sht/temp set/sht/temp/wired set/sht/temp set/sht/temp/max
 // maybe rewrite as dispatchParm and override where required
+// This is called, looping over all IN by 
 bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max  //TODO-200set
-    // TODO-200set obviously this doesn handle /max so not sure where does
+  if (isSet) { // e.g : set/sht/temp/wired Note subclass handles set/sht/temp set/sht/temp/max etc
     if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // Nite this is the "id" of the leaf, not of the sensor
       if (!(p == wiredPath)) { // if empty, or different
         wireTo(p);
-        writeConfigToFS(leaf, p);  // TODO need to make sure directory exists   -
+        writeConfigToFSandEcho(leaf, p);  // TODO need to make sure directory exists   -
       }
     }
   }
   // For now recognizing both xxx/leaf and set/xxx/leaf (but note only subscribed to set/xxx/leaf)
   // Also recognize leaf/value which is how will be written to disk or get problems with directories vs files
   if (leaf == id || (leaf.startsWith(id) && leaf.endsWith("/value"))) {
-    writeValueToFS(id, p);  // e.g. ledbuiltin/on or set/ledbuiltin/on.  // TODO need to make sure directory exists   
+    // isSet usually comes from messages and needs echo as (!set) topic
+    // !isSet usually comes from FS but also need to send
+    writeValueToFSandEcho(id, p);  // e.g. ledbuiltin/on or set/ledbuiltin/on.  // TODO need to make sure directory exists   
     return convertAndSet(p); // Virtual - depends on type of INxxx
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
@@ -319,12 +321,12 @@ bool IN::dispatchPath(const String &tp, const String &p) {
 }
 
 bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max  //TODO-200set should send
+  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
     if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // We are changing the path, not sending a value
       if (!(p == wiredPath)) {
         wiredPath = p; // Copies p
         sendWired(); // Destination changed, send current value
-        writeConfigToFS(leaf, p);  //         
+        writeConfigToFSandEcho(leaf, p);
       }
     }
   }
@@ -344,8 +346,8 @@ bool INfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
       dispatched = true;
     }
     if (dispatched) {
-      writeConfigToFS(leaf, p);  
-      return false; // value didnt change         
+      writeConfigToFSandEcho(leaf, p);  
+      return false; // value didnt change
     } 
     // else drop through and dispatch to superclass
   }
@@ -364,7 +366,7 @@ bool OUTfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
       dispatched = true;
     }
     if (dispatched) {
-      writeConfigToFS(leaf, p);  
+      writeConfigToFSandEcho(leaf, p);  
       return false; // value didnt change         
     } 
     // else drop through and dispatch to superclass
@@ -384,8 +386,8 @@ bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
       dispatched = true;
     }
     if (dispatched) {
-      writeConfigToFS(leaf, p);  
-      return false; // value didnt change         
+      writeConfigToFSandEcho(leaf, p);
+      return false; // value didnt change (just parameter)
     } 
     // else drop through and dispatch to superclass
   }
@@ -394,13 +396,16 @@ bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 }
 bool OUTbool::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   bool dispatched = false;
+  bool changed = false;
   if (leaf.startsWith(id)) {
     if (leaf.endsWith("/cycle")) { 
-      set(!value);
+      set(!value); // will send and sendWired if changed (which it has)
+      dispatched = true;
+      changed = true;
     }
     if (dispatched) {
-      writeConfigToFS(leaf, p);  
-      return false; // value didnt change
+      writeConfigToFS(leaf, p); // Dont echo since only /cycle and set will do the necessary sends
+      return changed; // value didnt change (just parameter)
     } 
     // else drop through and dispatch to superclass
   }
@@ -425,8 +430,8 @@ bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
       set((uint16_t)newvalue);
     }
     if (dispatched) {
-      writeConfigToFS(leaf, p);  
-      return false; // value didnt change         
+      writeConfigToFSandEcho(leaf, p);
+      return false; // value didnt change (just parameter)
     } 
     // else drop through and dispatch to superclass
   }
@@ -682,10 +687,12 @@ OUTuint16::OUTuint16(const OUTuint16 &other)
 
 // TO_ADD_OUTxxx
 // Called when either value, or wiredPath changes
-void OUT::sendWired(bool retain, uint8_t qos) {
+void OUT::sendWired(bool retain, uint8_t qos) { // defaults to MQTT_RETAIN MQTT_QOS_ATLEAST1
   if (wiredPath.length()) {
     // Three possibilities = normal = send+loop qos=2 & local = loopback; qos=2 & remote = sendRemote
     if (qos == MQTT_QOS_EXACTLY1) {
+      // Either loopback or send, but not both
+      Serial.print("XXX 205 " __FILE__ " "); Serial.println(__LINE__);
       if (wiredPath.startsWith(frugal_iot.messages->topicPrefix)) {
         frugal_iot.messages->queueLoopback(wiredPath, StringValue());
       } else {

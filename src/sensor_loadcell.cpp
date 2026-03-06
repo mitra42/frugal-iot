@@ -110,6 +110,7 @@ void Sensor_LoadCell::dispatchTwig(const String &topicSensorId, const String &to
     } else {
       Sensor_Float::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
     }
+    // At this point, not echoing back as output is a bit odd and offset/scale only come from SPIFFS
   }
 }
 void Sensor_LoadCell::captiveLines(AsyncResponseStream* response) {
