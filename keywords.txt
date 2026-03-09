@@ -214,4 +214,5 @@ track	KEYWORD2
 validate	KEYWORD2
 wireTo	KEYWORD2
 writeConfigToFS	KEYWORD2
-writeValueToFS	KEYWORD2
+writeConfigToFSandEcho	KEYWORD2
+writeValueToFSandEcho	KEYWORD2

@@ -692,7 +692,6 @@ void OUT::sendWired(bool retain, uint8_t qos) { // defaults to MQTT_RETAIN MQTT_
     // Three possibilities = normal = send+loop qos=2 & local = loopback; qos=2 & remote = sendRemote
     if (qos == MQTT_QOS_EXACTLY1) {
       // Either loopback or send, but not both
-      Serial.print("XXX 205 " __FILE__ " "); Serial.println(__LINE__);
       if (wiredPath.startsWith(frugal_iot.messages->topicPrefix)) {
         frugal_iot.messages->queueLoopback(wiredPath, StringValue());
       } else {

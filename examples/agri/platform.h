@@ -83,7 +83,7 @@
 //     ${common.build_flags_library}
 
 // lib_deps = 
-//     Frugal-IoT@^0.0.17
+//     Frugal-IoT@^0.0.18
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
     
@@ -166,7 +166,7 @@
 
 #ifdef ARDUINO_ESP32C3_DEV
 // platform = ${common.platform_esp32}
-// board = esp32-c3-devkitm-1
+// board = esp32-c3-devkitm-1 ; defines ARDUINO_ESP32C3_DEV
 // board_build.partitions = min_spiffs.csv
 // build_flags = 
 //     ${common.build_flags}
