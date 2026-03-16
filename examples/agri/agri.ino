@@ -16,6 +16,7 @@ System_Frugal frugal_iot("dev", "developers", "Agri", "Agri Sensor");
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after TODO-194 make this change on other .ino
   #ifdef SENSOR_BATTERY_PIN
+    // TODO add configure_battery to all main.cpp
     frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
   #endif
 
