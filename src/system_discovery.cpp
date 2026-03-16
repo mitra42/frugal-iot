@@ -49,7 +49,7 @@ void System_Discovery::quickAdvertise() {
 // Done once after WiFi first connects
 void System_Discovery::setup() {
   // Nothing to read from disk so not calling readConfigFromFS 
-  projectTopic = frugal_iot.org + "/" + frugal_iot.project;// e.g. "dev/developers/esp32-12345"
+  projectTopic = frugal_iot.org + "/" + frugal_iot.project;// e.g. "dev/developers"
 }
 
 void System_Discovery::infrequently() { 

@@ -37,23 +37,48 @@
 // e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
 void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
-    if (topicLeaf == "project") { // TODO unclear we should be changing project on a device live
-      project = String(payload); // Note weirdness, it really needs to copy 
-      // TODO - needs to redo stuff that uses "project"
-      // project = payload;
-    } else if (topicLeaf == "name") {
-      name = String(payload); // Note weirdness, it really needs to copy 
+    bool dispatched = false;
+    bool needrestart = false;
+    bool changed = false;
+    if (topicLeaf == "project") { // TODO-205 unclear we should be changing project on a device live
+      // Unclear we should be changing project on a device live
+      if ((payload) != project) {
+        // Serial.print("XXX Project change from "); Serial.print(project); Serial.print(" to "); Serial.println(payload);
+        project = String(payload); // Note weirdness, it really needs to copy 
+        // TODO needs to restart if the value changes - so 
+        // TODO - needs to redo stuff that uses "project"
+        // project = payload;
+        needrestart = true;
+        changed = true;
+      // } else {  Serial.println("XXX project matches");
+      }
+      dispatched = true;
+    // Handled by System_Base
+    //} else if (topicLeaf == "name") {
+    //  name = String(payload); // Note weirdness, it really needs to copy
+    //  dispatched = true;
     } else if (topicLeaf == "description") {
       description = payload;
+      dispatched = true;
+      changed = true;
     }
-    writeConfigToFS(topicLeaf, payload); // Save for next time
-    System_Base::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
+    if (changed) {
+      writeConfigToFSandEcho(topicLeaf, payload); // Save for next time (echo though not logged, so saved on MQTT server)
+    } 
+    if (!dispatched) {
+      System_Base::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
+    }
+    if (needrestart) {
+      ESP.restart();
+    }
   } else { // No point in passing on our own id for the loop
+    // Loop over all other actuators, sensors, controls etc
     System_Group::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   }
 }
 void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
-  // topic Twig  <actuatorId>/<ioID> or  <actuatorId>/<ioID> or <actuatorId>/<ioID>/<config>
+  // topic Twig  <actuatorId>/<ioID> or <actuatorId>/<ioID>/<param>
+  // e.g. sht/temperature or sht/temperature/max
   int8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
   if (slashPos != -1) {
     String id = topicTwig.substring(0, slashPos);       // Extract the part before the slash
@@ -160,6 +185,8 @@ void System_Frugal::pre_setup() {
   #ifdef SYSTEM_POWER_DEBUG
     // Need serial for debugging
     startSerial(); // Encapsulate setting up and starting serial
+
+    Serial.println("Serial started");
     powercontroller->checkLevel(); // Check voltage level
   #else
     // Shut down before enable startSerial to keep power draw minimal
@@ -168,6 +195,13 @@ void System_Frugal::pre_setup() {
   #endif
   fs_LittleFS->pre_setup();
   powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
+  // Project BEFORE it builds the prefix for topics, which will happen when reads first entry in readConfigFromFS()
+  String newProject = fs_LittleFS->slurp("/frugal_iot/project", true); // ignores if not found
+  if (newProject.length()) {
+    Serial.print(F("Project set to:")); Serial.println(project);
+    project = newProject;
+  }
+  // Note this will read project again
   readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig - note this just reads frugal_iot/ not other directories which are read in actuator,sensor,control,system_xxx.setup
 }
 void System_Frugal::setup() {
@@ -263,7 +297,8 @@ void System_Frugal::startSerial() {
 
 // Called by OTA byt checking other modules
 bool System_Frugal::canOTA() {
-  return wifi->connected();
+  // Even though wifi->connected checks after supposed stability, another couple of seconds seems needed before OTA (MQTT works earlier for some reason)
+  return wifi->connected() && (millis() > (wifi->statusSince + 2000));
 }
 bool System_Frugal::canMQTT() {
   return mqtt->connected();

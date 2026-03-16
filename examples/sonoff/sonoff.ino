@@ -29,9 +29,11 @@ Control_Sonoff::Control_Sonoff() :
 void Control_Sonoff::dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicControlId == id) { // matches this control
     if (topicTwig == "out/cycle") {
-      // If cycling state then also set to manual
-      manual->set(true);
-      manual->writeValueToFS(manual->id, manual->StringValue());
+      // If cycling state then also set to manual if not already
+      if (!manual->value) {
+        manual->set(true); // will also send it if changed
+        manual->writeValueToFSandEcho(manual->id, manual->StringValue());
+      }
     }
     Control_Hysterisis::dispatchTwig(topicControlId, topicTwig, payload, isSet); // Pass on to normal handle of manual - not clear if it writes out/on to FS
   }
@@ -81,7 +83,7 @@ void setup() {
   cs->outputs[0]->wireTo(frugal_iot.messages->setPath("relay/on")); // TODO refactor wireTo so can take a Base
   cs->outputs[1]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on")); // Turn on LED if manual (TODO-187 may want inverse) 
   // https://github.com/mitra42/frugal-iot/issues/159
-
+  cs->outputs[1]->sendWired(); // Send current value to LED 
   // Create a button, and wire its single and long clicks to the control.
   Sensor_Button* button = new Sensor_Button("button", "Button", BUILTIN_BUTTON, "red");
   frugal_iot.buttons->add(button);

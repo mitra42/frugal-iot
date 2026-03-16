@@ -81,12 +81,12 @@
 //     ${common.build_flags_loramesher}
 
 // lib_deps = 
-//     Frugal-IoT@^0.0.16
+//     Frugal-IoT@^0.0.18
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
     //Comment/Uncomment below two lines to switch between live and "new" version
-//     jaimi5/LoRaMesher
-    //https://github.com/mitra42/LoRaMesher.git#new_loramesher
+    //jaimi5/LoRaMesher
+//     https://github.com/mitra42/LoRaMesher.git#new_loramesher
 // selecting a platform for board descriotions
 //platform_esp32 = espressif32 ; this is the default
 // platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
@@ -145,11 +145,11 @@
 #ifdef ARDUINO_LILYGO_T3_S3_V1_X
 // platform = ${common.platform_esp32}
 // board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
-// board_build.variant = lilygo-t3-s3-sx127x
+// board_build.variant = lilygo_t3_s3_sx127x
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_PREFIX "lorasender"
-#define SYSTEM_OTA_SUFFIX "lilygo-t3-s3-sx127x"
+#define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x"
 #define SYSTEM_WIFI_SCANPERIOD 50000 ; Scan infrequently else hard to debug // Scan infrequently else hard to debug#define SYSTEM_LORAMESHER_SENDER
 // Need min_spiffs.csv as SSD and GFX push it over the size
 // board_build.partitions = min_spiffs.csv

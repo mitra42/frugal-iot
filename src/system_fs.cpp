@@ -128,6 +128,7 @@ bool System_FS::spurt(const String& filename, const String& content) {
     #endif
     return w == content.length();
 }
+// fn is path like /frugal_iot/project, note the leading slash
 String System_FS::slurp(const String& fn, const bool quietfail) {
   if (quietfail && !exists(fn)) {
     //Serial.print(F("XXX __FILE")); Serial.println(__LINE__);

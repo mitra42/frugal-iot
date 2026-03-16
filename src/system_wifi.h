@@ -16,6 +16,7 @@ class System_WiFi : public System_Base {
     int nextNetwork;
     System_WiFi();
     int8_t RSSI();
+    uint8_t rssi_to_bars(int8_t rssi);
     uint8_t bars();
     String SSID();
     void switchSSID(const String ssid);

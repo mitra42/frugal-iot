@@ -38,13 +38,16 @@ System_Messages::System_Messages()
 topicPrefix()
 { }
 
+void System_Messages::buildTopicPrefix() {
+    topicPrefix = frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/");
+    subscribe(path("set/#"));  // Main subscription to all changes sent to this node
+}
 // Note this setup might be done early (and called twice), rather than in frugal_iot.setup 
 void System_Messages::setup() {
   if (!topicPrefix.length()) { // Check if already done
     // Nothing to read from disk so not calling readConfigFromFS 
     // e.g. "dev/developers/esp32-12345/" prefix of most topics
-    topicPrefix = frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/");
-    subscribe(path("set/#"));  // Main subscription to all changes sent to this node
+    buildTopicPrefix();
   }
 }
 
@@ -67,9 +70,13 @@ String System_Messages::setPath(char const * const topicTwig) { // TODO find oth
 // Convert a twig e.g. sht30/temperature to path e.g. dev/developers/esp123/sht30/temperature
 String System_Messages::path(const String topicTwig) { // TODO find other places do this and replace with call to TopicPath
   setup(); // Allow control wiring before setup by doing setup early
-  return topicPrefix + topicTwig;
+  return topicPrefix + topicTwig; // e.g. dev/lotus/esp1234/sht/temperature or .../temperature/max
 }
 String System_Messages::path(const char* id, char const * const twig) { // TODO find other places do this and replace with call to TopicPath
+  setup(); // Allow control wiring before setup by doing setup early
+  return topicPrefix + id + "/" + twig; // Note topicPrefix ends in "/"
+}
+String System_Messages::path(const char* id, const String& twig) { // TODO find other places do this and replace with call to TopicPath
   setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + id + "/" + twig; // Note topicPrefix ends in "/"
 }
@@ -77,17 +84,6 @@ String System_Messages::path(const char* id,  const char* const leaf, const char
   setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + id + "/" + leaf + "/" + leafparm; // Note topicPrefix ends in "/"
 }
-
-/* Doesnt appear to be used
-// Convert a path e.g. /dev/developers/esp123/sht30/temperature to a twig e.g. sht30/temperature 
-String System_Messages::twig(const String &topicPath) { 
-  if (topicPath.startsWith(topicPrefix)) {
-    return topicPath.substring(topicPrefix.length());
-  } else {
-    return String();
-  }
-}
-*/
 
 // ============ UPSTREAM ====== MODULES -> (queue -> LoRaMesher) -> queue -> MQTT -> Broker 
 

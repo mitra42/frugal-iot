@@ -58,6 +58,8 @@ private:
     OneWire _oneWire;          // OneWire interface for DS18B20 communication
     DallasTemperature _sensors;// DallasTemperature driver instance
     uint8_t _index;            // Sensor index on the OneWire bus
+    void powerUp();             // Note superclass is powerUp(pin3v3, pin0v)
+    void powerDown();           // Note superclass is powerDown(pin3v3, pin0v)
 };
 
 #endif // SENSOR_DS18B20_H
