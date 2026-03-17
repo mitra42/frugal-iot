@@ -36,3 +36,17 @@ void Sensor_Soil::captiveLines(AsyncResponseStream* response) {
   frugal_iot.captive->addButton(response, id, "output", "0", "Soil Moisture Tare"); //TODO-TRANSLATE
   frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),3), "Calibrate", 0, output->max);
 }
+void Sensor_SHT::powerUp() {
+  #if defined(SENSOR_SOIL_3v3_PIN) && defined(SENSOR_SOIL_0v_PIN)
+    // TODO handle the case of one pin defined and hte other not
+    System_Base::powerUp(SENSOR_SOIL_3v3_PIN,SENSOR_SOIL_0v_PIN);
+  #endif
+}
+
+void Sensor_SHT::powerDown() {
+  #if defined(SENSOR_SOIL_3v3_PIN) && defined(SENSOR_SOIL_0v_PIN)
+    // TODO handle the case of one pin defined and hte other not
+    // To power down, go to high impedance input
+    System_Base::powerDown(SENSOR_SOIL_3v3_PIN,SENSOR_SOIL_0v_PIN);
+  #endif
+}

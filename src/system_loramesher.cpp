@@ -23,26 +23,26 @@
  *     TODO-189 this has changed, check after decide which parameters are required/optional to be in platformio.ini
  * 
  * Open issues with LoRaMesher 1.0.0
- * BROADCAST_ADDR used to be defined, what is the equivalent now?
- * Do we need to delete the std::vector passed to the packet handling callback, it looks like its on the stack so OK?
- * LoraMesher issue#89 about running mesher in its own task instead of the app
- * LoraMesher issue#88 about gateway functionality
+ * BROADCAST_ADDR used to be defined, what is the equivalent now? - https://github.com/LoRaMesher/LoRaMesher/issues/90
+ * Unclear about comment from example 
+ *   // Use GetTimeUntilNextDataSlot to avoid sending before the TX window
+ *   uint32_t wait_ms = mesher->GetTimeUntilNextDataSlot();
+ * Need to integrate signals from LoRaMesher about when to sleep 
  */
 
 #include "_settings.h"
+
 // defined in _settings.h if board has LoRa, can also define in platformio.ini if e.g. have a LoRa shield
 #ifdef SYSTEM_LORAMESHER_WANT 
 
-
 // This is currently only defined for ESP32, 
-// Certainly fials to complie on ESP8266 but might be fixable - I dont have a ESP8266+LoRa combo to try
+// Certainly fails to compile on ESP8266 but might be fixable - I dont have a ESP8266+LoRa combo to try
 #ifdef ESP32
 
 #include "system_loramesher.h"
 #include "loramesher.hpp"
 #include "system_frugal.h"
 #include "misc.h"  // for lprintf
-
 // These are board specific - check if in board or variant files and if not define in platformio.ini for each board
 // TODO-189 Jamie: This is a section, that IMHO should be inside LoraMesher, so it works with all the different boards with 
 // inconsistent pins_arduino.h
@@ -76,16 +76,25 @@
 #define LORA_BANDWITH 125.0
 #define LORA_CODING_RATE 7U
 #define LORA_POWER 6
-#define LORA_SYNC_WORD 20U
+#define LORA_SYNC_WORD 20U //TODO-189 pick different one for FrugalIoT
 #define LORA_CRC true
 #define LORA_PREAMBLE_LENGTH 8U
-// Intentionally not defining the frequency - the developer MUST specify this in their platformio.ini as it is country specific 
-#define LORA_FREQUENCY 915.0F // Note there are country specific laws as to what this needs to be !  //TODO-189 move to platform.ini
+#define LORA_FREQUENCY SYSTEM_LORAMESHER_FREQUENCY // Intentionally defined in platformio.ini as user MUST decide which to use
 
 #define QOS_DOWNSTREAM 12 // Special value of retain when downstream message (MQTT broker->gateway->LoRa->modules)
 #ifndef SYSTEM_LORAMESHER_MAXLEGITPACKET
   #define SYSTEM_LORAMESHER_MAXLEGITPACKET 256 // Seeing some big (1Mb) bad packets from sender
 #endif
+
+
+struct AppMessage {
+    loramesher::AddressType source;
+    std::vector<uint8_t> data;
+};
+
+#include "os/rtos.hpp"
+loramesher::os::QueueHandle_t receive_queue = nullptr;
+loramesher::os::TaskHandle_t receive_task_handle = nullptr;
 
 // =========== MeshSubscription class - only used by LoRaMesher to track subs ====
 
@@ -102,36 +111,35 @@ MeshSubscription::MeshSubscription(const String topicPath, const uint16_t src)
   extern void printAppData();
 #endif // SYSTEM_LORAMESHER_DEBUG
 
-// Simple data received callback (recommended approach)
-void OnDataReceived(loramesher::AddressType source, const std::vector<uint8_t>& data) {
-    // Recommendation: Forward to separate task for processing
-    #ifdef SYSTEM_LORAMESHER_DEBUG
-      Serial.print("Received data from: 0x"); Serial.print(source, HEX); Serial.print("("); Serial.print(data.size()); Serial.println(" bytes)");
-    #endif
-    // Should really be happening in separate task - but not sure how many tasks there are?
-    frugal_iot.loramesher->processReceivedPacket(source, data);
-}
 
-#ifdef TODO_189_DONT_THINK_NEED_THIS
-// Create a Receive Messages Task and add it to the LoRaMesher
-// Equivalent of system_mqtt's: client.onMessage(MessageReceived)
-void createReceiveMessages() {
-    int res = xTaskCreate(
-        processReceivedPackets, // TaskFunction_t
-        "Receive App Task",
-        4096,
-        (void*) 1,
-        2,
-        &receiveLoRaMessage_Handle);
-    if (res != pdPASS) {
-        Serial.printf("Error: Receive App Task creation gave error: %d\n", res);
+/**
+ * @brief Application task that processes incoming LoRa messages
+ *
+ * Receive Task — runs on its own stack, processes messages from queue
+ * Blocks on the queue until a message arrives, then processes it on
+ * this task's own stack — decoupled from the mesher's internal tasks.
+ */
+void ReceiveTask(void* /*pvParameters*/) {
+  AppMessage* msg = nullptr;
+  for (;;) {
+      auto result = loramesher::os::RTOS::instance().ReceiveFromQueue(receive_queue, &msg, MAX_DELAY);
+      if (result == loramesher::os::QueueResult::kOk && msg != nullptr) {
+      Serial.print(F("LoRaMesher - app received 0x")); Serial.print(msg->data.size()); Serial.print(F(" bytes from 0x")); Serial.println(msg->source, HEX); 
+      // application logic
+      frugal_iot.loramesher->processReceivedPacket(msg->source, msg->data);
+      delete msg; 
     }
+  }
 }
-#endif
 
 // ============ HELPERS =====================
 bool System_LoraMesher::initialize() {
   try {
+    // Create a queue - needs to be before SetDataCallback
+    receive_queue = xQueueCreate(10, sizeof(AppMessage*)); //TODO-189 see if can move into LoraMesher instance
+    // Create a task to receive messages
+    createReceiveMessages();
+    // 
     loramesher::RadioConfig radioConfig(LORA_RADIO_TYPE, LORA_FREQUENCY,
                             LORA_SPREADING_FACTOR, LORA_BANDWITH,
                             LORA_CODING_RATE, LORA_POWER, LORA_SYNC_WORD,
@@ -141,12 +149,7 @@ bool System_LoraMesher::initialize() {
                         LORA_IRQ,  // DIO0 pin
                         LORA_IO1   // DIO1 pin
     );
-    loramesher::LoRaMeshProtocolConfig mesh_config(0,       // Auto-assign node address
-                                       60000,   // Hello interval: 60 seconds
-                                       180000,  // Route timeout: 180 seconds
-                                       10);     // Max hops: 10
-    loramesher::ProtocolConfig protocol_config;
-    protocol_config.setLoRaMeshConfig(mesh_config);
+    loramesher::LoRaMeshProtocolConfig mesh_config;
 
     // Create LoraMesher with PingPong protocol
       mesher =
@@ -154,13 +157,21 @@ bool System_LoraMesher::initialize() {
               .withRadioConfig(radioConfig)
               .withPinConfig(pinConfig)
               .withLoRaMeshProtocol(mesh_config)  // Use LoRaMesh protocol
-              .withAutoAddressFromHardware(true)  // Enable hardware-based addressing (default)
+              //.withAutoAddressFromHardware(true)  // Enable hardware-based addressing (default)
               .Build();
-      #ifdef SYSTEM_LORAMESHER_DEBUG
-        Serial.print("LoRaMesher node address: 0x"); Serial.println(mesher->GetNodeAddress());
-      #endif
       //Set up data callback
-      mesher->SetDataCallback(OnDataReceived);
+      mesher->SetDataCallback( // TODO-189 move to own function instead of inline
+        [](loramesher::AddressType source, const std::vector<uint8_t>& data) {
+            auto* msg = new AppMessage{source, data};
+            auto result = loramesher::os::RTOS::instance().SendToQueue(
+              receive_queue, &msg, 0 /* non-blocking */);
+            if (result != loramesher::os::QueueResult::kOk) {
+              // Queue full — drop and free rather than block the mesher task
+              delete msg;
+              Serial.println(F("LoRaMesher: Receive queue full, dropping packet"));
+            }
+        });
+
       // Start the network
       loramesher::Result result = mesher->Start();
       if (!result) {
@@ -171,7 +182,10 @@ bool System_LoraMesher::initialize() {
       #ifdef SYSTEM_LORAMESHER_DEBUG
         Serial.println(F("LoraMesher started successfully"));
       #endif
-      
+      #ifdef SYSTEM_LORAMESHER_DEBUG
+        Serial.print("LoRaMesher node address: 0x"); Serial.println(mesher->GetNodeAddress());
+      #endif
+
       #ifdef SYSTEM_LORAMESHER_DEBUG
         auto mesh_protocol = mesher->GetLoRaMeshProtocol();
         if (mesh_protocol) {
@@ -187,19 +201,9 @@ bool System_LoraMesher::initialize() {
                     Serial.print(F("Route removed for destination: ")); Serial.println(destination);
                 }
             });
-      }
+        }
       #endif // SYSTEM_LORAMESHER_DEBUG
-      // TODO-189 Would be better with the `mesher` running in the other task putting messages in a queue, not the app
-      /*
-      // Create the application task 
-      os::TaskHandle_t app_task_handle = nullptr;
-      os::RTOS::instance().CreateTask(appTask, "Receive_LoRa_Message",
-                                      4096,  // Stack size
-                                      mesher.get(),
-                                      2,  // Priority
-                                      &app_task_handle);
-      */
-
+      
     } catch (const std::exception& e) {
         LOG_ERROR("Exception: %s", e.what());
         return 1;
@@ -209,23 +213,12 @@ bool System_LoraMesher::initialize() {
 
 System_LoraMesher::System_LoraMesher()
 : System_Base("loramesher", "LoraMesher")
-#ifdef TODO_189_DONT_THINK_NEED_THIS
-    radio(LoraMesher::getInstance()),
-    config(LoraMesher::LoraMesherConfig())
-#endif //TODO_189_DONT_THINK_NEED_THIS
 {
-#ifdef TODO_189_DONT_THINK_NEED_THIS
-    config.loraCs = LORA_CS;
-    config.loraRst = LORA_RST;
-    config.loraIrq = LORA_IRQ;
-    config.loraIo1 = LORA_IO1; 
-    config.module = SYSTEM_LORAMESHER_MODULE;
-    config.freq = SYSTEM_LORAMESHER_BAND;
+  // TODO-189
     // Loramesher will initialize SPI on LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS (if config.spi is unset)
     // if need to override then best to set those values, else can override here on a per-board basis 
     //SPI.begin(SCK, MISO, MOSI, LORA_CS); //TODO-176 check and recheck if/why needed -
     //config.spi = &SPI;
-#endif
 }
 
 
@@ -235,7 +228,7 @@ void System_LoraMesher::setup() {
   Serial.println(F("Loramesher setup"));
   // Nothing to read from disk so not calling readConfigFromFS 
 
-  // Set in LoRaMesher/src/config/system_config.hpp so not needed here TODO-189 Jamie allow override in platformio.ini 
+  // A debug level is set in LoRaMesher/src/config/system_config.hpp so maybe not needed
   //esp_log_level_set("*", ESP_LOG_VERBOSE);
   //esp_log_level_set(LM_TAG, ESP_LOG_VERBOSE); // To get lots of logging from LoraMesher
 
@@ -243,17 +236,6 @@ void System_LoraMesher::setup() {
     Serial.println("LoRaMesher initialize failed - now what !");
   }
 
-#ifdef TODO_189_DONT_THINK_NEED_THIS
-  // Error codes are buried deep  .pio/libdeps/*/RadioLib/src/TypeDef.h
-  // -2 is chip not found 
-  // -12 is invalid frequency usually means band and module are not matched.
-  // -16 is RADIOLIB_ERR_SPI_WRITE_FAILED suggesting wrong pins for SPI
-  radio.begin(config);        //Init the loramesher with a configuration
-  createReceiveMessages();    //Create the receive task and add it to the LoRaMesher
-  radio.setReceiveAppDataTaskHandle(receiveLoRaMessage_Handle); //Set the task handle to the LoRaMesher
-  //gpio_install_isr_service(ESP_INTR_FLAG_IRAM); // known error message - Jaimi says doesn't matter
-  radio.start();     //Start LoRaMesher
-#endif
   if (!findGatewayNode()) {
       Serial.println(F("Setup did not find a gateway node - expect after receive routing"));
   }
@@ -300,10 +282,20 @@ void System_LoraMesher::periodically() {
     Serial.print(F(", Manager=0x")); Serial.print(status.network_manager, HEX);
     Serial.print(F(", Slot=")); Serial.print(status.current_slot);
     Serial.println(F(", Nodes=")); Serial.println(status.connected_nodes);
+    Serial.print(F("Gateway =")); Serial.println(gatewayNodeAddress);
   }
 
 #endif // SYSTEM_LORAMESHER_DEBUG
 // ========= INCOMING - UP OR DOWNSTEAM =========
+
+void System_LoraMesher::createReceiveMessages() {
+  loramesher::os::RTOS::instance().CreateTask(
+    ReceiveTask, "App_LoRa_Recv",
+    4096,  // Stack size in bytes
+    nullptr,
+    2,  // Priority — adjust relative to your other tasks
+    &receive_task_handle);
+}
 
 
 // Note that received Packet could be Downstream (from MQTT broker via gateway) 
@@ -358,38 +350,33 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
       frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
     }
   }
-  //Delete the packet when used. It is very important to call this function to release the memory of the packet.
-  //radio.deletePacket(appPacket); //TODO-189 Jaimie do we still do this?
+  // Note packet is deleted by the callback that calls this
 }
-
 
 // ========= OUTGOING - UP OR DOWNSTEAM =========
 
-
-
-// addGatewayRole is called on receiver during setup, once route tables propogate this should start seeing hte gateway
+// addGatewayRole is called on receiver during setup, once route tables propogate this should start seeing the gateway
 bool System_LoraMesher::findGatewayNode() {
-  return false; 
-  #ifdef TODO_189 // need this functionality - not currently present
-    RouteNode* rn = radio.getClosestGateway(); //TODO-189 equivalent?
-    if (rn) {
-      if (gatewayNodeAddress == BROADCAST_ADDR) {
-        gatewayNodeAddress = rn->networkNode.address;
-        Serial.print(F("LoRaMesher - newly found gateway node ")); Serial.println(gatewayNodeAddress);
-      }
+  std::optional<loramesher::RouteEntry> gateway = mesher->GetClosestGateway();
+  if (gateway.has_value()) {
+    auto newGatewayNodeAddress = gateway.value().destination;
+      #ifdef SYSTEM_LORAMESHER_DEBUG
+        Serial.print(F("LoRaMesher - setting gateway node to")); Serial.println(newGatewayNodeAddress);
+      #endif
+      gatewayNodeAddress = newGatewayNodeAddress;
       return true;
-    } else {
-      if (gatewayNodeAddress != BROADCAST_ADDR) {
-        Serial.print(F("LoRaMesher - lost gateway node"));
-        gatewayNodeAddress = BROADCAST_ADDR;
-      }
-      return false;
-    }
-  #endif
+  } else { // Not found so remove if still think we have one
+    #ifdef SYSTEM_LORAMESHER_DEBUG
+      Serial.print(F("LoRaMesher - lost gateway node"));
+    #endif
+    gatewayNodeAddress = BROADCAST_ADDR;
+    return false; 
+  }
 }
 
 // Do we have a LoRaMNesher connection to a gateway upstream ? 
 // This is used by System_Messages to decide whether to use LoRaMesher (or MQTT)
+// Side effect of setting/clearing the gateway
 bool System_LoraMesher::connected() {
   return findGatewayNode();
 }
@@ -434,32 +421,29 @@ bool System_LoraMesher::publish(const String &topic, const String &payload, bool
   }
 }
 
-//TODO-189 work this one out
-
+bool System_LoraMesher::isGateway() {
+  return (mesher->GetNodeCapabilities() & loramesher::NodeCapabilities::GATEWAY);
+}
 // Check if we can act as an upstream gateway and if changes update routing tables
 // TODO-23 consider interaction of this with sleep modes, when come back from sleep won't have 
 // TODO-23 MQTT yet, but also unclear if want a gateway role retained during sleep
 LoraMesherMode System_LoraMesher::checkRole() {
   if (frugal_iot.mqtt->connected()) {
-    #ifdef TODO_189 // Need this functionality
-      if (!radio.isGatewayRole()) { //TODO-189 find equivalent
-        #ifdef SYSTEM_LORAMESHER_DEBUG 
-          Serial.println(F("Adding gateway role")); 
-        #endif
-        radio.addGatewayRole();
-      }
-    #endif
+    if (!isGateway()) {
+      #ifdef SYSTEM_LORAMESHER_DEBUG 
+        Serial.println(F("Adding gateway role")); 
+      #endif
+      mesher->SetNodeCapabilities(loramesher::NodeCapabilities::GATEWAY);
+    }
     return LORAMESHER_GATEWAY;
   } else { // Not connected to MQTT
-    #ifdef TODO_189 // Need this functionality
-      // Wait a little while before removing gateway role
-      if (radio.isGatewayRole() && (millis() > (lostMQTTat + SYSTEM_LORAMESHER_MQTTWAIT))) {
-        #ifdef SYSTEM_LORAMESHER_DEBUG
-          Serial.println(F("LoRaMesher removing gateway role as lost MQTT"));
-        #endif
-        radio.removeGatewayRole();
-      } 
-    #endif
+    // Wait a little while before removing gateway role
+    if (isGateway() && (millis() > (lostMQTTat + SYSTEM_LORAMESHER_MQTTWAIT))) {
+      #ifdef SYSTEM_LORAMESHER_DEBUG
+        Serial.println(F("LoRaMesher removing gateway role as lost MQTT"));
+      #endif
+      mesher->SetNodeCapabilities(loramesher::NodeCapabilities::NONE);
+    } 
     return connected() ? LORAMESHER_NODE : LORAMESHER_UNCONNECTED;
   }
 }

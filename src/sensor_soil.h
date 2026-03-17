@@ -11,6 +11,9 @@ class Sensor_Soil : public Sensor_Analog {
   protected:
     bool validate(int v) override;
     void captiveLines(AsyncResponseStream* response) override;
+    void powerUp(); // Note superclass is powerUp(pin3v3, pin0v)
+    void powerDown();  // Note superclass is powerDown(pin3v3, pin0v)
+
 };
 
 #endif // SENSOR_SOIL_H

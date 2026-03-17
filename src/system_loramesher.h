@@ -61,10 +61,13 @@ class System_LoraMesher : public System_Base {
     // == DOWNSTREAM 
 
   protected:
+    unsigned long lostMQTTat;
     bool initialize(); // Try and create the LoraMesher instance
     void setup() override;
     void prepareForLightSleep();
     void periodically() override;
+    bool isGateway(); 
+    void createReceiveMessages();
     // == INCOMING (up or downstream)
     uint16_t rcvdPacketCounter = 0;
     std::forward_list<MeshSubscription> meshSubscriptions;
@@ -79,8 +82,7 @@ class System_LoraMesher : public System_Base {
     void dispatchPath(const String &topicPath, const String &payload) override;
  
     #ifdef TODO_189_NOT_NEEDED
-    LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();
-    unsigned long lostMQTTat;
+      LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();
     #endif
 };
 
