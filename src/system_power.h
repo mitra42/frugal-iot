@@ -12,7 +12,7 @@
 // If need an extra bit, can assume WakeOnTimer = LightSleep
 #define PauseWiFi 0x01
 #define PauseMQTT 0x02
-#define PauseUART 0x04
+#define PauseUART 0x04 // Not currently used
 #define DeepSleep 0x08
 #define DelaySleep 0x10
 #define LightSleep 0x20
@@ -22,9 +22,10 @@
 enum System_Power_Type { 
   Power_Loop = 0,     // Standard loop, no waiting
   Power_Light = LightSleep | PauseWiFi | PauseMQTT | WakeOnTimer,        // Does a Light sleep
+  Power_Deep = DeepSleep | WakeOnTimer,         // Does a deep sleep - resulting in a restart
+  // The following modes are experimental - supported in code but not working well for any case I am aware of
   Power_LightWiFi = DelaySleep | PauseMQTT,     // Like Light, but wakes on WiFi, which menas it SHOULD keep WiFi alive. (poor power savings currently - possibly because of Uart=Serial)
   Power_Modem = LightSleep | WakeOnTimer | WakeOnWiFi,       // ESP32 Modem sleep mode - need to check what this means
-  Power_Deep = DeepSleep | WakeOnTimer,         // Does a deep sleep - resulting in a restart
   Power_Panic = DeepSleep
 };
 

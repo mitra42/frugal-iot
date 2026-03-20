@@ -104,6 +104,10 @@ void System_Base::powerUp(uint8_t pin3v3, uint8_t pin0v) {
     digitalWrite(pin3v3, HIGH);
   }
 }
+void System_Base::powerUp() {
+  // By default do nothing
+}
+
 void System_Base::powerDown(uint8_t pin3v3, uint8_t pin0v) {
   // To power down, go to high impedance input
   if (pin3v3 != 0xFF) {
@@ -113,6 +117,10 @@ void System_Base::powerDown(uint8_t pin3v3, uint8_t pin0v) {
     pinMode(pin0v, INPUT);
   }
 }
+void System_Base::powerDown() {
+  // By default do nothing
+}
+
 
 // ========== IO - base class for IN and OUT ===== 
 

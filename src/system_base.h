@@ -30,7 +30,9 @@ class System_Base {
     virtual void captiveLines(AsyncResponseStream* response) { };
     virtual void infrequently();
     void powerUp(uint8_t pin3v3, uint8_t pin0v);
+    virtual void powerUp();
     void powerDown(uint8_t pin3v3, uint8_t pin0v);
+    virtual void powerDown();
   protected: 
     String name; // Name of actuator, sensor or control
     String leaf2path(const char* leaf);  // eg. sht/temperature or sht/temperature/max -> dev/lotus/esp123/sht/temperature ...

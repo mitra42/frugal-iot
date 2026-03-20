@@ -11,6 +11,8 @@ class Sensor_Soil : public Sensor_Analog {
   protected:
     bool validate(int v) override;
     void captiveLines(AsyncResponseStream* response) override;
+    void powerUp() override;
+    void powerDown() override;
 };
 
 #endif // SENSOR_SOIL_H
