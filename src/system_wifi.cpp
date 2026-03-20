@@ -130,7 +130,9 @@ void System_WiFi::addWiFi(String ssid, String password) {
 }
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
+// see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/power_management.html for how to keep WiFi alive during sleep
 bool System_WiFi::pause() {
+  // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
    return (esp_wifi_stop() == ESP_OK); // Suggested to reduce dropping WiFi connection
 }
 #endif

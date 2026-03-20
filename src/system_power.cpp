@@ -16,6 +16,15 @@
  * This is to avoid the "brown-out" condition (bug) on some chips (especially ESP-C3) that below some point will wedge and can only 
  * be brought back by power going to zero and back again.  
  * 
+ * Normal control flow is .... 
+ * System_Frugal::loop calls maybeSleep which if its the right time calls prepare sleep recover 
+ * Except ... Deep sleep starts from scratch, like a reboot - and calls recover from setup
+ * 
+ * For LoRaMesher ....
+ *   maybeSleep should not sleep 
+ *   ping from LoraMesher should .... prepare,light_sleep,recover
+ * OR ... maybeSleep should be modified, so never if mode is Power_Lora, it never sleeps when called from loop and only when called from OnSleep
+ * 
  * Required: None
  *
  * https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html

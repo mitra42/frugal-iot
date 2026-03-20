@@ -55,6 +55,7 @@ Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, cons
 void Sensor_Analog::setup() {
   Sensor_Float::setup(); // Will readConfigFromFS - do before setting up pin
   // initialize the analog pin as an input.
+  powerUp(); // By default does nothing but typically overridden if pins defined //TODO-202 add powerDown to prepare & powerUp to recover
   pinMode(pin, INPUT); // I don't think this is needed ? - note Sensor_Battery also does this because reads before setup
   #ifdef SENSOR_ANALOG_REFERENCE
     analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h
