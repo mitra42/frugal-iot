@@ -34,8 +34,8 @@ void setup() {
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
-  // Add local wifis here, or see instructions in the wiki for adding via the /data
-  frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
+  // Add local wifis here, or see instructions in the wiki for adding via the /data or captive portal
+  //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
   
   #ifdef BUTTON_BUILTIN
     frugal_iot.buttons->add(new Sensor_Button("button", "Button", BUTTON_BUILTIN, "red"));
@@ -76,6 +76,8 @@ void loop() {
     // But note, you do not have to put sensor loops etc here - the loop and periodic functions in
     // each sensor and actuator and control are called from frugal_iot.loop()
     // This is also a good place to put things that check how long since last running
+    frugal_iot.loramesher->printNetworkStatus();
+    frugal_iot.loramesher->printRouteTable();
   }
   frugal_iot.loop(); // Do not delete this call to frugal_iot.loop
 }

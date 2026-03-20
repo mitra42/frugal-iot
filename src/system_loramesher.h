@@ -34,7 +34,7 @@ enum LoraMesherMode {
 };
 
 // TODO-189 Jamie this used to be defined but isnt 
-#define BROADCAST_ADDR -1
+#define BROADCAST_ADDR 0xFFFF
 
 class System_LoraMesher : public System_Base {
   public:
