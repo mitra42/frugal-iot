@@ -9,24 +9,24 @@
 
 // TO-ADD-POWER
 
-// If need an extra bit, can assume WakeOnTimer = LightSleep
-#define PauseWiFi 0x01
-#define PauseMQTT 0x02
-#define PauseUART 0x04 // Not currently used
-#define DeepSleep 0x08
-#define DelaySleep 0x10
-#define LightSleep 0x20
-#define WakeOnTimer 0x40
-#define WakeOnWiFi 0x80
+// If need an extra bit, can assume WakeOnTimerBit = LightSleepBit
+#define PauseWiFiBit 0x01
+#define PauseMQTTBit 0x02
+#define PauseUARTBit 0x04 // Not currently used
+#define DeepSleepBit 0x08
+#define DelaySleepBit 0x10
+#define LightSleepBit 0x20
+#define WakeOnTimerBit 0x40
+#define WakeOnWiFiBit 0x80
 
 enum System_Power_Type { 
   Power_Loop = 0,     // Standard loop, no waiting
-  Power_Light = LightSleep | PauseWiFi | PauseMQTT | WakeOnTimer,        // Does a Light sleep
-  Power_Deep = DeepSleep | WakeOnTimer,         // Does a deep sleep - resulting in a restart
+  Power_Light = LightSleepBit | PauseWiFiBit | PauseMQTTBit | WakeOnTimerBit,        // Does a Light sleep
+  Power_Deep = DeepSleepBit | WakeOnTimerBit,         // Does a deep sleep - resulting in a restart
   // The following modes are experimental - supported in code but not working well for any case I am aware of
-  Power_LightWiFi = DelaySleep | PauseMQTT,     // Like Light, but wakes on WiFi, which menas it SHOULD keep WiFi alive. (poor power savings currently - possibly because of Uart=Serial)
-  Power_Modem = LightSleep | WakeOnTimer | WakeOnWiFi,       // ESP32 Modem sleep mode - need to check what this means
-  Power_Panic = DeepSleep
+  Power_LightWiFi = DelaySleepBit | PauseMQTTBit,     // Like Light, but wakes on WiFi, which menas it SHOULD keep WiFi alive. (poor power savings currently - possibly because of Uart=Serial)
+  Power_Modem = LightSleepBit | WakeOnTimerBit | WakeOnWiFiBit,       // ESP32 Modem sleep mode - need to check what this means
+  Power_Panic = DeepSleepBit
 };
 
 class System_Power : public System_Base {

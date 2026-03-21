@@ -205,7 +205,7 @@ void System_Power::setup() {
   if (wake_count) {
     // Only time wake_count is non-zero is if recovering from a deep sleep - its false at startup and its false when recovering from other modes but setup() isn't run in those cases.
     recover(); 
-  } else if (mode & DelaySleep) { // We'll use conditions to auto enter sleep (doesnt work yet)
+  } else if (mode & DelaySleepBit) { // We'll use conditions to auto enter sleep (doesnt work yet)
     LightWifi_setup();
   }
 #endif
@@ -261,14 +261,14 @@ void System_Power::prepare() {
       digitalWrite(POWER_CTRL, LOW);
     #endif
     #ifdef ESP32 // ESP8266 does not define UART_NUM_0 may be different way to shut down if relevant
-      if (mode & PauseUART) {
+      if (mode & PauseUARTBit) {
         // Need to turn anything off that could keep it awake
         // So far that isn't working - on some boards and modes (sorry, cant remember which at the moment!), some background task I can't find is stopping it sleeping
         uart_driver_delete(UART_NUM_0); // Disable UART0 (Serial)
       }
     #endif
     #ifdef ESP32 // Not built yet to pause WiFi on ESP8266
-      if (mode & PauseWiFi) { // Note thst currently Power_Deep does not bother to pause wifi
+      if (mode & PauseWiFiBit) { // Note thst currently Power_Deep does not bother to pause wifi
         frugal_iot.wifi->pause();  // Disconnect WiFi gracefully - will lose it during sleep anyway
         // TODO-23 note that mqtt and loramesher both define prepareForLightSleep but it isn't called
       }
@@ -294,14 +294,14 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
   };
   if (forceMode) { // != Power_Loop
     #ifdef ESP32
-      if (forceMode & LightSleep) {
-        if (forceMode & WakeOnTimer) {
+      if (forceMode & LightSleepBit) {
+        if (forceMode & WakeOnTimerBit) {
           #ifdef SYSTEM_POWER_DEBUG
             Serial.print(F("Sleeping for ")); Serial.println(sleep_ms());
           #endif
           esp_sleep_enable_timer_wakeup(sleep_millisecs * 1000UL); // Wake on clock
         }
-        if (forceMode & WakeOnWiFi) { // I don't think this is working yet
+        if (forceMode & WakeOnWiFiBit) { // I don't think this is working yet
           esp_sleep_enable_wifi_wakeup();
         }
       }
@@ -309,13 +309,13 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
     #ifdef ESP32
       // TODO I don't think this works yet 
       // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html#_CPPv421esp_light_sleep_startv
-      if (forceMode & DelaySleep) {
+      if (forceMode & DelaySleepBit) {
         delay(sleep_millisecs); // Light sleep will be automatic
       }
     #endif
     #ifdef ESP32
-      if (forceMode & DeepSleep) {
-        if (forceMode & WakeOnTimer) {
+      if (forceMode & DeepSleepBit) {
+        if (forceMode & WakeOnTimerBit) {
           millis_offset = millis() + millis_offset + sleep_millisecs; // Since millis() will reset to 0 - stored in RTC
           esp_deep_sleep(sleep_millisecs * 1000UL);
           Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
@@ -337,7 +337,7 @@ void System_Power::recover() {
   nextSleepTime = (millis() + wake_ms); // not sleepSafeMillis() as by definition dont sleep before this
 
   if (mode) {
-    if (mode & PauseUART) { // TODO not sure this works yet
+    if (mode & PauseUARTBit) { // TODO not sure this works yet
       frugal_iot.startSerial(); // Note turned UART off in prepare or sleep
     }
     #ifdef LILYGOHIGROW
@@ -354,13 +354,13 @@ void System_Power::recover() {
     #ifdef ESP32
       // Restore comms: Power_Loop & Power_Modem do not need it; and Power_Deep does it in setup
       bool WiFiOK = true;
-      if (mode & PauseWiFi) {
+      if (mode & PauseWiFiBit) {
         WiFiOK = frugal_iot.wifi->recover();
       }
-      if (WiFiOK & PauseMQTT) { // Note MQTT not being explicitly paused
+      if (WiFiOK & PauseMQTTBit) { // Note MQTT not being explicitly paused
         frugal_iot.mqtt->recoverFromLightSleep(); // New or old session
       }
-      if (mode & DeepSleep) {
+      if (mode & DeepSleepBit) {
         // Memory will have been wiped by the sleep, what can we assume?
         // Note if required - can store stuff in RTC memory or on disk, but careful about overusing (writes) flash
         // Note this is called from setup() after deep sleep, which will also call other sensors & actuators to repeat setup()
