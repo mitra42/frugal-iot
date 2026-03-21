@@ -24,10 +24,10 @@
  * 
  * Open issues with LoRaMesher 1.0.0
  * BROADCAST_ADDR used to be defined, what is the equivalent now? - https://github.com/LoRaMesher/LoRaMesher/issues/90
- * Unclear about comment from example 
- *   // Use GetTimeUntilNextDataSlot to avoid sending before the TX window
- *   uint32_t wait_ms = mesher->GetTimeUntilNextDataSlot();
  * Need to integrate signals from LoRaMesher about when to sleep 
+ * 
+ * Open issues with this code
+ * I think that a gateway node coming online is not going to see the subscription 
  */
 
 #include "_settings.h"
@@ -47,12 +47,20 @@
 // TODO-189 Jamie: This is a section, that IMHO should be inside LoraMesher, so it works with all the different boards with 
 // inconsistent pins_arduino.h
 
+// Define maximum size of a message packet - this is topic + message + 2, (wired routes are usually the longest messages)
+#ifndef SYSTEM_LORAMESHER_MAXMESSAGESIZE
+  #define SYSTEM_LORAMESHER_MAXMESSAGESIZE 128
+#endif
+#ifndef LORAMESHER_LOG_LEVEL
+  #define LORAMESHER_LOG_LEVEL 2 // Warning - set to 1 for Info and 0 for debug
+#endif
+
 #if defined(ARDUINO_TTGO_LoRa32_v21new) // V2 and V1 dont define LORA_D1 so unsure what they need
   // Defines LORA_RST LORA_IRQ LORA_SCK LORA_MISO LORA_MOSI LORA_CS in pins_arduino.h
   #define LORA_IO1 LORA_D1
   #define LORA_RADIO_TYPE loramesher::RadioType::kSx1276
 #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
-  // Defines LORA_RST LORA_IRQ LORA_SCK LORA_MISO LORA_MOSI LORA_CS in pins_arduino.h
+  //Defines LORA_RST LORA_IRQ LORA_SCK LORA_MISO LORA_MOSI LORA_CS in pins_arduino.h
   #define LORA_IO1 LORA_DIO1
   #define LORA_RADIO_TYPE loramesher::RadioType::kSx1278
 #elif defined(ARDUINO_heltec_wifi_lora_32_V3) // Note V1 and V2 used SX1276 or SX1278 chips depending on region
@@ -62,10 +70,8 @@
   #define LORA_RADIO_TYPE loramesher::RadioType::kSx1262
   #define LORA_RST RST_LoRa
   #define LORA_CS SS            // GPIO8
-  #define LORA_IRQ 13U // DIO0         // Bizarre swap with Busy - not sure if documentation error or what but heltecs have notoriously faulty docs
-  #define LORA_IO1 14U // BUSY_LoRa 
-  //#define LORA_IRQ DIO0         // Bizarre swap with Busy - not sure if documentation error or what but heltecs have notoriously faulty docs
-  //#define LORA_IO1 BUSY_LoRa 
+  #define LORA_IRQ DIO0         // Bizarre swap with Busy - not sure if documentation error or what but heltecs have notoriously faulty docs
+  #define LORA_IO1 BUSY_LoRa 
   
 #elif !defined(LORA_CS) || !defined(LORA_IRQ) !! !defined(LORA_RADIO_TYPE) || !defined(LORA_IO1) || !defined(LORA_RST) || !defined(LORA_MOSI) || !defined(LORA_MISO)
   #error LORA parameters not defined, but defined SYSTEM_LORAMESHER_WANT
@@ -201,11 +207,11 @@ bool System_LoraMesher::initialize() {
             [](bool route_updated, loramesher::AddressType destination,
               loramesher::AddressType next_hop, uint8_t hop_count) {
                 if (route_updated) {
-                  Serial.print(F("Route updated - Destination: ")); Serial.print(destination); 
-                  Serial.print(F(", Next hop: ")); Serial.print(next_hop); 
+                  Serial.print(F("Route updated - Destination: ")); Serial.print(destination, HEX); 
+                  Serial.print(F(", Next hop: ")); Serial.print(next_hop, HEX); 
                   Serial.print(F(", Hops: ")); Serial.println(hop_count);
                 } else {
-                    Serial.print(F("Route removed for destination: ")); Serial.println(destination);
+                    Serial.print(F("Route removed for destination: ")); Serial.println(destination, HEX);
                 }
             });
         }
@@ -288,8 +294,8 @@ void System_LoraMesher::periodically() {
     Serial.print(F("Network status: State=")); Serial.print(static_cast<int>(status.current_state));
     Serial.print(F(", Manager=0x")); Serial.print(status.network_manager, HEX);
     Serial.print(F(", Slot=")); Serial.print(status.current_slot);
-    Serial.println(F(", Nodes=")); Serial.println(status.connected_nodes);
-    Serial.print(F("Gateway =")); Serial.println(gatewayNodeAddress);
+    Serial.print(F(", Nodes=")); Serial.println(status.connected_nodes);
+    Serial.print(F("Gateway=")); Serial.println(gatewayNodeAddress, HEX);
   }
 
 #endif // SYSTEM_LORAMESHER_DEBUG
@@ -395,7 +401,7 @@ void System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
   // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
   char qos_char = '0' + qos; // 0 1 2 as for MQTT incoming=12
   char retain_char = '0' + retain;
-  const uint8_t* stringymessage = lprintf(100, "%c%c%s:%s", // Creates new buffer, exolicitly deleted below
+  const uint8_t* stringymessage = lprintf(SYSTEM_LORAMESHER_MAXMESSAGESIZE, "%c%c%s:%s", // Creates new buffer, exolicitly deleted below
     qos_char, retain_char,
     topic.c_str(), payload.c_str());
   size_t msglen = strlen(reinterpret_cast<const char*>(stringymessage))+1; // +1 to include terminating \0
