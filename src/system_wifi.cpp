@@ -27,8 +27,24 @@ System_WiFi::System_WiFi()
 : System_Base("wifi", "WiFi")
   {}
 
+const __FlashStringHelper* wifiStatusNames[] = {
+  F("Starting"),
+  F("Disconnected"),
+  F("Reconnecting"),
+  F("Connected"),
+  F("Needscan"),
+  F("Scanning"),
+  F("Scanned"),
+  F("Connecting"),
+  F("Stabilizing")
+};
+
 void System_WiFi::setStatus(WiFiStatusType newstatus) {
   if (status != newstatus) {
+    #ifdef SYSTEM_WIFI_DEBUG
+      Serial.print(F("Wifi.status=")); Serial.print(WiFi.status());
+      Serial.print(F(" WIFI ")); Serial.println(wifiStatusNames[newstatus]);
+    #endif
     status = newstatus;
     statusSince = millis();
   }
@@ -177,10 +193,14 @@ void System_WiFi::stateMachine() {
       setStatus(WIFI_NEEDSCAN);
       break;
     case WIFI_DISCONNECTED: //1
-      if (WiFi.status() != WL_DISCONNECTED) {
+      if ( (WiFi.status() != WL_DISCONNECTED)
+        && (WiFi.status() != WL_CONNECTION_LOST)
+        && (WiFi.status() != WL_IDLE_STATUS)
+        && (WiFi.status() != WL_CONNECT_FAILED)
+      ) {
         #ifdef SYSTEM_WIFI_DEBUG
           Serial.print(F("XXX Should be WL_DISCONNECTED or WL_STOPPED but")); Serial.println(WiFi.status());
-          // Unsure what to do here - 
+          // Unsure what to do here - but try and reconnect anyway
         #endif
       }
       setStatus(WIFI_RECONNECTING);
@@ -200,7 +220,7 @@ void System_WiFi::stateMachine() {
     case WIFI_NEEDSCAN: //4
         if (rescan()) { // async
           setStatus(WIFI_SCANNING);
-          Serial.print(F("WiFi rescanning ")); Serial.println(WiFi.status());
+          Serial.print(F("WiFi rescanning ")); /* Serial.println(WiFi.status()); */
         } else {
           Serial.println(F("WiFi Scan failed to start"));
           break; // stay in WIFI_NEEDSCAN
@@ -260,11 +280,9 @@ void System_WiFi::stateMachine() {
       }
       // drop thru
     case WIFI_CONNECTED: //3
-      if ((WiFi.status() == WL_DISCONNECTED)
-          || (WiFi.status() == WL_NO_SSID_AVAIL)) { // No idea why this happens, but seen on poor connections
+      if (WiFi.status() != WL_CONNECTED) {
         setStatus(WIFI_DISCONNECTED);
-      } else if (WiFi.status() != WL_CONNECTED) {
-        Serial.print(F("WiFi: unhandled state combination CONNECTED but WiFi.status=")); Serial.println(WiFi.status());
+        Serial.print(F("WiFi connection lost, WiFi.status=")); Serial.println(WiFi.status());
       }
       break;
     default:

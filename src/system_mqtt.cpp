@@ -97,7 +97,7 @@ bool System_MQTT::connect() {
     // Theoretically "skip=true" should be good, dont close if connected, but leads to error code=6
     if (!client.connect(frugal_iot.nodeid.c_str(), username, password)) {
       /* Still not connected */
-      Serial.print(F(" Fail "));
+      Serial.print(F(" MQTT Connect Fail "));
       Serial.print(client.lastError()); // -3 is LWMQTT_NETWORK_FAILED_CONNECT
       Serial.print(F(" ")); // 6 is LWMQTT_UNKNOWN_RETURN_CODE 
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116
