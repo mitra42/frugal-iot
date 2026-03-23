@@ -65,19 +65,20 @@
   #define LORA_RADIO_TYPE loramesher::RadioType::kSx1278
 #elif defined(ARDUINO_heltec_wifi_lora_32_V3) // Note V1 and V2 used SX1276 or SX1278 chips depending on region
   // Defines: SCK MISO MOSI SS, which it uses for the SPI to the LoRa which LoRamesher picks up correctly since LORA_SCK etc not defined
- //RECOMMENDATION FROM PERPLEXITY: NSS 8, SCK 9, MOSI 10, MISO 11, RST 12, BUSY 13, and DIO1 14.
-  // LM queued receive example:  Heltec WiFi LoRa:  CS=18, RST=14, IRQ=26, IO1=35
+ //RECOMMENDATION FROM PERPLEXITY: NSS 8, SCK 9, MOSI 10, MISO 11, RST 12, BUSY 13, and DIO1 14 was wrong
+  // LM queued receive example:  Heltec WiFi LoRa:  CS=18, RST=14, IRQ=26, IO1=35 is for ARDUINO_heltec_wifi_lora_32_V2 but untested
   #define LORA_RADIO_TYPE loramesher::RadioType::kSx1262
   #define LORA_RST RST_LoRa
   #define LORA_CS SS            // GPIO8
   #define LORA_IRQ DIO0         // Bizarre swap with Busy - not sure if documentation error or what but heltecs have notoriously faulty docs
   #define LORA_IO1 BUSY_LoRa 
-  
+  #define LORA_TCXO_VOLTAGE 1.8F  
 #elif !defined(LORA_CS) || !defined(LORA_IRQ) !! !defined(LORA_RADIO_TYPE) || !defined(LORA_IO1) || !defined(LORA_RST) || !defined(LORA_MOSI) || !defined(LORA_MISO)
   #error LORA parameters not defined, but defined SYSTEM_LORAMESHER_WANT
 #endif
 
 // This set of variables are specific to the Frugal-IoT mesh network, all devices should have the same.
+// TODO-189 wrap each of these in a #ifndef.
 
 #define LORA_ADDRESS 0  // Set 0 for auto-address
 
@@ -154,7 +155,10 @@ bool System_LoraMesher::initialize() {
     loramesher::RadioConfig radioConfig(LORA_RADIO_TYPE, LORA_FREQUENCY,
                             LORA_SPREADING_FACTOR, LORA_BANDWITH,
                             LORA_CODING_RATE, LORA_POWER, LORA_SYNC_WORD,
-                            LORA_CRC, LORA_PREAMBLE_LENGTH);
+                            LORA_CRC, LORA_PREAMBLE_LENGTH);                        
+    #ifdef LORA_TCXO_VOLTAGE
+      radioConfig.setTcxoVoltage(LORA_TCXO_VOLTAGE)
+    #endif
     loramesher::PinConfig pinConfig(
                         LORA_CS,   // NSS pin
                         LORA_RST,  // Reset pin
