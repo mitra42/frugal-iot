@@ -58,9 +58,11 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
     //  name = String(payload); // Note weirdness, it really needs to copy
     //  dispatched = true;
     } else if (topicLeaf == "description") {
-      description = payload;
+      if ((payload) != description) {
+        description = payload;
+        changed = true;
+      }
       dispatched = true;
-      changed = true;
     }
     if (changed) {
       writeConfigToFSandEcho(topicLeaf, payload); // Save for next time (echo though not logged, so saved on MQTT server)

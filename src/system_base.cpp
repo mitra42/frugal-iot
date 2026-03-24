@@ -34,8 +34,10 @@ void System_Base::discover() {} ; // Default to do nothing
 void System_Base::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
     if (topicTwig == "name") {
-      name = payload;
-      writeConfigToFSandEcho(topicTwig, payload);
+      if (name != payload) {
+        name = payload;
+        writeConfigToFSandEcho(topicTwig, payload);
+      }
     } else {
       // Nothing wrong with no match - it might have been handled in subclass
     }
