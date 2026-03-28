@@ -33,9 +33,6 @@ enum LoraMesherMode {
     LORAMESHER_UNCONNECTED,
 };
 
-// TODO-189 Jamie this used to be defined but isnt 
-#define BROADCAST_ADDR 0xFFFF
-
 class System_LoraMesher : public System_Base {
   public:
     System_LoraMesher();
@@ -76,7 +73,7 @@ class System_LoraMesher : public System_Base {
     bool findGatewayNode();
     void buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos);
     // == UPSTREAM 
-    uint16_t gatewayNodeAddress = BROADCAST_ADDR;
+    uint16_t gatewayNodeAddress = loramesher::kBroadcastAddress;
     // == DOWNSTREAM 
     void relayDownstream(uint16_t destn, const String &topic, const String &payload);
     void dispatchPath(const String &topicPath, const String &payload) override;

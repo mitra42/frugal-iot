@@ -23,11 +23,11 @@
  *     TODO-189 this has changed, check after decide which parameters are required/optional to be in platformio.ini
  * 
  * Open issues with LoRaMesher 1.0.0
- * BROADCAST_ADDR used to be defined, what is the equivalent now? - https://github.com/LoRaMesher/LoRaMesher/issues/90
- * Need to integrate signals from LoRaMesher about when to sleep 
+ * Need to integrate signals from LoRaMesher about when to sleep
+ * Maybe ... should be adding gateway role earlier in process - seems to be after sending backlog of queue to MQTT
  * 
  * Open issues with this code
- * I think that a gateway node coming online is not going to see the subscription 
+ * I think that a gateway node coming power cycling after a node is not going to see the subscription while the node thinks it sent it
  */
 
 #include "_settings.h"
@@ -54,6 +54,9 @@
 #ifndef LORAMESHER_LOG_LEVEL
   #define LORAMESHER_LOG_LEVEL 2 // Warning - set to 1 for Info and 0 for debug
 #endif
+// Define these two settings to speed things up when testing, undo later.
+#define LORA_DUTY_CYCLE 1.0f
+#define LORA_MIN_SLEEP_FRACTION 0
 
 #if defined(ARDUINO_TTGO_LoRa32_v21new) // V2 and V1 dont define LORA_D1 so unsure what they need
   // Defines LORA_RST LORA_IRQ LORA_SCK LORA_MISO LORA_MOSI LORA_CS in pins_arduino.h
@@ -157,7 +160,7 @@ bool System_LoraMesher::initialize() {
                             LORA_CODING_RATE, LORA_POWER, LORA_SYNC_WORD,
                             LORA_CRC, LORA_PREAMBLE_LENGTH);                        
     #ifdef LORA_TCXO_VOLTAGE
-      radioConfig.setTcxoVoltage(LORA_TCXO_VOLTAGE)
+      radioConfig.setTcxoVoltage(LORA_TCXO_VOLTAGE);
     #endif
     loramesher::PinConfig pinConfig(
                         LORA_CS,   // NSS pin
@@ -167,7 +170,13 @@ bool System_LoraMesher::initialize() {
                         SCK,MISO,MOSI // Because I dont trust the convolutions in the hal layer of LoRaMesher that I think are going to get the wrong values.
     );
     loramesher::LoRaMeshProtocolConfig mesh_config;
-
+    #ifdef LORA_DUTY_CYCLE
+      mesh_config.setTargetDutyCycle(LORA_DUTY_CYCLE);
+    #endif
+    #ifdef LORA_MIN_SLEEP_FRACTION
+      mesh_config.setMinSleepFraction(LORA_MIN_SLEEP_FRACTION);
+    #endif
+    // TODO figure out how to dynamically adjust whether node manager or not - see https://github.com/LoRaMesher/LoRaMesher/discussions/97#discussioncomment-16290643
     // Create LoraMesher with PingPong protocol
       mesher =
           loramesher::LoraMesher::Builder()
@@ -378,16 +387,18 @@ bool System_LoraMesher::findGatewayNode() {
   if (gateway.has_value()) {
     auto newGatewayNodeAddress = gateway.value().destination;
       #ifdef SYSTEM_LORAMESHER_DEBUG
-        Serial.print(F("LoRaMesher - setting gateway node to")); Serial.println(newGatewayNodeAddress);
+        if (gatewayNodeAddress != newGatewayNodeAddress) {
+          Serial.print(F("LoRaMesher - setting gateway node to ")); Serial.println(newGatewayNodeAddress);
+        }
       #endif
       gatewayNodeAddress = newGatewayNodeAddress;
       return true;
   } else { // Not found so remove if still think we have one
-    if (gatewayNodeAddress != BROADCAST_ADDR) {
+    if (gatewayNodeAddress != loramesher::kBroadcastAddress) {
       #ifdef SYSTEM_LORAMESHER_DEBUG
         Serial.print(F("LoRaMesher - lost gateway node was ")); Serial.println(gatewayNodeAddress);
       #endif
-      gatewayNodeAddress = BROADCAST_ADDR;
+      gatewayNodeAddress = loramesher::kBroadcastAddress;
     }
     return false; 
   }
@@ -453,6 +464,7 @@ LoraMesherMode System_LoraMesher::checkRole() {
         Serial.println(F("Adding gateway role")); 
       #endif
       mesher->SetNodeCapabilities(loramesher::NodeCapabilities::GATEWAY);
+      
     }
     return LORAMESHER_GATEWAY;
   } else { // Not connected to MQTT

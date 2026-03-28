@@ -89,6 +89,7 @@ class System_Frugal : public System_Group {
     void pre_setup(); // Setup done before Messages tries to access "project"
     void setup() override;
     void setup_after_wifi();
+    void setup_after_mqtt();
     void loop() override; // Call this from main.cpp
     void infrequently() override;
     void periodically() override;

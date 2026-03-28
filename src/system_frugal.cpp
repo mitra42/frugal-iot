@@ -213,7 +213,7 @@ void System_Frugal::setup() {
   #endif
   System_Group::setup(); // includes WiFi
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
-    ota->setup_after_mqtt_setup(); // just initializes - and not totally sure why doe here and not in setup_after_wifi
+    ota->setup_after_mqtt_setup(); // just initializes - and not totally sure why do here and not in setup_after_wifi
   #endif
   #ifdef SYSTEM_FRUGAL_DEBUG
      Serial.println();
@@ -233,6 +233,12 @@ void System_Frugal::setup_after_wifi() {
     #endif
   }
 }
+void System_Frugal::setup_after_mqtt() {
+  #ifdef SYSTEM_LORAMESHER_WANT
+    loramesher->checkRole();
+  #endif
+}
+
 void System_Frugal::infrequently() {
   //heap_print(F("infrequent"));
   System_Group::infrequently();

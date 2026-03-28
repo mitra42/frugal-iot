@@ -76,8 +76,6 @@ void loop() {
     // But note, you do not have to put sensor loops etc here - the loop and periodic functions in
     // each sensor and actuator and control are called from frugal_iot.loop()
     // This is also a good place to put things that check how long since last running
-    frugal_iot.loramesher->printNetworkStatus();
-    frugal_iot.loramesher->printRouteTable();
   }
   frugal_iot.loop(); // Do not delete this call to frugal_iot.loop
 }
