@@ -29,10 +29,12 @@ Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, ui
  * Sets resolution to 12-bit for full precision (0.0625°C).
  */
 void Sensor_DS18B20::setup() {
+    Sensor_Float::setup(); 
     powerUp(); //TODO-202 add powerDown to prepare & powerUp to recover
     _sensors.begin();
     // Set 12-bit resolution for full precision (0.0625°C)
     _sensors.setResolution(12);
+    _sensors.requestTemperatures(); // thisd is just to reset OneWire which seems to fail otherwise.
     #ifdef SENSOR_DS18B20_DEBUG
         Serial.print(F("DS18B20 sensor initialized on index ")); Serial.print(_index); 
         Serial.print(F(" with resolution: ")); Serial.println(_sensors.getResolution());
