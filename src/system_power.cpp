@@ -204,6 +204,7 @@ void System_Power::setup() {
 #ifdef ESP32 // Specific to ESP32s
   if (wake_count) {
     // Only time wake_count is non-zero is if recovering from a deep sleep - its false at startup and its false when recovering from other modes but setup() isn't run in those cases.
+    Serial.println("Waking from deep");
     recover(); 
   } else if (mode & DelaySleepBit) { // We'll use conditions to auto enter sleep (doesnt work yet)
     LightWifi_setup();

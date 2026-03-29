@@ -282,7 +282,6 @@ void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
     #ifdef ESP32
       if (!wake_count) {
     #endif
-        //TODO-23 remove this delay when coming back from deep sleep.
         delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
     #ifdef ESP32
       }
