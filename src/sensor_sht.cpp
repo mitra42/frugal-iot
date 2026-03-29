@@ -73,8 +73,6 @@ void Sensor_SHT::setup() {
     #endif
     Serial.println();
   #endif // SENSOR_SHT_DEBUG
-  sht->requestData(); // Initial request queued up  (loop is to read data and queue up next read)
-  // TODO-23 this looks wrong in the case of a longer loop, we'll be returning a wrong answer from a previous read. 
 }
 
 bool Sensor_SHT::validate(float temp, float humy) {
@@ -86,7 +84,8 @@ void Sensor_SHT::readValidateConvertSet() {
     Serial.print(address, HEX);
     Serial.print(F("   "));
   #endif
-
+  sht->requestData(); // Initial request queued up  (loop is to read data and queue up next read)
+  delay(15); // standard delay to allow sensor to read data 10ms seems to fail, 15 ok
   // There is an implicit asssumption here that sensors should be able to go from requestData to dataReady between loops -
   // and if not it will be reported and read on next loop
   if (sht->dataReady())
@@ -106,9 +105,6 @@ void Sensor_SHT::readValidateConvertSet() {
       if (validate(temp, humy)) {
           set(temp, humy);
       }
-      // Note only request more Data if was dataReady
-      sht->requestData(); // Request next one
-
     #ifdef SENSOR_SHT_DEBUG
     } else {
       Serial.println(F("SHT sensor did not return data"));
