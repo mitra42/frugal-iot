@@ -105,18 +105,19 @@ bool System_MQTT::connect() {
       return false;
     } else { 
       /* Fresh connection */
-      Serial.print(F(" Connected "));
+      Serial.println(F(" Connected "));
       if (!client.sessionPresent()) {
-        subscriptionsDone = false; // No session so will need to redo subscriptions
+        subscriptionsDone = false; // No session so will need to redo subscriptions 
       } else {
         Serial.println(F(" Session present "));
       }
+      frugal_iot.setup_after_mqtt(); // Main thing is to set LoRaMesher gateway
     }
   }
   /* Have a connection - new or old */
-  if (!subscriptionsDone) { // Client has reported existence of a session
+  if (!subscriptionsDone) { // Client has reported non-existence of a session
     /* State connected but broker doesnt know subscriptions */
-    if (frugal_iot.messages->reSubscribeAll()) {
+    if (frugal_iot.messages->reSubscribeAll()) {  //TODO-189 check redoing LoRa subscriptions
       subscriptionsDone = true;
     } else {
       return false; // Something failed - probably connection dropped.
