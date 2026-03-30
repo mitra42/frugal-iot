@@ -35,6 +35,16 @@ void System_Group::discover() {
     fb->discover();
   }
 }
+void System_Group::prepare() {
+  for (System_Base* fb: group) {
+    fb->prepare();
+  }
+}
+void System_Group::recover() {
+  for (System_Base* fb: group) {
+    fb->recover();
+  }
+}
 // These just loop over the members of the group 
 void System_Group::loop() {
   for (System_Base* fb: group) { 

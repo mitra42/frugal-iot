@@ -39,8 +39,8 @@
 #ifndef SENSOR_ANALOG_UNSUPPORTED
 // If Analog unsupported then a linker error will be generated if try and add one. 
 
-Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, const uint8_t p, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool r) 
-: Sensor_Float(id, name, width, min, max, color, r),
+Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, const uint8_t p, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool r, uint8_t power3v3_pin, uint8_t power0v_pin) 
+: Sensor_Float(id, name, width, min, max, color, r, power3v3_pin, power0v_pin),
   pin(p),
   offset(offset),
   scale(scale)
@@ -55,7 +55,6 @@ Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, cons
 void Sensor_Analog::setup() {
   Sensor_Float::setup(); // Will readConfigFromFS - do before setting up pin
   // initialize the analog pin as an input.
-  powerUp(); // By default does nothing but typically overridden if pins defined //TODO-202 add powerDown to prepare & powerUp to recover
   pinMode(pin, INPUT); // I don't think this is needed ? - note Sensor_Battery also does this because reads before setup
   #ifdef SENSOR_ANALOG_REFERENCE
     analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor_analog.h

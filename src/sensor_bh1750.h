@@ -22,7 +22,7 @@
 class Sensor_BH1750 : public Sensor_Float {
   public:
     // Define its constructor - used in main.cpp or *.ino
-    Sensor_BH1750(const char* const id, const char * const name, const uint8_t addr, TwoWire* wire, const bool retain);
+    Sensor_BH1750(const char* const id, const char * const name, const uint8_t addr, TwoWire* wire, const bool retain, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
   protected:
     // Define some variables
     const uint8_t addr; // I2C address

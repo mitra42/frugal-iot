@@ -49,12 +49,20 @@
   #define SENSOR_SHT_DEVICE SHT30 // e.g. The Lolin SHT30 shield
 #endif
 
+
+// Default power control pins - can be overridden via constructor parameters
+#ifndef SENSOR_SHT_POWER0_PIN
+  #define SENSOR_SHT_POWER0_PIN 0xff
+#endif
+#ifndef SENSOR_SHT_POWER3v3_PIN
+  #define SENSOR_SHT_POWER3v3_PIN 0xff
+#endif
+
+
 class Sensor_SHT : public Sensor_HT {
   public:
-    Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, bool retain);
+    Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, bool retain, uint8_t power3v3_pin = SENSOR_SHT_POWER3v3_PIN, uint8_t power0v_pin = SENSOR_SHT_POWER0_PIN);
   protected:
-    void powerUp() override; // Note superclass is powerUp(pin3v3, pin0v)
-    void powerDown() override;  // Note superclass is powerDown(pin3v3, pin0v)
     uint8_t address;
     SENSOR_SHT_DEVICE *sht; 
     void setup() override;

@@ -12,8 +12,8 @@
 #include "sensor_ht.h"
 #include "misc.h" // heap_print shouldBeDefined
 
-Sensor_HT::Sensor_HT(const char* const id, const char * const name, boolean retain) 
-  : Sensor(id, name, retain),
+Sensor_HT::Sensor_HT(const char* const id, const char * const name, boolean retain, uint8_t power3v3_pin, uint8_t power0v_pin) 
+  : Sensor(id, name, retain, power3v3_pin, power0v_pin),
     temperature(new OUTfloat(id, "temperature", "Temperature", 0, 1, 0.0, 45.0, "red", false)),
     humidity(new OUTfloat(id, "humidity", "Humidity", 0, 1, 0.0, 100.0, "blue", false))
   { 

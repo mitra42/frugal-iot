@@ -31,8 +31,8 @@
 #include <Arduino.h>
 #include "sensor_sht.h"
 
-Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, bool retain)
-    : Sensor_HT("sht", name, retain),
+Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, bool retain, uint8_t power3v3_pin, uint8_t power0v_pin)
+    : Sensor_HT("sht", name, retain, power3v3_pin, power0v_pin),
     address(address_init) {
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   // Defaults to system defined SDA and SCL 
@@ -41,29 +41,7 @@ Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *w
   sht = new SENSOR_SHT_DEVICE(address, wire);
 }
 
-#ifndef SENSOR_SHT_POWER0_PIN
-  #define SENSOR_SHT_POWER0_PIN 0xff
-#endif
-#ifndef SENSOR_SHT_POWER3v3_PIN
-  #define SENSOR_SHT_POWER3v3_PIN 0xff
-#endif
-
-void Sensor_SHT::powerUp() {
-  #if defined(SENSOR_SHT_3v3_PIN) && defined(SENSOR_SHT_0v_PIN)
-    // TODO handle the case of one pin defined and hte other not
-    System_Base::powerUp(SENSOR_SHT_3v3_PIN,SENSOR_SHT_0v_PIN);
-  #endif
-}
-
-void Sensor_SHT::powerDown() {
-  #if defined(SENSOR_SHT_3v3_PIN) && defined(SENSOR_SHT_0v_PIN)
-    // TODO handle the case of one pin defined and hte other not
-    // To power down, go to high impedance input
-    System_Base::powerDown(SENSOR_SHT_3v3_PIN,SENSOR_SHT_0v_PIN);
-  #endif
-}
 void Sensor_SHT::setup() {
-  powerUp(); //TODO-202 add powerDown to prepare & powerUp to recover
   Sensor_HT::setup(); 
   sht->begin();
   #ifdef SENSOR_SHT_DEBUG

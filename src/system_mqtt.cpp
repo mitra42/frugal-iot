@@ -140,13 +140,12 @@ void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicT
     }
   }
 }
-bool System_MQTT::prepareForLightSleep() {
-  //TODO-23 this doesnt appear to be called, its not sure if it should or not
+void System_MQTT::prepare() {
+  //Note this is intentionally not called
   frugal_iot.mqtt->client.disconnect();
-  return true;
 }
-bool System_MQTT::recoverFromLightSleep() {
-  return connect(); // TODO-23 Note this is blocking if WiFi is connected, which it typically won't be. 
+void System_MQTT::recover() {
+  connect(); // TODO-23 Note this is blocking if WiFi is connected, which it typically won't be. 
 }
 
 // UPSTREAM module -> queue -> (loRaMesher -> queue ) -> MQTT -> Broker

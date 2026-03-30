@@ -8,8 +8,33 @@
 #include "sensor.h"
 #include "misc.h" // shouldBeDefined
 
-Sensor::Sensor(const char* const id, const char* const name, bool r) 
-: System_Base(id, name), retain(r) { }
+Sensor::Sensor(const char* const id, const char* const name, bool r, uint8_t power3v3_pin, uint8_t power0v_pin) 
+: System_Base(id, name), retain(r), power3v3(power3v3_pin), power0v(power0v_pin) { }
+
+// Power management methods
+void Sensor::powerUp() {
+  // Default implementation: call System_Base method with stored pins if valid
+  if (power3v3 != 0xFF || power0v != 0xFF) {
+    System_Base::powerUp(power3v3, power0v);
+  }
+}
+
+void Sensor::powerDown() {
+  // Default implementation: call System_Base method with stored pins if valid
+  if (power3v3 != 0xFF || power0v != 0xFF) {
+    System_Base::powerDown(power3v3, power0v);
+  }
+}
+
+void Sensor::prepare() {
+  // Prepare for sleep - power down the sensor
+  powerDown();
+}
+
+void Sensor::recover() {
+  // Recover from sleep - power up the sensor
+  powerUp();
+}
 
 // This is the main thing each sensor does periodically. 
 // It can be overridden, or any of its parts can be. 
@@ -19,6 +44,7 @@ void Sensor::periodically() {
   readValidateConvertSet();
 }
 void Sensor::setup() {
+  powerUp(); // Ensure sensor is powered up during setup
   readConfigFromFS(); // Reads config (one of the outputs) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
 }
 

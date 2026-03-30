@@ -32,8 +32,8 @@ class System_WiFi : public System_Base {
     //void periodically() override;
     void loop() override;
     #ifdef ESP32
-      bool pause();
-      bool recover();
+      bool pauseWiFi();
+      bool recoverWiFi();
     #endif
     void setup() override;
     void addWiFi(String ssid, String password);

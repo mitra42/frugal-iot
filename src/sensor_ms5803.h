@@ -16,7 +16,7 @@
 
 class Sensor_ms5803 : public Sensor {
   public:
-    Sensor_ms5803(const char* const id, const char * const name, uint8_t address, TwoWire* wire = &I2C_WIRE);
+    Sensor_ms5803(const char* const id, const char * const name, uint8_t address, TwoWire* wire = &I2C_WIRE, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
     ~Sensor_ms5803(); //TODO-132
   protected: // Since this just overrides things in the Base class, its basically all private
     OUTfloat* pressure;  

@@ -257,6 +257,8 @@ void System_Power::prepare() {
     Serial.println(F("Power Management: preparing"));
   #endif
   if (mode) { // Not set here ! 
+    // Power down sensors before sleep
+    frugal_iot.sensors->prepare();
     // Some things wont be done if just looping
     #ifdef LILYGOHIGROW
       digitalWrite(POWER_CTRL, LOW);
@@ -268,9 +270,14 @@ void System_Power::prepare() {
         uart_driver_delete(UART_NUM_0); // Disable UART0 (Serial)
       }
     #endif
+    #ifdef INTENTIONALLY_NOT_CALLED
+      if (PauseMQTTBit) { 
+        frugal_iot.mqtt->pause(); // New or old session
+      }
+    #endif
     #ifdef ESP32 // Not built yet to pause WiFi on ESP8266
       if (mode & PauseWiFiBit) { // Note thst currently Power_Deep does not bother to pause wifi
-        frugal_iot.wifi->pause();  // Disconnect WiFi gracefully - will lose it during sleep anyway
+        frugal_iot.wifi->pauseWiFi();  // Disconnect WiFi gracefully - will lose it during sleep anyway
         // TODO-23 note that mqtt and loramesher both define prepareForLightSleep but it isn't called
       }
     #endif
@@ -280,7 +287,6 @@ void System_Power::prepare() {
   // see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/power_management.html for how to keep WiFi alive during sleep
   // esp_wifi_stop() // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
   // WiFi.mode(WIFI_MODE_NULL);
-  // LoRa.sleep();
   // SPI.end();
 }
 // ================== sleep =========== called from maybeSleep ========= TO-ADD-POWERMODE
@@ -356,10 +362,10 @@ void System_Power::recover() {
       // Restore comms: Power_Loop & Power_Modem do not need it; and Power_Deep does it in setup
       bool WiFiOK = true;
       if (mode & PauseWiFiBit) {
-        WiFiOK = frugal_iot.wifi->recover();
+        WiFiOK = frugal_iot.wifi->recoverWiFi();
       }
       if (WiFiOK & PauseMQTTBit) { // Note MQTT not being explicitly paused
-        frugal_iot.mqtt->recoverFromLightSleep(); // New or old session
+        frugal_iot.mqtt->recover(); // New or old session
       }
       if (mode & DeepSleepBit) {
         // Memory will have been wiped by the sleep, what can we assume?
@@ -373,6 +379,8 @@ void System_Power::recover() {
         frugal_iot.discovery->doneFullAdvertise = true; // Assume did this before sleep
       }
     #endif
+    // Power up sensors after sleep
+    frugal_iot.sensors->recover();
   }
 }
 

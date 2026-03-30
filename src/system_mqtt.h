@@ -32,8 +32,8 @@ class System_MQTT : public System_Base {
     System_MQTT(const char* hostname, const char* username, const char* password);
     void setup_after_wifi();
     bool connected(); // Check if connected, dont change status
-    bool prepareForLightSleep();
-    bool recoverFromLightSleep();
+    void prepare() override;
+    void recover() override;
     // Downstream
     void messageReceived(const String &topicPath, const String &payload); // Used in MqttMessageReceived callbacks 
         // Upstream

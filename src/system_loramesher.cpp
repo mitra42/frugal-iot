@@ -163,11 +163,6 @@ void System_LoraMesher::setup() {
   #endif
 }
 
-void System_LoraMesher::prepareForLightSleep() {
-    //TODO-23 this doesnt appear to be called, its not sure if it should or not
-    // TODO-139 TODO-23 find where put radio and SPI to sleep - on some other libraries its LoRa.sleep() and SPI.end()
-}
-
 // Check and update our role based on whether we have upstream WiFi/MQTT
 // Have to be a bit careful with this, MQTT goes on and off frequently, but router tables
 // are updated slowly (minute?) so do not want to flap them. Also sleep can switch WiFi off. 
