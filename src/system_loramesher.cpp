@@ -209,7 +209,7 @@ bool System_LoraMesher::initialize() {
         Serial.println(F("LoraMesher started successfully"));
       #endif
       #ifdef SYSTEM_LORAMESHER_DEBUG
-        Serial.print("LoRaMesher node address: 0x"); Serial.println(mesher->GetNodeAddress());
+        Serial.print("LoRaMesher node address: "); Serial.println(mesher->GetNodeAddress(), HEX);
       #endif
 
       #ifdef SYSTEM_LORAMESHER_DEBUG
@@ -296,19 +296,25 @@ void System_LoraMesher::periodically() {
       auto routes = mesher->GetRoutingTable();
       Serial.print(F("Routing table size: ")); Serial.println(routes.size());
       for (const auto& route : routes) {
-        Serial.print(F("  Destination: 0x")); Serial.print(route.destination, HEX);
-        Serial.print(F(", Next hop: 0x")); Serial.print(route.next_hop, HEX);
+        /* Serial.print(F("  Destination: 0x")); */ Serial.print(route.destination, HEX);
+        Serial.print(F(" via: ")); Serial.print(route.next_hop, HEX);
         Serial.print(F(", Hops: "));  Serial.print(route.hop_count);
-        Serial.print(F(", Valid: ")); Serial.println(route.is_valid ? "yes" : "no");
+        Serial.print(F(" Q: ")); Serial.print(route.link_quality);
+        Serial.print(F(" Last seen: ")); Serial.print(route.last_seen_ms);
+        Serial.print(F("ms ")); Serial.print(route.is_valid ? "valid" : "invalid");
+        Serial.print(F(" Capabilities: ")); Serial.print(route.capabilities, HEX);
+        if (route.is_network_manager); Serial.print(F(" MANAGER"));
+        Serial.println();
       }
   }
   void System_LoraMesher::printNetworkStatus() {
     auto status = mesher->GetNetworkStatus();
-    Serial.print(F("Network status: State=")); Serial.print(static_cast<int>(status.current_state));
-    Serial.print(F(", Manager=0x")); Serial.print(status.network_manager, HEX);
-    Serial.print(F(", Slot=")); Serial.print(status.current_slot);
-    Serial.print(F(", Nodes=")); Serial.println(status.connected_nodes);
-    Serial.print(F("Gateway=")); Serial.println(gatewayNodeAddress, HEX);
+    Serial.print(F("Network status: State: ")); Serial.print(static_cast<int>(status.current_state));
+    Serial.print(F(", Manager: ")); Serial.print(status.network_manager, HEX);
+    Serial.print(F(", Slot: ")); Serial.print(status.current_slot);
+    Serial.print(F(", Nodes: ")); Serial.print(status.connected_nodes);
+    Serial.print(F(" Capabilities: ")); Serial.print(mesher->GetNodeCapabilities(), HEX), Serial.print(F(" ")); Serial.print(checkRoleString());
+    Serial.print(F(" Gateway: ")); Serial.println(gatewayNodeAddress, HEX);
   }
 
 #endif // SYSTEM_LORAMESHER_DEBUG
