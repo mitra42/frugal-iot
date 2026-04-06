@@ -8,6 +8,7 @@ Our test are run at 3.3V though it is supposed to also run at 5V.
 #include <cmath>
 
 //#define SENSOR_DS18B20_DEBUG
+
 /**
  * @brief Constructor
  * 
@@ -15,8 +16,8 @@ Our test are run at 3.3V though it is supposed to also run at 5V.
  * Temperature range: -55°C to +125°C
  * Color label "orange" for UI or visualization systems.
  */
-Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain)
-    : Sensor_Float(id, name, 1, -55, 125, "orange", retain),  // width=1 for 1 decimal place
+Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain, uint8_t power3v3_pin, uint8_t power0v_pin)
+    : Sensor_Float(id, name, 1, -55, 125, "orange", retain, power3v3_pin, power0v_pin),  // width=1 for 1 decimal place
       _oneWire(pin),
       _sensors(&_oneWire),
       _index(index) {}
@@ -29,29 +30,15 @@ Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, ui
  * Sets resolution to 12-bit for full precision (0.0625°C).
  */
 void Sensor_DS18B20::setup() {
-    powerUp(); //TODO-202 add powerDown to prepare & powerUp to recover
+    Sensor_Float::setup(); 
     _sensors.begin();
     // Set 12-bit resolution for full precision (0.0625°C)
     _sensors.setResolution(12);
+    _sensors.requestTemperatures(); // thisd is just to reset OneWire which seems to fail otherwise.
     #ifdef SENSOR_DS18B20_DEBUG
         Serial.print(F("DS18B20 sensor initialized on index ")); Serial.print(_index); 
         Serial.print(F(" with resolution: ")); Serial.println(_sensors.getResolution());
     #endif
-}
-
-void Sensor_DS18B20::powerUp() {
-#if defined(SENSOR_DS18B20_3v3_PIN) && defined(SENSOR_DS18B20_0v_PIN)
-  // TODO handle the case of one pin defined and hte other not
-  System_Base::powerUp(SENSOR_DS18B20_3v3_PIN,SENSOR_DS18B20_0v_PIN);
-#endif
-}
-
-void Sensor_DS18B20::powerDown() {
-#if defined(SENSOR_DS18B20_3v3_PIN) && defined(SENSOR_DS18B20_0v_PIN)
-  // TODO handle the case of one pin defined and hte other not
-  // To power down, go to high impedance input
-  System_Base::powerDown(SENSOR_DS18B20_3v3_PIN,SENSOR_DS18B20_0v_PIN);
-#endif
 }
 
 /**

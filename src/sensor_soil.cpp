@@ -24,9 +24,9 @@
 #include "sensor_soil.h"
 #include "Frugal-IoT.h"
 
-Sensor_Soil::Sensor_Soil(const char* const id, const char * const name, uint8_t pin_init, int offset, float scale, const char* color, bool retain) 
-  : Sensor_Analog(id, name, pin_init, 0, 0, 100, offset, scale, color, retain)
-  { }
+Sensor_Soil::Sensor_Soil(const char* const id, const char * const name, uint8_t pin_init, int offset, float scale, const char* color, bool retain, uint8_t power3v3_pin, uint8_t power0v_pin) 
+  : Sensor_Analog(id, name, pin_init, 0, 0, 100, offset, scale, color, retain, power3v3_pin, power0v_pin) {
+}
 
 // This may be specific to device being read - expect it to be subclassed
 bool Sensor_Soil::validate(int v) {
@@ -36,17 +36,4 @@ void Sensor_Soil::captiveLines(AsyncResponseStream* response) {
   frugal_iot.captive->addButton(response, id, "output", "0", "Soil Moisture Tare"); //TODO-TRANSLATE
   frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),3), "Calibrate", 0, output->max);
 }
-void Sensor_Soil::powerUp() {
-  #if defined(SENSOR_SOIL_3v3_PIN) && defined(SENSOR_SOIL_0v_PIN)
-    // TODO handle the case of one pin defined and hte other not
-    System_Base::powerUp(SENSOR_SOIL_3v3_PIN, SENSOR_SOIL_0v_PIN);
-  #endif
-}
 
-void Sensor_Soil::powerDown() {
-  #if defined(SENSOR_SOIL_3v3_PIN) && defined(SENSOR_SOIL_0v_PIN)
-    // TODO handle the case of one pin defined and hte other not
-    // To power down, go to high impedance input
-    System_Base::powerDown(SENSOR_SOIL_3v3_PIN, SENSOR_SOIL_0v_PIN);
-  #endif
-}

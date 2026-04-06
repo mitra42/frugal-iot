@@ -9,8 +9,8 @@
 #include "sensor_health.h"
 #include "system_frugal.h"
 
-Sensor_Health::Sensor_Health(const char* const id, const char* const name) 
-: Sensor(id, name, true),
+Sensor_Health::Sensor_Health(const char* const id, const char* const name, uint8_t power3v3_pin, uint8_t power0v_pin) 
+: Sensor(id, name, true, power3v3_pin, power0v_pin),
   wifibars(new OUTuint16(id, "wifibars", "WiFi Strength", 0, 0, 5, "#000000", false)),
   wifissid(new OUTtext(id, "wifissid", "WiFi SSID", "" ))
 {

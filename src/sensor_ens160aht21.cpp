@@ -66,8 +66,8 @@
 #define ENS161_PARTID				    0x0161
 
 
-Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name, TwoWire* wire) 
-  : Sensor(id, name, false)
+Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name, TwoWire* wire, uint8_t power3v3_pin, uint8_t power0v_pin) :
+  Sensor(id, name, false, power3v3_pin, power0v_pin)
 { // TODO-101 try movign some of these into part above
   aht = new System_I2C(SENSOR_ENSAHT_AHTI2C, &I2C_WIRE);
   // AHT21
