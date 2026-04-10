@@ -397,7 +397,7 @@ bool System_LoraMesher::findGatewayNode() {
   } else { // Not found so remove if still think we have one
     if (gatewayNodeAddress != loramesher::kBroadcastAddress) {
       #ifdef SYSTEM_LORAMESHER_DEBUG
-        Serial.print(F("LoRaMesher - lost gateway node was ")); Serial.println(gatewayNodeAddress);
+        Serial.print(F("LoRaMesher - lost gateway node was ")); Serial.println(gatewayNodeAddress, HEX);
       #endif
       gatewayNodeAddress = loramesher::kBroadcastAddress;
     }
