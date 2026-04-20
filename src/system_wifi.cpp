@@ -326,11 +326,10 @@ String System_WiFi::SSID() {
 bool System_WiFi::connected() {
   return (status == WIFI_CONNECTED); 
 }
+
+unsigned long lasttime = 0L;
+
 void System_WiFi::loop() {
-    frugal_iot.oled->debug(true, 30, "wifi loop 329");
-  static unsigned long lasttime;
-    frugal_iot.oled->debug(true, 30, "wifi loop 331");
-  lasttime = millis();
     frugal_iot.oled->debug(true, 30, "wifi loop 332");
   if (millis() > (lasttime + 100)) { // Unclear what right time delay is here - 2000 works - so does 100 
     lasttime = millis();
