@@ -52,8 +52,11 @@ void System_Messages::setup() {
 }
 
 void System_Messages::loop() {
+  frugal_iot.oled->debug(false, 50, "out");
   sendOutgoingQueued(); // Upstream
+  frugal_iot.oled->debug(false, 50, "in");
   dispatchIncomingQueued();
+  frugal_iot.oled->debug(false, 50, "done");
 }
 
 // =========== Helpers =====================
@@ -123,28 +126,39 @@ void System_Messages::send(const String topicPath, const String payload, bool re
 // Upstream queued => MQTT or LoRaMesher
 // Send any messages waiting to go (subscriptions or messages)
 void System_Messages::sendOutgoingQueued() {
+    frugal_iot.oled->debug(true, 20, "sendOutgoingQueued"); frugal_iot.oled->debug(false, 30, __LINE__);
   while (!outgoing.empty()) {
+    frugal_iot.oled->debug(true, 20, "sendOutgoingQueued"); frugal_iot.oled->debug(false, 30, __LINE__);
     System_Message &m = outgoing.front();
     if (m.isSubscription) {
+    frugal_iot.oled->debug(false, 40, "subscription"); 
       if (m.queuedSubscribe()) {
+         frugal_iot.oled->debug(false, 50, "success"); 
         //heap_print(F("popping sub"));
         subscriptions.push_front(m);
         //heap_print(F("/popping sub"));
         outgoing.pop_front(); // Note this should delete m and free up the memory
       } else {
+         frugal_iot.oled->debug(false, 50, "fail"); 
         return; // Dont block or keep looping if not connected
       }
     } else {
       if (m.queuedMessage()) {
+    frugal_iot.oled->debug(false, 50, "message"); 
         //heap_print(F("popping"));
         outgoing.pop_front(); // Note this should delete m and free up the memory
         //heap_print(F("/popping"));
+        frugal_iot.oled->debug(false, 40, __LINE__);
       } else {
+        frugal_iot.oled->debug(false, 40, __LINE__);
         return; // Dont block or keep looping if not connected
       }
     }
     // If succeeded then try and send any other queued messages
+        frugal_iot.oled->debug(false, 40, __LINE__);
   }
+          frugal_iot.oled->debug(false, 40, __LINE__);
+
 }
 // Upstream: queued => MQTT or LoRaMesher
 bool System_Message::queuedMessage() {
@@ -162,13 +176,20 @@ bool System_Message::queuedMessage() {
 
 // Upstream: Outgoing queue => MQTT || LoRaMesher
 bool System_Message::queuedSubscribe() {
+  frugal_iot.oled->debug(false, 50, "-1"); 
+
   if (frugal_iot.mqtt->connected()) {
+  frugal_iot.oled->debug(false, 50, "--2"); 
     return frugal_iot.mqtt->subscribe(topicPath);
   #ifdef SYSTEM_LORAMESHER_WANT
-  } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
+  } else { 
+      frugal_iot.oled->debug(false, 50, "---3"); 
+    if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
+  frugal_iot.oled->debug(false, 50, "---4"); 
     return frugal_iot.loramesher->publish("subscribe", topicPath,0,1);
   #endif
-  } 
+  } }
+    frugal_iot.oled->debug(false, 50, "----5"); 
   return false; // Not connected, or failed to send over connection
 }
 

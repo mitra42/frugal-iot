@@ -74,7 +74,10 @@ class Actuator_OLED : public System_Base {
     //void periodically() override; // Periodic tasks, e.g., every minute
     //void loop() override; // Frequent tasks, e.g., every 10 ms
     // TODO-149 check if needed
-    void displayMessage(const String &message); // Function to display a message on the OLED
+    //void displayMessage(const String &message); // Function to display a message on the OLED
+    void debug(const bool clear, const uint row, const char* s);
+    void debug(const bool clear, const uint row, const uint n);
+
   protected:
     TwoWire* wire;
 };

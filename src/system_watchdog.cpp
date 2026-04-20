@@ -55,7 +55,7 @@ void System_Watchdog::setup() {
 
 void System_Watchdog::loop() {
   static uint16_t watchcount = 0;
-  if (watchcount++ >= 10000 ) {
+  if (watchcount++ >= 100 ) {
     watchcount = 0;
     Serial.print(F("⏳"));
   }

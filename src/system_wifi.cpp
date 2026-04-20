@@ -177,6 +177,8 @@ bool System_WiFi::recoverWiFi() {
 void System_WiFi::stateMachine() {
   // State machine
   //Serial.print(F(" XXX Wifi=")); Serial.print(status); Serial.print(F(" ")); Serial.println(WiFi.status());
+  frugal_iot.oled->debug(true, 30, "wifi statemachine");
+  frugal_iot.oled->debug(false, 40, status);
   switch (status)
   {
     case WIFI_STARTING: //0
@@ -325,11 +327,17 @@ bool System_WiFi::connected() {
   return (status == WIFI_CONNECTED); 
 }
 void System_WiFi::loop() {
-  static unsigned long lasttime = millis();
+    frugal_iot.oled->debug(true, 30, "wifi loop 329");
+  static unsigned long lasttime;
+    frugal_iot.oled->debug(true, 30, "wifi loop 331");
+  lasttime = millis();
+    frugal_iot.oled->debug(true, 30, "wifi loop 332");
   if (millis() > (lasttime + 100)) { // Unclear what right time delay is here - 2000 works - so does 100 
     lasttime = millis();
+    frugal_iot.oled->debug(true, 30, "wifi loop 333");
     stateMachine();
   } 
+    frugal_iot.oled->debug(true, 30, "wifi end loop 337");
 }
 void System_WiFi::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   // Setting on wifi e.g. esp1234/set/wifi/foo/bar is setting the wifi password to "bar" for ssid=foo

@@ -48,4 +48,25 @@ void Actuator_OLED::setup() {
   display.display(); // May not strictly be needed here, but good to ensure display is ready
 }
 
+void Actuator_OLED::debug(const bool clear, const uint row, const char* s) {
+    if (clear) { display.clearDisplay(); 
+      UBaseType_t uxHighWaterMark;
+      uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+      display.setCursor(0,0);
+      display.print(uxHighWaterMark);
+    }
+
+    display.setCursor(0,row);
+    display.setTextSize(1);
+    display.print(s);
+    display.display();
+}
+void Actuator_OLED::debug(const bool clear, const uint row, const uint n) {
+    if (clear) { display.clearDisplay(); }
+    display.setCursor(0,row);
+    display.setTextSize(1);
+    display.print(n);
+    display.display();
+}
+
 #endif // SYSTEM_OLED_WANT
