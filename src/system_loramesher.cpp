@@ -74,9 +74,12 @@
   #define LORA_RST RST_LoRa
   #define LORA_CS SS            // GPIO8
   #define LORA_IRQ DIO0         // Bizarre swap with Busy - not sure if documentation error or what but heltecs have notoriously faulty docs
-  #define LORA_IO1 BUSY_LoRa 
-  #define LORA_TCXO_VOLTAGE 1.8F  
-#elif !defined(LORA_CS) || !defined(LORA_IRQ) !! !defined(LORA_RADIO_TYPE) || !defined(LORA_IO1) || !defined(LORA_RST) || !defined(LORA_MOSI) || !defined(LORA_MISO)
+  #define LORA_IO1 BUSY_LoRa
+  #define LORA_TCXO_VOLTAGE 1.8F
+#elif defined(ARDUINO_T_Beam)
+  // variants/tbeam/pins_arduino.h defines LORA_SCK/MISO/MOSI/CS/RST/IRQ/IO1; T-Beam uses the SX1276
+  #define LORA_RADIO_TYPE loramesher::RadioType::kSx1276
+#elif !defined(LORA_CS) || !defined(LORA_IRQ) || !defined(LORA_RADIO_TYPE) || !defined(LORA_IO1) || !defined(LORA_RST) || !defined(LORA_MOSI) || !defined(LORA_MISO)
   #error LORA parameters not defined, but defined SYSTEM_LORAMESHER_WANT
 #endif
 
