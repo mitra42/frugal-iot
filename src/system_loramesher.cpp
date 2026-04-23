@@ -384,15 +384,13 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
 
 // addGatewayRole is called on receiver during setup, once route tables propogate this should start seeing the gateway
 bool System_LoraMesher::findGatewayNode() {
-    frugal_iot.oled->debug(true, 30, "findGatewayNode"); 
+  #ifdef SYSTEM_LORAMESHER_DEBUG
+    Serial.println(F("LoRaMesher - findGatewayNode"));
+  #endif
   std::optional<loramesher::RouteEntry> gateway;
-  frugal_iot.oled->debug(false, 50, "-1"); 
   gateway = mesher->GetClosestGateway();
-  frugal_iot.oled->debug(false, 50, "--2"); 
   if (gateway.has_value()) {
-  frugal_iot.oled->debug(false, 50, "---3"); 
     auto newGatewayNodeAddress = gateway.value().destination;
-      frugal_iot.oled->debug(false, 50, "----4"); 
 
       #ifdef SYSTEM_LORAMESHER_DEBUG
         if (gatewayNodeAddress != newGatewayNodeAddress) {
@@ -402,18 +400,13 @@ bool System_LoraMesher::findGatewayNode() {
       gatewayNodeAddress = newGatewayNodeAddress;
       return true;
   } else { // Not found so remove if still think we have one
-          frugal_iot.oled->debug(false, 50, "--A"); 
-
     if (gatewayNodeAddress != loramesher::kBroadcastAddress) {
-                frugal_iot.oled->debug(false, 50, "---B"); 
       #ifdef SYSTEM_LORAMESHER_DEBUG
         Serial.print(F("LoRaMesher - lost gateway node was ")); Serial.println(gatewayNodeAddress, HEX);
       #endif
       gatewayNodeAddress = loramesher::kBroadcastAddress;
     }
-              frugal_iot.oled->debug(false, 50, "----X"); 
-
-    return false; 
+    return false;
   }
 }
 
