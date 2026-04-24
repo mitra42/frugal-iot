@@ -20,8 +20,10 @@
 
 set -u
 
-GATEWAY_ENV="gateway_tbeam"
-NODE_ENV="node_tbeam"
+# GATEWAY_ENV="gateway_tbeam"
+# NODE_ENV="node_tbeam"
+GATEWAY_ENV="gateway_heltec"
+NODE_ENV="node_heltec"
 GATEWAY_PORT="${1:-/dev/ttyUSB0}"
 NODE_PORT="${2:-/dev/ttyUSB1}"
 BAUD="${BAUD:-460800}"
