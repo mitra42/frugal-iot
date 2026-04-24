@@ -65,6 +65,7 @@ class System_LoraMesher : public System_Base {
     void periodically() override;
     bool isGateway(); 
     void createReceiveMessages();
+    void PromoteToNetworkManager();
     // == INCOMING (up or downstream)
     uint16_t rcvdPacketCounter = 0;
     std::forward_list<MeshSubscription> meshSubscriptions;

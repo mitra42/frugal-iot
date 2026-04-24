@@ -176,6 +176,9 @@ bool System_LoraMesher::initialize() {
     #ifdef LORA_MIN_SLEEP_FRACTION
       mesh_config.setMinSleepFraction(LORA_MIN_SLEEP_FRACTION);
     #endif
+    // Workaround form bug identified by jaimi5 23apr2026 will remove when fixed
+    Serial.println("LM setting node only");
+    mesh_config.setNodeRole(loramesher::NodeRole::NODE_ONLY); // Set all nodes as NODE_ONLY then gateway promotes
     // TODO figure out how to dynamically adjust whether node manager or not - see https://github.com/LoRaMesher/LoRaMesher/discussions/97#discussioncomment-16290643
     // Create LoraMesher with PingPong protocol
       mesher =
@@ -237,6 +240,21 @@ bool System_LoraMesher::initialize() {
     return 0;
 }
 
+// This is a workaround, for a bug in LM (April 2026) may not be used once thay bug is fixed
+void System_LoraMesher::PromoteToNetworkManager() {
+  auto status = mesher->GetNetworkStatus();                                                                           
+  using ProtocolState = loramesher::protocols::lora_mesh::INetworkService::ProtocolState;                                 
+                                                                                                                          
+  bool in_network = (status.current_state == ProtocolState::NORMAL_OPERATION ||                                           
+                     status.current_state == ProtocolState::NETWORK_MANAGER ||
+                     status.current_state == ProtocolState::JOINING);
+  if (!in_network) {
+    Serial.println("LM setting NETWORK_MANAGER");
+    if (!mesher->SetNodeRole(loramesher::NodeRole::NETWORK_MANAGER)) {
+      Serial.println("Loramesher error setting Network Manager");
+    }
+  }
+}
 System_LoraMesher::System_LoraMesher()
 : System_Base("loramesher", "LoraMesher")
 {
@@ -477,7 +495,8 @@ LoraMesherMode System_LoraMesher::checkRole() {
         Serial.println(F("Adding gateway role")); 
       #endif
       mesher->SetNodeCapabilities(loramesher::NodeCapabilities::GATEWAY);
-      
+      // This is a workaround, for a bug in LM (April 2026) may not be used once thay bug is fixed
+      PromoteToNetworkManager(); // only does this if not already in a network
     }
     return LORAMESHER_GATEWAY;
   } else { // Not connected to MQTT
