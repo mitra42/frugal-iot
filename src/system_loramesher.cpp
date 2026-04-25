@@ -74,9 +74,12 @@
   #define LORA_RST RST_LoRa
   #define LORA_CS SS            // GPIO8
   #define LORA_IRQ DIO0         // Bizarre swap with Busy - not sure if documentation error or what but heltecs have notoriously faulty docs
-  #define LORA_IO1 BUSY_LoRa 
-  #define LORA_TCXO_VOLTAGE 1.8F  
-#elif !defined(LORA_CS) || !defined(LORA_IRQ) !! !defined(LORA_RADIO_TYPE) || !defined(LORA_IO1) || !defined(LORA_RST) || !defined(LORA_MOSI) || !defined(LORA_MISO)
+  #define LORA_IO1 BUSY_LoRa
+  #define LORA_TCXO_VOLTAGE 1.8F
+#elif defined(ARDUINO_T_Beam)
+  // variants/tbeam/pins_arduino.h defines LORA_SCK/MISO/MOSI/CS/RST/IRQ/IO1; T-Beam uses the SX1276
+  #define LORA_RADIO_TYPE loramesher::RadioType::kSx1276
+#elif !defined(LORA_CS) || !defined(LORA_IRQ) || !defined(LORA_RADIO_TYPE) || !defined(LORA_IO1) || !defined(LORA_RST) || !defined(LORA_MOSI) || !defined(LORA_MISO)
   #error LORA parameters not defined, but defined SYSTEM_LORAMESHER_WANT
 #endif
 
@@ -402,15 +405,13 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
 
 // addGatewayRole is called on receiver during setup, once route tables propogate this should start seeing the gateway
 bool System_LoraMesher::findGatewayNode() {
-    frugal_iot.oled->debug(true, 30, "findGatewayNode"); 
+  #ifdef SYSTEM_LORAMESHER_DEBUG
+    Serial.println(F("LoRaMesher - findGatewayNode"));
+  #endif
   std::optional<loramesher::RouteEntry> gateway;
-  frugal_iot.oled->debug(false, 50, "-1"); 
   gateway = mesher->GetClosestGateway();
-  frugal_iot.oled->debug(false, 50, "--2"); 
   if (gateway.has_value()) {
-  frugal_iot.oled->debug(false, 50, "---3"); 
     auto newGatewayNodeAddress = gateway.value().destination;
-      frugal_iot.oled->debug(false, 50, "----4"); 
 
       #ifdef SYSTEM_LORAMESHER_DEBUG
         if (gatewayNodeAddress != newGatewayNodeAddress) {
@@ -420,18 +421,13 @@ bool System_LoraMesher::findGatewayNode() {
       gatewayNodeAddress = newGatewayNodeAddress;
       return true;
   } else { // Not found so remove if still think we have one
-          frugal_iot.oled->debug(false, 50, "--A"); 
-
     if (gatewayNodeAddress != loramesher::kBroadcastAddress) {
-                frugal_iot.oled->debug(false, 50, "---B"); 
       #ifdef SYSTEM_LORAMESHER_DEBUG
         Serial.print(F("LoRaMesher - lost gateway node was ")); Serial.println(gatewayNodeAddress, HEX);
       #endif
       gatewayNodeAddress = loramesher::kBroadcastAddress;
     }
-              frugal_iot.oled->debug(false, 50, "----X"); 
-
-    return false; 
+    return false;
   }
 }
 

@@ -47,16 +47,12 @@ void System_Group::recover() {
 }
 #include "Frugal-IoT.h"
 
-#include <Adafruit_SSD1306.h> // For OLED display
-
-// These just loop over the members of the group 
+// These just loop over the members of the group
 void System_Group::loop() {
   for (System_Base* fb: group) {
-    frugal_iot.oled->debug(true, 30, fb->id);
     //Serial.print(fb->id);Serial.print(' ');
-    fb->loop(); 
-    frugal_iot.oled->debug(true, 30, "-");
-  } 
+    fb->loop();
+  }
 }
 void System_Group::periodically() { 
   //heap_print(F("Periodic"));
