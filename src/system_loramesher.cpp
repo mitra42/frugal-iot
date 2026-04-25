@@ -443,7 +443,7 @@ bool System_LoraMesher::connected() {
 }
 
 // Common part to both relayDownstream and publish (which is upstream)
-void System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos) {
+bool System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos) {
   // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
   char qos_char = '0' + qos; // 0 1 2 as for MQTT incoming=12
   char retain_char = '0' + retain;
@@ -463,10 +463,12 @@ void System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
   // TODO-189 Suggest Jamie overloads Send to take a char* + size as the old one did
   std::vector<uint8_t> messageVector(stringymessage, stringymessage + msglen);
   loramesher::Result send_result = mesher->Send(destn, messageVector); // Will be broadcast if no node
+  delete(stringymessage); // msg is copied in createPacketAndSend
   if (!send_result) {
     Serial.print("LoRaMesher Failed to send:"); Serial.println(send_result.GetErrorMessage().c_str());
+    return false; 
   }
-  delete(stringymessage); // msg is copied in createPacketAndSend
+  return true;
 }
 
 // ========= UPSTREAM  ==================
@@ -475,8 +477,7 @@ void System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
 // but do have LoraMesher
 bool System_LoraMesher::publish(const String &topic, const String &payload, bool retain, int qos) {
   if (connected()) {  // Have upstream path
-    buildAndSend(frugal_iot.loramesher->gatewayNodeAddress, topic, payload, retain, qos);
-    return true;
+    return buildAndSend(frugal_iot.loramesher->gatewayNodeAddress, topic, payload, retain, qos);
   } else {
     return false; // Leave on queue if no gateway node. (shouldnt happen as should only be called when connected)
   }
@@ -521,8 +522,8 @@ const __FlashStringHelper* System_LoraMesher::checkRoleString() {
 
 // ========= DOWNSTREAM =================
 
-void System_LoraMesher::relayDownstream(uint16_t destn, const String &topic, const String &payload) {
-  buildAndSend(destn, topic, payload, false, QOS_DOWNSTREAM); // retain=12 gives a ascii character "<"
+bool System_LoraMesher::relayDownstream(uint16_t destn, const String &topic, const String &payload) {
+  return buildAndSend(destn, topic, payload, false, QOS_DOWNSTREAM); // retain=12 gives a ascii character "<"
 }
 
 // Catch downstream messages received over WiFi by MQTT and then matching a subscription we know
@@ -533,7 +534,9 @@ void System_LoraMesher::dispatchPath(const String &topicPath, const String &payl
     if (match_topic(topicPath, sub.topicPath)) { // Allows for + and # wildcards
       //Serial.print(F("XXX ")); Serial.print(topicPath); Serial.print(F(" matches ")); Serial.println(topicPath);
       // send over LoRaWan to subscriber
-      relayDownstream(sub.src, topicPath, payload);
+      if (!relayDownstream(sub.src, topicPath, payload)) {
+        Serial.print("XXX TODO-189 failed to send Lora downstream, think about requeueing");
+      }
     }
   }
 }

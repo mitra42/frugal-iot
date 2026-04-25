@@ -72,11 +72,11 @@ class System_LoraMesher : public System_Base {
     // == OUTGOING (up or downstream)
     uint16_t sentPacketCounter = 0; 
     bool findGatewayNode();
-    void buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos);
+    bool buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos);
     // == UPSTREAM 
     uint16_t gatewayNodeAddress = loramesher::kBroadcastAddress;
     // == DOWNSTREAM 
-    void relayDownstream(uint16_t destn, const String &topic, const String &payload);
+    bool relayDownstream(uint16_t destn, const String &topic, const String &payload);
     void dispatchPath(const String &topicPath, const String &payload) override;
  
     #ifdef TODO_189_NOT_NEEDED
