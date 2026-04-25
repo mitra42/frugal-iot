@@ -1,7 +1,7 @@
 #include "control_oled_loramesher.h"
 #include "Frugal-IoT.h"
 
-#ifdef SYSTEM_OLED_WANT // Only compile if have an OLED
+#if defined(SYSTEM_OLED_WANT) && defined(SYSTEM_LORAMESHER_WANT) // Only compile if have an OLED
 
 Control_Oled_LoRaMesher::Control_Oled_LoRaMesher(const char* name)
   :
