@@ -243,15 +243,17 @@ bool System_LoraMesher::initialize() {
     return 0;
 }
 
-// This is a workaround, for a bug in LM (April 2026) may not be used once thay bug is fixed
-void System_LoraMesher::PromoteToNetworkManager() {
+bool System_LoraMesher::in_network() {
   auto status = mesher->GetNetworkStatus();                                                                           
   using ProtocolState = loramesher::protocols::lora_mesh::INetworkService::ProtocolState;                                 
                                                                                                                           
-  bool in_network = (status.current_state == ProtocolState::NORMAL_OPERATION ||                                           
+  return (status.current_state == ProtocolState::NORMAL_OPERATION ||                                           
                      status.current_state == ProtocolState::NETWORK_MANAGER ||
                      status.current_state == ProtocolState::JOINING);
-  if (!in_network) {
+}
+// This is a workaround, for a bug in LM (April 2026) may not be used once that bug is fixed
+void System_LoraMesher::PromoteToNetworkManager() {
+  if (!in_network()) {
     Serial.println("LM setting NETWORK_MANAGER");
     if (!mesher->SetNodeRole(loramesher::NodeRole::NETWORK_MANAGER)) {
       Serial.println("Loramesher error setting Network Manager");
@@ -406,7 +408,7 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
 // addGatewayRole is called on receiver during setup, once route tables propogate this should start seeing the gateway
 bool System_LoraMesher::findGatewayNode() {
   #ifdef SYSTEM_LORAMESHER_DEBUG
-    Serial.println(F("LoRaMesher - findGatewayNode"));
+    //Serial.println(F("LoRaMesher - findGatewayNode"));
   #endif
   std::optional<loramesher::RouteEntry> gateway;
   gateway = mesher->GetClosestGateway();
@@ -435,7 +437,7 @@ bool System_LoraMesher::findGatewayNode() {
 // This is used by System_Messages to decide whether to use LoRaMesher (or MQTT)
 // Side effect of setting/clearing the gateway
 bool System_LoraMesher::connected() {
-  return findGatewayNode();
+  return (findGatewayNode() && in_network()); // Note gateway node appears before we LoRa is fully live
 }
 
 // Common part to both relayDownstream and publish (which is upstream)
@@ -486,7 +488,7 @@ bool System_LoraMesher::isGateway() {
 // TODO-23 consider interaction of this with sleep modes, when come back from sleep won't have 
 // TODO-23 MQTT yet, but also unclear if want a gateway role retained during sleep
 LoraMesherMode System_LoraMesher::checkRole() {
-  if (frugal_iot.mqtt->connected()) {
+  if (frugal_iot.mqtt->connected() && in_network()) { // Only marks gateway if both connected and Lora Network running
     if (!isGateway()) {
       #ifdef SYSTEM_LORAMESHER_DEBUG 
         Serial.println(F("Adding gateway role")); 
