@@ -442,6 +442,18 @@ bool System_LoraMesher::connected() {
 
 // Common part to both relayDownstream and publish (which is upstream)
 bool System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos) {
+  loramesher::Result ready = mesher->IsReadyToSend(destn);
+  if (!ready) {
+    #ifdef SYSTEM_LORAMESHER_DEBUG
+      static loramesher::LoraMesherErrorCode lasterrcode = loramesher::LoraMesherErrorCode::kSuccess;
+      auto errcode = ready.getErrorCode();
+      if (errcode != lasterrcode) {
+        lasterrcode = errcode;
+        Serial.print("Loramesher Not ready to send to "); Serial.print(destn, HEX); Serial.print(F(" ")); Serial.println(ready.GetErrorMessage().c_str());
+      }
+    #endif
+    return false;
+  }
   // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
   char qos_char = '0' + qos; // 0 1 2 as for MQTT incoming=12
   char retain_char = '0' + retain;
@@ -455,7 +467,6 @@ bool System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
   // Copy the string into the message array
   //memcpy(msg, stringymessage, msglen);
   //delete(stringymessage);
-  sentPacketCounter++;
   // TODO-189 look at other example for how to send a packet
   // Convert const uint8_t* to std::vector<uint8_t> for mesher->Send()
   // TODO-189 Suggest Jamie overloads Send to take a char* + size as the old one did
@@ -466,6 +477,7 @@ bool System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
     Serial.print("LoRaMesher Failed to send:"); Serial.println(send_result.GetErrorMessage().c_str());
     return false; 
   }
+  sentPacketCounter++;
   return true;
 }
 
