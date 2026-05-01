@@ -48,6 +48,7 @@ void Actuator_OLED::setup() {
   display.display(); // May not strictly be needed here, but good to ensure display is ready
 }
 
+// Two functions useful for debugging when cannot use Serial
 void Actuator_OLED::debug(const bool clear, const uint row, const char* s) {
     if (clear) { display.clearDisplay(); 
       UBaseType_t uxHighWaterMark;

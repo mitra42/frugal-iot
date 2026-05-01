@@ -24,7 +24,6 @@
  * 
  * Open issues with LoRaMesher 1.0.0
  * Need to integrate signals from LoRaMesher about when to sleep
- * Maybe ... should be adding gateway role earlier in process - seems to be after sending backlog of queue to MQTT
  * 
  * Open issues with this code
  * I think that a gateway node coming power cycling after a node is not going to see the subscription while the node thinks it sent it
@@ -183,7 +182,7 @@ bool System_LoraMesher::initialize() {
     Serial.println("LM setting node only");
     mesh_config.setNodeRole(loramesher::NodeRole::NODE_ONLY); // Set all nodes as NODE_ONLY then gateway promotes
     // TODO figure out how to dynamically adjust whether node manager or not - see https://github.com/LoRaMesher/LoRaMesher/discussions/97#discussioncomment-16290643
-    // Create LoraMesher with PingPong protocol
+    // Create LoraMesher with Mesh protocol
       mesher =
           loramesher::LoraMesher::Builder()
               .withRadioConfig(radioConfig)

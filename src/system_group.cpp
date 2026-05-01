@@ -45,7 +45,6 @@ void System_Group::recover() {
     fb->recover();
   }
 }
-#include "Frugal-IoT.h"
 
 // These just loop over the members of the group
 void System_Group::loop() {
