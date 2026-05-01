@@ -126,7 +126,7 @@
 
 // Define boards which have LoRa and should include LoRaMesher automatically
 // was defined(SYSTEM_LORAMESHER_BAND) // but that is a touch tricky to convert for arduino IDE
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) 
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_T_Beam)
   #define SYSTEM_LORAMESHER_WANT
 #endif
 

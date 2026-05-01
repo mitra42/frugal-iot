@@ -127,7 +127,6 @@ void System_Messages::sendOutgoingQueued() {
     System_Message &m = outgoing.front();
     if (m.isSubscription) {
       if (m.queuedSubscribe()) {
-        //heap_print(F("popping sub"));
         subscriptions.push_front(m);
         //heap_print(F("/popping sub"));
         outgoing.pop_front(); // Note this should delete m and free up the memory
@@ -145,6 +144,7 @@ void System_Messages::sendOutgoingQueued() {
     }
     // If succeeded then try and send any other queued messages
   }
+
 }
 // Upstream: queued => MQTT or LoRaMesher
 bool System_Message::queuedMessage() {
@@ -162,13 +162,15 @@ bool System_Message::queuedMessage() {
 
 // Upstream: Outgoing queue => MQTT || LoRaMesher
 bool System_Message::queuedSubscribe() {
+
   if (frugal_iot.mqtt->connected()) {
     return frugal_iot.mqtt->subscribe(topicPath);
   #ifdef SYSTEM_LORAMESHER_WANT
-  } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
+  } else { 
+    if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
     return frugal_iot.loramesher->publish("subscribe", topicPath,0,1);
   #endif
-  } 
+  } }
   return false; // Not connected, or failed to send over connection
 }
 

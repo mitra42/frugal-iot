@@ -324,12 +324,14 @@ String System_WiFi::SSID() {
 bool System_WiFi::connected() {
   return (status == WIFI_CONNECTED); 
 }
+
+unsigned long lasttime = 0L;
+
 void System_WiFi::loop() {
-  static unsigned long lasttime = millis();
-  if (millis() > (lasttime + 100)) { // Unclear what right time delay is here - 2000 works - so does 100 
+  if (millis() > (lasttime + 100)) { // Unclear what right time delay is here - 2000 works - so does 100
     lasttime = millis();
     stateMachine();
-  } 
+  }
 }
 void System_WiFi::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   // Setting on wifi e.g. esp1234/set/wifi/foo/bar is setting the wifi password to "bar" for ssid=foo

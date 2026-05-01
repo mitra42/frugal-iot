@@ -16,7 +16,7 @@
 #ifdef SYSTEM_LORAMESHER_WANT  // defined in platformio.ini
 
 #include <forward_list>
-#include "LoraMesher.h"
+#include "loramesher.hpp" // defines namespace loramesher 
 #include "system_base.h"
 
 class MeshSubscription {
@@ -33,44 +33,56 @@ enum LoraMesherMode {
     LORAMESHER_UNCONNECTED,
 };
 
-
 class System_LoraMesher : public System_Base {
   public:
     System_LoraMesher();
-    LoraMesher& radio;  // Accessed from processReceivedPackets so has to be public
+    std::unique_ptr<loramesher::LoraMesher> mesher = nullptr;
+    #ifdef SYSTEM_LORAMESHER_DEBUG
+      void printRouteTable();
+      void printNetworkStatus();
+    #endif
     // == INCOMING (up or downstream)
+    // public only because called from the callback - do not use externally
+    #ifdef SYSTEM_LORAMESHER_DEBUG
+      String lastTopicPath = String(); // Used by printAppData
+      String lastPayload = String(); // Used by printAppData
+    #endif
+    void processReceivedPacket(loramesher::AddressType source, const std::vector<uint8_t>& data); 
     // == OUTGOING (up or downstream)
-      bool connected();
-      // == UPSTREAM 
-      LoraMesherMode checkRole();
-      const __FlashStringHelper* checkRoleString();
-      // Match mqtt.client profile
-      bool publish(const String &topicPath, const String &payload, const bool retain, const int qos);
-      // == DOWNSTREAM 
-      // public only because called from the callback - do not use externally
-      void processReceivedPacket(AppPacket<uint8_t>* appPacket); 
-      #ifdef SYSTEM_LORAMESHER_DEBUG
-        String lastTopicPath = String(); // Used by printAppData
-        String lastPayload = String(); // Used by printAppData
-      #endif
-  protected:
-    LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();
-    uint16_t gatewayNodeAddress = BROADCAST_ADDR;
-    uint16_t rcvdPacketCounter = 0;
-    uint16_t sentPacketCounter = 0; 
-    unsigned long lostMQTTat;
-    std::forward_list<MeshSubscription> meshSubscriptions;
-    void setup() override;
-    void periodically() override;
-    void prepareForLightSleep();
-    // == INCOMING (up or downstream)
-    // == OUTGOING (up or downstream)
-      bool findGatewayNode();
-      void buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos);
+    bool connected();
+    // Match mqtt.client profile
+    bool publish(const String &topicPath, const String &payload, const bool retain, const int qos);
     // == UPSTREAM 
+    LoraMesherMode checkRole();
+    const __FlashStringHelper* checkRoleString();
     // == DOWNSTREAM 
-      void relayDownstream(uint16_t destn, const String &topic, const String &payload);
-      void dispatchPath(const String &topicPath, const String &payload) override;
+
+  protected:
+    unsigned long lostMQTTat;
+    bool initialize(); // Try and create the LoraMesher instance
+    void setup() override;
+    void prepareForLightSleep();
+    void periodically() override;
+    bool isGateway(); 
+    void createReceiveMessages();
+    void PromoteToNetworkManager();
+    bool in_network();
+    // == INCOMING (up or downstream)
+    uint16_t rcvdPacketCounter = 0;
+    std::forward_list<MeshSubscription> meshSubscriptions;
+    // == OUTGOING (up or downstream)
+    uint16_t sentPacketCounter = 0; 
+    bool findGatewayNode();
+    bool buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos);
+    // == UPSTREAM 
+    uint16_t gatewayNodeAddress = loramesher::kBroadcastAddress;
+    // == DOWNSTREAM 
+    bool relayDownstream(uint16_t destn, const String &topic, const String &payload);
+    void dispatchPath(const String &topicPath, const String &payload) override;
+ 
+    #ifdef TODO_189_NOT_NEEDED
+      LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();
+    #endif
 };
 
 #endif // SYSTEM_LORAMESHER_WANT
