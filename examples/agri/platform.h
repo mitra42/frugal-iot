@@ -24,10 +24,17 @@
 // [platformio]
 // name: Frugal-IoT Agri
 // description: Frugal IoT - Agriculture Sensor with SHT (temp and humidity) DS18B30 (soil temp) and Soil moisture
-// src_dir = .
+//src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
 // [common]
+
+// lib_deps = 
+    //Frugal-IoT@^0.0.19
+    // Libraries specific to this hardware - sensor, actuator, etc
+    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
+    
+
 // These are flags common to pretty much all frugal-iot projects
 // comment or uncomment debug flags based on need
 // build_flags_frugaliot =
@@ -82,11 +89,6 @@
 //     ${common.build_flags_main}
 //     ${common.build_flags_library}
 
-// lib_deps = 
-//     Frugal-IoT@^0.0.18
-    // Libraries specific to this hardware - sensor, actuator, etc
-    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
-    
 // selecting a platform for board descriotions
 // platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
 //platform_packages = framework-arduinoespressif32@3.3.2 ; also possible, but mostly unneeded and wont always work
@@ -151,15 +153,90 @@
 // board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
 // board_build.partitions = min_spiffs.csv
 // build_flags = 
+    // Default SDA=33 SCL=35 avoid TX=39 RX=37 SPI 7,9,11,12 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "s2_mini_1"
 // #define SYSTEM_POWER_DEBUG
-#define SENSOR_SOIL_PIN 8 ; orange labeled A // orange labeled A #define SENSOR_DS18B20_PIN 6 ; yellow labeled B // yellow labeled B#define SENSOR_BATTERY_PIN 10 ; Read battery voltage on pin 5 as its external // Read battery voltage on pin 5 as its external#define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 ; Power 1 & 2 are both 100k+100k // Power 1 & 2 are both 100k+100k#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)#define SENSOR_DS18B20_DEBUG
+#define SENSOR_SOIL_PIN 8 ; orange labeled A // orange labeled A #define SENSOR_DS18B20_PIN 6 ; yellow labeled D // yellow labeled D#define SENSOR_BATTERY_PIN 10 ; Read battery voltage on pin 10 as its external // Read battery voltage on pin 10 as its external#define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 ; Power 1 & 2 are both 100k+100k // Power 1 & 2 are both 100k+100k#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)#define SENSOR_DS18B20_DEBUG
+#define SENSOR_SOIL_DEBUG
+#define SENSOR_SHT_DEBUG
+
+// S2 Agri sensor including power control
+#endif // ARDUINO_LOLIN_S2_MINI
+
+#ifdef ARDUINO_LOLIN_S2_MINI
+// platform = ${common.platform_esp32}
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
+// board_build.partitions = min_spiffs.csv
+// build_flags = 
+    // Default SDA=33 SCL=35 avoid TX=39 RX=37 SPI 7,9,11,12 boot=0 and flashing=9-14,esp 11, 15-16 iff uses 32Mhz xtal; 39,40 iff use jtag debugging
+    // Soil power ~6mA 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "s2_mini_2"
+// #define SYSTEM_POWER_DEBUG
+#define SENSOR_SOIL_POWER0_PIN 1
+#define SENSOR_SOIL_POWER3v3_PIN 3
+#define SENSOR_SOIL_PIN 4
+#define SENSOR_SHT_POWER0_PIN 38
+#define SENSOR_SHT_POWER3v3_PIN 21
+    // SHT SDA 33, SCA 35 default I2C
+#define SENSOR_DS18B20_POWER0_PIN 7
+#define SENSOR_DS18B20_POWER3v3_PIN 8
+#define SENSOR_DS18B20_PIN 11
+#define SENSOR_BATTERY_PIN 16 ; Read battery voltage on pin 10 as its external // Read battery voltage on pin 10 as its external#define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 ; Power 1 & 2 are both 100k+100k // Power 1 & 2 are both 100k+100k#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)#define SENSOR_DS18B20_DEBUG
+#define SENSOR_SOIL_DEBUG
+#define SENSOR_SHT_DEBUG
+
+// S2 Agri sensor including power control
+#endif // ARDUINO_LOLIN_S2_MINI
+
+#ifdef ARDUINO_LOLIN_S2_MINI
+// platform = ${common.platform_esp32}
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
+// board_build.partitions = min_spiffs.csv
+// build_flags = 
+    // Default SDA=33 SCL=35 avoid TX=39 RX=37 SPI 7,9,11,12 boot=0 and flashing=9-14,esp 11, 15-16 iff uses 32Mhz xtal; 39,40 iff use jtag debugging
+    // Soil power ~6mA 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "s2_mini_5"
+// #define SYSTEM_POWER_DEBUG
+#define SENSOR_SOIL_POWER0_PIN 1
+#define SENSOR_SOIL_POWER3v3_PIN 4 ; shoild be 3 - miss-soldered! // shoild be 3 - miss-soldered!#define SENSOR_SOIL_PIN 3 ; should be 4 - miss-soldered! // should be 4 - miss-soldered!#define SENSOR_SHT_POWER0_PIN 38
+#define SENSOR_SHT_POWER3v3_PIN 21
+    // SHT SDA 33, SCA 35 default I2C
+#define SENSOR_DS18B20_POWER0_PIN 6
+#define SENSOR_DS18B20_POWER3v3_PIN 8
+#define SENSOR_DS18B20_PIN 10
+#define SENSOR_BATTERY_PIN 16 ; Read battery voltage on pin 10 as its external // Read battery voltage on pin 10 as its external#define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 ; Power 1 & 2 are both 100k+100k // Power 1 & 2 are both 100k+100k#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)#define SENSOR_DS18B20_DEBUG
 #define SENSOR_SOIL_DEBUG
 #define SENSOR_SHT_DEBUG
 
 // To add another board, copy example from another examples/*/platform.ini and edit in pins etc.
 
+// S2 Agri sensor including power control
+#endif // ARDUINO_LOLIN_S2_MINI
+
+#ifdef ARDUINO_LOLIN_S2_MINI
+// platform = ${common.platform_esp32}
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
+// board_build.partitions = min_spiffs.csv
+// build_flags = 
+    // Default SDA=33 SCL=35 avoid TX=39 RX=37 SPI 7,9,11,12 boot=0 and flashing=9-14,esp 11, 15-16 iff uses 32Mhz xtal; 39,40 iff use jtag debugging
+    // Soil power ~6mA 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "s2_mini_6"
+// #define SYSTEM_POWER_DEBUG
+#define SENSOR_SOIL_POWER0_PIN 1
+#define SENSOR_SOIL_POWER3v3_PIN 3
+#define SENSOR_SOIL_PIN 4 ; should be 4 - miss-soldered! // should be 4 - miss-soldered!#define SENSOR_SHT_POWER0_PIN 38
+#define SENSOR_SHT_POWER3v3_PIN 21
+    // SHT SDA 33, SCA 35 default I2C
+#define SENSOR_DS18B20_POWER0_PIN 6
+#define SENSOR_DS18B20_POWER3v3_PIN 10
+#define SENSOR_DS18B20_PIN 8
+#define SENSOR_BATTERY_PIN 16 ; Read battery voltage on pin 10 as its external // Read battery voltage on pin 10 as its external#define SENSOR_BATTERY_VOLTAGE_DIVIDER 2.0F ; Power 1 & 2 are both 100k+100k // Power 1 & 2 are both 100k+100k#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)#define SENSOR_DS18B20_DEBUG
+#define SENSOR_SOIL_DEBUG
+#define SENSOR_SHT_DEBUG
 
 // This is a test unit (for WeDoo), generic C3, 
 #endif // ARDUINO_LOLIN_S2_MINI

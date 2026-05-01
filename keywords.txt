@@ -74,6 +74,7 @@ ENSsend2	KEYWORD2
 ENSsendAndRead	KEYWORD2
 ENSsetMode	KEYWORD2
 LightWifi_setup	KEYWORD2
+PromoteToNetworkManager	KEYWORD2
 RSSI	KEYWORD2
 SSID	KEYWORD2
 StringValue	KEYWORD2
@@ -112,6 +113,7 @@ connectOneAndAllReset	KEYWORD2
 connected	KEYWORD2
 convert	KEYWORD2
 convertAndSet	KEYWORD2
+createReceiveMessages	KEYWORD2
 dateTime	KEYWORD2
 debug	KEYWORD2
 discover	KEYWORD2
@@ -120,16 +122,17 @@ dispatchIncomingQueued	KEYWORD2
 dispatchLeaf	KEYWORD2
 dispatchPath	KEYWORD2
 dispatchTwig	KEYWORD2
-displayMessage	KEYWORD2
 exists	KEYWORD2
 findGatewayNode	KEYWORD2
 floatValue	KEYWORD2
 formatBytes	KEYWORD2
 fullAdvertise	KEYWORD2
 heap_print	KEYWORD2
+in_network	KEYWORD2
 infrequently	KEYWORD2
 init	KEYWORD2
 initialize	KEYWORD2
+isGateway	KEYWORD2
 isOK	KEYWORD2
 isTimeSet	KEYWORD2
 leaf2path	KEYWORD2
@@ -143,7 +146,7 @@ ms5803CRC4	KEYWORD2
 now	KEYWORD2
 open	KEYWORD2
 path	KEYWORD2
-pause	KEYWORD2
+pauseWiFi	KEYWORD2
 periodically	KEYWORD2
 powerDown	KEYWORD2
 powerUp	KEYWORD2
@@ -151,6 +154,8 @@ pre_setup	KEYWORD2
 prepare	KEYWORD2
 prepareForLightSleep	KEYWORD2
 printDirectory	KEYWORD2
+printNetworkStatus	KEYWORD2
+printRouteTable	KEYWORD2
 processReceivedPacket	KEYWORD2
 publish	KEYWORD2
 queueFromCaptive	KEYWORD2
@@ -171,7 +176,7 @@ readUint16	KEYWORD2
 readValidateConvert	KEYWORD2
 readValidateConvertSet	KEYWORD2
 recover	KEYWORD2
-recoverFromLightSleep	KEYWORD2
+recoverWiFi	KEYWORD2
 relayDownstream	KEYWORD2
 remove	KEYWORD2
 rescan	KEYWORD2

@@ -28,6 +28,13 @@
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
 // [common]
+
+// lib_deps = 
+//     Frugal-IoT@^0.0.19
+    // Libraries specific to this hardware - sensor, actuator, etc
+    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
+    
+
 // These are flags common to pretty much all frugal-iot projects
 // comment or uncomment debug flags based on need
 // build_flags_frugaliot =
@@ -65,7 +72,6 @@
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
     // Specific to SHT 
-// #define SENSOR_SHT_SHT4x
 // #define SENSOR_SHT_ADDRESS 0x45 ; 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
 #define SYSTEM_OTA_PREFIX "sht30"
 
@@ -83,11 +89,6 @@
 //     ${common.build_flags_main}
 //     ${common.build_flags_library}
 
-// lib_deps = 
-//     Frugal-IoT@^0.0.18
-    // Libraries specific to this hardware - sensor, actuator, etc
-    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
-    
 // selecting a platform for board descriotions
 // platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
 //platform_packages = framework-arduinoespressif32@3.3.2 ; also possible, but mostly unneeded and wont always work
@@ -163,6 +164,16 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "d1_mini"
 
+// As used at Umah Pupa
+#endif // ARDUINO_ESP8266_WEMOS_D1MINI
+
+#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
+// board = d1_mini
+// platform = espressif8266
+// build_flags =
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "d1_mini_4x"
+#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
 #ifdef ARDUINO_ESP8266_WEMOS_D1MINI
@@ -210,6 +221,5 @@
     //https://github.com/LoRaMesher/LoRaMesher.git ; till isGatewayRole merged
 //     adafruit/Adafruit SSD1306@^2.5.0
 //     adafruit/Adafruit GFX Library@^1.10.13
-
 #endif // ARDUINO_LILYGO_T3_S3_V1_X
 

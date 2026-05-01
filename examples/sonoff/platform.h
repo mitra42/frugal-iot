@@ -79,7 +79,7 @@
 //     ${common.build_flags_library}
 
 // lib_deps = 
-//     Frugal-IoT@^0.0.18
+//     Frugal-IoT@^0.0.19
     // Libraries specific to this hardware - sensor, actuator, etc
     
 // selecting a platform for board descriotions
@@ -135,7 +135,7 @@
 #define SERIAL_BAUD 115200
 #define SYSTEM_BUTTONS_DEBUG
 #define SYSTEM_OTA_SUFFIX "r4"
-    // I2C and SPI aren't used, but will throw errors, at build, without these pins being set. 
+    // I2C and SPI aren't used, but will throw errors, at build, without these pins being set. TODO improve this
 #define PIN_WIRE_SDA -1
 #define SDA -1
 #define SCL -1
@@ -154,5 +154,6 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "s2_mini"
 #define SYSTEM_BUTTONS_DEBUG
-#define RELAY_BUILTIN 34 ; random place // random place#endif // ARDUINO_LOLIN_S2_MINI
+#define RELAY_BUILTIN 34 ; random place // random place// #define SYSTEM_OTA_MS 60000 ; Just for testing - check OTA every minute
+#endif // ARDUINO_LOLIN_S2_MINI
 
