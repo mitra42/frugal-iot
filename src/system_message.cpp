@@ -168,9 +168,10 @@ bool System_Message::queuedSubscribe() {
   #ifdef SYSTEM_LORAMESHER_WANT
   } else { 
     if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
-    return frugal_iot.loramesher->publish("subscribe", topicPath,0,1);
+      return frugal_iot.loramesher->publish("subscribe", topicPath,0,1);
+    }
   #endif
-  } }
+  }
   return false; // Not connected, or failed to send over connection
 }
 
