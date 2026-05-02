@@ -27,6 +27,9 @@
  * 
  * Open issues with this code
  * I think that a gateway node coming power cycling after a node is not going to see the subscription while the node thinks it sent it
+ * 
+ * Troubleshooting - this should really be in the Loramesher library docs!
+ * "Failed to start hardware" "Cannot start radio" - most often its not picking up the right SPI pins - MOSI,MISO etc
  */
 
 #include "_settings.h"
@@ -64,7 +67,7 @@
 #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
   //Defines LORA_RST LORA_IRQ LORA_SCK LORA_MISO LORA_MOSI LORA_CS in pins_arduino.h
   #define LORA_IO1 LORA_DIO1
-  #define LORA_RADIO_TYPE loramesher::RadioType::kSx1278
+  #define LORA_RADIO_TYPE loramesher::RadioType::kSx1276
 #elif defined(ARDUINO_heltec_wifi_lora_32_V3) // Note V1 and V2 used SX1276 or SX1278 chips depending on region
   // Defines: SCK MISO MOSI SS, which it uses for the SPI to the LoRa which LoRamesher picks up correctly since LORA_SCK etc not defined
  //RECOMMENDATION FROM PERPLEXITY: NSS 8, SCK 9, MOSI 10, MISO 11, RST 12, BUSY 13, and DIO1 14 was wrong
@@ -168,8 +171,8 @@ bool System_LoraMesher::initialize() {
                         LORA_CS,   // NSS pin
                         LORA_RST,  // Reset pin
                         LORA_IRQ,  // DIO0 pin
-                        LORA_IO1,   // DIO1 pin
-                        SCK,MISO,MOSI // Because I dont trust the convolutions in the hal layer of LoRaMesher that I think are going to get the wrong values.
+                        LORA_IO1   // DIO1 pin
+                        //SCK,MISO,MOSI // Because I dont trust the convolutions in the hal layer of LoRaMesher that I think are going to get the wrong values.
     );
     loramesher::LoRaMeshProtocolConfig mesh_config;
     #ifdef LORA_DUTY_CYCLE
