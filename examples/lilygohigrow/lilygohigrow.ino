@@ -30,10 +30,10 @@ void setup() {
   
   frugal_iot.sensors->add(new Sensor_DHT("DHT", GPIO_NUM_16, true));
   // Soil sensor 0%=4095 100%=0 pin=32 smooth=0 color=brown
-  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil", 32, 4095, -100.0/4095, "brown", true));
+  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil", 32, 4095, -100.0/4095, DEFAULT_soil_soil_color, true));
   // The salt sensor does not seem to work - got incorrect readings. TODO debug
   // Salt sensor 0%=0 100%=5000 pin=34 color=green
-  // frugal_iot.sensors->add(new Sensor_Analog("salt", "Salt", 34, 1, 0, 100, 0, 0.02, "green", true));
+  // frugal_iot.sensors->add(new Sensor_Analog("salt", "Salt", 34, 1, 0, 100, 0, 0.02, "green", true)); //TODO-213 add min/max/color defaults
   // actuator_ledbuiltin automatically added, but doesnt seem to work on LilyGo HiGrow
 
   // Battery sensor on pin 33 - but note battery didnt arrive so not tested TODO test

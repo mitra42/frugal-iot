@@ -14,6 +14,8 @@
   #include "platform.h" // should hold defines for Arduino that would, on PlatformIO, be in PlatformIO.ini
 #endif
 
+#include "defaults.h" // Auto generated file of parameter defaults
+
 #if !defined(PLATFORMIO)
   // On Arduiono do not have platformio.ini so presume these standards
   // TO-ADD-SENSOR TO-ADD-CONTROL TO-ADD-ACTUATOR TO-ADD-SYSTEm

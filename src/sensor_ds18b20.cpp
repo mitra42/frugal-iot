@@ -17,10 +17,12 @@ Our test are run at 3.3V though it is supposed to also run at 5V.
  * Color label "orange" for UI or visualization systems.
  */
 Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain, uint8_t power3v3_pin, uint8_t power0v_pin)
-    : Sensor_Float(id, name, 1, -55, 125, "orange", retain, power3v3_pin, power0v_pin),  // width=1 for 1 decimal place
-      _oneWire(pin),
-      _sensors(&_oneWire),
-      _index(index) {}
+  : Sensor_Float(id, name, 1, DEFAULT_ds18b20_ds18b20_min, DEFAULT_ds18b20_ds18b20_max, DEFAULT_ds18b20_ds18b20_color, retain, power3v3_pin, power0v_pin),  // width=1 for 1 decimal place
+    _oneWire(pin),
+    _sensors(&_oneWire),
+    _index(index) {
+  //TODO-213 fix this: setDefaultColor(DEFAULT_ds18b20_ds18b20_color);
+}
 
 /**
  * @brief Initializes DS18B20 sensor bus

@@ -45,14 +45,14 @@ void Control_Hysterisis::act() {
 Control_Hysterisis::Control_Hysterisis (const char* const id, const char * const name, float now, uint8_t width, float min, float max) 
 : Control(id, name,
   std::vector<IN*> {
-    new INfloat(id, "now", "Now", now, width, min, max, "black", true),
-    new INbool(id, "greater", "Greater than", true, "black", false),
-    new INfloat(id, "limit", "Limit", now, width, min, max, "black", true),
-    new INfloat(id, "hysterisis", "Hysterisis", 0, width, 0, max/2, "black", false)
+    new INfloat(id, "now", "Now", now, width, min, max, DEFAULT_controlhysteresis_now_min, DEFAULT_controlhysteresis_now_max, DEFAULT_controlhysteresis_now_color, true),
+    new INbool(id, "greater", "Greater than", true, DEFAULT_controlhysteresis_greater_color, false),
+    new INfloat(id, "limit", "Limit", now, width, min, max, DEFAULT_controlhysteresis_limit_min, DEFAULT_controlhysteresis_limit_max, DEFAULT_controlhysteresis_limit_color, true),
+    new INfloat(id, "hysterisis", "Hysterisis", 0, width, min, max, DEFAULT_controlhysteresis_hysterisis_min, DEFAULT_controlhysteresis_hysterisis_max, DEFAULT_controlhysteresis_hysterisis_color, false)
   },
   std::vector<OUT*> {
     // Note assumptions here, and in superclasses e.g. Control_Sonoff that output[0]="out" and is the output
-    new OUTbool(id, "out", "Out", false, "black", true)
+    new OUTbool(id, "out", "Out", false, DEFAULT_controlhysteresis_out_color, true)
   }
 ) {
   #ifdef CONTROL_HYSTERISIS_DEBUG

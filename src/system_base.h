@@ -50,6 +50,7 @@ class IO {
     String name; // Human readable name of this IO within the sensor, i.e. can duplicate across sensors
     const String topicTwig; // e.g. sht/temperature
     const char* color; // String passed to UX
+    const char* default_color;
     bool const wireable; // True if can wire this to/from others - note this flag is on the control, not on the sensor or actuator
     String wiredPath; // Topic also listening|sending to when wired
     IO();
@@ -105,6 +106,7 @@ class INfloat : public IN {
   public:
     INfloat(); 
     INfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
+    INfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, float default_min, float default_max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     uint8_t width; // Cant be protected because used in e.g. control_oled_sht.cpp 
@@ -112,6 +114,8 @@ class INfloat : public IN {
     float value;
     float min;
     float max;
+    float default_min;
+    float default_max;
     bool boolValue() override;
     virtual String StringValue();
     bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
@@ -138,12 +142,15 @@ class INuint16 : public IN {
     uint16_t value;
     //INuint16(); 
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, char const * const color, const bool wireable);
+    INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, uint16_t default_min, uint16_t default_max, char const * const color, const bool wireable);
     INuint16(const INuint16 &other);
     bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void discover() override;
   protected:
     uint16_t min;
     uint16_t max;
+    uint16_t default_min;
+    uint16_t default_max;
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     bool boolValue() override;
     virtual String StringValue();
@@ -207,8 +214,11 @@ class OUTfloat : public OUT {
     uint8_t width; // Not protected because used in e.g. captive or OLED output
     float min; // Not protected cos used in e.g. captive lines 
     float max; // Not protected cos used in e.g. captive lines 
+    float default_min;
+    float default_max;
     OUTfloat();
     OUTfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, char const * const color, const bool wireable);
+    OUTfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, float default_min, float default_max, char const * const color, const bool wireable);
     OUTfloat(const OUTfloat &other);
     void set(const float newvalue); // Set and send if changed
     bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
@@ -241,6 +251,8 @@ class OUTuint16 : public OUT {
     uint16_t value;
     uint16_t min;
     uint16_t max;
+    uint16_t default_min;
+    uint16_t default_max;
     OUTuint16();
     OUTuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool wireable);
     OUTuint16(const OUTuint16 &other);

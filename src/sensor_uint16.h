@@ -18,6 +18,7 @@ class Sensor_Uint16 : public Sensor {
     Sensor_Uint16(const char* const id, const char * const name, const uint8_t smooth, uint16_t min, uint16_t max, const char* color, bool retain, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
   protected:
     virtual uint16_t readUint16();
+    void setDefaultColor(char* color);
     bool validate(uint16_t newvalue);
     uint16_t convert(uint16_t newvalue);
     void set(const uint16_t newvalue);

@@ -21,7 +21,7 @@
 
 Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider, uint8_t power3v3_pin, uint8_t power0v_pin) 
 //(id, name, pin, width, min, max, offset, scale, color, retain) 
-: Sensor_Analog("battery", "Battery", pin_init, 0, 0, 4.5, 0, voltage_divider, "green", true, power3v3_pin, power0v_pin) //TODO-1
+: Sensor_Analog("battery", "Battery", pin_init, 0, DEFAULT_battery_battery_min, DEFAULT_battery_battery_max, 0, voltage_divider, DEFAULT_battery_battery_color, true, power3v3_pin, power0v_pin) //TODO-1
   {
       pinMode(pin, INPUT); // Maybe not needed, but really need to be sure for power
    }

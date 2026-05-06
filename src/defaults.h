@@ -8,6 +8,7 @@
 #define DEFAULT_battery_battery_color "green"
 #define DEFAULT_battery_battery_min 3000
 #define DEFAULT_battery_battery_max 5000
+#define DEFAULT_button_button_color "black"
 #define DEFAULT_controlblinken_timeon_color "black"
 #define DEFAULT_controlblinken_timeon_min 0
 #define DEFAULT_controlblinken_timeon_max 3600

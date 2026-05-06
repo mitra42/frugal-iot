@@ -77,7 +77,7 @@ void setup() {
   #ifndef SENSOR_LOADCELL_SCALE
     #define SENSOR_LOADCELL_SCALE 2000
   #endif
-  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 100000, "pink", true,
+  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", DEFAULT_loadcell_loadcell_max, DEFAULT_loadcell_loadcell_color, true,
     SENSOR_LOADCELL_DOUTPIN, SENSOR_LOADCELL_SCKPIN, SENSOR_LOADCELL_TIMES, SENSOR_LOADCELL_OFFSET, SENSOR_LOADCELL_SCALE)); // DOUT, SCK, times, offset, scale
 
   // MS5803 is set via jumper to 76 or 77
@@ -94,7 +94,6 @@ void setup() {
   // Salt sensor 0%=0 100%=5000 pin=34 color=green
   frugal_iot.sensors->add(new Sensor_Analog("salt", "Salt", 34, 1, 0, 100, 0, 0.02, "green", true));
   
-
   // ========= Actuators  ==============
   // Note Actuator_LedBuiltin added automatically if a pin is defined
 
@@ -106,7 +105,7 @@ void setup() {
       #define ACTUATOR_DIGITAL_PIN 19
     #endif
   #endif
-  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", ACTUATOR_DIGITAL_PIN, "purple"));
+  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", ACTUATOR_DIGITAL_PIN, DEFAULT_relay_on_color));
 
   // Controls that can be wire here, or in the UX
   Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
