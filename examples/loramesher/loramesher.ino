@@ -74,7 +74,6 @@ void loop()
 {
   if (frugal_iot.timeForPeriodic)
   {
-    Serial.print("XXX " __FILE__ " loop ");
     Serial.println(millis());
     // Things which happen once for each sensor read period go here.
     // But note, you do not have to put sensor loops etc here - the loop and periodic functions in
