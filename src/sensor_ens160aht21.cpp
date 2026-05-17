@@ -258,7 +258,8 @@ void Sensor_ensaht::readAndSetENS() {
 }
 void Sensor_ensaht::readValidateConvertSet() {
     readAndSetAHT(); // Note the temp and humiity from here are sent to the ENS
-    readAndSetENS();   
+    readAndSetENS();
+    markFresh();
 }
 
 /* 

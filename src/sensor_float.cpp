@@ -57,6 +57,7 @@ void Sensor_Float::readValidateConvertSet() {
   float vv = readValidateConvert();
   if (!isnan(vv)) {
     set(vv);                  // set - and send message
+    markFresh();
   }
 }
 

@@ -68,6 +68,7 @@ class Sensor_SHT : public Sensor_HT {
     void setup() override;
     void readValidateConvertSet() override; // Combines function of set(read()) since read gets two values from sensor
     bool validate(float temp, float humy);
+    bool isConnected() override;
   };
 
 #endif // SENSOR_SHT_H

@@ -47,6 +47,7 @@ void Sensor_Uint16::readValidateConvertSet() {
   if (validate(v)) {              // Check if its valid
     uint16_t vv = convert(v);        // Convert - e.g. scale and offset
     set(vv);                        // set - and send message
+    markFresh();
     #ifdef SENSOR_UINT16_DEBUG
       Serial.print(F(" converted ")); Serial.print(vv);
     #endif

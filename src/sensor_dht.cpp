@@ -112,5 +112,6 @@ void Sensor_DHT::readValidateConvertSet() {
     #endif
 
     set(temp, humy); // Will also send message via output->set()
+    markFresh();
   }
 }

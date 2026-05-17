@@ -57,6 +57,9 @@ bool Sensor_SHT::validate(float temp, float humy) {
     // Reject if both temperature and humidity are zero simultaneously
     return !(temp == 0.0f && humy == 0.0f);
 }
+bool Sensor_SHT::isConnected() {
+  return sht->isConnected();
+}
 void Sensor_SHT::readValidateConvertSet() {
   #ifdef SENSOR_SHT_DEBUG
     Serial.print(address, HEX);
@@ -82,6 +85,7 @@ void Sensor_SHT::readValidateConvertSet() {
       // Only set values if they pass validation
       if (validate(temp, humy)) {
           set(temp, humy);
+          markFresh();
       }
     #ifdef SENSOR_SHT_DEBUG
     } else {

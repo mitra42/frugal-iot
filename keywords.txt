@@ -221,3 +221,12 @@ wireTo	KEYWORD2
 writeConfigToFS	KEYWORD2
 writeConfigToFSandEcho	KEYWORD2
 writeValueToFSandEcho	KEYWORD2
+
+#######################################
+# Health methods (KEYWORD2)
+#######################################
+
+isConnected	KEYWORD2
+isFresh	KEYWORD2
+markFresh	KEYWORD2
+setFreshnessMs	KEYWORD2
