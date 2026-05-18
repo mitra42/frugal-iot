@@ -42,6 +42,9 @@ void Sensor::setFreshnessMs(uint32_t ms) {
 }
 
 void Sensor::markFresh() {
+  if (!connected && connectedOutput) {
+    connectedOutput->set(true);
+  }
   connected = true;
   #ifdef ESP32
     lastReadMs_ = frugal_iot.power->sleepSafeMillis();

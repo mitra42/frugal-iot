@@ -42,8 +42,8 @@ Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *w
 }
 
 void Sensor_SHT::setup() {
-  Sensor_HT::setup(); 
   sht->begin();
+  Sensor_HT::setup();
   #ifdef SENSOR_SHT_DEBUG
     Serial.print(F("address: ")); Serial.print(address, HEX);
     #ifndef SENSOR_SHT_SHT4x

@@ -22,7 +22,6 @@ class Sensor : public System_Base {
     virtual void powerDown(); // Optional power management - override in derived classes
     
     virtual bool isConnected() { return true; }
-    bool connected = true;
     uint32_t freshnessMs_ = 0;
     uint32_t lastReadMs_ = 0;
     OUTbool* connectedOutput = nullptr;
