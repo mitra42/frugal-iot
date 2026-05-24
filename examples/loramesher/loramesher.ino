@@ -52,7 +52,7 @@ void setup() {
   #endif
 
   // Add sensors, actuators and controls
-  #ifdef SYSTEM_LORAMESHER_SENDER
+  #ifdef SENSOR_SHT_WANT
     frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   #endif 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
@@ -74,7 +74,6 @@ void loop()
 {
   if (frugal_iot.timeForPeriodic)
   {
-    Serial.print("XXX " __FILE__ " loop ");
     Serial.println(millis());
     // Things which happen once for each sensor read period go here.
     // But note, you do not have to put sensor loops etc here - the loop and periodic functions in

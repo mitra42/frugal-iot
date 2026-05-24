@@ -27,6 +27,23 @@ System_WiFi::System_WiFi()
 : System_Base("wifi", "WiFi")
   {}
 
+#ifdef ESP8266
+// F() uses a GCC statement-expression (PSTR) which is not allowed at global scope on ESP8266.
+// Declare strings in PROGMEM manually and cast to __FlashStringHelper*.
+static const char _wsn0[] PROGMEM = "Starting";
+static const char _wsn1[] PROGMEM = "Disconnected";
+static const char _wsn2[] PROGMEM = "Reconnecting";
+static const char _wsn3[] PROGMEM = "Connected";
+static const char _wsn4[] PROGMEM = "Needscan";
+static const char _wsn5[] PROGMEM = "Scanning";
+static const char _wsn6[] PROGMEM = "Scanned";
+static const char _wsn7[] PROGMEM = "Connecting";
+static const char _wsn8[] PROGMEM = "Stabilizing";
+const __FlashStringHelper* wifiStatusNames[] = {
+  FPSTR(_wsn0), FPSTR(_wsn1), FPSTR(_wsn2), FPSTR(_wsn3), FPSTR(_wsn4),
+  FPSTR(_wsn5), FPSTR(_wsn6), FPSTR(_wsn7), FPSTR(_wsn8)
+};
+#else
 const __FlashStringHelper* wifiStatusNames[] = {
   F("Starting"),
   F("Disconnected"),
@@ -38,6 +55,7 @@ const __FlashStringHelper* wifiStatusNames[] = {
   F("Connecting"),
   F("Stabilizing")
 };
+#endif
 
 void System_WiFi::setStatus(WiFiStatusType newstatus) {
   if (status != newstatus) {

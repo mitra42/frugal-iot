@@ -507,6 +507,7 @@ LoraMesherMode System_LoraMesher::checkRole() {
     }
   if (frugal_iot.mqtt->connected() /* && in_network()*/) { // Only marks gateway if both connected and Lora Network running
     if (!isGateway()) {
+      lostMQTTat = 0;
       #ifdef SYSTEM_LORAMESHER_DEBUG 
         Serial.println(F("Adding gateway role")); 
       #endif
@@ -517,6 +518,7 @@ LoraMesherMode System_LoraMesher::checkRole() {
     return LORAMESHER_GATEWAY;
   } else { // Not connected to MQTT
     // Wait a little while before removing gateway role
+    if (!lostMQTTat) { lostMQTTat = millis(); } ; // If just lost gateway then flag when
     if (isGateway() && (millis() > (lostMQTTat + SYSTEM_LORAMESHER_MQTTWAIT))) {
       #ifdef SYSTEM_LORAMESHER_DEBUG
         Serial.println(F("LoRaMesher removing gateway role as lost MQTT"));
