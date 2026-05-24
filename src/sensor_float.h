@@ -18,7 +18,7 @@ class Sensor_Float : public Sensor {
     virtual bool validate(float v);
     virtual float convert(float v);
     virtual void set(const float vv);
-    void setDefaultColor(char* color);
+    void setDefaultColor(const char* color);
     void readValidateConvertSet() override;
     void captiveLines(AsyncResponseStream* response) override;
 };

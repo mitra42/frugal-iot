@@ -20,14 +20,14 @@ Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_
     outputs.push_back(output);
   };
 
-Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain, uint8_t power3v3_pin, uint8_t power0v_pin) {
-  Sensor_Float::Sensor_Float(id, name, width, min, max, min, max, color, retain, power3v3_pin, power0v_pin);
-}
+Sensor_Float::Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain, uint8_t power3v3_pin, uint8_t power0v_pin)
+  : Sensor_Float::Sensor_Float(id, name, width, min, max, min, max, color, retain, power3v3_pin, power0v_pin)
+{}
 // TODO_C++_EXPERT this next line is a completely useless one there just to stop the compiler barfing. See https://stackoverflow.com/questions/3065154/undefined-reference-to-vtable
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16 and sensor_ht
 float Sensor_Float::readFloat() {  shouldBeDefined(); return -1; }
 
-void Sensor_Float::setDefaultColor(char* color) {
+void Sensor_Float::setDefaultColor(const char* color) {
   output->default_color = color;
 }
 
