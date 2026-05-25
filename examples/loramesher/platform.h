@@ -5,14 +5,6 @@
 */
 
 // PlatformIO Project Configuration File
-//
-//   Build options: build flags, source filter
-//   Upload options: custom upload port, speed and extra flags
-//   Library options: dependencies, extra library storages
-//   Advanced options: extra scripting
-//
-// Please visit documentation for the other options and examples
-// https://docs.platformio.org/page/projectconf.html
 // 
 // Note the board name is defined in e.g. ~/.platformio/platforms/espressif32/boards/ttgo-lora32-v21.json
 // and variants are in ~/.platformio/packages/framework-arduinoespressif32/variants/
@@ -28,8 +20,10 @@
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
 // [common]
-// lib_deps =
-//     https://github.com/Jaimi5/frugal-iot.git#189-loramesher-new
+// lib_deps = 
+//     Frugal-IoT@^0.0.20
+    // Libraries specific to this hardware - sensor, actuator, etc
+    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
     //Comment/Uncomment below two lines to switch between live and "new" version
     //jaimi5/LoRaMesher
 //     https://github.com/loramesher/LoRaMesher.git#new_loramesher
@@ -135,8 +129,8 @@
 #define SYSTEM_OTA_PREFIX "loramesher"
 #define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x"
 // #define SYSTEM_WIFI_SCANPERIOD 50000 ; Scan infrequently else hard to debug
-#define SYSTEM_LORAMESHER_SENDER
-// Need min_spiffs.csv as SSD and GFX push it over the size
+#define LORAMESHER_LOG_LEVEL 2
+#define SENSOR_SHT_WANT // I2C Sensor// Need min_spiffs.csv as SSD and GFX push it over the size
 // board_build.partitions = min_spiffs.csv
 // lib_deps = 
 //     ${common.lib_deps}
@@ -175,7 +169,7 @@
 // #define OLED_SCL 22
 #define SYSTEM_OTA_PREFIX "loramesher"
 #define SYSTEM_OTA_SUFFIX "ttgo-t-beam"
-#define SYSTEM_WIFI_SCANPERIOD 50000
+// #define SYSTEM_WIFI_SCANPERIOD 50000
 // board_build.partitions = min_spiffs.csv
 // lib_deps =
 //     ${common.lib_deps}
