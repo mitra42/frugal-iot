@@ -13,6 +13,16 @@
  *
  * There is also some reflection - i.e. where an Upstream message is reflected downstream 
  * to a different subscriber instead of going via the broker. 
+ * 
+ * === REFACTOR NOTES = MESSAGES RATHER THAN STRINGS ====
+ * - incoming
+ * NEED TO MAP OUT INCOMING THEN DECIDE IF PREP (remove set etc, set variables like _twig)
+ * should prep - set isSet etc 
+ *  DISPATCH_TWIG
+ *  frugal_iot.dispatchTwig add dispatchTwig(Message) then when tested remove old version
+ *  and frugal_iot.dispatchPath add dispatchTwig(Message) then when tested remove old vers
+ *  then (maybe) marge into dispatch() as both just do loops
+ * - outgoing
  */
 
 #include <Arduino.h>
@@ -197,9 +207,17 @@ bool System_Messages::reSubscribeAll() {
 
 // ============ DOWNSTREAM ====== Broker -> MQTT -> (LoRaMesher) -> Modules
 
+bool System_Message::isThisNode() {
+  return (topicPath.startsWith(frugal_iot.messages->topicPrefix));  // includes trailing slash
+}
+String System_Message::topicTwig() {
+  String topicTwig = topicPath.substring(frugal_iot.messages->topicPrefix.length());
+  
+}
 // Downstream MQTT -> modules (note that LoRaMesher is a module that forwards based on subscriptions)
+// Only called by SMs.dispatchIncomingQueued
 void System_Message::dispatch() {
-  if (topicPath.startsWith(frugal_iot.messages->topicPrefix)) { // includes trailing slash
+  if (isThisNode()) {
     String topicTwig = topicPath.substring(frugal_iot.messages->topicPrefix.length()); 
     bool isSet;
     if (topicTwig.startsWith("set/")) {

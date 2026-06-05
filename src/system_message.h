@@ -31,6 +31,9 @@ class System_Message { // Only used for outgoing queued messages
     void dispatch();
     bool queuedMessage();
     bool queuedSubscribe();
+    // Only relevant/accurate on incoming
+    bool isThisNode(); // True if message topic matches the 'org/project/node/'
+    String topicTwig();  // Return e.g. temperature or temperature/max
 };
 
 class System_Messages : public System_Base {

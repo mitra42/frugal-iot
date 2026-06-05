@@ -78,6 +78,7 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
     System_Group::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
   }
 }
+// This is the loopback from outgoing
 void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
   // topic Twig  <actuatorId>/<ioID> or <actuatorId>/<ioID>/<param>
   // e.g. sht/temperature or sht/temperature/max
@@ -90,7 +91,9 @@ void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload,
     Serial.print(F("No slash found in topic: ")); Serial.println(topicTwig);
   }
 }
-
+void System_Frugal::dispatchTwig(System_Message msg) { // Message on stack ? Maybe will need to be *msg
+  msg.dispatchTwig();
+}
 
 void System_Frugal::discover() {
   messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
