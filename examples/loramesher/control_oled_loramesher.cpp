@@ -26,6 +26,8 @@ Control_Oled_LoRaMesher::Control_Oled_LoRaMesher(const char* name)
     display->print(frugal_iot.description);
     display->setTextSize(1);
     display->setCursor(0,10);
+    display->print(LMstatus[static_cast<int>(status.current_state)]);
+    display->print(F(" "));
     display->print(frugal_iot.loramesher->checkRoleString());
     display->setCursor(0,20);
     display->print("last packet:");

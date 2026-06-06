@@ -327,9 +327,23 @@ void System_LoraMesher::periodically() {
         Serial.println();
       }
   }
+  
+  // See .pio/libdeps/heltec_wifi_lora_32_V3/LoRaMesher/src/protocols/lora_mesh/interfaces/i_network_service.hpp
+
+  const __FlashStringHelper* LMstatus[] = {
+    F("Init"),
+    F("Disc"),
+    F("Join"),
+    F("Norm"),
+    F("NtMg"),
+    F("Fault"),
+    F("Elect")
+};
   void System_LoraMesher::printNetworkStatus() {
     auto status = mesher->GetNetworkStatus();
-    Serial.print(F("Network status: State: ")); Serial.print(static_cast<int>(status.current_state));
+    Serial.print(F("Network status: State: ")); 
+    // Serial.print(static_cast<int>(status.current_state)); // Numeric
+    Serial.print(LMstatus[static_cast<int>(status.current_state)]);
     Serial.print(F(", Manager: ")); Serial.print(status.network_manager, HEX);
     Serial.print(F(", Slot: ")); Serial.print(status.current_slot);
     Serial.print(F(", Nodes: ")); Serial.print(status.connected_nodes);
