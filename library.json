@@ -23,7 +23,8 @@
         { "name": "HX711", "owner": "robtillaart"},
         { "name": "ESPAsyncWebServer", "owner": "ESP32Async", "platforms": ["espressif8266", "espressif32"]},
         { "name": "DallasTemperature", "owner": "milesburton" },
-        { "name": "OneWire", "owner": "paulstoffregen" }
+        { "name": "OneWire", "owner": "paulstoffregen" },
+        { "name": "hd44780", "owner": "duinowitchery"}
     ],
     "frameworks": "arduino",
     "platforms": ["espressif32","espressif8266"],

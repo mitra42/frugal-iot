@@ -108,12 +108,12 @@ class INfloat : public IN {
     INfloat(const INfloat &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     uint8_t width; // Cant be protected because used in e.g. control_oled_sht.cpp 
+    virtual String StringValue();
   protected:
     float value;
     float min;
     float max;
     bool boolValue() override;
-    virtual String StringValue();
     bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     // Copy assignment operator
     /*

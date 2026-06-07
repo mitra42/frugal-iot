@@ -147,6 +147,29 @@ Paths follow the pattern `<device_id>/<leaf>`. `setPath` creates a writable endp
 | `Actuator_LEDBuiltin` | Built-in LED; added automatically on supported boards |
 | `Actuator_Digital` | Any digital output (relay, LED) |
 | `Actuator_OLED` | SSD1306 OLED; added automatically on supported boards |
+| `Actuator_LCD` | HD44780 LCD via I2C backpack; requires `ACTUATOR_LCD_WANT` |
+
+### Actuator_LCD
+
+Drives an HD44780-compatible character LCD via a PCF8574 I2C backpack. Uses `I2C_WIRE` with
+auto-detected I2C address. Enable with `-D ACTUATOR_LCD_WANT`.
+
+```cpp
+// Enable in platformio.ini:
+//   build_flags = -D ACTUATOR_LCD_WANT
+// For a 20x4 display (default is 16x2):
+//   build_flags = -D ACTUATOR_LCD_WANT -D ACTUATOR_LCD_COLS=20 -D ACTUATOR_LCD_ROWS=4
+
+frugal_iot.actuators->add(new Actuator_LCD());
+
+// Wire a two-line message to it (lines separated by ASCII newline):
+frugal_iot.messages->setPath("lcd/message");
+// Or wire from another component's output:
+someControl->outputs[0]->wireTo(frugal_iot.messages->setPath("lcd/message"));
+```
+
+The `message` input accepts a `String`; lines are split on `\n` (ASCII 10). Lines longer than
+`ACTUATOR_LCD_COLS` are silently truncated. The display is cleared on every update.
 
 ## Available Controls
 

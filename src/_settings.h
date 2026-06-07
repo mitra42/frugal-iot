@@ -61,7 +61,7 @@
 #if defined(ACTUATOR_RELAY_DEBUG) || defined(ACTUATOR_LEDBUILTIN_DEBUG)
   #define ACTUATOR_DIGITAL_DEBUG
 #endif
-#if defined(ACTUATOR_DIGITAL_DEBUG)
+#if defined(ACTUATOR_DIGITAL_DEBUG) || defined(ACTUATOR_LCD_DEBUG)
   #define ACTUATOR_DEBUG
 #endif
 
