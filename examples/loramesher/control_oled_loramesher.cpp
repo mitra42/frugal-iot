@@ -2,12 +2,11 @@
 #include "Frugal-IoT.h"
 
 #if defined(SYSTEM_OLED_WANT) && defined(SYSTEM_LORAMESHER_WANT) // Only compile if have an OLED
-
 Control_Oled_LoRaMesher::Control_Oled_LoRaMesher(const char* name)
   :
   //temperature(new INfloat("control_oled_sht", "temperature", "Temperature", 0, 1, 0, 50, "#ff0000", true)),
   //humidity(new INfloat("control_oled_sht", "humidity", "Humidity", 0, 1, 0, 100, "#0000ff", true)),
-  battery(new INfloat("control_oled_loramesher", "battery", "Battery", 0, 0, 0, 5000, "#00ff00", true)),
+  battery(new INfloat("control_oled_loramesher", "battery", "Battery", 0, 0, DEFAULT_control_oled_loramesher_battery_min, DEFAULT_control_oled_loramesher_battery_max, "#00ff00", true)),
   //Control_Oled("control_oled_sht", name, { })
   Control_Oled("control_oled_loramesher", name, std::vector<IN*> { })
   {
@@ -26,9 +25,13 @@ Control_Oled_LoRaMesher::Control_Oled_LoRaMesher(const char* name)
     display->print(frugal_iot.description);
     display->setTextSize(1);
     display->setCursor(0,10);
+    auto status = frugal_iot.loramesher->mesher->GetNetworkStatus();
     display->print(LMstatus[static_cast<int>(status.current_state)]);
     display->print(F(" "));
     display->print(frugal_iot.loramesher->checkRoleString());
+    display->print(F(" "));
+    display->print(status.connected_nodes);
+    // nodes count
     display->setCursor(0,20);
     display->print("last packet:");
     #ifdef SYSTEM_LORAMESHER_DEBUG
