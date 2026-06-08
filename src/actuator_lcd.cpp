@@ -22,10 +22,16 @@ void Actuator_LCD::setup() {
   I2C_WIRE.begin(I2C_SDA, I2C_SCL);
   int status = lcd.begin(ACTUATOR_LCD_COLS, ACTUATOR_LCD_ROWS);
   if (status) {
+    // .pio/libdeps/*/hd44780/hd44780.h
+    Serial.print("LCD setup failed, status="); Serial.println(status);
     setupFailed();
     return;
   }
   lcd.clear();
+  #ifdef ACTUATOR_LCD_DEBUG
+    lcd.setCursor(0, 0);
+    lcd.print("Hello World");
+  #endif
 }
 
 void Actuator_LCD::act() {
@@ -36,6 +42,7 @@ void Actuator_LCD::act() {
     String line = (nl >= 0) ? remaining.substring(0, nl) : remaining;
     if (line.length() > 0) {
       lcd.setCursor(0, row);
+      Serial.print("XXX LCD:"),Serial.println(line.substring(0, ACTUATOR_LCD_COLS));
       lcd.print(line.substring(0, ACTUATOR_LCD_COLS));
     }
     if (nl < 0) break;
