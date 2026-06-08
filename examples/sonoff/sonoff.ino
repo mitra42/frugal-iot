@@ -52,7 +52,11 @@ void Control_Sonoff::act() {
 System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff switch");
 
 void setup() {
-
+  // Battery sensor has to come before pre_setup, all others should come after
+  #ifdef SENSOR_BATTERY_PIN
+    frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
+  #endif
+  
   // Configure power handling - type, cycle_ms, wake_ms 
   // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
   // Power_Loop= awake all the time; 

@@ -16,7 +16,7 @@
 System_Frugal frugal_iot("dev", "developers", "SHT30", "SHT30 Temperature and Humidity Sensor"); 
 
 void setup() {
-  // Battery sensor has to come before pre_setup, all others should come after TODO-194 make this change on other .ino
+  // Battery sensor has to come before pre_setup, all others should come after
   #ifdef SENSOR_BATTERY_PIN
     frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
   #endif

@@ -141,8 +141,8 @@ void System_Power::dispatchTwig(const String &topicSensorId, const String &topic
 // TODO allow mode change from captive
 void System_Power::captiveLines(AsyncResponseStream* response) {
   //TODO-23x add mode switch
-  frugal_iot.captive->addNumber(response, id, "cycle", String(cycle_ms), "Cycle time (ms)", 0, (60*60*1000));
-  frugal_iot.captive->addNumber(response, id, "wake", String(wake_ms), "Wake time (ms)", 20000, cycle_ms);
+  frugal_iot.captive->addNumber(response, id, "cycle", String(cycle_ms), T->CycleTime, 0, (60*60*1000));
+  frugal_iot.captive->addNumber(response, id, "wake", String(wake_ms), T->WakeTime, 20000, cycle_ms);
 }
 
 // ================== manage a set of sleep-safe times - see control_blinken for example of usage =====================

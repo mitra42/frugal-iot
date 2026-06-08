@@ -189,6 +189,7 @@ sendOutgoingQueued	KEYWORD2
 sendRemote	KEYWORD2
 sendWired	KEYWORD2
 set	KEYWORD2
+setDefaultColor	KEYWORD2
 setLanguage	KEYWORD2
 setPath	KEYWORD2
 setStatus	KEYWORD2

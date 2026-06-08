@@ -267,6 +267,7 @@ void System_Captive::addNumber(AsyncResponseStream* response, const char* id, co
 void System_Captive::addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, bool init, String label) {
   // weirdness here is because absence of check, means absence of input being sent, so send 0 with optional 1 following
   //response->print(String(F("<input type=hidden name='" ))+ id + "/" + topicTwig + "' value='0'>");  
+  //label should be translated, but is typically the local name of the module
   response->print(String(F("<p><label>")) + label + ": <input type=checkbox name='" + id + "/" + topicTwig + "' value='1'" + (init ? " checked" : "") + " onchange=\"s(this.name,this.checked?this.value:'0')\"></label></p>");  
 }
 void System_Captive::addButton(AsyncResponseStream* response, const char* id, const char* topicTwig, String val, String label) {

@@ -28,6 +28,11 @@
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
 // [common]
+// lib_deps = 
+//     Frugal-IoT@^0.0.20
+    // Libraries specific to this hardware - sensor, actuator, etc
+    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
+ 
 // These are flags common to pretty much all frugal-iot projects
 // comment or uncomment debug flags based on need
 // build_flags_frugaliot =
@@ -77,12 +82,7 @@
 //     ${common.build_flags_frugaliot}
 //     ${common.build_flags_main}
 //     ${common.build_flags_library}
-
-// lib_deps = 
-//     Frugal-IoT@^0.0.19
-    // Libraries specific to this hardware - sensor, actuator, etc
-    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
-    
+   
 // selecting a platform for board descriotions
 // platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
 //platform_packages = framework-arduinoespressif32@3.3.2 ; also possible, but mostly unneeded and wont always work

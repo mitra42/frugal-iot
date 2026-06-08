@@ -50,5 +50,5 @@ void Actuator_Digital::setup() {
 }
 
 void Actuator_Digital::captiveLines(AsyncResponseStream* response) {
-  frugal_iot.captive->addBool(response, id, input->id, input->value, name);
+  frugal_iot.captive->addBool(response, id, input->id, input->value, name); // Name should be local, doesnt need translating
 }
