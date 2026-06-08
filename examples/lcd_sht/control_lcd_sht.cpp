@@ -29,17 +29,8 @@ Control_LCD_SHT::Control_LCD_SHT()
 }
 
 void Control_LCD_SHT::act() {
-  
   String line1 = temperature->StringValue() + "\xDF" "C";
   String line2 = humidity->StringValue() + "%RH";
-  
-  /*
-  char buf[ACTUATOR_LCD_COLS + 1];
-  dtostrf(temperature->floatValue(), 0, temperature->width, buf);
-  String line1 = String(buf) + "\xDFC";
-  dtostrf(humidity->floatValue(), 0, humidity->width, buf);
-  String line2 = String(buf) + "%RH";
-  */
   message->set(line1 + "\n" + line2);
 }
 

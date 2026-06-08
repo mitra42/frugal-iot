@@ -14,7 +14,7 @@
 #include "control_lcd_sht.h"
 
 #ifndef REMOTE_SHT_PATH
-  #define REMOTE_SHT_PATH "dev/developers/esp32-XXXX/" // Replace with actual remote node prefix
+  #define REMOTE_SHT_PATH "dev/lotus/esp8266-fb94bb/" // Replace with actual remote node prefix
 #endif
 
 System_Frugal frugal_iot("dev", "developers", "lcd", "LCD SHT Display");
