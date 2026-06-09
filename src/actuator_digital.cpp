@@ -24,6 +24,10 @@ Actuator_Digital::Actuator_Digital(const char * const id, const char * const nam
   inputs.push_back(input);
 };
 
+void Actuator_Digital::setDefaultColor(char* color) {
+  input->default_color = color;
+}
+
 void Actuator_Digital::act() {
   digitalWrite(pin, input->value ? HIGH : LOW); // Relay pin on Wemos shield is NOT inverted
 }

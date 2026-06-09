@@ -60,9 +60,9 @@ void setup() {
 
   // ========= Actuators ==============
   // Heating relay on HEATING_PIN
-  frugal_iot.actuators->add(new Actuator_Digital("heating", "Heating", HEATING_PIN, "red"));
+  frugal_iot.actuators->add(new Actuator_Digital("heating", "Heating", HEATING_PIN, "red"));  // note UX module "heating" is not defined
   // Humidifier relay on HUMIDIFIER_PIN
-  frugal_iot.actuators->add(new Actuator_Digital("humidifier", "Humidifier", HUMIDIFIER_PIN, "blue"));
+  frugal_iot.actuators->add(new Actuator_Digital("humidifier", "Humidifier", HUMIDIFIER_PIN, "blue")); // note UX module "humidifier" is not defined
 
   // ========= Controls ==============
   // Climate control: temp_setpoint=22C, temp_hysteresis=1C, humidity_setpoint=50%, humidity_hysteresis=5%

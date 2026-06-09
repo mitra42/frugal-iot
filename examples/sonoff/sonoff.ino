@@ -22,7 +22,7 @@ class Control_Sonoff : public Control_Hysterisis {
 // Build on the Hysterisis control, expand it so the long button drops it out of manual. 
 Control_Sonoff::Control_Sonoff() : 
   Control_Hysterisis("controlhysterisis", "Control", 50, 1, 0, 100),
-  manual(new OUTbool(id, "manual", "Manual",false,"red",true)) {
+  manual(new OUTbool(id, "manual", "Manual",false,"black",true)) { //TODO-213 handle case of valid topics but not in a module
   outputs.push_back(manual); // Note push_back as dont change outputs[0] being the output result.
 }
 
@@ -79,7 +79,7 @@ void setup() {
   // Add sensors, actuators and controls
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
   // Relay on Sonoff is on pin 12
-  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, "purple"));
+  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, DEFAULT_relay_on_color));
 
   // Add the control and wire to the relay and the LED.
   Control_Sonoff* cs = new Control_Sonoff();
@@ -89,9 +89,8 @@ void setup() {
   // https://github.com/mitra42/frugal-iot/issues/159
   cs->outputs[1]->sendWired(); // Send current value to LED 
   // Create a button, and wire its single and long clicks to the control.
-  Sensor_Button* button = new Sensor_Button("button", "Button", BUILTIN_BUTTON, "red");
+  Sensor_Button* button = new Sensor_Button("button", "Button", BUILTIN_BUTTON, DEFAULT_button_button_color);
   frugal_iot.buttons->add(button);
-  //frugal_iot.buttons->outputs.push_back(new OUTuint16(frugal_iot.buttons->id, "state", "State", SONOFF_OFF, SONOFF_OFF, SONOFF_ON, "black", true));
   button->longClick->wireTo(frugal_iot.messages->setPath("controlhysterisis/manual/cycle")); // Value sent is "1" so goes into manual
   button->singleClick->wireTo(frugal_iot.messages->setPath("controlhysterisis/out/cycle"));
   

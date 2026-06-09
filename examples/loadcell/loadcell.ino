@@ -61,7 +61,7 @@ void setup() {
   
   // Add a new sensor max=2000, color="pink", retain=true, DOUTpin=0, SCKpin=1, times=10, offset=0, scale=2000
   
-  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 100000, "pink", true,
+  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 100000, DEFAULT_loadcell_loadcell_color, true,
     SENSOR_LOADCELL_DOUTPIN, SENSOR_LOADCELL_SCKPIN, SENSOR_LOADCELL_TIMES, SENSOR_LOADCELL_OFFSET, SENSOR_LOADCELL_SCALE)); // DOUT, SCK, times, offset, scale
   
   // TODO-134 add a pair of buttons here hooked up to tare and calibrate

@@ -71,13 +71,13 @@ Sensor_ensaht::Sensor_ensaht(const char* const id, const char* const name, TwoWi
 { // TODO-101 try movign some of these into part above
   aht = new System_I2C(SENSOR_ENSAHT_AHTI2C, &I2C_WIRE);
   // AHT21
-  outputs.push_back(temperature = new OUTfloat(id, "temperature", "Temperature", 0, 0, 0, 455, "red", false));
-  outputs.push_back(humidity = new OUTfloat(id, "humidity", "Humidity", 0, 0, 0, 100, "blue", false));
+  outputs.push_back(temperature = new OUTfloat(id, "temperature", "Temperature", 0, 0, DEFAULT_ensaht_temperature_min, DEFAULT_ensaht_temperature_max, DEFAULT_ensaht_temperature_color, false));
+  outputs.push_back(humidity = new OUTfloat(id, "humidity", "Humidity", 0, 0, DEFAULT_ensaht_humidity_min, DEFAULT_ensaht_humidity_max, DEFAULT_ensaht_humidity_color, false));
   // ENS160
   ens = new System_I2C(SENSOR_ENSAHT_ENSI2C, &I2C_WIRE); // I2C object at this address
-  outputs.push_back(aqi = new OUTuint16(id, "aqi", "AQI", 0, 0, 5, "purple", false)); // TODO-101 set min/max
-  outputs.push_back(tvoc = new OUTuint16(id, "tvoc", "TVOC", 0, 0, 200, "green", false)); // TODO-101 set min/max
-  outputs.push_back(eco2 = new OUTuint16(id, "eco2", "eCO2", 0, 300, 900, "brown", false)); // TODO-101 set min/max
+  outputs.push_back(aqi = new OUTuint16(id, "aqi", "AQI", 0, DEFAULT_ensaht_aqi_min, DEFAULT_ensaht_aqi_max, DEFAULT_ensaht_aqi_color, false)); // TODO-101 set min/max
+  outputs.push_back(tvoc = new OUTuint16(id, "tvoc", "TVOC", 0, DEFAULT_ensaht_tvoc_min, DEFAULT_ensaht_tvoc_max, DEFAULT_ensaht_tvoc_color, false)); // TODO-101 set min/max
+  outputs.push_back(eco2 = new OUTuint16(id, "eco2", "eCO2", 0, DEFAULT_ensaht_eco2_min, DEFAULT_ensaht_eco2_max, DEFAULT_ensaht_eco2_color, false)); // TODO-101 set min/max
   outputs.push_back(aqi500 = new OUTuint16(id, "aqi500", "AQI500", 0, 0, 500, "brown", false)); // Only valid on ENS161  // TODO-101 set min/max
 }
 

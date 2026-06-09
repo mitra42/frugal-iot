@@ -14,7 +14,11 @@ Sensor_Uint16::Sensor_Uint16(const char* const id, const char * const name, cons
   : Sensor(id, name, retain, power3v3_pin, power0v_pin), smooth(smooth_init) {
     outputs.push_back(output = new OUTuint16(id, id, name, 0, min, max, color, false)); //TODO-25-22apr pass color
   }
-    
+
+void Sensor_Uint16::setDefaultColor(char* color) {
+  output->default_color = color;
+}
+
 
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16
 uint16_t Sensor_Uint16::readUint16() { shouldBeDefined(); return -1; }
