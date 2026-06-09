@@ -21,9 +21,14 @@ void Actuator_OLED::setup() {
   System_Base::setup();
 
   // TODO experimenting for heltec - parameterize this 
-  #ifdef OLED_ENABLE_LOW
+  #ifdef OLED_ENABLE_LOW //  e.g. Heltec Lora Wifi V3
     pinMode(OLED_ENABLE_LOW,OUTPUT);
-    digitalWrite(OLED_ENABLE_LOW,LOW);
+    digitalWrite(OLED_ENABLE_LOW,LOW); // This is on heltec v3, note v3.2 wants it high
+    //delay(20);
+  #endif
+  #ifdef OLED_ENABLE_HIGH // e.g. Heltec Lora Wifi V3.2
+    pinMode(OLED_ENABLE_HIGH,OUTPUT);
+    digitalWrite(OLED_ENABLE_HIGH,HIGH); // This is on heltec v3, note v3.2 wants it high
     //delay(20);
   #endif
   // Nothing to read from disk so not calling readConfigFromFS 

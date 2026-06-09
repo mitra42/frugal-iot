@@ -35,12 +35,16 @@
   #define OLED_SCL SCL
   #define OLED_RST_X -1 // Doesnt appear to exist on this board
 #elif defined(ARDUINO_heltec_wifi_lora_32_V3)
+  #if defined(  ) // Note this is made up - there is no board or variant files for this significant rev yet - define in platformio.ini for now
+    #define OLED_ENABLE_HIGH Vext // Need to set this low to turn on OLED
+  #else
+    #define OLED_ENABLE_LOW Vext // Need to set this low to turn on OLED
+  #endif
   // SDA=41 SCL=42 - assume that is "Wire" and used for LoRa, assume this is Wire1
   #define OLED_WIRE Wire1
   #define OLED_SDA SDA_OLED //TODO submit a PR to make this consistent across boards
   #define OLED_SCL SCL_OLED //TODO submit a PR to make this consistent across boards
   #define OLED_RST_X RST_OLED
-  #define OLED_ENABLE_LOW Vext // Need to set this low to turn on OLED
 #elif defined(ARDUINO_T_Beam)
   // T-Beam has no built-in OLED; users wire one externally on the default I2C pins (21/22).
   // OLED_SDA and OLED_SCL are expected to be set via build_flags (e.g. -D OLED_SDA=21 -D OLED_SCL=22).

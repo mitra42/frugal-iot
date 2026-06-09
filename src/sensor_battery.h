@@ -11,6 +11,11 @@
  * 
  * Note that BAT_VOLT is defined in /Users/mitra/.platformio/packages/framework-arduinoespressif32/variants/lilygo_t3_s3_sx1262/pins_arduino.h and maybe useful as a semi-standard
  * grep BAT_VOLT /Users/mitra/.platformio/packages/framework-arduinoespressif32/variants/\*./pins_arduino.h shows VBAT_VOLTAGE BAT_VOLTS or BAT_VOLT BAT_MEASURE VBAT_SENSE BATT_ADC_PIN BAT_ADC_PIN BAT_ADC BATT_MONITOR BAT_MEASURE BAT_LV on different boards
+ *
+ * Note its often not this simple e.g. on Heltecs it needs enabling and is different
+ * on per revision (even minor revision). The docs at 
+ * https://digitalconcepts.net.au/arduino/index.php?op=Battery#wifilora3 are really good
+ * on Heltecs.
  */
 
 #ifndef SENSOR_BATTERY_H
@@ -28,8 +33,8 @@
     #define SENSOR_BATTERY_VOLTAGE_DIVIDER 6.6 // From LilyGo code, not testd yet
   #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
     #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2.0 // Almost certainly wrong ! Define for this board TO-ADD-BOARD
-  #elif defined(ARDUINO_heltec_wifi_lora_32_V3)
-    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 4.9
+  #elif defined(ARDUINO_heltec_wifi_lora_32_V3) // Also for V3.2
+    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 4.9. // (390k + 100l) / 100k
   #else 
     //Leave undefined and don't allow default constructor
   #endif 
@@ -54,6 +59,24 @@
   // See https://github.com/espressif/arduino-esp32/issues/11953 for suggestion to fix this problem
 #endif
 
+// Some boards need the voltage divider enabling (probably also good to stop leakage)
+
+#ifndef SENSOR_BATTERY_POWER0_PIN
+  #if defined(ARDUINO_heltec_wifi_lora_32_V3) && !defined(ARDUINO_heltec_wifi_lora_32_V32) // Note this is defined in platformio, its not (yet) and official different board file
+      #define SENSOR_BATTERY_POWER0_PIN 37
+  #else
+    #define SENSOR_BATTERY_POWER0_PIN 0xFF // Special value to not do anything
+  #endif
+#endif
+
+#ifndef SENSOR_BATTERY_POWER3v3_PIN
+  #if defined(ARDUINO_heltec_wifi_lora_32_V3) && defined(ARDUINO_heltec_wifi_lora_32_V32) // Note this is defined in platformio, its not (yet) and official different board file
+      #define SENSOR_BATTERY_POWER3v3_PIN 37
+  #else
+    #define SENSOR_BATTERY_POWER3v3_PIN 0xFF // Special value to not do anything
+  #endif
+#endif
+
 #ifdef ESP8266 // analogReadMilliVolts not available
 
     #define ANALOG_READ_RANGE 1024 // This can be board/chip specific, 
@@ -73,7 +96,7 @@
 class Sensor_Battery : public Sensor_Analog {
   public: 
     #if defined(SENSOR_BATTERY_SCALE) && defined(SENSOR_BATTERY_PIN)
-      Sensor_Battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_SCALE, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF); // Where SENSOR_BATTERY_PIN and SENSOR_BATTERY_VOLTAGE_DIVIDER defined 
+      Sensor_Battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_SCALE, uint8_t power3v3_pin = SENSOR_BATTERY_POWER3v3_PIN, uint8_t power0v_pin = SENSOR_BATTERY_POWER0_PIN); // Where SENSOR_BATTERY_PIN and SENSOR_BATTERY_VOLTAGE_DIVIDER defined 
     #else
       Sensor_Battery(const uint8_t pin, float_t voltage_divider, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
     #endif
