@@ -22,8 +22,8 @@
 // custom common options
 
 // [platformio]
-// name: Frugal-IoT All 
-// description: Frugal IoT - Combination file - compile and link everything for testing
+// name: Frugal-IoT LCD SHT Display
+// description: Frugal IoT - LCD display showing remote SHT sensor readings
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
@@ -93,8 +93,12 @@
 // project specific flags that are needed by the library 
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
-// build_flags_library = 
-#define SYSTEM_OTA_PREFIX "all"
+// build_flags_library =
+#define SYSTEM_OTA_PREFIX "lcd_sht"
+#define ACTUATOR_LCD_WANT
+#define ACTUATOR_LCD_DEBUG
+// #define ACTUATOR_LCD_COLS 20  ; uncomment for 20x4 display (default is 16x2)
+// #define ACTUATOR_LCD_ROWS 4
 
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
@@ -206,7 +210,6 @@
 // board_build.variant = lilygo_t3_s3_sx127x
 // build_flags = 
 //     ${common.build_flags}
-//    ${common.build_flags_loramesher}
 #define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x"
 //     ${common.build_flags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size

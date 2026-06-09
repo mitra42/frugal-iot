@@ -22,29 +22,43 @@
 // [common]
 // lib_deps = 
 //     Frugal-IoT@^0.0.20
-    // Libraries specific to this hardware - sensor, actuator, etc
-    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
+
+// lib_deps_lora = 
+//     Frugal-IoT@^0.0.20
     //Comment/Uncomment below two lines to switch between live and "new" version
     //jaimi5/LoRaMesher
-//     https://github.com/loramesher/LoRaMesher.git#new_loramesher
+//     https://github.com/loramesher/LoRaMesher.git
     //https://github.com/mitra42/LoRaMesher.git#new_loramesher
+
+// lib_deps_lora_oled =
+//     ${common.lib_deps_lora}
+//     adafruit/Adafruit SSD1306@^2.5.0
+//     adafruit/Adafruit GFX Library@^1.10.13
+    // adafruit/Adafruit BusIO@^1.14.0  ; transitive dep of Adafruit GFX; chain LDF doesn't auto-resolve; unclear if still needed for any boards
 
 // These are flags common to pretty much all frugal-iot projects
 // comment or uncomment debug flags based on need
 // build_flags_frugaliot =
-// #define LANGUAGE_DEFAULT "id"' ; Default language for portal (if not en) - de,nl,id currently supported
-#define SYSTEM_DISCOVERY_DEBUG
-#define SYSTEM_FRUGAL_DEBUG
-// #define SYSTEM_LITTLEFS_DEBUG
-// #define SYSTEM_MEMORY_DEBUG
-#define SYSTEM_MQTT_DEBUG
-// #define SYSTEM_OTA_DEBUG
-// #define SYSTEM_POWER_DEBUG
+    //Flags usable in specific modules - mostly here for documentation
+// #define LANGUAGE_DEFAULT "id"'         ; Default language for portal (if not en) - de,nl,id currently supported
+// #define ACTUATOR_LCD_WANT
+// #define ACTUATOR_LCD_COLS 20            ; uncomment for 20x4 display (default is 16x2)
+// #define ACTUATOR_LCD_ROWS 4
+// #define SENSOR_BATTERY_PIN 0            ; Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
+// #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 ; Typically use a 100k+100k voltage divider on external power supplies
+// #define SENSOR_DS18B20_PIN 6
+// #define SENSOR_SHT_ADDRESS 0x45         ; 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
+// #define SENSOR_SHT_SHT4x
+// #define SENSOR_SOIL_PIN 4
 // #define SYSTEM_SD_WANT
-// #define SYSTEM_TIME_DEBUG
-#define SYSTEM_WIFI_DEBUG
-// #define SYSTEM_WIFI_SCANPERIOD 50000        ; Slow down scanning so can easier debug LoRaMesher
+// #define SYSTEM_WIFI_SCANPERIOD 50000    ; Slow down scanning so can easier debug captive portal
+    // Flags from other libraries
+// #define LORAMESHER_LOG_LEVEL 2          ; 0 is LOTS of debugging 2 is less
+// #define DEBUG_DNSSERVER
+    // Uncomment debug lines before as needed
+// #define ACTUATOR_LCD_DEBUG
 // #define CONTROL_BLINKEN_DEBUG
+// #define CONTROL_CLIMATE_DEBUG
 // #define CONTROL_LOGGERFS_DEBUG
 // #define SENSOR_BH1750_DEBUG
 // #define SENSOR_DHT_DEBUG
@@ -52,9 +66,16 @@
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
 // #define SENSOR_SHT_DEBUG
-// #define SENSOR_SHT_ADDRESS 0x45 ; 0x44 (default) or 0x45 for D1 shields
 // #define SENSOR_SOIL_DEBUG
-// #define DEBUG_DNSSERVER
+// #define SYSTEM_DISCOVERY_DEBUG
+// #define SYSTEM_FRUGAL_DEBUG
+// #define SYSTEM_LITTLEFS_DEBUG
+// #define SYSTEM_MEMORY_DEBUG
+// #define SYSTEM_MQTT_DEBUG
+// #define SYSTEM_OTA_DEBUG
+// #define SYSTEM_POWER_DEBUG
+// #define SYSTEM_TIME_DEBUG
+// #define SYSTEM_WIFI_DEBUG
 
 // flags that apply only in main (the library can see them, but doesnt need them)
 // build_flags_main = 
@@ -63,6 +84,7 @@
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
+#define SYSTEM_OTA_PREFIX "loramesher"
 
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
@@ -97,9 +119,8 @@
 // lib_ldf_mode = chain
 //Uncomment, if seeing exceptions need decoding
 //build_type = debug
-//monitor_filters = esp32_exception_decoder
 // monitor_filters = esp8266_exception_decoder
-//extra_scripts = download_fs.py ; only works if have this file in root of project - from https://github.com/maxgerhardt/pio-esp32-esp8266-filesystem-downloader/blob/main/download_fs.py
+// monitor_filters = esp32_exception_decoder
 
 
 #ifdef ARDUINO_TTGO_LoRa32_v21new
@@ -107,16 +128,11 @@
 // board = ttgo-lora32-v21 ; defines ARDUINO_TTGO_LoRa32_v21new
 // build_flags = 
 //     ${common.build_flags}
-#define SYSTEM_OTA_PREFIX "lorareceiver"
 #define SYSTEM_OTA_SUFFIX "ttgo-lora32-v21"
-// #define SYSTEM_WIFI_SCANPERIOD 50000 ; Scan infrequently else hard to debug
-// Need min_spiffs.csv as SSD and GFX push it over the size
-// board_build.partitions = min_spiffs.csv
+//     ${common.build_flags_loramesher}
+// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps = 
-//     ${common.lib_deps}
-//     adafruit/Adafruit SSD1306@^2.5.0
-//     adafruit/Adafruit GFX Library@^1.10.13
-
+//     ${common.lib_deps_lora_oled}
 
 #endif // ARDUINO_TTGO_LoRa32_v21new
 
@@ -126,33 +142,51 @@
 // board_build.variant = lilygo_t3_s3_sx127x
 // build_flags = 
 //     ${common.build_flags}
-#define SYSTEM_OTA_PREFIX "loramesher"
 #define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x"
-// #define SYSTEM_WIFI_SCANPERIOD 50000 ; Scan infrequently else hard to debug
-#define LORAMESHER_LOG_LEVEL 2
-#define SENSOR_SHT_WANT // I2C Sensor// Need min_spiffs.csv as SSD and GFX push it over the size
-// board_build.partitions = min_spiffs.csv
+//     ${common.build_flags_loramesher}
+// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps = 
-//     ${common.lib_deps}
-//     adafruit/Adafruit SSD1306@^2.5.0
-//     adafruit/Adafruit GFX Library@^1.10.13
+//     ${common.lib_deps_lora_oled}
 
 #endif // ARDUINO_LILYGO_T3_S3_V1_X
+
+#ifdef ARDUINO_LILYGO_T3_S3_V1_X
+// platform = ${common.platform_esp32}
+// board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
+// board_build.variant = lilygo_t3_s3_sx127x
+// build_flags = 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x_sht"
+#define SENSOR_SHT_WANT // I2C Sensor//     ${common.build_flags_loramesher}
+// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
+// lib_deps = 
+//     ${common.lib_deps_lora_oled}
+
+#endif // ARDUINO_LILYGO_T3_S3_V1_X
+
+#ifdef TODO_HELTEC_WIFI_LORA_32_V3
+// platform = ${common.platform_esp32}
+// board = heltec_wifi_lora_32_V3  ; there are not yet separate board and variant files for V3
+// build_flags = 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v3"
+//     ${common.build_flags_loramesher}
+// board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
+// lib_deps = 
+//     ${common.lib_deps_lora_oled}
+
+#endif // TODO_HELTEC_WIFI_LORA_32_V3
 
 #ifdef TODO_HELTEC_WIFI_LORA_32_V3
 // platform = ${common.platform_esp32}
 // board = heltec_wifi_lora_32_V3  ; defines ARDUINO_heltec_wifi_lora_32_V3; default variant heltec_wifi_lora_32_V3
 // build_flags = 
 //     ${common.build_flags}
-#define SYSTEM_OTA_PREFIX "loramesher"
-#define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v3"
-// #define SYSTEM_WIFI_SCANPERIOD 50000 ; Scan infrequently else hard to debug LoRa
-#define LORAMESHER_LOG_LEVEL 2
+#define ARDUINO_heltec_wifi_lora_32_V32 // If using 3.2 board uncomment this#define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v32"
+//     ${common.build_flags_loramesher}
 // board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
 // lib_deps = 
-//     ${common.lib_deps}
-//     adafruit/Adafruit SSD1306@^2.5.0
-//     adafruit/Adafruit GFX Library@^1.10.13
+//     ${common.lib_deps_lora_oled}
 
 #endif // TODO_HELTEC_WIFI_LORA_32_V3
 
@@ -160,22 +194,29 @@
 // platform = ${common.platform_esp32}
 // board = ttgo-t-beam ; defines ARDUINO_T_Beam
 // build_flags =
-//     ${common.build_flags_frugaliot}
-//     ${common.build_flags_main}
-//     ${common.build_flags_library}
-//     ${common.build_flags_loramesher}
-    // OLED is intentionally disabled as user added, uncomment if required
-// #define OLED_SDA 21
-// #define OLED_SCL 22
-#define SYSTEM_OTA_PREFIX "loramesher"
+//     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "ttgo-t-beam"
-// #define SYSTEM_WIFI_SCANPERIOD 50000
-// board_build.partitions = min_spiffs.csv
+//     ${common.build_flags_loramesher}
+//  oard_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps =
-//     ${common.lib_deps}
-//     adafruit/Adafruit SSD1306@^2.5.0
-//     adafruit/Adafruit GFX Library@^1.10.13
-//     adafruit/Adafruit BusIO@^1.14.0  ; transitive dep of Adafruit GFX; chain LDF doesn't auto-resolve
+//     ${common.lib_deps_lora}
+
+#endif // TODO_TTGO_T_BEAM
+
+#ifdef TODO_TTGO_T_BEAM
+// platform = ${common.platform_esp32}
+// board = ttgo-t-beam ; defines ARDUINO_T_Beam
+// build_flags =
+//     ${common.build_flags}
+    // OLED is an add on for tbeams
+#define OLED_SDA 21
+#define OLED_SCL 22
+#define SYSTEM_OTA_SUFFIX "ttgo-t-beam-oled"
+//     ${common.build_flags_loramesher}
+// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
+// lib_deps =
+//     ${common.lib_deps_lora_oled}
+
 
 // This option doesnt actually do LoRa but its to support testing
 #endif // TODO_TTGO_T_BEAM
@@ -188,5 +229,5 @@
 // build_flags =
 //     -DCONFIG_ESP_INT_WDT_TIMEOUT_MS=2000
 //     -DCONFIG_ESP_TASK_WDT_TIMEOUT_S=10
-    #endif // TODO_ESP32DEV
+#endif // TODO_ESP32DEV
 

@@ -28,32 +28,65 @@
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
 // [common]
+// lib_deps = 
+//     Frugal-IoT@^0.0.20
+    // Libraries specific to this hardware - sensor, actuator, etc
+    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
+ 
+// lib_deps_lora = 
+//     ${common.lib_deps}
+    //Comment/Uncomment below two lines to switch between live and "new" version
+    //jaimi5/LoRaMesher
+//     https://github.com/loramesher/LoRaMesher.git
+    //https://github.com/mitra42/LoRaMesher.git#new_loramesher
+
+// lib_deps_lora_oled =
+//     ${common.lib_deps_lora}
+//     adafruit/Adafruit SSD1306@^2.5.0
+//     adafruit/Adafruit GFX Library@^1.10.13
+    // adafruit/Adafruit BusIO@^1.14.0  ; transitive dep of Adafruit GFX; chain LDF doesn't auto-resolve; unclear if still needed for any boards
+
+
 // These are flags common to pretty much all frugal-iot projects
 // comment or uncomment debug flags based on need
 // build_flags_frugaliot =
-// #define LANGUAGE_DEFAULT "id"' ; Default language for portal (if not en) - de,nl,id currently supported
-#define SYSTEM_DISCOVERY_DEBUG
-#define SYSTEM_FRUGAL_DEBUG
-// #define SYSTEM_LITTLEFS_DEBUG
-// #define SYSTEM_MEMORY_DEBUG
-#define SYSTEM_MQTT_DEBUG
-// #define SYSTEM_OTA_DEBUG
-// #define SYSTEM_POWER_DEBUG
+    //Flags usable in specific modules - mostly here for documentation
+// #define LANGUAGE_DEFAULT "id"'         ; Default language for portal (if not en) - de,nl,id currently supported
+// #define ACTUATOR_LCD_WANT
+// #define ACTUATOR_LCD_COLS 20            ; uncomment for 20x4 display (default is 16x2)
+// #define ACTUATOR_LCD_ROWS 4
+// #define SENSOR_BATTERY_PIN 0            ; Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
+// #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 ; Typically use a 100k+100k voltage divider on external power supplies
+// #define SENSOR_DS18B20_PIN 6
+// #define SENSOR_SHT_ADDRESS 0x45         ; 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
+// #define SENSOR_SHT_SHT4x
+// #define SENSOR_SOIL_PIN 4
 // #define SYSTEM_SD_WANT
-// #define SYSTEM_TIME_DEBUG
-#define SYSTEM_WIFI_DEBUG
-// #define SYSTEM_WIFI_SCANPERIOD 50000        ; Slow down scanning so can easier debug captive portal
+// #define SYSTEM_WIFI_SCANPERIOD 50000    ; Slow down scanning so can easier debug captive portal
+    // Flags from other libraries
+// #define LORAMESHER_LOG_LEVEL 2          ; 0 is LOTS of debugging 2 is less
+// #define DEBUG_DNSSERVER
+    // Uncomment debug lines before as needed
+// #define ACTUATOR_LCD_DEBUG
 // #define CONTROL_BLINKEN_DEBUG
+// #define CONTROL_CLIMATE_DEBUG
 // #define CONTROL_LOGGERFS_DEBUG
 // #define SENSOR_BH1750_DEBUG
 // #define SENSOR_DHT_DEBUG
-#define SENSOR_ENSAHT_DEBUG
+// #define SENSOR_ENSAHT_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
 // #define SENSOR_SHT_DEBUG
-// #define SENSOR_SHT_ADDRESS 0x45 ; 0x44 (default) or 0x45 for D1 shields
 // #define SENSOR_SOIL_DEBUG
-// #define DEBUG_DNSSERVER
+// #define SYSTEM_DISCOVERY_DEBUG
+// #define SYSTEM_FRUGAL_DEBUG
+// #define SYSTEM_LITTLEFS_DEBUG
+// #define SYSTEM_MEMORY_DEBUG
+// #define SYSTEM_MQTT_DEBUG
+// #define SYSTEM_OTA_DEBUG
+// #define SYSTEM_POWER_DEBUG
+// #define SYSTEM_TIME_DEBUG
+// #define SYSTEM_WIFI_DEBUG
 
 // flags that apply only in main (the library can see them, but doesnt need them)
 // build_flags_main = 
@@ -69,7 +102,7 @@
     // LoRaMesher, for now, has a lot of flags here, will move some of this to main.cpp
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
-#define SYSTEM_LORAMESHER_BAND 915.0F ; 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers// #define CORE_DEBUG_LEVEL 5 ; To get lots of debugging out of LoraMesher
+#define SYSTEM_LORAMESHER_FREQUENCY 915.0F ; 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers// #define CORE_DEBUG_LEVEL 5 ; To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC
 
 // Flags specific to project, but vary across dev-boards or variants
@@ -77,12 +110,7 @@
 //     ${common.build_flags_frugaliot}
 //     ${common.build_flags_main}
 //     ${common.build_flags_library}
-
-// lib_deps = 
-//     Frugal-IoT@^0.0.20
-    // Libraries specific to this hardware - sensor, actuator, etc
-    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
-    
+   
 // selecting a platform for board descriotions
 // platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
 //platform_packages = framework-arduinoespressif32@3.3.2 ; also possible, but mostly unneeded and wont always work
@@ -99,21 +127,22 @@
 //Uncomment, if seeing exceptions need decoding
 // build_type = debug
 // monitor_filters = esp8266_exception_decoder
+// monitor_filters = esp32_exception_decoder
 
 
 #ifdef ARDUINO_LOLIN_C3_PICO
 // platform = ${common.platform_esp32}
 // board = lolin_c3_mini ; use c3_mini board defs - but note define below which is special cased
 // board_build.variant = lolin_c3_pico
+// board_build.partitions = min_spiffs.csv
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "c3_pico"
 #define ARDUINO_LOLIN_C3_PICO // if using C3_PICO use lolin_c3_mini as board and define here    // PR submitted https://github.com/espressif/arduino-esp32/pull/11851
     // Until then patched into variant file but if that is auto-updated, can define below
-    // Remvoe this comment when PR accepted, and new version of Arudino-esp32 gets installed
+    // Remove this comment when PR accepted, and new version of Arudino-esp32 gets installed
     // See Home(bottom left)/Platforms/espresif32/updates (none as of 2025sep23 even though PR merged)
 // #define RGB_BUILTIN_LED_COLOR_ORDER LED_COLOR_ORDER_RGB
-// board_build.partitions = min_spiffs.csv
 
 #endif // ARDUINO_LOLIN_C3_PICO
 
@@ -155,6 +184,8 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "d1_mini"
 
+// ===== LORA BOARDS - ALL ESP32 ======================================
+
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
 #ifdef ARDUINO_TTGO_LoRa32_v21new
@@ -162,16 +193,12 @@
 // board = ttgo-lora32-v21 ; defines ARDUINO_TTGO_LoRa32_v21new
 // build_flags = 
 //     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "ttgo-lora32-v21"
 //     ${common.build_flags_loramesher}
-#define SYSTEM_OTA_SUFFIX "ttgo"
-// board_build.partitions = min_spiffs.csv
+// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps = 
-//     ${common.lib_deps}
-//     jaimi5/LoRaMesher
-    //https://github.com/LoRaMesher/LoRaMesher.git ; till radio.isGatewayRole published (its merged)
-//     adafruit/Adafruit SSD1306@^2.5.0
-//     adafruit/Adafruit GFX Library@^1.10.13
-    
+//     ${common.lib_deps_lora_oled}
+
 #endif // ARDUINO_TTGO_LoRa32_v21new
 
 #ifdef ARDUINO_LILYGO_T3_S3_V1_X
@@ -180,16 +207,80 @@
 // board_build.variant = lilygo_t3_s3_sx127x
 // build_flags = 
 //     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x"
 //     ${common.build_flags_loramesher}
-#define SYSTEM_OTA_SUFFIX "t3s3"
-// Need min_spiffs.csv as SSD and GFX push it over the size
-// board_build.partitions = min_spiffs.csv
+// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps = 
-//     ${common.lib_deps}
-//     jaimi5/LoRaMesher
-    //https://github.com/LoRaMesher/LoRaMesher.git ; till isGatewayRole merged
-//     adafruit/Adafruit SSD1306@^2.5.0
-//     adafruit/Adafruit GFX Library@^1.10.13
+//     ${common.lib_deps_lora_oled}
 
 #endif // ARDUINO_LILYGO_T3_S3_V1_X
+
+#ifdef ARDUINO_LILYGO_T3_S3_V1_X
+// platform = ${common.platform_esp32}
+// board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
+// board_build.variant = lilygo_t3_s3_sx127x
+// build_flags = 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x_sht"
+#define SENSOR_SHT_WANT // I2C Sensor//     ${common.build_flags_loramesher}
+// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
+// lib_deps = 
+//     ${common.lib_deps_lora_oled}
+
+#endif // ARDUINO_LILYGO_T3_S3_V1_X
+
+#ifdef TODO_HELTEC_WIFI_LORA_32_V3
+// platform = ${common.platform_esp32}
+// board = heltec_wifi_lora_32_V3  ; there are not yet separate board and variant files for V3
+// build_flags = 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v3"
+//     ${common.build_flags_loramesher}
+// board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
+// lib_deps = 
+//     ${common.lib_deps_lora_oled}
+
+#endif // TODO_HELTEC_WIFI_LORA_32_V3
+
+#ifdef TODO_HELTEC_WIFI_LORA_32_V3
+// platform = ${common.platform_esp32}
+// board = heltec_wifi_lora_32_V3  ; defines ARDUINO_heltec_wifi_lora_32_V3; default variant heltec_wifi_lora_32_V3
+// build_flags = 
+//     ${common.build_flags}
+#define ARDUINO_heltec_wifi_lora_32_V32 // If using 3.2 board uncomment this#define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v32"
+//     ${common.build_flags_loramesher}
+// board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
+// lib_deps = 
+//     ${common.lib_deps_lora_oled}
+
+#endif // TODO_HELTEC_WIFI_LORA_32_V3
+
+#ifdef TODO_TTGO_T_BEAM
+// platform = ${common.platform_esp32}
+// board = ttgo-t-beam ; defines ARDUINO_T_Beam
+// build_flags =
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "ttgo-t-beam"
+//     ${common.build_flags_loramesher}
+//  oard_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
+// lib_deps =
+//     ${common.lib_deps_lora}
+
+#endif // TODO_TTGO_T_BEAM
+
+#ifdef TODO_TTGO_T_BEAM
+// platform = ${common.platform_esp32}
+// board = ttgo-t-beam ; defines ARDUINO_T_Beam
+// build_flags =
+//     ${common.build_flags}
+    // OLED is an add on for tbeams
+#define OLED_SDA 21
+#define OLED_SCL 22
+#define SYSTEM_OTA_SUFFIX "ttgo-t-beam-oled"
+//     ${common.build_flags_loramesher}
+// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
+// lib_deps =
+//     ${common.lib_deps_lora_oled}
+
+#endif // TODO_TTGO_T_BEAM
 

@@ -28,22 +28,34 @@
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
 // [common]
+// lib_deps = 
+//     Frugal-IoT@^0.0.20
+    // Libraries specific to this hardware - sensor, actuator, etc
+    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
+ 
 // These are flags common to pretty much all frugal-iot projects
 // comment or uncomment debug flags based on need
 // build_flags_frugaliot =
-// #define LANGUAGE_DEFAULT "id"' ; Default language for portal (if not en) - de,nl,id currently supported
-#define SYSTEM_DISCOVERY_DEBUG
-#define SYSTEM_FRUGAL_DEBUG
-// #define SYSTEM_LITTLEFS_DEBUG
-// #define SYSTEM_MEMORY_DEBUG
-#define SYSTEM_MQTT_DEBUG
-// #define SYSTEM_OTA_DEBUG
-// #define SYSTEM_POWER_DEBUG
+    //Flags usable in specific modules - mostly here for documentation
+// #define LANGUAGE_DEFAULT "id"'         ; Default language for portal (if not en) - de,nl,id currently supported
+// #define ACTUATOR_LCD_WANT
+// #define ACTUATOR_LCD_COLS 20            ; uncomment for 20x4 display (default is 16x2)
+// #define ACTUATOR_LCD_ROWS 4
+// #define SENSOR_BATTERY_PIN 0            ; Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
+// #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 ; Typically use a 100k+100k voltage divider on external power supplies
+// #define SENSOR_DS18B20_PIN 6
+// #define SENSOR_SHT_ADDRESS 0x45         ; 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
+// #define SENSOR_SHT_SHT4x
+// #define SENSOR_SOIL_PIN 4
 // #define SYSTEM_SD_WANT
-// #define SYSTEM_TIME_DEBUG
-#define SYSTEM_WIFI_DEBUG
-// #define SYSTEM_WIFI_SCANPERIOD 50000        ; Slow down scanning so can easier debug captive portal
+// #define SYSTEM_WIFI_SCANPERIOD 50000    ; Slow down scanning so can easier debug captive portal
+    // Flags from other libraries
+// #define LORAMESHER_LOG_LEVEL 2          ; 0 is LOTS of debugging 2 is less
+// #define DEBUG_DNSSERVER
+    // Uncomment debug lines before as needed
+// #define ACTUATOR_LCD_DEBUG
 // #define CONTROL_BLINKEN_DEBUG
+// #define CONTROL_CLIMATE_DEBUG
 // #define CONTROL_LOGGERFS_DEBUG
 // #define SENSOR_BH1750_DEBUG
 // #define SENSOR_DHT_DEBUG
@@ -51,9 +63,16 @@
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
 // #define SENSOR_SHT_DEBUG
-// #define SENSOR_SHT_ADDRESS 0x45 ; 0x44 (default) or 0x45 for D1 shields
 // #define SENSOR_SOIL_DEBUG
-// #define DEBUG_DNSSERVER
+// #define SYSTEM_DISCOVERY_DEBUG
+// #define SYSTEM_FRUGAL_DEBUG
+// #define SYSTEM_LITTLEFS_DEBUG
+// #define SYSTEM_MEMORY_DEBUG
+// #define SYSTEM_MQTT_DEBUG
+// #define SYSTEM_OTA_DEBUG
+// #define SYSTEM_POWER_DEBUG
+// #define SYSTEM_TIME_DEBUG
+// #define SYSTEM_WIFI_DEBUG
 
 // flags that apply only in main (the library can see them, but doesnt need them)
 // build_flags_main = 
@@ -69,7 +88,7 @@
     // LoRaMesher, for now, has a lot of flags here, will move some of this to main.cpp
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
-#define SYSTEM_LORAMESHER_BAND 915.0F ; 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers// #define CORE_DEBUG_LEVEL 5 ; To get lots of debugging out of LoraMesher
+#define SYSTEM_LORAMESHER_FREQUENCY 915.0F ; 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers// #define CORE_DEBUG_LEVEL 5 ; To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC
 
 // Flags specific to project, but vary across dev-boards or variants
@@ -77,11 +96,7 @@
 //     ${common.build_flags_frugaliot}
 //     ${common.build_flags_main}
 //     ${common.build_flags_library}
-
-// lib_deps = 
-//     Frugal-IoT@^0.0.20
-    // Libraries specific to this hardware - sensor, actuator, etc
-    
+   
 // selecting a platform for board descriotions
 // platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
 //platform_packages = framework-arduinoespressif32@3.3.2 ; also possible, but mostly unneeded and wont always work
@@ -98,9 +113,13 @@
 // lib_ldf_mode = chain
 //Uncomment, if seeing exceptions need decoding
 // build_type = debug
-// monitor_filters = esp32_exception_decoder
 // monitor_filters = esp8266_exception_decoder
+// monitor_filters = esp32_exception_decoder
 
+// Note there are many Sonoffs 
+// R2 is ESP8266 and works well, but cannot be OTA-ed
+// R3 is reputedly hard to program - inaccessible pins
+// R4 is the ESP32 version used for all new work.
 
 
 #ifdef TODO_SONOFF_BASIC
@@ -115,11 +134,6 @@
 #define SERIAL_BAUD 115200
 // #define SYSTEM_OTA_SUFFIX "r2"' ; No OTA_KEY for Sonoff, there is not enough space (code > flash/2)
 #define PIN_WIRE_SDA -1 ; To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA // To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA#define SDA -1 ; To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA // To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA
-// Note there are other Sonoffs 
-// R3 is reputedly hard to program - inaccessible pins
-// R4 is the ESP32 version - have some but not yet tested   
-
-
 #endif // TODO_SONOFF_BASIC
 
 #ifdef ARDUINO_ESP32C3_DEV
@@ -144,7 +158,7 @@
 #define SCK -1
 #define SS -1
 
-// JUST FOR TESTING DO NOT COPY BACK INTO SONOFF/PLATFORM.INI
+// JUST FOR TESTING when you dont have a SONOFF handy!
 #endif // ARDUINO_ESP32C3_DEV
 
 #ifdef ARDUINO_LOLIN_S2_MINI

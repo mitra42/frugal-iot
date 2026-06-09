@@ -108,7 +108,7 @@ void setup() {
   frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", ACTUATOR_DIGITAL_PIN, DEFAULT_relay_on_color));
 
   // Controls that can be wire here, or in the UX
-  Control* cb = new ControlBlinken("blinken", "Blinken", 5, 2);
+  Control* cb = new Control_Blinken("blinken", "Blinken", 5, 2);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/id"));
 

@@ -272,7 +272,7 @@ lib_deps =
     adafruit/Adafruit SSD1306@^2.5.0
     adafruit/Adafruit GFX Library@^1.10.13
 build_flags =
-    -D SYSTEM_LORAMESHER_BAND=915.0F  ; 868.0F Europe, 433.0F Asia
+    -D SYSTEM_LORAMESHER_FREQUENCY=915.0F  ; 868.0F Europe, 433.0F Asia
 ```
 
 See `examples/loramesher/` for a gateway + node pair.
