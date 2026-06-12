@@ -109,6 +109,9 @@ void System_Messages::sendRemote(const String topicPath, const String payload, b
       return; // Don't push
     }
   }
+  #ifdef SYSTEM_MESSAGE_DEBUG
+    Serial.print("Queueing "); Serial.print(topicPath); Serial.print("="); Serial.println(payload);
+  #endif
   outgoing.emplace_back(topicPath, payload, retain, qos);  // Implicit new Message
 }
 
