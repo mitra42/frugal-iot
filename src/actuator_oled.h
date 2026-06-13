@@ -35,8 +35,8 @@
   #define OLED_SCL SCL
   #define OLED_RST_X -1 // Doesnt appear to exist on this board
 #elif defined(ARDUINO_heltec_wifi_lora_32_V3)
-  #if defined(  ) // Note this is made up - there is no board or variant files for this significant rev yet - define in platformio.ini for now
-    #define OLED_ENABLE_HIGH Vext // Need to set this low to turn on OLED
+  #if defined(ARDUINO_heltec_wifi_lora_32_V32) // Note this is made up - there is no board or variant files for this significant rev yet - define in platformio.ini for now
+    #define OLED_ENABLE_HIGH Vext // Need to set this high to turn on OLED
   #else
     #define OLED_ENABLE_LOW Vext // Need to set this low to turn on OLED
   #endif

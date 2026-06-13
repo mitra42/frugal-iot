@@ -34,7 +34,7 @@
   #elif defined(ARDUINO_LILYGO_T3_S3_V1_X)
     #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2.0 // Almost certainly wrong ! Define for this board TO-ADD-BOARD
   #elif defined(ARDUINO_heltec_wifi_lora_32_V3) // Also for V3.2
-    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 4.9. // (390k + 100l) / 100k
+    #define SENSOR_BATTERY_VOLTAGE_DIVIDER 4.9 // (390k + 100l) / 100k
   #else 
     //Leave undefined and don't allow default constructor
   #endif 
