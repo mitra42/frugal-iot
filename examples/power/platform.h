@@ -158,7 +158,7 @@
 
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
-// board = lolin_s2_mini
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "s2_mini"
@@ -177,7 +177,7 @@
 
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
-// board = lolin_s2_mini
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI
 // build_flags = 
 //     ${common.build_flags}
 //     ${common.build_flags_powerlightwifi}

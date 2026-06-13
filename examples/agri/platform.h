@@ -151,7 +151,7 @@
 
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
-// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
 // board_build.partitions = min_spiffs.csv
 // build_flags = 
     // Default SDA=33 SCL=35 avoid TX=39 RX=37 SPI 7,9,11,12 boot=0 and flashing=9-14,esp 11, 15-16 iff uses 32Mhz xtal; 39,40 iff use jtag debugging
@@ -174,7 +174,7 @@
 
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
-// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
 // board_build.partitions = min_spiffs.csv
 // build_flags = 
     // Default SDA=33 SCL=35 avoid TX=39 RX=37 SPI 7,9,11,12 boot=0 and flashing=9-14,esp 11, 15-16 iff uses 32Mhz xtal; 39,40 iff use jtag debugging
@@ -200,7 +200,7 @@
 
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
-// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
 // board_build.partitions = min_spiffs.csv
 
 // ===== LORA BOARDS - ALL ESP32 ======================================

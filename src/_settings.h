@@ -173,7 +173,7 @@
     // Cant get it to work on this socket, read somewhere about board surgery (resistor removal or addition) required but cant find the reference now
     //#define I2C_SDA SDA1 // 10
     //#define I2C_SCL SCL1  // 21
-  #else // confirmed for ARDUINO_TTGO_LoRa32_v2, ARDUINO_TTGO_LoRa32_v21new
+  #else // confirmed for ARDUINO_TTGO_LoRa32_v2, ARDUINO_TTGO_LoRa32_v21new, ARDUINO_LOLIN_S2_MINI
     // Use system defined ones
     #define I2C_WIRE Wire
     #define I2C_SDA SDA
