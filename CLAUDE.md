@@ -1,7 +1,7 @@
 # Frugal-IoT Library
 
 A platform for affordable, easily built sensor networks running on ESP32/ESP8266 microcontrollers.
-Library version: 0.0.20. MIT licence. Author: Mitra Ardron.
+Library version: 0.0.21. MIT licence. Author: Mitra Ardron.
 
 Wiki: https://github.com/mitra42/frugal-iot/wiki
 Repo: https://github.com/mitra42/frugal-iot
@@ -10,7 +10,7 @@ Repo: https://github.com/mitra42/frugal-iot
 
 Every example `.ino` file must work in **both**:
 - **Arduino IDE** — open the `.ino` directly; dependencies installed via Library Manager
-- **PlatformIO** — referenced via `lib_deps = Frugal-IoT@^0.0.20` in `platformio.ini`
+- **PlatformIO** — referenced via `lib_deps = Frugal-IoT@^0.0.21` in `platformio.ini`
 
 Each example directory contains a `platform.h` file alongside the `.ino`. This file is
 **auto-generated** from the example's `platformio.ini` by running `scripts/prerelease.bash`
@@ -267,7 +267,7 @@ LoRa support is enabled automatically on boards that define `SYSTEM_LORAMESHER_W
 
 ```ini
 lib_deps =
-    Frugal-IoT@^0.0.20
+    Frugal-IoT@^0.0.21
     jaimi5/LoRaMesher
     adafruit/Adafruit SSD1306@^2.5.0
     adafruit/Adafruit GFX Library@^1.10.13

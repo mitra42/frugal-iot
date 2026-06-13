@@ -21,10 +21,10 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.0.20
+//     Frugal-IoT@^0.0.21
 
 // lib_deps_lora = 
-//     Frugal-IoT@^0.0.20
+//     Frugal-IoT@^0.0.21
     //Comment/Uncomment below two lines to switch between live and "new" version
     //jaimi5/LoRaMesher
 //     https://github.com/loramesher/LoRaMesher.git
