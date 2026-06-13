@@ -9,6 +9,10 @@
 #include <hd44780ioClass/hd44780_I2Cexp.h>
 #include "actuator.h"
 #include "actuator_lcd.h"
+#ifdef ACTUATOR_LCD_DEBUG
+  #include "system_i2c.h"
+#endif
+
 
 Actuator_LCD::Actuator_LCD()
 : Actuator("lcd", "LCD"),
@@ -25,28 +29,8 @@ void Actuator_LCD::setup() {
   I2C_WIRE.begin(I2C_SDA, I2C_SCL);
 
   #ifdef ACTUATOR_LCD_DEBUG
-    // Print the actual GPIO numbers Wire is using so wiring can be verified.
-    // If 5V power is used for the backpack, its pull-up resistors will drive
-    // SDA/SCL to 5V — ESP32 GPIOs are NOT 5V-tolerant. Use 3.3V instead.
-    Serial.print(F("LCD I2C SDA=gpio")); Serial.print(I2C_SDA);
-    Serial.print(F(" SCL=gpio")); Serial.println(I2C_SCL);
-
-    // TODO move this scanning to system_i2c
-    // Scan I2C bus before handing control to hd44780 so we can see what's there.
-    // hd44780_I2Cexp auto-detect only scans 0x20-0x27 (PCF8574/MCP23008) and
-    // 0x38-0x3F (PCF8574A). If your backpack address falls outside those ranges
-    // it will not be found and begin() returns RV_ENXIO.
-    Serial.println(F("LCD I2C scan:"));
-    bool found = false;
-    delay(1000); // TOOD-XXX remove this once sure what needed
-    for (uint8_t addr = 1; addr < 127; addr++) {
-      I2C_WIRE.beginTransmission(addr);
-      if (I2C_WIRE.endTransmission() == 0) {
-        Serial.print(F("  device at 0x")); Serial.println(addr, HEX);
-        found = true;
-      }
-    }
-    if (!found) Serial.println(F("  nothing found - check wiring and that SDA/SCL are correct gpio numbers above"));
+    System_I2C i2c(0, wire); // Allow scanning
+    i2c.scan();
   #endif
 
   int status = lcd.begin(ACTUATOR_LCD_COLS, ACTUATOR_LCD_ROWS);
