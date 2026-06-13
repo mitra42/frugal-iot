@@ -3,11 +3,9 @@
 #include "_settings.h"
 #ifdef ACTUATOR_LCD_WANT
 
-#include <Arduino.h>
 #include <Wire.h>
 #include <hd44780.h>
 #include <hd44780ioClass/hd44780_I2Cexp.h>
-#include "actuator.h"
 #include "actuator_lcd.h"
 #ifdef ACTUATOR_LCD_DEBUG
   #include "system_i2c.h"

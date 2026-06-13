@@ -16,33 +16,35 @@ Control_Oled_LoRaMesher::Control_Oled_LoRaMesher(const char* name)
   }
 
   void Control_Oled_LoRaMesher::act() {
-    // Called when any of the inputs change
-    //TODO-176 probably want other things to trigger that aren't "inputs"
-    Adafruit_SSD1306* display  = &frugal_iot.oled->display;
-    display->clearDisplay();
-    display->setCursor(0,0);
-    display->setTextSize(1);
-    display->print(frugal_iot.description);
-    display->setTextSize(1);
-    display->setCursor(0,10);
-    auto status = frugal_iot.loramesher->mesher->GetNetworkStatus();
-    display->print(LMstatus[static_cast<int>(status.current_state)]);
-    display->print(F(" "));
-    display->print(frugal_iot.loramesher->checkRoleString());
-    display->print(F(" "));
-    display->print(status.connected_nodes);
-    // nodes count
-    display->setCursor(0,20);
-    display->print("last packet:");
-    #ifdef SYSTEM_LORAMESHER_DEBUG
-      display->setCursor(0,30);
-      display->print(frugal_iot.loramesher->lastTopicPath);
-      display->setCursor(0,40);
-      display->print(frugal_iot.loramesher->lastPayload);      
-    #endif
-    display->setCursor(0,50);
-    display->print(battery->floatValue(), battery->width);
-    display->print("mV");
-    display->display();   
+    if (enabled) {
+      // Called when any of the inputs change
+      //TODO-176 probably want other things to trigger that aren't "inputs"
+      Adafruit_SSD1306* display  = &frugal_iot.oled->display;
+      display->clearDisplay();
+      display->setCursor(0,0);
+      display->setTextSize(1);
+      display->print(frugal_iot.description);
+      display->setTextSize(1);
+      display->setCursor(0,10);
+      auto status = frugal_iot.loramesher->mesher->GetNetworkStatus();
+      display->print(LMstatus[static_cast<int>(status.current_state)]);
+      display->print(F(" "));
+      display->print(frugal_iot.loramesher->checkRoleString());
+      display->print(F(" "));
+      display->print(status.connected_nodes);
+      // nodes count
+      display->setCursor(0,20);
+      display->print("last packet:");
+      #ifdef SYSTEM_LORAMESHER_DEBUG
+        display->setCursor(0,30);
+        display->print(frugal_iot.loramesher->lastTopicPath);
+        display->setCursor(0,40);
+        display->print(frugal_iot.loramesher->lastPayload);      
+      #endif
+      display->setCursor(0,50);
+      display->print(battery->floatValue(), battery->width);
+      display->print("mV");
+      display->display();   
+    }
   }
   #endif // SYSTEM_OLED_WANT

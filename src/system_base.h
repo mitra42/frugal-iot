@@ -140,15 +140,15 @@ class INfloat : public IN {
 class INuint16 : public IN {
   public:
     uint16_t value;
-    //INuint16(); 
+    uint16_t min;
+    uint16_t max;
+    //INuint16();
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, char const * const color, const bool wireable);
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, uint16_t default_min, uint16_t default_max, char const * const color, const bool wireable);
     INuint16(const INuint16 &other);
     bool dispatchLeaf(const String &leaf, const String &p, bool isSet) override;
     void discover() override;
   protected:
-    uint16_t min;
-    uint16_t max;
     uint16_t default_min;
     uint16_t default_max;
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required

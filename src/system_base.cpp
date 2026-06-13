@@ -389,18 +389,24 @@ bool OUTfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   bool dispatched = false;
   if (leaf.startsWith(id)) {
-    uint16_t v = p.toInt(); // TODO is this really toFloat ? 
+    uint16_t v = p.toInt();
     if (leaf.endsWith("/max")) {
-      max = v;        
+      max = v;
       dispatched = true;
     } else if (leaf.endsWith("/min")) {
       min = v;
       dispatched = true;
+    } else if (leaf.endsWith("/cycle")) {
+      int16_t newvalue = (int16_t)value + (int16_t)v;
+      if (newvalue > (int16_t)max) { newvalue = (int16_t)min; }
+      if (newvalue < (int16_t)min) { newvalue = (int16_t)max; }
+      value = (uint16_t)newvalue;
+      return true; // value changed
     }
     if (dispatched) {
       writeConfigToFSandEcho(leaf, p);
       return false; // value didnt change (just parameter)
-    } 
+    }
     // else drop through and dispatch to superclass
   }
   // Catch generic case like color
