@@ -7,12 +7,19 @@
 #include "_settings.h" // Defines I2C_WIRE as either Wire or Wire1
 #include "sensor_bh1750.h"
 #include <BH1750.h>             //https://github.com/claws/BH1750
+#ifdef SENSOR_BH1750_DEBUG
+  #include "system_i2c.h"
+#endif
 
 // TODO need a way to useful handle logarithnic values like lux - more of a UX issue than a node issue
 // Practical range of lux unknown - apparantly can go from 0.001 to 65k 
 Sensor_BH1750::Sensor_BH1750( const char* const id, const char * const name, const uint8_t addr, TwoWire* wire, const bool retain, uint8_t power3v3_pin, uint8_t power0v_pin)
   : Sensor_Float(id, name, 3, 0, 65000, "yellow", retain, power3v3_pin, power0v_pin), //TODO-213 define min/max/color in UX
     addr(addr), wire(wire), lightmeter(addr) {
+      // Note lightmeter(addr) calls the constructor and saves address
+      #ifdef SENSOR_BH1750_DEBUG
+        Serial.print(F("Setting up BH1750 at 0x")); Serial.print(addr, HEX); Serial.print(F(" SDA=")); Serial.print(SDA); Serial.print(F(" SCL=")); Serial.println(SCL);
+      #endif
       //TODO-213 setDefaultColor(DEFAULT_bh1750_bh1750_color)
   }
 
@@ -23,6 +30,11 @@ void Sensor_BH1750::setup() {
   wire->begin(I2C_SDA, I2C_SCL); // Note potential conflict with I2C on SHT. TODO-115
   //(Mode mode = CONTINUOUS_HIGH_RES_MODE, byte addr = 0x23, TwoWire* i2c = nullptr)
   // TODO copy this pattern of public enum to other enums 
+  delay(100); // No idea if needed - just letting wire->begin stabilize TODO try removing
+  #ifdef SENSOR_BH1750_DEBUG
+    System_I2C i2c(addr, wire); // Allow scanning
+    i2c.scan();
+  #endif
   if (!lightmeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, addr, wire)) { // (Mode mode, byte addr, TwoWire* i2c)
     setupFailed();
   }
@@ -34,3 +46,5 @@ float Sensor_BH1750::readFloat() {
 bool Sensor_BH1750::validate(const float v) {
   return (!isnan(v) && (v >= 0));
 }
+
+//TODO need to handle power up and down

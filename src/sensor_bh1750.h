@@ -9,13 +9,19 @@
 // Include the library we are building on
 #include <BH1750.h>
 
-// Define a defauly for the sensor address that can be used in the main.cpp or *.ino file
+// Define a default for the sensor address if not overridden in main.cpp / bh1750.ino
+// Default is 0x23 if addr is floating or tied to ground, if tied to Vcc its 0x5C
 #ifndef SENSOR_BH1750_ADDRESS
-  #ifdef LILYGOHIGROW
-    #define SENSOR_BH1750_ADDRESS (0x23)  // This may be a generally useful default ?
-  #else
+  // Confirmed also for Lilygo HiGrow
     #define SENSOR_BH1750_ADDRESS 0x23  // This is the default also in the BH1750 library
-  #endif
+#endif
+
+// Default power control pins - can be overridden via constructor parameters
+#ifndef SENSOR_BH1750_POWER0_PIN
+  #define SENSOR_BH1750_POWER0_PIN 0xff
+#endif
+#ifndef SENSOR_BH1750_POWER3v3_PIN
+  #define SENSOR_BH1750_POWER3v3_PIN 0xff
 #endif
 
 // Define the class, in terms of a parent class
