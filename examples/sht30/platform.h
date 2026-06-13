@@ -29,7 +29,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.0.21
+//     Frugal-IoT@^0.0.22
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
 
@@ -76,12 +76,13 @@
 // #define SENSOR_ENSAHT_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
-// #define SENSOR_SHT_DEBUG
+#define SENSOR_SHT_DEBUG
 // #define SENSOR_SOIL_DEBUG
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
 // #define SYSTEM_MEMORY_DEBUG
+// #define SYSTEM_MESSAGE_DEBUG
 // #define SYSTEM_MQTT_DEBUG
 // #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
@@ -155,6 +156,15 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "s2_mini"
 
+#endif // ARDUINO_LOLIN_S2_MINI
+
+#ifdef ARDUINO_LOLIN_S2_MINI
+// platform = ${common.platform_esp32}
+// board = lolin_s2_mini
+// build_flags = 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "s2_mini_4x"
+#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 #endif // ARDUINO_LOLIN_S2_MINI
 
 #ifdef ARDUINO_NodeMCU_32S
