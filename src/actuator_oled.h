@@ -2,6 +2,7 @@
  * This is a port of code from demo for TTGO Lora board - expand as needed
  * 
  * See https://github.com/mitra42/frugal-iot/issues/149 
+ * 
  */
 
 #ifndef SYSTEM_OLED_H
@@ -90,6 +91,7 @@ class Actuator_OLED : public System_Base {
   protected:
     TwoWire* wire;
 };
+
 
 
 #endif // SYSTEM_OLED_WANT
