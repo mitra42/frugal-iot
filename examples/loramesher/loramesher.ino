@@ -17,7 +17,9 @@
 #endif
 
 // Full MQTT path prefix of the device publishing SHT temperature/humidity
-#define REMOTE_SHT_DEVICE "dev/lotus/esp12345"
+#ifndef LORAMESHER_REMOTE_SHT_DEVICE
+  #define LORAMESHER_REMOTE_SHT_DEVICE "dev/lotus/esp32-ac3d7a" //TODO switch to the office one
+#endif
 
 // Change the parameters here to match your ...
 // organization, project, id, description
@@ -55,9 +57,9 @@ void setup() {
   #ifdef SYSTEM_OLED_WANT
     Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED SHT");
     frugal_iot.controls->add(cos);
-    cos->temperature->wireTo(REMOTE_SHT_DEVICE "/sht/temperature");
-    cos->humidity->wireTo(REMOTE_SHT_DEVICE "/sht/humidity");
-    cos->battery->wireTo(REMOTE_SHT_DEVICE "/battery/battery");
+    cos->temperature->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/temperature");
+    cos->humidity->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/humidity");
+    cos->battery->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/battery/battery");
 
     col = new Control_Oled_LoRaMesher("Control OLED");
     frugal_iot.controls->add(col);

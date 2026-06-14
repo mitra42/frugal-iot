@@ -175,9 +175,15 @@
     //#define I2C_SCL SCL1  // 21
   #else // confirmed for ARDUINO_TTGO_LoRa32_v2, ARDUINO_TTGO_LoRa32_v21new, ARDUINO_LOLIN_S2_MINI
     // Use system defined ones
-    #define I2C_WIRE Wire
-    #define I2C_SDA SDA
-    #define I2C_SCL SCL
+    #ifndef I2C_WIRE
+      #define I2C_WIRE Wire
+    #endif
+    #ifndef I2C_SDA
+     #define I2C_SDA SDA
+    #endif
+    #ifndef I2C_SCL
+      #define I2C_SCL SCL
+    #endif
   #endif
 #endif
 

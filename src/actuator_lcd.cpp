@@ -27,7 +27,7 @@ void Actuator_LCD::setup() {
   I2C_WIRE.begin(I2C_SDA, I2C_SCL);
 
   #ifdef ACTUATOR_LCD_DEBUG
-    System_I2C i2c(0, wire); // Allow scanning
+    System_I2C i2c(static_cast<std::uint8_t>(0), &I2C_WIRE); // Allow scanning
     i2c.scan();
   #endif
 
