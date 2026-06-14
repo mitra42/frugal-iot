@@ -53,7 +53,7 @@
 #if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
-#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)
+#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)  || defined(SENSOR_GPS_DEBUG)
   #define SENSOR_DEBUG // Only used for ANY_DEBUG below
 #endif
 
@@ -128,7 +128,7 @@
 
 // Define boards which have LoRa and should include LoRaMesher automatically
 // was defined(SYSTEM_LORAMESHER_FREQUENCY) // but that is a touch tricky to convert for arduino IDE
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_T_Beam)
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_T_Beam) || defined(ARDUINO_heltec_wifi_lora_32_V4)
   #define SYSTEM_LORAMESHER_WANT
 #endif
 
@@ -146,7 +146,7 @@
 #define SYSTEM_WIFI_WANT  // currently always wanted
 
 // Define boards which have built in OLED and should include automatically
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(OLED_SDA)
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V32) || defined(ARDUINO_heltec_wifi_lora_32_V4) || defined(OLED_SDA)
   #define SYSTEM_OLED_WANT
 #endif
 

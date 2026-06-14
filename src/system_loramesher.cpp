@@ -68,7 +68,7 @@
   //Defines LORA_RST LORA_IRQ LORA_SCK LORA_MISO LORA_MOSI LORA_CS in pins_arduino.h
   #define LORA_IO1 LORA_DIO1
   #define LORA_RADIO_TYPE loramesher::RadioType::kSx1276
-#elif defined(ARDUINO_heltec_wifi_lora_32_V3) // Note V1 and V2 used SX1276 or SX1278 chips depending on region
+#elif defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V4) // Note V1 and V2 used SX1276 or SX1278 chips depending on region
   // Defines: SCK MISO MOSI SS, which it uses for the SPI to the LoRa which LoRamesher picks up correctly since LORA_SCK etc not defined
  //RECOMMENDATION FROM PERPLEXITY: NSS 8, SCK 9, MOSI 10, MISO 11, RST 12, BUSY 13, and DIO1 14 was wrong
   // LM queued receive example:  Heltec WiFi LoRa:  CS=18, RST=14, IRQ=26, IO1=35 is for ARDUINO_heltec_wifi_lora_32_V2 but untested

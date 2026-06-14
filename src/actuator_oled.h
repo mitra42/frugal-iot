@@ -35,16 +35,17 @@
   #define OLED_SDA SDA
   #define OLED_SCL SCL
   #define OLED_RST_X -1 // Doesnt appear to exist on this board
-#elif defined(ARDUINO_heltec_wifi_lora_32_V3)
+#elif defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V32) || defined(ARDUINO_heltec_wifi_lora_32_V4) 
   #if defined(ARDUINO_heltec_wifi_lora_32_V32) // Note this is made up - there is no board or variant files for this significant rev yet - define in platformio.ini for now
     #define OLED_ENABLE_HIGH Vext // Need to set this high to turn on OLED
-  #else
+  #else // V3 or V4
+    // On V4 Vext (GPIO 36) must be driven LOW to power the OLED — confirmed by testing
     #define OLED_ENABLE_LOW Vext // Need to set this low to turn on OLED
   #endif
-  // SDA=41 SCL=42 - assume that is "Wire" and used for LoRa, assume this is Wire1
+  //On V3 or V32 SDA=41 SCL=42 - assume that is "Wire" and used for sensors
   #define OLED_WIRE Wire1
-  #define OLED_SDA SDA_OLED //TODO submit a PR to make this consistent across boards
-  #define OLED_SCL SCL_OLED //TODO submit a PR to make this consistent across boards
+  #define OLED_SDA SDA_OLED
+  #define OLED_SCL SCL_OLED
   #define OLED_RST_X RST_OLED
 #elif defined(ARDUINO_T_Beam)
   // T-Beam has no built-in OLED; users wire one externally on the default I2C pins (21/22).
@@ -57,7 +58,7 @@
 
 // Note ARDUINO_LILYGO_T3_S3_V1_X not tested yet, but probably same as ARDUINO_TTGO_LoRa32
 #ifndef DISPLAY_HEIGHT // defined on ARDUINO_heltec_wifi_lora_32_V3
-  #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_T_Beam) // V1 or v2
+  #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_T_Beam) || defined( ARDUINO_heltec_wifi_lora_32_V4) // V1 or v2
     #define DISPLAY_WIDTH 128 // OLED display width, in pixels
     #define DISPLAY_HEIGHT 64 // OLED display height, in pixels
   #else
@@ -65,7 +66,7 @@
   #endif
 #endif
 // What chip is driving the OLED
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_T_Beam) // V1 or v2
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V4)  || defined(ARDUINO_T_Beam) // V1 or v2
   #include <Adafruit_SSD1306.h> // For OLED display
 #else
   #error have not defined OLED chip driver
@@ -73,7 +74,8 @@
 
 class Actuator_OLED : public System_Base {
   public:
-    #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_T_Beam) // V1 or v2
+    #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V4) || defined(ARDUINO_T_Beam) // V1 or v2
+      // Note SD1315 is register compatible with SD1306
       Adafruit_SSD1306 display; // OLED display object TODO-138 parameterize this and depend on board
     #else
       #error need to add "display" for appropriate OLED
