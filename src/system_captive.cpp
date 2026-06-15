@@ -169,7 +169,7 @@ System_Captive::System_Captive()
 void System_Captive::setup() {
   Serial.println(F("Configuring access point..."));
   setupLanguages();
-  readConfigFromFS(); // Reads config (language_code) and passes to our dispatchTwig (Must come AFTER setting language strings)
+  readConfigFromFS(); // Reads config (language_code) and passes to our dispatch (Must come AFTER setting language strings)
 
   // Unsure what these items choose - copied from example -SOC_WIFI_SUPPORTED seems to be defined for ESP32
   #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI || defined(ESP8266)
@@ -297,14 +297,14 @@ bool System_Captive::setLanguage(const String& payload) {
   return false; // not found
 }
 
-void System_Captive::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) {
-    if (topicTwig == "language_code") {
-      if (setLanguage(payload)) { // Code e.g. "EN". true if language supported
-        writeConfigToFSandEcho(topicTwig, payload);
+void System_Captive::dispatch(System_Message &msg) {
+  if (msg.isSet() && (msg.module() == id)) {
+    if (msg.leaf() == "language_code") {
+      if (setLanguage(msg.payload)) { // Code e.g. "EN". true if language supported
+        msg.maybeWriteToFSandEcho();
       }
     } else { // e.g. "name"
-      System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+      System_Base::dispatch(msg);
     }
   }
 }

@@ -41,7 +41,7 @@ class Sensor_LoadCell : public Sensor_Float {
     uint8_t times; // How often to read the load cell for each reported reading
     int32_t offset;
     float scale;
-    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;
+    void dispatch(System_Message &msg) override;
     void captiveLines(AsyncResponseStream* response) override;
 };
 #endif // SENSOR_LOADCELL_H

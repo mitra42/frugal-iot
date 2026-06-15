@@ -10,7 +10,7 @@ class System_Buttons : public System_Group {
     System_Buttons(const char* const id, const char* const name);
   protected:
     void setup();
-    void dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet);
+    void dispatch(System_Message &msg) override;
     void discover();
 };
 

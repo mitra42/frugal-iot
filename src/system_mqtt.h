@@ -54,7 +54,7 @@ class System_MQTT : public System_Base {
     void captiveLines(AsyncResponseStream* response) override;
     void loop() override;
     bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
-    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet); // receiving message for the mqtt module
+    void dispatch(System_Message &msg) override;
 };
 
 #endif // SYSTEM_MQTT_H

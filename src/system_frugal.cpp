@@ -32,22 +32,20 @@
 #include "misc.h"
 #include "system_group.h"
 
-
-// Handle messages at top level - check for own, and if not loop through all other modules
+void System_Frugal::dispatch(System_Message &msg) {
+  // Handle messages at top level - check for own, and if not loop through all other modules
 // e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
-void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) {
+  if (msg.isSet() && (msg.module() == id)) {
     bool dispatched = false;
     bool needrestart = false;
     bool changed = false;
-    if (topicLeaf == "project") { // TODO-205 unclear we should be changing project on a device live
+    if (msg.leaf() == "project") { 
       // Unclear we should be changing project on a device live
-      if ((payload) != project) {
+      if ((msg.payload) != project) {
         // Serial.print("XXX Project change from "); Serial.print(project); Serial.print(" to "); Serial.println(payload);
-        project = String(payload); // Note weirdness, it really needs to copy 
+        project = String(msg.payload); // Note weirdness, it really needs to copy 
         // TODO needs to restart if the value changes - so 
         // TODO - needs to redo stuff that uses "project"
-        // project = payload;
         needrestart = true;
         changed = true;
       // } else {  Serial.println("XXX project matches");
@@ -57,42 +55,26 @@ void System_Frugal::dispatchTwig(const String &topicSensorId, const String &topi
     //} else if (topicLeaf == "name") {
     //  name = String(payload); // Note weirdness, it really needs to copy
     //  dispatched = true;
-    } else if (topicLeaf == "description") {
-      if ((payload) != description) {
-        description = payload;
+    } else if (msg.leaf() == "description") {
+      if ((msg.payload) != description) {
+        description = msg.payload;
         changed = true;
       }
       dispatched = true;
     }
     if (changed) {
-      writeConfigToFSandEcho(topicLeaf, payload); // Save for next time (echo though not logged, so saved on MQTT server)
+      msg.maybeWriteToFSandEcho(); // Save for next time (echo though not logged, so saved on MQTT server)
     } 
     if (!dispatched) {
-      System_Base::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
+      System_Base::dispatch(msg);
     }
     if (needrestart) {
       ESP.restart();
     }
-  } else { // No point in passing on our own id for the loop
-    // Loop over all other actuators, sensors, controls etc
-    System_Group::dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
-  }
-}
-// This is the loopback from outgoing
-void System_Frugal::dispatchTwig(const String &topicTwig, const String &payload, bool isSet) {
-  // topic Twig  <actuatorId>/<ioID> or <actuatorId>/<ioID>/<param>
-  // e.g. sht/temperature or sht/temperature/max
-  int8_t slashPos = topicTwig.indexOf('/'); // Find the position of the slash
-  if (slashPos != -1) {
-    String id = topicTwig.substring(0, slashPos);       // Extract the part before the slash
-    String topicLeaf = topicTwig.substring(slashPos + 1);      // Extract the part after the slash
-    dispatchTwig(id, topicLeaf, payload, isSet); // Start the loop now its been parsed
-  } else {
-    Serial.print(F("No slash found in topic: ")); Serial.println(topicTwig);
-  }
-}
-void System_Frugal::dispatchTwig(System_Message msg) { // Message on stack ? Maybe will need to be *msg
-  msg.dispatchTwig();
+  } 
+  // Loop over all other actuators, sensors, controls etc -
+  // need to do even if dispatched because some modules might have a wired path to this.
+  System_Group::dispatch(msg);
 }
 
 void System_Frugal::discover() {
@@ -207,7 +189,7 @@ void System_Frugal::pre_setup() {
     project = newProject;
   }
   // Note this will read project again
-  readConfigFromFS(); // Reads config (project, name) and passes to our dispatchTwig - note this just reads frugal_iot/ not other directories which are read in actuator,sensor,control,system_xxx.setup
+  readConfigFromFS(); // Reads config (project, name) and passes to our dispatch - note this just reads frugal_iot/ not other directories which are read in actuator,sensor,control,system_xxx.setup
 }
 void System_Frugal::setup() {
   // By the time this is run, mqtt should have been added, and serial started in main.cpp -> pre_setup

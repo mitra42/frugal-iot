@@ -19,7 +19,7 @@ class Control_LoggerFS : public Control_Logger {
     void setup() override;
     void append(const String &topicPath, const String &payload);
     void act() override;
-    void dispatchPath(const String &topicPath, const String &payload) override;
+    void dispatch(System_Message &msg) override;
 };
 
 #endif //CONTROL_LOGGER_FS_H

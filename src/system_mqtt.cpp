@@ -12,7 +12,7 @@
 * "topic" is ambiguous and therefore wrong ! 
 *
 * Incoming flow 
-* messageReceived -> dispatch -> (dispatchTwig; dispatchPath)
+* messageReceived -> dispatch
 */
 
 #include "_settings.h"
@@ -44,7 +44,7 @@ System_MQTT::System_MQTT(const char* hostname, const char* username, const char*
 {}
 
 void System_MQTT::setup() {
-  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig
+  readConfigFromFS(); // Reads config (hostname) and passes to our dispatch
 }
 
 // Setup MQTT, connect and subscribe - note if WiFi is connected, this will block till MQTT times out 
@@ -128,15 +128,15 @@ bool System_MQTT::connect() {
   return true;
 }
 // This is for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname
-void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+void System_MQTT::dispatch(System_Message &msg) {
   // TODO-206 no need to resend, but *do* need to test changing via SPIFFS
-  if (isSet && (topicSensorId == id)) {
-    if (topicTwig == "hostname") {
-      hostname = payload;
-      writeConfigToFS(topicTwig, payload);
+  if (msg.isSet() && (msg.module() == id)) {
+    if (msg.leaf() == "hostname") {
+      hostname = msg.payload;
+      writeConfigToFS(msg.leaf(), msg.payload);
       // Could echo here but dont need to
     } else {
-      System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+      System_Base::dispatch(msg);
     }
   }
 }
@@ -231,7 +231,7 @@ void System_MQTT::messageReceived(const String &topicPath, const String &payload
   // unsubscribe as it may cause deadlocks when other things arrive while
   // sending and receiving acknowledgments. Instead, change a global variable,
   // or push to a queue and handle it in the loop after calling `client.loop()`.
-  frugal_iot.messages->queueIncoming(topicPath, payload);
+  frugal_iot.messages->queueIncoming(topicPath, payload, MsgFromMQTT);
   inReceived = false;
 }
 

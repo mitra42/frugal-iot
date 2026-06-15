@@ -10,6 +10,7 @@
 #include <vector>
 #include "control.h"
 #include "misc.h"
+#include "system_message.h"
 
 // TODO-ADD-CONTROL
 
@@ -41,44 +42,32 @@ void Control::setup() {
   for (auto &output : outputs) {
       output->setup();
   }
-  readConfigFromFS(); // Reads config (inputs or outputs) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+  readConfigFromFS(); // Reads config (inputs or outputs) and passes to our dispatch - should be after inputs and outputs setup (probably)
 }
 
 void Control::act() {
     // Default is to do nothing - though that will rarely be correct - expect this to be overridden
 }
-void Control::dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet) {
-    bool changed = false;
-    if (topicControlId == id) { // matches this control
-      for (auto &input : inputs) {
-        if (input->dispatchLeaf(topicTwig, payload, isSet)) {
-          changed = true; // Changed an input, call act()
-        }
-      }
-      for (auto &output : outputs) {
-        if (output->dispatchLeaf(topicTwig, payload, isSet)) { // Will send value if wiredPath changed
-          changed = true; // Shouldnt happen - changing outputs shouldnt cause process, but here for completeness.
-        }; 
-      }
-      System_Base::dispatchTwig(topicControlId, topicTwig, payload, isSet); // Currently only handles "name" 
-    }
-    if (changed) { 
-      act(); // Likely to be subclassed
-    }
-}
+//TODO-120 come back and review this
 
-// dispatchPath is called so can check for wired connections to other devices i.e. inputs 
-// are checking "is this coming from the thing I am wired to"
-void Control::dispatchPath(const String &topicPath, const String &payload ) {
+void Control::dispatch(System_Message &msg) {
     bool changed = false;
+    if (msg.module() == id) {
+      for (auto &output : outputs) {
+        if (output->dispatch(msg)) {
+          changed = true;
+        }
+      }
+      System_Base::dispatch(msg);
+    }
+    // Do these even if not module=id because maybe matches wired input
     for (auto &input : inputs) {
-        // Only inputs are listening to potential topicPaths - i.e. other devices outputs
-        if (input->dispatchPath(topicPath, payload)) {
-            changed = true; // Changed an input, call act()
+        if (input->dispatch(msg)) {
+            changed = true;
         }
     }
-    if (changed) { 
-      act(); // Likely to be subclassed
+    if (changed) {
+      act();
     }
 }
 

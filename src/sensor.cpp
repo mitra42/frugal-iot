@@ -6,6 +6,7 @@
 #include <Arduino.h>
 #include <vector>
 #include "sensor.h"
+#include "system_message.h"
 #include "misc.h" // shouldBeDefined
 
 Sensor::Sensor(const char* const id, const char* const name, bool r, uint8_t power3v3_pin, uint8_t power0v_pin) 
@@ -45,7 +46,7 @@ void Sensor::periodically() {
 }
 void Sensor::setup() {
   powerUp(); // Ensure sensor is powered up during setup
-  readConfigFromFS(); // Reads config (one of the outputs) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+  readConfigFromFS(); // Reads config (one of the outputs) and passes to our dispatch - should be after inputs and outputs setup (probably)
 }
 
 void Sensor::discover() {
@@ -53,15 +54,11 @@ void Sensor::discover() {
     output->discover();
   }
 }
-void Sensor::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (topicSensorId == id) {
-    //bool changed = false; // Not needed on sensor as dont act on changes
+void Sensor::dispatch(System_Message &msg) {
+  if (msg.module() == id) {
     for (auto &output : outputs) {
-      if (output->dispatchLeaf(topicTwig, payload, isSet)) { // Will send value if wiredPath changed
-        //changed = true; // Shouldnt happen - changing outputs shouldnt cause process, but here for completeness.
-      }; 
+      output->dispatch(msg);
     }
-    // Catch fields every sensor or actuator or control has - like name 
-    System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+    System_Base::dispatch(msg);
   }
 }

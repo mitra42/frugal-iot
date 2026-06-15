@@ -12,6 +12,7 @@
 #include <Arduino.h>
 #include <vector>
 #include "system_base.h"
+#include "system_message.h"
 
 class Control : public System_Base {
   public:
@@ -23,8 +24,7 @@ class Control : public System_Base {
     void setup() override;
     virtual void act();
     void discover() override;
-    void dispatchTwig(const String &topicControlId, const String &topicLeaf, const String &payload, bool isSet) override;
-    void dispatchPath(const String &topicPath, const String &payload) override;
+    void dispatch(System_Message &msg) override;
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const blah);
     #endif //CONTROL_DEBUG
