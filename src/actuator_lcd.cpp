@@ -31,6 +31,7 @@ void Actuator_LCD::setup() {
     i2c.scan();
   #endif
 
+  // This is where the I2C bus scan runs (when lcd was constructed without an address).
   int status = lcd.begin(ACTUATOR_LCD_COLS, ACTUATOR_LCD_ROWS);
   if (status) {
     // .pio/libdeps/*/hd44780/hd44780.h

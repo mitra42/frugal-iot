@@ -36,7 +36,10 @@ class Actuator_LCD : public Actuator {
   public:
     Actuator_LCD();
   protected:
-    hd44780_I2Cexp lcd; // uses Wire, auto-detects I2C address
+    // No address arg → hd44780_I2Cexp scans the bus for a PCF8574/PCF8574A backpack
+    // (tries 0x20–0x27 then 0x38–0x3F). To pin a specific address use e.g.:
+    //   hd44780_I2Cexp lcd(0x27);
+    hd44780_I2Cexp lcd;
     INtext* input;
     void setup() override;
     void act() override;
