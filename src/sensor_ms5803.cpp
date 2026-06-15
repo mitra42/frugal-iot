@@ -148,5 +148,6 @@ void Sensor_ms5803::readValidateConvertSet() {
   // will send to mqtt
   temperature->set(( 2000 + (deltaTemp * sensorCoefficients[6] ) / pow( 2, 23 ) ) / 100);  // in degrees C
   pressure->set(( ( ( ( D1 * sensitivity ) / pow( 2, 21 ) - sensorOffset) / pow( 2, 15 ) ) / 10 ));   // in mBars
+  markFresh();
 }
 

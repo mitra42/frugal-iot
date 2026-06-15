@@ -42,8 +42,8 @@ Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *w
 }
 
 void Sensor_SHT::setup() {
-  Sensor_HT::setup(); 
   sht->begin();
+  Sensor_HT::setup();
   #ifdef SENSOR_SHT_DEBUG
     Serial.print(F("address: ")); Serial.print(address, HEX);
     #ifndef SENSOR_SHT_SHT4x
@@ -56,6 +56,9 @@ void Sensor_SHT::setup() {
 bool Sensor_SHT::validate(float temp, float humy) {
     // Reject if both temperature and humidity are zero simultaneously
     return !(temp == 0.0f && humy == 0.0f);
+}
+bool Sensor_SHT::isConnected() {
+  return sht->isConnected();
 }
 void Sensor_SHT::readValidateConvertSet() {
   #ifdef SENSOR_SHT_DEBUG
@@ -82,6 +85,7 @@ void Sensor_SHT::readValidateConvertSet() {
       // Only set values if they pass validation
       if (validate(temp, humy)) {
           set(temp, humy);
+          markFresh();
       }
     #ifdef SENSOR_SHT_DEBUG
     } else {

@@ -26,4 +26,5 @@ void Sensor_Health::readValidateConvertSet() {
   wifibars->set(frugal_iot.wifi->bars());
   Serial.print("XXX217 setting wifi to - this is good "); Serial.println(frugal_iot.wifi->SSID());
   wifissid->set(frugal_iot.wifi->SSID());
+  markFresh();
 }
