@@ -16,7 +16,7 @@
 System_Frugal frugal_iot("dev", "developers", "SHT30", "SHT30 Temperature and Humidity Sensor"); 
 
 void setup() {
-  // Battery sensor has to come before pre_setup, all others should come after TODO-194 make this change on other .ino
+  // Battery sensor has to come before pre_setup, all others should come after
   #ifdef SENSOR_BATTERY_PIN
     frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
   #endif
@@ -25,8 +25,8 @@ void setup() {
   // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
   // Power_Loop= awake all the time; 
   // Power_Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
-  frugal_iot.configure_power(Power_Deep, 600000, 30000); // Take a reading every 10 mins deep sleep between
-  //frugal_iot.configure_power(Power_Loop, 10000, 10000); // For debugging sensors - 10 second loop
+  //frugal_iot.configure_power(Power_Deep, 600000, 30000); // Take a reading every 10 mins deep sleep between
+  frugal_iot.configure_power(Power_Loop, 10000, 10000); // For debugging sensors - 10 second loop
   
   // Encapsulate setting up and starting serial and read main config also checks power ok.
   // This has to happen AFTER battery and power are setup, and before mqtt and adding sensors actuators etc. 

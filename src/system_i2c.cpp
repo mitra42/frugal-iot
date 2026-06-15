@@ -81,3 +81,21 @@ bool System_I2C::sendAndRead(uint8_t cmd, uint8_t* rcvBuffer,uint8_t rcvLength) 
   send(cmd); // TODO allow for failure here - if fails dont try the read just return false
   return read(rcvBuffer, rcvLength);
 }
+
+void System_I2C::scan() {
+  // Print the actual GPIO numbers Wire is using so wiring can be verified.
+  // If 5V power is used for the backpack, its pull-up resistors will drive
+  // SDA/SCL to 5V — ESP32 GPIOs are NOT 5V-tolerant. Use 3.3V instead.
+  Serial.print(F("Scanning I2C on SDA=")); Serial.print(I2C_SDA);
+  Serial.print(F(" SCL=")); Serial.println(I2C_SCL);
+  bool found = false;
+  delay(1000); // TOOD-XXX remove this once sure what needed
+  for (uint8_t addr = 1; addr < 127; addr++) {
+    I2C_WIRE.beginTransmission(addr);
+    if (I2C_WIRE.endTransmission() == 0) {
+      Serial.print(F("  device at 0x")); Serial.println(addr, HEX);
+      found = true;
+    }
+  }
+  if (!found) Serial.println(F("  nothing found - check wiring and that SDA/SCL are correct gpio numbers above"));
+}

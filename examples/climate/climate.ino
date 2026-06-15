@@ -37,6 +37,11 @@
 System_Frugal frugal_iot("dev", "developers", "climate", "Climate Control");
 
 void setup() {
+  // Battery sensor has to come before pre_setup, all others should come after
+  #ifdef SENSOR_BATTERY_PIN
+    frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
+  #endif
+
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
 
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
@@ -55,9 +60,9 @@ void setup() {
 
   // ========= Actuators ==============
   // Heating relay on HEATING_PIN
-  frugal_iot.actuators->add(new Actuator_Digital("heating", "Heating", HEATING_PIN, "red"));
+  frugal_iot.actuators->add(new Actuator_Digital("heating", "Heating", HEATING_PIN, "red"));  // note UX module "heating" is not defined
   // Humidifier relay on HUMIDIFIER_PIN
-  frugal_iot.actuators->add(new Actuator_Digital("humidifier", "Humidifier", HUMIDIFIER_PIN, "blue"));
+  frugal_iot.actuators->add(new Actuator_Digital("humidifier", "Humidifier", HUMIDIFIER_PIN, "blue")); // note UX module "humidifier" is not defined
 
   // ========= Controls ==============
   // Climate control: temp_setpoint=22C, temp_hysteresis=1C, humidity_setpoint=50%, humidity_hysteresis=5%

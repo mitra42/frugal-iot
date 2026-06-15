@@ -13,11 +13,11 @@
 Control_Blinken::Control_Blinken (const char* const id, const char * const name, float secsOn, float secsOff) 
 : Control(id, name,
   std::vector<IN*> {
-    new INfloat(id, "timeon", "Time On (s)", secsOn, 3, 0, 3600, "black", true),
-    new INfloat(id, "timeoff", "Time Off (s)", secsOff, 3, 0, 3600, "black", true),
+    new INfloat(id, "timeon", "Time On (s)", secsOn, 3, DEFAULT_controlblinken_timeon_min, DEFAULT_controlblinken_timeon_max, DEFAULT_controlblinken_timeon_color, true),
+    new INfloat(id, "timeoff", "Time Off (s)", secsOff, 3, DEFAULT_controlblinken_timeoff_min, DEFAULT_controlblinken_timeoff_max, DEFAULT_controlblinken_timeoff_color, true),
   },
   std::vector<OUT*> {
-    new OUTbool(id, "out", name, false, "black", true), 
+    new OUTbool(id, "out", name, false, DEFAULT_controlblinken_out_color, true), 
   }
 ), blinkOn(secsOn * 1000), blinkOff(secsOff * 1000),
    timer_index(frugal_iot.powercontroller->timer_next())

@@ -17,8 +17,9 @@ class Control : public System_Base {
   public:
     std::vector<IN*> inputs; // Vector of inputs
     std::vector<OUT*> outputs; // Vector of outputs
+    bool enabled = true; // Set false to suppress act() drawing/output
 
-    Control(const char * const id, const char * const name, std::vector<IN*> i, std::vector<OUT*> o); 
+    Control(const char * const id, const char * const name, std::vector<IN*> i, std::vector<OUT*> o);
     void setup() override;
     virtual void act();
     void discover() override;

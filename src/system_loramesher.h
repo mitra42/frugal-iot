@@ -33,6 +33,9 @@ enum LoraMesherMode {
     LORAMESHER_UNCONNECTED,
 };
 
+extern const __FlashStringHelper* LMstatus[7]; // Size should match .pio/libdeps/heltec_wifi_lora_32_V3/LoRaMesher/src/protocols/lora_mesh/interfaces/i_network_service.hpp
+
+
 class System_LoraMesher : public System_Base {
   public:
     System_LoraMesher();

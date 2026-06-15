@@ -21,9 +21,14 @@ void Actuator_OLED::setup() {
   System_Base::setup();
 
   // TODO experimenting for heltec - parameterize this 
-  #ifdef OLED_ENABLE_LOW
+  #ifdef OLED_ENABLE_LOW //  e.g. Heltec Lora Wifi V3
     pinMode(OLED_ENABLE_LOW,OUTPUT);
-    digitalWrite(OLED_ENABLE_LOW,LOW);
+    digitalWrite(OLED_ENABLE_LOW,LOW); // This is on heltec v3, note v3.2 wants it high
+    //delay(20);
+  #endif
+  #ifdef OLED_ENABLE_HIGH // e.g. Heltec Lora Wifi V3.2
+    pinMode(OLED_ENABLE_HIGH,OUTPUT);
+    digitalWrite(OLED_ENABLE_HIGH,HIGH); // This is on heltec v3, note v3.2 wants it high
     //delay(20);
   #endif
   // Nothing to read from disk so not calling readConfigFromFS 
@@ -70,4 +75,22 @@ void Actuator_OLED::debug(const bool clear, const uint row, const uint n) {
     display.display();
 }
 
-#endif // SYSTEM_OLED_WANT
+/* May incorporate some of the following to get lines */
+#ifdef NOTUSEDYET
+  void drawThickLine(Adafruit_SSD1306& d, int x0, int y0, int x1, int y1, uint8_t thickness, uint16_t color) {
+    for (int i = -(thickness / 2); i <= thickness / 2; i++) {
+        // offset perpendicular to the line direction
+        bool steep = abs(y1 - y0) > abs(x1 - x0);
+        if (steep) {
+            d.drawLine(x0 + i, y0, x1 + i, y1, color);
+        } else {
+            d.drawLine(x0, y0 + i, x1, y1 + i, color);
+        }
+    }
+  }
+  or 
+  / Horizontal bar of height `thickness`:
+  display.fillRect(x, y - thickness/2, length, thickness, WHITE);
+#endif
+#endif // SYSTEM_OLED_WANT'
+

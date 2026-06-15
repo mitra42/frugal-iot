@@ -9,7 +9,7 @@ void System_Buttons::setup() {
   for (auto &output : outputs) {
       output->setup();
   }
-  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+  readConfigFromFS(); // Reads config (none as of yet) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
 }
 
 void System_Buttons::dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet) {

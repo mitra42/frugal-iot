@@ -29,7 +29,10 @@ struct Texts {
         *SETWIFI,
         *Tare,
         *Calibrate,
-        *SettingsUpdated
+        *SettingsUpdated,
+        *SoilMoistureTare,
+        *CycleTime,
+        *WakeTime
         ;
 };
 

@@ -21,15 +21,28 @@
 
 Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider, uint8_t power3v3_pin, uint8_t power0v_pin) 
 //(id, name, pin, width, min, max, offset, scale, color, retain) 
-: Sensor_Analog("battery", "Battery", pin_init, 0, 0, 4.5, 0, voltage_divider, "green", true, power3v3_pin, power0v_pin) //TODO-1
+: Sensor_Analog("battery", "Battery", pin_init, 0, DEFAULT_battery_battery_min, DEFAULT_battery_battery_max, 0, voltage_divider, DEFAULT_battery_battery_color, true, power3v3_pin, power0v_pin) //TODO-1
   {
       pinMode(pin, INPUT); // Maybe not needed, but really need to be sure for power
-   }
+      #ifdef SENSOR_BATTERY_POWER0_PIN
+        pinMode(SENSOR_BATTERY_POWER0_PIN, OUTPUT);
+      #endif
+      #ifdef SENSOR_BATTERY_POWER3v3_PIN
+        pinMode(SENSOR_BATTERY_POWER3v3_PIN, OUTPUT);
+      #endif
+  }
 
 // ESP32 readInt() override - must be outside conditional block to avoid vtable errors
 // when using the 2-parameter constructor on boards without default SENSOR_BATTERY_PIN/VOLTAGE_DIVIDER
 #ifdef ESP32
 int Sensor_Battery::readInt() {
+  #ifdef SENSOR_BATTERY_POWER0_PIN  // e.g. Heltec Lora Wifi V3
+    digitalWrite(SENSOR_BATTERY_POWER0_PIN, LOW);
+  #endif
+  #ifdef SENSOR_BATTERY_POWER3v3_PIN // e.g. Heltec Lora Wifi V3.2
+    digitalWrite(SENSOR_BATTERY_POWER3v3_PIN, HIGH);
+  #endif
+
   return analogReadMilliVolts(pin);  // returns uint32 
 }
 #endif // ESP32

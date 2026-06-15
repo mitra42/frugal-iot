@@ -11,8 +11,9 @@
 // TODO need a way to useful handle logarithnic values like lux - more of a UX issue than a node issue
 // Practical range of lux unknown - apparantly can go from 0.001 to 65k 
 Sensor_BH1750::Sensor_BH1750( const char* const id, const char * const name, const uint8_t addr, TwoWire* wire, const bool retain, uint8_t power3v3_pin, uint8_t power0v_pin)
-  : Sensor_Float(id, name, 3, 0, 65000, "yellow", retain, power3v3_pin, power0v_pin), 
+  : Sensor_Float(id, name, 3, 0, 65000, "yellow", retain, power3v3_pin, power0v_pin), //TODO-213 define min/max/color in UX
     addr(addr), wire(wire), lightmeter(addr) {
+      //TODO-213 setDefaultColor(DEFAULT_bh1750_bh1750_color)
   }
 
 // TODO add to docs - BH1750 default I2C address is 0x23

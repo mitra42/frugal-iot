@@ -29,7 +29,10 @@ void System_Captive::setupLanguages() {
     F("Set WiFi"),
     F("Tare"),
     F("Calibrate"),
-    F("Settings Updated")
+    F("Settings Updated"),
+    F("Soil Moisture Tare"),
+    F("Cycle Time (ms)"),
+    F("Wake Time (ms)")
   };
 
   T = TT[Language_EN];
@@ -56,7 +59,10 @@ void System_Captive::setupLanguages() {
       F("Définir le WiFi"),
       F("Tare"),
       F("Étalonner"),
-      F("Paramètres mis à jour")
+      F("Paramètres mis à jour"),
+      F("Humidité du Sol Tare"),
+      F("Temps de Cycle (ms)"),
+      F("Temps d'Éveil (ms)")
       };
   #endif //LANGUAGE_FR
 
@@ -82,7 +88,10 @@ void System_Captive::setupLanguages() {
       F("Configurar WiFi"),
       F("Tara"),
       F("Calibrar"),
-      F("Configuración actualizada")
+      F("Configuración actualizada"),
+      F("Tara de Humedad del Suelo"),
+      F("Tiempo de Ciclo (ms)"),
+      F("Tiempo de Activación (ms)")
  };
   #endif //LANGUAGE_SP
 
@@ -108,7 +117,10 @@ void System_Captive::setupLanguages() {
       F("WLAN einstellen"),
       F("Tara"),
       F("Kalibrieren"),
-      F("Einstellungen aktualisiert")
+      F("Einstellungen aktualisiert"),
+      F("Bodenfeuchtigkeit Tara"),
+      F("Zykluszeit (ms)"),
+      F("Aufwachzeit (ms)")
       };
   #endif //LANGUAGE_DE
 
@@ -134,7 +146,10 @@ void System_Captive::setupLanguages() {
       F("WiFi instellen"),
       F("Tarra"),
       F("Kalibreren"),
-      F("Instellingen bijgewerkt")
+      F("Instellingen bijgewerkt"),
+      F("Bodemvocht Tarra"),
+      F("Cyclustijd (ms)"),
+      F("Wektijd (ms)")
       };
   #endif //LANGUAGE_NL
 
@@ -160,7 +175,10 @@ void System_Captive::setupLanguages() {
       F("Atur WiFi"),
       F("Tara"),
       F("Kalibrasi"),
-      F("Pengaturan diperbarui")
+      F("Pengaturan diperbarui"),
+      F("Tara Kelembaban Tanah"),
+      F("Waktu Siklus (ms)"),
+      F("Waktu Aktif (ms)")
       };
   #endif //LANGUAGE_ID
 
@@ -186,7 +204,10 @@ void System_Captive::setupLanguages() {
       F("वाईफाई सेट करें"),
       F("तार"),
       F("कैलिब्रेट करें"),
-      F("सेटिंग्स अपडेट की गईं")
+      F("सेटिंग्स अपडेट की गईं"),
+      F("मृदा नमी टेर"),
+      F("चक्र समय (ms)"),
+      F("जागरण समय (ms)")
       };
   #endif //LANGUAGE_HI
 }
