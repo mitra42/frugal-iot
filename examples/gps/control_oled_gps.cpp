@@ -5,12 +5,12 @@
 
 Control_Oled_GPS::Control_Oled_GPS(const char* name)
   : latitude(  new INfloat("control_oled_gps", "latitude",   "Latitude",   0, 6, -90.0f,  90.0f,  "blue",   true)),
-    longitude( new INfloat("control_oled_gps", "longitude",  "Longitude",  0, 6, -180.0f, 180.0f, "blue",   true)),
-    altitude(  new INfloat("control_oled_gps", "altitude",   "Altitude",   0, 1, -500.0f, 9000.0f,"green",  true)),
-    speed(     new INfloat("control_oled_gps", "speed",      "Speed",      0, 1,    0.0f,  999.0f, "orange", true)),
-    course(    new INfloat("control_oled_gps", "course",     "Course",     0, 1,    0.0f,  360.0f, "black",  true)),
-    satellites(new INfloat("control_oled_gps", "satellites", "Satellites", 0, 0,    0.0f,   32.0f, "black",  true)),
-    hdop(      new INfloat("control_oled_gps", "hdop",       "HDOP",       0, 2,    0.0f,   50.0f, "black",  true)),
+    longitude(  new INfloat("control_oled_gps", "longitude",  "Longitude",  0, 6, -180.0f, 180.0f, "blue",   true)),
+    altitude(   new INfloat("control_oled_gps", "altitude",   "Altitude",   0, 1, -500.0f, 9000.0f,"green",  true)),
+    speed(      new INfloat("control_oled_gps", "speed",      "Speed",      0, 1,    0.0f,  999.0f, "orange", true)),
+    course(     new INfloat("control_oled_gps", "course",     "Course",     0, 1,    0.0f,  360.0f, "black",  true)),
+    satellites( new INfloat("control_oled_gps", "satellites", "Satellites", 0, 0,    0.0f,   32.0f, "black",  true)),
+    hdop(       new INfloat("control_oled_gps", "hdop",       "HDOP",       0, 2,    0.0f,   50.0f, "black",  true)),
     Control_Oled("control_oled_gps", name, std::vector<IN*> { })
 {
   inputs.push_back(latitude);
