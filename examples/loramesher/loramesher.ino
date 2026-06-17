@@ -12,7 +12,6 @@
   #include "control_oled_sht.h"
   #include "control_oled_loramesher.h"
   #include "control_carousel.h"
-  Control_Oled_LoRaMesher* col;
   Control_Carousel* carousel;
 #endif
 
@@ -50,9 +49,11 @@ void setup() {
   // Add local wifis here, or see instructions in the wiki for adding via the /data or captive portal
   // frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
 
-  // esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
-  frugal_iot.loramesher = new System_LoraMesher(); // Held in a variable as future LoRaMesher will access it directly e.g. from MQTT
-  frugal_iot.system->add(frugal_iot.loramesher);
+  /* LoRaMesher now added automatically if SYSTEM_LORAMESHER_WANT which is defined in _settings.h for LoRa boards
+    // esp_log_level_set(LM_TAG, ESP_LOG_INFO);     // enable INFO logs from LoraMesher - but doesnt seem to work
+    frugal_iot.loramesher = new System_LoraMesher(); // Held in a variable as future LoRaMesher will access it directly e.g. from MQTT
+    frugal_iot.system->add(frugal_iot.loramesher);
+  */
 
   #ifdef SYSTEM_OLED_WANT
     Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED SHT");
@@ -61,7 +62,8 @@ void setup() {
     cos->humidity->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/humidity");
     cos->battery->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/battery/battery");
 
-    col = new Control_Oled_LoRaMesher("Control OLED");
+
+    Control_Oled_LoRaMesher* col = new Control_Oled_LoRaMesher("Control OLED");
     frugal_iot.controls->add(col);
     col->battery->wireTo(frugal_iot.messages->path("battery/battery"));
     col->enabled = false; // Second in carousel, starts hidden
