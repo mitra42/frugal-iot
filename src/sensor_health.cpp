@@ -24,6 +24,5 @@ void Sensor_Health::readValidateConvertSet() {
   // TODO-116 get wifi strenght and SSID
   // 4 bars for -55 dBm or higher, 3 bars for -56 to -66 dBm, 2 bars for -67 to -77 dBm, 1 bar for -78 to -88 dBm, and 0 bars for -89 dBm or lower
   wifibars->set(frugal_iot.wifi->bars());
-  Serial.print("XXX217 setting wifi to - this is good "); Serial.println(frugal_iot.wifi->SSID());
   wifissid->set(frugal_iot.wifi->SSID());
 }
