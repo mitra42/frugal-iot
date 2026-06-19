@@ -19,6 +19,9 @@
 #include "sensor_gps.h"
 #ifdef SYSTEM_OLED_WANT
   #include "control_oled_gps.h"
+  #include "control_oled_loramesher.h"
+  #include "control_carousel.h"
+  Control_Carousel* carousel;
 #endif
 
 System_Frugal frugal_iot("dev", "developers", "gps", "GPS Sensor");
@@ -46,6 +49,28 @@ void setup() {
     cog->course->wireTo(    frugal_iot.messages->path("gps/course"));
     cog->satellites->wireTo(frugal_iot.messages->path("gps/satellites"));
     cog->hdop->wireTo(      frugal_iot.messages->path("gps/hdop"));
+
+    // Add LoRaMesher debug display
+    Control_Oled_LoRaMesher* col = new Control_Oled_LoRaMesher("Control OLED");
+    frugal_iot.controls->add(col);
+    col->battery->wireTo(frugal_iot.messages->path("battery/battery"));
+    col->enabled = false; // Second in carousel, starts hidden
+
+    // Define a carousel for the displays and add cog
+    carousel = new Control_Carousel("Carousel");
+    frugal_iot.controls->add(carousel);
+    carousel->controls.push_back(cog);
+    carousel->controls.push_back(col);
+
+  #endif
+
+  // Support button and use it cycle carousel
+  #ifdef BUTTON_BUILTIN
+    Sensor_Button* button = new Sensor_Button("button", "Button", BUTTON_BUILTIN, "red");
+    frugal_iot.buttons->add(button);
+    #ifdef SYSTEM_OLED_WANT
+      button->singleClick->wireTo(frugal_iot.messages->setPath("carousel/select/cycle")); // cycles carousel display
+    #endif
   #endif
 
   frugal_iot.setup();
@@ -54,3 +79,12 @@ void setup() {
 void loop() {
   frugal_iot.loop();
 }
+
+// Callback from LoRaMesher
+#ifdef SYSTEM_LORAMESHER_DEBUG
+void printAppData() {
+  #ifdef SYSTEM_OLED_WANT
+    carousel->controls[carousel->selected]->act(); // Redisplay current carousel item
+  #endif
+}
+#endif

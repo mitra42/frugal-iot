@@ -98,7 +98,8 @@ bool System_MQTT::connect() {
     if (!client.connect(frugal_iot.nodeid.c_str(), username, password)) {
       /* Still not connected */
       Serial.print(F(" MQTT Connect Fail "));
-      Serial.print(client.lastError()); // -3 is LWMQTT_NETWORK_FAILED_CONNECT
+      /* https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h */
+      Serial.print(client.lastError()); // -3 is LWMQTT_NETWORK_FAILED_CONNECT -10 is userid/password fail
       Serial.print(F(" ")); // 6 is LWMQTT_UNKNOWN_RETURN_CODE 
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116
       Serial.println(client.returnCode());
