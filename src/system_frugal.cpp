@@ -135,6 +135,9 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #ifdef SYSTEM_LORAMESHER_WANT
     loramesher(new System_LoraMesher()),
   #endif
+  #ifdef SYSTEM_MDNS_WANT
+    mdns(new System_MDNS()),
+  #endif
     messages(new System_Messages()),
   // mqtt is added in main.cpp > configure_mqtt(host,user,password)
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
@@ -174,7 +177,10 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #ifdef SYSTEM_LORAMESHER_WANT
     system->add(loramesher);
   #endif // SYSTEM_LORAMESHER_WANT
-  system->add(captive);
+  system->add(captive); // Must come before mdns — captive starts the server
+  #ifdef SYSTEM_MDNS_WANT
+    system->add(mdns);  // setup() adds its STA route to captive's server
+  #endif // SYSTEM_MDNS_WANT
   add(system);
 }
 

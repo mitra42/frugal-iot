@@ -34,6 +34,8 @@ class System_Captive : public System_Base {
     bool setLanguage(const String& language_code);
     void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet);
     void captiveLines(AsyncResponseStream* response);
+    // Register a POST handler on the station WiFi interface (used by System_MDNS)
+    void addSTARoute(const char* uri, ArRequestHandlerFunction handler);
   protected:
   };
 

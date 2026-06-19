@@ -131,6 +131,11 @@ void System_Messages::sendOutgoingQueued() {
     if (m.isSubscription) {
       if (m.queuedSubscribe()) {
         subscriptions.push_front(m);
+        #ifdef SYSTEM_MDNS_WANT
+          if (frugal_iot.mdns) {
+            frugal_iot.mdns->notifyPeersOfSubscription(m.topicPath);
+          }
+        #endif
         //heap_print(F("/popping sub"));
         outgoing.pop_front(); // Note this should delete m and free up the memory
       } else {
@@ -149,8 +154,20 @@ void System_Messages::sendOutgoingQueued() {
   }
 
 }
-// Upstream: queued => MQTT or LoRaMesher
+// Upstream: queued => MQTT or LoRaMesher (+ mDNS peers in parallel)
 bool System_Message::queuedMessage() {
+  // mDNS: always attempt peer delivery in parallel with MQTT/LoRaMesher.
+  // publishToPeer routes set/ commands to the target device by nodeId.
+  // publishToSubscribers pushes sensor data to peers that subscribed to this topic.
+  // Neither call affects the return value unless no other transport is available.
+  bool mdnsSent = false;
+  #ifdef SYSTEM_MDNS_WANT
+    if (frugal_iot.mdns) {
+      frugal_iot.mdns->publishToSubscribers(topicPath, payload);
+      mdnsSent = frugal_iot.mdns->publishToPeer(topicPath, payload, retain, qos);
+    }
+  #endif
+
   if (frugal_iot.mqtt->connected()) {
     // This will be false if fail to send, true if either send or its unsendable (too big)
     return frugal_iot.mqtt->send(topicPath, payload, retain, qos);
@@ -159,7 +176,7 @@ bool System_Message::queuedMessage() {
     return frugal_iot.loramesher->publish(topicPath, payload, retain, qos);
   #endif
   } else {
-    return false; // Unable to send, leave on queue 
+    return mdnsSent; // If mDNS delivered, pop from queue; otherwise keep trying //TODO-226 may be wrong may want to retain here till have MQTT or LM up 
   }
 }
 
@@ -237,3 +254,27 @@ void System_Messages::queueFromCaptive(const String &twig, const String &payload
 void System_Messages::queueLoopback(const String &topicPath, const String &payload) {
   queueIncoming(topicPath, payload);
 }
+
+#ifdef SYSTEM_MDNS_WANT
+// Called by System_MDNS::onNewPeer() when a new peer is discovered.
+// Iterates the local subscription list and sends an HTTP subscribe POST to the
+// peer for every topic whose path starts with that peer's org/project/nodeId/ prefix.
+void System_Messages::subscribeViaMdns(const String& peerNodeId, IPAddress ip, uint16_t port) {
+  String peerPrefix = frugal_iot.org + "/" + frugal_iot.project + "/" + peerNodeId + "/";
+  bool anySent = false;
+  for (const System_Message& sub : subscriptions) {
+    if (sub.topicPath.startsWith(peerPrefix)) {
+      #ifdef SYSTEM_MDNS_DEBUG
+        Serial.print(F("mDNS: subscribing to ")); Serial.println(sub.topicPath);
+      #endif
+      frugal_iot.mdns->httpPost(ip, port, "subscribe", sub.topicPath);
+      anySent = true;
+    }
+  }
+  #ifdef SYSTEM_MDNS_DEBUG
+    if (!anySent) {
+      Serial.print(F("mDNS: no local subscriptions match peer ")); Serial.println(peerNodeId);
+    }
+  #endif
+}
+#endif // SYSTEM_MDNS_WANT

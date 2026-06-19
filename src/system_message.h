@@ -52,6 +52,11 @@ class System_Messages : public System_Base {
     void queueFromCaptive(const String &twig, const String &payload);
     void queueLoopback(const String &topicPath, const String &payload);
     void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos); // Only remote send, no loopback
+    #ifdef SYSTEM_MDNS_WANT
+      // Send HTTP subscribe POSTs to a newly-discovered mDNS peer for every
+      // locally-registered subscription whose topic path starts with that peer's prefix.
+      void subscribeViaMdns(const String& peerNodeId, IPAddress ip, uint16_t port);
+    #endif
   protected:
     friend class System_Message;
     std::list<System_Message> outgoing;

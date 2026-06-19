@@ -183,7 +183,9 @@ void System_Captive::setup() {
   String ip = WiFi.softAPIP().toString(); // Note how this is used by redirect 
   Serial.print(F("Access point on: ")); Serial.println(ip);
 
-  // Order is important - this has to come BEFORE the catch-all default portal
+  // Order is important - this has to come BEFORE the catch-all default portal.
+  // ON_AP_FILTER restricts this handler to clients on the device's own AP;
+  // station-interface POSTs (from mDNS peers) are handled by System_MDNS::setup().
   server.on("/", HTTP_POST, [](AsyncWebServerRequest *request){
     Serial.println(F("POST /"));
     int params = request->params();
@@ -231,7 +233,7 @@ void System_Captive::setup() {
 
     request->send(response);
     message = T->SettingsUpdated;
-  });
+  }).setFilter(ON_AP_FILTER);
 
   server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
     Serial.println(F("POST /restart"));
@@ -323,4 +325,11 @@ void System_Captive::captiveLines(AsyncResponseStream* response) {
 
 void System_Captive::loop() {
   dnsServer.processNextRequest(); // Apparantly does nothing, and not needed
+}
+
+// Register a POST handler visible only on the station WiFi interface.
+// Called by System_MDNS::setup() to attach the peer message endpoint.
+// ESPAsyncWebServer supports adding handlers after server.begin().
+void System_Captive::addSTARoute(const char* uri, ArRequestHandlerFunction handler) {
+  server.on(uri, HTTP_POST, handler).setFilter(ON_STA_FILTER);
 }
