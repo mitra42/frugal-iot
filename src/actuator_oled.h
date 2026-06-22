@@ -98,6 +98,7 @@ class Actuator_OLED : public System_Base {
     #else
       #error need to add "display" for appropriate OLED
     #endif
+    Actuator_OLED(TwoWire* wire = &Wire); // Constructor
     void setup() override; // Setup function to initialize the display
     //void infrequently() override; // Infrequent tasks, e.g., every 10 seconds
     //void periodically() override; // Periodic tasks, e.g., every minute
