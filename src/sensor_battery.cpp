@@ -19,17 +19,24 @@
 
 // Note voltage divider is board specific - known defaults in sensor_battery.h
 
-Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider) 
+Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider, uint8_t power3v3_pin, uint8_t power0v_pin) 
 //(id, name, pin, width, min, max, offset, scale, color, retain) 
-: Sensor_Analog("battery", "Battery", pin_init, 0, 0, 4.5, 0, voltage_divider, "green", true) //TODO-1
+: Sensor_Analog("battery", "Battery", pin_init, 0, DEFAULT_battery_battery_min, DEFAULT_battery_battery_max, 0, voltage_divider, DEFAULT_battery_battery_color, true, power3v3_pin, power0v_pin) //TODO-1
   {
       pinMode(pin, INPUT); // Maybe not needed, but really need to be sure for power
-   }
+      #ifdef SENSOR_BATTERY_POWER0_PIN
+        pinMode(SENSOR_BATTERY_POWER0_PIN, OUTPUT);
+      #endif
+      #ifdef SENSOR_BATTERY_POWER3v3_PIN
+        pinMode(SENSOR_BATTERY_POWER3v3_PIN, OUTPUT);
+      #endif
+  }
 
 // ESP32 readInt() override - must be outside conditional block to avoid vtable errors
 // when using the 2-parameter constructor on boards without default SENSOR_BATTERY_PIN/VOLTAGE_DIVIDER
 #ifdef ESP32
 int Sensor_Battery::readInt() {
+  powerUp();
   return analogReadMilliVolts(pin);  // returns uint32 
 }
 #endif // ESP32
@@ -42,12 +49,14 @@ int Sensor_Battery::readInt() {
     // Note that on some boards -  the voltage divider for the battery is different than for pin A0
     // e.g. ARDUINO_ESP8266_WEMOS_D1MINIPRO (V2) - batt = (130+220+100)/100 while A0 is just (220+100)/100
 
-    #define SENSOR_BATTERY_SCALE (SENSOR_BATTERY_VOLTAGE_DIVIDER * VCC_MILLIVOLTS) / ANALOG_READ_RANGE 
+    #ifndef SENSOR_BATTERY_SCALE
+      #define SENSOR_BATTERY_SCALE (SENSOR_BATTERY_VOLTAGE_DIVIDER * VCC_MILLIVOLTS) / ANALOG_READ_RANGE 
+    #endif
 
     // readInt() will default to read this pin
     // convert() will apply scale
   #else  // ESP32
-    #ifdef SENSOR_BATTERY_VOLTAGE_DIVIDER
+    #if defined(SENSOR_BATTERY_VOLTAGE_DIVIDER) && !defined(SENSOR_BATTERY_SCALE)
       #define SENSOR_BATTERY_SCALE (SENSOR_BATTERY_VOLTAGE_DIVIDER)
     #endif
   #endif //ESP8266

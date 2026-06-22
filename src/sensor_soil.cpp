@@ -24,15 +24,17 @@
 #include "sensor_soil.h"
 #include "Frugal-IoT.h"
 
-Sensor_Soil::Sensor_Soil(const char* const id, const char * const name, uint8_t pin_init, int offset, float scale, const char* color, bool retain) 
-  : Sensor_Analog(id, name, pin_init, 0, 0, 100, offset, scale, color, retain)
-  { }
+Sensor_Soil::Sensor_Soil(const char* const id, const char * const name, uint8_t pin_init, int offset, float scale, const char* color, bool retain, uint8_t power3v3_pin, uint8_t power0v_pin) 
+  : Sensor_Analog(id, name, pin_init, 0, DEFAULT_soil_soil_min, DEFAULT_soil_soil_max, offset, scale, color, retain, power3v3_pin, power0v_pin)   {
+    setDefaultColor(DEFAULT_soil_soil_color);
+}
 
 // This may be specific to device being read - expect it to be subclassed
 bool Sensor_Soil::validate(int v) {
   return (v != 4095);   
 }
 void Sensor_Soil::captiveLines(AsyncResponseStream* response) {
-  frugal_iot.captive->addButton(response, id, "output", "0", "Soil Moisture Tare"); //TODO-TRANSLATE
-  frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),3), "Calibrate", 0, output->max);
+  frugal_iot.captive->addButton(response, id, "output", "0", T->SoilMoistureTare);
+  frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),3), T->Calibrate, 0, output->max);
 }
+

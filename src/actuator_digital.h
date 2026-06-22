@@ -9,6 +9,7 @@ class Actuator_Digital : public Actuator {
   protected:
     uint8_t pin;
     INbool* input;
+    void setDefaultColor(char* color);
     void act() override;
     virtual void set(const bool v);
     virtual void setup() override;

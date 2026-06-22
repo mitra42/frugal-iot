@@ -18,7 +18,7 @@ System_Base::System_Base(const char * const id, const String name)
 // Defaults for routines that can, but often are not, overridden in sub-class.
 void System_Base::setup() { };
 void System_Base::setupFailed() { // Call this from setup() if fails
-  Serial.print(id); Serial.println(F("Failed in setup"));
+  Serial.print(id); Serial.println(F(" Failed in setup"));
 }
 void System_Base::loop() { }; // Called frequently same as loop() in typical arduino apps
 void System_Base::periodically() { }; // Called once for each period - which might be 10 seconds, or seeral hours
@@ -34,8 +34,10 @@ void System_Base::discover() {} ; // Default to do nothing
 void System_Base::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
     if (topicTwig == "name") {
-      name = payload;
-      writeConfigToFS(topicTwig, payload);
+      if (name != payload) {
+        name = payload;
+        writeConfigToFSandEcho(topicTwig, payload);
+      }
     } else {
       // Nothing wrong with no match - it might have been handled in subclass
     }
@@ -78,21 +80,57 @@ void System_Base::readConfigFromFS(File dir, const String* leaf) {
   }
   dir.close();
 }
+// Note there is also a IO::writeConfigToFS
 void System_Base::writeConfigToFS(const String& topicLeaf, const String& payload) {
   String filepath = String("/") + id + "/" + topicLeaf;
   frugal_iot.fs_LittleFS->spurt(filepath, payload);
 }
-
+// Write to FileSystem, but also echo to MQTT - typically this is take a "set" message and echoing as a regular one
+void System_Base::writeConfigToFSandEcho(const String& topicLeaf, const String& payload) {
+  frugal_iot.messages->send(leaf2path(topicLeaf), payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  writeConfigToFS(topicLeaf, payload);
+}
 String System_Base::leaf2path(const char* const leaf) { 
   return frugal_iot.messages->path(id, leaf);
 }
+String System_Base::leaf2path(const String& leaf) { 
+  return frugal_iot.messages->path(id, leaf);
+}
+void System_Base::powerUp(uint8_t pin3v3, uint8_t pin0v) {
+  if (pin0v != 0xFF) {
+    pinMode(pin0v, OUTPUT);  // Set pin after reading config as may change
+    digitalWrite(pin0v, LOW);
+  }
+  if (pin3v3 != 0xFF) {
+    pinMode(pin3v3, OUTPUT);  // Set pin after reading config as may change
+    digitalWrite(pin3v3, HIGH);
+  }
+}
+void System_Base::powerUp() {
+  // By default do nothing
+}
+
+void System_Base::powerDown(uint8_t pin3v3, uint8_t pin0v) {
+  // To power down, go to high impedance input
+  if (pin3v3 != 0xFF) {
+    pinMode(pin3v3, INPUT); 
+  }
+  if (pin0v != 0xFF) {
+    pinMode(pin0v, INPUT);
+  }
+}
+void System_Base::powerDown() {
+  // By default do nothing
+}
+
+
 // ========== IO - base class for IN and OUT ===== 
 
 
 IO::IO(const char * const sensorId, const char * const id, const String name, const char* const color, const bool w)
 : sensorId(sensorId), id(id), name(name), 
 topicTwig(StringF("%s/%s", sensorId, id)), 
-color(color), wireable(w), wiredPath()
+color(color), default_color(color), wireable(w), wiredPath()
 {};
 
 IN::IN(const char* sensorId, const char * const id, const String name, const char * const color, const bool w)
@@ -127,7 +165,9 @@ void IO::discover() {
   if (wireable) {
     frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "wired"), wiredPath, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   }
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "color"), String(color), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  if (color != default_color) { //TODO-213 this is probably not a valid compare, will prob compare ptr not value
+    frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "color"), String(color), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  }
 }
 
 // TO_ADD_INxxx 
@@ -167,7 +207,7 @@ bool INbool::boolValue() {
   return value;
 }
 String INbool::StringValue() {
-  return String(value ? "true" : "false");
+  return String(value ? "1" : "0");
 }
 float INcolor::floatValue() {
   return 0;
@@ -245,44 +285,39 @@ void IO::writeConfigToFS(const String &leaf, const String& payload) {
   //Serial.println(F("Writing config to " + path + "=" + payload));
   frugal_iot.fs_LittleFS->spurt(path, payload);
 }
+// Leaf should be e.g. temperature or temperature/max or temperature/wired
+void IO::writeConfigToFSandEcho(const String &leaf, const String& payload) { 
+  Serial.print("XXX 206 " __FILE__ " tt should be sht/temp ");Serial.println(__LINE__); 
+  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, leaf), payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  writeConfigToFS(leaf, payload);
+}
+
 // Leaf should be e.g. control/limit and will append value
-void IO::writeValueToFS(const String &leaf, const String& payload) { 
+void IO::writeValueToFSandEcho(const String &leaf, const String& payload) { 
   String dirPath = String("/") + sensorId + "/" + leaf;
-  String path = dirPath + "/value";
-  // Checking and removing legacy file when want a directory
-  // This shouldnt be needed long - when all devices have updated code this will run the first time they readConfigFromFS (e.g. erase Nov 2025)
-  /*
-  if (frugal_iot.fs_LittleFS->exists(dirPath)) {
-    bool needsRemoval;
-    {
-      File f = frugal_iot.fs_LittleFS->open(dirPath, "r");
-      needsRemoval = !f.isDirectory();
-      f.close();
-    }
-    if (needsRemoval) {
-      frugal_iot.fs_LittleFS->remove(dirPath); // XX may not be accurage
-    }
-  }
-  */
-  // End of legacy code
-  frugal_iot.fs_LittleFS->spurt(path, payload);
+  String valuePath = dirPath + "/value";
+  frugal_iot.fs_LittleFS->spurt(valuePath, payload);
+  frugal_iot.messages->send(path(),payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 
 // Options eg: sht/temp set/sht/temp/wired set/sht/temp set/sht/temp/max
 // maybe rewrite as dispatchParm and override where required
+// This is called, looping over all IN by 
 bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
+  if (isSet) { // e.g : set/sht/temp/wired Note subclass handles set/sht/temp set/sht/temp/max etc
     if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // Nite this is the "id" of the leaf, not of the sensor
       if (!(p == wiredPath)) { // if empty, or different
         wireTo(p);
-        writeConfigToFS(leaf, p);  // TODO need to make sure directory exists   -
+        writeConfigToFSandEcho(leaf, p);  // TODO need to make sure directory exists   -
       }
     }
   }
   // For now recognizing both xxx/leaf and set/xxx/leaf (but note only subscribed to set/xxx/leaf)
   // Also recognize leaf/value which is how will be written to disk or get problems with directories vs files
   if (leaf == id || (leaf.startsWith(id) && leaf.endsWith("/value"))) {
-    writeValueToFS(id, p);  // e.g. ledbuiltin/on or set/ledbuiltin/on.  // TODO need to make sure directory exists   
+    // isSet usually comes from messages and needs echo as (!set) topic
+    // !isSet usually comes from FS but also need to send
+    writeValueToFSandEcho(id, p);  // e.g. ledbuiltin/on or set/ledbuiltin/on.  // TODO need to make sure directory exists   
     return convertAndSet(p); // Virtual - depends on type of INxxx
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
@@ -303,7 +338,7 @@ bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
       if (!(p == wiredPath)) {
         wiredPath = p; // Copies p
         sendWired(); // Destination changed, send current value
-        writeConfigToFS(leaf, p);  //         
+        writeConfigToFSandEcho(leaf, p);
       }
     }
   }
@@ -323,8 +358,8 @@ bool INfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
       dispatched = true;
     }
     if (dispatched) {
-      writeConfigToFS(leaf, p);  
-      return false; // value didnt change         
+      writeConfigToFSandEcho(leaf, p);  
+      return false; // value didnt change
     } 
     // else drop through and dispatch to superclass
   }
@@ -343,7 +378,7 @@ bool OUTfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
       dispatched = true;
     }
     if (dispatched) {
-      writeConfigToFS(leaf, p);  
+      writeConfigToFSandEcho(leaf, p);  
       return false; // value didnt change         
     } 
     // else drop through and dispatch to superclass
@@ -354,18 +389,24 @@ bool OUTfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   bool dispatched = false;
   if (leaf.startsWith(id)) {
-    uint16_t v = p.toInt(); // TODO is this really toFloat ? 
+    uint16_t v = p.toInt();
     if (leaf.endsWith("/max")) {
-      max = v;        
+      max = v;
       dispatched = true;
     } else if (leaf.endsWith("/min")) {
       min = v;
       dispatched = true;
+    } else if (leaf.endsWith("/cycle")) {
+      int16_t newvalue = (int16_t)value + (int16_t)v;
+      if (newvalue > (int16_t)max) { newvalue = (int16_t)min; }
+      if (newvalue < (int16_t)min) { newvalue = (int16_t)max; }
+      value = (uint16_t)newvalue;
+      return true; // value changed
     }
     if (dispatched) {
-      writeConfigToFS(leaf, p);  
-      return false; // value didnt change         
-    } 
+      writeConfigToFSandEcho(leaf, p);
+      return false; // value didnt change (just parameter)
+    }
     // else drop through and dispatch to superclass
   }
   // Catch generic case like color
@@ -373,13 +414,16 @@ bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
 }
 bool OUTbool::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   bool dispatched = false;
+  bool changed = false;
   if (leaf.startsWith(id)) {
     if (leaf.endsWith("/cycle")) { 
-      set(!value);
+      set(!value); // will send and sendWired if changed (which it has)
+      dispatched = true;
+      changed = true;
     }
     if (dispatched) {
-      writeConfigToFS(leaf, p);  
-      return false; // value didnt change
+      writeConfigToFS(leaf, p); // Dont echo since only /cycle and set will do the necessary sends
+      return changed; // value didnt change (just parameter)
     } 
     // else drop through and dispatch to superclass
   }
@@ -404,8 +448,8 @@ bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
       set((uint16_t)newvalue);
     }
     if (dispatched) {
-      writeConfigToFS(leaf, p);  
-      return false; // value didnt change         
+      writeConfigToFSandEcho(leaf, p);
+      return false; // value didnt change (just parameter)
     } 
     // else drop through and dispatch to superclass
   }
@@ -496,22 +540,27 @@ void OUTtext::debug(const char* const where) {
 
 // INfloat::INfloat() {}
 // TO_ADD_INxxx
+INfloat::INfloat(const char * const sensorId, const char * const id, const String name, float v, uint8_t width, float mn, float mx, float default_min, float default_max, char const * const c, const bool w)
+  :   IN(sensorId, id, name, c, w), width(width), value(v), min(mn), max(mx), default_min(default_min), default_max(default_max) {
+}
 INfloat::INfloat(const char * const sensorId, const char * const id, const String name, float v, uint8_t width, float mn, float mx, char const * const c, const bool w)
-  :   IN(sensorId, id, name, c, w), width(width), value(v), min(mn), max(mx) {
+  :   INfloat(sensorId, id, name, v, width, mn, mx, mn, mx, c, w) {
 }
 
 INfloat::INfloat(const INfloat &other)
 : IN(other.sensorId, other.id, other.name, other.color, other.wireable), 
   width(other.width),
-  value(other.value)
+  value(other.value),
+  min(other.min), max(other.max), default_min(other.default_min), default_max(other.default_max)
 { }
-INuint16::INuint16(const char * const sensorId, const char * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const c, const bool w)
-  :   IN(sensorId, id, name, c, w), value(v), min(mn), max(mx) {
+INuint16::INuint16(const char * const sensorId, const char * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, uint16_t default_min, uint16_t default_max, char const * const c, const bool w)
+  :   IN(sensorId, id, name, c, w), value(v), min(mn), max(mx), default_min(default_min), default_max(default_max) {
 }
-
+INuint16::INuint16(const char * const sensorId, const char * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const c, const bool w)
+  : INuint16(sensorId, id, name, v, mn, mx, mn, mx, c, w) {
+}
 INuint16::INuint16(const INuint16 &other) 
-: IN(other.sensorId, other.id, other.name, other.color, other.wireable) {
-  value = other.value;
+: IN(other.sensorId, other.id, other.name, other.color, other.wireable), default_min(other.default_min), default_max(other.default_max), value(other.value) {
 }
 
 INbool::INbool(const char * const sensorId, const char * const id, const String name, bool value, char const * const color, const bool wireable)
@@ -605,18 +654,26 @@ bool INtext::convertAndSet(const String &payload) {
 // TO_ADD_INxxx
 
 void INfloat::discover() {
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  if (min != default_min) {
+    frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  }
+  if (min != default_max) {
+    frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  }
   IN::discover();
 }
 void INuint16::discover() {
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  IN::discover(); // Sends value
+  if (min != default_min) {
+    frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  }
+  if (min != default_max) {
+    frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  }
+  IN::discover();
 }
 /* Using base class's which calls class's StringValue
   void INcolor::discover() {
-    IN::discover(); // Sends value as #RRGGBB
+    IN::discover();
   }
 */
 // INbool and INtext, INcolor are fine witb the superclass (just sending color)
@@ -629,11 +686,14 @@ void INuint16::discover() {
 OUTbool::OUTbool(const char * const sensorId, const char* const id, const String name, bool v, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v)  {
 }
+OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const String name,  float v, uint8_t width, float mn, float mx, float default_min, float default_max, char const * const color, const bool w)
+  :   OUT(sensorId, id, name, color, w), width(width), min(mn), max(mx), default_min(default_min), default_max(default_max), value(v) {
+}
 OUTfloat::OUTfloat(const char * const sensorId, const char* const id, const String name,  float v, uint8_t width, float mn, float mx, char const * const color, const bool w)
-  :   OUT(sensorId, id, name, color, w), width(width), min(mn), max(mx), value(v) { 
+  :   OUTfloat(sensorId, id, name, v, width, mn, mx, mn, mx, color, w) { 
 }
 OUTuint16::OUTuint16(const char * const sensorId, const char* const id, const String name,  uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool w)
-  :   OUT(sensorId, id, name, color, w), value(v), min(mn), max(mx) {
+  :   OUT(sensorId, id, name, color, w), value(v), min(mn), max(mx), default_min(mn), default_max(mx) {
 }
 OUTtext::OUTtext(const char * const sensorId, const char* const id, const String name,  const String v, char const * const color, const bool w)
   :   OUT(sensorId, id, name, color, w), value(v) {
@@ -655,16 +715,19 @@ OUTfloat::OUTfloat(const OUTfloat &other)
   max = other.max;
 }
 OUTuint16::OUTuint16(const OUTuint16 &other) 
-: OUT(other.sensorId, other.id, other.name, other.color, other.wireable) {
-  value = other.value;
+: OUT(other.sensorId, other.id, other.name, other.color, other.wireable), 
+  min(other.min), max(other.max), 
+  default_min(other.default_min), default_max(other.default_max),
+  value(other.value) {
 }
 
 // TO_ADD_OUTxxx
 // Called when either value, or wiredPath changes
-void OUT::sendWired(bool retain, uint8_t qos) {
+void OUT::sendWired(bool retain, uint8_t qos) { // defaults to MQTT_RETAIN MQTT_QOS_ATLEAST1
   if (wiredPath.length()) {
     // Three possibilities = normal = send+loop qos=2 & local = loopback; qos=2 & remote = sendRemote
     if (qos == MQTT_QOS_EXACTLY1) {
+      // Either loopback or send, but not both
       if (wiredPath.startsWith(frugal_iot.messages->topicPrefix)) {
         frugal_iot.messages->queueLoopback(wiredPath, StringValue());
       } else {
@@ -711,14 +774,22 @@ void OUTbool::set(const bool newvalue) {
 
 // TO-ADD-OUTxxx
 void OUTfloat::discover() {
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  OUT::discover(); // Sends value
+  if (min != default_min) {
+    frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  }
+  if (max != default_max) {
+    frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  }
+  OUT::discover();
 }
 void OUTuint16::discover() {
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  OUT::discover(); // Sends value
+  if (min != default_min) {
+    frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  }
+  if (max != default_max) {
+    frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  }
+  OUT::discover();
 }
 // OUTtext::discover -> OUT::discover
 

@@ -11,6 +11,14 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+// Default power control pins - can be overridden via constructor parameters
+#ifndef SENSOR_DS18B20_POWER0_PIN
+  #define SENSOR_DS18B20_POWER0_PIN 0xff
+#endif
+#ifndef SENSOR_DS18B20_POWER3v3_PIN
+  #define SENSOR_DS18B20_POWER3v3_PIN 0xff
+#endif
+
 /**
  * @brief DS18B20 sensor with validation and full precision
  * 
@@ -32,7 +40,7 @@ public:
      * Note: Index 0 reads the first DS18B20 detected. Use higher index values
      * if multiple sensors share the same OneWire bus.
      */
-    Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain);
+    Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain, uint8_t power3v3_pin = SENSOR_DS18B20_POWER3v3_PIN, uint8_t power0v_pin = SENSOR_DS18B20_POWER0_PIN);
 
 protected:
     /**

@@ -21,6 +21,8 @@ class System_Group : public System_Base {
     void dispatchTwig(const String &topicActuatorId, const String &topicLeaf, const String &payload, bool isSet); 
     void dispatchPath(const String &topicPath, const String &payload) override; // Only currently relevant on controls
     void discover() override;
+    void prepare() override;
+    void recover() override;
     void loop() override;
     void periodically() override;
     void infrequently() override;

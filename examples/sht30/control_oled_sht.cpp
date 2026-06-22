@@ -17,8 +17,12 @@ Control_Oled_SHT::Control_Oled_SHT(const char* name)
   }
 
   void Control_Oled_SHT::act() {
+    if (!enabled) return;
     // Called when any of the inputs change
     Adafruit_SSD1306* display  = &frugal_iot.oled->display;
+    #ifdef SYSTEM_OLED_DEBUG
+      Serial.println(F("Writing fresh to oLED"));
+    #endif
     display->clearDisplay();
     display->setCursor(0,0);
     display->setTextSize(3);

@@ -97,26 +97,28 @@ bool System_MQTT::connect() {
     // Theoretically "skip=true" should be good, dont close if connected, but leads to error code=6
     if (!client.connect(frugal_iot.nodeid.c_str(), username, password)) {
       /* Still not connected */
-      Serial.print(F(" Fail "));
-      Serial.print(client.lastError()); // -3 is LWMQTT_NETWORK_FAILED_CONNECT
+      Serial.print(F(" MQTT Connect Fail "));
+      /* https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h */
+      Serial.print(client.lastError()); // -3 is LWMQTT_NETWORK_FAILED_CONNECT -10 is userid/password fail
       Serial.print(F(" ")); // 6 is LWMQTT_UNKNOWN_RETURN_CODE 
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116
       Serial.println(client.returnCode());
       return false;
     } else { 
       /* Fresh connection */
-      Serial.print(F(" Connected "));
+      Serial.println(F(" Connected "));
       if (!client.sessionPresent()) {
-        subscriptionsDone = false; // No session so will need to redo subscriptions
+        subscriptionsDone = false; // No session so will need to redo subscriptions 
       } else {
         Serial.println(F(" Session present "));
       }
+      frugal_iot.setup_after_mqtt(); // Main thing is to set LoRaMesher gateway
     }
   }
   /* Have a connection - new or old */
-  if (!subscriptionsDone) { // Client has reported existence of a session
+  if (!subscriptionsDone) { // Client has reported non-existence of a session
     /* State connected but broker doesnt know subscriptions */
-    if (frugal_iot.messages->reSubscribeAll()) {
+    if (frugal_iot.messages->reSubscribeAll()) {  //TODO-189 check redoing LoRa subscriptions
       subscriptionsDone = true;
     } else {
       return false; // Something failed - probably connection dropped.
@@ -128,22 +130,23 @@ bool System_MQTT::connect() {
 }
 // This is for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname
 void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+  // TODO-206 no need to resend, but *do* need to test changing via SPIFFS
   if (isSet && (topicSensorId == id)) {
     if (topicTwig == "hostname") {
       hostname = payload;
       writeConfigToFS(topicTwig, payload);
+      // Could echo here but dont need to
     } else {
       System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
     }
   }
 }
-bool System_MQTT::prepareForLightSleep() {
-  //TODO-23 this doesnt appear to be called, its not sure if it should or not
+void System_MQTT::prepare() {
+  //Note this is intentionally not called
   frugal_iot.mqtt->client.disconnect();
-  return true;
 }
-bool System_MQTT::recoverFromLightSleep() {
-  return connect(); // TODO-23 Note this is blocking if WiFi is connected, which it typically won't be. 
+void System_MQTT::recover() {
+  connect(); // TODO-23 Note this is blocking if WiFi is connected, which it typically won't be. 
 }
 
 // UPSTREAM module -> queue -> (loRaMesher -> queue ) -> MQTT -> Broker

@@ -39,8 +39,8 @@
 #ifndef SENSOR_ANALOG_UNSUPPORTED
 // If Analog unsupported then a linker error will be generated if try and add one. 
 
-Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, const uint8_t p, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool r) 
-: Sensor_Float(id, name, width, min, max, color, r),
+Sensor_Analog::Sensor_Analog(const char* const id, const char * const name, const uint8_t p, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool r, uint8_t power3v3_pin, uint8_t power0v_pin) 
+: Sensor_Float(id, name, width, min, max, color, r, power3v3_pin, power0v_pin),
   pin(p),
   offset(offset),
   scale(scale)
@@ -132,6 +132,7 @@ void Sensor_Analog::dispatchTwig(const String &topicSensorId, const String &topi
     } else {
       Sensor_Float::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
     }
+    // At this point, not echoing back as output is a bit odd and offset/scale only come from SPIFFS
   }
 }
 

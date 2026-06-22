@@ -128,13 +128,19 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       while (WiFi.scanComplete() < 0) {  }; // Careful in case this blocks everything mid-scan, seems to be ok.
       for (int i = 0; i < frugal_iot.wifi->num_networks; i++) {
         String s = WiFi.SSID(i);
+        uint8_t bars =  frugal_iot.wifi->rssi_to_bars(WiFi.RSSI(i));
         wifi_auth_mode_t mode = WiFi.encryptionType(i); //uint8_t on ESP8266
         response->print(F("<option value='"));
-        response->print(html_entities(WiFi.SSID(i)) + F("'"));
-        if (s == WiFi.SSID()) { response->print(T->_selected); }
+        response->print(html_entities(WiFi.SSID(i)));
+        response->print(F("'"));
+        if (s == WiFi.SSID()) { response->print(F(" selected")); }
         response->print(F(">"));
         response->print(WiFi.SSID(i));
-        response->print(mode == WIFI_AUTH_OPEN ? F("") : F("&#x1f512;")); // Lock icon
+        if (!WIFI_AUTH_OPEN) { response->print(F(" &#x1f512;")); }  // Lock icon
+        const char* bb[] = {" ", "&#x2804", "&#x2806", "&#x2807", "&#x2847", "&#x283f" };
+        for (uint8_t b = 0; b <= bars; b++) {
+          response->print(bb[b]); // e.g. .))) if three bars (ugly but saves images on device)
+        }
         if (mode == WIFI_AUTH_WPA2_ENTERPRISE) { response->print(F(" unsupported 802.1x")); }
         response->print(F("</option>"));
       }
@@ -261,6 +267,7 @@ void System_Captive::addNumber(AsyncResponseStream* response, const char* id, co
 void System_Captive::addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, bool init, String label) {
   // weirdness here is because absence of check, means absence of input being sent, so send 0 with optional 1 following
   //response->print(String(F("<input type=hidden name='" ))+ id + "/" + topicTwig + "' value='0'>");  
+  //label should be translated, but is typically the local name of the module
   response->print(String(F("<p><label>")) + label + ": <input type=checkbox name='" + id + "/" + topicTwig + "' value='1'" + (init ? " checked" : "") + " onchange=\"s(this.name,this.checked?this.value:'0')\"></label></p>");  
 }
 void System_Captive::addButton(AsyncResponseStream* response, const char* id, const char* topicTwig, String val, String label) {
@@ -280,23 +287,23 @@ auto handler = server.on("/some/path", [](AsyncWebServerRequest *request){
 */
 
 bool System_Captive::setLanguage(const String& payload) {
-  for (auto t : TT) {
-    if (payload == t->code) {
-      language_code = payload;
-      T = t;
-      return true;
+  for (auto t : TT) { // Iterate across languages
+    if (payload == t->code) { // Found matching language
+      language_code = payload;  // save it (won't save if node does not support language)
+      T = t; // Language array to use is this one
+      return true; // found it 
     }
   }
-  return false;
+  return false; // not found
 }
 
 void System_Captive::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
   if (isSet && (topicSensorId == id)) {
     if (topicTwig == "language_code") {
-      if (setLanguage(payload)) { // Code e.g. "EN"
-        writeConfigToFS(topicTwig, payload);
+      if (setLanguage(payload)) { // Code e.g. "EN". true if language supported
+        writeConfigToFSandEcho(topicTwig, payload);
       }
-    } else {
+    } else { // e.g. "name"
       System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
     }
   }

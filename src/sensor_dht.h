@@ -34,11 +34,12 @@
 
 class Sensor_DHT : public Sensor_HT {
 public:
-  Sensor_DHT(const char * const name, const uint8_t pin, const bool retain);
+  Sensor_DHT(const char * const name, const uint8_t pin, const bool retain, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
 protected:
   DHTNEW * const dht; 
   const uint8_t pin;
   void setup() override;
+  void powerUp() override;
   void readValidateConvertSet() override; // Combines function of set(read()) since reads two values from sensor
 };
 

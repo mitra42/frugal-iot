@@ -60,7 +60,7 @@ void Control::dispatchTwig(const String &topicControlId, const String &topicTwig
           changed = true; // Shouldnt happen - changing outputs shouldnt cause process, but here for completeness.
         }; 
       }
-      System_Base::dispatchTwig(topicControlId, topicTwig, payload, isSet);
+      System_Base::dispatchTwig(topicControlId, topicTwig, payload, isSet); // Currently only handles "name" 
     }
     if (changed) { 
       act(); // Likely to be subclassed

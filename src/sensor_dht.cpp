@@ -32,15 +32,18 @@
 #include "sensor_dht.h"
 
 // Add alternative constructor with id e.g. dht1, dht2 etc
-Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, const bool retain) 
-  : Sensor_HT("dht", name, retain), 
+Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, const bool retain, uint8_t power3v3_pin, uint8_t power0v_pin) 
+  : Sensor_HT("dht", name, retain, power3v3_pin, power0v_pin), 
     dht(new DHTNEW(pin_init)),
    pin(pin_init) {
   //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples
   // dht->setType(11); // Override bug in DHTnew till fixed see https://github.com/RobTillaart/DHTNew/issues/104
 }
-void Sensor_DHT::setup() {
+void Sensor_DHT::powerUp() {
+  Sensor_HT::powerUp();
   dht->powerUp(); //TODO-POWER think about when do this
+}
+void Sensor_DHT::setup() {
   Sensor_HT::setup(); // Call parent setup - which will readConfigFromFS (not currently configuing pins, if do then may have to move before powerUp)
   #ifdef SENSOR_DHT_DEBUG
     Serial.print(F("DHT"));

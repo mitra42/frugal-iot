@@ -1,6 +1,6 @@
 /* 
  *  Frugal IoT example - Sonoff - Basic R2 or R4 switch
- *
+ * 
  * Optional: 
  */
 
@@ -22,16 +22,18 @@ class Control_Sonoff : public Control_Hysterisis {
 // Build on the Hysterisis control, expand it so the long button drops it out of manual. 
 Control_Sonoff::Control_Sonoff() : 
   Control_Hysterisis("controlhysterisis", "Control", 50, 1, 0, 100),
-  manual(new OUTbool(id, "manual", "Manual",false,"red",true)) {
+  manual(new OUTbool(id, "manual", "Manual",false,"black",true)) { //TODO-213 handle case of valid topics but not in a module
   outputs.push_back(manual); // Note push_back as dont change outputs[0] being the output result.
 }
 
 void Control_Sonoff::dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet) {
   if (topicControlId == id) { // matches this control
     if (topicTwig == "out/cycle") {
-      // If cycling state then also set to manual
-      manual->set(true);
-      manual->writeValueToFS(manual->id, manual->StringValue());
+      // If cycling state then also set to manual if not already
+      if (!manual->value) {
+        manual->set(true); // will also send it if changed
+        manual->writeValueToFSandEcho(manual->id, manual->StringValue());
+      }
     }
     Control_Hysterisis::dispatchTwig(topicControlId, topicTwig, payload, isSet); // Pass on to normal handle of manual - not clear if it writes out/on to FS
   }
@@ -50,18 +52,26 @@ void Control_Sonoff::act() {
 System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff switch");
 
 void setup() {
-  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
+  // Battery sensor has to come before pre_setup, all others should come after
+  #ifdef SENSOR_BATTERY_PIN
+    frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
+  #endif
+  
+  // Configure power handling - type, cycle_ms, wake_ms 
+  // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
+  // Power_Loop= awake all the time; 
+  // Power_Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
+  frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
+
+  // Encapsulate setting up and starting serial and read main config also checks power ok.
+  // This has to happen AFTER battery and power are setup, and before mqtt and adding sensors actuators etc. 
+  frugal_iot.pre_setup();
+
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 
-  // Configure power handling - type, cycle_ms, wake_ms 
-  // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
-  // Loop= awake all the time; 
-  // Light = Light Sleep; 
-  // LightWiFi=Light + WiFi on (not working); 
-  // Modem=Modem sleep - works but negligable power saving
-  // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
-  frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
+
+  // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
@@ -69,7 +79,7 @@ void setup() {
   // Add sensors, actuators and controls
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
   // Relay on Sonoff is on pin 12
-  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, "purple"));
+  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, DEFAULT_relay_on_color));
 
   // Add the control and wire to the relay and the LED.
   Control_Sonoff* cs = new Control_Sonoff();
@@ -77,11 +87,10 @@ void setup() {
   cs->outputs[0]->wireTo(frugal_iot.messages->setPath("relay/on")); // TODO refactor wireTo so can take a Base
   cs->outputs[1]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on")); // Turn on LED if manual (TODO-187 may want inverse) 
   // https://github.com/mitra42/frugal-iot/issues/159
-
+  cs->outputs[1]->sendWired(); // Send current value to LED 
   // Create a button, and wire its single and long clicks to the control.
-  Sensor_Button* button = new Sensor_Button("button", "Button", BUILTIN_BUTTON, "red");
+  Sensor_Button* button = new Sensor_Button("button", "Button", BUILTIN_BUTTON, DEFAULT_button_button_color);
   frugal_iot.buttons->add(button);
-  //frugal_iot.buttons->outputs.push_back(new OUTuint16(frugal_iot.buttons->id, "state", "State", SONOFF_OFF, SONOFF_OFF, SONOFF_ON, "black", true));
   button->longClick->wireTo(frugal_iot.messages->setPath("controlhysterisis/manual/cycle")); // Value sent is "1" so goes into manual
   button->singleClick->wireTo(frugal_iot.messages->setPath("controlhysterisis/out/cycle"));
   

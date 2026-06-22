@@ -38,13 +38,16 @@ System_Messages::System_Messages()
 topicPrefix()
 { }
 
+void System_Messages::buildTopicPrefix() {
+    topicPrefix = frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/");
+    subscribe(path("set/#"));  // Main subscription to all changes sent to this node
+}
 // Note this setup might be done early (and called twice), rather than in frugal_iot.setup 
 void System_Messages::setup() {
   if (!topicPrefix.length()) { // Check if already done
     // Nothing to read from disk so not calling readConfigFromFS 
     // e.g. "dev/developers/esp32-12345/" prefix of most topics
-    topicPrefix = frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/");
-    subscribe(path("set/#"));  // Main subscription to all changes sent to this node
+    buildTopicPrefix();
   }
 }
 
@@ -67,9 +70,13 @@ String System_Messages::setPath(char const * const topicTwig) { // TODO find oth
 // Convert a twig e.g. sht30/temperature to path e.g. dev/developers/esp123/sht30/temperature
 String System_Messages::path(const String topicTwig) { // TODO find other places do this and replace with call to TopicPath
   setup(); // Allow control wiring before setup by doing setup early
-  return topicPrefix + topicTwig;
+  return topicPrefix + topicTwig; // e.g. dev/lotus/esp1234/sht/temperature or .../temperature/max
 }
 String System_Messages::path(const char* id, char const * const twig) { // TODO find other places do this and replace with call to TopicPath
+  setup(); // Allow control wiring before setup by doing setup early
+  return topicPrefix + id + "/" + twig; // Note topicPrefix ends in "/"
+}
+String System_Messages::path(const char* id, const String& twig) { // TODO find other places do this and replace with call to TopicPath
   setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + id + "/" + twig; // Note topicPrefix ends in "/"
 }
@@ -77,17 +84,6 @@ String System_Messages::path(const char* id,  const char* const leaf, const char
   setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + id + "/" + leaf + "/" + leafparm; // Note topicPrefix ends in "/"
 }
-
-/* Doesnt appear to be used
-// Convert a path e.g. /dev/developers/esp123/sht30/temperature to a twig e.g. sht30/temperature 
-String System_Messages::twig(const String &topicPath) { 
-  if (topicPath.startsWith(topicPrefix)) {
-    return topicPath.substring(topicPrefix.length());
-  } else {
-    return String();
-  }
-}
-*/
 
 // ============ UPSTREAM ====== MODULES -> (queue -> LoRaMesher) -> queue -> MQTT -> Broker 
 
@@ -113,6 +109,9 @@ void System_Messages::sendRemote(const String topicPath, const String payload, b
       return; // Don't push
     }
   }
+  #ifdef SYSTEM_MESSAGE_DEBUG
+    Serial.print("Queueing "); Serial.print(topicPath); Serial.print("="); Serial.println(payload);
+  #endif
   outgoing.emplace_back(topicPath, payload, retain, qos);  // Implicit new Message
 }
 
@@ -131,7 +130,6 @@ void System_Messages::sendOutgoingQueued() {
     System_Message &m = outgoing.front();
     if (m.isSubscription) {
       if (m.queuedSubscribe()) {
-        //heap_print(F("popping sub"));
         subscriptions.push_front(m);
         //heap_print(F("/popping sub"));
         outgoing.pop_front(); // Note this should delete m and free up the memory
@@ -149,6 +147,7 @@ void System_Messages::sendOutgoingQueued() {
     }
     // If succeeded then try and send any other queued messages
   }
+
 }
 // Upstream: queued => MQTT or LoRaMesher
 bool System_Message::queuedMessage() {
@@ -166,13 +165,16 @@ bool System_Message::queuedMessage() {
 
 // Upstream: Outgoing queue => MQTT || LoRaMesher
 bool System_Message::queuedSubscribe() {
+
   if (frugal_iot.mqtt->connected()) {
     return frugal_iot.mqtt->subscribe(topicPath);
   #ifdef SYSTEM_LORAMESHER_WANT
-  } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
-    return frugal_iot.loramesher->publish("subscribe", topicPath,0,1);
+  } else { 
+    if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
+      return frugal_iot.loramesher->publish("subscribe", topicPath,0,1);
+    }
   #endif
-  } 
+  }
   return false; // Not connected, or failed to send over connection
 }
 

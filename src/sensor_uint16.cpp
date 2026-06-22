@@ -10,11 +10,15 @@
 #include "misc.h" // shouldBeDefined
 
 //Sensor_Uint16::Sensor_Uint16() : Sensor() {  };
-Sensor_Uint16::Sensor_Uint16(const char* const id, const char * const name, const uint8_t smooth_init, uint16_t min, uint16_t max, const char* color, bool retain)
-  : Sensor(id, name, retain), smooth(smooth_init) {
+Sensor_Uint16::Sensor_Uint16(const char* const id, const char * const name, const uint8_t smooth_init, uint16_t min, uint16_t max, const char* color, bool retain, uint8_t power3v3_pin, uint8_t power0v_pin)
+  : Sensor(id, name, retain, power3v3_pin, power0v_pin), smooth(smooth_init) {
     outputs.push_back(output = new OUTuint16(id, id, name, 0, min, max, color, false)); //TODO-25-22apr pass color
   }
-    
+
+void Sensor_Uint16::setDefaultColor(char* color) {
+  output->default_color = color;
+}
+
 
 // All subclasses will override this.   Note same issue on sensor_float and sensor_uint16
 uint16_t Sensor_Uint16::readUint16() { shouldBeDefined(); return -1; }

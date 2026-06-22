@@ -7,7 +7,8 @@
 
 class Sensor_Float : public Sensor {
   public:
-    Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain);
+    Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, const char* color, bool retain, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
+    Sensor_Float(const char* const id, const char * const name, uint8_t width, float min, float max, float default_min, float default_max, const char* color, bool retain, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
     virtual float readValidateConvert();
   protected:
     OUTfloat* output;
@@ -17,6 +18,7 @@ class Sensor_Float : public Sensor {
     virtual bool validate(float v);
     virtual float convert(float v);
     virtual void set(const float vv);
+    void setDefaultColor(const char* color);
     void readValidateConvertSet() override;
     void captiveLines(AsyncResponseStream* response) override;
 };

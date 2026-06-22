@@ -24,6 +24,10 @@ Actuator_Digital::Actuator_Digital(const char * const id, const char * const nam
   inputs.push_back(input);
 };
 
+void Actuator_Digital::setDefaultColor(char* color) {
+  input->default_color = color;
+}
+
 void Actuator_Digital::act() {
   digitalWrite(pin, input->value ? HIGH : LOW); // Relay pin on Wemos shield is NOT inverted
 }
@@ -34,7 +38,7 @@ void Actuator_Digital::set(const bool v) {
   #ifdef ACTUATOR_DIGITAL_DEBUG
     Serial.print(F("\nSetting ")); Serial.print(name); Serial.println(v ? F(" on") : F(" off"));
   #endif
-  act();
+  act(); // Note act() will also be called if reads any values from file and 'sets' them
 }
 #pragma GCC diagnostic pop
 
@@ -46,5 +50,5 @@ void Actuator_Digital::setup() {
 }
 
 void Actuator_Digital::captiveLines(AsyncResponseStream* response) {
-  frugal_iot.captive->addBool(response, id, input->id, input->value, name);
+  frugal_iot.captive->addBool(response, id, input->id, input->value, name); // Name should be local, doesnt need translating
 }

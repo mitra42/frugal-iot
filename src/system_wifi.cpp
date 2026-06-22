@@ -21,19 +21,55 @@
   #define SYSTEM_WIFI_SCANPERIOD 20000
 #endif
 
+// Note the equivalent of System_WiFi::captiveLines is part of system_captive.cpp
+
 System_WiFi::System_WiFi()
 : System_Base("wifi", "WiFi")
   {}
 
+#ifdef ESP8266
+// F() uses a GCC statement-expression (PSTR) which is not allowed at global scope on ESP8266.
+// Declare strings in PROGMEM manually and cast to __FlashStringHelper*.
+static const char _wsn0[] PROGMEM = "Starting";
+static const char _wsn1[] PROGMEM = "Disconnected";
+static const char _wsn2[] PROGMEM = "Reconnecting";
+static const char _wsn3[] PROGMEM = "Connected";
+static const char _wsn4[] PROGMEM = "Needscan";
+static const char _wsn5[] PROGMEM = "Scanning";
+static const char _wsn6[] PROGMEM = "Scanned";
+static const char _wsn7[] PROGMEM = "Connecting";
+static const char _wsn8[] PROGMEM = "Stabilizing";
+const __FlashStringHelper* wifiStatusNames[] = {
+  FPSTR(_wsn0), FPSTR(_wsn1), FPSTR(_wsn2), FPSTR(_wsn3), FPSTR(_wsn4),
+  FPSTR(_wsn5), FPSTR(_wsn6), FPSTR(_wsn7), FPSTR(_wsn8)
+};
+#else
+const __FlashStringHelper* wifiStatusNames[] = {
+  F("Starting"),
+  F("Disconnected"),
+  F("Reconnecting"),
+  F("Connected"),
+  F("Needscan"),
+  F("Scanning"),
+  F("Scanned"),
+  F("Connecting"),
+  F("Stabilizing")
+};
+#endif
+
 void System_WiFi::setStatus(WiFiStatusType newstatus) {
   if (status != newstatus) {
+    #ifdef SYSTEM_WIFI_DEBUG
+      Serial.print(F("Wifi.status=")); Serial.print(WiFi.status());
+      Serial.print(F(" WIFI ")); Serial.println(wifiStatusNames[newstatus]);
+    #endif
     status = newstatus;
     statusSince = millis();
   }
 }
 
 void System_WiFi::setup() {
-  readConfigFromFS(); // Note takes a slightly different format, as each file is a SSID with content = password
+  readConfigFromFS(); // Note takes a slightly different format, as each file is a SSID with content = password (calls dispatchTwig with each ssid/password pair)
 }
 bool System_WiFi::rescan() {
   // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
@@ -128,13 +164,15 @@ void System_WiFi::addWiFi(String ssid, String password) {
 }
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-bool System_WiFi::pause() {
+// see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/power_management.html for how to keep WiFi alive during sleep
+bool System_WiFi::pauseWiFi() {
+  // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
    return (esp_wifi_stop() == ESP_OK); // Suggested to reduce dropping WiFi connection
 }
 #endif
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-bool System_WiFi::recover() {
+bool System_WiFi::recoverWiFi() {
   if (esp_wifi_start() != ESP_OK) {
     Serial.println(F("Failed to restart esp_wifi"));
     return false;
@@ -173,10 +211,14 @@ void System_WiFi::stateMachine() {
       setStatus(WIFI_NEEDSCAN);
       break;
     case WIFI_DISCONNECTED: //1
-      if (WiFi.status() != WL_DISCONNECTED) {
+      if ( (WiFi.status() != WL_DISCONNECTED)
+        && (WiFi.status() != WL_CONNECTION_LOST)
+        && (WiFi.status() != WL_IDLE_STATUS)
+        && (WiFi.status() != WL_CONNECT_FAILED)
+      ) {
         #ifdef SYSTEM_WIFI_DEBUG
           Serial.print(F("XXX Should be WL_DISCONNECTED or WL_STOPPED but")); Serial.println(WiFi.status());
-          // Unsure what to do here - 
+          // Unsure what to do here - but try and reconnect anyway
         #endif
       }
       setStatus(WIFI_RECONNECTING);
@@ -196,7 +238,7 @@ void System_WiFi::stateMachine() {
     case WIFI_NEEDSCAN: //4
         if (rescan()) { // async
           setStatus(WIFI_SCANNING);
-          Serial.print(F("WiFi rescanning ")); Serial.println(WiFi.status());
+          Serial.print(F("WiFi rescanning ")); /* Serial.println(WiFi.status()); */
         } else {
           Serial.println(F("WiFi Scan failed to start"));
           break; // stay in WIFI_NEEDSCAN
@@ -256,11 +298,9 @@ void System_WiFi::stateMachine() {
       }
       // drop thru
     case WIFI_CONNECTED: //3
-      if ((WiFi.status() == WL_DISCONNECTED)
-          || (WiFi.status() == WL_NO_SSID_AVAIL)) { // No idea why this happens, but seen on poor connections
+      if (WiFi.status() != WL_CONNECTED) {
         setStatus(WIFI_DISCONNECTED);
-      } else if (WiFi.status() != WL_CONNECTED) {
-        Serial.print(F("WiFi: unhandled state combination CONNECTED but WiFi.status=")); Serial.println(WiFi.status());
+        Serial.print(F("WiFi connection lost, WiFi.status=")); Serial.println(WiFi.status());
       }
       break;
     default:
@@ -284,13 +324,17 @@ int8_t System_WiFi::RSSI() { // Negative number if decibel-milliwatts
   return WiFi.RSSI(); 
 }
 
-uint8_t System_WiFi::bars() {
-  const int8_t rssi = WiFi.RSSI();
-  if (rssi > -55) return 4;
-  if (rssi > -66) return 3;
-  if (rssi > -77) return 2;
+uint8_t System_WiFi::rssi_to_bars(int8_t rssi) {
+  // There is no standard but various searches turned up this range
+  if (rssi > -43) return 5;
+  if (rssi > -60) return 4;
+  if (rssi > -68) return 3;
+  if (rssi > -75) return 2;
   if (rssi > -88) return 1;
   return 0;
+}
+uint8_t System_WiFi::bars() {
+  return rssi_to_bars(WiFi.RSSI());
 }
 String System_WiFi::SSID() {
   return WiFi.SSID();
@@ -298,14 +342,19 @@ String System_WiFi::SSID() {
 bool System_WiFi::connected() {
   return (status == WIFI_CONNECTED); 
 }
+
+unsigned long lasttime = 0L;
+
 void System_WiFi::loop() {
-  static unsigned long lasttime = millis();
-  if (millis() > (lasttime + 100)) { // Unclear what right time delay is here - 2000 works - so does 100 
+  if (millis() > (lasttime + 100)) { // Unclear what right time delay is here - 2000 works - so does 100
     lasttime = millis();
     stateMachine();
-  } 
+  }
 }
 void System_WiFi::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
+  // Setting on wifi e.g. esp1234/set/wifi/foo/bar is setting the wifi password to "bar" for ssid=foo
+  // No need to echo this to the UX
+  // Note this can only be set from the captive, or the SPIFFS
   if (isSet && (topicSensorId == id)) {
     // topicTwig is ssid payload is password
     if (payload.length()) {  // Only save if have a password

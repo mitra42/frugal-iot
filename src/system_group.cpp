@@ -35,11 +35,23 @@ void System_Group::discover() {
     fb->discover();
   }
 }
-// These just loop over the members of the group 
+void System_Group::prepare() {
+  for (System_Base* fb: group) {
+    fb->prepare();
+  }
+}
+void System_Group::recover() {
+  for (System_Base* fb: group) {
+    fb->recover();
+  }
+}
+
+// These just loop over the members of the group
 void System_Group::loop() {
-  for (System_Base* fb: group) { 
-    fb->loop(); 
-  } 
+  for (System_Base* fb: group) {
+    //Serial.print(fb->id);Serial.print(' ');
+    fb->loop();
+  }
 }
 void System_Group::periodically() { 
   //heap_print(F("Periodic"));

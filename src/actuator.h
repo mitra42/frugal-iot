@@ -7,6 +7,7 @@
 class Actuator : public System_Base {
   public:
   protected:
+    // An Actuator has a group of inputs used to control it. Some things (like dispatchTwig) will loop through them.
     std::vector<IN*> inputs; // Vector of inputs
     //Actuator();
     Actuator(const char * const id, const char * const name);

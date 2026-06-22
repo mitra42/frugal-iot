@@ -11,6 +11,11 @@
 System_Frugal frugal_iot("dev", "developers", "Soil", "Soil probe"); 
 
 void setup() {
+  // Battery sensor has to come before pre_setup, all others should come after
+  #ifdef SENSOR_BATTERY_PIN
+    frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
+  #endif
+  
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
 
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
@@ -37,7 +42,7 @@ void setup() {
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
   // If required, add a control - this is just an example
-  Control_Hysterisis* cb = new Control_Hysterisis("Control_Hysterisis", "Control", 50, 1, 0, 100);
+  Control_Hysterisis* cb = new Control_Hysterisis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
