@@ -52,6 +52,7 @@
   #define OLED_SDA SDA_OLED
   #define OLED_SCL SCL_OLED
   #define OLED_RST_X RST_OLED
+  #define OLED_IS_SSD1306
 #elif defined(ARDUINO_T_Beam)
   // T-Beam has no built-in OLED; users wire one externally on the default I2C pins (21/22).
   // OLED_SDA and OLED_SCL are expected to be set via build_flags (e.g. -D OLED_SDA=21 -D OLED_SCL=22).
@@ -84,7 +85,7 @@
 #endif
 
 // What chip is driving the OLED
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V4)  || defined(ARDUINO_T_Beam) // V1 or v2
+#ifdef OLED_IS_SSD1306
   #include <Adafruit_SSD1306.h> // For OLED display
 #else
   #error have not defined OLED chip driver
@@ -92,7 +93,7 @@
 
 class Actuator_OLED : public System_Base {
   public:
-    #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V4) || defined(ARDUINO_T_Beam) // V1 or v2
+    #ifdef OLED_IS_SSD1306
       // Note SD1315 is register compatible with SD1306
       Adafruit_SSD1306 display; // OLED display object TODO-138 parameterize this and depend on board
     #else
