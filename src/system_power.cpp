@@ -352,7 +352,7 @@ void System_Power::recover() {
     #endif
     #ifdef SYSTEM_POWER_DEBUG
       Serial.print(F("Waking for")); Serial.println(wake_ms);
-      #ifdef SYSTEM_OLED_WANT // Maybe comment out once working
+      #ifdef ACTUATOR_OLED_WANT // Maybe comment out once working
         frugal_iot.oled->display.setCursor(0,40);
         frugal_iot.oled->display.print("Recovering from Sleep");  
         frugal_iot.oled->display.display();

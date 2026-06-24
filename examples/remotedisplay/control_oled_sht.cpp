@@ -1,7 +1,7 @@
 #include "control_oled_sht.h"
 #include "Frugal-IoT.h"
 
-#ifdef SYSTEM_OLED_WANT // Only compile if have an OLED
+#ifdef ACTUATOR_OLED_WANT // Only compile if have an OLED
 
 Control_Oled_SHT::Control_Oled_SHT(const char* name)
   :
@@ -20,7 +20,7 @@ Control_Oled_SHT::Control_Oled_SHT(const char* name)
     if (!enabled) return;
     // Called when any of the inputs change
     Adafruit_SSD1306* display  = &frugal_iot.oled->display;
-    #ifdef SYSTEM_OLED_DEBUG
+    #ifdef ACTUATOR_OLED_DEBUG
       Serial.println(F("Writing fresh to oLED"));
     #endif
     display->clearDisplay();
@@ -44,4 +44,4 @@ Control_Oled_SHT::Control_Oled_SHT(const char* name)
 
     display->display();   
   }
-  #endif // SYSTEM_OLED_WANT
+  #endif // ACTUATOR_OLED_WANT

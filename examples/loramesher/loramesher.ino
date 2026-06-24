@@ -8,7 +8,7 @@
 #include "Frugal-IoT.h"
 #include "system_mqtt.h"
 
-#ifdef SYSTEM_OLED_WANT
+#ifdef ACTUATOR_OLED_WANT
   #include "control_oled_sht.h"
   #include "control_oled_loramesher.h"
   #include "control_carousel.h"
@@ -55,7 +55,7 @@ void setup() {
     frugal_iot.system->add(frugal_iot.loramesher);
   */
 
-  #ifdef SYSTEM_OLED_WANT
+  #ifdef ACTUATOR_OLED_WANT
     Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED SHT");
     frugal_iot.controls->add(cos);
     cos->temperature->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/temperature");
@@ -77,7 +77,7 @@ void setup() {
   #ifdef BUTTON_BUILTIN
     Sensor_Button* button = new Sensor_Button("button", "Button", BUTTON_BUILTIN, "red");
     frugal_iot.buttons->add(button);
-    #ifdef SYSTEM_OLED_WANT
+    #ifdef ACTUATOR_OLED_WANT
       button->singleClick->wireTo(frugal_iot.messages->setPath("carousel/select/cycle")); // cycles carousel display
     #endif
   #endif
@@ -94,7 +94,7 @@ void setup() {
 
 #ifdef SYSTEM_LORAMESHER_DEBUG
 void printAppData() {
-  #ifdef SYSTEM_OLED_WANT
+  #ifdef ACTUATOR_OLED_WANT
     carousel->controls[carousel->selected]->act(); // Redisplay current carousel item
   #endif
 }
