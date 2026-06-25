@@ -62,7 +62,7 @@ class System_Frugal : public System_Group {
     #endif
     System_Messages* messages;
     System_MQTT* mqtt;
-    #ifdef SYSTEM_OLED_WANT
+    #ifdef ACTUATOR_OLED_WANT
       Actuator_OLED* oled;
     #endif
     #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)

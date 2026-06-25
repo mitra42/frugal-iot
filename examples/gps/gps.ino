@@ -17,7 +17,7 @@
 
 #include "Frugal-IoT.h"
 #include "sensor_gps.h"
-#ifdef SYSTEM_OLED_WANT
+#ifdef ACTUATOR_OLED_WANT
   #include "control_oled_gps.h"
   #include "control_oled_loramesher.h"
   #include "control_carousel.h"
@@ -39,7 +39,7 @@ void setup() {
       SENSOR_GPS_RX_PIN, SENSOR_GPS_TX_PIN);
   frugal_iot.sensors->add(gps);
 
-  #ifdef SYSTEM_OLED_WANT
+  #ifdef ACTUATOR_OLED_WANT
     Control_Oled_GPS* cog = new Control_Oled_GPS("OLED GPS");
     frugal_iot.controls->add(cog);
     cog->latitude->wireTo(  frugal_iot.messages->path("gps/latitude"));
@@ -68,7 +68,7 @@ void setup() {
   #ifdef BUTTON_BUILTIN
     Sensor_Button* button = new Sensor_Button("button", "Button", BUTTON_BUILTIN, "red");
     frugal_iot.buttons->add(button);
-    #ifdef SYSTEM_OLED_WANT
+    #ifdef ACTUATOR_OLED_WANT
       button->singleClick->wireTo(frugal_iot.messages->setPath("carousel/select/cycle")); // cycles carousel display
     #endif
   #endif
@@ -83,7 +83,7 @@ void loop() {
 // Callback from LoRaMesher
 #ifdef SYSTEM_LORAMESHER_DEBUG
 void printAppData() {
-  #ifdef SYSTEM_OLED_WANT
+  #ifdef ACTUATOR_OLED_WANT
     carousel->controls[carousel->selected]->act(); // Redisplay current carousel item
   #endif
 }

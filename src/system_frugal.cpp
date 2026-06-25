@@ -137,9 +137,9 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #endif
     messages(new System_Messages()),
   // mqtt is added in main.cpp > configure_mqtt(host,user,password)
-  #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
+  #ifdef ACTUATOR_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
     oled(new Actuator_OLED(&OLED_WIRE)),
-  #endif // SYSTEM_OLED_WANT
+  #endif // ACTUATOR_OLED_WANT
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     ota(new System_OTA()), // Must be after Power (for timers)
   #endif
@@ -151,7 +151,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #ifdef LED_BUILTIN // defined by board or _settings.h
     actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN)); // Default LED builtin actuator at default brightness and white
   #endif
-  #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
+  #ifdef ACTUATOR_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
     actuators->add(oled);
   #endif
   sensors->add(new Sensor_Health("health", "System"));

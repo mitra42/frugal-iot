@@ -1,7 +1,7 @@
 #include "control_oled_loramesher.h"
 #include "Frugal-IoT.h"
 
-#if defined(SYSTEM_OLED_WANT) && defined(SYSTEM_LORAMESHER_WANT) // Only compile if have an OLED
+#if defined(ACTUATOR_OLED_WANT) && defined(SYSTEM_LORAMESHER_WANT) // Only compile if have an OLED
 Control_Oled_LoRaMesher::Control_Oled_LoRaMesher(const char* name)
   :
   //temperature(new INfloat("control_oled_sht", "temperature", "Temperature", 0, 1, 0, 50, "#ff0000", true)),
@@ -47,4 +47,4 @@ Control_Oled_LoRaMesher::Control_Oled_LoRaMesher(const char* name)
       display->display();   
     }
   }
-  #endif // SYSTEM_OLED_WANT
+  #endif // ACTUATOR_OLED_WANT

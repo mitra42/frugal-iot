@@ -1,7 +1,7 @@
 #include "control_oled_gps.h"
 #include "Frugal-IoT.h"
 
-#ifdef SYSTEM_OLED_WANT
+#ifdef ACTUATOR_OLED_WANT
 
 Control_Oled_GPS::Control_Oled_GPS(const char* name)
   : latitude(  new INfloat("control_oled_gps", "latitude",   "Latitude",   0, 6, -90.0f,  90.0f,  "blue",   true)),
@@ -76,4 +76,4 @@ void Control_Oled_GPS::act() {
   }
 }
 
-#endif // SYSTEM_OLED_WANT
+#endif // ACTUATOR_OLED_WANT
