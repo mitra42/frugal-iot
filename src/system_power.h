@@ -33,13 +33,17 @@ class System_Power : public System_Base {
   public:
     System_Power_Type mode; 
     uint8_t timer_next(); // Return an index to a timer that can be used
-    void timer_set(uint8_t i, unsigned long t);
+    void timer_set(uint8_t i, uint32_t t_secs);
     bool timer_expired(uint8_t i); 
     bool maybeSleep();
     void pre_setup();
     #ifdef ESP32
+      // Use the RTC to track time, so safe over deep and light sleeps
+      uint32_t sleepSafeSecs();
       unsigned long sleepSafeMillis();
-    #else // Only needed/valid on ESP32 where have saved millis_offset in RTCs memory
+    #else
+      // ESP8266 doesnt have deep sleep so this wont reset anyway - not sure if any viable sleep on ESP8266
+      uint32_t sleepSafeSecs() { return millis() / 1000; }
       unsigned long sleepSafeMillis() { return millis(); }
     #endif
     System_Power();
@@ -47,7 +51,7 @@ class System_Power : public System_Base {
     void checkLevel();
   protected: // Move any of these needed to public above
   private:
-    unsigned long timer(uint8_t i); // Return value of timer
+    uint32_t timer(uint8_t i); // Return value of timer (seconds)
     unsigned long nextSleepTime = 0; // Next time to sleep in millis() (NOT offseted) - set in constructor, updated in maybeSleep()
     unsigned long cycle_ms; // Time for each cycle (wake + sleep)
     unsigned long wake_ms; // Time to stay awake during each cycle

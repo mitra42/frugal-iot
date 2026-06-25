@@ -9,7 +9,7 @@
  * - Power_Light - shorter sleeps, memory retained
  * - Power_Deep  - sleep longer periods with - memory is cleared on recovery
  * 
- * An important distinction is millis() vs sleepSafeMillis(), the latter adds an offset that should allow timers over sleep periods
+ * An important distinction is millis() vs sleepSafeSecs(), the latter, apart from being in seconds, keeps track over Light and Deep Sleep periods
  * 
  * This module also handles low battery. On wakeup on a device with SENSOR_BATTERY_PIN a call to configure_battery will 
  * check for a dangerously low battery, and if seen will go into a deep sleep for a configurable period before checking again
@@ -35,6 +35,7 @@
 #ifdef ESP32 // Not available on ESP8266 - have not yet searched for equivalents
   // Next three .h might or might not be needed 
   #include "esp_pm.h"
+  #include "esp_timer.h"
   #include "esp_wifi.h"
   #include "esp_sleep.h"
   #include "driver/uart.h"   // To allow disabling UART
@@ -81,9 +82,8 @@ void printTaskList() {
 #define TIMER_LENGTH 8 // Can make this longer (and add to initialization) if ever need >4 timers.
 #ifdef ESP32
   RTC_DATA_ATTR unsigned long wake_count = 0L; // If 1 per minute, uint_16 would just be 45 days
-  RTC_DATA_ATTR unsigned long millis_offset = 0L;  // Cumulative time in deep sleep with millis() being reset
-  // This is an array of timers, available to modules
-  RTC_DATA_ATTR unsigned long timers[TIMER_LENGTH] = {0L,0L,0L,0L,0L,0L,0L,0L}; // Array used by entities - currently using max five (OTA, Disovery. Blinken, time, Watchdog)
+  // Timers store absolute seconds (from sleepSafeSecs) — 32-bit seconds overflows at ~136 years
+  RTC_DATA_ATTR uint32_t timers[TIMER_LENGTH] = {0,0,0,0,0,0,0,0}; // Array used by entities - currently using max four (OTA, Discovery, time, Watchdog)
 #else
   unsigned long timers[TIMER_LENGTH] = {0L,0L,0L,0L}; // Array used by entities
 #endif
@@ -104,7 +104,7 @@ void printTaskList() {
 System_Power::System_Power()
 : System_Base("power", "Power Controller"),
   mode(Power_Loop),
-  nextSleepTime(0L), // not sleepSafeMillis() as by definition dont sleep before this
+  nextSleepTime(0L), // not sleepSafeSecs() as by definition dont sleep before this
   cycle_ms(10000),
   wake_ms(10000),
   timer_index(0)
@@ -153,14 +153,14 @@ uint8_t System_Power::timer_next() {
   }
   return timer_index++;
 }
-unsigned long System_Power::timer(uint8_t i) {
+uint32_t System_Power::timer(uint8_t i) {
   return timers[i];
 }
-void System_Power::timer_set(const uint8_t i, const unsigned long t) {
-    timers[i] = sleepSafeMillis() + t ;
+void System_Power::timer_set(const uint8_t i, const uint32_t t_secs) {
+    timers[i] = sleepSafeSecs() + t_secs;
 }
 bool System_Power::timer_expired(const uint8_t i) {
-  return (timer(i) <= sleepSafeMillis());
+  return (timer(i) <= sleepSafeSecs());
 }
 
 
@@ -241,7 +241,7 @@ void System_Power::configure(const System_Power_Type mode_init, const unsigned l
   mode = mode_init;
   cycle_ms = cycle_ms_init;
   wake_ms = wake_ms_init;
-  nextSleepTime = (millis() + wake_ms); // not sleepSafeMillis() as by definition dont sleep before this
+  nextSleepTime = (millis() + wake_ms); // not sleepSafeSecs() as by definition dont sleep before this
   /* Serial not enabled yet
   #ifdef SYSTEM_POWER_DEBUG
     Serial.printf("%s: %lu of %lu\n", name.c_str(), wake_ms, cycle_ms); 
@@ -323,7 +323,6 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
     #ifdef ESP32
       if (forceMode & DeepSleepBit) {
         if (forceMode & WakeOnTimerBit) {
-          millis_offset = millis() + millis_offset + sleep_millisecs; // Since millis() will reset to 0 - stored in RTC
           esp_deep_sleep(sleep_millisecs * 1000UL);
           Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
         } else {  // Power_Panic
@@ -341,7 +340,7 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
 
 void System_Power::recover() {
   // For Power_Loop wake_ms = cycle_ms; for Deep millis is ~0 so this is good for all modes
-  nextSleepTime = (millis() + wake_ms); // not sleepSafeMillis() as by definition dont sleep before this
+  nextSleepTime = (millis() + wake_ms); // not sleepSafeSecs() as by definition dont sleep before this
 
   if (mode) {
     if (mode & PauseUARTBit) { // TODO not sure this works yet
@@ -399,10 +398,11 @@ bool System_Power::maybeSleep() {
 }
 
 #ifdef ESP32
-  // === Adjusted millis() to account for time when millis() not ticking
+  // esp_timer_get_time() is compensated for both light and deep sleep (IDF 5.x+)
+  uint32_t System_Power::sleepSafeSecs() {
+    return (uint32_t)(esp_timer_get_time() / 1000000ULL);
+  }
   unsigned long System_Power::sleepSafeMillis() {
-    // Return millis() adjusted for any sleep offset
-    // TODO-23 millis wraps at 49 days, so need to handle that
-    return millis() + millis_offset;
+    return sleepSafeSecs() * 1000UL + (millis() % 1000UL);
   }
 #endif
