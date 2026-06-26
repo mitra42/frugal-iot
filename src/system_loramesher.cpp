@@ -246,12 +246,14 @@ bool System_LoraMesher::initialize() {
 }
 
 bool System_LoraMesher::in_network() {
-  auto status = mesher->GetNetworkStatus();                                                                           
-  using ProtocolState = loramesher::protocols::lora_mesh::INetworkService::ProtocolState;                                 
-                                                                                                                          
-  return (status.current_state == ProtocolState::NORMAL_OPERATION ||                                           
-                     status.current_state == ProtocolState::NETWORK_MANAGER ||
-                     status.current_state == ProtocolState::JOINING);
+  if (mesher) {
+    auto status = mesher->GetNetworkStatus();
+    using ProtocolState = loramesher::protocols::lora_mesh::INetworkService::ProtocolState;
+    return (status.current_state == ProtocolState::NORMAL_OPERATION ||
+                       status.current_state == ProtocolState::NETWORK_MANAGER ||
+                       status.current_state == ProtocolState::JOINING);
+  }
+  return false;
 }
 // This is a workaround, for a bug in LM (April 2026) may not be used once that bug is fixed
 void System_LoraMesher::PromoteToNetworkManager() {
@@ -510,37 +512,43 @@ bool System_LoraMesher::publish(const String &topic, const String &payload, bool
 }
 
 bool System_LoraMesher::isGateway() {
-  return (mesher->GetNodeCapabilities() & loramesher::NodeCapabilities::GATEWAY);
+  if (mesher) {
+    return (mesher->GetNodeCapabilities() & loramesher::NodeCapabilities::GATEWAY);
+  }
+  return false;
 }
 // Check if we can act as an upstream gateway and if changes update routing tables
 // TODO-23 consider interaction of this with sleep modes, when come back from sleep won't have 
 // TODO-23 MQTT yet, but also unclear if want a gateway role retained during sleep
 LoraMesherMode System_LoraMesher::checkRole() {
+  if (mesher) {
     if (frugal_iot.mqtt->connected() && !in_network()) {
       Serial.println("XXX Gateway but not in network");
     }
-  if (frugal_iot.mqtt->connected() /* && in_network()*/) { // Only marks gateway if both connected and Lora Network running
-    if (!isGateway()) {
-      lostMQTTat = 0;
-      #ifdef SYSTEM_LORAMESHER_DEBUG 
-        Serial.println(F("Adding gateway role")); 
-      #endif
-      mesher->SetNodeCapabilities(loramesher::NodeCapabilities::GATEWAY);
-      // This is a workaround, for a bug in LM (April 2026) may not be used once thay bug is fixed
-      PromoteToNetworkManager(); // only does this if not already in a network
+    if (frugal_iot.mqtt->connected() /* && in_network()*/) { // Only marks gateway if both connected and Lora Network running
+      if (!isGateway()) {
+        lostMQTTat = 0;
+        #ifdef SYSTEM_LORAMESHER_DEBUG
+          Serial.println(F("Adding gateway role"));
+        #endif
+        mesher->SetNodeCapabilities(loramesher::NodeCapabilities::GATEWAY);
+        // This is a workaround, for a bug in LM (April 2026) may not be used once thay bug is fixed
+        PromoteToNetworkManager(); // only does this if not already in a network
+      }
+      return LORAMESHER_GATEWAY;
+    } else { // Not connected to MQTT
+      // Wait a little while before removing gateway role
+      if (!lostMQTTat) { lostMQTTat = millis(); } ; // If just lost gateway then flag when
+      if (isGateway() && (millis() > (lostMQTTat + SYSTEM_LORAMESHER_MQTTWAIT))) {
+        #ifdef SYSTEM_LORAMESHER_DEBUG
+          Serial.println(F("LoRaMesher removing gateway role as lost MQTT"));
+        #endif
+        mesher->SetNodeCapabilities(loramesher::NodeCapabilities::NONE);
+      }
+      return connected() ? LORAMESHER_NODE : LORAMESHER_UNCONNECTED;
     }
-    return LORAMESHER_GATEWAY;
-  } else { // Not connected to MQTT
-    // Wait a little while before removing gateway role
-    if (!lostMQTTat) { lostMQTTat = millis(); } ; // If just lost gateway then flag when
-    if (isGateway() && (millis() > (lostMQTTat + SYSTEM_LORAMESHER_MQTTWAIT))) {
-      #ifdef SYSTEM_LORAMESHER_DEBUG
-        Serial.println(F("LoRaMesher removing gateway role as lost MQTT"));
-      #endif
-      mesher->SetNodeCapabilities(loramesher::NodeCapabilities::NONE);
-    } 
-    return connected() ? LORAMESHER_NODE : LORAMESHER_UNCONNECTED;
   }
+  return LORAMESHER_UNCONNECTED;
 }
 const __FlashStringHelper* System_LoraMesher::checkRoleString() {
   switch (checkRole()) {

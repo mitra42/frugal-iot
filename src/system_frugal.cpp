@@ -117,6 +117,9 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #ifdef SYSTEM_LORA_WANT
     lora(new System_LoRa()),
   #endif
+  #ifdef SYSTEM_LORAMESHER_WANT
+    loramesher(new System_LoraMesher()),
+  #endif
     messages(new System_Messages()),
   // mqtt is added in main.cpp > configure_mqtt(host,user,password)
   #ifdef SYSTEM_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
@@ -153,6 +156,9 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
   #ifdef SYSTEM_LORA_WANT
     system->add(lora);
   #endif // SYSTEM_LORA_WANT
+  #ifdef SYSTEM_LORAMESHER_WANT
+    system->add(loramesher);
+  #endif // SYSTEM_LORAMESHER_WANT
   system->add(captive);
   add(system);
 }

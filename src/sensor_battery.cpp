@@ -36,13 +36,7 @@ Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider, ui
 // when using the 2-parameter constructor on boards without default SENSOR_BATTERY_PIN/VOLTAGE_DIVIDER
 #ifdef ESP32
 int Sensor_Battery::readInt() {
-  #ifdef SENSOR_BATTERY_POWER0_PIN  // e.g. Heltec Lora Wifi V3
-    digitalWrite(SENSOR_BATTERY_POWER0_PIN, LOW);
-  #endif
-  #ifdef SENSOR_BATTERY_POWER3v3_PIN // e.g. Heltec Lora Wifi V3.2
-    digitalWrite(SENSOR_BATTERY_POWER3v3_PIN, HIGH);
-  #endif
-
+  powerUp();
   return analogReadMilliVolts(pin);  // returns uint32 
 }
 #endif // ESP32

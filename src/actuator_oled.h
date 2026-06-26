@@ -36,7 +36,8 @@
   #define OLED_SCL SCL
   #define OLED_RST_X -1 // Doesnt appear to exist on this board
 #elif defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V32) || defined(ARDUINO_heltec_wifi_lora_32_V4) 
-  #if defined(ARDUINO_heltec_wifi_lora_32_V32) // Note this is made up - there is no board or variant files for this significant rev yet - define in platformio.ini for now
+  // Documentation is that V3.2 requires Vext HIGH, but i have a board which is labeled 3.2, has battery behavior like 3.2 but requires LOW on Vext
+  #if defined(XXX_ARDUINO_heltec_wifi_lora_32_V32) // Note this is made up - there is no board or variant files for this significant rev yet - define in platformio.ini for now
     #define OLED_ENABLE_HIGH Vext // Need to set this high to turn on OLED
   #else // V3 or V4
     // On V4 Vext (GPIO 36) must be driven LOW to power the OLED — confirmed by testing

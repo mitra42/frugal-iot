@@ -92,22 +92,23 @@ void Sensor_GPS::setup() {
 }
 
 void Sensor_GPS::readValidateConvertSet() {
-  // Step 1 — flush stale bytes accumulated since the last call.
-  // For cycles ≤260 ms this is a fast no-op; for longer cycles it discards
-  // overflowed data so TinyGPSPlus sees only fresh sentences.
+  // Step 1 — mark the flush start time, then discard all buffered bytes.
+  // start is captured before the flush so that any bytes arriving during
+  // the flush (which may be mid-sentence) are also excluded by the age check.
+  uint32_t start = millis();
   while (_serial->available()) {
     _serial->read();
   }
 
-  // Step 2 — collect bytes until TinyGPSPlus confirms a valid, freshly-decoded
-  // location, or until the timeout expires (one 1 Hz GPS update cycle + margin).
+  // Step 2 — collect bytes until TinyGPSPlus commits a valid location whose age
+  // is less than the time elapsed since start (proving it arrived post-flush),
+  // or until the timeout expires (one 1 Hz GPS update cycle + margin).
   bool fixed = false;
-  uint32_t start = millis();
   while (!fixed && (millis() - start < SENSOR_GPS_READ_TIMEOUT_MS)) {
     while (_serial->available()) {
       _gps.encode(_serial->read());
     }
-    if (_gps.location.isValid() && _gps.location.isUpdated()) {
+    if (_gps.location.isValid() && _gps.location.age() < (millis() - start)) {
       fixed = true;
     }
   }
@@ -148,11 +149,13 @@ void Sensor_GPS::readValidateConvertSet() {
     }
 
     #ifdef SENSOR_GPS_DEBUG
-      Serial.print(F("GPS lat=")); Serial.print(lat, 6);
-      Serial.print(F(" lon="));   Serial.print(lon, 6);
-      Serial.print(F(" alt="));   Serial.print(alt, 1);
-      Serial.print(F(" sats="));
-      Serial.println(_gps.satellites.isValid() ? (int)_gps.satellites.value() : -1);
+    {
+      char _gps_dbg[72];
+      snprintf(_gps_dbg, sizeof(_gps_dbg), "GPS lat=%.6f lon=%.6f alt=%.1f sats=%d",
+               lat, lon, alt,
+               _gps.satellites.isValid() ? (int)_gps.satellites.value() : -1);
+      Serial.println(_gps_dbg);
+    }
     #endif
   #ifdef SENSOR_GPS_DEBUG
   } else {
