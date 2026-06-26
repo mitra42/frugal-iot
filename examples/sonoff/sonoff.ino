@@ -31,8 +31,7 @@ void Control_Sonoff::dispatch(System_Message &msg) {
     if (msg.leaf() == "out/cycle") {
       // If cycling state then also set to manual if not already
       if (!manual->value) {
-        manual->set(true); // will also send it if changed
-        manual->writeValueToFSandEcho(manual->id, manual->StringValue());
+        manual->set(true); // will also send it if changed - TODO-210 should this write to FS as well?
       }
     }
     Control_Hysterisis::dispatch(msg); // Pass on to normal handle of manual - not clear if it writes out/on to FS

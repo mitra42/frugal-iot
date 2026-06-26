@@ -384,8 +384,8 @@ bool INuint16::dispatch(System_Message &msg) {
         int16_t newvalue = (int16_t)value + (int16_t)v;
         if (newvalue > (int16_t)max) { newvalue = (int16_t)min; }
         if (newvalue < (int16_t)min) { newvalue = (int16_t)max; }
-        value = (uint16_t)newvalue;
-        return true; // value changed
+        value = (uint16_t)newvalue; // TODO should this be set(newvalue) ? 
+        return true; // value changed 
       }
       if (dispatched) {
         msg.maybeWriteToFSandEcho();
@@ -408,7 +408,7 @@ bool OUTbool::dispatch(System_Message &msg) {
         changed = true;
       }
       if (dispatched) {
-        writeConfigToFS(msg.leaf(), msg.payload); // Dont echo since only /cycle and set will do the necessary sends
+        msg.maybeWriteToFS(false); // Dont echo since only /cycle and set will do the necessary sends
         return changed;
       }
       // else drop through and dispatch to superclass
@@ -433,7 +433,7 @@ bool OUTuint16::dispatch(System_Message &msg) {
         int16_t newvalue = value + (int16_t)v;
         if (newvalue > max) { newvalue = min; }
         if (newvalue < min) { newvalue = max; }
-        set((uint16_t)newvalue);
+        set((uint16_t)newvalue); // Will do its own message sending if appropriate
       }
       if (dispatched) {
         msg.maybeWriteToFSandEcho();
