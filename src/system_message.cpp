@@ -240,17 +240,18 @@ void System_Message::maybeWriteToFS(bool appendValue) { // appendValue defaults 
       path = path + "/value";
     }
     #if defined(SYSTEM_LITTLEFS_DEBUG) || defined(SYSTEM_MESSAGE_DEBUG)
-      Serial.print(F("Writing config to ")); Serial.print(path); Serial.print(F("=")); Serial.print(msg.payload);
+      Serial.print(F("Writing config to ")); Serial.print(path); Serial.print(F("=")); Serial.print(payload);
     #endif
     frugal_iot.fs_LittleFS->spurt(path, payload);
   }
 }
 void System_Message::maybeEcho() {
+  const String path = frugal_iot.messages->path(module() + "/" + leaf());
   #if defined(SYSTEM_MESSAGE_DEBUG)
-    Serial.print(F("Echoing ")); Serial.print(path); Serial.print(F("=")); Serial.print(msg.payload);
+    Serial.print(F("Echoing ")); Serial.print(path); Serial.print(F("=")); Serial.print(payload);
   #endif
   // TODO-210 maybe more efficient way to get topicPath - need to check e.g. topicPath works here and doesnt include "set"
-  frugal_iot.messages->send(frugal_iot.messages->path(module() + "/" + leaf()), payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  frugal_iot.messages->send(path, payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 void System_Message::maybeWriteToFSandEcho(bool appendValue) { // appendValue defaults to false
   maybeWriteToFS(appendValue);
