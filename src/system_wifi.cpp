@@ -69,6 +69,25 @@ void System_WiFi::setStatus(WiFiStatusType newstatus) {
 
 void System_WiFi::setup() {
   readConfigFromFS(); // Note takes a slightly different format, as each file is a SSID with content = password (calls dispatchTwig with each ssid/password pair)
+  #ifdef ESP32
+    // Frugal-IoT owns all reconnection logic. Disable arduino-esp32 auto-reconnect so that
+    // our esp_wifi_disconnect() calls are not immediately undone by the library re-calling
+    // esp_wifi_connect(), which keeps the IDF in "connecting" state and blocks scanning.
+    WiFi.setAutoReconnect(false);
+    WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info) {
+      uint8_t reason = info.wifi_sta_disconnected.reason;
+      Serial.print(F("WiFi disconnect reason=")); Serial.print(reason);
+      // IDF reason codes: 0=intentional, 2=auth_expire, 3=ap_deauth, 15=4way_handshake_timeout
+      // 200=beacon_timeout(ap_gone), 201=no_ap_found, 202=auth_fail, 204=handshake_timeout
+      // Reasons 15/202/204 typically mean wrong password; 200/201 mean AP disappeared
+      if (reason == 15 || reason == 202 || reason == 204) { Serial.print(F(" bad_password?")); }
+      else if (reason == 200 || reason == 201) { Serial.print(F(" ap_gone?")); }
+      else if (reason == 0 || reason == 3) { Serial.print(F(" intentional")); }
+      Serial.println();
+      _disconnectReason = reason;
+      if (_disconnectAt == 0) { _disconnectAt = millis(); } // record when first event fired
+    }, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  #endif
 }
 bool System_WiFi::rescan() {
   // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
@@ -142,6 +161,8 @@ void System_WiFi::connectInnerAsync(String ssid, String pw) {
     WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);  // arduino-esp32 #2537 and #6278
   #endif
   WiFi.setHostname(frugal_iot.nodeid.c_str());
+  _disconnectReason = 0; // Clear before each attempt so WIFI_CONNECTING doesn't see stale events
+  _disconnectAt = 0;
   if ((wl_status_t)WiFi.begin(ssid.c_str(), pw.c_str()) == WL_CONNECT_FAILED) {
     // WiFi.begin() failed synchronously — IDF rejected esp_wifi_set_config() (ESP_ERR_WIFI_STATE).
     // WiFi stack is still processing a prior disconnect; set flag so WIFI_CONNECTING exits fast.
@@ -298,7 +319,38 @@ void System_WiFi::stateMachine() {
           #endif
           stabilizeTill = millis() + 5000;
           setStatus(WIFI_SCANNED);
+        } else if (_disconnectReason != 0 && millis() > (_disconnectAt + 1500)) {
+          // IDF fired a disconnect event — auth expired, AP rejected, etc.
+          // Wait 1.5s from first event to allow one IDF internal retry before giving up.
+          Serial.print(F("WiFi connect rejected reason=")); Serial.println(_disconnectReason);
+          _disconnectReason = 0;
+          _disconnectAt = 0;
+          #ifdef ESP32
+            {
+              esp_err_t err = esp_wifi_disconnect();
+              #ifdef SYSTEM_WIFI_DEBUG
+                if (err != ESP_OK) { Serial.print(F("esp_wifi_disconnect err ")); Serial.println(err); }
+              #endif
+            }
+          #endif
+          stabilizeTill = millis() + 2000;
+          setStatus(WIFI_SCANNED);
+        } else if (WiFi.status() == WL_CONNECT_FAILED || WiFi.status() == WL_NO_SSID_AVAIL) {
+          // Async failure: wrong password (4) or SSID vanished after scan (1) — no point waiting 30s
+          Serial.print(F("WiFi connect failed status=")); Serial.println(WiFi.status());
+          // status: 1=no_ssid 4=auth_fail/bad_password
+          #ifdef ESP32
+            {
+              esp_err_t err = esp_wifi_disconnect();
+              #ifdef SYSTEM_WIFI_DEBUG
+                if (err != ESP_OK) { Serial.print(F("esp_wifi_disconnect err ")); Serial.println(err); }
+              #endif
+            }
+          #endif
+          stabilizeTill = millis() + 2000; // Clean failure — shorter wait than state error
+          setStatus(WIFI_SCANNED);
         } else if (millis() > (statusSince + 30000)) { // Give it 30 seconds to try
+          Serial.print(F("WiFi connect timeout status=")); Serial.println(WiFi.status());
           #ifdef ESP32
             // WiFi.disconnect(true,true) fails on IDF 5.x while connecting (ESP_ERR_WIFI_STATE).
             // esp_wifi_disconnect() aborts in-progress attempt and works in any state.
@@ -312,7 +364,6 @@ void System_WiFi::stateMachine() {
           stabilizeTill = millis() + 5000; // Give WiFi task time to process disconnect before next begin()
           setStatus(WIFI_SCANNED); // Try next network from current scan results, not a full rescan
         }
-        // WiFi.status() remains at 6 during this timeout - cant tell quicker that it failed
         break; // Either as WIFI_CONNECTED | WIFI_CONNECTING | WIFI_SCANNED
       case WIFI_STABILIZING: //8
         if (WiFi.status() != WL_CONNECTED) {
