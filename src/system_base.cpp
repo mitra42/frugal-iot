@@ -317,8 +317,9 @@ bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
   if (leaf == id || (leaf.startsWith(id) && leaf.endsWith("/value"))) {
     // isSet usually comes from messages and needs echo as (!set) topic
     // !isSet usually comes from FS but also need to send
-    writeValueToFSandEcho(id, p);  // e.g. ledbuiltin/on or set/ledbuiltin/on.  // TODO need to make sure directory exists   
-    return convertAndSet(p); // Virtual - depends on type of INxxx
+    bool changed = convertAndSet(p); // Virtual - depends on type of INxxx
+    if (changed) { writeValueToFSandEcho(id, p); } // e.g. ledbuiltin/on or set/ledbuiltin/on.  // TODO need to make sure directory exists
+    return changed;
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
 }

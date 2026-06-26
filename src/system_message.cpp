@@ -100,12 +100,12 @@ void System_Messages::subscribe(const String topicPath) {
 // Upstream: module => queue outgoing (no reflection)
 void System_Messages::sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos) {
   // Instead of pushing a new message, update the payload
-  for(System_Message sm: outgoing) {
+  for(System_Message& sm: outgoing) {
     if (sm.topicPath == topicPath) {
-      sm.payload = payload; 
       #ifdef SYSTEM_MESSAGE_DEBUG
-        Serial.print(F("Updating queued")); Serial.print(topicPath); Serial.print(" "); Serial.print(sm.payload); Serial.print("->"); Serial.println(payload);  
+        Serial.print(F("Updating queued ")); Serial.print(topicPath); Serial.print(" "); Serial.print(sm.payload); Serial.print("->"); Serial.println(payload);  
       #endif
+      sm.payload = payload; 
       return; // Don't push
     }
   }
