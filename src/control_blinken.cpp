@@ -21,6 +21,7 @@ Control_Blinken::Control_Blinken (const char* const id, const char * const name,
   }
 ), blinkOn(secsOn * 1000), blinkOff(secsOff * 1000),
    blink_next_ms(0)
+   //timer_index(frugal_iot.powercontroller->timer_next())  // Alternative if want sleep safe timer
 {
   #ifdef CONTROL_BLINKEN_DEBUG
     debug("Control_Blinken after instantiation");
@@ -28,17 +29,26 @@ Control_Blinken::Control_Blinken (const char* const id, const char * const name,
   #endif
 };
 
+void Control_Blinken::timer_set(unsigned long secs) {
+  blink_next_ms = millis() + secs*1000;
+  //frugal_iot.powercontroller->timer_set(timer_index, secs); // Alternative if want sleep safe timer
+}
+bool Control_Blinken::timer_expired() {
+ return millis() >= blink_next_ms;  // Non sleep safe
+ // return frugal_iot.powercontroller->timer_expired(timer_index); // Sleep safe 
+}
+
 void Control_Blinken::act() {
   // If calling act, then we know blinkSpeed changed
-  blinkOn = inputs[0]->floatValue() * 1000;
-  blinkOff = inputs[1]->floatValue() * 1000;
-  blink_next_ms = millis() + (outputs[0]->boolValue() ? blinkOn : blinkOff);
+  blinkOn = inputs[0]->floatValue();
+  blinkOff = inputs[1]->floatValue();
+  timer_set( outputs[0]->boolValue() ? blinkOn : blinkOff);
 }
 
 void Control_Blinken::loop() {
-  if (millis() >= blink_next_ms) {
+  if (timer_expired()) {
     bool next = !outputs[0]->boolValue();
     ((OUTbool*)outputs[0])->set(next); // Will send message
-    blink_next_ms = millis() + (next ? blinkOn : blinkOff);
+    timer_set(next ? blinkOn : blinkOff);
   }
 }
