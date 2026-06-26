@@ -8,7 +8,7 @@
  * Required: SYSTEM_TIME_ZONE e.g. "GMT0BST,M3.5.0/1,M10.5.0" (technically optional but we are going to default it to GMT if you do not define it!)
  * 
  * // TODO-141 pass in constructor
- * Optional: SYSTEM_TIME_S time in seconds to report time on serial port - e.g. 360
+ * Optional: SYSTEM_TIME_S time in seconds to report time on serial port - e.g. 3600
  * 
  * Optional: SYSTEM_TIME_DEBUG 
  */

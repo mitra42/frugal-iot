@@ -46,7 +46,7 @@ class System_MQTT : public System_Base {
     String hostname; 
     bool inReceived = false;
     unsigned long ms;
-    unsigned long nextLoopTime; // Not sleepSafeMillis as frequent.
+    unsigned long nextLoopTime; // Not sleepSafeSecs as frequent.
     bool subscriptionsDone = false; // True when server has reported a session - so dont need to subscribe OR have resubscribed. Also true at start before did subscriptions.
     const char* password;
     const char* username;

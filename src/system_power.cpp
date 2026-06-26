@@ -9,7 +9,7 @@
  * - Power_Light - shorter sleeps, memory retained
  * - Power_Deep  - sleep longer periods with - memory is cleared on recovery
  * 
- * An important distinction is millis() vs sleepSafeMillis(), the latter adds an offset that should allow timers over sleep periods
+ * An important distinction is millis() vs sleepSafeSecs(), the latter, apart from being in seconds, keeps track over Light and Deep Sleep periods
  * 
  * This module also handles low battery. On wakeup on a device with SENSOR_BATTERY_PIN a call to configure_battery will 
  * check for a dangerously low battery, and if seen will go into a deep sleep for a configurable period before checking again
@@ -35,6 +35,7 @@
 #ifdef ESP32 // Not available on ESP8266 - have not yet searched for equivalents
   // Next three .h might or might not be needed
   #include "esp_pm.h"
+  #include "esp_timer.h"
   #include "esp_wifi.h"
   #include "esp_sleep.h"
   #include "esp_timer.h"     // For esp_timer_get_time() — sleep-compensated microseconds since boot
@@ -84,7 +85,7 @@ void printTaskList() {
   RTC_DATA_ATTR unsigned long wake_count = 0L; // If 1 per minute, uint_16 would just be 45 days
   // Timers stored in seconds; uint32_t rolls over at 136 years vs 49 days for millis-based unsigned long.
   // esp_timer_get_time() is already compensated for deep sleep on IDF 5.x, so no offset needed.
-  RTC_DATA_ATTR uint32_t timers[TIMER_LENGTH] = {0,0,0,0,0,0,0,0}; // Array used by entities
+  RTC_DATA_ATTR uint32_t timers[TIMER_LENGTH] = {0,0,0,0,0,0,0,0}; // Array used by entities - currently using max four (OTA, Discovery, time, Watchdog)
 #else
   uint32_t timers[TIMER_LENGTH] = {0,0,0,0}; // Array used by entities
 #endif
@@ -105,7 +106,7 @@ void printTaskList() {
 System_Power::System_Power()
 : System_Base("power", "Power Controller"),
   mode(Power_Loop),
-  nextSleepTime(0L), // not sleepSafeMillis() as by definition dont sleep before this
+  nextSleepTime(0L), // not sleepSafeSecs() as by definition dont sleep before this
   cycle_ms(10000),
   wake_ms(10000),
   timer_index(0)
@@ -158,7 +159,7 @@ uint32_t System_Power::timer(uint8_t i) {
   return timers[i];
 }
 void System_Power::timer_set(const uint8_t i, const uint32_t t_secs) {
-  timers[i] = sleepSafeSecs() + t_secs;
+    timers[i] = sleepSafeSecs() + t_secs;
 }
 bool System_Power::timer_expired(const uint8_t i) {
   return (timer(i) <= sleepSafeSecs());
@@ -242,7 +243,7 @@ void System_Power::configure(const System_Power_Type mode_init, const unsigned l
   mode = mode_init;
   cycle_ms = cycle_ms_init;
   wake_ms = wake_ms_init;
-  nextSleepTime = (millis() + wake_ms); // not sleepSafeMillis() as by definition dont sleep before this
+  nextSleepTime = (millis() + wake_ms); // not sleepSafeSecs() as by definition dont sleep before this
   /* Serial not enabled yet
   #ifdef SYSTEM_POWER_DEBUG
     Serial.printf("%s: %lu of %lu\n", name.c_str(), wake_ms, cycle_ms); 
@@ -343,7 +344,7 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
 
 void System_Power::recover() {
   // For Power_Loop wake_ms = cycle_ms; for Deep millis is ~0 so this is good for all modes
-  nextSleepTime = (millis() + wake_ms); // not sleepSafeMillis() as by definition dont sleep before this
+  nextSleepTime = (millis() + wake_ms); // not sleepSafeSecs() as by definition dont sleep before this
 
   if (mode) {
     if (mode & PauseUARTBit) { // TODO not sure this works yet
