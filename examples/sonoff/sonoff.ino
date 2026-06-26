@@ -32,7 +32,7 @@ void Control_Sonoff::dispatchTwig(const String &topicControlId, const String &to
       // If cycling state then also set to manual if not already
       if (!manual->value) {
         manual->set(true); // will also send it if changed
-        manual->writeValueToFSandEcho(manual->id, manual->StringValue());
+        //manual->writeValueToFSandEcho(manual->id, manual->StringValue()); // Maybe should write to FS but not echo - note fixed in TODO-210 anyway
       }
     }
     Control_Hysterisis::dispatchTwig(topicControlId, topicTwig, payload, isSet); // Pass on to normal handle of manual - not clear if it writes out/on to FS
