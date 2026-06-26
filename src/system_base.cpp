@@ -290,8 +290,11 @@ bool IN::dispatch(System_Message &msg) {
       if (msg.leaf() == id || (msg.leaf().startsWith(id) && msg.leaf().endsWith("/value"))) {
         // isSet usually comes from messages and needs echo as (!set) topic
         // !isSet usually comes from FS but also need to send
-        msg.maybeWriteToFSandEcho(true); // Append "/value"
-        return convertAndSet(msg.payload); // Virtual - depends on type of INxxx
+        const bool changed = convertAndSet(msg.payload); // Virtual - depends on type of INxxx
+        if (changed) { 
+          msg.maybeWriteToFSandEcho(true); 
+        } // Append "/value"
+        return changed;
       }
     }
   }
