@@ -8,7 +8,7 @@
  * Required: SYSTEM_TIME_ZONE e.g. "GMT0BST,M3.5.0/1,M10.5.0" (technically optional but we are going to default it to GMT if you do not define it!)
  * 
  * // TODO-141 pass in constructor
- * Optional: SYSTEM_TIME_MS time in milliseconds to report time on serial port - usually very lomg e.g. 3600000
+ * Optional: SYSTEM_TIME_S time in seconds to report time on serial port - e.g. 360
  * 
  * Optional: SYSTEM_TIME_DEBUG 
  */
@@ -32,8 +32,8 @@
   #define SYSTEM_TIME_ZONE_ABBREV "GMT" // The typical way time is described locally 
 #endif
 
-#ifndef SYSTEM_TIME_MS
-  #define SYSTEM_TIME_MS 360000 
+#ifndef SYSTEM_TIME_S
+  #define SYSTEM_TIME_S 360
 #endif
 
 #define JAN_01_2024 1704070861L
@@ -111,6 +111,6 @@ void System_Time::infrequently() {
     }
     // TODO-141 check actually setting time
     configTime(0, 0, "foo","bar","bax"); // TODO this cant be right, which servers are we using ?
-    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_TIME_MS);
+    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_TIME_S);
   }
 }

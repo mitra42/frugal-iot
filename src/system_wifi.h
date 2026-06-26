@@ -11,6 +11,8 @@ class System_WiFi : public System_Base {
   public:
     WiFiStatusType status = WIFI_STARTING ;
     unsigned long statusSince = 0;
+    unsigned long stabilizeTill = 0;
+    bool _connectFailed = false; // set by connectInnerAsync when WiFi.begin() fails synchronously
     int16_t num_networks = -1;
     int32_t minRSSI; // Minimum RSSI we are trying to connect to in this cycle of state Machine
     int nextNetwork;

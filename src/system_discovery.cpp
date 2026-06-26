@@ -1,10 +1,10 @@
 /* Manage MQTT higher level 
    Advertise in a way that allows a client to discover the nodes from knowing the project
  
-   Periodically (SYSTEM_DISCOVERY_MS) send node name on project  e.g  "dev/developers/" = "node1"
+   Periodically (SYSTEM_DISCOVERY_S seconds) send node name on project  e.g  "dev/developers/" = "node1"
   At startup send a YAML string that describes this node and all sensors actuators
 
-  Required SYSTEM_DISCOVERY_MS 
+  Required SYSTEM_DISCOVERY_S
   Optional SYSTEM_DISCOVERY_DEBUG
   Optional *_WANT and *ADVERTISEMENT for each sensor and actuator
 
@@ -14,8 +14,8 @@
 
 #include "_settings.h"
 
-#ifndef SYSTEM_DISCOVERY_MS
-  #define SYSTEM_DISCOVERY_MS (30000) // quick discovery every 30 seconds
+#ifndef SYSTEM_DISCOVERY_S
+  #define SYSTEM_DISCOVERY_S 30 // quick discovery every 30 seconds
 #endif
 
 #include <Arduino.h>
@@ -60,6 +60,6 @@ void System_Discovery::infrequently() {
     } 
     // Even if MQTT down (no WiFi or LoRa) queue up one of these to send when reconnect so UX knows we exist
     quickAdvertise(); // Send info about this node to server (on timer)
-    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_DISCOVERY_MS);
+    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_DISCOVERY_S);
   }
 }

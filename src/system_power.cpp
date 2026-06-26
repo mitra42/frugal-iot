@@ -33,10 +33,11 @@
 
 #include <Arduino.h> // Required to get sdkconfig.h to get CONFIG_IDF_TARGET_xxx
 #ifdef ESP32 // Not available on ESP8266 - have not yet searched for equivalents
-  // Next three .h might or might not be needed 
+  // Next three .h might or might not be needed
   #include "esp_pm.h"
   #include "esp_wifi.h"
   #include "esp_sleep.h"
+  #include "esp_timer.h"     // For esp_timer_get_time() — sleep-compensated microseconds since boot
   #include "driver/uart.h"   // To allow disabling UART
   // To allow printing task list - which doesnt work anyway!
   //#include "freertos/FreeRTOS.h"
@@ -81,11 +82,11 @@ void printTaskList() {
 #define TIMER_LENGTH 8 // Can make this longer (and add to initialization) if ever need >4 timers.
 #ifdef ESP32
   RTC_DATA_ATTR unsigned long wake_count = 0L; // If 1 per minute, uint_16 would just be 45 days
-  RTC_DATA_ATTR unsigned long millis_offset = 0L;  // Cumulative time in deep sleep with millis() being reset
-  // This is an array of timers, available to modules
-  RTC_DATA_ATTR unsigned long timers[TIMER_LENGTH] = {0L,0L,0L,0L,0L,0L,0L,0L}; // Array used by entities - currently using max five (OTA, Disovery. Blinken, time, Watchdog)
+  // Timers stored in seconds; uint32_t rolls over at 136 years vs 49 days for millis-based unsigned long.
+  // esp_timer_get_time() is already compensated for deep sleep on IDF 5.x, so no offset needed.
+  RTC_DATA_ATTR uint32_t timers[TIMER_LENGTH] = {0,0,0,0,0,0,0,0}; // Array used by entities
 #else
-  unsigned long timers[TIMER_LENGTH] = {0L,0L,0L,0L}; // Array used by entities
+  uint32_t timers[TIMER_LENGTH] = {0,0,0,0}; // Array used by entities
 #endif
 //TODO-23 think about roll-over of timers and routines that test against a number maybe not rolled over
 
@@ -153,14 +154,14 @@ uint8_t System_Power::timer_next() {
   }
   return timer_index++;
 }
-unsigned long System_Power::timer(uint8_t i) {
+uint32_t System_Power::timer(uint8_t i) {
   return timers[i];
 }
-void System_Power::timer_set(const uint8_t i, const unsigned long t) {
-    timers[i] = sleepSafeMillis() + t ;
+void System_Power::timer_set(const uint8_t i, const uint32_t t_secs) {
+  timers[i] = sleepSafeSecs() + t_secs;
 }
 bool System_Power::timer_expired(const uint8_t i) {
-  return (timer(i) <= sleepSafeMillis());
+  return (timer(i) <= sleepSafeSecs());
 }
 
 
@@ -323,7 +324,8 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
     #ifdef ESP32
       if (forceMode & DeepSleepBit) {
         if (forceMode & WakeOnTimerBit) {
-          millis_offset = millis() + millis_offset + sleep_millisecs; // Since millis() will reset to 0 - stored in RTC
+          // millis() resets to 0 after deep sleep, but esp_timer_get_time() on IDF 5.x is
+          // already compensated for sleep duration — no offset needed.
           esp_deep_sleep(sleep_millisecs * 1000UL);
           Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
         } else {  // Power_Panic
@@ -399,10 +401,13 @@ bool System_Power::maybeSleep() {
 }
 
 #ifdef ESP32
-  // === Adjusted millis() to account for time when millis() not ticking
+  // sleepSafeSecs: microseconds from esp_timer_get_time() are already compensated for deep sleep
+  // on IDF 5.x (pioarduino stable), so no RTC offset needed.
+  uint32_t System_Power::sleepSafeSecs() {
+    return (uint32_t)(esp_timer_get_time() / 1000000ULL);
+  }
+  // sleepSafeMillis derived from sleepSafeSecs to stay consistent across sleep boundaries.
   unsigned long System_Power::sleepSafeMillis() {
-    // Return millis() adjusted for any sleep offset
-    // TODO-23 millis wraps at 49 days, so need to handle that
-    return millis() + millis_offset;
+    return sleepSafeSecs() * 1000UL + (millis() % 1000UL);
   }
 #endif

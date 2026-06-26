@@ -2,7 +2,6 @@
  *
  *
  */
-
 #include <Arduino.h>
 #include "_settings.h" // For ???
 #include "system_wifi.h"
@@ -74,15 +73,18 @@ void System_WiFi::setup() {
 bool System_WiFi::rescan() {
   // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
   //bool async = false, bool show_hidden = false, bool passive = false, uint32_t max_ms_per_chan = 300, uint8_t channel = 0, const char *ssid = nullptr, const uint8_t *bssid = nullptr
-  // Have seen online that need this to scan, but not finding required, and don't want as concerned disconnects AP
-  /*
   #ifdef ESP32
-    WiFi.disconnect(true, true);    // reset state so .scanNetworks() works
-  #else
-      WiFi.disconnect(true);
+    esp_wifi_scan_stop(); // Abort any in-progress scan before starting a new one
+    esp_wifi_disconnect(); // Ensure STA is idle — scan fails if a connect attempt is still in flight
   #endif
-  */
-  return (WiFi.scanNetworks(true) == WIFI_SCAN_RUNNING); // Scan asynchronously. look for WL_SCAN_COMPLETED when done
+  WiFi.scanDelete(); // Free previous scan results and reset arduino-esp32 _scanStarted flag
+  int16_t result = WiFi.scanNetworks(true); // Scan asynchronously; WIFI_SCAN_RUNNING on success
+  if (result != WIFI_SCAN_RUNNING) {
+    Serial.print(F("WiFi scan start failed code=")); Serial.print(result);
+    Serial.print(F(" WiFi.status=")); Serial.println(WiFi.status());
+    return false;
+  }
+  return true;
 }
 
 // Scan for networks - try and connect to any we have password for (in order of strength) true if success
@@ -126,24 +128,27 @@ bool System_WiFi::connectOne(String ssid, int32_t rssi) {
 }
 // Try and connect to a single network
 void System_WiFi::connectInnerAsync(String ssid, String pw) {
-  // Unclear why this brute multiple setHostname calls - should be documented?
   Serial.print(F("Connecting to WiFi SSID "));
-  Serial.print(ssid);
-  WiFi.setHostname(frugal_iot.nodeid.c_str());  
-  WiFi.begin(ssid.c_str(), pw.c_str()); // Attempt connection - note returns immediately need to check status
-  WiFi.setHostname(frugal_iot.nodeid.c_str()); 
+  Serial.println(ssid);
+  // mode() and config() must be called BEFORE begin() — IDF 5.x rejects them once connecting has started
+  #ifdef ESP32
+    WiFi.mode(WIFI_MODE_APSTA);  // Keep captive portal alive; arduino-esp32 #6278
+  #else
+    WiFi.mode(WIFI_AP_STA);
+  #endif
+  WiFi.setHostname(frugal_iot.nodeid.c_str());
   #ifndef ESP8266
     // This won't work on ESP8266 which is unforgiving - if dont set all four then Serial.print(WiFi.localIP()) will report IP unset and DNS lookup will fail
     WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);  // arduino-esp32 #2537 and #6278
   #endif
-  WiFi.setHostname(frugal_iot.nodeid.c_str());  
-  // Dont drop captive portal while trying to connect
-  #ifdef ESP32
-    WiFi.mode(WIFI_MODE_APSTA);  // arduino-esp32 #6278.  WIFI_MODE_STA is just station, AP is just Access Point
-  #else
-    WiFi.mode(WIFI_AP_STA);  // On ESP8266 WIFI_MODE_APSTA doesnt exist its WIFI_AP_STA or WIFI_STA
-  #endif
-  WiFi.setHostname(frugal_iot.nodeid.c_str());  
+  WiFi.setHostname(frugal_iot.nodeid.c_str());
+  if ((wl_status_t)WiFi.begin(ssid.c_str(), pw.c_str()) == WL_CONNECT_FAILED) {
+    // WiFi.begin() failed synchronously — IDF rejected esp_wifi_set_config() (ESP_ERR_WIFI_STATE).
+    // WiFi stack is still processing a prior disconnect; set flag so WIFI_CONNECTING exits fast.
+    Serial.println(F("WiFi.begin state err - still stabilizing"));
+    _connectFailed = true;
+    stabilizeTill = millis() + 5000;
+  }
 }
 
 
@@ -193,119 +198,141 @@ bool System_WiFi::recoverWiFi() {
   #define WL_EXPECTED_AT_STARTING WL_DISCONNECTED // e.g. on ESP8266
 #endif
 void System_WiFi::stateMachine() {
-  // State machine
+  // State machine — stabilizeTill blocks all transitions while waiting for WiFi stack to settle
   //Serial.print(F(" XXX Wifi=")); Serial.print(status); Serial.print(F(" ")); Serial.println(WiFi.status());
-  switch (status)
-  {
-    case WIFI_STARTING: //0
-      if ((WiFi.status() != WL_DISCONNECTED) // Note that WL_DISCONNECTED is 7 on ESP8266 and 6 on ESP32
-        #ifdef ESP32
-          && (WiFi.status() != WL_STOPPED) // WL_STOPPED is not defined on ESP8266 (its 254 on ESP32)
-        #endif
-        ) {
-        #ifdef SYSTEM_WIFI_DEBUG
-          Serial.print(F("WiFi: STARTING but WiFi.status=")); Serial.println(WiFi.status()); 
-          // Unsure what to do here - 
-        #endif
-      }
-      setStatus(WIFI_NEEDSCAN);
-      break;
-    case WIFI_DISCONNECTED: //1
-      if ( (WiFi.status() != WL_DISCONNECTED)
-        && (WiFi.status() != WL_CONNECTION_LOST)
-        && (WiFi.status() != WL_IDLE_STATUS)
-        && (WiFi.status() != WL_CONNECT_FAILED)
-      ) {
-        #ifdef SYSTEM_WIFI_DEBUG
-          Serial.print(F("XXX Should be WL_DISCONNECTED or WL_STOPPED but")); Serial.println(WiFi.status());
-          // Unsure what to do here - but try and reconnect anyway
-        #endif
-      }
-      setStatus(WIFI_RECONNECTING);
-      WiFi.reconnect();  // In theory should be quick if not possible. 
-        // drop thru
-    case WIFI_RECONNECTING: //2
-        if (WiFi.status() == WL_CONNECTED) {
-          setStatus(WIFI_CONNECTED);
-          break; // Success
+  if (millis() >= stabilizeTill) {
+    switch (status)
+    {
+      case WIFI_STARTING: //0
+        if ((WiFi.status() != WL_DISCONNECTED) // Note that WL_DISCONNECTED is 7 on ESP8266 and 6 on ESP32
+          #ifdef ESP32
+            && (WiFi.status() != WL_STOPPED) // WL_STOPPED is not defined on ESP8266 (its 254 on ESP32)
+          #endif
+          ) {
+          #ifdef SYSTEM_WIFI_DEBUG
+            Serial.print(F("WiFi: STARTING but WiFi.status=")); Serial.println(WiFi.status());
+            // Unsure what to do here -
+          #endif
         }
-        if (millis() < (statusSince + 3000)) { // Failed to reconnect
-          break; // Leave at WIFI_RECONNECTING
-        }
-        Serial.println(F("WiFi failed to reconnect"));
         setStatus(WIFI_NEEDSCAN);
-        // drop thru 
-    case WIFI_NEEDSCAN: //4
-        if (rescan()) { // async
-          setStatus(WIFI_SCANNING);
-          Serial.print(F("WiFi rescanning ")); /* Serial.println(WiFi.status()); */
-        } else {
-          Serial.println(F("WiFi Scan failed to start"));
-          break; // stay in WIFI_NEEDSCAN
+        break;
+      case WIFI_DISCONNECTED: //1
+        if ( (WiFi.status() != WL_DISCONNECTED)
+          && (WiFi.status() != WL_CONNECTION_LOST)
+          && (WiFi.status() != WL_IDLE_STATUS)
+          && (WiFi.status() != WL_CONNECT_FAILED)
+        ) {
+          #ifdef SYSTEM_WIFI_DEBUG
+            Serial.print(F("XXX Should be WL_DISCONNECTED or WL_STOPPED but")); Serial.println(WiFi.status());
+            // Unsure what to do here - but try and reconnect anyway
+          #endif
         }
-        // drop thru
-    case WIFI_SCANNING: //5
-      switch (num_networks = WiFi.scanComplete()) {
-        case WIFI_SCAN_FAILED: {
-          Serial.print(F("WiFi Scan failed to complete"));
-          status = WIFI_NEEDSCAN;
+        setStatus(WIFI_RECONNECTING);
+        WiFi.reconnect();  // In theory should be quick if not possible.
+          // drop thru
+      case WIFI_RECONNECTING: //2
+          if (WiFi.status() == WL_CONNECTED) {
+            setStatus(WIFI_CONNECTED);
+            break; // Success
+          }
+          if (millis() < (statusSince + 3000)) { // Failed to reconnect
+            break; // Leave at WIFI_RECONNECTING
+          }
+          Serial.println(F("WiFi failed to reconnect"));
+          setStatus(WIFI_NEEDSCAN);
+          // drop thru
+      case WIFI_NEEDSCAN: //4
+          if (rescan()) { // async
+            setStatus(WIFI_SCANNING);
+            Serial.print(F("WiFi rescanning ")); /* Serial.println(WiFi.status()); */
+          } else {
+            stabilizeTill = millis() + 2000; // Retry in 2s, not on every loop tick
+            break; // stay in WIFI_NEEDSCAN
+          }
+          // drop thru
+      case WIFI_SCANNING: //5
+        switch (num_networks = WiFi.scanComplete()) {
+          case WIFI_SCAN_FAILED: {
+            Serial.print(F("WiFi Scan failed to complete"));
+            status = WIFI_NEEDSCAN;
+            break;
+          }
+          case WIFI_SCAN_RUNNING: {
+            break; // No need for timeout, it will terminate
+          }
+          default: {
+            // Weirdly WiFi.status() reports WL_DISCONNECTED rather than WL_SCAN_COMPLETED
+            Serial.print(F("WiFi found:")); Serial.println(num_networks);
+            connectOneAndAllReset();
+            status = WIFI_SCANNED;
+          }
+        }
+        break;
+        // Drop thru
+      case WIFI_SCANNED: //6 Each time it hits this, it will try and connect to one more node if possible
+        if (!connectOneAndAllNext()) { // returns either true if started connecting, or false if nothing to try
+          // Came to end but none found
+          if (millis() > (statusSince + SYSTEM_WIFI_SCANPERIOD)) { // Leave space between scans or portal wont work
+            setStatus(WIFI_NEEDSCAN);
+          }
+          break; // Either still in WIFI_SCANNED at end of tries, OR with WIFI_NEEDSCAN
+        } else {
+          setStatus(WIFI_CONNECTING);
+        }
+        // Drop thru
+      case WIFI_CONNECTING: //7
+        if (WiFi.status() == WL_CONNECTED) {
+          setStatus(WIFI_STABILIZING);
+          stabilizeTill = millis() + 2000; // Give WiFi stack time to settle before setup_after_wifi
+        } else if (_connectFailed) {
+          // connectInnerAsync() detected WiFi.begin() returned WL_CONNECT_FAILED (IDF state error).
+          // WiFi is still connecting from a prior attempt; abort it and wait before retrying.
+          _connectFailed = false;
+          #ifdef ESP32
+            {
+              esp_err_t err = esp_wifi_disconnect();
+              #ifdef SYSTEM_WIFI_DEBUG
+                if (err != ESP_OK) { Serial.print(F("esp_wifi_disconnect err ")); Serial.println(err); }
+              #endif
+            }
+          #endif
+          stabilizeTill = millis() + 5000;
+          setStatus(WIFI_SCANNED);
+        } else if (millis() > (statusSince + 30000)) { // Give it 30 seconds to try
+          #ifdef ESP32
+            // WiFi.disconnect(true,true) fails on IDF 5.x while connecting (ESP_ERR_WIFI_STATE).
+            // esp_wifi_disconnect() aborts in-progress attempt and works in any state.
+            {
+              esp_err_t err = esp_wifi_disconnect();
+              #ifdef SYSTEM_WIFI_DEBUG
+                if (err != ESP_OK) { Serial.print(F("esp_wifi_disconnect err ")); Serial.println(err); }
+              #endif
+            }
+          #endif
+          stabilizeTill = millis() + 5000; // Give WiFi task time to process disconnect before next begin()
+          setStatus(WIFI_SCANNED); // Try next network from current scan results, not a full rescan
+        }
+        // WiFi.status() remains at 6 during this timeout - cant tell quicker that it failed
+        break; // Either as WIFI_CONNECTED | WIFI_CONNECTING | WIFI_SCANNED
+      case WIFI_STABILIZING: //8
+        if (WiFi.status() != WL_CONNECTED) {
+          setStatus(WIFI_DISCONNECTED);
           break;
         }
-        case WIFI_SCAN_RUNNING: {
-          break; // No need for timeout, it will terminate
-        }
-        default: {
-          // Weirdly WiFi.status() reports WL_DISCONNECTED rather than WL_SCAN_COMPLETED
-          Serial.print(F("WiFi found:")); Serial.println(num_networks);
-          connectOneAndAllReset(); 
-          status = WIFI_SCANNED;
-        }
-      }
-      break;
-      // Drop thru      
-    case WIFI_SCANNED: //6 Each time it hits this, it will try and connect to one more node if possible
-      if (!connectOneAndAllNext()) { // returns either true if started connecting, or false if nothing to try
-        // Came to end but none found
-        if (millis() > (statusSince + SYSTEM_WIFI_SCANPERIOD)) { // Leave space between scans or portal wont work 
-          setStatus(WIFI_NEEDSCAN);
-        }
-        break; // Either still in WIFI_SCANNED at end of tries, OR with WIFI_NEEDSCAN
-      } else {
-        setStatus(WIFI_CONNECTING); 
-      }
-      // Drop thru
-    case WIFI_CONNECTING: //7
-      if (WiFi.status() == WL_CONNECTED) {
-        setStatus(WIFI_STABILIZING);
-      } else if (millis() > (statusSince + 30000)) { // Give it 30 seconds to try
-        // Failed to connect - if don't do this heavy disconnect it will fail to scan.
-        #ifdef ESP32
-          WiFi.disconnect(true, true); // Shouldnt need to do this, if keep then only for ESP32
-        #endif
-        setStatus(WIFI_SCANNED); // Go back for next
-      }
-      // WiFi.status() remains at 6 during this timeout - cant tell quicker that it failed
-      break; // Either as WIFI_CONNECTED | WIFI_CONNECTING | WIFI_SCANNED
-    case WIFI_STABILIZING: //8
-      if (WiFi.status() != WL_CONNECTED) {
-        setStatus(WIFI_DISCONNECTED);
-        break;
-      // TODO-153 Waiting for stabilization - maybe could be shorter but noticed at 1000 that first MQTT connect often faiks
-      } else if (millis() > (statusSince + 2000)) {
+        // stabilizeTill guard above already waited 2000ms — proceed directly
         setStatus(WIFI_CONNECTED);
         frugal_iot.setup_after_wifi(); // Callback to MQTT, Time and OTA as first connected
         //drop thru
-      }
-      // drop thru
-    case WIFI_CONNECTED: //3
-      if (WiFi.status() != WL_CONNECTED) {
-        setStatus(WIFI_DISCONNECTED);
-        Serial.print(F("WiFi connection lost, WiFi.status=")); Serial.println(WiFi.status());
-      }
-      break;
-    default:
-        Serial.println(F("WiFi: unhandled status"));
-      break;
+      case WIFI_CONNECTED: //3
+        if (WiFi.status() != WL_CONNECTED) {
+          setStatus(WIFI_DISCONNECTED);
+          Serial.print(F("WiFi connection lost, WiFi.status=")); Serial.println(WiFi.status());
+        }
+        break;
+      default:
+          Serial.println(F("WiFi: unhandled status"));
+        break;
+    }
   }
   //WiFi.softAPgetStationNum() maybe relevant - but prob not - its number connected to captive portal
 }
