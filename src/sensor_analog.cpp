@@ -39,7 +39,7 @@
 #ifndef SENSOR_ANALOG_UNSUPPORTED
 // If Analog unsupported then a linker error will be generated if try and add one. 
 
-Sensor_Analog::Sensor_Analog(const char* const moduleId, const char* const leafId, const char * const moduleName, const char * const leafName, const uint8_t p, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool r) 
+Sensor_Analog::Sensor_Analog(const char* const moduleId, const char* const leafId, const char * const moduleName, const char * const leafName, const uint8_t p, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool r, uint8_t power3v3_pin, uint8_t power0v_pin) 
 : Sensor_Float(moduleId, leafId, moduleName, leafName,  width, min, max, color, r),
   pin(p),
   offset(offset),
