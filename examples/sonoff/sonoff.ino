@@ -34,8 +34,8 @@ void Control_Sonoff::dispatch(System_Message &msg) {
         manual->set(true); // will also send it if changed - TODO-210 should this write to FS as well?
       }
     }
-    Control_Hysterisis::dispatch(msg); // Pass on to normal handle of manual - not clear if it writes out/on to FS
   }
+  Control_Hysterisis::dispatch(msg); // Pass on to normal handle of manual - not clear if it writes out/on to FS
 }
 
 void Control_Sonoff::act() {
