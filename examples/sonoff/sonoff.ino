@@ -34,8 +34,8 @@ void Control_Sonoff::dispatch(System_Message &msg) {
         manual->set(true); // will also send it if changed - TODO-210 should this write to FS as well?
       }
     }
-    Control_Hysterisis::dispatch(msg); // Pass on to normal handle of manual - not clear if it writes out/on to FS
   }
+  Control_Hysterisis::dispatch(msg); // Pass on to normal handle of manual - not clear if it writes out/on to FS
 }
 
 void Control_Sonoff::act() {
@@ -48,7 +48,7 @@ void Control_Sonoff::act() {
 
 // Change the parameters here to match your ... 
 // organization, project, device name, description
-System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff switch");
+System_Frugal frugal_iot("winam", "kiya", "sonoff", "Sonoff switch");
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after
@@ -67,7 +67,7 @@ void setup() {
   frugal_iot.pre_setup();
 
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
+  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "winam", "public");
 
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.

@@ -124,7 +124,7 @@ void System_Messages::send(const String topicPath, const String payload, bool re
   // TODO-210 may need to pass in flags to send, but not clear any but 0x00
   sendRemote(topicPath, payload, retain, qos, 0x00);
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
-  queueLoopback(topicPath, payload);
+  queueLoopback(topicPath, payload); 
 }
 
 // Upstream queued => MQTT or LoRaMesher
@@ -240,7 +240,7 @@ void System_Message::maybeWriteToFS(bool appendValue) { // appendValue defaults 
       path = path + "/value";
     }
     #if defined(SYSTEM_LITTLEFS_DEBUG) || defined(SYSTEM_MESSAGE_DEBUG)
-      Serial.print(F("Writing config to ")); Serial.print(path); Serial.print(F("=")); Serial.print(payload);
+      Serial.print(F("Writing config flags=")); Serial.print(flags_, HEX); Serial.print(F(" ")); Serial.print(path); Serial.print(F("=")); Serial.print(payload);
     #endif
     frugal_iot.fs_LittleFS->spurt(path, payload);
   }
@@ -248,7 +248,7 @@ void System_Message::maybeWriteToFS(bool appendValue) { // appendValue defaults 
 void System_Message::maybeEcho() {
   const String path = frugal_iot.messages->path(module() + "/" + leaf());
   #if defined(SYSTEM_MESSAGE_DEBUG)
-    Serial.print(F("Echoing ")); Serial.print(path); Serial.print(F("=")); Serial.print(payload);
+    Serial.print(F("Echoing flags=")); Serial.print(flags_, HEX); Serial.print(F(" ")); Serial.print(path); Serial.print(F("=")); Serial.println(payload);
   #endif
   // TODO-210 maybe more efficient way to get topicPath - need to check e.g. topicPath works here and doesnt include "set"
   frugal_iot.messages->send(path, payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);

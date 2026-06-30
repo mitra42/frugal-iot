@@ -27,9 +27,12 @@ void Control_Hysterisis::debug(const char* const where) {
 
 void Control_Hysterisis::act() {
   const float now = inputs[0]->floatValue();
-  const float greater = inputs[1]->boolValue();
+  const bool greater = inputs[1]->boolValue();
   const float lim = inputs[2]->floatValue();
   const float hysterisis = inputs[3]->floatValue();
+  #ifdef CONTROL_HYSTERISIS_DEBUG
+    Serial.print("XXX now="); Serial.print(now); Serial.print(" greater ="); Serial.print(greater); Serial.print(" lim"); Serial.print(lim); Serial.print(" out="); Serial.println(((OUTbool*)outputs[0])->value);
+  #endif
   if ((greater && (now > (lim + hysterisis))) || (!greater && (now < (lim - hysterisis)))) {
       ((OUTbool*)outputs[0])->set(true);
   }

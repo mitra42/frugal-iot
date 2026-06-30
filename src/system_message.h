@@ -20,7 +20,7 @@
 #define MsgFromCaptive 0x10
 #define MsgFromMQTT 0x20
 #define MsgFromLoRaMesher 0x40 
-#define MsgIsLoopback 0x80
+#define MsgIsLoopback 0x80        // Outgoing message, but looped back in case any wired topics listening
 // Its uint8_t so hopefully dont need more flags - if so split off source as separate field rather than expanding this byte
 
 class System_Messages; // to allow forward reference
