@@ -14,7 +14,7 @@
 
 class Sensor_Health : public Sensor {
   public:
-    Sensor_Health(const char* const id, const char* const name);
+    Sensor_Health(const char* const id, const char* const name, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
   protected:
     OUTuint16* wifibars;
     OUTtext* wifissid;

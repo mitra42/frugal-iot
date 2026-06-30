@@ -1,6 +1,6 @@
 {
     "name": "Frugal-IoT",
-    "version": "0.0.13",
+    "version": "0.0.22",
     "description": "A platform for affordable easily built sensors",
     "keywords": "frugal, arduino, esp32, iot, sensors",
     "authors": [
@@ -23,7 +23,9 @@
         { "name": "HX711", "owner": "robtillaart"},
         { "name": "ESPAsyncWebServer", "owner": "ESP32Async", "platforms": ["espressif8266", "espressif32"]},
         { "name": "DallasTemperature", "owner": "milesburton" },
-        { "name": "OneWire", "owner": "paulstoffregen" }
+        { "name": "OneWire", "owner": "paulstoffregen" },
+        { "name": "hd44780", "owner": "duinowitchery" },
+        { "name": "TinyGPSPlus", "owner": "mikalhart" }
     ],
     "frameworks": "arduino",
     "platforms": ["espressif32","espressif8266"],

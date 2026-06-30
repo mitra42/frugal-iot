@@ -12,18 +12,19 @@
 #include <Arduino.h>
 #include <vector>
 #include "system_base.h"
+#include "system_message.h"
 
 class Control : public System_Base {
   public:
     std::vector<IN*> inputs; // Vector of inputs
     std::vector<OUT*> outputs; // Vector of outputs
+    bool enabled = true; // Set false to suppress act() drawing/output
 
-    Control(const char * const id, const char * const name, std::vector<IN*> i, std::vector<OUT*> o); 
+    Control(const char * const id, const char * const name, std::vector<IN*> i, std::vector<OUT*> o);
     void setup() override;
     virtual void act();
     void discover() override;
-    void dispatchTwig(const String &topicControlId, const String &topicLeaf, const String &payload, bool isSet) override;
-    void dispatchPath(const String &topicPath, const String &payload) override;
+    void dispatch(System_Message &msg) override;
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const blah);
     #endif //CONTROL_DEBUG

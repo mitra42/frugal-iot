@@ -32,8 +32,8 @@ class System_MQTT : public System_Base {
     System_MQTT(const char* hostname, const char* username, const char* password);
     void setup_after_wifi();
     bool connected(); // Check if connected, dont change status
-    bool prepareForLightSleep();
-    bool recoverFromLightSleep();
+    void prepare() override;
+    void recover() override;
     // Downstream
     void messageReceived(const String &topicPath, const String &payload); // Used in MqttMessageReceived callbacks 
         // Upstream
@@ -46,7 +46,7 @@ class System_MQTT : public System_Base {
     String hostname; 
     bool inReceived = false;
     unsigned long ms;
-    unsigned long nextLoopTime; // Not sleepSafeMillis as frequent.
+    unsigned long nextLoopTime; // Not sleepSafeSecs as frequent.
     bool subscriptionsDone = false; // True when server has reported a session - so dont need to subscribe OR have resubscribed. Also true at start before did subscriptions.
     const char* password;
     const char* username;
@@ -54,7 +54,7 @@ class System_MQTT : public System_Base {
     void captiveLines(AsyncResponseStream* response) override;
     void loop() override;
     bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
-    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet); // receiving message for the mqtt module
+    void dispatch(System_Message &msg) override;
 };
 
 #endif // SYSTEM_MQTT_H

@@ -12,7 +12,7 @@
 * "topic" is ambiguous and therefore wrong ! 
 *
 * Incoming flow 
-* messageReceived -> dispatch -> (dispatchTwig; dispatchPath)
+* messageReceived -> dispatch
 */
 
 #include "_settings.h"
@@ -44,7 +44,7 @@ System_MQTT::System_MQTT(const char* hostname, const char* username, const char*
 {}
 
 void System_MQTT::setup() {
-  readConfigFromFS(); // Reads config (hostname) and passes to our dispatchTwig
+  readConfigFromFS(); // Reads config (hostname) and passes to our dispatch
 }
 
 // Setup MQTT, connect and subscribe - note if WiFi is connected, this will block till MQTT times out 
@@ -72,7 +72,7 @@ void System_MQTT::loop() {
           Serial.print(F("MQTT client loop failed ")); Serial.println(client.lastError()); // lwmqtt_err
         #endif // SYSTEM_MQTT_DEBUG
       }; // Do this at end of loop so some time before checks if connected
-      nextLoopTime = millis() + SYSTEM_MQTT_MS; // Not sleepSafeMillis as this is frequent
+      nextLoopTime = millis() + SYSTEM_MQTT_MS; // Not sleepSafeSecs as this is frequent
     } else {
       nextLoopTime = (millis() + SYSTEM_MQTT_BACKOFF);
     }
@@ -97,26 +97,28 @@ bool System_MQTT::connect() {
     // Theoretically "skip=true" should be good, dont close if connected, but leads to error code=6
     if (!client.connect(frugal_iot.nodeid.c_str(), username, password)) {
       /* Still not connected */
-      Serial.print(F(" Fail "));
-      Serial.print(client.lastError()); // -3 is LWMQTT_NETWORK_FAILED_CONNECT
+      Serial.print(F(" MQTT Connect Fail "));
+      /* https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h */
+      Serial.print(client.lastError()); // -3 is LWMQTT_NETWORK_FAILED_CONNECT -10 is userid/password fail
       Serial.print(F(" ")); // 6 is LWMQTT_UNKNOWN_RETURN_CODE 
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116
       Serial.println(client.returnCode());
       return false;
     } else { 
       /* Fresh connection */
-      Serial.print(F(" Connected "));
+      Serial.println(F(" Connected "));
       if (!client.sessionPresent()) {
-        subscriptionsDone = false; // No session so will need to redo subscriptions
+        subscriptionsDone = false; // No session so will need to redo subscriptions 
       } else {
         Serial.println(F(" Session present "));
       }
+      frugal_iot.setup_after_mqtt(); // Main thing is to set LoRaMesher gateway
     }
   }
   /* Have a connection - new or old */
-  if (!subscriptionsDone) { // Client has reported existence of a session
+  if (!subscriptionsDone) { // Client has reported non-existence of a session
     /* State connected but broker doesnt know subscriptions */
-    if (frugal_iot.messages->reSubscribeAll()) {
+    if (frugal_iot.messages->reSubscribeAll()) {  //TODO-189 check redoing LoRa subscriptions
       subscriptionsDone = true;
     } else {
       return false; // Something failed - probably connection dropped.
@@ -127,23 +129,24 @@ bool System_MQTT::connect() {
   return true;
 }
 // This is for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname
-void System_MQTT::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) {
-    if (topicTwig == "hostname") {
-      hostname = payload;
-      writeConfigToFS(topicTwig, payload);
+void System_MQTT::dispatch(System_Message &msg) {
+  // TODO-206 no need to resend, but *do* need to test changing via SPIFFS
+  if (msg.isSet() && (msg.module() == id)) {
+    if (msg.leaf() == "hostname") {
+      hostname = msg.payload;
+      writeConfigToFS(msg.leaf(), msg.payload);
+      // Could echo here but dont need to
     } else {
-      System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+      System_Base::dispatch(msg);
     }
   }
 }
-bool System_MQTT::prepareForLightSleep() {
-  //TODO-23 this doesnt appear to be called, its not sure if it should or not
+void System_MQTT::prepare() {
+  //Note this is intentionally not called
   frugal_iot.mqtt->client.disconnect();
-  return true;
 }
-bool System_MQTT::recoverFromLightSleep() {
-  return connect(); // TODO-23 Note this is blocking if WiFi is connected, which it typically won't be. 
+void System_MQTT::recover() {
+  connect(); // TODO-23 Note this is blocking if WiFi is connected, which it typically won't be. 
 }
 
 // UPSTREAM module -> queue -> (loRaMesher -> queue ) -> MQTT -> Broker
@@ -229,7 +232,7 @@ void System_MQTT::messageReceived(const String &topicPath, const String &payload
   // unsubscribe as it may cause deadlocks when other things arrive while
   // sending and receiving acknowledgments. Instead, change a global variable,
   // or push to a queue and handle it in the loop after calling `client.loop()`.
-  frugal_iot.messages->queueIncoming(topicPath, payload);
+  frugal_iot.messages->queueIncoming(topicPath, payload, MsgFromMQTT);
   inReceived = false;
 }
 

@@ -31,7 +31,7 @@
 class Sensor_LoadCell : public Sensor_Float {
   public:
     Sensor_LoadCell(const char* const id, const char * const name, float max, const char* color, const bool retain, 
-      uint8_t DOUTpin, uint8_t SCKpin, uint8_t times, int32_t offset, int32_t scale);
+      uint8_t DOUTpin, uint8_t SCKpin, uint8_t times, int32_t offset, int32_t scale, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
   protected:
     float readFloat() override;
     void tare();
@@ -41,7 +41,7 @@ class Sensor_LoadCell : public Sensor_Float {
     uint8_t times; // How often to read the load cell for each reported reading
     int32_t offset;
     float scale;
-    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;
+    void dispatch(System_Message &msg) override;
     void captiveLines(AsyncResponseStream* response) override;
 };
 #endif // SENSOR_LOADCELL_H

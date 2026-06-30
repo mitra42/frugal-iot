@@ -16,8 +16,7 @@ class Control_Blinken : public Control {
     void act() override; // Override in Control
     void loop() override; // Override in FrugalBase
   private:
-    uint8_t timer_index; // Index into RTC timer array 
-    void timer_set(unsigned long t);
+    unsigned long blink_next_ms; // millis() value when next toggle is due
 };
 
 #endif // CONTROL_BLINKEN_H

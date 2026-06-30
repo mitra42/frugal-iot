@@ -40,7 +40,7 @@
 // If Analog unsupported then a linker error will be generated if try and add one. 
 
 Sensor_Analog::Sensor_Analog(const char* const moduleId, const char* const leafId, const char * const moduleName, const char * const leafName, const uint8_t p, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool r) 
-: Sensor_Float(moduleId, leafId, moduleName, leafName, width, min, max, color, r),
+: Sensor_Float(moduleId, leafId, moduleName, leafName,  width, min, max, color, r),
   pin(p),
   offset(offset),
   scale(scale)
@@ -107,30 +107,30 @@ void Sensor_Analog::calibrate(const float val) {
   #endif
   scale = val / (v - offset);
 }
-void Sensor_Analog::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, const bool isSet) {
-  if (topicSensorId == id) {
-    // Set by UX - "Tare" is weight=0  Calbrate is weight=XX
-    if (topicTwig == "output") {
-      if(payload.toFloat() == 0.0) {
+void Sensor_Analog::dispatch(System_Message &msg) {
+  if (msg.module() == id) {
+    // Set by UX - "Tare" is weight=0  Calibrate is weight=XX
+    if (msg.leaf() == "output") {
+      if (msg.payload.toFloat() == 0.0) {
         tare(); // sets offset
         #ifdef SENSOR_ANALOG_DEBUG
           Serial.print(F("Tare offset=")); Serial.println(offset);
         #endif
         writeConfigToFS("offset", String(offset));
       } else {
-        calibrate(payload.toFloat()); // uses offset, sets scale
+        calibrate(msg.payload.toFloat()); // uses offset, sets scale
         #ifdef SENSOR_ANALOG_DEBUG
           Serial.print(F("Calibrate scale=")); Serial.println(scale);
         #endif
         writeConfigToFS("scale", String(scale));
       }
     // offset and scale should only be seen when reading from disk
-    } else if (topicTwig == "offset") {
-      offset = payload.toInt();
-    } else if (topicTwig == "scale") {
-      scale = payload.toFloat();
+    } else if (msg.leaf() == "offset") {
+      offset = msg.payload.toInt();
+    } else if (msg.leaf() == "scale") {
+      scale = msg.payload.toFloat();
     } else {
-      Sensor_Float::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+      Sensor::dispatch(msg);
     }
   }
 }

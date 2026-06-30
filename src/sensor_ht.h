@@ -5,7 +5,7 @@
 
 class Sensor_HT : public Sensor {
   public:
-    Sensor_HT(const char* const id, const char * const name, bool retain);
+    Sensor_HT(const char* const id, const char * const name, bool retain, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
     OUTfloat* temperature;
     OUTfloat* humidity;
   protected:

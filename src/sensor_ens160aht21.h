@@ -8,7 +8,7 @@
 
 class Sensor_ensaht : public Sensor {
   public:
-    Sensor_ensaht(const char* const id, const char* const name, TwoWire* wire = &I2C_WIRE);
+    Sensor_ensaht(const char* const id, const char* const name, TwoWire* wire = &I2C_WIRE, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
     ~Sensor_ensaht(); //TODO-101
   protected:
     OUTfloat* humidity;  

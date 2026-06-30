@@ -43,7 +43,7 @@ Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightnessIn
     #ifdef RGB_BUILTIN
       inputs.push_back(color = new INcolor("ledbuiltin", "color", "LED color", colorInit, false)); //TODO-131 color of UX should reflect color of LED
     #endif
-    inputs.push_back(brightness = new INuint16("ledbuiltin", "brightness", "Brightness", brightnessInit, 0, 255, colorInit, false));
+    inputs.push_back(brightness = new INuint16("ledbuiltin", "brightness", "Brightness", brightnessInit, DEFAULT_ledbuiltin_brightness_min, DEFAULT_ledbuiltin_brightness_max, colorInit, false));
     #ifdef ACTUATOR_LEDBUILTIN_DEBUG
       Serial.print(F("Ledbuiltin pin=")); Serial.println(pin); 
     #endif

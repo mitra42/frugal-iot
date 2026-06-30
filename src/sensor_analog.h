@@ -19,7 +19,7 @@
 
 class Sensor_Analog : public Sensor_Float {
   public:
-    Sensor_Analog(const char* const moduleId, const char * const moduleName, const char * const leafId, const char * const leafName, const uint8_t pin, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool retain);
+    Sensor_Analog(const char* const moduleId, const char* const leafId, const char * const moduleName, const char * const leafName, const uint8_t pin, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool retain);
     float readValidateConvert() override;
   protected:
     uint8_t pin;    
@@ -32,6 +32,6 @@ class Sensor_Analog : public Sensor_Float {
     virtual float convert(int v);
     void tare();
     void calibrate(float v);
-    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;
+    void dispatch(System_Message &msg) override;
 }; // Class Sensor_Analog
 #endif // SENSOR_ANALOG_H

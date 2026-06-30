@@ -23,7 +23,7 @@
 #ifdef ESP32
   #define TWDT_TIMEOUT_MS (180000) // three minutes - want to be long enough.
 #endif
-#define SYSTEM_WATCHDOG_MEM_MS 10000 // 10 seconds, much too fast once tested 
+#define SYSTEM_WATCHDOG_MEM_S 10 // 10 seconds, much too fast once tested
 
 System_Watchdog::System_Watchdog() 
 : System_Base("watchdog", "Watchdog"),
@@ -70,7 +70,7 @@ void System_Watchdog::infrequently() {
     #ifdef SYSTEM_MEMORY_DEBUG
       //heap_print(F("watchdog infrequent"));
     #endif
-    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_WATCHDOG_MEM_MS);
+    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_WATCHDOG_MEM_S);
   }
 }
 #endif

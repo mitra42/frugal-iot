@@ -13,6 +13,7 @@
  *
  * There is also some reflection - i.e. where an Upstream message is reflected downstream 
  * to a different subscriber instead of going via the broker. 
+ * 
  */
 
 #include <Arduino.h>
@@ -27,24 +28,28 @@
 
 
 // Note Strings passed must be safe - copy before calling this if going to go out of scope.
-System_Message::System_Message(const String& topicPath, const String& payload, const bool retain, const int qos, const bool isSubscription)
-: topicPath(topicPath), payload(payload), isSubscription(isSubscription), retain(retain), qos(qos) {}
+System_Message::System_Message(const String& topicPath, const String& payload, const bool retain, const int qos, const uint8_t flags)
+: topicPath(topicPath), payload(payload), flags_(flags), retain(retain), qos(qos) {}
 
+// Called implicitly from outgoing.emplace in System_Messages::subscribe
 System_Message::System_Message(const String& topicPath) // For subscriptions only
-: System_Message(topicPath, String(), false, 0, true) {}
+: System_Message(topicPath, String(), false, 0, MsgIsSubscription) {}
 
 System_Messages::System_Messages() 
 : System_Base("messages", "Messages"),
 topicPrefix()
 { }
 
+void System_Messages::buildTopicPrefix() {
+    topicPrefix = frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/");
+    subscribe(path("set/#"));  // Main subscription to all changes sent to this node
+}
 // Note this setup might be done early (and called twice), rather than in frugal_iot.setup 
 void System_Messages::setup() {
   if (!topicPrefix.length()) { // Check if already done
     // Nothing to read from disk so not calling readConfigFromFS 
     // e.g. "dev/developers/esp32-12345/" prefix of most topics
-    topicPrefix = frugal_iot.org + F("/") + frugal_iot.project + F("/") + frugal_iot.nodeid + F("/");
-    subscribe(path("set/#"));  // Main subscription to all changes sent to this node
+    buildTopicPrefix();
   }
 }
 
@@ -67,9 +72,13 @@ String System_Messages::setPath(char const * const topicTwig) { // TODO find oth
 // Convert a twig e.g. sht30/temperature to path e.g. dev/developers/esp123/sht30/temperature
 String System_Messages::path(const String topicTwig) { // TODO find other places do this and replace with call to TopicPath
   setup(); // Allow control wiring before setup by doing setup early
-  return topicPrefix + topicTwig;
+  return topicPrefix + topicTwig; // e.g. dev/lotus/esp1234/sht/temperature or .../temperature/max
 }
 String System_Messages::path(const char* id, char const * const twig) { // TODO find other places do this and replace with call to TopicPath
+  setup(); // Allow control wiring before setup by doing setup early
+  return topicPrefix + id + "/" + twig; // Note topicPrefix ends in "/"
+}
+String System_Messages::path(const char* id, const String& twig) { // TODO find other places do this and replace with call to TopicPath
   setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + id + "/" + twig; // Note topicPrefix ends in "/"
 }
@@ -77,17 +86,6 @@ String System_Messages::path(const char* id,  const char* const leaf, const char
   setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + id + "/" + leaf + "/" + leafparm; // Note topicPrefix ends in "/"
 }
-
-/* Doesnt appear to be used
-// Convert a path e.g. /dev/developers/esp123/sht30/temperature to a twig e.g. sht30/temperature 
-String System_Messages::twig(const String &topicPath) { 
-  if (topicPath.startsWith(topicPrefix)) {
-    return topicPath.substring(topicPrefix.length());
-  } else {
-    return String();
-  }
-}
-*/
 
 // ============ UPSTREAM ====== MODULES -> (queue -> LoRaMesher) -> queue -> MQTT -> Broker 
 
@@ -98,30 +96,35 @@ void System_Messages::subscribe(const String topicPath) {
       return; // Dont resubscribe
     }
   }
-  outgoing.emplace_back(topicPath); // // Implicit new Message (subscription)
+  outgoing.emplace_back(topicPath); // Implicit new Message (subscription)
 }
 
 // Upstream: module => queue outgoing (no reflection)
-void System_Messages::sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos) {
+void System_Messages::sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos, uint8_t flags) {
   // Instead of pushing a new message, update the payload
-  for(System_Message sm: outgoing) {
+  for(System_Message& sm: outgoing) {
     if (sm.topicPath == topicPath) {
-      sm.payload = payload; 
       #ifdef SYSTEM_MESSAGE_DEBUG
-        Serial.print(F("Updating queued")); Serial.print(topicPath); Serial.print(" "); Serial.print(sm.payload); Serial.print("->"); Serial.println(payload);  
+        Serial.print(F("Updating queued ")); Serial.print(topicPath); Serial.print(" "); Serial.print(sm.payload); Serial.print("->"); Serial.println(payload);  
       #endif
+      sm.payload = payload; 
       return; // Don't push
     }
   }
-  outgoing.emplace_back(topicPath, payload, retain, qos);  // Implicit new Message
+  #ifdef SYSTEM_MESSAGE_DEBUG
+    Serial.print("Queueing "); Serial.print(topicPath); Serial.print("="); Serial.println(payload);
+  #endif
+  outgoing.emplace_back(topicPath, payload, retain, qos, flags );  // Implicit new Message
 }
 
 
 // Upstream: module => queue for MQTT and queue loopback
 void System_Messages::send(const String topicPath, const String payload, bool retain, uint8_t qos) {
-  sendRemote(topicPath, payload, retain, qos);
+  // Note we have to make two messagesas they will be queued (and deleted) separately
+  // TODO-210 may need to pass in flags to send, but not clear any but 0x00
+  sendRemote(topicPath, payload, retain, qos, 0x00);
   // This does a local loopback, if anything is listening for this message it will get it twice - once locally and once via server.
-  queueLoopback(topicPath, payload);
+  queueLoopback(topicPath, payload); 
 }
 
 // Upstream queued => MQTT or LoRaMesher
@@ -129,9 +132,8 @@ void System_Messages::send(const String topicPath, const String payload, bool re
 void System_Messages::sendOutgoingQueued() {
   while (!outgoing.empty()) {
     System_Message &m = outgoing.front();
-    if (m.isSubscription) {
+    if (m.isSubscription()) {
       if (m.queuedSubscribe()) {
-        //heap_print(F("popping sub"));
         subscriptions.push_front(m);
         //heap_print(F("/popping sub"));
         outgoing.pop_front(); // Note this should delete m and free up the memory
@@ -149,6 +151,7 @@ void System_Messages::sendOutgoingQueued() {
     }
     // If succeeded then try and send any other queued messages
   }
+
 }
 // Upstream: queued => MQTT or LoRaMesher
 bool System_Message::queuedMessage() {
@@ -166,13 +169,16 @@ bool System_Message::queuedMessage() {
 
 // Upstream: Outgoing queue => MQTT || LoRaMesher
 bool System_Message::queuedSubscribe() {
+
   if (frugal_iot.mqtt->connected()) {
     return frugal_iot.mqtt->subscribe(topicPath);
   #ifdef SYSTEM_LORAMESHER_WANT
-  } else if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
-    return frugal_iot.loramesher->publish("subscribe", topicPath,0,1);
+  } else { 
+    if (frugal_iot.loramesher && frugal_iot.loramesher->connected()) {
+      return frugal_iot.loramesher->publish("subscribe", topicPath,0,1);
+    }
   #endif
-  } 
+  }
   return false; // Not connected, or failed to send over connection
 }
 
@@ -198,20 +204,58 @@ bool System_Messages::reSubscribeAll() {
 
 // ============ DOWNSTREAM ====== Broker -> MQTT -> (LoRaMesher) -> Modules
 
-// Downstream MQTT -> modules (note that LoRaMesher is a module that forwards based on subscriptions)
-void System_Message::dispatch() {
-  if (topicPath.startsWith(frugal_iot.messages->topicPrefix)) { // includes trailing slash
-    String topicTwig = topicPath.substring(frugal_iot.messages->topicPrefix.length()); 
-    bool isSet;
-    if (topicTwig.startsWith("set/")) {
-      isSet = true;
-      topicTwig.remove(0, 4); // Remove set/ from start
-      // At the moment it looks like all dispatchTwig are isSet, because control subscribes to full path for its wired.
-      frugal_iot.dispatchTwig(topicTwig, payload, isSet); // Just matches twigs e.g. sht/temperature or sht/temperature/max
-    }
+void System_Message::parse() {
+  if (topicPath.startsWith(frugal_iot.messages->topicPrefix)) {
+    flags_ |= MsgIsThisNode; // includes trailing slash
   }
-  // Note LoRaMesher will go through this to System_LoRaMesher::dispatchPath
-  frugal_iot.dispatchPath(topicPath, payload);  // Matches just paths. (Twigs and sets handled above)
+  twig_ = topicPath.substring(frugal_iot.messages->topicPrefix.length());  // set/sht/temperature or sht/temperature or set/sht/temperature/max or sht/temperature/max
+  if (twig_.startsWith("set/")) {
+    flags_ |= MsgIsSet;
+    twig_.remove(0, 4); // sht/temperature or sht/temperature/max
+  }
+  int8_t slashPos = twig_.indexOf('/'); // Find the position of the slash
+  module_ = (slashPos == -1) ? String() : twig_.substring(0, slashPos);
+  leaf_ = twig_.substring(slashPos + 1);
+}
+// TODO-210 maybe should be inline
+String System_Message::topicTwig() { return twig_; } // sht/temperature or sht/temperature/max
+String System_Message::module() { return module_; } // sht
+String System_Message::leaf() { return leaf_; } // temperature or temperature/max
+bool System_Message::isSet() { return flags_ & MsgIsSet; } 
+bool System_Message::isSubscription() { return flags_ & MsgIsSubscription; } 
+
+
+// Downstream MQTT -> modules (note that LoRaMesher is a module that forwards based on subscriptions)
+// Message is on the front of the queue and will be destroyed and memory freed by dispatchIncomingQueued once dispatched
+// TODO-210. SMs.dispatchIncomingQueued -> SM.dispatch -> FIOT.dispatch -> 
+void System_Message::dispatch() {
+  parse(); 
+  frugal_iot.dispatch(*this);
+}
+
+void System_Message::maybeWriteToFS(bool appendValue) { // appendValue defaults to false
+  if (!(flags_ & MsgFromFS)) {
+    String path = String("/") + module() + "/" + leaf(); // e.g. sht/temperature or sht/temperature/max
+    if (appendValue) {
+      path = path + "/value";
+    }
+    #if defined(SYSTEM_LITTLEFS_DEBUG) || defined(SYSTEM_MESSAGE_DEBUG)
+      Serial.print(F("Writing config flags=")); Serial.print(flags_, HEX); Serial.print(F(" ")); Serial.print(path); Serial.print(F("=")); Serial.print(payload);
+    #endif
+    frugal_iot.fs_LittleFS->spurt(path, payload);
+  }
+}
+void System_Message::maybeEcho() {
+  const String path = frugal_iot.messages->path(module() + "/" + leaf());
+  #if defined(SYSTEM_MESSAGE_DEBUG)
+    Serial.print(F("Echoing flags=")); Serial.print(flags_, HEX); Serial.print(F(" ")); Serial.print(path); Serial.print(F("=")); Serial.println(payload);
+  #endif
+  // TODO-210 maybe more efficient way to get topicPath - need to check e.g. topicPath works here and doesnt include "set"
+  frugal_iot.messages->send(path, payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+}
+void System_Message::maybeWriteToFSandEcho(bool appendValue) { // appendValue defaults to false
+  maybeWriteToFS(appendValue);
+  maybeEcho();
 }
 
 // Downstream queued => dispatch
@@ -226,12 +270,13 @@ void System_Messages::dispatchIncomingQueued() {
 // Downstream queued => dispatch
 // This is called by either the MQTT or LoRaMesher module on receiving a message
 // also by send to implement a loopBack, and by captive
-void System_Messages::queueIncoming(const String &topicPath, const String &payload) {
-  incoming.emplace_back(topicPath, payload, false, 0);  // Implicit new Message (freed in dispatch)
+void System_Messages::queueIncoming(const String &topicPath, const String &payload, uint8_t flags) {
+  incoming.emplace_back(topicPath, payload, false, 0, flags);  // Implicit new Message (freed in dispatch)
 }
 void System_Messages::queueFromCaptive(const String &twig, const String &payload) {
-  queueIncoming(path(twig), payload);
+  queueIncoming(path(twig), payload, MsgFromCaptive);
 }
 void System_Messages::queueLoopback(const String &topicPath, const String &payload) {
-  queueIncoming(topicPath, payload);
+  queueIncoming(topicPath, payload, MsgIsLoopback);
 }
+

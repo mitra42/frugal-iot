@@ -7,7 +7,7 @@
 
 * Required: SYSTEM_OTA_PREFIX short string for different apps e.g. sht30
 * Required: SYSTEM_OTA_SUFFIX short string for boards e.g. d1_mini
-* Optional: SYSTEM_OTA_DEBUG SYSTEM_OTA_MS SYSTEM_OTA_SERVERPORTPATH 
+* Optional: SYSTEM_OTA_DEBUG SYSTEM_OTA_S SYSTEM_OTA_SERVERPORTPATH
 * 
 * OTA was a pain to implement - had to move server to https, then it wouldn't connect and most of the published 
 * examples didn't work - thanks to Jonathan Semple for a working solution, now incorporated here. 
@@ -189,7 +189,7 @@ void System_OTA::setup_after_mqtt_setup() {
   // Nothing to read from disk so not calling readConfigFromFS 
   const String url = getOTApath(); // Needs topicPrefix setup in MQTT::setup
   // Note this must run after WiFi has connected  and ideally before MQTT or Discovery except it needs xDiscovery::topicPrefix
-  Serial.print(F("OTA url=:")); Serial.println(url);
+  Serial.print(F("OTA url=")); Serial.println(url);
   #ifdef SYSTEM_OTA_USECERT
     init(url, SYSTEM_OTA_VERSION, rootCACertificateForNaturalInnovation);
   #else
@@ -204,7 +204,7 @@ void System_OTA::maybe_ota() {
   if (frugal_iot.canOTA() && frugal_iot.powercontroller->timer_expired(timer_index)) {
     Serial.println(F("Check for OTA"));
     checkForUpdate();
-    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_OTA_MS);
+    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_OTA_S);
   }
 }
 
