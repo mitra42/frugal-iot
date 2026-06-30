@@ -112,28 +112,28 @@ System_Power::System_Power()
 
 // The power module can be configured - from the SPIFFS, Captive or MQTT 
 // beware that changing power mode while running may not always do what is expected and a restart may be recommended. 
-void System_Power::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, const bool isSet) {
+void System_Power::dispatch(System_Message &msg) {
   //TODO-23 allow changing type of power mgmt - e.g. from Deep to Loop
-  if (isSet && (topicSensorId == id)) {
+  if (msg.isSet() && (msg.module() == id)) {
     bool dispatched = false;
-    float v = payload.toFloat(); // Maybe NaN if string malformed
-    if (topicTwig == "wake") {      
+    float v = msg.payload.toFloat(); // Maybe NaN if string malformed
+    if (msg.leaf() == "wake") {
       wake_ms = v;
       dispatched = true;
-    } else if (topicTwig == "cycle") {
+    } else if (msg.leaf() == "cycle") {
       cycle_ms = v;
       dispatched = true;
-    } else if (topicTwig == "mode") {
-        // TODO-23x this will almost certainly fail, switching modes isnt this easy! 
-        mode = (System_Power_Type)payload.toInt();;
-        dispatched = true;
+    } else if (msg.leaf() == "mode") {
+      // TODO-23x this will almost certainly fail, switching modes isnt this easy!
+      mode = (System_Power_Type)msg.payload.toInt();
+      dispatched = true;
     } else {
-      System_Base::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+      System_Base::dispatch(msg);
       // Drops through, dispatched=false
     }
     if (dispatched) {
-      writeConfigToFSandEcho(topicTwig, payload);
-    } 
+      msg.maybeWriteToFSandEcho();
+    }
   }
 }
 
@@ -211,7 +211,7 @@ void System_Power::setup() {
   }
 #endif
   {
-    readConfigFromFS(); // Reads config (mode, wake, cycle) and passes to our dispatchTwig
+    readConfigFromFS(); // Reads config (mode, wake, cycle) and passes to our dispatch
     #ifdef SYSTEM_POWER_DEBUG
       Serial.printf("Setup %s: %lu of %lu\n", name.c_str(), wake_ms, cycle_ms); 
     #endif

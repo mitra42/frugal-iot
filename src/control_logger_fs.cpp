@@ -74,10 +74,10 @@ void Control_LoggerFS::act() {
   needAppend = true; // Set flag to append
 }
 
-void Control_LoggerFS::dispatchPath(const String &topicPath, const String &payload ) {
-  Control::dispatchPath(topicPath, payload); // Call base class dispatchPath
-  if (needAppend) { // If we need to append
-    needAppend = false; // Reset flag
-    append(topicPath, payload);  // Normally we would subclass act() BUT need topicPath & payload
+void Control_LoggerFS::dispatch(System_Message &msg) {
+  Control::dispatch(msg);
+  if (needAppend) {
+    needAppend = false;
+    append(msg.topicPath, msg.payload);
   }
 }

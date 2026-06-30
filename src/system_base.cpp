@@ -6,6 +6,7 @@
 #include <Arduino.h>
 #include <string>     // std::string, std::stoi
 #include "system_base.h"
+#include "system_message.h"
 #include "sensor.h"
 #include "actuator.h"
 #include "control.h"
@@ -25,24 +26,19 @@ void System_Base::periodically() { }; // Called once for each period - which mig
 void System_Base::infrequently() { }; // Run once each period, but should check timing
 //void System_Base::captiveLines(AsyncResponseStream* response) { }; // Called by captive portal for anything to display
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void System_Base::dispatchPath(const String &topicPath, const String &payload) {};
-#pragma GCC diagnostic pop
 void System_Base::discover() {} ; // Default to do nothing
 
-void System_Base::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (isSet && (topicSensorId == id)) {
-    if (topicTwig == "name") {
-      if (name != payload) {
-        name = payload;
-        writeConfigToFSandEcho(topicTwig, payload);
+void System_Base::dispatch(System_Message &msg) {
+  if (msg.isSet() && (msg.module() == id)) {
+    if (msg.leaf() == "name") {
+      if (name != msg.payload) {
+        name = msg.payload;
+        msg.maybeWriteToFSandEcho();
       }
-    } else {
-      // Nothing wrong with no match - it might have been handled in subclass
     }
   }
 }
+
 // Basic read configuration - based on the object's "id"
 void System_Base::readConfigFromFS() {
   // Note LittleFS should have been setup in frugal_iot constructor so this should not be null
@@ -72,10 +68,12 @@ void System_Base::readConfigFromFS(File dir, const String* leaf) {
       readConfigFromFS(entry, &newleaf);  // will close entry
     } else { // a: id=wifi twiglet=nullptr entry is foo   or c: id=sht twiglet=temperature entry is max
       String payload = entry.readString();
-      entry.close(); // Must close before dispatchTwig which might delete the file
+      entry.close(); // Must close before dispatch which might delete the file
       payload.trim(); // Remove leading/trailing whitespace
       Serial.print(F("=")); Serial.println(payload);
-      dispatchTwig(id, newleaf, payload, true);
+      System_Message msg(frugal_iot.messages->topicPrefix + "set/" + id + "/" + newleaf, payload, false, 0, MsgFromFS);
+      msg.parse();
+      dispatch(msg);
     }
   }
   dir.close();
@@ -84,11 +82,6 @@ void System_Base::readConfigFromFS(File dir, const String* leaf) {
 void System_Base::writeConfigToFS(const String& topicLeaf, const String& payload) {
   String filepath = String("/") + id + "/" + topicLeaf;
   frugal_iot.fs_LittleFS->spurt(filepath, payload);
-}
-// Write to FileSystem, but also echo to MQTT - typically this is take a "set" message and echoing as a regular one
-void System_Base::writeConfigToFSandEcho(const String& topicLeaf, const String& payload) {
-  frugal_iot.messages->send(leaf2path(topicLeaf), payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  writeConfigToFS(topicLeaf, payload);
 }
 String System_Base::leaf2path(const char* const leaf) { 
   return frugal_iot.messages->path(id, leaf);
@@ -279,184 +272,183 @@ void IN::setup() {
   IO::setup();
   // No longer subscribes since subscribe to node/set/<sensor>/leaf
 }
-// Leaf should be e.g. now/wired 
-void IO::writeConfigToFS(const String &leaf, const String& payload) { 
-  String path = String("/") + sensorId + "/" + leaf;
-  //Serial.println(F("Writing config to " + path + "=" + payload));
-  frugal_iot.fs_LittleFS->spurt(path, payload);
-}
-// Leaf should be e.g. temperature or temperature/max or temperature/wired
-void IO::writeConfigToFSandEcho(const String &leaf, const String& payload) { 
-  Serial.print("XXX 206 " __FILE__ " tt should be sht/temp ");Serial.println(__LINE__); 
-  frugal_iot.messages->send(frugal_iot.messages->path(sensorId, leaf), payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  writeConfigToFS(leaf, payload);
-}
-
-// Leaf should be e.g. control/limit and will append value
-void IO::writeValueToFSandEcho(const String &leaf, const String& payload) { 
-  String dirPath = String("/") + sensorId + "/" + leaf;
-  String valuePath = dirPath + "/value";
-  frugal_iot.fs_LittleFS->spurt(valuePath, payload);
-  frugal_iot.messages->send(path(),payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-}
 
 // Options eg: sht/temp set/sht/temp/wired set/sht/temp set/sht/temp/max
 // maybe rewrite as dispatchParm and override where required
 // This is called, looping over all IN by 
-bool IN::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  if (isSet) { // e.g : set/sht/temp/wired Note subclass handles set/sht/temp set/sht/temp/max etc
-    if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // Nite this is the "id" of the leaf, not of the sensor
-      if (!(p == wiredPath)) { // if empty, or different
-        wireTo(p);
-        writeConfigToFSandEcho(leaf, p);  // TODO need to make sure directory exists   -
+bool IN::dispatch(System_Message &msg) {
+  if (msg.module() == sensorId) {
+    if (msg.isSet()) { // e.g : set/sht/temp/wired Note subclass handles set/sht/temp set/sht/temp/max etc
+      if (msg.leaf().startsWith(id) && msg.leaf().endsWith("/wired")) { // Note: this is the "id" of the leaf, not of the sensor
+        if (!(msg.payload == wiredPath)) { // if empty, or different
+          wireTo(msg.payload);
+          msg.maybeWriteToFSandEcho();
+          // Does not trigger a changed return
+        }
+      }
+      // Also recognize leaf/value which is how will be written to disk or get problems with directories vs files
+      if (msg.leaf() == id || (msg.leaf().startsWith(id) && msg.leaf().endsWith("/value"))) {
+        // isSet usually comes from messages and needs echo as (!set) topic
+        // !isSet usually comes from FS but also need to send
+        const bool changed = convertAndSet(msg.payload); // Virtual - depends on type of INxxx
+        if (changed) { 
+          msg.maybeWriteToFSandEcho(true); 
+        } // Append "/value"
+        return changed;
       }
     }
   }
-  // For now recognizing both xxx/leaf and set/xxx/leaf (but note only subscribed to set/xxx/leaf)
-  // Also recognize leaf/value which is how will be written to disk or get problems with directories vs files
-  if (leaf == id || (leaf.startsWith(id) && leaf.endsWith("/value"))) {
-    // isSet usually comes from messages and needs echo as (!set) topic
-    // !isSet usually comes from FS but also need to send
-    writeValueToFSandEcho(id, p);  // e.g. ledbuiltin/on or set/ledbuiltin/on.  // TODO need to make sure directory exists   
-    return convertAndSet(p); // Virtual - depends on type of INxxx
+  // Check if topic matches what we are wired to
+  if (msg.topicPath == wiredPath) {
+    return convertAndSet(msg.payload);
   }
   return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
 }
-// Check incoming message, return true if value changed and should call act() on the control
-bool IN::dispatchPath(const String &tp, const String &p) {
-  // Note looking for wiredPath of a remote object wired, not path of this IN
-  if (tp == wiredPath) { 
-    return convertAndSet(p);
-    // Intentionally not writing config to FS here - its a value sent to runtime wiring
-  }
-  return false; // nothing changed
-}
 
-bool OUT::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  if (isSet) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
-    if (leaf.startsWith(id) && leaf.endsWith("/wired")) { // We are changing the path, not sending a value
-      if (!(p == wiredPath)) {
-        wiredPath = p; // Copies p
-        sendWired(); // Destination changed, send current value
-        writeConfigToFSandEcho(leaf, p);
+bool OUT::dispatch(System_Message &msg) {
+  if (msg.module() == sensorId) {
+    if (msg.isSet()) { // e.g : set/sht/temp/wired set/sht/temp set/sht/temp/max
+      if (msg.leaf().startsWith(id) && msg.leaf().endsWith("/wired")) { // We are changing the path, not sending a value
+        if (!(msg.payload == wiredPath)) {
+          wiredPath = msg.payload;
+          sendWired(); // Destination changed, send current value
+          msg.maybeWriteToFSandEcho();
+        }
       }
     }
+    // Note intentionally can't set output values directly with e.g. set/sht/temp or sht/temp
+    return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
+  } else {
+    return false;
   }
-  // Note intentionally can't set output values directly with e.g. set/sht/temp or sht/temp
-  return false; // Should not rerun calculations just because wiredPath changes - but will if/when receive new value
 }
 
-bool INfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  bool dispatched = false;
-  if (leaf.startsWith(id)) {
-    float v = p.toFloat();
-    if (leaf.endsWith("/max")) {
-      max = v;      
-      dispatched = true;
-    } else if (leaf.endsWith("/min")) {
-      min = v;
-      dispatched = true;
+bool INfloat::dispatch(System_Message &msg) {
+  if ( msg.module() == sensorId) { // check for this node 
+    if (msg.isSet() && msg.leaf().startsWith(id)) { // Check set for this IO
+      bool dispatched = false;
+      float v = msg.payload.toFloat();
+      if (msg.leaf().endsWith("/max")) {
+        max = v;
+        dispatched = true;
+      } else if (msg.leaf().endsWith("/min")) {
+        min = v;
+        dispatched = true;
+      }
+      if (dispatched) {
+        msg.maybeWriteToFSandEcho();
+        return false; // value didnt change
+      }
+      // else drop through and dispatch to superclass
     }
-    if (dispatched) {
-      writeConfigToFSandEcho(leaf, p);  
-      return false; // value didnt change
-    } 
-    // else drop through and dispatch to superclass
+  }
+  // Catch generic case like color and incoming wired or (what this is wired to (even if !set))
+  return IN::dispatch(msg);
+}
+bool OUTfloat::dispatch(System_Message &msg) {
+  if (msg.module() == sensorId) {
+    bool dispatched = false;
+    if (msg.isSet() && msg.leaf().startsWith(id)) {
+      float v = msg.payload.toFloat();
+      if (msg.leaf().endsWith("/max")) {
+        max = v;
+        dispatched = true;
+      } else if (msg.leaf().endsWith("/min")) {
+        min = v;
+        dispatched = true;
+      }
+      if (dispatched) {
+        msg.maybeWriteToFSandEcho();
+        return false; // value didnt change
+      }
+      // else drop through and dispatch to superclass
+    }
+  }
+    // Catch generic case like color
+  return OUT::dispatch(msg);
+}
+bool INuint16::dispatch(System_Message &msg) {
+  if (msg.module() == sensorId) {
+    bool dispatched = false;
+    if (msg.isSet() && msg.leaf().startsWith(id)) {
+      uint16_t v = msg.payload.toInt();
+      if (msg.leaf().endsWith("/max")) {
+        max = v;
+        dispatched = true;
+      } else if (msg.leaf().endsWith("/min")) {
+        min = v;
+        dispatched = true;
+      } else if (msg.leaf().endsWith("/cycle")) { //TODO-210 this looks wrong structure though its skipping hte maybeWriteToFSandEcho correctly 
+        int16_t newvalue = (int16_t)value + (int16_t)v;
+        if (newvalue > (int16_t)max) { newvalue = (int16_t)min; }
+        if (newvalue < (int16_t)min) { newvalue = (int16_t)max; }
+        value = (uint16_t)newvalue; // TODO should this be set(newvalue) ? 
+        return true; // value changed 
+      }
+      if (dispatched) {
+        msg.maybeWriteToFSandEcho();
+        return false; // value didnt change (just parameter)
+      }
+      // else drop through and dispatch to superclass
+    }
   }
   // Catch generic case like color
-  return IN::dispatchLeaf(leaf, p, isSet);
+  return IN::dispatch(msg);
 }
-bool OUTfloat::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  bool dispatched = false;
-  if (leaf.startsWith(id)) {
-    float v = p.toFloat();
-    if (leaf.endsWith("/max")) {
-      max = v;      
-      dispatched = true;
-    } else if (leaf.endsWith("/min")) {
-      min = v;
-      dispatched = true;
+bool OUTbool::dispatch(System_Message &msg) {
+  if (msg.module() == sensorId) {
+    bool dispatched = false;
+    bool changed = false;
+    if (msg.leaf().startsWith(id)) {
+      if (msg.leaf().endsWith("/cycle")) {
+        set(!value); // will send and sendWired if changed (which it has)
+        dispatched = true;
+        changed = true;
+      }
+      if (dispatched) {
+        //msg.maybeWriteToFS(false); // Dont echo or write to FS since only /cycle and set will do the necessary sends
+        return changed;
+      }
+      // else drop through and dispatch to superclass
     }
-    if (dispatched) {
-      writeConfigToFSandEcho(leaf, p);  
-      return false; // value didnt change         
-    } 
-    // else drop through and dispatch to superclass
-  }
-  // Catch generic case like color
-  return OUT::dispatchLeaf(leaf, p, isSet);
-}
-bool INuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  bool dispatched = false;
-  if (leaf.startsWith(id)) {
-    uint16_t v = p.toInt();
-    if (leaf.endsWith("/max")) {
-      max = v;
-      dispatched = true;
-    } else if (leaf.endsWith("/min")) {
-      min = v;
-      dispatched = true;
-    } else if (leaf.endsWith("/cycle")) {
-      int16_t newvalue = (int16_t)value + (int16_t)v;
-      if (newvalue > (int16_t)max) { newvalue = (int16_t)min; }
-      if (newvalue < (int16_t)min) { newvalue = (int16_t)max; }
-      value = (uint16_t)newvalue;
-      return true; // value changed
-    }
-    if (dispatched) {
-      writeConfigToFSandEcho(leaf, p);
-      return false; // value didnt change (just parameter)
-    }
-    // else drop through and dispatch to superclass
-  }
-  // Catch generic case like color
-  return IN::dispatchLeaf(leaf, p, isSet);
-}
-bool OUTbool::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
-  bool dispatched = false;
-  bool changed = false;
-  if (leaf.startsWith(id)) {
-    if (leaf.endsWith("/cycle")) { 
-      set(!value); // will send and sendWired if changed (which it has)
-      dispatched = true;
-      changed = true;
-    }
-    if (dispatched) {
-      writeConfigToFS(leaf, p); // Dont echo since only /cycle and set will do the necessary sends
-      return changed; // value didnt change (just parameter)
-    } 
-    // else drop through and dispatch to superclass
   }
   // Catch generic case - currently just /wired  (specifically I don't think it handles /value)
-  return OUT::dispatchLeaf(leaf, p, isSet);
+  return OUT::dispatch(msg);
 }
-bool OUTuint16::dispatchLeaf(const String &leaf, const String &p, bool isSet) {
+bool OUTuint16::dispatch(System_Message &msg) {
+  if (msg.module() == sensorId) {
     bool dispatched = false;
-  if (leaf.startsWith(id)) {
-    uint16_t v = p.toInt();
-    if (leaf.endsWith("/max")) {
-      max = v;      
-      dispatched = true;
-    } else if (leaf.endsWith("/min")) {
-      min = v;
-      dispatched = true;
-    } else if (leaf.endsWith("/cycle")) { //TODO move to a function of OUTuint16
-      // Complexity here is because this is a uint16 and cycling below min may go negative 
-      int16_t newvalue = value + (int16_t)v;
-      if (newvalue > max) { newvalue = min;};
-      if (newvalue < min) { newvalue = max;};
-      set((uint16_t)newvalue);
+    bool needEcho = false;
+    if (msg.isSet() && msg.leaf().startsWith(id)) {
+      uint16_t v = msg.payload.toInt();
+      if (msg.leaf().endsWith("/max")) {
+        max = v;
+        dispatched = true;
+        needEcho = true;
+      } else if (msg.leaf().endsWith("/min")) {
+        min = v;
+        dispatched = true;
+        needEcho = true;
+      } else if (msg.leaf().endsWith("/cycle")) { //TODO move to a function of OUTuint16
+        // Complexity here is because this is a uint16 and cycling below min may go negative
+        int16_t newvalue = value + (int16_t)v;
+        if (newvalue > max) { newvalue = min; }
+        if (newvalue < min) { newvalue = max; }
+        set((uint16_t)newvalue); // Will do its own message sending if appropriate
+      }
+      if (needEcho) {
+        msg.maybeWriteToFSandEcho();
+      }
+      if (dispatched) {
+        return false; // value didnt change (just parameter)
+      }
+      // else drop through and dispatch to superclass
     }
-    if (dispatched) {
-      writeConfigToFSandEcho(leaf, p);
-      return false; // value didnt change (just parameter)
-    } 
-    // else drop through and dispatch to superclass
   }
   // Catch generic case - currently just /wired (specifically I don't think it handles /value)
-  return OUT::dispatchLeaf(leaf, p, isSet);
+  return OUT::dispatch(msg);
 }
-// OUTtext::dispatchLeaf -> OUT::dispatchLeaf
+// OUTtext::dispatch -> OUT::dispatch
 /*
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -477,7 +469,7 @@ void IO::set(const bool newvalue) {
 */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-bool IO::dispatchPath(const String &topicPath, const String &payload) {
+bool IO::dispatch(System_Message &msg) {
 #pragma GCC diagnostic pop
   shouldBeDefined();
   return false;
@@ -700,7 +692,6 @@ OUTtext::OUTtext(const char * const sensorId, const char* const id, const String
 }
 
 // OUT::setup() - note OUT does not subscribe to the topic, it only sends on the topic
-// OUT::dispatchPath() - wont be called from Control::dispatchPath.
 
 // TO_ADD_OUTxxx
 OUTbool::OUTbool(const OUTbool &other) 
@@ -729,9 +720,9 @@ void OUT::sendWired(bool retain, uint8_t qos) { // defaults to MQTT_RETAIN MQTT_
     if (qos == MQTT_QOS_EXACTLY1) {
       // Either loopback or send, but not both
       if (wiredPath.startsWith(frugal_iot.messages->topicPrefix)) {
-        frugal_iot.messages->queueLoopback(wiredPath, StringValue());
+        frugal_iot.messages->queueLoopback(wiredPath, StringValue()); // Wired path out, but its to this node
       } else {
-        frugal_iot.messages->sendRemote(wiredPath, StringValue(), retain, qos);
+        frugal_iot.messages->sendRemote(wiredPath, StringValue(), retain, qos, 0x00);
       }
     } else {
       frugal_iot.messages->send(wiredPath, StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
@@ -797,7 +788,6 @@ void OUTuint16::discover() {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 float IO::floatValue() { shouldBeDefined(); return 0.0; }
-bool IO::dispatchLeaf(const String &twig, const String &p, bool isSet) { shouldBeDefined(); return false; }
 float OUT::floatValue() { shouldBeDefined(); return 0.0; }
 bool OUT::boolValue() { shouldBeDefined(); return false; }
 String IO::StringValue() { shouldBeDefined(); return String(); }

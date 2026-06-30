@@ -90,28 +90,27 @@ void Sensor_LoadCell::calibrate(float weight) {
   #endif
 }
 
-void Sensor_LoadCell::dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) {
-  if (topicSensorId == id) {
-    // Set by UX - "Tare" is weight=0  Calbrate is weight=XX
-    if (topicTwig == "output") {
-      if(payload.toFloat() == 0.0) {
+void Sensor_LoadCell::dispatch(System_Message &msg) {
+  if (msg.module() == id) {
+    // Set by UX - "Tare" is weight=0  Calibrate is weight=XX
+    if (msg.leaf() == "output") {
+      if (msg.payload.toFloat() == 0.0) {
         tare(); // sets offset on hx711 and here
         writeConfigToFS("offset", String(offset));
       } else {
-        calibrate(payload.toFloat());
+        calibrate(msg.payload.toFloat());
         writeConfigToFS("scale", String(scale));
       }
     // offset and scale should only be seen when reading from disk
-    } else if (topicTwig == "offset") {
-      offset=payload.toInt();
+    } else if (msg.leaf() == "offset") {
+      offset = msg.payload.toInt();
       hx711->set_offset(offset);
-    } else if (topicTwig == "scale") {
-      scale=payload.toFloat();
+    } else if (msg.leaf() == "scale") {
+      scale = msg.payload.toFloat();
       hx711->set_scale(scale);
     } else {
-      Sensor_Float::dispatchTwig(topicSensorId, topicTwig, payload, isSet);
+      Sensor::dispatch(msg);
     }
-    // At this point, not echoing back as output is a bit odd and offset/scale only come from SPIFFS
   }
 }
 void Sensor_LoadCell::captiveLines(AsyncResponseStream* response) {

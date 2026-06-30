@@ -25,7 +25,7 @@ class Sensor : public System_Base {
     void periodically() override;
     void setup() override;
     void discover() override;
-    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet);
+    void dispatch(System_Message &msg) override;
 }; // Class Sensor
 
 

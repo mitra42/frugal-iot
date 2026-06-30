@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include "actuator.h"
+#include "system_message.h"
 #include "misc.h" // for shouldBeDefined
 
 Actuator::Actuator(const char * const id, const char * const name) 
@@ -15,23 +16,23 @@ void Actuator::setup() {
   for (auto &input : inputs) {
     input->setup();
   }
-  readConfigFromFS(); // Reads config (matching one of the Inputs) and passes to our dispatchTwig - should be after inputs and outputs setup (probably)
+  readConfigFromFS(); // Reads config (matching one of the Inputs) and passes to our dispatch - should be after inputs and outputs setup (probably)
 }
 
 void Actuator::act() { } // Can be do nothing or overridden
 
-void Actuator::dispatchTwig(const String &topicActuatorId, const String &topicTwig, const String &payload, bool isSet) {
+void Actuator::dispatch(System_Message &msg) {
     bool changed = false;
-    if (topicActuatorId == id) { // matches this control
-      for (auto &input : inputs) {
-        if (input->dispatchLeaf(topicTwig, payload, isSet)) {
-          changed = true; // Changed an input, call act()
+    if (msg.module() == id) {
+        for (auto &input : inputs) {
+            if (input->dispatch(msg)) {
+                changed = true;
+            }
         }
-      }
-      System_Base::dispatchTwig(topicActuatorId, topicTwig, payload, isSet);
+        System_Base::dispatch(msg);
     }
-    if (changed) { 
-      act(); // Likely to be subclassed
+    if (changed) {
+        act();
     }
 }
 void Actuator::discover() {
