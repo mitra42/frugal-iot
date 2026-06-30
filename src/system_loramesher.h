@@ -81,7 +81,7 @@ class System_LoraMesher : public System_Base {
     uint16_t gatewayNodeAddress = loramesher::kBroadcastAddress;
     // == DOWNSTREAM 
     bool relayDownstream(uint16_t destn, const String &topic, const String &payload);
-    void dispatchPath(const String &topicPath, const String &payload) override;
+    void dispatch(System_Message &msg) override;
  
     #ifdef TODO_189_NOT_NEEDED
       LoraMesher::LoraMesherConfig config = LoraMesher::LoraMesherConfig();

@@ -37,7 +37,7 @@ class System_WiFi : public System_Base {
     #endif
     void setup() override;
     void addWiFi(String ssid, String password);
-    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;
+    void dispatch(System_Message &msg) override;
 };
 
 #endif // SYSTEM_WIFI_H

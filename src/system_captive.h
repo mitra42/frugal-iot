@@ -32,7 +32,7 @@ class System_Captive : public System_Base {
     void addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, bool init, String label);
     void addButton(AsyncResponseStream* response, const char* id, const char* topicTwig, String val, String label);
     bool setLanguage(const String& language_code);
-    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet);
+    void dispatch(System_Message &msg) override;
     void captiveLines(AsyncResponseStream* response);
   protected:
   };

@@ -12,25 +12,54 @@
 //#endif
 #include "system_base.h"
 
+// If need an extra bit, can assume WakeOnTimerBit = LightSleepBit
+#define MsgIsSubscription 0x01
+#define MsgFromFS 0x02
+#define MsgIsSet 0x04
+#define MsgIsThisNode 0x08
+#define MsgFromCaptive 0x10
+#define MsgFromMQTT 0x20
+#define MsgFromLoRaMesher 0x40 
+#define MsgIsLoopback 0x80        // Outgoing message, but looped back in case any wired topics listening
+// Its uint8_t so hopefully dont need more flags - if so split off source as separate field rather than expanding this byte
+
 class System_Messages; // to allow forward reference
+
+// Types of messages ... fromFS; fromLoRa; fromMQTT; 
 
 class System_Message { // Only used for outgoing queued messages
   public:
-    System_Message(const String& topicPath, const String& payload, const bool retain, const int qos, const bool isSubscription = false);
-    System_Message(const String& topicPath); // For subscriptions
-    //~System_Message();
-  protected:
-    friend class System_Messages;
-    bool send(); 
     const String topicPath;
     String payload;    // Retained payload
+    System_Message(const String& topicPath, const String& payload, const bool retain, const int qos, const uint8_t flags);
+    System_Message(const String& topicPath); // For subscriptions
+    //~System_Message();
+    // Only currently relevant/accurate on incoming
+    bool isThisNode(); // True if message topic matches the 'org/project/node/'
+    String topicTwig();  // Return e.g. temperature or temperature/max
+    void parse(); // Preload local variables
+    String module();
+    String leaf();
+    bool isSet();
+    bool isSubscription();
+    void maybeWriteToFS(bool appendValue = false);
+    void maybeEcho();
+    void maybeWriteToFSandEcho(bool appendValue = false);
+  protected:
+    friend class System_Messages;
     // Only relevant/accurate on outgoing
-    const bool isSubscription;
     const bool retain;
     const int qos;
+    bool send(); 
     void dispatch();
     bool queuedMessage();
     bool queuedSubscribe();
+  private:
+      // Access through functions
+      uint8_t flags_;
+      String twig_;
+      String module_;
+      String leaf_;
 };
 
 class System_Messages : public System_Base {
@@ -48,10 +77,10 @@ class System_Messages : public System_Base {
     String path(const String topicTwig); 
     //String twig(const String &topicPath); // unused
     bool reSubscribeAll(); // Called by MQTT after reconnection
-    void queueIncoming(const String &topicPath, const String &payload); // Called by MQTT and LoRaMesher
+    void queueIncoming(const String &topicPath, const String &payload, uint8_t flags); // Called by MQTT and LoRaMesher
     void queueFromCaptive(const String &twig, const String &payload);
     void queueLoopback(const String &topicPath, const String &payload);
-    void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos); // Only remote send, no loopback
+    void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos, uint8_t flags); // Only remote send, no loopback
   protected:
     friend class System_Message;
     std::list<System_Message> outgoing;

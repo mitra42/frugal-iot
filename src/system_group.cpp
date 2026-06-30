@@ -25,11 +25,6 @@ void System_Group::setup() {
   }
 }
 
-void System_Group::dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) {
-  for (System_Base* fb: group) {
-    fb->dispatchTwig(topicSensorId, topicLeaf, payload, isSet);
-  }
-};
 void System_Group::discover() {
   for (System_Base* fb: group) {
     fb->discover();
@@ -71,7 +66,9 @@ void System_Group::infrequently() {
 void System_Group::captiveLines(AsyncResponseStream* response) 
   { for (System_Base* fb: group) { fb->captiveLines(response); } }
   
-void System_Group::dispatchPath(const String &topicPath, const String &payload) 
-  { for (System_Base* fb: group) { fb->dispatchPath(topicPath, payload); } }
-
+void System_Group::dispatch(System_Message &msg) {
+  for (System_Base* fb: group) {
+    fb->dispatch(msg);
+  }
+}
 

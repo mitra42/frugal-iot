@@ -60,7 +60,7 @@ class System_Power : public System_Base {
     virtual void sleep(System_Power_Type forceMode = Power_Loop, unsigned long sleep_millisecs = 0);
     virtual void recover();
     // Override virtuals - so can be private 
-    void dispatchTwig(const String &topicSensorId, const String &topicTwig, const String &payload, bool isSet) override;
+    void dispatch(System_Message &msg) override;
     void captiveLines(AsyncResponseStream* response) override;
 };
 

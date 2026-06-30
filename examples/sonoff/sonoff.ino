@@ -14,8 +14,8 @@ class Control_Sonoff : public Control_Hysterisis {
     OUTbool* manual;
     Control_Sonoff();
   protected:
-    // Override dispatchTwig to handle switch of "out" when change from auto to manual.
-    void dispatchTwig(const String &topicControlId, const String &topicLeaf, const String &payload, bool isSet) override;
+    // Override dispatch to handle switch of "out" when change from auto to manual.
+    void dispatch(System_Message &msg) override;
     void act() override;
 };
 
@@ -26,17 +26,16 @@ Control_Sonoff::Control_Sonoff() :
   outputs.push_back(manual); // Note push_back as dont change outputs[0] being the output result.
 }
 
-void Control_Sonoff::dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet) {
-  if (topicControlId == id) { // matches this control
-    if (topicTwig == "out/cycle") {
+void Control_Sonoff::dispatch(System_Message &msg) {
+  if (msg.module() == id) {
+    if (msg.leaf() == "out/cycle") {
       // If cycling state then also set to manual if not already
       if (!manual->value) {
-        manual->set(true); // will also send it if changed
-        //manual->writeValueToFSandEcho(manual->id, manual->StringValue()); // Maybe should write to FS but not echo - note fixed in TODO-210 anyway
+        manual->set(true); // will also send it if changed - TODO-210 should this write to FS as well?
       }
     }
-    Control_Hysterisis::dispatchTwig(topicControlId, topicTwig, payload, isSet); // Pass on to normal handle of manual - not clear if it writes out/on to FS
   }
+  Control_Hysterisis::dispatch(msg); // Pass on to normal handle of manual - not clear if it writes out/on to FS
 }
 
 void Control_Sonoff::act() {

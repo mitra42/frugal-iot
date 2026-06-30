@@ -84,8 +84,10 @@ class System_Frugal : public System_Group {
     #endif
     void startSerial(uint32_t baud, uint16_t serial_delay);
     void startSerial(); // Encapsulate setting up and starting serial
-    void dispatchTwig(const String &topicSensorId, const String &topicLeaf, const String &payload, bool isSet) override; // this is for local messages for ths obj
-    void dispatchTwig(const String &topicTwig, const String &payload, bool isSet); // this is the looping one
+    // Deprecated
+    // Moving to below
+    void dispatch(System_Message &msg);
+    // ---
     void pre_setup(); // Setup done before Messages tries to access "project"
     void setup() override;
     void setup_after_wifi();

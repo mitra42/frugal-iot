@@ -15,7 +15,7 @@
  *     Nodes not connected to WiFi send "Upstream", possibly relayed (inside the LM layer) by other nodes  to a Gateway
  *     Gateways keep track of any that are subscriptions and remember which node the subscription came from 
  *     Gateways queue upstream messages for the MQTT/WiFi to send to the server.
- *     Gateways check incoming messages from MQTT/WiFi using the same "dispatchLeaf" mechanism that the rest of FrugalIoT uses
+ *     Gateways check incoming messages from MQTT/WiFi using the same "dispatch" mechanism that the rest of FrugalIoT uses
  *     If incoming messages match a subscription they are routed to the destination node. 
  *     There is a side-effect that if an outgoing message matches a subscription it will also be routed to that node (probably both directly and via MQTT/WiFi)
  *
@@ -412,7 +412,7 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
     }
     if (downstream) {
       //Serial.print(F("XXX " __FILE__)); Serial.print(F("downstream ")); Serial.println(topicPath);
-      frugal_iot.messages->queueIncoming(topicPath, payload);
+      frugal_iot.messages->queueIncoming(topicPath, payload, MsgFromLoRaMesher);
     } else { // upstream (not subscribe)
       Serial.print(F("LoRaMesher forwarding to MQTT:")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
       frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
@@ -567,13 +567,13 @@ bool System_LoraMesher::relayDownstream(uint16_t destn, const String &topic, con
 
 // Catch downstream messages received over WiFi by MQTT and then matching a subscription we know
 // Note - this (I think) will catch outgoing messages that also match a subscription. 
-void System_LoraMesher::dispatchPath(const String &topicPath, const String &payload) {
-  for (auto &sub : meshSubscriptions) { 
+void System_LoraMesher::dispatch(System_Message &msg) {
+  System_Base::dispatch(msg);
+  for (auto &sub : meshSubscriptions) {
     // Find matching subscriptions
-    if (match_topic(topicPath, sub.topicPath)) { // Allows for + and # wildcards
-      //Serial.print(F("XXX ")); Serial.print(topicPath); Serial.print(F(" matches ")); Serial.println(topicPath);
+    if (match_topic(msg.topicPath, sub.topicPath)) { // Allows for + and # wildcards
       // send over LoRaWan to subscriber
-      if (!relayDownstream(sub.src, topicPath, payload)) {
+      if (!relayDownstream(sub.src, msg.topicPath, msg.payload)) {
         Serial.print("XXX TODO-189 failed to send Lora downstream, think about requeueing");
       }
     }
