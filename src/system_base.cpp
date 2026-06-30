@@ -324,9 +324,9 @@ bool OUT::dispatch(System_Message &msg) {
 }
 
 bool INfloat::dispatch(System_Message &msg) {
-  if (msg.module() == sensorId) {
-    bool dispatched = false;
-    if (msg.leaf().startsWith(id)) {
+  if ( msg.module() == sensorId) { // check for this node 
+    if (msg.isSet() && msg.leaf().startsWith(id)) { // Check set for this IO
+      bool dispatched = false;
       float v = msg.payload.toFloat();
       if (msg.leaf().endsWith("/max")) {
         max = v;
@@ -341,16 +341,14 @@ bool INfloat::dispatch(System_Message &msg) {
       }
       // else drop through and dispatch to superclass
     }
-    // Catch generic case like color and incoming wired
-    return IN::dispatch(msg);
-  } else {
-    return false;
   }
+  // Catch generic case like color and incoming wired or (what this is wired to (even if !set))
+  return IN::dispatch(msg);
 }
 bool OUTfloat::dispatch(System_Message &msg) {
   if (msg.module() == sensorId) {
     bool dispatched = false;
-    if (msg.leaf().startsWith(id)) {
+    if (msg.isSet() && msg.leaf().startsWith(id)) {
       float v = msg.payload.toFloat();
       if (msg.leaf().endsWith("/max")) {
         max = v;
@@ -372,7 +370,7 @@ bool OUTfloat::dispatch(System_Message &msg) {
 bool INuint16::dispatch(System_Message &msg) {
   if (msg.module() == sensorId) {
     bool dispatched = false;
-    if (msg.leaf().startsWith(id)) {
+    if (msg.isSet() && msg.leaf().startsWith(id)) {
       uint16_t v = msg.payload.toInt();
       if (msg.leaf().endsWith("/max")) {
         max = v;
@@ -408,7 +406,7 @@ bool OUTbool::dispatch(System_Message &msg) {
         changed = true;
       }
       if (dispatched) {
-        msg.maybeWriteToFS(false); // Dont echo since only /cycle and set will do the necessary sends
+        //msg.maybeWriteToFS(false); // Dont echo or write to FS since only /cycle and set will do the necessary sends
         return changed;
       }
       // else drop through and dispatch to superclass
@@ -420,14 +418,17 @@ bool OUTbool::dispatch(System_Message &msg) {
 bool OUTuint16::dispatch(System_Message &msg) {
   if (msg.module() == sensorId) {
     bool dispatched = false;
-    if (msg.leaf().startsWith(id)) {
+    bool needEcho = false;
+    if (msg.isSet() && msg.leaf().startsWith(id)) {
       uint16_t v = msg.payload.toInt();
       if (msg.leaf().endsWith("/max")) {
         max = v;
         dispatched = true;
+        needEcho = true;
       } else if (msg.leaf().endsWith("/min")) {
         min = v;
         dispatched = true;
+        needEcho = true;
       } else if (msg.leaf().endsWith("/cycle")) { //TODO move to a function of OUTuint16
         // Complexity here is because this is a uint16 and cycling below min may go negative
         int16_t newvalue = value + (int16_t)v;
@@ -435,8 +436,10 @@ bool OUTuint16::dispatch(System_Message &msg) {
         if (newvalue < min) { newvalue = max; }
         set((uint16_t)newvalue); // Will do its own message sending if appropriate
       }
-      if (dispatched) {
+      if (needEcho) {
         msg.maybeWriteToFSandEcho();
+      }
+      if (dispatched) {
         return false; // value didnt change (just parameter)
       }
       // else drop through and dispatch to superclass
@@ -717,7 +720,7 @@ void OUT::sendWired(bool retain, uint8_t qos) { // defaults to MQTT_RETAIN MQTT_
     if (qos == MQTT_QOS_EXACTLY1) {
       // Either loopback or send, but not both
       if (wiredPath.startsWith(frugal_iot.messages->topicPrefix)) {
-        frugal_iot.messages->queueLoopback(wiredPath, StringValue());
+        frugal_iot.messages->queueLoopback(wiredPath, StringValue()); // Wired path out, but its to this node
       } else {
         frugal_iot.messages->sendRemote(wiredPath, StringValue(), retain, qos, 0x00);
       }
