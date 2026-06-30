@@ -63,7 +63,7 @@
 #if defined(ACTUATOR_RELAY_DEBUG) || defined(ACTUATOR_LEDBUILTIN_DEBUG)
   #define ACTUATOR_DIGITAL_DEBUG
 #endif
-#if defined(ACTUATOR_DIGITAL_DEBUG) || defined(ACTUATOR_LCD_DEBUG)
+#if defined(ACTUATOR_DIGITAL_DEBUG) || defined(ACTUATOR_LCD_DEBUG) || defined(ACTUATOR_OLED_DEBUG) 
   #define ACTUATOR_DEBUG
 #endif
 
@@ -85,7 +85,7 @@
   #define CONTROL_DEBUG
 #endif
 // TO_ADD_SYSTEM - there is no class hierarchy
-#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(ACTUATOR_OLED_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG)
+#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG)
   #define SYSTEM_DEBUG
 #endif
 
