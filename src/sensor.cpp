@@ -9,21 +9,26 @@
 #include "system_message.h"
 #include "misc.h" // shouldBeDefined
 
-Sensor::Sensor(const char* const id, const char* const name, bool r, uint8_t power3v3_pin, uint8_t power0v_pin) 
-: System_Base(id, name), retain(r), power3v3(power3v3_pin), power0v(power0v_pin) { }
+Sensor::Sensor(const char* const id, const char* const name, bool r) 
+: System_Base(id, name), retain(r) { }
 
+Sensor* Sensor::powerPins(const uint8_t power3v3, const uint8_t power0v) {
+  power3v3_ = power3v3;
+  power0v_ = power0v;
+  return this; // For chaining
+}
 // Power management methods
 void Sensor::powerUp() {
   // Default implementation: call System_Base method with stored pins if valid
-  if (power3v3 != 0xFF || power0v != 0xFF) {
-    System_Base::powerUp(power3v3, power0v);
+  if (power3v3_ != 0xFF || power0v_ != 0xFF) {
+    System_Base::powerUp(power3v3_, power0v_);
   }
 }
 
 void Sensor::powerDown() {
   // Default implementation: call System_Base method with stored pins if valid
-  if (power3v3 != 0xFF || power0v != 0xFF) {
-    System_Base::powerDown(power3v3, power0v);
+  if (power3v3_ != 0xFF || power0v_ != 0xFF) {
+    System_Base::powerDown(power3v3_, power0v_);
   }
 }
 
