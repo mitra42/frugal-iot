@@ -18,7 +18,7 @@ class System_Group : public System_Base {
     void setup();
     void setup_after_wifi();
     void setup_after_mqtt();
-    void add(System_Base* fb);
+    System_Base* add(System_Base* fb);
     void dispatch(System_Message &msg) override;
     void discover() override;
     void prepare() override;

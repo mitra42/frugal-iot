@@ -5,23 +5,17 @@
 #include "system_base.h"
 #include <vector>
 
-class Sensor : public System_Base {
+class Sensor : public System_SensorActuator {
   public:
     //Sensor();
     Sensor(const char* id, const char* const name, bool retain);
     Sensor(const char* id, const char* const name, bool retain, uint8_t power3v3, uint8_t power0v); // Function missing will delete
-    Sensor* powerPins(const uint8_t power3v3, const uint8_t power0v);
     virtual void prepare();   // Calls powerDown for power cycling before sensor read
     virtual void recover();   // Calls powerUp for power cycling after sleep
   protected:
     std::vector<OUT*> outputs; // Vector of outputs
     const bool retain = false;
     const int qos = 0; // Default to no guarrantee of delivery
-    uint8_t power3v3_ = 0xFF;
-    uint8_t power0v_ = 0xFF;
-    
-    virtual void powerUp();   // Optional power management - override in derived classes
-    virtual void powerDown(); // Optional power management - override in derived classes
     
     virtual void readValidateConvertSet();
     void periodically() override;

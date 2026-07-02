@@ -10,27 +10,8 @@
 #include "misc.h" // shouldBeDefined
 
 Sensor::Sensor(const char* const id, const char* const name, bool r) 
-: System_Base(id, name), retain(r) { }
+: System_SensorActuator(id, name), retain(r) { }
 
-Sensor* Sensor::powerPins(const uint8_t power3v3, const uint8_t power0v) {
-  power3v3_ = power3v3;
-  power0v_ = power0v;
-  return this; // For chaining
-}
-// Power management methods
-void Sensor::powerUp() {
-  // Default implementation: call System_Base method with stored pins if valid
-  if (power3v3_ != 0xFF || power0v_ != 0xFF) {
-    System_Base::powerUp(power3v3_, power0v_);
-  }
-}
-
-void Sensor::powerDown() {
-  // Default implementation: call System_Base method with stored pins if valid
-  if (power3v3_ != 0xFF || power0v_ != 0xFF) {
-    System_Base::powerDown(power3v3_, power0v_);
-  }
-}
 
 void Sensor::prepare() {
   // Prepare for sleep - power down the sensor

@@ -89,6 +89,9 @@ String System_Base::leaf2path(const char* const leaf) {
 String System_Base::leaf2path(const String& leaf) { 
   return frugal_iot.messages->path(id, leaf);
 }
+// This is here so can do an "add" on a Group that contains System_Base, does nothing on Control or System subclasses, overridden in Sensor and Actuator (via System_SensorActuator)
+System_Base* System_Base::powerPins(const uint8_t power3v3, const uint8_t power0v) { return this; }
+
 void System_Base::powerUp(uint8_t pin3v3, uint8_t pin0v) {
   if (pin0v != 0xFF) {
     pinMode(pin0v, OUTPUT);  // Set pin after reading config as may change
@@ -116,6 +119,30 @@ void System_Base::powerDown() {
   // By default do nothing
 }
 
+// ========== IO - base class for IN and OUT ===== 
+
+System_SensorActuator::System_SensorActuator(const char * const id, const String name) 
+: System_Base(id, name) {}
+
+System_SensorActuator* System_SensorActuator::powerPins(const uint8_t power3v3, const uint8_t power0v) {
+  power3v3_ = power3v3;
+  power0v_ = power0v;
+  return this; // For chaining
+}
+// Power management methods
+void System_SensorActuator::powerUp() {
+  // Default implementation: call System_Base method with stored pins if valid
+  if (power3v3_ != 0xFF || power0v_ != 0xFF) {
+    System_Base::powerUp(power3v3_, power0v_);
+  }
+}
+
+void System_SensorActuator::powerDown() {
+  // Default implementation: call System_Base method with stored pins if valid
+  if (power3v3_ != 0xFF || power0v_ != 0xFF) {
+    System_Base::powerDown(power3v3_, power0v_);
+  }
+}
 
 // ========== IO - base class for IN and OUT ===== 
 

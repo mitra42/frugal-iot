@@ -11,8 +11,9 @@ System_Group::System_Group(const char * const id, const char * const name)
 : System_Base(id, name)
 {}
 
-void System_Group::add(System_Base* fb) {
+System_Base* System_Group::add(System_Base* fb) {
   group.push_back(fb);
+  return fb;
 }
 
 
