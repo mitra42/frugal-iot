@@ -4,6 +4,7 @@
 
 #include "_settings.h"
 #include "system_base.h"
+#include "system_io.h"
 
 class System_Watchdog : public System_Base {
   public:

@@ -2,6 +2,7 @@
 #define SYSTEM_DISCOVERY_H
 
 #include "system_base.h"
+#include "system_io.h"
 
 class System_Discovery : public System_Base {
   public:

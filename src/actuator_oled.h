@@ -19,6 +19,7 @@
 #include "_settings.h"
 #ifdef ACTUATOR_OLED_WANT
 #include "system_base.h" // For System_Base class
+#include "system_io.h"
 #include "Wire.h"
 
 // TODO-149 check which headers needed

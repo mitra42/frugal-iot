@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "system_base.h"
+#include "system_io.h"
 #include <vector>
 
 class Sensor : public System_SensorActuator {

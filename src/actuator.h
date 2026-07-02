@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "system_base.h"
+#include "system_io.h"
 
 class Actuator : public System_Base {
   public:

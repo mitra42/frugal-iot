@@ -26,6 +26,7 @@
 #include "system_discovery.h"
 #include <forward_list>
 #include "system_base.h"
+#include "system_io.h"
 
 class System_MQTT : public System_Base {
   public:

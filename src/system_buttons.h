@@ -2,6 +2,7 @@
 #define SYSTEM_BUTTONS_H
 
 #include "system_base.h"
+#include "system_io.h"
 #include "system_group.h"
 
 class System_Buttons : public System_Group {

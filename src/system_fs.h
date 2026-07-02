@@ -3,6 +3,7 @@
 
 #include "_settings.h"
 #include "system_base.h"
+#include "system_io.h"
 
 #if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_LITTLEFS_DEBUG)
   #define SYSTEM_FS_DEBUG

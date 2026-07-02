@@ -16,6 +16,7 @@
 #define SYSTEM_CAPTIVE_H
 
 #include "system_base.h"
+#include "system_io.h"
 #include "_settings.h" // For LANGUAGE_ALL
 
 

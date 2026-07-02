@@ -18,6 +18,7 @@
 #include <forward_list>
 #include "loramesher.hpp" // defines namespace loramesher 
 #include "system_base.h"
+#include "system_io.h"
 
 class MeshSubscription {
   public:

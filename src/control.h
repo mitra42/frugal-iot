@@ -12,6 +12,7 @@
 #include <Arduino.h>
 #include <vector>
 #include "system_base.h"
+#include "system_io.h"
 #include "system_message.h"
 
 class Control : public System_Base {

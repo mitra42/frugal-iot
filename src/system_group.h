@@ -9,6 +9,7 @@
 #define SYSTEM_GROUP_H
 
 #include "system_base.h"
+#include "system_io.h"
 #include "system_message.h"
 
 class System_Group : public System_Base {

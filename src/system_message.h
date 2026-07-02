@@ -11,6 +11,7 @@
   #include <forward_list> // Doesnt seem to be required (and may be problmatic) for ESP32
 //#endif
 #include "system_base.h"
+#include "system_io.h"
 
 // If need an extra bit, can assume WakeOnTimerBit = LightSleepBit
 #define MsgIsSubscription 0x01

@@ -4,6 +4,7 @@
 #include <time.h>
 #include <Arduino.h> // For String
 #include "system_base.h"
+#include "system_io.h"
 
 class System_Time : public System_Base {
   public:

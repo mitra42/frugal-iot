@@ -27,6 +27,7 @@
 
 #include "system_fs.h"
 #include "system_base.h"
+#include "system_io.h"
 #include "misc.h" // For StringF
 // May change for different boards
 // #define SYSTEM_SD_CHIPSELECT D8   // SPI select pin used - note SS defined as 15 - not sure if that is D8

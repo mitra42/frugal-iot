@@ -23,6 +23,7 @@
 #include "sensor_battery.h"
 #include "sensor_health.h"
 #include "system_base.h"
+#include "system_io.h"
 #include "system_buttons.h"
 #include "system_captive.h"
 #include "system_discovery.h"
