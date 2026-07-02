@@ -37,7 +37,7 @@ void setup() {
   // Serial1 is used per Heltec example code; the ESP32-S3 remaps it to GPIOs 39/38.
   Sensor_GPS* gps = new Sensor_GPS("GPS", &Serial1,
       SENSOR_GPS_RX_PIN, SENSOR_GPS_TX_PIN);
-  frugal_iot.sensors->add(gps);
+  frugal_iot.sensors->add(gps)->powerPins(SENSOR_GPS_3v3_PIN, SENSOR_GPS_0v_PIN);
 
   #ifdef ACTUATOR_OLED_WANT
     Control_Oled_GPS* cog = new Control_Oled_GPS("OLED GPS");

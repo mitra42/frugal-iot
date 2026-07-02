@@ -32,8 +32,8 @@
 #include "sensor_dht.h"
 
 // Add alternative constructor with id e.g. dht1, dht2 etc
-Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, const bool retain, uint8_t power3v3_pin, uint8_t power0v_pin) 
-  : Sensor_HT("dht", name, retain, power3v3_pin, power0v_pin), 
+Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, const bool retain)
+  : Sensor_HT("dht", name, retain),
     dht(new DHTNEW(pin_init)),
    pin(pin_init) {
   //TODO-64 is the library working for other DHTs - check other examples at https://github.com/RobTillaart/DHTNew/tree/master/examples

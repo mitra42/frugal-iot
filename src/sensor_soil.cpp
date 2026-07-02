@@ -24,8 +24,8 @@
 #include "sensor_soil.h"
 #include "Frugal-IoT.h"
 
-Sensor_Soil::Sensor_Soil(const char* const moduleId, const char * const moduleName, uint8_t pin_init, int offset, float scale, const char* color, bool retain, uint8_t power3v3_pin, uint8_t power0v_pin) 
-  : Sensor_Analog(moduleId, "moisture", moduleName, "Moisture", pin_init, 0, DEFAULT_soil_soil_min, DEFAULT_soil_soil_max, offset, scale, color, retain, power3v3_pin, power0v_pin)   {
+Sensor_Soil::Sensor_Soil(const char* const moduleId, const char * const moduleName, uint8_t pin_init, int offset, float scale, const char* color, bool retain)
+  : Sensor_Analog(moduleId, "moisture", moduleName, "Moisture", pin_init, 0, DEFAULT_soil_soil_min, DEFAULT_soil_soil_max, offset, scale, color, retain)   {
     setDefaultColor(DEFAULT_soil_soil_color);
 }
 

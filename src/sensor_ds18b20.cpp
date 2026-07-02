@@ -16,8 +16,8 @@ Our test are run at 3.3V though it is supposed to also run at 5V.
  * Temperature range: -55°C to +125°C
  * Color label "orange" for UI or visualization systems.
  */
-Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain, uint8_t power3v3_pin, uint8_t power0v_pin)
-  : Sensor_Float(id, "temperature", name, "Temperature", 1, DEFAULT_ds18b20_ds18b20_min, DEFAULT_ds18b20_ds18b20_max, DEFAULT_ds18b20_ds18b20_color, retain, power3v3_pin, power0v_pin),
+Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain)
+  : Sensor_Float(id, "temperature", name, "Temperature", 1, DEFAULT_ds18b20_ds18b20_min, DEFAULT_ds18b20_ds18b20_max, DEFAULT_ds18b20_ds18b20_min, DEFAULT_ds18b20_ds18b20_max, DEFAULT_ds18b20_ds18b20_color, retain),
     _oneWire(pin),
     _sensors(&_oneWire),
     _index(index) {

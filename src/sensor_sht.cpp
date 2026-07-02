@@ -31,8 +31,8 @@
 #include <Arduino.h>
 #include "sensor_sht.h"
 
-Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, bool retain, uint8_t power3v3_pin, uint8_t power0v_pin)
-    : Sensor_HT("sht", name, retain, power3v3_pin, power0v_pin),
+Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, bool retain)
+    : Sensor_HT("sht", name, retain),
     address(address_init) {
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   // Defaults to system defined SDA and SCL 

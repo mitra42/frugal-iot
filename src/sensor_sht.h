@@ -61,7 +61,7 @@
 
 class Sensor_SHT : public Sensor_HT {
   public:
-    Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, bool retain, uint8_t power3v3_pin = SENSOR_SHT_POWER3v3_PIN, uint8_t power0v_pin = SENSOR_SHT_POWER0_PIN);
+    Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, bool retain);
   protected:
     uint8_t address;
     SENSOR_SHT_DEVICE *sht; 

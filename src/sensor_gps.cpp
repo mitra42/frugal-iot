@@ -36,10 +36,8 @@ Sensor_GPS::Sensor_GPS(const char* const name,
                        uint8_t rx_pin,
                        uint8_t tx_pin,
                        uint32_t baud,
-                       bool retain,
-                       uint8_t power3v3_pin,
-                       uint8_t power0v_pin)
-  : Sensor("gps", name, retain, power3v3_pin, power0v_pin),
+                       bool retain)
+  : Sensor("gps", name, retain),
     latitude(new OUTfloat(  "gps", "latitude",   "Latitude",   0, 6, -90.0f,   90.0f,   "blue",   false)),
     longitude(new OUTfloat( "gps", "longitude",  "Longitude",  0, 6, -180.0f,  180.0f,  "blue",   false)),
     altitude(new OUTfloat(  "gps", "altitude",   "Altitude",   0, 1, -500.0f,  9000.0f, "green",  false)),

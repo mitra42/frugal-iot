@@ -35,12 +35,26 @@ class System_Base {
     virtual void powerDown();
     virtual void prepare() { }   // Optional - prepare before sleep (overridden in subclasses)
     virtual void recover() { }   // Optional - recover after sleep (overridden in subclasses)
+    virtual System_Base* powerPins(const uint8_t power3v3, const uint8_t power0v); // Just here to allow chaining in Group
   protected: 
     String name; // Name of actuator, sensor or control
     String leaf2path(const char* leaf);  // eg. sht/temperature or sht/temperature/max -> dev/lotus/esp123/sht/temperature ...
     String leaf2path(const String& leaf); 
     void readConfigFromFS();
-}; // Class FrugalBase
+}; // Class System_Base
+
+class System_SensorActuator : public System_Base {
+  public:
+    System_SensorActuator(const char * const id, const String name);
+    System_SensorActuator* powerPins(const uint8_t power3v3, const uint8_t power0v) override;
+  protected:
+    uint8_t power3v3_ = 0xFF;
+    uint8_t power0v_ = 0xFF;
+    virtual void powerUp();   // Optional power management - override in derived classes
+    virtual void powerDown(); // Optional power management - override in derived classes
+  private:
+}; // Class System_SensorActuator
+
 
 class IO {
   public:
