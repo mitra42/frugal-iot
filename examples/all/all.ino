@@ -112,7 +112,7 @@ void setup() {
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/id"));
 
-  Control_Hysterisis* ch = new Control_Hysterisis("controlhysteresis", "Control", 50, 1, 0, 100);
+  Control_Hysteresis* ch = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(ch);
   ch->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 

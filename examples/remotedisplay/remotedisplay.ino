@@ -41,7 +41,7 @@ void setup() {
   //frugal_iot.sensors->add(new Sensor_Battery());
 
   // If required, add a control - this is just an example
-  //Control_Hysterisis* cb = new Control_Hysterisis("Control_Hysterisis", "Control", 50, 1, 0, 100);
+  //Control_Hysteresis* cb = new Control_Hysteresis("Control_Hysteresis", "Control", 50, 1, 0, 100);
   //frugal_iot.controls->add(cb);
   //cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 

@@ -10,7 +10,7 @@ Actuator_OLED	KEYWORD1
 Control	KEYWORD1
 Control_Blinken	KEYWORD1
 Control_Gsheets	KEYWORD1
-Control_Hysterisis	KEYWORD1
+Control_Hysteresis	KEYWORD1
 Control_Logger	KEYWORD1
 Control_LoggerFS	KEYWORD1
 Control_Oled	KEYWORD1

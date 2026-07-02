@@ -175,7 +175,7 @@ The `message` input accepts a `String`; lines are split on `\n` (ASCII 10). Line
 
 | Class | Notes |
 |-------|-------|
-| `Control_Hysterisis` | Single-channel on/off with deadband |
+| `Control_Hysteresis` | Single-channel on/off with deadband |
 | `Control_Blinken` | LED blink pattern generator |
 | `Control_OLED` | Base class for custom OLED displays |
 | `Control_LoggerFS` | LittleFS CSV data logger |
@@ -248,7 +248,7 @@ void setup() {
   frugal_iot.actuators->add(new Actuator_Digital("heating", "Heating", HEATING_PIN, "red"));
   frugal_iot.actuators->add(new Actuator_Digital("humidifier", "Humidifier", HUMIDIFIER_PIN, "blue"));
 
-  Control_Hysterisis* ch = new Control_Hysterisis("controlheat", "Heat Control", 22.0, 1.0, 0, 100);
+  Control_Hysteresis* ch = new Control_Hysteresis("controlheat", "Heat Control", 22.0, 1.0, 0, 100);
   frugal_iot.controls->add(ch);
   ch->inputs[0]->wireTo(sht->temperature->path());
   ch->outputs[0]->wireTo(frugal_iot.messages->setPath("heating/on"));

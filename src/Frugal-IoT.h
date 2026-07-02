@@ -23,7 +23,7 @@
 #include "control.h"
 #include "control_blinken.h"
 #include "control_gsheets.h"
-#include "control_hysterisis.h"
+#include "control_hysteresis.h"
 #include "control_logger_fs.h"
 
 //TO-ADD-SYSTEM - note dont need to add here if adding in system_frugal.h
