@@ -14,7 +14,7 @@
 
 class Sensor_Soil : public Sensor_Analog {
   public: 
-    Sensor_Soil(const char* const id, const char * const name, uint8_t pin_init, int offset, float scale, const char* color, bool retain, uint8_t power3v3_pin = SENSOR_SOIL_POWER3v3_PIN, uint8_t power0v_pin = SENSOR_SOIL_POWER0_PIN);
+    Sensor_Soil(const char* const id, const char * const name, uint8_t pin_init, int offset, float scale, const char* color, bool retain);
   protected:
     bool validate(int v) override;
     void captiveLines(AsyncResponseStream* response) override;

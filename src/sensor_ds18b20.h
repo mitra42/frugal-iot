@@ -40,7 +40,7 @@ public:
      * Note: Index 0 reads the first DS18B20 detected. Use higher index values
      * if multiple sensors share the same OneWire bus.
      */
-    Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain, uint8_t power3v3_pin = SENSOR_DS18B20_POWER3v3_PIN, uint8_t power0v_pin = SENSOR_DS18B20_POWER0_PIN);
+    Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain);
 
 protected:
     /**

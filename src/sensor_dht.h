@@ -34,7 +34,7 @@
 
 class Sensor_DHT : public Sensor_HT {
 public:
-  Sensor_DHT(const char * const name, const uint8_t pin, const bool retain, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
+  Sensor_DHT(const char * const name, const uint8_t pin, const bool retain);
 protected:
   DHTNEW * const dht; 
   const uint8_t pin;

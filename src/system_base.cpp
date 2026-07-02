@@ -94,11 +94,9 @@ System_Base* System_Base::powerPins(const uint8_t power3v3, const uint8_t power0
 
 void System_Base::powerUp(uint8_t pin3v3, uint8_t pin0v) {
   if (pin0v != 0xFF) {
-    pinMode(pin0v, OUTPUT);  // Set pin after reading config as may change
     digitalWrite(pin0v, LOW);
   }
   if (pin3v3 != 0xFF) {
-    pinMode(pin3v3, OUTPUT);  // Set pin after reading config as may change
     digitalWrite(pin3v3, HIGH);
   }
 }
@@ -127,6 +125,12 @@ System_SensorActuator::System_SensorActuator(const char * const id, const String
 System_SensorActuator* System_SensorActuator::powerPins(const uint8_t power3v3, const uint8_t power0v) {
   power3v3_ = power3v3;
   power0v_ = power0v;
+  if (power3v3_ != 0xFF) { 
+        pinMode(power3v3_, OUTPUT);
+  }
+  if (power3v3_ != 0xFF) { 
+        pinMode(power0v_, OUTPUT);
+  }
   return this; // For chaining
 }
 // Power management methods

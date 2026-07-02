@@ -29,6 +29,7 @@ void Actuator_OLED::setup() {
   System_Base::setup();
 
   // TODO experimenting for heltec - parameterize this 
+  // TODO move to use standard power mechanism
   #ifdef OLED_ENABLE_LOW //  e.g. Heltec Lora Wifi V3
     pinMode(OLED_ENABLE_LOW,OUTPUT);
     digitalWrite(OLED_ENABLE_LOW,LOW); // This is on heltec v3, note v3.2 wants it high

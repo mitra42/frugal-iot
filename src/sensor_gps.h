@@ -73,9 +73,7 @@ class Sensor_GPS : public Sensor {
                uint8_t rx_pin,
                uint8_t tx_pin,
                uint32_t baud           = SENSOR_GPS_BAUD,
-               bool retain             = true,
-               uint8_t power3v3_pin    = SENSOR_GPS_3v3_PIN,
-               uint8_t power0v_pin     = SENSOR_GPS_0v_PIN);
+               bool retain             = true);
 
     OUTfloat*   latitude;
     OUTfloat*   longitude;

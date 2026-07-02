@@ -96,9 +96,9 @@
 class Sensor_Battery : public Sensor_Analog {
   public: 
     #if defined(SENSOR_BATTERY_SCALE) && defined(SENSOR_BATTERY_PIN)
-      Sensor_Battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_SCALE, uint8_t power3v3_pin = SENSOR_BATTERY_POWER3v3_PIN, uint8_t power0v_pin = SENSOR_BATTERY_POWER0_PIN); // Where SENSOR_BATTERY_PIN and SENSOR_BATTERY_VOLTAGE_DIVIDER defined 
+      Sensor_Battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_SCALE); // Where SENSOR_BATTERY_PIN and SENSOR_BATTERY_VOLTAGE_DIVIDER defined
     #else
-      Sensor_Battery(const uint8_t pin, float_t voltage_divider, uint8_t power3v3_pin = 0xFF, uint8_t power0v_pin = 0xFF);
+      Sensor_Battery(const uint8_t pin, float_t voltage_divider);
     #endif
   protected:
     #ifdef ESP32
