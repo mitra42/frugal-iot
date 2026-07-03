@@ -1,0 +1,44 @@
+#ifndef SYSTEM_WIFI_H
+#define SYSTEM_WIFI_H
+
+#include "system/base.h"
+#include "system/io.h"
+
+enum WiFiStatusType { 
+  WIFI_STARTING, WIFI_DISCONNECTED, WIFI_RECONNECTING, WIFI_CONNECTED, WIFI_NEEDSCAN, WIFI_SCANNING, WIFI_SCANNED, WIFI_CONNECTING, WIFI_STABILIZING
+};
+
+class System_WiFi : public System_Base {
+  public:
+    WiFiStatusType status = WIFI_STARTING ;
+    unsigned long statusSince = 0;
+    int16_t num_networks = -1;
+    int32_t minRSSI; // Minimum RSSI we are trying to connect to in this cycle of state Machine
+    int nextNetwork;
+    System_WiFi();
+    int8_t RSSI();
+    uint8_t rssi_to_bars(int8_t rssi);
+    uint8_t bars();
+    String SSID();
+    void switchSSID(const String ssid);
+    bool connectOne(String ssid, int32_t rssi = 0);
+    void connectInnerAsync(String ssid, String pw);
+    //bool connect1(String ssid, String pw, int wait_seconds=30);
+    bool connectOneAndAllNext();
+    void connectOneAndAllReset();
+    void setStatus(WiFiStatusType newstatus);
+    bool connected();
+    void stateMachine();
+    bool rescan();
+    //void periodically() override;
+    void loop() override;
+    #ifdef ESP32
+      bool pauseWiFi();
+      bool recoverWiFi();
+    #endif
+    void setup() override;
+    void addWiFi(String ssid, String password);
+    void dispatch(System_Message &msg) override;
+};
+
+#endif // SYSTEM_WIFI_H

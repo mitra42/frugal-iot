@@ -1,5 +1,5 @@
 
-#include "control.h"
+#include "control/control.h"
 
 /* Control_Climate: dual-channel hysteresis for temperature + humidity */
 

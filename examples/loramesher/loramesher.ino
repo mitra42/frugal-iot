@@ -6,12 +6,12 @@
  */
 
 #include "Frugal-IoT.h"
-#include "system_mqtt.h"
+#include "system/mqtt.h"
 
 #ifdef ACTUATOR_OLED_WANT
   #include "control_oled_sht.h"
-  #include "control_oled_loramesher.h"
-  #include "control_carousel.h"
+  #include "control/oled_loramesher.h"
+  #include "control/carousel.h"
   Control_Carousel* carousel;
 #endif
 

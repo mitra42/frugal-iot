@@ -1,7 +1,7 @@
 #ifndef CONTROL_OLED_SHT_H
 #define CONTROL_OLED_SHT_H
 
-#include "control_oled.h"
+#include "control/oled.h"
 
 class Control_Oled_SHT : public Control_Oled {
   public:

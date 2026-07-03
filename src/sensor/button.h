@@ -1,0 +1,36 @@
+#ifndef SENSOR_BUTTON_H
+#define SENSOR_BUTTON_H
+/* 
+ * Frugal IoT button handler 
+ * 
+ * Detect a button click, and send a message depending on SINGLE, LONG, DOUBLE, or TRIPLE
+ */
+
+ #include <vector>
+ #include "Button2.h" // https://github.com/LennartHennigs/Button2
+ #include "sensor/sensor.h"
+ //#include "system/frugal.h"
+
+ #ifndef SENSOR_BUTTON_MS
+  #define SENSOR_BUTTON_MS 10
+#endif
+ 
+// Note this is a subclass of System_Base, not of Sensor 
+ class Sensor_Button : public System_Base {
+    public:
+      Sensor_Button( const char * const id, const char * const name, uint8_t pin, const char * const color);
+      //OUTuint16* output; // TODO convert to an enum 
+      OUTtext* singleClick;
+      OUTtext* longClick;
+      OUTtext* doubleClick;
+      OUTtext* tripleClick;
+      void setup() override;
+      void loop() override;
+      void clickHandlerInner(clickType type);
+    private:
+      Button2* button;
+      uint8_t pin;
+ };
+ 
+ #endif // SENSOR_BUTTON_H
+ 

@@ -6,7 +6,7 @@
 
 #include "Frugal-IoT.h"
 
-#include "control_hysteresis.h"
+#include "control/hysteresis.h"
 
 //TODO-189 maybe these should just be variables not a class ? 
 class Control_Sonoff : public Control_Hysteresis {
