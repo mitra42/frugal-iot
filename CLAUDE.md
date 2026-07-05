@@ -1,7 +1,7 @@
 # Frugal-IoT Library
 
 A platform for affordable, easily built sensor networks running on ESP32/ESP8266 microcontrollers.
-Library version: 0.0.22. MIT licence. Author: Mitra Ardron.
+Library version: 0.1.0. MIT licence. Author: Mitra Ardron.
 
 Wiki: https://github.com/mitra42/frugal-iot/wiki
 Repo: https://github.com/mitra42/frugal-iot
@@ -10,7 +10,7 @@ Repo: https://github.com/mitra42/frugal-iot
 
 Every example `.ino` file must work in **both**:
 - **Arduino IDE** — open the `.ino` directly; dependencies installed via Library Manager
-- **PlatformIO** — referenced via `lib_deps = Frugal-IoT@^0.0.22` in `platformio.ini`
+- **PlatformIO** — referenced via `lib_deps = Frugal-IoT@^0.1.0` in `platformio.ini`
 
 Each example directory contains a `platform.h` file alongside the `.ino`. This file is
 **auto-generated** from the example's `platformio.ini` by running `scripts/prerelease.bash`
@@ -175,7 +175,7 @@ The `message` input accepts a `String`; lines are split on `\n` (ASCII 10). Line
 
 | Class | Notes |
 |-------|-------|
-| `Control_Hysterisis` | Single-channel on/off with deadband |
+| `Control_Hysteresis` | Single-channel on/off with deadband |
 | `Control_Blinken` | LED blink pattern generator |
 | `Control_OLED` | Base class for custom OLED displays |
 | `Control_LoggerFS` | LittleFS CSV data logger |
@@ -248,7 +248,7 @@ void setup() {
   frugal_iot.actuators->add(new Actuator_Digital("heating", "Heating", HEATING_PIN, "red"));
   frugal_iot.actuators->add(new Actuator_Digital("humidifier", "Humidifier", HUMIDIFIER_PIN, "blue"));
 
-  Control_Hysterisis* ch = new Control_Hysterisis("controlheat", "Heat Control", 22.0, 1.0, 0, 100);
+  Control_Hysteresis* ch = new Control_Hysteresis("controlheat", "Heat Control", 22.0, 1.0, 0, 100);
   frugal_iot.controls->add(ch);
   ch->inputs[0]->wireTo(sht->temperature->path());
   ch->outputs[0]->wireTo(frugal_iot.messages->setPath("heating/on"));
@@ -267,7 +267,7 @@ LoRa support is enabled automatically on boards that define `SYSTEM_LORAMESHER_W
 
 ```ini
 lib_deps =
-    Frugal-IoT@^0.0.22
+    Frugal-IoT@^0.1.0
     jaimi5/LoRaMesher
     adafruit/Adafruit SSD1306@^2.5.0
     adafruit/Adafruit GFX Library@^1.10.13

@@ -1,6 +1,6 @@
 /* Frugal IoT - Control_Climate - Dual-channel hysteresis for temperature and humidity control.
  *
- * Follows the same pattern as Control_Hysterisis but with two independent channels.
+ * Follows the same pattern as Control_Hysteresis but with two independent channels.
  *
  * Inputs (INfloat):
  *   0: temperature         - current temp reading in C (wireable, wired to sensor)
@@ -37,7 +37,7 @@ void Control_Climate::debug(const char* const where) {
 #endif //CONTROL_CLIMATE_DEBUG
 
 void Control_Climate::act() {
-  // Temperature channel — hysteresis logic (same as Control_Hysterisis::act)
+  // Temperature channel — hysteresis logic (same as Control_Hysteresis::act)
   // ON when temp falls below setpoint-hysteresis (too cold, needs heating)
   // OFF when temp rises above setpoint+hysteresis (warm enough)
   // No change within the deadband to avoid relay chatter

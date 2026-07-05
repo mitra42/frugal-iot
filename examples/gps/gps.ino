@@ -12,15 +12,15 @@
  * readValidateConvertSet() blocks for up to SENSOR_GPS_READ_TIMEOUT_MS (default 1100 ms)
  * to obtain a fresh fix, so the effective cycle is ~1.1 s minimum. For slower readings
  * increase cycle_ms; the UART flush in readValidateConvertSet() handles buffer overflow
- * automatically. See sensor_gps.cpp for a full discussion of the tradeoffs.
+ * automatically. See sensor/gps.cpp for a full discussion of the tradeoffs.
  */
 
 #include "Frugal-IoT.h"
-#include "sensor_gps.h"
+#include "sensor/gps.h"
 #ifdef ACTUATOR_OLED_WANT
   #include "control_oled_gps.h"
-  #include "control_oled_loramesher.h"
-  #include "control_carousel.h"
+  #include "control/oled_loramesher.h"
+  #include "control/carousel.h"
   Control_Carousel* carousel;
 #endif
 
@@ -37,7 +37,7 @@ void setup() {
   // Serial1 is used per Heltec example code; the ESP32-S3 remaps it to GPIOs 39/38.
   Sensor_GPS* gps = new Sensor_GPS("GPS", &Serial1,
       SENSOR_GPS_RX_PIN, SENSOR_GPS_TX_PIN);
-  frugal_iot.sensors->add(gps);
+  frugal_iot.sensors->add(gps)->powerPins(SENSOR_GPS_3v3_PIN, SENSOR_GPS_0v_PIN);
 
   #ifdef ACTUATOR_OLED_WANT
     Control_Oled_GPS* cog = new Control_Oled_GPS("OLED GPS");

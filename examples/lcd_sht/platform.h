@@ -29,7 +29,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.0.22
+//     Frugal-IoT@^0.1.0
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -81,6 +81,7 @@
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
 // #define SYSTEM_MEMORY_DEBUG
+// #define SYSTEM_MESSAGE_DEBUG
 // #define SYSTEM_MQTT_DEBUG
 // #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
@@ -166,9 +167,26 @@
 #define SYSTEM_OTA_SUFFIX "nodemcu-32s"
 // board_build.partitions = min_spiffs.csv
 
+#endif // ARDUINO_NodeMCU_32S
+
+#ifdef ARDUINO_ESP32C3_DEV
+// platform = ${common.platform_esp32}
+// board = esp32-c3-devkitm-1 ; defines ARDUINO_ESP32C3_DEV
+// board_build.partitions = min_spiffs.csv
+// board_build.f_cpu = 160000000L
+// build_flags =
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "supermini"
+#define ARDUINO_USB_MODE 1
+#define ARDUINO_USB_CDC_ON_BOOT 1
+    // SDA=8 SCL=9(grey) is the standard for esp32-c3-devkitm-1 but 8 is LED, so override with I2C_SDA and I2C_SCL
+// #define I2C_WIRE Wire' ; TODO probably not needed, I think this is default
+#define I2C_SDA 4
+#define I2C_SCL 5
+    
 // ==== ESP8266 boards ================================================
 
-#endif // ARDUINO_NodeMCU_32S
+#endif // ARDUINO_ESP32C3_DEV
 
 #ifdef ARDUINO_ESP8266_WEMOS_D1MINIPRO
 // platform = espressif8266
