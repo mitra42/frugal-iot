@@ -114,7 +114,7 @@ void Sensor_LoadCell::dispatch(System_Message &msg) {
   }
 }
 void Sensor_LoadCell::captiveLines(AsyncResponseStream* response) {
-  frugal_iot.captive->addButton(response, id, "output", "0", T->Tare); //TODO-TRANSLATE
+  frugal_iot.captive->addButton(response, id, "output", "0", T->Tare);
   frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),3), T->Calibrate, 0, output->max);
 }
 
