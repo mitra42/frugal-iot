@@ -10,5 +10,6 @@ class Control_Oled_SHT : public Control_Oled {
     INfloat* battery;
     Control_Oled_SHT(const char* name);
     void act() override;
+    void periodically() override;
 };
 #endif // CONTROL_OLED_SHT_H

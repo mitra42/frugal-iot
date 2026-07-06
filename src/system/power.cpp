@@ -33,11 +33,12 @@
 
 #include <Arduino.h> // Required to get sdkconfig.h to get CONFIG_IDF_TARGET_xxx
 #ifdef ESP32 // Not available on ESP8266 - have not yet searched for equivalents
-  // Next three .h might or might not be needed 
+  // Next three .h might or might not be needed
   #include "esp_pm.h"
   #include "esp_timer.h"
   #include "esp_wifi.h"
   #include "esp_sleep.h"
+  #include "esp_timer.h"     // For esp_timer_get_time() — sleep-compensated microseconds since boot
   #include "driver/uart.h"   // To allow disabling UART
   // To allow printing task list - which doesnt work anyway!
   //#include "freertos/FreeRTOS.h"
@@ -82,10 +83,11 @@ void printTaskList() {
 #define TIMER_LENGTH 8 // Can make this longer (and add to initialization) if ever need >4 timers.
 #ifdef ESP32
   RTC_DATA_ATTR unsigned long wake_count = 0L; // If 1 per minute, uint_16 would just be 45 days
-  // Timers store absolute seconds (from sleepSafeSecs) — 32-bit seconds overflows at ~136 years
+  // Timers stored in seconds; uint32_t rolls over at 136 years vs 49 days for millis-based unsigned long.
+  // esp_timer_get_time() is already compensated for deep sleep on IDF 5.x, so no offset needed.
   RTC_DATA_ATTR uint32_t timers[TIMER_LENGTH] = {0,0,0,0,0,0,0,0}; // Array used by entities - currently using max four (OTA, Discovery, time, Watchdog)
 #else
-  unsigned long timers[TIMER_LENGTH] = {0L,0L,0L,0L}; // Array used by entities
+  uint32_t timers[TIMER_LENGTH] = {0,0,0,0}; // Array used by entities
 #endif
 //TODO-23 think about roll-over of timers and routines that test against a number maybe not rolled over
 
@@ -323,6 +325,8 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
     #ifdef ESP32
       if (forceMode & DeepSleepBit) {
         if (forceMode & WakeOnTimerBit) {
+          // millis() resets to 0 after deep sleep, but esp_timer_get_time() on IDF 5.x is
+          // already compensated for sleep duration — no offset needed.
           esp_deep_sleep(sleep_millisecs * 1000UL);
           Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
         } else {  // Power_Panic
@@ -398,10 +402,12 @@ bool System_Power::maybeSleep() {
 }
 
 #ifdef ESP32
-  // esp_timer_get_time() is compensated for both light and deep sleep (IDF 5.x+)
+  // sleepSafeSecs: microseconds from esp_timer_get_time() are already compensated for deep sleep
+  // on IDF 5.x (pioarduino stable), so no RTC offset needed.
   uint32_t System_Power::sleepSafeSecs() {
     return (uint32_t)(esp_timer_get_time() / 1000000ULL);
   }
+  // sleepSafeMillis derived from sleepSafeSecs to stay consistent across sleep boundaries.
   unsigned long System_Power::sleepSafeMillis() {
     return sleepSafeSecs() * 1000UL + (millis() % 1000UL);
   }
