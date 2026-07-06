@@ -25,22 +25,32 @@ Control_Oled_SHT::Control_Oled_SHT(const char* name)
     #endif
     display->clearDisplay();
     display->setCursor(0,0);
-    display->setTextSize(3);
+    #ifdef OLED_IS_HW675
+      display->setTextSize(2);
+    #else
+      display->setTextSize(3);
+    #endif
+
     //TODO-149 just comes up black despite good value of color565 return
     //Serial.print("Color: "); Serial.print(temperature->color); Serial.println(color565(temperature->color),HEX); 
     //display->setTextColor(color565(temperature->color));
     //display->setTextColor(0xF800, 0x001F); // ALso doesnt work, just prints strange characters
     display->print(temperature->floatValue(),temperature->width);
     display->print("C");
-    display->setCursor(0,25);
+    #ifdef OLED_IS_HW675
+      display->setCursor(0,20);
+    #else
+      display->setCursor(0,25);
+    #endif
     //display->setTextColor(color565(humidity->color));
     display->print(humidity->floatValue(), humidity->width);
     display->print("%");    
-
-    display->setCursor(0,50);
-    display->setTextSize(1);
-    display->print(battery->floatValue(), battery->width);
-    display->print("mV");
+    #ifndef OLED_IS_HW675
+      display->setCursor(0,50);
+      display->setTextSize(1);
+      display->print(battery->floatValue(), battery->width);
+      display->print("mV");
+    #endif
 
     display->display();   
   }

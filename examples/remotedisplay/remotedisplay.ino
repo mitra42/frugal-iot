@@ -44,7 +44,7 @@ void setup() {
   // Add sensors, actuators and controls
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   */
-  /*
+  
   // If required, add a control - this is just an example
   //Control_Hysteresis* cb = new Control_Hysteresis("Control_Hysteresis", "Control", 50, 1, 0, 100);
   //frugal_iot.controls->add(cb);
