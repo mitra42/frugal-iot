@@ -8,7 +8,7 @@
 #include "sensor/bh1750.h"
 #include <BH1750.h>             //https://github.com/claws/BH1750
 #ifdef SENSOR_BH1750_DEBUG
-  #include "system_i2c.h"
+  #include "system/i2c.h"
 #endif
 
 // TODO need a way to useful handle logarithnic values like lux - more of a UX issue than a node issue
@@ -29,7 +29,6 @@ void Sensor_BH1750::setup() {
   //bool BH1750::begin(Mode mode, byte addr, TwoWire* i2c
   wire->begin(I2C_SDA, I2C_SCL); // Note potential conflict with I2C on SHT. TODO-115
   //(Mode mode = CONTINUOUS_HIGH_RES_MODE, byte addr = 0x23, TwoWire* i2c = nullptr)
-  // TODO copy this pattern of public enum to other enums 
   delay(100); // No idea if needed - just letting wire->begin stabilize TODO try removing
   #ifdef SENSOR_BH1750_DEBUG
     System_I2C i2c(addr, wire); // Allow scanning

@@ -5,10 +5,6 @@
 
 #include "Frugal-IoT.h"
 
-#ifdef SYSTEM_OLED_WANT
-  #include "control_oled_sht.h" // Custom display handler
-#endif
-
 // Change the parameters here to match your ... 
 // organization, project, device name, description
 System_Frugal frugal_iot("dev", "developers", "BH1750", "BH1750 Light Sensor"); 
