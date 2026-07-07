@@ -35,7 +35,7 @@ void setup() {
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
   frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS160 AHT21"));
   
-  Control_Hysterisis* cb = new Control_Hysterisis("controlhysteresis", "Control", 50, 1, 0, 100);
+  Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 

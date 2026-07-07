@@ -6,43 +6,42 @@
 
 #include "Frugal-IoT.h"
 
-#include "control_hysterisis.h"
+#include "control/hysteresis.h"
 
 //TODO-189 maybe these should just be variables not a class ? 
-class Control_Sonoff : public Control_Hysterisis {
+class Control_Sonoff : public Control_Hysteresis {
   public:
     OUTbool* manual;
     Control_Sonoff();
   protected:
-    // Override dispatchTwig to handle switch of "out" when change from auto to manual.
-    void dispatchTwig(const String &topicControlId, const String &topicLeaf, const String &payload, bool isSet) override;
+    // Override dispatch to handle switch of "out" when change from auto to manual.
+    void dispatch(System_Message &msg) override;
     void act() override;
 };
 
-// Build on the Hysterisis control, expand it so the long button drops it out of manual. 
+// Build on the Hysteresis control, expand it so the long button drops it out of manual. 
 Control_Sonoff::Control_Sonoff() : 
-  Control_Hysterisis("controlhysterisis", "Control", 50, 1, 0, 100),
+  Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100),
   manual(new OUTbool(id, "manual", "Manual",false,"black",true)) { //TODO-213 handle case of valid topics but not in a module
   outputs.push_back(manual); // Note push_back as dont change outputs[0] being the output result.
 }
 
-void Control_Sonoff::dispatchTwig(const String &topicControlId, const String &topicTwig, const String &payload, bool isSet) {
-  if (topicControlId == id) { // matches this control
-    if (topicTwig == "out/cycle") {
+void Control_Sonoff::dispatch(System_Message &msg) {
+  if (msg.module() == id) {
+    if (msg.leaf() == "out/cycle") {
       // If cycling state then also set to manual if not already
       if (!manual->value) {
-        manual->set(true); // will also send it if changed
-        manual->writeValueToFSandEcho(manual->id, manual->StringValue());
+        manual->set(true); // will also send it if changed - TODO-210 should this write to FS as well?
       }
     }
-    Control_Hysterisis::dispatchTwig(topicControlId, topicTwig, payload, isSet); // Pass on to normal handle of manual - not clear if it writes out/on to FS
   }
+  Control_Hysteresis::dispatch(msg); // Pass on to normal handle of manual - not clear if it writes out/on to FS
 }
 
 void Control_Sonoff::act() {
   // Only propogate changes to output[0] if !manual 
   if (!(manual->value)) {
-    Control_Hysterisis::act();
+    Control_Hysteresis::act();
   }
 }
 
@@ -91,8 +90,8 @@ void setup() {
   // Create a button, and wire its single and long clicks to the control.
   Sensor_Button* button = new Sensor_Button("button", "Button", BUILTIN_BUTTON, DEFAULT_button_button_color);
   frugal_iot.buttons->add(button);
-  button->longClick->wireTo(frugal_iot.messages->setPath("controlhysterisis/manual/cycle")); // Value sent is "1" so goes into manual
-  button->singleClick->wireTo(frugal_iot.messages->setPath("controlhysterisis/out/cycle"));
+  button->longClick->wireTo(frugal_iot.messages->setPath("controlhysteresis/manual/cycle")); // Value sent is "1" so goes into manual
+  button->singleClick->wireTo(frugal_iot.messages->setPath("controlhysteresis/out/cycle"));
   
 
   // Dont change below here - should be after setup the actuators, controls and sensors

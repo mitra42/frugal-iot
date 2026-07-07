@@ -29,7 +29,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.0.22
+//     Frugal-IoT@^0.1.0
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -151,7 +151,7 @@
 
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
-// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
 // board_build.partitions = min_spiffs.csv
 // build_flags = 
     // Default SDA=33 SCL=35 avoid TX=39 RX=37 SPI 7,9,11,12 boot=0 and flashing=9-14,esp 11, 15-16 iff uses 32Mhz xtal; 39,40 iff use jtag debugging
@@ -174,7 +174,7 @@
 
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
-// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
 // board_build.partitions = min_spiffs.csv
 // build_flags = 
     // Default SDA=33 SCL=35 avoid TX=39 RX=37 SPI 7,9,11,12 boot=0 and flashing=9-14,esp 11, 15-16 iff uses 32Mhz xtal; 39,40 iff use jtag debugging
@@ -200,12 +200,36 @@
 
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
-// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
 // board_build.partitions = min_spiffs.csv
+
+// This is a test unit (for WeDoo), generic C3, 
+#endif // ARDUINO_LOLIN_S2_MINI
+
+#ifdef ARDUINO_ESP32C3_DEV
+// platform = ${common.platform_esp32}
+// board = esp32-c3-devkitm-1 ; defines ARDUINO_ESP32C3_DEV
+// board_build.partitions = min_spiffs.csv
+// build_flags = 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "c3_wedoo"
+#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)#define SYSTEM_POWER_DEBUG
+// #define SENSOR_SOIL_PIN 4
+#define ARDUINO_USB_MODE 1
+#define ARDUINO_USB_CDC_ON_BOOT 1
+#define SENSOR_SHT_3v3_PIN 0
+    // SDA=8 SCL=9(grey) is the standard for esp32-c3-devkitm-1 but 8 is LED, so override with I2C_SDA and I2C_SCL
+#define I2C_WIRE Wire
+#define I2C_SDA 1
+#define I2C_SCL 2
+#define SENSOR_SHT_0v_PIN 3
+#define SENSOR_DS18B20_3v3_PIN 6
+#define SENSOR_DS18B20_PIN 5
+#define SENSOR_DS18B20_0v_PIN 7
 
 // ===== LORA BOARDS - ALL ESP32 ======================================
 
-#endif // ARDUINO_LOLIN_S2_MINI
+#endif // ARDUINO_ESP32C3_DEV
 
 #ifdef ARDUINO_TTGO_LoRa32_v21new
 // platform = ${common.platform_esp32}

@@ -1,0 +1,65 @@
+/* Manage MQTT higher level 
+   Advertise in a way that allows a client to discover the nodes from knowing the project
+ 
+   Periodically (SYSTEM_DISCOVERY_S seconds) send node name on project  e.g  "dev/developers/" = "node1"
+  At startup send a YAML string that describes this node and all sensors actuators
+
+  Required SYSTEM_DISCOVERY_S
+  Optional SYSTEM_DISCOVERY_DEBUG
+  Optional *_WANT and *ADVERTISEMENT for each sensor and actuator
+
+  TODO make this into a class ! 
+
+*/
+
+#include "_settings.h"
+
+#ifndef SYSTEM_DISCOVERY_S
+  #define SYSTEM_DISCOVERY_S 30 // quick discovery every 30 seconds
+#endif
+
+#include <Arduino.h>
+#include "system/discovery.h"
+#include "actuator/actuator.h"
+#include "sensor/sensor.h"
+#include "control/control.h"
+#include "system/frugal.h"
+#include "misc.h"
+#include "system/frugal.h" // for frugal_iot
+
+
+System_Discovery::System_Discovery()
+: System_Base("discovery", "Discovery"),
+   timer_index(frugal_iot.powercontroller->timer_next())
+{ }
+
+void System_Discovery::quickAdvertise() {
+    frugal_iot.messages->send(projectTopic, frugal_iot.nodeid, MQTT_DONT_RETAIN, MQTT_QOS_ATLEAST1); // Don't RETAIN as other nodes also broadcasting to same topic
+}
+
+  // Tell broker what I've got at start (has to be before quickAdvertise; after sensor & actuator*::setup so can't be inside xDiscoverSetup
+  // Relying on short messages from modules instead of large message which won't go thru LoRaMesher
+  void System_Discovery::fullAdvertise() {
+    //heap_print(F("Discovery::fullAdvertise before"));
+    frugal_iot.discover();
+    //heap_print(F("Discovery::fullAdvertise after"));
+    doneFullAdvertise = true;
+  }
+
+// Done once after WiFi first connects
+void System_Discovery::setup() {
+  // Nothing to read from disk so not calling readConfigFromFS 
+  projectTopic = frugal_iot.org + "/" + frugal_iot.project;// e.g. "dev/developers"
+}
+
+void System_Discovery::infrequently() { 
+  if (frugal_iot.powercontroller->timer_expired(timer_index)) {
+    if ((!doneFullAdvertise)) { // (&& frugal_iot.canMQTT()) - should be able to do this over LoRaMesher
+      // Can queue these up even before MQTT connected as will be sent when connects
+      fullAdvertise();
+    } 
+    // Even if MQTT down (no WiFi or LoRa) queue up one of these to send when reconnect so UX knows we exist
+    quickAdvertise(); // Send info about this node to server (on timer)
+    frugal_iot.powercontroller->timer_set(timer_index, SYSTEM_DISCOVERY_S);
+  }
+}

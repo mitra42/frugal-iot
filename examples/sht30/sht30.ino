@@ -7,7 +7,7 @@
 // defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "Frugal-IoT.h"
 
-#ifdef SYSTEM_OLED_WANT
+#ifdef ACTUATOR_OLED_WANT
   #include "control_oled_sht.h" // Custom display handler
 #endif
 
@@ -45,11 +45,11 @@ void setup() {
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
 
   // If required, add a control - this is just an example
-  Control_Hysterisis* cb = new Control_Hysterisis("controlhysteresis", "Control", 50, 1, 0, 100);
+  Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
-  #ifdef SYSTEM_OLED_WANT
+  #ifdef ACTUATOR_OLED_WANT
     Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED");
     frugal_iot.controls->add(cos);
     cos->temperature->wireTo(frugal_iot.messages->path("sht/temperature"));

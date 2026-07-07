@@ -53,7 +53,7 @@
 #if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
-#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)
+#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)  || defined(SENSOR_GPS_DEBUG)
   #define SENSOR_DEBUG // Only used for ANY_DEBUG below
 #endif
 
@@ -63,7 +63,7 @@
 #if defined(ACTUATOR_RELAY_DEBUG) || defined(ACTUATOR_LEDBUILTIN_DEBUG)
   #define ACTUATOR_DIGITAL_DEBUG
 #endif
-#if defined(ACTUATOR_DIGITAL_DEBUG) || defined(ACTUATOR_LCD_DEBUG)
+#if defined(ACTUATOR_DIGITAL_DEBUG) || defined(ACTUATOR_LCD_DEBUG) || defined(ACTUATOR_OLED_DEBUG) 
   #define ACTUATOR_DEBUG
 #endif
 
@@ -81,11 +81,11 @@
 #if defined(CONTROL_LOGGERFS_DEBUG) || defined(CONTROL_GSHEETS_DEBUG)
   #define CONTROL_LOGGER_DEBUG 
 #endif
-#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_LOGGER_DEBUG) 
+#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERESIS_DEBUG) || defined(CONTROL_LOGGER_DEBUG) 
   #define CONTROL_DEBUG
 #endif
 // TO_ADD_SYSTEM - there is no class hierarchy
-#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_OLED_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG)
+#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG)
   #define SYSTEM_DEBUG
 #endif
 
@@ -128,7 +128,7 @@
 
 // Define boards which have LoRa and should include LoRaMesher automatically
 // was defined(SYSTEM_LORAMESHER_FREQUENCY) // but that is a touch tricky to convert for arduino IDE
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_T_Beam)
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_T_Beam) || defined(ARDUINO_heltec_wifi_lora_32_V4)
   #define SYSTEM_LORAMESHER_WANT
 #endif
 
@@ -146,8 +146,8 @@
 #define SYSTEM_WIFI_WANT  // currently always wanted
 
 // Define boards which have built in OLED and should include automatically
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(OLED_SDA)
-  #define SYSTEM_OLED_WANT
+#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V32) || defined(ARDUINO_heltec_wifi_lora_32_V4) || defined(OLED_SDA)
+  #define ACTUATOR_OLED_WANT
 #endif
 
 #if defined(ARDUINO_heltec_wifi_lora_32_V3)
@@ -173,11 +173,17 @@
     // Cant get it to work on this socket, read somewhere about board surgery (resistor removal or addition) required but cant find the reference now
     //#define I2C_SDA SDA1 // 10
     //#define I2C_SCL SCL1  // 21
-  #else // confirmed for ARDUINO_TTGO_LoRa32_v2, ARDUINO_TTGO_LoRa32_v21new
+  #else // confirmed for ARDUINO_TTGO_LoRa32_v2, ARDUINO_TTGO_LoRa32_v21new, ARDUINO_LOLIN_S2_MINI
     // Use system defined ones
-    #define I2C_WIRE Wire
-    #define I2C_SDA SDA
-    #define I2C_SCL SCL
+    #ifndef I2C_WIRE
+      #define I2C_WIRE Wire
+    #endif
+    #ifndef I2C_SDA
+     #define I2C_SDA SDA
+    #endif
+    #ifndef I2C_SCL
+      #define I2C_SCL SCL
+    #endif
   #endif
 #endif
 

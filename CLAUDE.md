@@ -1,7 +1,7 @@
 # Frugal-IoT Library
 
 A platform for affordable, easily built sensor networks running on ESP32/ESP8266 microcontrollers.
-Library version: 0.0.22. MIT licence. Author: Mitra Ardron.
+Library version: 0.1.0. MIT licence. Author: Mitra Ardron.
 
 Wiki: https://github.com/mitra42/frugal-iot/wiki
 Repo: https://github.com/mitra42/frugal-iot
@@ -10,7 +10,7 @@ Repo: https://github.com/mitra42/frugal-iot
 
 Every example `.ino` file must work in **both**:
 - **Arduino IDE** — open the `.ino` directly; dependencies installed via Library Manager
-- **PlatformIO** — referenced via `lib_deps = Frugal-IoT@^0.0.22` in `platformio.ini`
+- **PlatformIO** — referenced via `lib_deps = Frugal-IoT@^0.1.0` in `platformio.ini`
 
 Each example directory contains a `platform.h` file alongside the `.ino`. This file is
 **auto-generated** from the example's `platformio.ini` by running `scripts/prerelease.bash`
@@ -31,11 +31,15 @@ Frugal-IoT/
 ├── src/
 │   ├── _settings.h        # Compile-time defaults and guards
 │   ├── defaults.h         # Default values for all settings
-│   ├── system_frugal.h/cpp   # Main controller class (System_Frugal)
-│   ├── system_*.h/cpp        # WiFi, MQTT, OTA, power, FS, I2C, SPI, time, watchdog…
-│   ├── sensor_*.h/cpp        # One file pair per sensor type
-│   ├── actuator_*.h/cpp      # LED, digital output, OLED
-│   └── control_*.h/cpp       # Logic blocks (hysteresis, logger, OLED display, Google Sheets…)
+│   ├── misc.h/cpp         # Shared helpers (e.g. StringF)
+│   ├── system/            # Infrastructure: frugal (System_Frugal), wifi, mqtt, ota, power,
+│   │                       #   fs, i2c, spi, time, watchdog, base, group, io, message, discovery…
+│   ├── sensor/            # One file pair per sensor type (sht, dht, ht, soil, battery, bh1750,
+│   │                       #   loadcell, ds18b20, ms5803, ens160aht21, button, analog, float,
+│   │                       #   uint16, health, gps, sensor [base class]…)
+│   ├── actuator/          # LED, digital output, OLED, LCD (actuator.h is the base class)
+│   └── control/           # Logic blocks (hysteresis, logger, logger_fs, blinken, carousel,
+│                           #   oled, oled_loramesher, gsheets, control.h [base class]…)
 ├── examples/              # One subdirectory per example application
 │   ├── sht30/             # Temperature + humidity with optional OLED
 │   ├── climate/           # Dual-channel hysteresis control (heating + humidifier relays)
@@ -47,10 +51,13 @@ Frugal-IoT/
 │   ├── blinken/           # LED blink patterns
 │   ├── datalogger/        # LittleFS data logging
 │   ├── ensaht/            # ENS160 air quality + AHT21
+│   ├── gps/               # GPS location via NMEA serial module + OLED
 │   ├── gsheets/           # Google Sheets integration
+│   ├── lcd_sht/           # HD44780 LCD showing a remote SHT node's readings over MQTT
 │   ├── lilygohigrow/      # Plant watering (LilyGo HiGrow)
 │   ├── ms5803/            # MS5803 pressure sensor
 │   ├── power/             # Power mode demonstration
+│   ├── remotedisplay/     # OLED showing a remote SHT node's readings over MQTT
 │   └── sonoff/            # Sonoff relay module
 └── test/
 ```
@@ -68,7 +75,11 @@ Frugal-IoT uses four component groups managed by `System_Frugal`:
 | `frugal_iot.controls` | `Control_*` | Logic: transform/route signals |
 | `frugal_iot.system` | `System_*` | Infrastructure (WiFi, MQTT, OTA…) |
 
-All components inherit from `System_Base` → `System_Group` → specific base class.
+All components inherit from `System_Base` — `Sensor` via the intermediate `System_SensorActuator`,
+`Actuator` and `Control` directly. `System_Group` is a separate `System_Base` subclass used as a
+*container*: `frugal_iot.sensors`, `frugal_iot.actuators`, `frugal_iot.controls` and `frugal_iot.system`
+are each a `System_Group` holding a list of components and forwarding `setup()`/`loop()`/`dispatch()`
+to each member.
 
 ## System_Frugal API
 
@@ -106,48 +117,103 @@ frugal_iot.configure_power(type, cycle_ms, wake_ms);
 | `Power_Modem` | Modem sleep (minimal saving) |
 | `Power_Deep` | Deep sleep — slow to reconnect; use cycle_ms ≥ 60 000 |
 
-## Signal Wiring (Message Bus)
+## IO Classes (IN / OUT) — how sensors, actuators and controls actually connect
 
-Components communicate via a path-based message bus, not direct pointers.
+Every value a component reads or writes is a member object, not a plain field — an `IN` (input)
+or `OUT` (output), both defined in `system/io.h`. This is the mechanism the rest of this doc calls
+"signal wiring": `wireTo()`, MQTT publish, and `dispatch()` are all implemented on `IO`, not
+hand-rolled per component.
+
+```
+IO (system/io.h)          — sensorId, id, name, topicTwig ("sht/temperature"), color, wiredPath…
+├── IN                    — subscribes wiredPath on the message bus when wireTo() is called
+│   ├── INfloat           — value + min/max/width, e.g. a temperature reading or setpoint
+│   ├── INbool
+│   ├── INuint16
+│   ├── INcolor
+│   └── INtext
+└── OUT                   — publishes to its own topic AND pushes to wiredPath when set()
+    ├── OUTfloat
+    ├── OUTbool
+    ├── OUTuint16
+    └── OUTtext
+```
+
+Which group a component uses depends on its role:
+
+| Base class | Holds | Example |
+|------------|-------|---------|
+| `Sensor` (`sensor/sensor.h`) | `std::vector<OUT*> outputs` | `Sensor_HT` has `OUTfloat* temperature; OUTfloat* humidity;` |
+| `Actuator` (`actuator/actuator.h`) | `std::vector<IN*> inputs` | `Actuator_Digital` has `INbool* input` |
+| `Control` (`control/control.h`) | both `inputs` and `outputs` | `Control_Hysteresis` — 4 `IN`s (now/greater/limit/hysteresis), 1 `OUTbool` (out) |
+
+A concrete `IN`/`OUT` is constructed with `(sensorId, id, name, ..., color, wireable)` — `id` becomes
+the trailing path segment (`topicTwig = "<sensorId>/<id>"`, e.g. `sht/temperature`), and `wireable`
+controls whether the UX offers rewiring it at all.
+
+**How wiring and dispatch actually flow:**
+
+1. `wireTo(path)` on an `IN` calls `frugal_iot.messages->subscribe(path)` — it does **not** talk to
+   the other `IO` directly. `OUT::wireTo()` just records `wiredPath`; it does not subscribe (that
+   would create a useless loopback since an `OUT` never receives).
+2. When an `OUT` changes (e.g. `((OUTfloat*)temperature)->set(21.5)`), `set()` both `send()`s to its
+   own topic (`sht/temperature`) and `sendWired()`s directly to `wiredPath` — locally looped back if
+   `wiredPath` is on this node, or published remotely via MQTT otherwise.
+3. Every incoming `System_Message` is cascaded top-down: `System_Frugal` → the relevant `System_Group`
+   (`sensors`/`actuators`/`controls`) → each component's `dispatch()` → each of its `IN`/`OUT`
+   objects' `dispatch()`. `Control::dispatch()` (`control/control.cpp`) is the canonical example: it
+   runs every `output->dispatch(msg)` (handles `.../wired` topic changes), then every
+   `input->dispatch(msg)` (handles `.../wired`, `.../value`, `.../min`, `.../max`, `.../cycle`
+   suffixes via the typed subclass's `convertAndSet()`), and if any input actually changed value it
+   calls `act()` — the method a `Control` subclass overrides to react (e.g.
+   `Control_Hysteresis::act()` reads `inputs[0..3]->floatValue()`/`boolValue()` and calls
+   `((OUTbool*)outputs[0])->set(...)`).
+4. `id`/`sensorId` matching happens inside `dispatch()` itself (`msg.module() == sensorId`), so it's
+   safe to call `dispatch()` on every `IN`/`OUT` for every message — most just no-op.
+
+**Wiring one component to another** — either at construction/setup time in code, or later at runtime
+via MQTT (`.../wired` topic), or from the captive portal / LittleFS config:
 
 ```cpp
-// Wire a sensor output to a control input:
+// Wire a sensor output to a control input (path() returns this node's own topic path):
 cc->inputs[0]->wireTo(sht->temperature->path());
 
-// Wire a control output to an actuator's "set" topic:
+// Wire a control output to an actuator's "set" topic (setPath creates a writable endpoint):
 cc->outputs[0]->wireTo(frugal_iot.messages->setPath("heating/on"));
 ```
 
-Paths follow the pattern `<device_id>/<leaf>`. `setPath` creates a writable endpoint;
-`path` creates a readable one.
+Paths follow the pattern `<device_id>/<leaf>`. `setPath` creates a writable endpoint; `path` creates
+a readable one — both just build the topic string, the actual subscribe only happens via `IN::wireTo()`.
 
 ## Available Sensors
 
 | Class | File | Measures |
 |-------|------|---------|
-| `Sensor_SHT` | sensor_sht | Temperature + humidity (SHT30/SHT40/SHT85) |
-| `Sensor_DHT` | sensor_dht | Temperature + humidity (DHT11/22) |
-| `Sensor_Soil` | sensor_soil | Soil moisture (capacitive) |
-| `Sensor_Battery` | sensor_battery | Battery voltage |
-| `Sensor_BH1750` | sensor_bh1750 | Light (lux) |
-| `Sensor_LoadCell` | sensor_loadcell | Weight via HX711 |
-| `Sensor_DS18B20` | sensor_ds18b20 | 1-Wire temperature |
-| `Sensor_MS5803` | sensor_ms5803 | Pressure + temperature |
-| `Sensor_ENS160AHT21` | sensor_ens160aht21 | Air quality + temp/humidity |
-| `Sensor_Button` | sensor_button | Button press events |
-| `Sensor_Analog` | sensor_analog | Raw ADC |
-| `Sensor_Float` | sensor_float | Arbitrary float value |
-| `Sensor_UInt16` | sensor_uint16 | Arbitrary uint16 value |
-| `Sensor_Health` | sensor_health | Device health metrics |
+| `Sensor_HT` | sensor/ht | Base class for temp+humidity sensors (`OUTfloat* temperature/humidity`) — not instantiated directly |
+| `Sensor_SHT` | sensor/sht | Temperature + humidity (SHT30/SHT40/SHT85); extends `Sensor_HT` |
+| `Sensor_DHT` | sensor/dht | Temperature + humidity (DHT11/22); extends `Sensor_HT` |
+| `Sensor_Soil` | sensor/soil | Soil moisture (capacitive) |
+| `Sensor_Battery` | sensor/battery | Battery voltage |
+| `Sensor_BH1750` | sensor/bh1750 | Light (lux) |
+| `Sensor_LoadCell` | sensor/loadcell | Weight via HX711 |
+| `Sensor_DS18B20` | sensor/ds18b20 | 1-Wire temperature |
+| `Sensor_MS5803` | sensor/ms5803 | Pressure + temperature |
+| `Sensor_ENS160AHT21` | sensor/ens160aht21 | Air quality + temp/humidity |
+| `Sensor_Button` | sensor/button | Button press events |
+| `Sensor_Analog` | sensor/analog | Raw ADC |
+| `Sensor_Float` | sensor/float | Arbitrary float value |
+| `Sensor_UInt16` | sensor/uint16 | Arbitrary uint16 value |
+| `Sensor_Health` | sensor/health | Device health metrics |
+| `Sensor_GPS` | sensor/gps | GPS location (lat/lon/altitude/speed/course/hdop/satellites/UTC time) via NMEA serial module |
 
 ## Available Actuators
 
-| Class | Notes |
-|-------|-------|
-| `Actuator_LEDBuiltin` | Built-in LED; added automatically on supported boards |
-| `Actuator_Digital` | Any digital output (relay, LED) |
-| `Actuator_OLED` | SSD1306 OLED; added automatically on supported boards |
-| `Actuator_LCD` | HD44780 LCD via I2C backpack; requires `ACTUATOR_LCD_WANT` |
+| Class | File | Notes |
+|-------|------|-------|
+| `Actuator_LEDBuiltin` | actuator/ledbuiltin | Built-in LED; added automatically on supported boards |
+| `Actuator_Digital` | actuator/digital | Any digital output (relay, LED) |
+| `Actuator_OLED` | actuator/oled | SSD1306 OLED; added automatically on supported boards |
+| `Actuator_LCD` | actuator/lcd | HD44780 LCD via I2C backpack; requires `ACTUATOR_LCD_WANT` |
 
 ### Actuator_LCD
 
@@ -173,14 +239,16 @@ The `message` input accepts a `String`; lines are split on `\n` (ASCII 10). Line
 
 ## Available Controls
 
-| Class | Notes |
-|-------|-------|
-| `Control_Hysterisis` | Single-channel on/off with deadband |
-| `Control_Blinken` | LED blink pattern generator |
-| `Control_OLED` | Base class for custom OLED displays |
-| `Control_LoggerFS` | LittleFS CSV data logger |
-| `Control_Logger` | Serial logger |
-| `Control_GSheets` | Push readings to Google Sheets |
+| Class | File | Notes |
+|-------|------|-------|
+| `Control_Hysteresis` | control/hysteresis | Single-channel on/off with deadband |
+| `Control_Blinken` | control/blinken | LED blink pattern generator |
+| `Control_Carousel` | control/carousel | Cycles through a list of child `Control*`s, selected via an `INuint16` |
+| `Control_OLED` | control/oled | Base class for custom OLED displays |
+| `Control_Oled_LoRaMesher` | control/oled_loramesher | `Control_OLED` subclass showing LoRa mesh status + battery |
+| `Control_LoggerFS` | control/logger_fs | LittleFS CSV data logger |
+| `Control_Logger` | control/logger | Serial logger |
+| `Control_GSheets` | control/gsheets | Push readings to Google Sheets |
 
 ## Debug Flags
 
@@ -248,7 +316,7 @@ void setup() {
   frugal_iot.actuators->add(new Actuator_Digital("heating", "Heating", HEATING_PIN, "red"));
   frugal_iot.actuators->add(new Actuator_Digital("humidifier", "Humidifier", HUMIDIFIER_PIN, "blue"));
 
-  Control_Hysterisis* ch = new Control_Hysterisis("controlheat", "Heat Control", 22.0, 1.0, 0, 100);
+  Control_Hysteresis* ch = new Control_Hysteresis("controlheat", "Heat Control", 22.0, 1.0, 0, 100);
   frugal_iot.controls->add(ch);
   ch->inputs[0]->wireTo(sht->temperature->path());
   ch->outputs[0]->wireTo(frugal_iot.messages->setPath("heating/on"));
@@ -267,7 +335,7 @@ LoRa support is enabled automatically on boards that define `SYSTEM_LORAMESHER_W
 
 ```ini
 lib_deps =
-    Frugal-IoT@^0.0.22
+    Frugal-IoT@^0.1.0
     jaimi5/LoRaMesher
     adafruit/Adafruit SSD1306@^2.5.0
     adafruit/Adafruit GFX Library@^1.10.13

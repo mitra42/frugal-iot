@@ -4,7 +4,7 @@
 #include "_settings.h"
 #ifdef ACTUATOR_LCD_WANT
 
-#include "control.h"
+#include "control/control.h"
 
 class Control_LCD_SHT : public Control {
   public:
