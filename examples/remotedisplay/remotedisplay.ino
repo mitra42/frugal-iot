@@ -1,10 +1,8 @@
 /* 
- *  Frugal IoT example - SHT30 temperature and humidity sensor
+ *  Frugal IoT example - Remote Display
  * 
- * Optional: SENSOR_SHT_ADDRESS - defaults to 0x44, (note the D1 shields default to 0x45)
  */
 
-// defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "Frugal-IoT.h"
 
 #ifdef ACTUATOR_OLED_WANT
