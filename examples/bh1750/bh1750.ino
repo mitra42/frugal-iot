@@ -36,10 +36,12 @@ void setup() {
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
   
   // Add sensors, actuators and controls
-  frugal_iot.sensors->add(new Sensor_BH1750("lux", "Light Sensor", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true, SENSOR_BH1750_POWER3v3_PIN, SENSOR_BH1750_POWER0_PIN ));
+  frugal_iot.sensors->add(new Sensor_BH1750("lux", "Light Sensor", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true))
+  ->powerPins(SENSOR_BH1750_POWER3v3_PIN, SENSOR_BH1750_POWER0_PIN);
+
 
   // If required, add a control - this is just an example
-  Control_Hysterisis* cb = new Control_Hysterisis("controlhysteresis", "Control", 50, 1, 0, 100);
+  Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
