@@ -147,8 +147,13 @@ void Sensor_GPS::readValidateConvertSet() {
 
     if (_gps.time.isValid()) {
       char timeStr[10];
+      // hour()/minute()/second() are always 0-99, but GCC's range analysis assumes
+      // up to 255 and warns that timeStr could theoretically be too small.
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wformat-truncation"
       snprintf(timeStr, sizeof(timeStr), "%02d:%02d:%02d",
                _gps.time.hour(), _gps.time.minute(), _gps.time.second());
+      #pragma GCC diagnostic pop
       utc_time->set(String(timeStr));
     }
 
