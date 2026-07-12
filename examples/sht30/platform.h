@@ -23,13 +23,13 @@
 
 // [platformio]
 // name: Frugal-IoT SHT30
-// description: Frugal IoT - Temperature and Humidity Sensor with SHT30
+// description: Frugal IoT - Temperature and Humidity Sensor with SHT3x or SHT4x
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.0
+//     Frugal-IoT@^0.1.1
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
 
@@ -175,9 +175,45 @@
 #define SYSTEM_OTA_SUFFIX "nodemcu-32s"
 // board_build.partitions = min_spiffs.csv
 
+// An affordable C3 with a small HW675 OLED 
+#endif // ARDUINO_NodeMCU_32S
+
+#ifdef ARDUINO_LOLIN_C3_PICO
+// platform = ${common.platform_esp32}
+// board = lolin_c3_mini ; use c3_mini board defs - but note define below which is special cased
+// board_build.variant = lolin_c3_pico
+// build_flags = 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "c3_oled_72x40"
+#define ARDUINO_C3_OLED_72x40 // if using the C3/small OLED board define here#define ACTUATOR_OLED_WANT
+#define ACTUATOR_OLED_DEBUG // Still debugging this one// lib_deps = 
+//     ${common.lib_deps}  
+//     adafruit/Adafruit SSD1306@^2.5.0
+//     adafruit/Adafruit GFX Library@^1.10.13
+// board_build.partitions = min_spiffs.csv
+
+// This is the tiny supermini board from Tencent (and clones)
+#endif // ARDUINO_LOLIN_C3_PICO
+
+#ifdef ARDUINO_ESP32C3_DEV
+// platform = ${common.platform_esp32}
+// board = esp32-c3-devkitm-1 ; defines ARDUINO_ESP32C3_DEV
+// board_build.partitions = min_spiffs.csv
+// board_build.f_cpu = 160000000L
+// build_flags =
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "supermini-4x"
+#define ARDUINO_USB_MODE 1
+#define ARDUINO_USB_CDC_ON_BOOT 1
+    // SDA=8 SCL=9(grey) is the standard for esp32-c3-devkitm-1 but 8 is LED, so override with I2C_SDA and I2C_SCL
+#define I2C_SDA 6
+#define I2C_SCL 5
+#define SENSOR_SHT_POWER3v3_PIN 7
+#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
+ 
 // ==== ESP8266 boards ================================================
 
-#endif // ARDUINO_NodeMCU_32S
+#endif // ARDUINO_ESP32C3_DEV
 
 #ifdef ARDUINO_ESP8266_WEMOS_D1MINIPRO
 // platform = espressif8266
@@ -205,7 +241,8 @@
 // build_flags =
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "d1_mini_4x"
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)// ===== LORA BOARDS - ALL ESP32 ======================================
+#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
+// ===== LORA BOARDS - ALL ESP32 ======================================
 
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 

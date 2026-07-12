@@ -5,25 +5,15 @@
 */
 
 // PlatformIO Project Configuration File
-//
-//   Build options: build flags, source filter
-//   Upload options: custom upload port, speed and extra flags
-//   Library options: dependencies, extra library storages
-//   Advanced options: extra scripting
-//
-// Please visit documentation for the other options and examples
-// https://docs.platformio.org/page/projectconf.html
+// Docs for this file; https://docs.platformio.org/page/projectconf.html
 // 
 // Note the board name is defined in e.g. ~/.platformio/platforms/espressif32/boards/ttgo-lora32-v21.json
 // and variants are in ~/.platformio/packages/framework-arduinoespressif32/variants/
 // or ~/.platformio/packages/framework-arduinoespressif8266/variants
 
-
-// custom common options
-
 // [platformio]
-// name: Frugal-IoT SHT30
-// description: Frugal IoT - Temperature and Humidity Sensor with SHT30
+// name: Frugal-IoT BH1750
+// description: Frugal IoT - Light Sensor with BH1750
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
@@ -71,12 +61,12 @@
 // #define CONTROL_BLINKEN_DEBUG
 // #define CONTROL_CLIMATE_DEBUG
 // #define CONTROL_LOGGERFS_DEBUG
-// #define SENSOR_BH1750_DEBUG
+#define SENSOR_BH1750_DEBUG
 // #define SENSOR_DHT_DEBUG
 // #define SENSOR_ENSAHT_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
-#define SENSOR_SHT_DEBUG
+// #define SENSOR_SHT_DEBUG
 // #define SENSOR_SOIL_DEBUG
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
@@ -98,7 +88,7 @@
 // build_flags_library = 
     // Specific to SHT 
 // #define SENSOR_SHT_ADDRESS 0x45 ; 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
-#define SYSTEM_OTA_PREFIX "sht30"
+#define SYSTEM_OTA_PREFIX "bh1750"
 
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
@@ -151,20 +141,11 @@
 
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
-// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI
+// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI    ; defines ARDUINO_LOLIN_S2_MINI
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "s2_mini"
 
-#endif // ARDUINO_LOLIN_S2_MINI
-
-#ifdef ARDUINO_LOLIN_S2_MINI
-// platform = ${common.platform_esp32}
-// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI
-// build_flags = 
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "s2_mini_4x"
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 #endif // ARDUINO_LOLIN_S2_MINI
 
 #ifdef ARDUINO_NodeMCU_32S
@@ -196,16 +177,7 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "d1_mini"
 
-// As used at Umah Pupa
-#endif // ARDUINO_ESP8266_WEMOS_D1MINI
-
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
-// board = d1_mini
-// platform = espressif8266
-// build_flags =
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "d1_mini_4x"
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)// ===== LORA BOARDS - ALL ESP32 ======================================
+// ===== LORA BOARDS - ALL ESP32 ======================================
 
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
