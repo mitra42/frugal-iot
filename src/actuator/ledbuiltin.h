@@ -57,7 +57,8 @@
 // Oddity - some digital boards are inverted 
 // TODO-141 reconfirm this  - including checking definition of HIGH and LOW 
 // Also check which pin SONOFF is on and make sure set somewhere as LED_BUILTIN probably wrong
-#if defined(ARDUINO_ESP8266_SONOFF_BASIC) || defined(ESP8266_D1) 
+// ARDUINO_ESP32C3_DEV is defined on SUPERMINI, but possibly other boards as well - may need to define something more spexific in platform.ini e.g. SUPERMINI
+#if defined(ARDUINO_ESP8266_SONOFF_BASIC) || defined(ESP8266_D1) || defined(ARDUINO_ESP32C3_DEV)
   #define ACTUATOR_LEDBUILTIN_INVERT 
 #endif
 
