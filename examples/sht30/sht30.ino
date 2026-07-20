@@ -7,7 +7,7 @@
 // defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini
 #include "Frugal-IoT.h"
 
-#ifdef SYSTEM_OLED_WANT
+#ifdef ACTUATOR_OLED_WANT
   #include "control_oled_sht.h" // Custom display handler
 #endif
 
@@ -26,7 +26,8 @@ void setup() {
   // Power_Loop= awake all the time; 
   // Power_Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
   //frugal_iot.configure_power(Power_Deep, 600000, 30000); // Take a reading every 10 mins deep sleep between
-  frugal_iot.configure_power(Power_Loop, 10000, 10000); // For debugging sensors - 10 second loop
+  frugal_iot.configure_power(Power_Deep, 40000, 30000); // Debugging 30 secs up, 10 secs Deep sleep
+  //frugal_iot.configure_power(Power_Loop, 10000, 10000); // For debugging sensors - 10 second loop
   
   // Encapsulate setting up and starting serial and read main config also checks power ok.
   // This has to happen AFTER battery and power are setup, and before mqtt and adding sensors actuators etc. 
@@ -42,14 +43,14 @@ void setup() {
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
   
   // Add sensors, actuators and controls
-  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
-
+  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true))
+    -> powerPins(SENSOR_SHT_POWER3v3_PIN, SENSOR_SHT_POWER0_PIN);
   // If required, add a control - this is just an example
-  Control_Hysterisis* cb = new Control_Hysterisis("controlhysteresis", "Control", 50, 1, 0, 100);
+  Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
-  #ifdef SYSTEM_OLED_WANT
+  #ifdef ACTUATOR_OLED_WANT
     Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED");
     frugal_iot.controls->add(cos);
     cos->temperature->wireTo(frugal_iot.messages->path("sht/temperature"));

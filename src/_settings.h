@@ -63,7 +63,7 @@
 #if defined(ACTUATOR_RELAY_DEBUG) || defined(ACTUATOR_LEDBUILTIN_DEBUG)
   #define ACTUATOR_DIGITAL_DEBUG
 #endif
-#if defined(ACTUATOR_DIGITAL_DEBUG) || defined(ACTUATOR_LCD_DEBUG)
+#if defined(ACTUATOR_DIGITAL_DEBUG) || defined(ACTUATOR_LCD_DEBUG) || defined(ACTUATOR_OLED_DEBUG) 
   #define ACTUATOR_DEBUG
 #endif
 
@@ -81,11 +81,11 @@
 #if defined(CONTROL_LOGGERFS_DEBUG) || defined(CONTROL_GSHEETS_DEBUG)
   #define CONTROL_LOGGER_DEBUG 
 #endif
-#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERISIS_DEBUG) || defined(CONTROL_LOGGER_DEBUG) 
+#if defined(CONTROL_BLINKEN_DEBUG) || defined(CONTROL_HYSTERESIS_DEBUG) || defined(CONTROL_LOGGER_DEBUG) 
   #define CONTROL_DEBUG
 #endif
 // TO_ADD_SYSTEM - there is no class hierarchy
-#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_OLED_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG)
+#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG)
   #define SYSTEM_DEBUG
 #endif
 
@@ -147,7 +147,7 @@
 
 // Define boards which have built in OLED and should include automatically
 #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V32) || defined(ARDUINO_heltec_wifi_lora_32_V4) || defined(OLED_SDA)
-  #define SYSTEM_OLED_WANT
+  #define ACTUATOR_OLED_WANT
 #endif
 
 #if defined(ARDUINO_heltec_wifi_lora_32_V3)

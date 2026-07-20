@@ -1,7 +1,7 @@
 #ifndef CONTROL_OLED_GPS_H
 #define CONTROL_OLED_GPS_H
 
-#include "control_oled.h"
+#include "control/oled.h"
 
 // Displays GPS fix data on the onboard SSD1306 OLED.
 // Wire each input to the matching Sensor_GPS output path in gps.ino (or main.cpp).

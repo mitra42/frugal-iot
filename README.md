@@ -11,4 +11,6 @@ It enables really simple applications to include a full range of functionality, 
 
 It works on an expanding variety of dev boards; with an expanding range of sensors, and in an expanding range of languages.
 
-But ... please see the [Wiki here](https://github.com/mitra42/frugal-iot/wiki), which - unlike this README is updated regularly. 
+But ... please see the [Wiki here](https://github.com/mitra42/frugal-iot/wiki), which - unlike this README is updated regularly.  
+
+CLAUDE.md can also be a good place for more structured description. 

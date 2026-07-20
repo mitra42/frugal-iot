@@ -21,10 +21,10 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.0.22
+//     Frugal-IoT@^0.1.1
 
 // lib_deps_lora = 
-//     Frugal-IoT@^0.0.22
+//     ${common.lib_deps}
     //Comment/Uncomment below two lines to switch between live and "new" version
     //jaimi5/LoRaMesher
 //     https://github.com/loramesher/LoRaMesher.git
@@ -53,8 +53,7 @@
 // #define SYSTEM_SD_WANT
 // #define SYSTEM_WIFI_SCANPERIOD 50000    ; Slow down scanning so can easier debug captive portal
     // Flags from other libraries
-// #define LORAMESHER_LOG_LEVEL 2          ; 0 is LOTS of debugging 2 is less
-// #define DEBUG_DNSSERVER
+#define LORAMESHER_LOG_LEVEL 2          ; 0 is LOTS of debugging 2 is less // 0 is LOTS of debugging 2 is less// #define DEBUG_DNSSERVER
     // Uncomment debug lines before as needed
 // #define ACTUATOR_LCD_DEBUG
 // #define CONTROL_BLINKEN_DEBUG
@@ -229,5 +228,6 @@
 // build_flags =
 //     -DCONFIG_ESP_INT_WDT_TIMEOUT_MS=2000
 //     -DCONFIG_ESP_TASK_WDT_TIMEOUT_S=10
+
 #endif // TODO_ESP32DEV
 

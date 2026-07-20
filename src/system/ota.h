@@ -1,0 +1,44 @@
+#ifndef SYSTEM_OTA_H
+#define SYSTEM_OTA_H
+
+#include <Arduino.h>
+
+#ifndef SYSTEM_OTA_S
+  // By default, check for updates once an hour - override in platformio.ini
+  #define SYSTEM_OTA_S 3600
+#endif // SYSTEM_OTA_S
+
+class System_OTA : public System_Base {
+  public:
+
+    System_OTA();
+    ~System_OTA();
+    void init(const String otaServerAddress, const String softwareVersion, const char* caCert);
+    void checkForUpdate(void);
+    void setup_after_wifi(void);
+    void maybe_ota(void);
+	  bool isOK() { return _isOK; }
+	  bool canRetry() { return _retryCount > 0; }
+	  bool checked() { return _checked; }
+	
+    friend void otaStartCB(void);
+    friend void otaProgressCB(int done, int size);
+    friend void otaEndCB(void);
+    friend void otaErrorCB(int errorCode);
+
+    void setup_after_mqtt_setup();
+    void infrequently() override;
+
+  private:
+    uint8_t timer_index;
+    bool _isOK;
+    bool _checked;
+    int _retryCount;
+    const char* _caCert;
+    String _otaServerAddress;
+    String _softwareVersion;
+    const String getOTApath();
+    void discover() override;
+};
+
+#endif // SYSTEM_OTA_H
