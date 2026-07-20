@@ -35,10 +35,9 @@
 #ifdef ESP32 // Not available on ESP8266 - have not yet searched for equivalents
   // Next three .h might or might not be needed
   #include "esp_pm.h"
-  #include "esp_timer.h"
   #include "esp_wifi.h"
   #include "esp_sleep.h"
-  #include "esp_timer.h"     // For esp_timer_get_time() — sleep-compensated microseconds since boot
+  #include <sys/time.h>      // For gettimeofday() — RTC-backed clock, survives deep sleep
   #include "driver/uart.h"   // To allow disabling UART
   // To allow printing task list - which doesnt work anyway!
   //#include "freertos/FreeRTOS.h"
@@ -84,7 +83,6 @@ void printTaskList() {
 #ifdef ESP32
   RTC_DATA_ATTR unsigned long wake_count = 0L; // If 1 per minute, uint_16 would just be 45 days
   // Timers stored in seconds; uint32_t rolls over at 136 years vs 49 days for millis-based unsigned long.
-  // esp_timer_get_time() is already compensated for deep sleep on IDF 5.x, so no offset needed.
   RTC_DATA_ATTR uint32_t timers[TIMER_LENGTH] = {0,0,0,0,0,0,0,0}; // Array used by entities - currently using max four (OTA, Discovery, time, Watchdog)
 #else
   uint32_t timers[TIMER_LENGTH] = {0,0,0,0}; // Array used by entities
@@ -325,8 +323,7 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
     #ifdef ESP32
       if (forceMode & DeepSleepBit) {
         if (forceMode & WakeOnTimerBit) {
-          // millis() resets to 0 after deep sleep, but esp_timer_get_time() on IDF 5.x is
-          // already compensated for sleep duration — no offset needed.
+          // millis() and esp_timer_get_time() both reset to 0 after deep sleep - see sleepSafeSecs().
           esp_deep_sleep(sleep_millisecs * 1000UL);
           Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
         } else {  // Power_Panic
@@ -402,13 +399,20 @@ bool System_Power::maybeSleep() {
 }
 
 #ifdef ESP32
-  // sleepSafeSecs: microseconds from esp_timer_get_time() are already compensated for deep sleep
-  // on IDF 5.x (pioarduino stable), so no RTC offset needed.
+  // sleepSafeSecs: esp_timer_get_time() resets to 0 on every deep sleep wake (deep sleep is a
+  // full chip restart, and the ESP Timer counter lives in the digital domain that loses power).
+  // gettimeofday() is anchored to the RTC domain instead, which stays powered through deep sleep,
+  // so it keeps advancing across sleep/wake cycles regardless of wake source or sleep duration.
   uint32_t System_Power::sleepSafeSecs() {
-    return (uint32_t)(esp_timer_get_time() / 1000000ULL);
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint32_t)tv.tv_sec;
   }
-  // sleepSafeMillis derived from sleepSafeSecs to stay consistent across sleep boundaries.
+  // sleepSafeMillis: same RTC-backed clock as sleepSafeSecs(), not millis() (which resets to 0
+  // on deep sleep and is on a different epoch than gettimeofday() anyway).
   unsigned long System_Power::sleepSafeMillis() {
-    return sleepSafeSecs() * 1000UL + (millis() % 1000UL);
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (unsigned long)tv.tv_sec * 1000UL + (unsigned long)(tv.tv_usec / 1000);
   }
 #endif

@@ -32,6 +32,7 @@
 #include <Arduino.h>
 #include "actuator/ledbuiltin.h"
 #include "actuator/digital.h"
+#include "misc.h" // for StringF
 
 #define ACTUATOR_LEDBUILTIN_WHITE "#FFFFFF"
 

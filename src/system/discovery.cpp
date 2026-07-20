@@ -53,7 +53,14 @@ void System_Discovery::setup() {
 }
 
 void System_Discovery::infrequently() { 
+    #ifdef SYSTEM_DISCOVERY_DEBUG
+      Serial.println("System_Discovery: infreq"); // Should trigger each periodic
+    #endif
+  
   if (frugal_iot.powercontroller->timer_expired(timer_index)) {
+    #ifdef SYSTEM_DISCOVERY_DEBUG
+      Serial.println("System_Discovery: timer");
+    #endif
     if ((!doneFullAdvertise)) { // (&& frugal_iot.canMQTT()) - should be able to do this over LoRaMesher
       // Can queue these up even before MQTT connected as will be sent when connects
       fullAdvertise();
