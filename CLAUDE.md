@@ -117,6 +117,66 @@ frugal_iot.configure_power(type, cycle_ms, wake_ms);
 | `Power_Modem` | Modem sleep (minimal saving) |
 | `Power_Deep` | Deep sleep — slow to reconnect; use cycle_ms ≥ 60 000 |
 
+### Timing across deep sleep
+
+Deep sleep is a full chip restart — only the RTC domain (RTC_SLOW_MEM/`RTC_DATA_ATTR`, and the RTC
+hardware counter) stays powered. Two clocks look similar but behave very differently across it:
+
+- `millis()` / `esp_timer_get_time()` — **reset to 0** on every deep-sleep wake (their counters live
+  in the digital domain, which loses power). `esp_timer_get_time()` only stays continuous across
+  *light* sleep, not deep sleep — there is no IDF-version exception to this.
+- `gettimeofday()` (`sys/time.h`) — anchored to the RTC domain, so it **keeps advancing** across deep
+  sleep (and any reset except a full power-on).
+
+`System_Power::sleepSafeSecs()`/`sleepSafeMillis()` (`system/power.h`/`power.cpp`) wrap
+`gettimeofday()` for exactly this reason — use them (or `timer_set()`/`timer_expired()`, which are
+built on them) for any interval that needs to survive deep sleep, never raw `millis()`. This bit a
+previous AI session, which wrote `sleepSafeSecs()` around `esp_timer_get_time()` with a comment
+claiming it was "already compensated for deep sleep" — it wasn't; fixed 2026-07-20.
+
+### Using a sleep-safe timer in a component
+
+Any `System_Base` subclass (sensor/actuator/control/system) that needs to do something every N
+seconds — but only that often, and correctly even across deep sleep — uses the timer slots on
+`frugal_iot.powercontroller` (`System_Power`, `system/power.h`). Pattern (see `system/ota.cpp`,
+`system/discovery.cpp`, `system/watchdog.cpp`, `system/time.cpp` for real examples):
+
+```cpp
+// 1. Acquire — once per component instance, in the constructor init-list. Do not call timer_next()
+//    anywhere else - there are only TIMER_LENGTH (8) slots process-wide (system/power.cpp), and
+//    each call permanently claims one for the lifetime of the device.
+MyThing::MyThing()
+: System_Base("mything", "My Thing"),
+  timer_index(frugal_iot.powercontroller->timer_next())
+{ }
+
+// 2. Test + set — typically in infrequently() (see below for why), not periodically() or loop().
+void MyThing::infrequently() {
+  if (frugal_iot.powercontroller->timer_expired(timer_index)) {
+    // ... do the infrequent work ...
+    frugal_iot.powercontroller->timer_set(timer_index, MYTHING_INTERVAL_S); // re-arm N seconds out
+  }
+}
+```
+
+- `timer_next()` returns an index into an `RTC_DATA_ATTR` array, so the armed time survives deep
+  sleep. A freshly-acquired timer defaults to 0, i.e. already expired — it fires on the first check
+  unless you call `timer_set()` up front to delay that.
+- `timer_expired(i)` compares against `sleepSafeSecs()`, so it works correctly regardless of sleep
+  mode; `timer_set(i, secs)` arms it for `secs` seconds from now.
+- **Where to call it from**: `periodically()` runs once every wake cycle unconditionally; `infrequently()`
+  also runs once per cycle, but is where a component checks its own `timer_expired()` to self-throttle
+  to a longer interval than the wake cycle itself. Put timer-gated logic in `infrequently()`, not `loop()`
+  (`loop()` runs every pass round `System_Frugal::loop()`, i.e. far more often than the sleep/wake cycle).
+- **When you do NOT want this**: for short, sub-cycle backoff/retry timing that only needs to matter
+  while the device is already awake (e.g. `wifi.cpp`'s connect-retry backoff, `mqtt.cpp`'s reconnect
+  loop), just use plain `millis()` directly — that's what those files do, with a comment noting
+  `// Not sleepSafeSecs as this is frequent`. Reaching for a sleep-safe timer there would be wrong,
+  not just unnecessary — it would also burn one of the 8 scarce timer slots.
+- If you need a raw sleep-safe timestamp rather than the pre-built expiry-slot mechanism (e.g. to
+  measure an elapsed duration), call `frugal_iot.powercontroller->sleepSafeSecs()` /
+  `sleepSafeMillis()` directly instead.
+
 ## IO Classes (IN / OUT) — how sensors, actuators and controls actually connect
 
 Every value a component reads or writes is a member object, not a plain field — an `IN` (input)
