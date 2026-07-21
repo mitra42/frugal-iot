@@ -8,8 +8,8 @@
 #include <ESPmDNS.h>
 #include <HTTPClient.h>
 #include "ESPAsyncWebServer.h"
-#include "system_mdns.h"
-#include "system_frugal.h" // for frugal_iot
+#include "system/mdns.h"
+#include "system/frugal.h" // for frugal_iot
 
 System_MDNS::System_MDNS()
 : System_Base("mdns", "mDNS") {}
@@ -34,19 +34,24 @@ void System_MDNS::setup() {
         const String& name  = nameParam->value();
         const String& value = valueParam->value();
         if (name == "subscribe") {
-          #ifdef SYSTEM_MDNS_DEBUG
-            Serial.print(F("mDNS: incoming subscribe for ")); Serial.println(value);
-          #endif
-          frugal_iot.mdns->addPeerSubscription(
-            value,
-            request->client()->remoteIP(),
-            SYSTEM_MDNS_PORT);
+          const AsyncWebHeader* deviceHeader = request->getHeader("X-Frugal-Device");
+          if (deviceHeader) {
+            #ifdef SYSTEM_MDNS_DEBUG
+              Serial.print(F("mDNS: incoming subscribe for ")); Serial.print(value);
+              Serial.print(F(" from ")); Serial.println(deviceHeader->value());
+            #endif
+            frugal_iot.mdns->addPeerSubscription(value, deviceHeader->value());
+          } else {
+            #ifdef SYSTEM_MDNS_DEBUG
+              Serial.println(F("mDNS: incoming subscribe missing X-Frugal-Device header, ignoring"));
+            #endif
+          }
         } else {
           #ifdef SYSTEM_MDNS_DEBUG
             Serial.print(F("mDNS: incoming message "));
             Serial.print(name); Serial.print(F("=")); Serial.println(value);
           #endif
-          frugal_iot.messages->queueIncoming(name, value);
+          frugal_iot.messages->queueIncoming(name, value, MsgFromMDNS);
         }
       }
       request->send(200, "text/plain", "OK");
@@ -73,6 +78,15 @@ void System_MDNS::periodically() {
       }
       if (nodeId == frugal_iot.nodeid) {
         continue; // Skip ourselves
+      }
+      bool alreadyFound = false;
+      for (const auto& f : foundPeers) {
+        if (f.nodeId == nodeId) {
+          alreadyFound = true; // mDNS can report the same host more than once per query
+        }
+      }
+      if (alreadyFound) {
+        continue;
       }
       // MDNS.IP() is not available in all ESP32 core versions; resolve via WiFi stack instead.
       IPAddress ip;
@@ -126,16 +140,10 @@ void System_MDNS::onPeerLost(const String& nodeId) {
   #ifdef SYSTEM_MDNS_DEBUG
     Serial.print(F("mDNS: lost peer ")); Serial.println(nodeId);
   #endif
-  // Remove subscriber-table entries that came from this peer's IP
-  for (const auto& peer : _peers) {
-    if (peer.nodeId == nodeId) {
-      IPAddress lostIP = peer.ip;
-      // Lambda function, takes lostIp from environment, then calls function with sub set to reference to each member of list
-      _subscriptions.remove_if([lostIP](const MdnsSubscription& sub) {
-        return sub.subscriberIP == lostIP;
-      });
-    }
-  }
+  // Remove subscriber-table entries that came from this peer
+  _subscriptions.remove_if([&nodeId](const MdnsSubscription& sub) {
+    return sub.subscriberNodeId == nodeId;
+  });
 }
 
 bool System_MDNS::connected() {
@@ -171,35 +179,44 @@ bool System_MDNS::publishToPeer(const String& topicPath, const String& payload,
   return sent;
 }
 
-void System_MDNS::publishToSubscribers(const String& topicPath,
+// Send message to MDNS peers who have subscribed 
+// These aren't queued, 
+// and messages will typically also go through MQTT if available
+bool System_MDNS::publishToSubscribers(const String& topicPath,
                                        const String& payload) {
+  bool sent = false;
   if (connected()) {
     for (const auto& sub : _subscriptions) {
       if (sub.topicPath == topicPath) {
-        #ifdef SYSTEM_MDNS_DEBUG
-          Serial.print(F("mDNS: pushing ")); Serial.print(topicPath);
-          Serial.print(F(" to subscriber ")); Serial.println(sub.subscriberIP.toString());
-        #endif
-        httpPost(sub.subscriberIP, sub.subscriberPort, topicPath, payload);
+        for (const auto& peer : _peers) {
+          if (peer.nodeId == sub.subscriberNodeId) {
+            #ifdef SYSTEM_MDNS_DEBUG
+              Serial.print(F("mDNS: pushing ")); Serial.print(topicPath);
+              Serial.print(F(" to subscriber ")); Serial.println(sub.subscriberNodeId);
+            #endif
+            if (httpPost(peer.ip, peer.port, topicPath, payload)) {
+              sent = true;
+            }
+          }
+        }
       }
     }
   }
+  return sent;
 }
 
-void System_MDNS::addPeerSubscription(const String& topicPath,
-                                      IPAddress subscriberIP,
-                                      uint16_t subscriberPort) {
+void System_MDNS::addPeerSubscription(const String& topicPath, const String& subscriberNodeId) {
   bool duplicate = false;
   for (const auto& sub : _subscriptions) {
-    if (sub.topicPath == topicPath && sub.subscriberIP == subscriberIP) {
+    if (sub.topicPath == topicPath && sub.subscriberNodeId == subscriberNodeId) {
       duplicate = true;
     }
   }
   if (!duplicate) {
-    _subscriptions.push_front({topicPath, subscriberIP, subscriberPort});
+    _subscriptions.push_front({topicPath, subscriberNodeId});
     #ifdef SYSTEM_MDNS_DEBUG
       Serial.print(F("mDNS: added subscription ")); Serial.print(topicPath);
-      Serial.print(F(" for ")); Serial.println(subscriberIP.toString());
+      Serial.print(F(" for ")); Serial.println(subscriberNodeId);
     #endif
   }
 }
@@ -222,6 +239,7 @@ bool System_MDNS::httpPost(IPAddress ip, uint16_t port,
       Serial.print(F("mDNS: POST ")); Serial.print(ip.toString());
       Serial.print(F(" ")); Serial.print(name);
       Serial.print(F("=")); Serial.print(value);
+      // 200 is success, -11 is timeout
       Serial.print(F(" -> ")); Serial.println(code);
     #endif
   } else {
@@ -232,9 +250,10 @@ bool System_MDNS::httpPost(IPAddress ip, uint16_t port,
   return success;
 }
 
-// Called when a subscription is newly committed locally. Checks existing peers and
-// sends an HTTP subscribe POST to any peer whose nodeId matches the topic's nodeId segment.
-void System_MDNS::notifyPeersOfSubscription(const String& topicPath) {
+// Checks existing peers and sends an HTTP subscribe POST to any peer whose nodeId
+// matches the topic's nodeId segment.
+bool System_MDNS::notifyPeersOfSubscription(const String& topicPath) {
+  bool sent = false;
   if (connected()) {
     String prefix = frugal_iot.org + "/" + frugal_iot.project + "/";
     if (topicPath.startsWith(prefix)) {
@@ -248,12 +267,15 @@ void System_MDNS::notifyPeersOfSubscription(const String& topicPath) {
               Serial.print(F("mDNS: new local subscription ")); Serial.print(topicPath);
               Serial.print(F(" -> notifying peer ")); Serial.println(nodeId);
             #endif
-            httpPost(peer.ip, peer.port, "subscribe", topicPath);
+            if (httpPost(peer.ip, peer.port, "subscribe", topicPath)) {
+              sent = true;
+            }
           }
         }
       }
     }
   }
+  return sent;
 }
 
 // Percent-encode a string for use in an application/x-www-form-urlencoded body.

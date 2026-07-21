@@ -22,7 +22,7 @@
 #include <Arduino.h>
 #include <IPAddress.h>
 #include <forward_list>
-#include "system_base.h"
+#include "system/base.h"
 
 #ifndef SYSTEM_MDNS_ENDPOINT
   #define SYSTEM_MDNS_ENDPOINT "/"
@@ -46,17 +46,21 @@ public:
   bool publishToPeer(const String& topicPath, const String& payload,
                      bool retain, uint8_t qos);
 
-  // Called by queuedMessage() — push this message to every peer that has
+  // Called by attemptMdns() — push this message to every peer that has
   // registered a subscription matching this topic on this device.
-  void publishToSubscribers(const String& topicPath, const String& payload);
+  // Returns true if at least one subscriber's HTTP POST succeeded.
+  bool publishToSubscribers(const String& topicPath, const String& payload);
 
   // Called by the STA-side POST handler when a peer registers a subscription.
-  void addPeerSubscription(const String& topicPath, IPAddress subscriberIP,
-                           uint16_t subscriberPort);
+  // subscriberNodeId comes from the peer's X-Frugal-Device request header (set on
+  // every httpPost() this library sends) rather than a reverse IP lookup in _peers —
+  // that would race against our own mDNS discovery of the subscribing peer.
+  void addPeerSubscription(const String& topicPath, const String& subscriberNodeId);
 
-  // Called when a new local subscription is committed — notifies any already-known
-  // mDNS peer whose nodeId matches this subscription's topic prefix.
-  void notifyPeersOfSubscription(const String& topicPath);
+  // Called by attemptMdns() — notifies any already-known mDNS peer whose nodeId
+  // matches this subscription's topic prefix. Returns true if a matching peer was
+  // found and the HTTP POST succeeded.
+  bool notifyPeersOfSubscription(const String& topicPath);
 
   // HTTP POST helper — also used by System_Messages::subscribeViaMdns.
   bool httpPost(IPAddress ip, uint16_t port,
@@ -70,8 +74,7 @@ private:
   };
   struct MdnsSubscription {
     String  topicPath;
-    IPAddress subscriberIP;
-    uint16_t subscriberPort;
+    String  subscriberNodeId; // Looked up from _peers; current IP/port fetched from there at publish time
   };
 
   std::forward_list<MdnsPeer>         _peers;

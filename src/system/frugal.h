@@ -34,7 +34,7 @@
 #include "system/loramesher.h"
 #endif
 #ifdef SYSTEM_MDNS_WANT
-#include "system_mdns.h"
+#include "system/mdns.h"
 #endif
 #include "system/message.h"
 #include "system/mqtt.h"

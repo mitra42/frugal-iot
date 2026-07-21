@@ -20,9 +20,18 @@
 #define MsgIsThisNode 0x08
 #define MsgFromCaptive 0x10
 #define MsgFromMQTT 0x20
-#define MsgFromLoRaMesher 0x40 
+#ifdef SYSTEM_LORAMESHER_WANT
+  #define MsgFromLoRaMesher 0x40
+#endif
 #define MsgIsLoopback 0x80        // Outgoing message, but looped back in case any wired topics listening
-// Its uint8_t so hopefully dont need more flags - if so split off source as separate field rather than expanding this byte
+#ifdef SYSTEM_MDNS_WANT
+  #define MsgFromMDNS 0x100
+  #define MsgMdnsDelivered 0x200 // Outgoing: mDNS peer delivery (publishToSubscribers or publishToPeer)
+                                 // has already succeeded for the current payload - set in attemptMdns(),
+                                 // cleared in sendRemote() when the payload changes. Until it's set,
+                                 // attemptMdns() keeps retrying every loop() (independent of whether
+                                 // MQTT/LoRaMesher have accepted the message yet).
+#endif
 
 class System_Messages; // to allow forward reference
 
@@ -32,7 +41,7 @@ class System_Message { // Only used for outgoing queued messages
   public:
     const String topicPath;
     String payload;    // Retained payload
-    System_Message(const String& topicPath, const String& payload, const bool retain, const int qos, const uint8_t flags);
+    System_Message(const String& topicPath, const String& payload, const bool retain, const int qos, const uint16_t flags);
     System_Message(const String& topicPath); // For subscriptions
     //~System_Message();
     // Only currently relevant/accurate on incoming
@@ -51,13 +60,23 @@ class System_Message { // Only used for outgoing queued messages
     // Only relevant/accurate on outgoing
     const bool retain;
     const int qos;
-    bool send(); 
+    bool send();
     void dispatch();
     bool queuedMessage();
     bool queuedSubscribe();
+    #ifdef SYSTEM_MDNS_WANT
+      // Attempt mDNS peer delivery for this message: notifyPeersOfSubscription for a
+      // subscription message, or publishToSubscribers + publishToPeer for a data
+      // message's current payload. Retries every loop() until it succeeds
+      // (MsgMdnsDelivered), independently of MQTT/LoRaMesher - called from
+      // sendOutgoingQueued() for every queued message, each tick, regardless of
+      // queue position. Purely a side channel: its result does not affect whether
+      // queuedMessage()/queuedSubscribe() considers this message sent.
+      void attemptMdns();
+    #endif
   private:
       // Access through functions
-      uint8_t flags_;
+      uint16_t flags_;
       String twig_;
       String module_;
       String leaf_;
@@ -78,10 +97,10 @@ class System_Messages : public System_Base {
     String path(const String topicTwig); 
     //String twig(const String &topicPath); // unused
     bool reSubscribeAll(); // Called by MQTT after reconnection
-    void queueIncoming(const String &topicPath, const String &payload, uint8_t flags); // Called by MQTT and LoRaMesher
+    void queueIncoming(const String &topicPath, const String &payload, uint16_t flags); // Called by MQTT and LoRaMesher
     void queueFromCaptive(const String &twig, const String &payload);
     void queueLoopback(const String &topicPath, const String &payload);
-    void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos, uint8_t flags); // Only remote send, no loopback
+    void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos, uint16_t flags); // Only remote send, no loopback
     #ifdef SYSTEM_MDNS_WANT
       // Send HTTP subscribe POSTs to a newly-discovered mDNS peer for every
       // locally-registered subscription whose topic path starts with that peer's prefix.
