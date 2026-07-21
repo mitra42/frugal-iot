@@ -33,6 +33,9 @@
 #ifdef ESP32
 #include "system/loramesher.h"
 #endif
+#ifdef SYSTEM_MDNS_WANT
+#include "system/mdns.h"
+#endif
 #include "system/message.h"
 #include "system/mqtt.h"
 #include "actuator/oled.h"
@@ -60,6 +63,9 @@ class System_Frugal : public System_Group {
     System_Discovery* discovery; // Must be after powercontroller
     #ifdef SYSTEM_LORAMESHER_WANT // This is automatically defined on LoRa compatable boardss
       System_LoraMesher* loramesher; // Will be nullptr if no loramesher
+    #endif
+    #ifdef SYSTEM_MDNS_WANT
+      System_MDNS* mdns;
     #endif
     System_Messages* messages;
     System_MQTT* mqtt;

@@ -92,25 +92,24 @@ bool System_MQTT::connect() {
   if (!client.connected()) {
     // TODO-153 make this non blocking
     /* Not connected */
-    Serial.print(F("\nMQTT connecting: to ")); Serial.print(hostname);
+    Serial.print(F("MQTT: connecting: to ")); Serial.println(hostname);
     // The call to client.connect is blocking 
     // Theoretically "skip=true" should be good, dont close if connected, but leads to error code=6
     if (!client.connect(frugal_iot.nodeid.c_str(), username, password)) {
       /* Still not connected */
-      Serial.print(F(" MQTT Connect Fail "));
+      Serial.printf(F("MQTT: Connect Fail %d %d\n"), client.lastError(), client.returnCode());
       /* https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h */
-      Serial.print(client.lastError()); // -3 is LWMQTT_NETWORK_FAILED_CONNECT -10 is userid/password fail
-      Serial.print(F(" ")); // 6 is LWMQTT_UNKNOWN_RETURN_CODE 
+      // -3 is LWMQTT_NETWORK_FAILED_CONNECT -10 is userid/password fail
+      // 6 is LWMQTT_UNKNOWN_RETURN_CODE 
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116
-      Serial.println(client.returnCode());
       return false;
     } else { 
       /* Fresh connection */
-      Serial.println(F(" Connected "));
+      Serial.println(F("MQTT: Connected "));
       if (!client.sessionPresent()) {
         subscriptionsDone = false; // No session so will need to redo subscriptions 
       } else {
-        Serial.println(F(" Session present "));
+        Serial.println(F("MQTT: Session present "));
       }
       frugal_iot.setup_after_mqtt(); // Main thing is to set LoRaMesher gateway
     }

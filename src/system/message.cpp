@@ -28,7 +28,7 @@
 
 
 // Note Strings passed must be safe - copy before calling this if going to go out of scope.
-System_Message::System_Message(const String& topicPath, const String& payload, const bool retain, const int qos, const uint8_t flags)
+System_Message::System_Message(const String& topicPath, const String& payload, const bool retain, const int qos, const uint16_t flags)
 : topicPath(topicPath), payload(payload), retain(retain), qos(qos), flags_(flags) {}
 
 // Called implicitly from outgoing.emplace in System_Messages::subscribe
@@ -100,14 +100,19 @@ void System_Messages::subscribe(const String topicPath) {
 }
 
 // Upstream: module => queue outgoing (no reflection)
-void System_Messages::sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos, uint8_t flags) {
+void System_Messages::sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos, uint16_t flags) {
   // Instead of pushing a new message, update the payload
   for(System_Message& sm: outgoing) {
     if (sm.topicPath == topicPath) {
       #ifdef SYSTEM_MESSAGE_DEBUG
-        Serial.print(F("Updating queued ")); Serial.print(topicPath); Serial.print(" "); Serial.print(sm.payload); Serial.print("->"); Serial.println(payload);  
+        Serial.print(F("Updating queued ")); Serial.print(topicPath); Serial.print(" "); Serial.print(sm.payload); Serial.print("->"); Serial.println(payload);
       #endif
-      sm.payload = payload; 
+      #ifdef SYSTEM_MDNS_WANT
+        if (sm.payload != payload) {
+          sm.flags_ &= ~MsgMdnsDelivered; // Value actually changed - allow mDNS peer delivery to run again
+        }
+      #endif
+      sm.payload = payload;
       return; // Don't push
     }
   }
@@ -127,32 +132,57 @@ void System_Messages::send(const String topicPath, const String payload, bool re
   queueLoopback(topicPath, payload); 
 }
 
-// Upstream queued => MQTT or LoRaMesher
-// Send any messages waiting to go (subscriptions or messages)
+// Upstream queued => MQTT or LoRaMesher (+ mDNS peers, independently, in parallel)
+// Every queued message gets a turn each tick, regardless of position, so a message
+// MQTT/LoRaMesher can't accept yet doesn't block mDNS delivery - or MQTT/LoRaMesher
+// delivery of later messages - behind it.
 void System_Messages::sendOutgoingQueued() {
-  while (!outgoing.empty()) {
-    System_Message &m = outgoing.front();
+  for (auto it = outgoing.begin(); it != outgoing.end(); ) {
+    System_Message& m = *it;
+    #ifdef SYSTEM_MDNS_WANT
+      if (frugal_iot.mdns) {
+        m.attemptMdns(); // Side channel only - doesn't affect whether m is popped below
+      }
+    #endif
+    bool accepted;
     if (m.isSubscription()) {
-      if (m.queuedSubscribe()) {
+      accepted = m.queuedSubscribe();
+      if (accepted) {
         subscriptions.push_front(m);
-        //heap_print(F("/popping sub"));
-        outgoing.pop_front(); // Note this should delete m and free up the memory
-      } else {
-        return; // Dont block or keep looping if not connected
       }
     } else {
-      if (m.queuedMessage()) {
-        //heap_print(F("popping"));
-        outgoing.pop_front(); // Note this should delete m and free up the memory
-        //heap_print(F("/popping"));
-      } else {
-        return; // Dont block or keep looping if not connected
-      }
+      accepted = m.queuedMessage();
     }
-    // If succeeded then try and send any other queued messages
+    if (accepted) {
+      it = outgoing.erase(it); // Note this should delete m and free up the memory
+    } else {
+      ++it;
+    }
   }
-
 }
+#ifdef SYSTEM_MDNS_WANT
+// mDNS peer delivery - retried every loop() until it succeeds (MsgMdnsDelivered),
+// independently of MQTT/LoRaMesher below. For a subscription message, notifies the
+// matching peer directly (not gated on MQTT/LoRaMesher accepting the subscription).
+// For a data message, publishToPeer routes set/ commands to the target device by
+// nodeId, and publishToSubscribers pushes to peers that subscribed to this topic.
+void System_Message::attemptMdns() {
+  if (!(flags_ & MsgMdnsDelivered)) {
+    bool delivered;
+    if (isSubscription()) {
+      delivered = frugal_iot.mdns->notifyPeersOfSubscription(topicPath);
+    } else {
+      bool toSubscribers = frugal_iot.mdns->publishToSubscribers(topicPath, payload);
+      bool toPeer = frugal_iot.mdns->publishToPeer(topicPath, payload, retain, qos);
+      delivered = toSubscribers || toPeer;
+    }
+    if (delivered) {
+      flags_ |= MsgMdnsDelivered;
+    }
+  }
+}
+#endif
+
 // Upstream: queued => MQTT or LoRaMesher
 bool System_Message::queuedMessage() {
   if (frugal_iot.mqtt->connected()) {
@@ -163,7 +193,7 @@ bool System_Message::queuedMessage() {
     return frugal_iot.loramesher->publish(topicPath, payload, retain, qos);
   #endif
   } else {
-    return false; // Unable to send, leave on queue 
+    return false; // Nothing else available - stay queued and retry next loop()
   }
 }
 
@@ -270,7 +300,7 @@ void System_Messages::dispatchIncomingQueued() {
 // Downstream queued => dispatch
 // This is called by either the MQTT or LoRaMesher module on receiving a message
 // also by send to implement a loopBack, and by captive
-void System_Messages::queueIncoming(const String &topicPath, const String &payload, uint8_t flags) {
+void System_Messages::queueIncoming(const String &topicPath, const String &payload, uint16_t flags) {
   incoming.emplace_back(topicPath, payload, false, 0, flags);  // Implicit new Message (freed in dispatch)
 }
 void System_Messages::queueFromCaptive(const String &twig, const String &payload) {
@@ -280,3 +310,26 @@ void System_Messages::queueLoopback(const String &topicPath, const String &paylo
   queueIncoming(topicPath, payload, MsgIsLoopback);
 }
 
+#ifdef SYSTEM_MDNS_WANT
+// Called by System_MDNS::onNewPeer() when a new peer is discovered.
+// Iterates the local subscription list and sends an HTTP subscribe POST to the
+// peer for every topic whose path starts with that peer's org/project/nodeId/ prefix.
+void System_Messages::subscribeViaMdns(const String& peerNodeId, IPAddress ip, uint16_t port) {
+  String peerPrefix = frugal_iot.org + "/" + frugal_iot.project + "/" + peerNodeId + "/";
+  bool anySent = false;
+  for (const System_Message& sub : subscriptions) {
+    if (sub.topicPath.startsWith(peerPrefix)) {
+      #ifdef SYSTEM_MDNS_DEBUG
+        Serial.print(F("mDNS: subscribing to ")); Serial.println(sub.topicPath);
+      #endif
+      frugal_iot.mdns->httpPost(ip, port, "subscribe", sub.topicPath);
+      anySent = true;
+    }
+  }
+  #ifdef SYSTEM_MDNS_DEBUG
+    if (!anySent) {
+      Serial.print(F("mDNS: no local subscriptions match peer ")); Serial.println(peerNodeId);
+    }
+  #endif
+}
+#endif // SYSTEM_MDNS_WANT
