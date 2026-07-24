@@ -56,11 +56,26 @@ class PlatformIOConverter:
         
         return ''.join(result)
 
+    def strip_trailing_comment(self, text: str) -> str:
+        """Return text up to (not including) the first ';' comment marker outside quotes"""
+        in_double_quotes = False
+        in_single_quotes = False
+        for i, char in enumerate(text):
+            if char == '"' and (i == 0 or text[i-1] != '\\'):
+                in_double_quotes = not in_double_quotes
+            elif char == "'" and (i == 0 or text[i-1] != '\\'):
+                in_single_quotes = not in_single_quotes
+            elif char == ';' and not in_double_quotes and not in_single_quotes:
+                return text[:i]
+        return text
+
     def extract_define(self, line_content: str) -> Optional[str]:
         """Extract and convert a single -D flag from line content"""
         # Remove leading/trailing whitespace and quotes
         content = line_content.strip()
-        
+        # Drop any inline "; comment" - it's converted separately - so it doesn't end up in the value
+        content = self.strip_trailing_comment(content).strip()
+
         # Strip outer single quotes if present
         if content.startswith("'") and content.endswith("'"):
             content = content[1:-1]
@@ -95,49 +110,54 @@ class PlatformIOConverter:
             return line + '\n'
         return line
 
+    def extract_trailing_comment(self, line: str) -> str:
+        """Return the //-converted trailing "; comment" on a -D line, if any"""
+        match = re.search(r'[;](.+)$', line)
+        if match:
+            return self.convert_comment(";" + match.group(1))
+        return ""
+
     def process_single_line(self, line: str) -> str:
         """Process a single line from the file"""
         stripped = line.lstrip()
-        
+
         # Empty lines stay empty
         if not stripped:
             return line
-        
+
         # Section headers - comment them out
         if stripped.startswith('[') and stripped.endswith(']\n'):
             return f"// {line}"
         if stripped.startswith('[') and stripped.endswith(']'):
             return f"// {line}\n"
-        
+
         # Lines that are already comments (start with ;)
         if stripped.startswith(';'):
-            # Convert the leading ; to //
-            line = self.convert_comment(line)
-            # Check if this comment contains a -D flag
-            define = self.extract_define(line)
+            # Drop just the leading ; marker - keep the rest raw so a -D flag's OWN trailing
+            # "; comment" (if any) is still found by extract_define/extract_trailing_comment,
+            # rather than being consumed as part of converting this leading marker.
+            marker_index = line.index(';')
+            rest = line[:marker_index] + line[marker_index + 1:]
+            define = self.extract_define(rest)
             if define:
-                # It's a commented-out define - output it as a comment
-                return f"// {define}\n"
+                # It's a commented-out define - output it as a comment, plus its own comment if any
+                result = f"// {define}"
+                trailing_comment = self.extract_trailing_comment(rest)
+                if trailing_comment:
+                    result += " " + trailing_comment
+                return self.ensure_newline(result)
+            line = self.convert_comment(line)
             return self.ensure_newline(line)
-        
+
         # Lines with -D flags (not commented)
         if '-D' in line:
             define = self.extract_define(line)
             if define:
-                # Convert any trailing comment on the same line
-                trailing_comment = ""
-                if "//" in line or ";" in line:
-                    # Extract the comment part
-                    match = re.search(r'[;](.+)$', line)
-                    if match:
-                        trailing_comment = self.convert_comment(";" + match.group(1))
-                
                 result = define
+                trailing_comment = self.extract_trailing_comment(line)
                 if trailing_comment:
                     result += " " + trailing_comment
-                else:
-                    result += '\n'
-                return result
+                return self.ensure_newline(result)
             # If we couldn't extract a define, fall through to comment it
             line = self.convert_comment(line)
             return f"// {self.ensure_newline(line)}"

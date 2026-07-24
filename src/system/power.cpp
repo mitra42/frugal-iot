@@ -61,6 +61,11 @@
 #ifndef SYSTEM_POWER_LOW_MS
   #define SYSTEM_POWER_LOW_MS (60 * 60 * 1000) // Presume solar - lets go for 1 hour intervals - TODO-194 try longer or shorter levels
 #endif
+#ifndef SYSTEM_POWER_ON_DELAY
+  #define SYSTEM_POWER_ON_DELAY 100 // Sufficient for most sensors or actuator power to stabilize
+  // Intention is to extend this if needed e.g. based on a certain sensor leave it longer
+#endif
+
 /* Not using - without a better indicator it could just leave the chip in a deep-sleep state
 #ifndef SYSTEM_POWER_PANIC_MV
   #define SYSTEM_POWER_PANIC_MV 3300.0 // Still droppong 
@@ -381,6 +386,7 @@ void System_Power::recover() {
     #endif
     // Power up sensors after sleep
     frugal_iot.sensors->recover();
+    delay(SYSTEM_POWER_ON_DELAY); // Allow power to sensors and actuators to stabilize
   }
 }
 
