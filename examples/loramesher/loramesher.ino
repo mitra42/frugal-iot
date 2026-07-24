@@ -9,7 +9,7 @@
 #include "system/mqtt.h"
 
 #ifdef ACTUATOR_OLED_WANT
-  #include "control_oled_sht.h"
+  #include "control_oled_ht.h"
   #include "control/oled_loramesher.h"
   #include "control/carousel.h"
   Control_Carousel* carousel;
@@ -56,7 +56,7 @@ void setup() {
   */
 
   #ifdef ACTUATOR_OLED_WANT
-    Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED SHT");
+    Control_Oled_HT* cos = new Control_Oled_HT("Control OLED SHT");
     frugal_iot.controls->add(cos);
     cos->temperature->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/temperature");
     cos->humidity->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/humidity");
