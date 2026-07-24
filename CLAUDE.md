@@ -419,3 +419,26 @@ See `examples/loramesher/` for a gateway + node pair.
 3. Call `frugal_iot.sensors->add(new Sensor_Whatever(…))` **after** `pre_setup()` and **before** `setup()`.
 4. Optionally wire its outputs to control inputs or actuator set-paths.
 5. Enable the matching `_DEBUG` flag during development.
+6. Don't forget to add the new `sensor/whatever.h` include to `Frugal-IoT.h`'s master list - a
+   sensor that compiles fine on its own but was never added there won't be visible to any `.ino`.
+
+## Testing an Example Against Local Library Changes
+
+Every example's `platformio.ini` pulls `Frugal-IoT@^0.1.1` from the registry, not this repo's
+`src/`, so building inside `examples/<name>/` only exercises the last released version - it
+won't see uncommitted library changes. `lib_deps = symlink://../..` looks like the fix but
+doesn't correctly resolve the library's own transitive deps (e.g. it'll fail with `fatal
+error: ESPAsyncWebServer.h: No such file or directory`).
+
+The reliable way to test an unreleased library change against a real example: temporarily
+copy the example's `.ino` body into a project that references this library via PlatformIO's
+local `lib/` folder auto-detection, which does resolve transitive deps correctly - e.g. the
+sibling `frugal-iot-demo` project's `src/main.cpp`. If you also want the example's own
+`platformio.ini` (for its board matrix/build flags) rather than just the `.ino` body, comment
+out two lines in it first:
+- `Frugal-IoT@^0.1.1` in `[common]` `lib_deps` - so it resolves to the local `lib/` copy
+  instead of the registry
+- `src_dir = .` in `[platformio]` - the host project's sources live under `src/`, not at its
+  root the way a standalone example's do
+Restore both files (`main.cpp` and, if swapped, `platformio.ini`) once you're done - this is a
+scratch test, not a permanent change.

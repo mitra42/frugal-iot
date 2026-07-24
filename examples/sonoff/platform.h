@@ -37,21 +37,21 @@
 // comment or uncomment debug flags based on need
 // build_flags_frugaliot =
     //Flags usable in specific modules - mostly here for documentation
-// #define LANGUAGE_DEFAULT "id"'         ; Default language for portal (if not en) - de,nl,id currently supported
+// #define LANGUAGE_DEFAULT "id" // Default language for portal (if not en) - de,nl,id currently supported
 // #define ACTUATOR_LCD_WANT
-// #define ACTUATOR_LCD_COLS 20            ; uncomment for 20x4 display (default is 16x2)
+// #define ACTUATOR_LCD_COLS 20 // uncomment for 20x4 display (default is 16x2)
 // #define ACTUATOR_LCD_ROWS 4
-// #define SENSOR_BATTERY_PIN 0            ; Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
-// #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 ; Typically use a 100k+100k voltage divider on external power supplies
+// #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
+// #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
 // #define SENSOR_DS18B20_PIN 6
-// #define SENSOR_SHT_ADDRESS 0x45         ; 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
-// #define SENSOR_SHT_SHT4x
+// #define SENSOR_SHT_ADDRESS 0x45 // 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
+// #define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 // #define SENSOR_SOIL_PIN 4
-// #define SYSTEM_SD_WANT
-// #define SYSTEM_WIFI_SCANPERIOD 50000    ; Slow down scanning so can easier debug captive portal
+// #define SYSTEM_SD_WANT // Uses LittleFS by default
+// #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
     // Flags from other libraries
-// #define LORAMESHER_LOG_LEVEL 2          ; 0 is LOTS of debugging 2 is less
-// #define DEBUG_DNSSERVER
+// #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
+// #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
     // Uncomment debug lines before as needed
 // #define ACTUATOR_LCD_DEBUG
 // #define CONTROL_BLINKEN_DEBUG
@@ -67,7 +67,7 @@
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
-// #define SYSTEM_MEMORY_DEBUG
+// #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG
 // #define SYSTEM_MQTT_DEBUG
 // #define SYSTEM_OTA_DEBUG
@@ -89,8 +89,10 @@
     // LoRaMesher, for now, has a lot of flags here, will move some of this to main.cpp
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
-#define SYSTEM_LORAMESHER_FREQUENCY 915.0F ; 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers// #define CORE_DEBUG_LEVEL 5 ; To get lots of debugging out of LoraMesher
-// #define RADIOLIB_DEBUG_BASIC
+#define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
+#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
+// #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
+// #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 
 // Flags specific to project, but vary across dev-boards or variants
 // build_flags = 
@@ -133,8 +135,10 @@
 // build_flags = 
 //     ${common.build_flags}
 #define SERIAL_BAUD 115200
-// #define SYSTEM_OTA_SUFFIX "r2"' ; No OTA_KEY for Sonoff, there is not enough space (code > flash/2)
-#define PIN_WIRE_SDA -1 ; To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA // To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA#define SDA -1 ; To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA // To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA
+// #define SYSTEM_OTA_SUFFIX "r2" // No OTA_KEY for Sonoff, there is not enough space (code > flash/2)
+#define PIN_WIRE_SDA -1 // To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA
+#define SDA -1 // To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA
+
 #endif // TODO_SONOFF_BASIC
 
 #ifdef ARDUINO_ESP32C3_DEV
@@ -171,7 +175,8 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "s2_mini"
 #define SYSTEM_BUTTONS_DEBUG
-#define RELAY_BUILTIN 34 ; random place // random place// #define SYSTEM_OTA_S 60 ; Just for testing - check OTA every minute
+#define RELAY_BUILTIN 34 // random place
+// #define SYSTEM_OTA_S 60 // Just for testing - check OTA every minute
 #define SYSTEM_MESSAGE_DEBUG
 #define SYSTEM_MQTT_DEBUG
 #define SYSTEM_WIFI_DEBUG
