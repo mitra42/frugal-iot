@@ -18,6 +18,7 @@
 #include "sensor/ms5803.h"
 #include "sensor/loadcell.h"
 #include "sensor/ens160aht21.h"
+#include "sensor/rain.h"
 
 //TO-ADD-CONTROL
 #include "control/control.h"

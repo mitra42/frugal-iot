@@ -261,6 +261,7 @@ a readable one — both just build the topic string, the actual subscribe only h
 | `Sensor_ENS160AHT21` | sensor/ens160aht21 | Air quality + temp/humidity |
 | `Sensor_Button` | sensor/button | Button press events |
 | `Sensor_Analog` | sensor/analog | Raw ADC |
+| `Sensor_Rain` | sensor/rain | Accumulated rain (mm) from an LM393-based analog rain board; linear approximation, tare/calibrate against a manual gauge |
 | `Sensor_Float` | sensor/float | Arbitrary float value |
 | `Sensor_UInt16` | sensor/uint16 | Arbitrary uint16 value |
 | `Sensor_Health` | sensor/health | Device health metrics |
@@ -332,6 +333,7 @@ SENSOR_DHT_DEBUG
 SENSOR_ENSAHT_DEBUG
 SENSOR_LOADCELL_DEBUG
 SENSOR_MS5803_DEBUG
+SENSOR_RAIN_DEBUG
 SENSOR_SHT_DEBUG
 SENSOR_SOIL_DEBUG
 ```

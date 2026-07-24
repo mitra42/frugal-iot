@@ -128,6 +128,8 @@
 #define DEFAULT_ms5803_temperature_color "red"
 #define DEFAULT_ms5803_temperature_min 0
 #define DEFAULT_ms5803_temperature_max 50
+#define DEFAULT_rain_rain_color "blue"
+#define DEFAULT_rain_rain_min 0
 #define DEFAULT_relay_on_color "black"
 #define DEFAULT_sht_temperature_color "red"
 #define DEFAULT_sht_temperature_min 0
