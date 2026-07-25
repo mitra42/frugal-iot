@@ -11,9 +11,11 @@
   #include "control_oled_sht.h" // Custom display handler
 #endif
 
-// Change the parameters here to match your ... 
+// Change the parameters here to match your ...
+// Define organization and project here, or in platformio.ini
+// Add a device name and descriotion for this project both of which can be changed in the UI
 // organization, project, device name, description
-System_Frugal frugal_iot("dev", "developers", "SHT30", "SHT30 Temperature and Humidity Sensor"); 
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "SHT30", "SHT30 Temperature and Humidity Sensor");
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after
