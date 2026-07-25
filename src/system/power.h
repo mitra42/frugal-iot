@@ -10,7 +10,6 @@
 
 // TO-ADD-POWER
 
-// If need an extra bit, can assume WakeOnTimerBit = LightSleepBit
 #define PauseWiFiBit 0x01
 #define PauseMQTTBit 0x02
 #define PauseUARTBit 0x04 // Not currently used
@@ -19,6 +18,7 @@
 #define LightSleepBit 0x20
 #define WakeOnTimerBit 0x40
 #define WakeOnWiFiBit 0x80
+#define ExternalSleepBit 0x100
 
 enum System_Power_Type { 
   Power_Loop = 0,     // Standard loop, no waiting
@@ -27,7 +27,8 @@ enum System_Power_Type {
   // The following modes are experimental - supported in code but not working well for any case I am aware of
   Power_LightWiFi = DelaySleepBit | PauseMQTTBit,     // Like Light, but wakes on WiFi, which menas it SHOULD keep WiFi alive. (poor power savings currently - possibly because of Uart=Serial)
   Power_Modem = LightSleepBit | WakeOnTimerBit | WakeOnWiFiBit,       // ESP32 Modem sleep mode - need to check what this means
-  Power_Panic = DeepSleepBit
+  Power_Panic = DeepSleepBit,
+  Power_Lora = ExternalSleepBit | PauseWiFiBit | PauseMQTTBit // Lora library will do the sleep
 };
 
 class System_Power : public System_Base {

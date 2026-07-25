@@ -152,6 +152,15 @@ void ReceiveTask(void* /*pvParameters*/) {
   }
 }
 
+loramesher::power::SleepResult OnSleep(const loramesher::power::SleepContext& sc) { 
+  Serial.printf("LoraMesher sleep rq: type %d ms %d slot %d messages %d",
+    sc.requested_state, sc.sleep_duration_ms, sc.current_slot, sc.has_pending_messages);
+    return loramesher::power::SleepResult{.allow_sleep = true, .max_sleep_duration_ms = sc.sleep_duration_ms};
+}
+/*
+XXX TODO-232
+                 .withWakeUpCallback(OnWakeUp)
+*/
 // ============ HELPERS =====================
 bool System_LoraMesher::initialize() {
   try {
@@ -191,6 +200,8 @@ bool System_LoraMesher::initialize() {
               .withRadioConfig(radioConfig)
               .withPinConfig(pinConfig)
               .withLoRaMeshProtocol(mesh_config)  // Use LoRaMesh protocol
+              .withPrepareSleepCallback(OnSleep)
+              .withWakeUpCallback(OnWakeUp)
               //.withAutoAddressFromHardware(true)  // Enable hardware-based addressing (default)
               .Build();
       //Set up data callback

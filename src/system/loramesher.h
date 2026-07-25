@@ -65,7 +65,6 @@ class System_LoraMesher : public System_Base {
     unsigned long lostMQTTat;
     bool initialize(); // Try and create the LoraMesher instance
     void setup() override;
-    void prepareForLightSleep();
     void periodically() override;
     bool isGateway(); 
     void createReceiveMessages();

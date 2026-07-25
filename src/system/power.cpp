@@ -210,6 +210,9 @@ void System_Power::setup() {
   if (wake_count) {
     // Only time wake_count is non-zero is if recovering from a deep sleep - its false at startup and its false when recovering from other modes but setup() isn't run in those cases.
     Serial.println(F("Power: Waking from deep"));
+    // For Deep, millis is ~0
+    nextSleepTime = (millis() + wake_ms); // not sleepSafeSecs() as by definition dont deep sleep before this
+
     recover(); 
   } else if (mode & DelaySleepBit) { // We'll use conditions to auto enter sleep (doesnt work yet)
     LightWifi_setup();
@@ -283,7 +286,6 @@ void System_Power::prepare() {
     #ifdef ESP32 // Not built yet to pause WiFi on ESP8266
       if (mode & PauseWiFiBit) { // Note thst currently Power_Deep does not bother to pause wifi
         frugal_iot.wifi->pauseWiFi();  // Disconnect WiFi gracefully - will lose it during sleep anyway
-        // TODO-23 note that mqtt and loramesher both define prepareForLightSleep but it isn't called
       }
     #endif
   }
@@ -345,8 +347,6 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
 // It also has to setup the nextSleepTime - which varies from mode to mode. 
 
 void System_Power::recover() {
-  // For Power_Loop wake_ms = cycle_ms; for Deep millis is ~0 so this is good for all modes
-  nextSleepTime = (millis() + wake_ms); // not sleepSafeSecs() as by definition dont sleep before this
 
   if (mode) {
     if (mode & PauseUARTBit) { // TODO not sure this works yet
@@ -391,14 +391,16 @@ void System_Power::recover() {
 }
 
 // ================== maybeSleep =========== called from main::loop() = doesnt return if deep-sleep ===
-bool System_Power::maybeSleep() {
+// Note that for Power_Loop this returns true when period is up and time for periodic again. 
+bool System_Power::maybeSleep() {       
   if (nextSleepTime <= millis()) {
-    #ifdef SYSTEM_POWER_DEBUG
-      Serial.println(F("Sleeping")); delay(1000);
-    #endif
-    prepare();
-    sleep();
-    recover(); // Never gets here in deep sleep - in that case recover is called from setup
+    if (mode && !(mode & ExternalSleepBit)) {
+      prepare();
+      sleep();
+      // For Power_Loop wake_ms = cycle_ms; so this is good for all modes
+      recover(); // Never gets here in deep sleep - in that case recover is called from setup
+    }
+    nextSleepTime = (millis() + wake_ms); // not sleepSafeSecs() as by definition dont deep sleep before this
     return true;
   }
   return false;
