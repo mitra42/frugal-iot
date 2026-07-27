@@ -15,20 +15,20 @@
 #ifdef ACTUATOR_LCD_WANT
 
 #include "Frugal-IoT.h"
-#include "control_lcd_sht.h"
+#include "control_lcd_ht.h"
 
-Control_LCD_SHT::Control_LCD_SHT()
-: temperature(new INfloat("control_lcd_sht", "temperature", "Temperature", 0.0f, 1, -40, 85, "#ff0000", true)),
-  humidity(new INfloat("control_lcd_sht", "humidity", "Humidity", 0.0f, 1, 0, 100, "#0000ff", true)),
-  message(new OUTtext("control_lcd_sht", "message", "Message", "", "#ffffff", true)),
-  Control("control_lcd_sht", "LCD SHT", std::vector<IN*>{}, std::vector<OUT*>{})
+Control_LCD_HT::Control_LCD_HT()
+: temperature(new INfloat("control_lcd_ht", "temperature", "Temperature", 0.0f, 1, -40, 85, "#ff0000", true)),
+  humidity(new INfloat("control_lcd_ht", "humidity", "Humidity", 0.0f, 1, 0, 100, "#0000ff", true)),
+  message(new OUTtext("control_lcd_ht", "message", "Message", "", "#ffffff", true)),
+  Control("control_lcd_ht", "LCD SHT", std::vector<IN*>{}, std::vector<OUT*>{})
 {
   inputs.push_back(temperature);
   inputs.push_back(humidity);
   outputs.push_back(message);
 }
 
-void Control_LCD_SHT::act() {
+void Control_LCD_HT::act() {
   String line1 = temperature->StringValue() + "\xDF" "C";
   String line2 = humidity->StringValue() + "%RH";
   message->set(line1 + "\n" + line2);

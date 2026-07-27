@@ -11,7 +11,7 @@
  */
 
 #include "Frugal-IoT.h"
-#include "control_lcd_sht.h"
+#include "control_lcd_ht.h"
 
 #ifndef REMOTE_SHT_PATH
   #define REMOTE_SHT_PATH "dev/lotus/esp8266-fb94bb/" // Replace with actual remote node prefix
@@ -26,7 +26,7 @@ void setup() {
 
   frugal_iot.actuators->add(new Actuator_LCD());
 
-  Control_LCD_SHT* cls = new Control_LCD_SHT();
+  Control_LCD_HT* cls = new Control_LCD_HT();
   frugal_iot.controls->add(cls);
   // Subscribe to the remote SHT sensor's MQTT readings
   cls->temperature->wireTo(String(REMOTE_SHT_PATH) + "sht/temperature");

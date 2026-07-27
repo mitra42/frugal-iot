@@ -6,7 +6,7 @@
 #include "Frugal-IoT.h"
 
 #ifdef ACTUATOR_OLED_WANT
-  #include "control_oled_sht.h" // Custom display handler
+  #include "control_oled_ht.h" // Custom display handler
 #endif
 
 // Change the parameters here to match your ... 
@@ -49,7 +49,7 @@ void setup() {
   //cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
   #ifdef ACTUATOR_OLED_WANT
-    Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED");
+    Control_Oled_HT* cos = new Control_Oled_HT("Control OLED");
     frugal_iot.controls->add(cos);
     cos->temperature->wireTo(frugal_iot.messages->path("sht/temperature"));
     cos->humidity->wireTo(frugal_iot.messages->path("sht/humidity"));  
