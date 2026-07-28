@@ -7,7 +7,7 @@
 
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "lilygohigrow", "LilyGo HiGrow plant sensor");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "lilygohigrow", "LilyGo HiGrow plant sensor");
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after

@@ -34,7 +34,7 @@
 
 // Change the parameters here to match your ...
 // organization, project, device name, description
-System_Frugal frugal_iot("dev", "developers", "climate", "Climate Control");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "climate", "Climate Control");
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after

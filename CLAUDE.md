@@ -341,7 +341,7 @@ SENSOR_SOIL_DEBUG
 ```cpp
 #include "Frugal-IoT.h"
 
-System_Frugal frugal_iot("dev", "developers", "sht30", "SHT30 Sensor");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "sht30", "SHT30 Sensor");
 
 void setup() {
   frugal_iot.configure_power(Power_Deep, 600000, 30000); // 10-min cycle, 30 s awake
@@ -363,7 +363,7 @@ void loop() {
 ```cpp
 #include "Frugal-IoT.h"
 
-System_Frugal frugal_iot("dev", "developers", "climate", "Climate Control");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "climate", "Climate Control");
 
 void setup() {
   frugal_iot.pre_setup();

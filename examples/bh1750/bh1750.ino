@@ -7,7 +7,7 @@
 
 // Change the parameters here to match your ... 
 // organization, project, device name, description
-System_Frugal frugal_iot("dev", "developers", "BH1750", "BH1750 Light Sensor"); 
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "BH1750", "BH1750 Light Sensor"); 
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after

@@ -24,7 +24,7 @@
   Control_Carousel* carousel;
 #endif
 
-System_Frugal frugal_iot("dev", "developers", "gps", "GPS Sensor");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "gps", "GPS Sensor");
 
 void setup() {
   // Power_Loop: always awake, 1-second cycle (matches GPS 1 Hz update rate).

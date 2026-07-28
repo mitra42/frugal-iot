@@ -22,7 +22,7 @@
 
 // Change the parameters here to match your ...
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "loramesher", "LoraMesher Node");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "loramesher", "LoraMesher Node");
 
 
 void setup() {

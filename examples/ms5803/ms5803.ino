@@ -9,7 +9,7 @@
 
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "ms5803", "MS5803 Pressure sensor");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "ms5803", "MS5803 Pressure sensor");
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after

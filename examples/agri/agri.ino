@@ -11,7 +11,7 @@
 
 // Change the parameters here to match your ... 
 // organization, project, device name, description
-System_Frugal frugal_iot("dev", "developers", "Agri", "Agri Sensor"); 
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "Agri", "Agri Sensor"); 
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after

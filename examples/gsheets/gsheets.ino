@@ -11,7 +11,7 @@
 
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "gsheets", "Google Sheets logger");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "gsheets", "Google Sheets logger");
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after
