@@ -17,54 +17,26 @@ System_Base* System_Group::add(System_Base* fb) {
 }
 
 
-void System_Group::setup() {
+// Loops over the members of the group calling fn on each, printing fnName + the group's and
+// member's id when SYSTEM_GROUP_DEBUG is defined.
+void System_Group::forEach(const char* fnName, void (System_Base::*fn)()) {
   for (System_Base* fb: group) {
-    #ifdef SYSTEM_FRUGAL_DEBUG
-      Serial.println(fb->id);
+    #ifdef SYSTEM_GROUP_DEBUG
+      Serial.printf("%s: %s/%s\n", fnName, id, fb->id);
     #endif
-    fb->setup();
+    (fb->*fn)();
   }
 }
 
-void System_Group::discover() {
-  for (System_Base* fb: group) {
-    fb->discover();
-  }
-}
-void System_Group::prepare() {
-  for (System_Base* fb: group) {
-    fb->prepare();
-  }
-}
-void System_Group::recover() {
-  for (System_Base* fb: group) {
-    fb->recover();
-  }
-}
+void System_Group::setup()        { forEach("setup", &System_Base::setup); }
+void System_Group::discover()     { forEach("discover", &System_Base::discover); }
+void System_Group::prepare()      { forEach("prepare", &System_Base::prepare); }
+void System_Group::recover()      { forEach("recover", &System_Base::recover); }
+void System_Group::loop()         { forEach("loop", &System_Base::loop); }
+void System_Group::periodically() { forEach("periodically", &System_Base::periodically); }
+void System_Group::infrequently() { forEach("infrequently", &System_Base::infrequently); }
 
-// These just loop over the members of the group
-void System_Group::loop() {
-  for (System_Base* fb: group) {
-    //Serial.print(fb->id);Serial.print(' ');
-    fb->loop();
-  }
-}
-void System_Group::periodically() { 
-  //heap_print(F("Periodic"));
-  for (System_Base* fb: group) { 
-    #ifdef SYSTEM_MEMORY_DEBUG
-      Serial.print(fb->id);  //heap_print(F("Sensor_HT::set"));
-    #endif
-    fb->periodically();
-  } 
-  //heap_print(F("/Periodic"));
-}
-void System_Group::infrequently() { 
-  for (System_Base* fb: group) { 
-    fb->infrequently(); 
-  } 
-}
-void System_Group::captiveLines(AsyncResponseStream* response) 
+void System_Group::captiveLines(AsyncResponseStream* response)
   { for (System_Base* fb: group) { fb->captiveLines(response); } }
   
 void System_Group::dispatch(System_Message &msg) {
