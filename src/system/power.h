@@ -51,6 +51,8 @@ class System_Power : public System_Base {
     System_Power();
     void configure(System_Power_Type mode_init, unsigned long cycle_ms_init, unsigned long wake_ms_init);
     void checkLevel();
+    virtual void prepare();
+    virtual void recover();
   protected: // Move any of these needed to public above
   private:
     uint32_t timer(uint8_t i); // Return value of timer (seconds)
@@ -62,9 +64,7 @@ class System_Power : public System_Base {
     unsigned long sleep_ms() { return cycle_ms - wake_ms; }
     uint8_t timer_index;
     //virtual void configure(); // Typically called from setup() but might also be called if switch modes
-    virtual void prepare();
     virtual void sleep(System_Power_Type forceMode = Power_Loop, unsigned long sleep_millisecs = 0);
-    virtual void recover();
     // Override virtuals - so can be private 
     void dispatch(System_Message &msg) override;
     void captiveLines(AsyncResponseStream* response) override;

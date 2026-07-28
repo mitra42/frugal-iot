@@ -57,8 +57,8 @@
   #define LORAMESHER_LOG_LEVEL 2 // Warning - set to 1 for Info and 0 for debug
 #endif
 // Define these two settings to speed things up when testing, undo later.
-#define LORA_DUTY_CYCLE 1.0f
-#define LORA_MIN_SLEEP_FRACTION 0
+//#define LORA_DUTY_CYCLE 1.0f
+//#define LORA_MIN_SLEEP_FRACTION 0
 
 #if defined(ARDUINO_TTGO_LoRa32_v21new) // V2 and V1 dont define LORA_D1 so unsure what they need
   // Defines LORA_RST LORA_IRQ LORA_SCK LORA_MISO LORA_MOSI LORA_CS in pins_arduino.h
@@ -152,15 +152,19 @@ void ReceiveTask(void* /*pvParameters*/) {
   }
 }
 
+// TODO-232
 loramesher::power::SleepResult OnSleep(const loramesher::power::SleepContext& sc) { 
-  Serial.printf("LoraMesher sleep rq: type %d ms %d slot %d messages %d",
+  Serial.printf("LoraMesher sleep rq: type %d ms %d slot %d messages %d \n",
     sc.requested_state, sc.sleep_duration_ms, sc.current_slot, sc.has_pending_messages);
+    frugal_iot.powercontroller->prepare(); //TODO-232 pass some info to prepare
     return loramesher::power::SleepResult{.allow_sleep = true, .max_sleep_duration_ms = sc.sleep_duration_ms};
 }
-/*
-XXX TODO-232
-                 .withWakeUpCallback(OnWakeUp)
-*/
+// TODO-232
+void OnWakeUp(loramesher::power::PowerState previous_state) {
+  Serial.printf("LoraMesher wakeUp type %d \n", previous_state);  
+  frugal_iot.powercontroller->recover(); //TODO-232 pass some info to prepare
+
+}
 // ============ HELPERS =====================
 bool System_LoraMesher::initialize() {
   try {
