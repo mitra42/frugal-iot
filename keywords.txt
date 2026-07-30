@@ -57,6 +57,7 @@ System_Group	KEYWORD1
 System_I2C	KEYWORD1
 System_LittleFS	KEYWORD1
 System_LoraMesher	KEYWORD1
+System_MDNS	KEYWORD1
 System_MQTT	KEYWORD1
 System_Message	KEYWORD1
 System_Messages	KEYWORD1
@@ -89,9 +90,12 @@ act	KEYWORD2
 addBool	KEYWORD2
 addButton	KEYWORD2
 addNumber	KEYWORD2
+addPeerSubscription	KEYWORD2
+addSTARoute	KEYWORD2
 addString	KEYWORD2
 addWiFi	KEYWORD2
 append	KEYWORD2
+attemptMdns	KEYWORD2
 bars	KEYWORD2
 boolValue	KEYWORD2
 buildAndSend	KEYWORD2
@@ -136,6 +140,7 @@ floatValue	KEYWORD2
 formatBytes	KEYWORD2
 fullAdvertise	KEYWORD2
 heap_print	KEYWORD2
+httpPost	KEYWORD2
 in_network	KEYWORD2
 infrequently	KEYWORD2
 init	KEYWORD2
@@ -159,7 +164,10 @@ messageReceived	KEYWORD2
 mkdir	KEYWORD2
 module	KEYWORD2
 ms5803CRC4	KEYWORD2
+notifyPeersOfSubscription	KEYWORD2
 now	KEYWORD2
+onNewPeer	KEYWORD2
+onPeerLost	KEYWORD2
 open	KEYWORD2
 parse	KEYWORD2
 path	KEYWORD2
@@ -175,6 +183,8 @@ printNetworkStatus	KEYWORD2
 printRouteTable	KEYWORD2
 processReceivedPacket	KEYWORD2
 publish	KEYWORD2
+publishToPeer	KEYWORD2
+publishToSubscribers	KEYWORD2
 queueFromCaptive	KEYWORD2
 queueIncoming	KEYWORD2
 queueLoopback	KEYWORD2
@@ -229,6 +239,7 @@ spurt	KEYWORD2
 startSerial	KEYWORD2
 stateMachine	KEYWORD2
 subscribe	KEYWORD2
+subscribeViaMdns	KEYWORD2
 switchSSID	KEYWORD2
 sync	KEYWORD2
 tare	KEYWORD2
