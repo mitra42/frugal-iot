@@ -45,6 +45,7 @@ Sensor_LoadCell	KEYWORD1
 Sensor_SHT	KEYWORD1
 Sensor_Soil	KEYWORD1
 Sensor_Uint16	KEYWORD1
+Sensor_Ultrasonic	KEYWORD1
 Sensor_ensaht	KEYWORD1
 Sensor_ms5803	KEYWORD1
 System_Base	KEYWORD1
@@ -61,8 +62,10 @@ System_MDNS	KEYWORD1
 System_MQTT	KEYWORD1
 System_Message	KEYWORD1
 System_Messages	KEYWORD1
+System_Modbus	KEYWORD1
 System_OTA	KEYWORD1
 System_Power	KEYWORD1
+System_RS485	KEYWORD1
 System_SD	KEYWORD1
 System_SPI	KEYWORD1
 System_SensorActuator	KEYWORD1
@@ -198,7 +201,10 @@ readAndSetAHT	KEYWORD2
 readAndSetENS	KEYWORD2
 readConfigFromFS	KEYWORD2
 readFloat	KEYWORD2
+readHoldingRegisters	KEYWORD2
 readInt	KEYWORD2
+readRegister	KEYWORD2
+readRegs	KEYWORD2
 readUint16	KEYWORD2
 readValidateConvert	KEYWORD2
 readValidateConvertSet	KEYWORD2
@@ -207,6 +213,7 @@ recoverWiFi	KEYWORD2
 relayDownstream	KEYWORD2
 remove	KEYWORD2
 rescan	KEYWORD2
+responseBuffer	KEYWORD2
 rssi_to_bars	KEYWORD2
 scan	KEYWORD2
 send	KEYWORD2
@@ -249,8 +256,10 @@ timer_next	KEYWORD2
 timer_set	KEYWORD2
 topicTwig	KEYWORD2
 track	KEYWORD2
+txEnable	KEYWORD2
 validate	KEYWORD2
 visibleHeight	KEYWORD2
 visibleWidth	KEYWORD2
 wireTo	KEYWORD2
 writeConfigToFS	KEYWORD2
+writeReg	KEYWORD2

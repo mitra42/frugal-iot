@@ -15,7 +15,6 @@
 // ====== NOTE THIS IS NOT YET WORKING - NEEDS TESTING ======
 
 #include "_settings.h"  // Settings for what to include etc
-#include <Arduino.h>
 #include <Wire.h>
 
 #include "sensor/ms5803.h"

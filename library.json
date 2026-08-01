@@ -25,7 +25,8 @@
         { "name": "DallasTemperature", "owner": "milesburton" },
         { "name": "OneWire", "owner": "paulstoffregen" },
         { "name": "hd44780", "owner": "duinowitchery" },
-        { "name": "TinyGPSPlus", "owner": "mikalhart" }
+        { "name": "TinyGPSPlus", "owner": "mikalhart" },
+        { "name": "ModbusMaster", "owner": "4-20ma" }
     ],
     "frameworks": "arduino",
     "platforms": ["espressif32","espressif8266"],

@@ -265,6 +265,84 @@ a readable one — both just build the topic string, the actual subscribe only h
 | `Sensor_UInt16` | sensor/uint16 | Arbitrary uint16 value |
 | `Sensor_Health` | sensor/health | Device health metrics |
 | `Sensor_GPS` | sensor/gps | GPS location (lat/lon/altitude/speed/course/hdop/satellites/UTC time) via NMEA serial module |
+| `Sensor_Ultrasonic` | sensor/ultrasonic | Distance (mm) from an RS485/Modbus ultrasonic module (A01ANY4B); needs `SENSOR_ULTRASONIC_SLAVE_ID` |
+
+### Modbus over RS485 (`system/modbus.h`)
+
+Two plain classes — not `System_Base` subclasses — split the same way `System_I2C` is split
+from the `TwoWire` bus it is handed:
+
+| Class | Represents | Owns |
+|-------|-----------|------|
+| `System_RS485` | One physical connection: a UART plus its half-duplex transceiver | rx/tx pins, DE/RE pins, baud, and the single `ModbusMaster` |
+| `System_Modbus` | One addressed slave on that bus | slave id, `connected` flag, retry backoff |
+
+RS485 is multi-drop, so several `System_Modbus` (different slave ids) share one
+`System_RS485`. The slave id is re-bound before each transaction, which is cheap —
+`ModbusMaster::begin()` only sets `_u8MBSlave`/`_serial` and leaves the callbacks alone.
+Keeping one `ModbusMaster` per bus rather than per device also saves RAM: each instance
+carries two `uint16_t[64]` buffers, 256 bytes.
+
+A sensor holds its `System_Modbus` **by value** and builds it from `(slave_id, bus)` in its
+constructor — compare `Sensor_ms5803`'s `System_I2C interface;`. `System_RS485::initialize()`
+is idempotent, so every device on the bus can safely call it from its own `setup()`.
+
+Enabled by `SYSTEM_MODBUS_WANT`, which `_settings.h` derives from any sensor that needs it
+(currently `SENSOR_ULTRASONIC_SLAVE_ID`). Bus flags: `SYSTEM_RS485_RX_PIN` and
+`SYSTEM_RS485_TX_PIN` (both required — `#error` otherwise), `SYSTEM_RS485_DE_PIN` (0xFF =
+transceiver auto-switches direction), `SYSTEM_RS485_RE_PIN` (0xFF = tied to DE),
+`SYSTEM_RS485_BAUD` (9600), `SYSTEM_MODBUS_RETRY_CYCLES` (10), `SYSTEM_MODBUS_DEBUG`.
+
+**Timing.** `ModbusMaster::ku16MBResponseTimeout` is `static const uint16_t = 2000` —
+compile-time, no setter — so a slave that does not answer blocks `loop()` for a full 2 s.
+Fine for a device that is really there (the watchdog is 180 s), but it would be paid every
+cycle for one that is absent. `System_Modbus` therefore tracks `connected`: after a failure
+it skips the next `SYSTEM_MODBUS_RETRY_CYCLES` read attempts outright, then tries once more.
+A device powered up later is picked up automatically, at one 2 s stall per 10 cycles rather
+than one per cycle.
+
+### Sensor_Ultrasonic
+
+Reads one Modbus holding register from an ultrasonic distance module over RS485. Enabled by
+defining `SENSOR_ULTRASONIC_SLAVE_ID` (the module's Modbus address, usually 1) — that also
+turns on `SYSTEM_MODBUS_WANT`. Without it the sensor, both bus classes and `ModbusMaster`
+contribute no symbols to the firmware.
+
+```ini
+; platformio.ini
+build_flags =
+    -D SYSTEM_RS485_RX_PIN=16
+    -D SYSTEM_RS485_TX_PIN=17
+    ;-D SYSTEM_RS485_DE_PIN=26   ; omit if the transceiver auto-switches direction
+    ;-D SYSTEM_RS485_RE_PIN=25   ; omit if RE is tied to DE
+    -D SENSOR_ULTRASONIC_SLAVE_ID=1
+    ;-D SENSOR_ULTRASONIC_REGISTER=0x0101 -D SENSOR_ULTRASONIC_DEBUG
+```
+
+```cpp
+// One bus object per transceiver, shared by every Modbus device on it
+System_RS485* rs485 = new System_RS485(&Serial2);
+
+// Raw distance to the surface, in mm:
+frugal_iot.sensors->add(new Sensor_Ultrasonic("ultrasonic", "Distance", 7500, "blue", true, rs485));
+
+// Depth of water instead, for a sensor mounted 2000mm above the tank floor:
+frugal_iot.sensors->add(new Sensor_Ultrasonic("depth", "Depth", 2000, "blue", true, rs485, 2000.0, -1.0));
+```
+
+The published value is `offset + raw * scale`, where `raw` is the register value in mm.
+`offset` and `scale` are persisted to LittleFS and settable over MQTT; `offset` is also
+editable in the captive portal (`scale` is not — `addNumber` emits `step=1`, so a
+fractional scale cannot be typed in). A failed read returns `NAN`, which
+`Sensor_Float::validate()` rejects, so nothing is published for that cycle.
+
+The `HardwareSerial*` is a constructor argument rather than a `#define` because it is a
+C++ object, not a number — and note that ESP32-C3/S2 have no `Serial2`.
+
+**To add another Modbus sensor**: subclass `Sensor_Float` (or whichever base fits), give it a
+`System_Modbus` member built from `(slave_id, bus)`, call `modbus.initialize()` in `setup()`,
+and make `readFloat()` a `modbus.readRegister(reg, &raw)` call. Then add its enabling flag to
+the `SYSTEM_MODBUS_WANT` derivation in `_settings.h`.
 
 ## Available Actuators
 

@@ -48,6 +48,12 @@
 #endif
 
 
+// TO_ADD_SENSOR - a sensor that talks Modbus over RS485 pulls in the bus classes by
+// defining its slave id; see system/modbus.h
+#if defined(SENSOR_ULTRASONIC_SLAVE_ID)
+  #define SYSTEM_MODBUS_WANT
+#endif
+
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
 #if defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG)
   #define SENSOR_HT_DEBUG
@@ -58,7 +64,7 @@
 #if defined(SENSOR_ANALOG_DEBUG) 
   #define SENSOR_UINT16_DEBUG
 #endif
-#if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG)
+#if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG) || defined(SENSOR_ULTRASONIC_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
 #if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)  || defined(SENSOR_GPS_DEBUG)
@@ -93,7 +99,7 @@
   #define CONTROL_DEBUG
 #endif
 // TO_ADD_SYSTEM - there is no class hierarchy
-#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG)
+#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG) || defined(SYSTEM_MODBUS_DEBUG)
   #define SYSTEM_DEBUG
 #endif
 

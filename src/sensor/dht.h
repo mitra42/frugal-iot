@@ -31,6 +31,14 @@
 #include "sensor/ht.h"
 #include <dhtnew.h>                     // https://github.com/RobTillaart/DHTNew
 
+// Default power control pins - can be overridden via constructor parameters
+#ifndef SENSOR_DHT_POWER0_PIN
+  #define SENSOR_DHT_POWER0_PIN 0xff
+#endif
+#ifndef SENSOR_DHT_POWER3v3_PIN
+  #define SENSOR_DHT_POWER3v3_PIN 0xff
+#endif
+
 
 class Sensor_DHT : public Sensor_HT {
 public:
