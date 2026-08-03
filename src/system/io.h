@@ -69,6 +69,8 @@ class INfloat : public IN {
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     uint8_t width; // Cant be protected because used in e.g. control_oled_sht.cpp 
     virtual String StringValue();
+    void discover() override;
+    bool dispatch(System_Message &msg) override;
   protected:
     float value;
     float min;
@@ -76,7 +78,6 @@ class INfloat : public IN {
     float default_min;
     float default_max;
     bool boolValue() override;
-    bool dispatch(System_Message &msg) override;
     // Copy assignment operator
     /*
     INfloat& operator=(const INfloat &other) {
@@ -93,7 +94,6 @@ class INfloat : public IN {
     */
     bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
-    void discover() override;
 };
 class INuint16 : public IN {
   public:

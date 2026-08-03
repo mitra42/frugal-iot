@@ -4,6 +4,9 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
+#ifndef PLATFORM_H
+#define PLATFORM_H
+
 // PlatformIO Project Configuration File
 //
 //   Build options: build flags, source filter
@@ -135,7 +138,9 @@
 // monitor_filters = esp32_exception_decoder
 
 
+// ===== [env:c3_pico] -> ARDUINO_LOLIN_C3_PICO
 #ifdef ARDUINO_LOLIN_C3_PICO
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lolin_c3_mini ; use c3_mini board defs - but note define below which is special cased
 // board_build.variant = lolin_c3_pico
@@ -152,7 +157,9 @@
 
 #endif // ARDUINO_LOLIN_C3_PICO
 
+// ===== [env:s2_mini] -> ARDUINO_LOLIN_S2_MINI
 #ifdef ARDUINO_LOLIN_S2_MINI
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI
 // build_flags = 
@@ -161,6 +168,13 @@
 
 #endif // ARDUINO_LOLIN_S2_MINI
 
+// ----- [env:s2_mini_4x] also targets ARDUINO_LOLIN_S2_MINI, DISABLED
+// Only one env per board can be active in the Arduino IDE, and
+// [env:s2_mini] is the one in effect. To use this one instead, set
+//   custom_arduino_default = yes
+// on [env:s2_mini_4x] in platformio.ini (and remove it from any other env for
+// this board), then re-run scripts/generate_platform_h.py.
+#if 0
 #ifdef ARDUINO_LOLIN_S2_MINI
 // platform = ${common.platform_esp32}
 // board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI
@@ -170,8 +184,11 @@
 #define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 
 #endif // ARDUINO_LOLIN_S2_MINI
+#endif // 0
 
+// ===== [env:nodemcu-32s] -> ARDUINO_NodeMCU_32S
 #ifdef ARDUINO_NodeMCU_32S
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = nodemcu-32s
 // build_flags = 
@@ -182,7 +199,9 @@
 // An affordable C3 with a small HW675 OLED 
 #endif // ARDUINO_NodeMCU_32S
 
-#ifdef ARDUINO_LOLIN_C3_PICO
+// ===== [env:esp32c3_oled_72x40] -> ARDUINO_LOLIN_C3_MINI
+#ifdef ARDUINO_LOLIN_C3_MINI
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lolin_c3_mini ; enables native USB-CDC (ARDUINO_USB_CDC_ON_BOOT=1)
 // board_build.variant = lolin_c3_pico ; same SDA/SCL/USB as lolin_c3_mini variant; kept as known-working config
@@ -200,40 +219,11 @@
 
 // ==== ESP8266 boards ================================================
 
-#endif // ARDUINO_LOLIN_C3_PICO
+#endif // ARDUINO_LOLIN_C3_MINI
 
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINIPRO
-// platform = espressif8266
-// board = d1_mini_pro
-// build_flags = 
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "d1_mini_pro"
-// board_build.partitions = min_spiffs.csv
-
-#endif // ARDUINO_ESP8266_WEMOS_D1MINIPRO
-
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
-// board = d1_mini
-// platform = espressif8266
-// build_flags =
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "d1_mini"
-
-// As used at Umah Pupa
-#endif // ARDUINO_ESP8266_WEMOS_D1MINI
-
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
-// board = d1_mini
-// platform = espressif8266
-// build_flags =
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "d1_mini_4x"
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
-// ===== LORA BOARDS - ALL ESP32 ======================================
-
-#endif // ARDUINO_ESP8266_WEMOS_D1MINI
-
+// ===== [env:ttgo-lora32-v21] -> ARDUINO_TTGO_LoRa32_v21new
 #ifdef ARDUINO_TTGO_LoRa32_v21new
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = ttgo-lora32-v21 ; defines ARDUINO_TTGO_LoRa32_v21new
 // build_flags = 
@@ -246,7 +236,9 @@
 
 #endif // ARDUINO_TTGO_LoRa32_v21new
 
+// ===== [env:lilygo_t3_s3_sx127x] -> ARDUINO_LILYGO_T3_S3_V1_X
 #ifdef ARDUINO_LILYGO_T3_S3_V1_X
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
 // board_build.variant = lilygo_t3_s3_sx127x
@@ -260,6 +252,13 @@
 
 #endif // ARDUINO_LILYGO_T3_S3_V1_X
 
+// ----- [env:lilygo_t3_s3_sx127x_sht] also targets ARDUINO_LILYGO_T3_S3_V1_X, DISABLED
+// Only one env per board can be active in the Arduino IDE, and
+// [env:lilygo_t3_s3_sx127x] is the one in effect. To use this one instead, set
+//   custom_arduino_default = yes
+// on [env:lilygo_t3_s3_sx127x_sht] in platformio.ini (and remove it from any other env for
+// this board), then re-run scripts/generate_platform_h.py.
+#if 0
 #ifdef ARDUINO_LILYGO_T3_S3_V1_X
 // platform = ${common.platform_esp32}
 // board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
@@ -274,8 +273,11 @@
 //     ${common.lib_deps_lora_oled}
 
 #endif // ARDUINO_LILYGO_T3_S3_V1_X
+#endif // 0
 
-#ifdef TODO_HELTEC_WIFI_LORA_32_V3
+// ===== [env:heltec_wifi_lora_32_V3] -> ARDUINO_heltec_wifi_lora_32_V3
+#ifdef ARDUINO_heltec_wifi_lora_32_V3
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = heltec_wifi_lora_32_V3  ; there are not yet separate board and variant files for V3
 // build_flags = 
@@ -286,9 +288,16 @@
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
 
-#endif // TODO_HELTEC_WIFI_LORA_32_V3
+#endif // ARDUINO_heltec_wifi_lora_32_V3
 
-#ifdef TODO_HELTEC_WIFI_LORA_32_V3
+// ----- [env:heltec_wifi_lora_32_V32] also targets ARDUINO_heltec_wifi_lora_32_V3, DISABLED
+// Only one env per board can be active in the Arduino IDE, and
+// [env:heltec_wifi_lora_32_V3] is the one in effect. To use this one instead, set
+//   custom_arduino_default = yes
+// on [env:heltec_wifi_lora_32_V32] in platformio.ini (and remove it from any other env for
+// this board), then re-run scripts/generate_platform_h.py.
+#if 0
+#ifdef ARDUINO_heltec_wifi_lora_32_V3
 // platform = ${common.platform_esp32}
 // board = heltec_wifi_lora_32_V3  ; defines ARDUINO_heltec_wifi_lora_32_V3; default variant heltec_wifi_lora_32_V3
 // build_flags = 
@@ -300,9 +309,12 @@
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
 
-#endif // TODO_HELTEC_WIFI_LORA_32_V3
+#endif // ARDUINO_heltec_wifi_lora_32_V3
+#endif // 0
 
-#ifdef TODO_TTGO_T_BEAM
+// ===== [env:tbeam] -> ARDUINO_T_Beam
+#ifdef ARDUINO_T_Beam
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = ttgo-t-beam ; defines ARDUINO_T_Beam
 // build_flags =
@@ -313,9 +325,16 @@
 // lib_deps =
 //     ${common.lib_deps_lora}
 
-#endif // TODO_TTGO_T_BEAM
+#endif // ARDUINO_T_Beam
 
-#ifdef TODO_TTGO_T_BEAM
+// ----- [env:tbeam_oled] also targets ARDUINO_T_Beam, DISABLED
+// Only one env per board can be active in the Arduino IDE, and
+// [env:tbeam] is the one in effect. To use this one instead, set
+//   custom_arduino_default = yes
+// on [env:tbeam_oled] in platformio.ini (and remove it from any other env for
+// this board), then re-run scripts/generate_platform_h.py.
+#if 0
+#ifdef ARDUINO_T_Beam
 // platform = ${common.platform_esp32}
 // board = ttgo-t-beam ; defines ARDUINO_T_Beam
 // build_flags =
@@ -329,5 +348,11 @@
 // lib_deps =
 //     ${common.lib_deps_lora_oled}
 
-#endif // TODO_TTGO_T_BEAM
+#endif // ARDUINO_T_Beam
+#endif // 0
 
+#ifndef FRUGAL_IOT_BOARD_CONFIGURED
+  #error "This board has no settings in platform.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_LOLIN_C3_PICO, ARDUINO_LOLIN_S2_MINI, ARDUINO_NodeMCU_32S, ARDUINO_LOLIN_C3_MINI, ARDUINO_TTGO_LoRa32_v21new, ARDUINO_LILYGO_T3_S3_V1_X, ARDUINO_heltec_wifi_lora_32_V3, ARDUINO_T_Beam"
+#endif
+
+#endif // PLATFORM_H

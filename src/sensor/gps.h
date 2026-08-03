@@ -5,17 +5,22 @@
  *
  * See Quectel L76K datasheet and Heltec WiFi LoRa 32 V4 schematic for wiring.
  *
- * Required library:
- *   mikalhart/TinyGPSPlus  (NMEA parser)
+ * Required library - all the NMEA sentence parsing is theirs:
+ *   https://github.com/mikalhart/TinyGPSPlus
+ *   Copyright (C) 2008-2024 Mikal Hart. LGPL-2.1-or-later, per the notice at the top of
+ *   src/TinyGPS++.h - the repo has no LICENSE file, so GitHub does not report a licence.
+ *   NOTE this is the only non-permissive dependency in library.json. Frugal-IoT ships as
+ *   source, so the relinking LGPL asks for is possible, but it is not the clean MIT/BSD
+ *   situation of the other dependencies.
  *
  * Optional build flags (with defaults):
  *   SENSOR_GPS_BAUD            (9600)  — module UART baud rate
  *   SENSOR_GPS_READ_TIMEOUT_MS (1100)  — max ms to wait for a fresh fix after
  *                                        flushing the stale UART buffer; covers
  *                                        one full 1 Hz L76K update cycle + jitter
- *   SENSOR_GPS_3v3_PIN         (0xFF)  — GPIO driven HIGH to power the module
+ *   SENSOR_GPS_3v3_PIN         (PIN_NONE)  — GPIO driven HIGH to power the module
  *                                        (e.g. GPIO 46 on Heltec V4, active HIGH)
- *   SENSOR_GPS_0v_PIN          (0xFF)  — GPIO driven LOW for ground enable
+ *   SENSOR_GPS_0v_PIN          (PIN_NONE)  — GPIO driven LOW for ground enable
  *                                        (not used on Heltec V4)
  *   SENSOR_GPS_DEBUG           — enable Serial debug output
  *
@@ -48,22 +53,22 @@
 #endif
 
 #ifndef SENSOR_GPS_3v3_PIN
-  #define SENSOR_GPS_3v3_PIN 0xFF
+  #define SENSOR_GPS_3v3_PIN PIN_NONE
 #endif
 #ifndef SENSOR_GPS_0v_PIN
-  #define SENSOR_GPS_0v_PIN 0xFF
+  #define SENSOR_GPS_0v_PIN PIN_NONE
 #endif
 
 // GPIO driven HIGH continuously to prevent the module from entering sleep
-// between reads (e.g. GNSS_WAKE = GPIO 40 on Heltec V4). 0xFF = unused.
+// between reads (e.g. GNSS_WAKE = GPIO 40 on Heltec V4). PIN_NONE = unused.
 #ifndef SENSOR_GPS_WAKE_PIN
-  #define SENSOR_GPS_WAKE_PIN 0xFF
+  #define SENSOR_GPS_WAKE_PIN PIN_NONE
 #endif
 
 // GPIO driven HIGH to release the module from hardware reset
-// (e.g. GNSS_RST = GPIO 42 on Heltec V4). 0xFF = unused.
+// (e.g. GNSS_RST = GPIO 42 on Heltec V4). PIN_NONE = unused.
 #ifndef SENSOR_GPS_RST_PIN
-  #define SENSOR_GPS_RST_PIN 0xFF
+  #define SENSOR_GPS_RST_PIN PIN_NONE
 #endif
 
 class Sensor_GPS : public Sensor {

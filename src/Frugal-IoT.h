@@ -12,9 +12,11 @@
 #include "sensor/sht.h"
 #include "sensor/dht.h"
 #include "sensor/bh1750.h"
+#include "sensor/bme280.h"
 #include "sensor/button.h"
 #include "sensor/ds18b20.h"
-// #include "sensor/ina219.h" // commented out till library identified and tested
+#include "sensor/dissolvedoxygen.h"
+#include "sensor/ina219.h" // Freestanding over System_I2C, no external library
 #include "sensor/ms5803.h"
 #include "sensor/loadcell.h"
 #include "sensor/ens160aht21.h"

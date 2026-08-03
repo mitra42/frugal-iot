@@ -18,10 +18,138 @@ Each example directory contains a `platform.h` file alongside the `.ino`. This f
 `#define` statements and wraps board-specific defines in `#ifdef ARDUINO_BOARD_NAME` guards.
 
 - **PlatformIO** reads flags directly from `platformio.ini`; `platform.h` is not used.
-- **Arduino IDE** users include `platform.h` at the top of the `.ino` to get the same defines.
+- **Arduino IDE** picks `platform.h` up because `_settings.h` includes it when `PLATFORMIO` is
+  undefined — the `.ino` does not need to (and on ESP8266 could not; see below).
 
 Do not hand-edit `platform.h` — regenerate it by re-running `scripts/prerelease.bash` after
 changing `platformio.ini`.
+
+### Test-compiling an example for Arduino
+
+`scripts/arduino_compile.bash <example> <env>` compiles an example exactly as the Arduino IDE
+would, from the command line via `arduino-cli` (same cores, libraries and sketchbook as the IDE —
+nothing needs opening). Run it from the `scripts` directory:
+
+```
+cd lib/Frugal-IoT/scripts
+./arduino_compile.bash commonroom nodemcu_tambak
+./arduino_compile.bash --list          # every example and its environments
+./arduino_compile.bash --install-deps  # core + library.properties deps (ESP32 core is >1GB)
+```
+
+It passes `--library ..` so the **working tree** is compiled, not whatever stale copy sits in
+`~/Documents/Arduino/libraries`. It regenerates `platform.h` first, and checks two things a bare
+"exit 0" would hide:
+
+- **Extra `.cpp` in the sketch folder that also defines `setup()`.** Arduino compiles *every*
+  source file in a sketch directory, so that is a duplicate-symbol link error.
+- **That the `ARDUINO_*` macro `platform.h` guards the env with is the one the core really
+  defines.** If not, the whole `#ifdef` block is skipped, none of the env's flags reach the build,
+  and the sketch compiles with library defaults — green, but meaningless. The expected macro is
+  obtained by importing `generate_platform_h.py`, so the two cannot drift apart.
+
+`generate_platform_h.py`'s guards must therefore be the **Arduino** macro, not the one PlatformIO
+passes as `-D`. Find it with:
+
+```
+arduino-cli board details -b <fqbn> --show-properties | grep '^build.board='   # guard is ARDUINO_<that>
+```
+
+Its `env_defines` (checked before `board_defines`) exists for envs whose Arduino board differs from
+their PlatformIO one — `c3_pico` is `board = lolin_c3_mini` in PlatformIO, which has no C3 Pico
+definition, but Arduino has a real `esp32:esp32:lolin_c3_pico` defining `ARDUINO_LOLIN_C3_PICO`
+natively. Some boards also need a menu option: TTGO LoRa32-OLED picks its variant through
+`Revision=TTGO_LoRa32_v21new`, and without it you silently get the V1 default.
+
+### Partitions: getting min_spiffs in the Arduino IDE
+
+Why this is needed: these boards' default partition scheme (`default.csv`) gives **1,310,720
+bytes** of app space, and a full Frugal-IoT build is around 1.36 MB — so it overflows with
+*"text section exceeds available space in board"*, which does not obviously point at partitions.
+`min_spiffs.csv` gives **1,966,080 bytes** and, importantly, still has both `app0` and `app1`,
+so **OTA keeps working**.
+
+The menu is **Tools > Partition Scheme**, and the option, where it exists, is labelled exactly:
+
+> **Minimal SPIFFS (1.9MB APP with OTA/128KB SPIFFS)**
+
+**But most of this project's boards do not offer it.** The core ships `min_spiffs.csv` and 264
+board definitions expose it, yet only two of ours do:
+
+| Board (Arduino name) | Used by env | `Minimal SPIFFS` in the menu? |
+|---|---|---|
+| ESP32C3 Dev Module | `c3_wedoo` | **yes** — just select it |
+| LilyGo T3-S3 | `lilygo_t3_s3_*` | **yes** — just select it |
+| LOLIN C3 Pico | `c3_pico` | no |
+| LOLIN C3 Mini | — | no |
+| LOLIN S2 Mini | `s2_mini*` | no |
+| NodeMCU-32S | `nodemcu_tambak` | no |
+| TTGO LoRa32-OLED | `ttgo-lora32-v21` | no |
+| Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V3*` | no |
+| T-Beam | `tbeam*` | no |
+
+#### How this is shipped
+
+Every example directory contains a copy of **`min_spiffs.csv`**, taken from the ESP32 core
+(and byte-identical to PlatformIO's copy, so both toolchains use the same table). It is
+deliberately named `min_spiffs.csv` and **not** `partitions.csv`, because a file called
+`partitions.csv` would override the menu for *every* board — including the 8 MB Heltec boards,
+whose `default_8MB.csv` already gives ~3.3 MB and is fine as-is. Left under its own name it is
+inert (the IDE does not compile `.csv` files), and the user activates it only if they need it.
+
+Precedence comes from the core's `platform.txt`: *"first and higher priority overwrites it:
+build.partitions < variant < source"* — a `partitions.csv` in the sketch directory beats the menu.
+
+#### Text for the user documentation / wiki
+
+> **If compiling gives "text section exceeds available space in board"**
+>
+> Your board's default flash layout does not leave enough room for this sketch. Two steps:
+>
+> 1. **Sketch > Show Sketch Folder**, and rename `min_spiffs.csv` to `partitions.csv`.
+> 2. **Tools > Partition Scheme >** choose **"No OTA (2MB APP/2MB SPIFFS)"**.
+>
+> Compile again and it will fit.
+>
+> Despite that menu option's name, **over-the-air updates still work.** Step 1 is what sets the
+> real flash layout, and it keeps both OTA slots. The menu choice only raises the size limit the
+> IDE checks your sketch against — every other option on these boards caps it too low to allow a
+> sketch this size, even though it fits.
+>
+> Shortcut: if your board's Partition Scheme menu already lists **"Minimal SPIFFS (1.9MB APP with
+> OTA/128KB SPIFFS)"**, just select that and skip step 1 entirely.
+>
+> If you never see the error, do nothing — boards with more flash (such as the 8 MB Heltec V3)
+> have room with their default settings.
+
+One caveat for us rather than the user: with "No OTA (2MB)" selected the IDE's limit
+(2,097,152) is slightly above the real `app0` (1,966,080), so a sketch between those two sizes
+would pass the check yet not fit. Worth watching the reported percentage.
+
+#### The script does this for you
+
+`arduino_compile.bash` needs neither step and writes nothing into the example directory. It
+prefers the menu option when the board has one, and otherwise overrides both properties
+directly, reading the app size from the largest `app` partition in the core's own CSV:
+
+```
+--build-property build.partitions=min_spiffs --build-property upload.maximum_size=1966080
+```
+
+### ESP8266 and platform.h — a real limitation
+
+The `platform.h` mechanism relies on a library header (`_settings.h`) being able to
+`#include "platform.h"` from the *sketch* directory. That works on ESP32 only because its
+`compiler.cpreprocessor.flags` carries `"-I{build.source.path}"`. **ESP8266's does not**, so on
+ESP8266 the build fails with `platform.h: No such file or directory` and no per-example flag can
+reach library sources at all.
+
+`arduino_compile.bash` works around it by borrowing the empty `compiler.c/cpp.extra_flags` slots to
+put the sketch dir back on the include path — but **an Arduino IDE user has no such lever**. The
+portable fix, if ESP8266 IDE support matters, is to generate a **`build_opt.h`** instead of (or as
+well as) `platform.h`: both cores honour a sketch-local `build_opt.h` and inject its contents as
+flags into every translation unit, library sources included (`{build.opt.flags}` on ESP8266,
+`"@{build.opt.path}"` on ESP32).
 
 ## Directory Structure
 
@@ -255,17 +383,185 @@ a readable one — both just build the topic string, the actual subscribe only h
 | `Sensor_Soil` | sensor/soil | Soil moisture (capacitive) |
 | `Sensor_Battery` | sensor/battery | Battery voltage |
 | `Sensor_BH1750` | sensor/bh1750 | Light (lux) |
+| `Sensor_BME280` | sensor/bme280 | Temperature + humidity + pressure (hPa); extends `Sensor_HT`. Freestanding, no external library |
 | `Sensor_LoadCell` | sensor/loadcell | Weight via HX711 |
 | `Sensor_DS18B20` | sensor/ds18b20 | 1-Wire temperature |
 | `Sensor_MS5803` | sensor/ms5803 | Pressure + temperature |
 | `Sensor_ENS160AHT21` | sensor/ens160aht21 | Air quality + temp/humidity |
 | `Sensor_Button` | sensor/button | Button press events |
 | `Sensor_Analog` | sensor/analog | Raw ADC |
+| `Sensor_INA219` | sensor/ina219 | Current/voltage/power monitor — shunt (mV), bus (V), current (mA), power (mW), load (V). Freestanding, no external library |
+| `Sensor_DissolvedOxygen` | sensor/dissolvedoxygen | Dissolved oxygen (mg/L) from an analog probe, temperature compensated; extends `Sensor_Analog`. **The only Sensor with an `IN`** |
 | `Sensor_Float` | sensor/float | Arbitrary float value |
 | `Sensor_UInt16` | sensor/uint16 | Arbitrary uint16 value |
 | `Sensor_Health` | sensor/health | Device health metrics |
 | `Sensor_GPS` | sensor/gps | GPS location (lat/lon/altitude/speed/course/hdop/satellites/UTC time) via NMEA serial module |
 | `Sensor_Ultrasonic` | sensor/ultrasonic | Distance (mm) from an RS485/Modbus ultrasonic module (A01ANY4B); needs `SENSOR_ULTRASONIC_SLAVE_ID` |
+
+### System_I2C helpers
+
+`System_I2C` is a plain class (not `System_Base`), one instance **per addressed device**,
+holding `addr` plus a `TwoWire*` for the shared bus. Prefer these over hand-rolling:
+
+| Method | Use |
+|--------|-----|
+| `initialize()` | `wire->begin(I2C_SDA, I2C_SCL)`, **de-duplicated per bus** — every device on a bus calls it from its own `setup()` |
+| `sendRegister(reg, value)` | Write one byte to a register |
+| `sendRegister16(reg, value)` | Write a big-endian 16-bit register |
+| `send1read(cmd, bytes)` | Send a register/command byte, read N bytes back as a big-endian integer (N ≤ 4) |
+| `send1read1(cmd)` | The one-byte case |
+| `sendAndRead(reg, buf, len)` | Send a register byte, read `len` bytes into a buffer |
+| `isPresent()` | Does anything ACK at this address? Cheap wiring check before any chip-specific id read |
+| `scan()` | Print every address that ACKs **on this object's bus** |
+
+`sendRegister`, `sendRegister16`, `send1read` and `isPresent` were added after finding the same
+code hand-rolled in several sensors: `Sensor_ensaht::ENSsend2()` and `Sensor_BME280::writeReg()`
+were byte-identical implementations of the register write, and `ms5803.cpp` paired
+`send()`+`read()` five times where `send1read()` now does it. `initialize()` gained the per-bus
+guard because every I2C sensor called `wire->begin()` — see the "unnecessary since already
+called" note in `ens160aht21.cpp` and TODO-115/TODO-16 in `sht.cpp`. `scan()` previously scanned
+the global `I2C_WIRE` regardless of which bus the object was on.
+
+### Sensor_INA219
+
+Freestanding over `System_I2C` — no external library. Five outputs, so it extends `Sensor`
+directly (the `Sensor_GPS` shape) rather than `Sensor_Float`. `load = bus + shunt/1000`.
+
+Register layout, LSB scalings (shunt 10 µV/bit signed, bus 4 mV/bit after `>>3`, power LSB =
+20 × current LSB) and the calibration arithmetic (`current_LSB = maxCurrent/32768`,
+`cal = 0.04096/(current_LSB × shunt)`) were cross-checked against `RobTillaart/INA219` (MIT)
+rather than written from memory.
+
+**The calibration trap.** `current` and `power` are meaningless unless
+`SENSOR_INA219_SHUNT_OHMS` matches the resistor fitted to the board, and the failure is
+**silent** — `shunt` and `bus` stay perfectly correct while `current` and `power` are wrong by
+the ratio of the two resistances. Common breakouts fit 0.1 Ω (the default); high-current boards
+fit 0.002 Ω, which would read 50× off against it.
+
+```ini
+build_flags =
+    -D SENSOR_INA219_WANT            ; main.cpp's per-board switch
+    -D SENSOR_INA219_SHUNT_OHMS=0.1  ; MUST match the board
+    -D SENSOR_INA219_MAX_CURRENT=3.2 ; A; sets resolution (LSB = MAX_CURRENT/32768)
+    ;-D SENSOR_INA219_ADDRESS=0x40 -D SENSOR_INA219_CONFIG=0x3FFF -D SENSOR_INA219_DEBUG
+```
+
+Bus-register bit 0 is the chip's own math-overflow flag: when set, `shunt` and `bus` are still
+published but `current`/`power` are skipped and a message suggests raising `MAX_CURRENT`.
+
+**Power.** Converting continuously costs ~1 mA — for a battery node, more than the thing being
+measured. So the chip is left in MODE `000` (power-down, ~6 µA) and woken only for the instant
+it is read: write MODE `011` (triggered) → poll the bus register's conversion-ready bit → read
+the four registers → back to MODE `000`. Define `SENSOR_INA219_CONTINUOUS` for the old
+always-on behaviour, trading ~1 mA for an instant read instead of a ~136 ms blocking wait (at
+the default 128-sample averaging on both channels).
+
+This is the pattern to copy for any sensor with a low-power mode:
+
+- **`powerDown()`** (reached via `Sensor::prepare()` before sleeping) writes MODE `000`
+  **before** calling the base, so the I2C write happens while the chip still has power.
+- **`powerUp()`** (via `Sensor::recover()`) calls the base and then only sets a
+  `needs_config` flag. It deliberately does **not** write registers, because
+  `System_Power::recover()` runs its `SYSTEM_POWER_ON_DELAY` *after* every sensor's
+  `powerUp()` has returned — an I2C write from inside `powerUp()` can hit a chip whose supply
+  is still ramping. The flag is acted on at the next read, and rewrites the calibration
+  register as well as the config so it is correct whether or not the board actually cut power.
+
+Note the triggered mode helps in **every** power mode, not just sleep:
+`System_Power::prepare()` is guarded by `if (mode)`, so under `Power_Loop` nothing ever calls
+`prepare()`/`recover()` and a continuously-converting chip would draw its ~1 mA forever.
+
+`SENSOR_INA219_CONFIG` (default `0x3FF8`) holds only the range/gain/averaging bits — the low 3
+MODE bits are owned by the class and masked off whatever you pass, so a datasheet-literal
+`0x3FFF` also works.
+
+### Sensor_DissolvedOxygen — and how to give a Sensor an input
+
+Extends `Sensor_Analog`, enabled by passing a pin (`SENSOR_DO_PIN` in the demo). Publishes mg/L.
+
+**It maps onto `Sensor_Analog` without overriding `convert()`.** The DO formula is
+`DO = voltage_mv * DO_saturation(T) / V_saturation(T)` — pure multiplication — and
+`Sensor_Analog` already publishes `(reading - offset) * scale`. So:
+
+- `readInt()` returns the probe voltage in **millivolts**, not raw counts
+- `offset` is 0
+- `scale` is recomputed as `DO_saturation(T) / (V_saturation(T) * 1000)` whenever a new water
+  temperature arrives (the `/1000` converts the table's µg/L to mg/L)
+
+Note the method names: `Sensor_Analog` replaces `Sensor_Float`'s chain with **int** versions —
+`readInt()`, `validate(int)`, `convert(int)` — so `readFloat()` is not involved at all.
+
+**This is the first `Sensor` with an `IN`**, and there are three traps if you add another:
+
+1. `Sensor` has only `std::vector<OUT*> outputs` — no `inputs`. The input is a plain member.
+2. `Sensor::dispatch()` wraps everything in `if (msg.module() == id)`, but a *wired* input
+   receives messages published by a **different** module. So the input's `dispatch()` must be
+   called **outside** that test, before delegating upward — exactly what `Control::dispatch()`
+   does, and the reason it can't simply be delegated.
+3. Hold it as `IN*`, not `INfloat*` — `INfloat::dispatch()` and `::discover()` are protected
+   overrides, reachable only through the public `IN` declarations. Also call `input->setup()`
+   and add it to `discover()`, neither of which `Sensor` does for you.
+
+The input wires itself in `setup()` to `SENSOR_DO_TEMPERATURE_PATH` (default
+`"ds18b20/ds18b20"`) **only if** nothing already wired it, so a path stored on LittleFS or set
+in the UX takes precedence over the compile-time default.
+
+```ini
+build_flags =
+    -D SENSOR_DO_PIN=34
+    ;-D SENSOR_DO_CAL1_V=269 -D SENSOR_DO_CAL1_T=25   ; single-point calibration
+    ;-D SENSOR_DO_CAL2_V=... -D SENSOR_DO_CAL2_T=...  ; define BOTH for two-point
+    ;-D SENSOR_DO_TEMPERATURE_PATH=\"ds18b20/ds18b20\"
+    ;-D SENSOR_DO_DEBUG
+```
+
+`captiveLines()` is overridden to show the reading read-only: `Sensor_Float::captiveLines()`
+offers it as an editable number, which on a `Sensor_Analog` means `calibrate()` and would set a
+`scale` that the next temperature message immediately overwrites.
+
+### Sensor_BME280
+
+Extends `Sensor_HT` (which already supplies `temperature` and `humidity`) and adds a
+`pressure` output in hPa. Freestanding over `System_I2C` — **no external library** — in the
+same spirit as `Sensor_ms5803`.
+
+The compensation arithmetic and calibration unpacking are ported from Bosch's own reference
+driver, `boschsensortec/BME280_SensorAPI` (`bme280.c`, `BME280_DOUBLE_ENABLE`), which is
+BSD-3-Clause and therefore compatible with this library's MIT licence — the attribution
+notice at the top of `bme280.h`/`.cpp` is the requirement. Port rather than reimplement,
+because `dig_h4`/`dig_h5` sign-extend the MSB *before* shifting
+(`(int16_t)(int8_t)reg_data[3] * 16`), which is easy to get subtly wrong and yields
+plausible-but-incorrect humidity.
+
+`double` not `float`: the pressure polynomial divides by constants up to `2147483648.0`,
+beyond a 24-bit float mantissa. It runs once per read cycle, so the cost is irrelevant.
+
+Reads in Bosch's **weather monitoring** configuration — forced mode, 1× oversampling on all
+three channels, IIR filter off — so the chip sleeps between reads, which suits one reading
+per wake cycle. `setup()` resets the device, requires chip id `0x60` (a BMP280 answers `0x58`
+and has no humidity, so it cannot sit under `Sensor_HT`) and calls `setupFailed()` otherwise.
+Each read also rejects an all-`0xFF` data block, because Bosch's compensation clamps to the
+rated range and would otherwise silently publish 85 °C for a disconnected device.
+
+Altitude is deliberately **not** published — it is a re-expression of pressure against an
+assumed sea-level reference, better derived downstream from `bme280/pressure`.
+
+```ini
+; platformio.ini — the class is always compiled; this flag is main.cpp's per-board switch
+build_flags =
+    -D SENSOR_BME280_WANT
+    ;-D SENSOR_BME280_ADDRESS=0x77   ; default 0x76; 0x77 if SDO is tied high
+    ;-D SENSOR_BME280_DEBUG
+```
+
+```cpp
+frugal_iot.sensors->add(new Sensor_BME280("BME280"));
+// or: new Sensor_BME280("BME280", 0x77, &I2C_WIRE, true)
+```
+
+Verification: the port was cross-checked against Bosch's functions on the host over 200,000
+randomized calibration/raw-value combinations — calibration unpacking, 20/16-bit raw
+assembly, `t_fine`, and all three compensated outputs were bit-identical.
 
 ### Modbus over RS485 (`system/modbus.h`)
 

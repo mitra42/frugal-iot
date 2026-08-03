@@ -19,16 +19,16 @@ System_RS485::System_RS485(HardwareSerial* serial,
     rx_pin(rx_pin),
     tx_pin(tx_pin),
     de_pin(de_pin),
-    re_pin(re_pin == 0xFF ? de_pin : re_pin), // 0xFF means the breakout ties RE to DE
+    re_pin(re_pin == PIN_NONE ? de_pin : re_pin), // PIN_NONE means the breakout ties RE to DE
     baud(baud)
   { }
 
 // Drive the transceiver into transmit (on) or receive (off).
 // DE is active HIGH, RE is active LOW, so both follow the same level - and when the
 // breakout ties them together this just writes the one pin twice.
-// de_pin 0xFF means the transceiver handles direction itself, so there is nothing to drive.
+// de_pin PIN_NONE means the transceiver handles direction itself, so there is nothing to drive.
 void System_RS485::txEnable(bool on) {
-  if (de_pin != 0xFF) {
+  if (de_pin != PIN_NONE) {
     digitalWrite(re_pin, on ? HIGH : LOW);
     digitalWrite(de_pin, on ? HIGH : LOW);
   }
@@ -48,7 +48,7 @@ void System_RS485::postTransmission() {
 void System_RS485::initialize() {
   if (!initialized) {
     initialized = true;
-    if (de_pin != 0xFF) { // 0xFF - transceiver switches direction on its own, leave its pins alone
+    if (de_pin != PIN_NONE) { // PIN_NONE - transceiver switches direction on its own, leave its pins alone
       pinMode(de_pin, OUTPUT);
       pinMode(re_pin, OUTPUT);
       txEnable(false); // Idle listening

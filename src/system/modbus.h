@@ -25,16 +25,18 @@
  * Most breakouts tie DE and RE together - define DE only. Boards with automatic direction
  * control need neither: leave both undefined and no direction switching is done.
  *
- * Required library:
- *   4-20ma/ModbusMaster  (Doc Walker)
+ * Required library - this file is a thin wrapper around it, all the Modbus RTU framing, CRC
+ * and timeout handling is theirs:
+ *   https://github.com/4-20ma/ModbusMaster  - Copyright (c) Doc Walker, Apache-2.0 licence
+ *   (also at https://registry.platformio.org/libraries/4-20ma/ModbusMaster)
  *
  * Build flags:
  *   SYSTEM_MODBUS_WANT           - REQUIRED. Derived in _settings.h from any sensor that
  *                                  needs Modbus (e.g. SENSOR_ULTRASONIC_SLAVE_ID).
  *   SYSTEM_RS485_RX_PIN          - REQUIRED, and
  *   SYSTEM_RS485_TX_PIN          - REQUIRED. Constructor defaults for the UART pins.
- *   SYSTEM_RS485_DE_PIN  (0xFF)  - 0xFF = transceiver switches direction itself
- *   SYSTEM_RS485_RE_PIN  (0xFF)  - 0xFF = tied to DE
+ *   SYSTEM_RS485_DE_PIN  (PIN_NONE)  - PIN_NONE = transceiver switches direction itself
+ *   SYSTEM_RS485_RE_PIN  (PIN_NONE)  - PIN_NONE = tied to DE
  *   SYSTEM_RS485_BAUD    (9600)
  *   SYSTEM_MODBUS_RETRY_CYCLES (10) - see "Timing" below
  *   SYSTEM_MODBUS_DEBUG          - Serial debug output
@@ -68,10 +70,10 @@
 #endif
 
 #ifndef SYSTEM_RS485_DE_PIN
-  #define SYSTEM_RS485_DE_PIN 0xFF
+  #define SYSTEM_RS485_DE_PIN PIN_NONE
 #endif
 #ifndef SYSTEM_RS485_RE_PIN
-  #define SYSTEM_RS485_RE_PIN 0xFF
+  #define SYSTEM_RS485_RE_PIN PIN_NONE
 #endif
 #ifndef SYSTEM_RS485_BAUD
   #define SYSTEM_RS485_BAUD 9600

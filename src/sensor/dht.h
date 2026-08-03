@@ -13,7 +13,8 @@
  * similar at https://arduinomodules.info/ky-015-temperature-humidity-sensor-module/ 
  * or non-blocking DHT at https://github.com/toannv17/DHT-Sensors-Non-Blocking/blob/main/DHT_Async.cpp (this is a library)
  *
- * This version uses Rob Tillart's library (who also did the SHT library we use) 
+ * This version uses Rob Tillaart's library (who also did the SHT library we use)
+ *   https://github.com/RobTillaart/DHTNew  - Copyright (c) Rob Tillaart, MIT licence
  * 
  * Known Pins for various boards
  *  LilyGo HiGrow:        GPIO_NUM_16

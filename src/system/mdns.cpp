@@ -1,8 +1,9 @@
 /* Frugal-IoT - mDNS peer-to-peer messaging */
 
+#include "_settings.h"
+
 #ifdef SYSTEM_MDNS_WANT
 
-#include "_settings.h"
 #include <Arduino.h>
 #include <WiFi.h>
 #include <ESPmDNS.h>

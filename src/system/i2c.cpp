@@ -7,11 +7,36 @@
 #include <Wire.h>
 #include "system/i2c.h"
 
-System_I2C::System_I2C(uint8_t addr, TwoWire* wire) 
+System_I2C::System_I2C(uint8_t addr, TwoWire* wire)
 :  addr(addr), wire(wire) {}
 
+// A System_I2C is per *device*, but wire->begin() is per *bus*, and every device on a bus calls
+// initialize() from its own setup(). So remember which buses have been begun - see the
+// "unnecessary since already called" note in ens160aht21.cpp and TODO-115/TODO-16 in sht.cpp.
+static TwoWire* i2c_begun[SYSTEM_I2C_MAX_BUSES] = { nullptr };
+
+// True if this bus has been begun before. If not, records it (when there is room) and returns
+// false so the caller does the begin().
+bool System_I2C::busAlreadyBegun() {
+  bool found = false;
+  uint8_t slot = SYSTEM_I2C_MAX_BUSES; // First free slot, if any
+  for (uint8_t i = 0; i < SYSTEM_I2C_MAX_BUSES; i++) {
+    if (i2c_begun[i] == wire) {
+      found = true;
+    } else if ((i2c_begun[i] == nullptr) && (slot == SYSTEM_I2C_MAX_BUSES)) {
+      slot = i;
+    }
+  }
+  if (!found && (slot < SYSTEM_I2C_MAX_BUSES)) {
+    i2c_begun[slot] = wire;
+  }
+  return found;
+}
+
 void System_I2C::initialize() {
-  wire->begin(I2C_SDA, I2C_SCL);  // typically SDA SCL unless board specific in _settings.h or overridden in platformio.ini
+  if (!busAlreadyBegun()) {
+    wire->begin(I2C_SDA, I2C_SCL);  // typically SDA SCL unless board specific in _settings.h or overridden in platformio.ini
+  }
 }
 
 // The raw send and write. 
@@ -58,18 +83,35 @@ uint32_t System_I2C::read(uint8_t bytes) {
     result |= wire->read();
   }
   #ifdef SYSTEM_I2C_DEBUG
-    Serial.print(F()"I2C read"));  Serial.println(result); 
+    Serial.print(F("I2C read"));  Serial.println(result);
   #endif
   return result;
 }
 
-// Now various combinations used by different sensors - some will be in the sensor classes instead.
-// TODO-101 rewrite ms803 to use this
+// Write one byte to a register. The register/value paradigm most chips use - was hand-rolled
+// identically in Sensor_ensaht::ENSsend2() and Sensor_BME280::writeReg() before this existed.
+bool System_I2C::sendRegister(uint8_t reg, uint8_t value) {
+  uint8_t buf[2] = { reg, value };
+  return send(buf, 2);
+}
 
-// Send 1 byte, read N
-uint8_t System_I2C::send1read1(uint8_t cmd) {
+// Write a big-endian 16-bit value to a register - chips whose registers are 16 bit wide,
+// e.g. the INA219. Counterpart to send1read(reg, 2).
+bool System_I2C::sendRegister16(uint8_t reg, uint16_t value) {
+  uint8_t buf[3] = { reg, (uint8_t)(value >> 8), (uint8_t)(value & 0xFF) };
+  return send(buf, 3);
+}
+
+// Now various combinations used by different sensors - some will be in the sensor classes instead.
+
+// Send a register/command byte, read `bytes` back as a big-endian integer
+uint32_t System_I2C::send1read(uint8_t cmd, uint8_t bytes) {
   send(cmd);
-  return read(1);
+  return read(bytes);
+}
+// Send 1 byte, read 1
+uint8_t System_I2C::send1read1(uint8_t cmd) {
+  return send1read(cmd, 1);
 }
 // Send N bytes, read M
 bool System_I2C::sendAndRead(uint8_t* sendBuffer, uint8_t sendLength, uint8_t* rcvBuffer,uint8_t rcvLength) {
@@ -82,6 +124,18 @@ bool System_I2C::sendAndRead(uint8_t cmd, uint8_t* rcvBuffer,uint8_t rcvLength) 
   return read(rcvBuffer, rcvLength);
 }
 
+// Does `address` ACK on this bus? The primitive behind both isPresent() and scan().
+bool System_I2C::ack(uint8_t address) {
+  wire->beginTransmission(address);
+  return wire->endTransmission() == 0;
+}
+
+// Cheap check that something is wired at this device's address, before reading any
+// chip-specific id register.
+bool System_I2C::isPresent() {
+  return ack(addr);
+}
+
 void System_I2C::scan() {
   // Print the actual GPIO numbers Wire is using so wiring can be verified.
   // If 5V power is used for the backpack, its pull-up resistors will drive
@@ -90,10 +144,11 @@ void System_I2C::scan() {
   Serial.print(F(" SCL=")); Serial.println(I2C_SCL);
   bool found = false;
   delay(1000); // TOOD-XXX remove this once sure what needed
-  for (uint8_t addr = 1; addr < 127; addr++) {
-    I2C_WIRE.beginTransmission(addr);
-    if (I2C_WIRE.endTransmission() == 0) {
-      Serial.print(F("  device at 0x")); Serial.println(addr, HEX);
+  // Note this scans *this object's* bus - it used to scan the global I2C_WIRE regardless, so a
+  // device constructed on Wire1 had its scan report the wrong bus entirely.
+  for (uint8_t a = 1; a < 127; a++) {
+    if (ack(a)) {
+      Serial.print(F("  device at 0x")); Serial.println(a, HEX);
       found = true;
     }
   }
