@@ -384,6 +384,7 @@ a readable one — both just build the topic string, the actual subscribe only h
 | `Sensor_Battery` | sensor/battery | Battery voltage |
 | `Sensor_BH1750` | sensor/bh1750 | Light (lux) |
 | `Sensor_BME280` | sensor/bme280 | Temperature + humidity + pressure (hPa); extends `Sensor_HT`. Freestanding, no external library |
+| `Sensor_BME680` | sensor/bme680 | Temperature + humidity + pressure (hPa) + gas resistance (kΩ); extends `Sensor_HT`. Also handles the BME688. Freestanding, no external library |
 | `Sensor_LoadCell` | sensor/loadcell | Weight via HX711 |
 | `Sensor_DS18B20` | sensor/ds18b20 | 1-Wire temperature |
 | `Sensor_MS5803` | sensor/ms5803 | Pressure + temperature |
@@ -562,6 +563,72 @@ frugal_iot.sensors->add(new Sensor_BME280("BME280"));
 Verification: the port was cross-checked against Bosch's functions on the host over 200,000
 randomized calibration/raw-value combinations — calibration unpacking, 20/16-bit raw
 assembly, `t_fine`, and all three compensated outputs were bit-identical.
+
+### Sensor_BME680
+
+Same shape as `Sensor_BME280` — extends `Sensor_HT`, freestanding over `System_I2C`, no
+external library — plus a `pressure` output in hPa and a `gas` output in kΩ.
+
+```ini
+; platformio.ini — the class is always compiled; this flag is main.cpp's per-board switch
+build_flags =
+    -D SENSOR_BME680_WANT
+    ;-D SENSOR_BME680_ADDRESS=0x77       ; default 0x76; 0x77 if SDO is tied high
+    ;-D SENSOR_BME680_HEATER_TEMP_C=320  ; gas plate target, capped at 400 by the chip
+    ;-D SENSOR_BME680_HEATER_MS=150      ; hold time before the plate is sampled
+    ;-D SENSOR_BME680_DEBUG
+```
+
+```cpp
+frugal_iot.sensors->add(new Sensor_BME680("BME680"));
+// Temperature/humidity/pressure only - no heater, no gas output, no 150ms wait:
+// new Sensor_BME680("BME680", SENSOR_BME680_ADDRESS, &I2C_WIRE, true, false)
+```
+
+**Ported from a different upstream to bme280.cpp.** Bosch retired `BME680_driver`; the
+current reference is `boschsensortec/BME68x-Sensor-API` (`bme68x.c`), also BSD-3-Clause,
+covering both chips. And unlike bme280.cpp this port is **`float`, not `double`** — Bosch's
+default variant for this chip is single precision (`BME68X_USE_FPU`), and matching it exactly
+is what makes a bit-for-bit host check possible. There is no RobTillaart BME680 library to
+cross-read against; the ones that exist (Adafruit, Zanduino, DFRobot) all wrap Bosch's driver.
+
+**BME680 and BME688 are both accepted.** They share chip id `0x61` and are told apart by the
+variant id at register `0xF0` (`0x00` = BME680, `0x01` = BME688). The variant selects a
+*completely different* gas-resistance formula and a different `run_gas` bit pattern, and
+getting it wrong yields a plausible-but-wrong resistance rather than an obvious failure — so
+`setup()` reads it and every read honours it.
+
+**Gas resistance is not an air quality index.** It is the resistance of a heated metal-oxide
+plate: it falls as reducing (VOC) gases rise, so higher is cleaner air, but the absolute value
+drifts with humidity, temperature and age. Turning it into IAQ requires Bosch's BSEC, a
+closed-source per-architecture binary that cannot be redistributed under this licence, so it
+is deliberately not attempted — publish the trend and derive an index downstream. The reading
+is skipped (rather than published wrong) unless the chip's `gas_valid` **and** `heat_stab`
+status bits are both set; the first read after power-up typically has neither.
+
+**Cost of the gas channel.** The heater draws order 12 mA for `HEATER_MS`, and the read
+*blocks* for that long too (~12 ms of TPH conversion plus the heater time, against the BME280's
+~8 ms). Pass `wantGas=false` on a battery node: the heater is left off, the wait disappears,
+and the `gas` output is never created rather than publishing a value that never changes.
+
+Two other differences from `Sensor_BME280` worth knowing:
+
+- **All measurement registers are rewritten before every read**, not once in `setup()`. A chip
+  that has been power-cycled between reads (`Sensor::prepare()`/`recover()`) comes back with
+  the heater off and 0× oversampling, which would keep publishing temperature and humidity
+  quite happily — the failure would be invisible.
+- **The heater setpoint depends on ambient temperature**, so `calc_res_heat` is recomputed each
+  cycle from the last good reading instead of against Bosch's assumed 25 °C.
+
+Bosch's BME680 compensation, unlike the BME280's, does *not* clamp to the rated range, so
+`validate()` is what keeps nonsense off MQTT; an all-`0xFF` field read (absent device) is
+rejected separately, as is a conversion that never sets the new-data bit.
+
+Verification: same treatment as the BME280 — the port was cross-checked on the host against
+Bosch's own `calc_*` functions (compiled from `bme68x.c`) over 200,000 randomized
+calibration/raw combinations plus 20,000 randomized register maps for the calibration
+unpacking. Temperature, pressure, humidity, `t_fine`, both gas formulas, `res_heat` and
+`gas_wait` were bit-identical, and all 26 unpacked coefficients matched.
 
 ### Modbus over RS485 (`system/modbus.h`)
 

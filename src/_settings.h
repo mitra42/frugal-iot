@@ -114,7 +114,7 @@
 #endif
 
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
-#if defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG) || defined(SENSOR_BME280_DEBUG)
+#if defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG) || defined(SENSOR_BME280_DEBUG) || defined(SENSOR_BME680_DEBUG)
   #define SENSOR_HT_DEBUG
 #endif
 #if defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG) || defined(SENSOR_DO_DEBUG)

@@ -13,6 +13,7 @@
 #include "sensor/dht.h"
 #include "sensor/bh1750.h"
 #include "sensor/bme280.h"
+#include "sensor/bme680.h"
 #include "sensor/button.h"
 #include "sensor/ds18b20.h"
 #include "sensor/dissolvedoxygen.h"
