@@ -45,12 +45,6 @@ void setup() {
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
-  #ifdef SYSTEM_OLED_WANT
-    Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED");
-    frugal_iot.controls->add(cos);
-    cos->temperature->wireTo(frugal_iot.messages->path("lux/lux"));
-  #endif
-
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
   Serial.println(F("FrugalIoT Starting Loop"));

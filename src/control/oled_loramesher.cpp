@@ -4,14 +4,9 @@
 #if defined(ACTUATOR_OLED_WANT) && defined(SYSTEM_LORAMESHER_WANT) // Only compile if have an OLED
 Control_Oled_LoRaMesher::Control_Oled_LoRaMesher(const char* name)
   :
-  //temperature(new INfloat("control_oled_sht", "temperature", "Temperature", 0, 1, 0, 50, "#ff0000", true)),
-  //humidity(new INfloat("control_oled_sht", "humidity", "Humidity", 0, 1, 0, 100, "#0000ff", true)),
   battery(new INfloat("control_oled_loramesher", "battery", "Battery", 0, 0, DEFAULT_control_oled_loramesher_battery_min, DEFAULT_control_oled_loramesher_battery_max, "#00ff00", true)),
-  //Control_Oled("control_oled_sht", name, { })
   Control_Oled("control_oled_loramesher", name, std::vector<IN*> { })
   {
-      //inputs.push_back(temperature);
-      //inputs.push_back(humidity);
       inputs.push_back(battery);
   }
 

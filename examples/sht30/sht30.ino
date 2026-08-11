@@ -1,6 +1,6 @@
-/* 
+/*
  *  Frugal IoT example - SHT30 temperature and humidity sensor
- * 
+ *
  * Optional: SENSOR_SHT_ADDRESS - defaults to 0x44, (note the D1 shields default to 0x45)
  */
 
@@ -8,7 +8,7 @@
 #include "Frugal-IoT.h"
 
 #ifdef ACTUATOR_OLED_WANT
-  #include "control_oled_sht.h" // Custom display handler
+  #include "control_oled_ht.h" // Custom display handler
 #endif
 
 // Change the parameters here to match your ...
@@ -23,15 +23,15 @@ void setup() {
     frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
   #endif
 
-    // Configure power handling - type, cycle_ms, wake_ms 
-  // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
-  // Power_Loop= awake all the time; 
-  // Power_Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
+    // Configure power handling - type, cycle_ms, wake_ms
+  // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type
+  // Power_Loop= awake all the time;
+  // Power_Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles.
   //frugal_iot.configure_power(Power_Deep, 600000, 30000); // Take a reading every 10 mins deep sleep between
   frugal_iot.configure_power(Power_Loop, 10000, 10000); // For debugging sensors - 10 second loop
-  
+
   // Encapsulate setting up and starting serial and read main config also checks power ok.
-  // This has to happen AFTER battery and power are setup, and before mqtt and adding sensors actuators etc. 
+  // This has to happen AFTER battery and power are setup, and before mqtt and adding sensors actuators etc.
   frugal_iot.pre_setup();
 
   // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
@@ -42,7 +42,7 @@ void setup() {
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
-  
+
   // Add sensors, actuators and controls
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true))
     -> powerPins(SENSOR_SHT_POWER3v3_PIN, SENSOR_SHT_POWER0_PIN);
@@ -52,10 +52,10 @@ void setup() {
   cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
   #ifdef ACTUATOR_OLED_WANT
-    Control_Oled_SHT* cos = new Control_Oled_SHT("Control OLED");
+    Control_Oled_HT* cos = new Control_Oled_HT("Control OLED");
     frugal_iot.controls->add(cos);
     cos->temperature->wireTo(frugal_iot.messages->path("sht/temperature"));
-    cos->humidity->wireTo(frugal_iot.messages->path("sht/humidity"));  
+    cos->humidity->wireTo(frugal_iot.messages->path("sht/humidity"));
     cos->battery->wireTo(frugal_iot.messages->path("battery/battery"));
   #endif
 
