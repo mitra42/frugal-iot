@@ -48,7 +48,7 @@ void Control_Sonoff::act() {
 
 // Change the parameters here to match your ... 
 // organization, project, device name, description
-System_Frugal frugal_iot("dev", "developers", "sonoff", "Sonoff switch");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "sonoff", "Sonoff switch");
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after

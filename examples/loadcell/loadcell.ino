@@ -7,7 +7,7 @@
 
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "loadcell", "Load Cell");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "loadcell", "Load Cell");
 
 // Define default pins, can override in platformio.ini
 #ifndef SENSOR_LOADCELL_DOUTPIN

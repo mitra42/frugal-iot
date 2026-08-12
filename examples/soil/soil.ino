@@ -8,7 +8,7 @@
 #include "Frugal-IoT.h"
 // Change the parameters here to match your ... 
 // organization, project, device name, description
-System_Frugal frugal_iot("dev", "developers", "Soil", "Soil probe"); 
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "Soil", "Soil probe"); 
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after

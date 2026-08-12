@@ -17,7 +17,7 @@
   #define REMOTE_SHT_PATH "dev/lotus/esp8266-fb94bb/" // Replace with actual remote node prefix
 #endif
 
-System_Frugal frugal_iot("dev", "developers", "lcd", "LCD SHT Display");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "lcd", "LCD SHT Display");
 
 void setup() {
   frugal_iot.configure_power(Power_Loop, 10000, 10000);

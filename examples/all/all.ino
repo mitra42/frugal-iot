@@ -6,7 +6,7 @@
 #include "Frugal-IoT.h"
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "all", "All sensors - just for testing"); 
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "all", "All sensors - just for testing"); 
 
 void setup() {
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config

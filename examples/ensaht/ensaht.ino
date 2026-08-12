@@ -7,7 +7,7 @@
 
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot("dev", "developers", "ENS160 AHT21", "ENS160 AHT21 Environmental Sensor");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "ENS160 AHT21", "ENS160 AHT21 Environmental Sensor");
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after
