@@ -15,7 +15,7 @@
 Sensor_HT::Sensor_HT(const char* const id, const char * const name, boolean retain)
   : Sensor(id, name, retain),
     temperature(new OUTfloat(id, "temperature", "Temperature", 0, 1, DEFAULT_ht_temperature_min, DEFAULT_dht_temperature_max, DEFAULT_dht_temperature_color, false)),
-    humidity(new OUTfloat(id, "humidity", "Humidity", 0, 1, DEFAULT_dht_humidity_min, DEFAULT_sht_humidity_max, DEFAULT_dht_humidity_color, false))
+    humidity(new OUTfloat(id, "humidity", "Humidity", 0, 1, DEFAULT_dht_humidity_min, DEFAULT_dht_humidity_max, DEFAULT_dht_humidity_color, false))
   { 
     outputs.push_back(temperature);
     outputs.push_back(humidity);

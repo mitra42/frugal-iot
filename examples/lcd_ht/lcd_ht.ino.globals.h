@@ -4,8 +4,8 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
-#ifndef LCD_SHT_INO_GLOBALS_H
-#define LCD_SHT_INO_GLOBALS_H
+#ifndef LCD_HT_INO_GLOBALS_H
+#define LCD_HT_INO_GLOBALS_H
 
 // PlatformIO Project Configuration File
 //
@@ -32,7 +32,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.2
+//     Frugal-IoT@^0.1.3
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -165,7 +165,7 @@
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in lcd_sht.ino.globals.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP8266_WEMOS_D1MINIPRO, ARDUINO_ESP8266_WEMOS_D1MINI"
+  #error "This board has no settings in lcd_ht.ino.globals.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP8266_WEMOS_D1MINIPRO, ARDUINO_ESP8266_WEMOS_D1MINI"
 #endif
 
-#endif // LCD_SHT_INO_GLOBALS_H
+#endif // LCD_HT_INO_GLOBALS_H
