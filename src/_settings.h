@@ -158,8 +158,13 @@
   #define ACTUATOR_OLED_WANT
 #endif
 
-#if defined(ARDUINO_heltec_wifi_lora_32_V3)
-  #define BUTTON_BUILTIN (0)
+// We test BUTTON_BUILTIN which is defined in all sorts of ways, add here. 
+#ifndef BUTTON_BUILTIN
+  #if defined(ARDUINO_heltec_wifi_lora_32_V3)
+    #define BUTTON_BUILTIN (0)
+  #elif defined(ARDUINO_LILYGO_T3_S3_V1_X) // e.g. lilygo_t3_s3_sx127x which defines BUTTON_1 as a const so can't test that
+    #define BUTTON_BUILTIN BUTTON_1
+  #endif
 #endif
 
 // A number of sensors will want to default to the boards I2C, 

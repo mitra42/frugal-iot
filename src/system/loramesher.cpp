@@ -56,9 +56,12 @@
 #ifndef LORAMESHER_LOG_LEVEL
   #define LORAMESHER_LOG_LEVEL 2 // Warning - set to 1 for Info and 0 for debug
 #endif
-// Define these two settings to speed things up when testing, undo later.
-//#define LORA_DUTY_CYCLE 1.0f
-//#define LORA_MIN_SLEEP_FRACTION 0
+
+#ifndef SYSTEM_LORAMESHER_SLEEP
+  // Define these two settings to speed things up when testing, undo later. Probably best not to use when doing Power_Lora
+  #define LORA_DUTY_CYCLE 1.0f
+  #define LORA_MIN_SLEEP_FRACTION 0
+#endif
 
 #if defined(ARDUINO_TTGO_LoRa32_v21new) // V2 and V1 dont define LORA_D1 so unsure what they need
   // Defines LORA_RST LORA_IRQ LORA_SCK LORA_MISO LORA_MOSI LORA_CS in pins_arduino.h
@@ -204,8 +207,10 @@ bool System_LoraMesher::initialize() {
               .withRadioConfig(radioConfig)
               .withPinConfig(pinConfig)
               .withLoRaMeshProtocol(mesh_config)  // Use LoRaMesh protocol
-              .withPrepareSleepCallback(OnSleep)
-              .withWakeUpCallback(OnWakeUp)
+              #ifdef SYSTEM_LORAMESHER_SLEEP
+                .withPrepareSleepCallback(OnSleep)
+                .withWakeUpCallback(OnWakeUp)
+              #endif
               //.withAutoAddressFromHardware(true)  // Enable hardware-based addressing (default)
               .Build();
       //Set up data callback
