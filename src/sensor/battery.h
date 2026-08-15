@@ -65,7 +65,7 @@
   #if defined(ARDUINO_heltec_wifi_lora_32_V3) && !defined(ARDUINO_heltec_wifi_lora_32_V32) // Note this is defined in platformio, its not (yet) and official different board file
       #define SENSOR_BATTERY_POWER0_PIN 37
   #else
-    #define SENSOR_BATTERY_POWER0_PIN 0xFF // Special value to not do anything
+    #define SENSOR_BATTERY_POWER0_PIN PIN_NONE // Special value to not do anything
   #endif
 #endif
 
@@ -73,7 +73,7 @@
   #if defined(ARDUINO_heltec_wifi_lora_32_V3) && defined(ARDUINO_heltec_wifi_lora_32_V32) // Note this is defined in platformio, its not (yet) and official different board file
       #define SENSOR_BATTERY_POWER3v3_PIN 37
   #else
-    #define SENSOR_BATTERY_POWER3v3_PIN 0xFF // Special value to not do anything
+    #define SENSOR_BATTERY_POWER3v3_PIN PIN_NONE // Special value to not do anything
   #endif
 #endif
 

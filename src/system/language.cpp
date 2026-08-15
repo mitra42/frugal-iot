@@ -32,7 +32,8 @@ void System_Captive::setupLanguages() {
     F("Settings Updated"),
     F("Soil Moisture Tare"),
     F("Cycle Time (ms)"),
-    F("Wake Time (ms)")
+    F("Wake Time (ms)"),
+    F("Offset")
   };
 
   T = TT[Language_EN];
@@ -62,7 +63,8 @@ void System_Captive::setupLanguages() {
       F("Paramètres mis à jour"),
       F("Humidité du Sol Tare"),
       F("Temps de Cycle (ms)"),
-      F("Temps d'Éveil (ms)")
+      F("Temps d'Éveil (ms)"),
+      F("Décalage")
       };
   #endif //LANGUAGE_FR
 
@@ -91,7 +93,8 @@ void System_Captive::setupLanguages() {
       F("Configuración actualizada"),
       F("Tara de Humedad del Suelo"),
       F("Tiempo de Ciclo (ms)"),
-      F("Tiempo de Activación (ms)")
+      F("Tiempo de Activación (ms)"),
+      F("Desplazamiento")
  };
   #endif //LANGUAGE_SP
 
@@ -120,7 +123,8 @@ void System_Captive::setupLanguages() {
       F("Einstellungen aktualisiert"),
       F("Bodenfeuchtigkeit Tara"),
       F("Zykluszeit (ms)"),
-      F("Aufwachzeit (ms)")
+      F("Aufwachzeit (ms)"),
+      F("Versatz")
       };
   #endif //LANGUAGE_DE
 
@@ -149,7 +153,8 @@ void System_Captive::setupLanguages() {
       F("Instellingen bijgewerkt"),
       F("Bodemvocht Tarra"),
       F("Cyclustijd (ms)"),
-      F("Wektijd (ms)")
+      F("Wektijd (ms)"),
+      F("Correctie")
       };
   #endif //LANGUAGE_NL
 
@@ -178,7 +183,8 @@ void System_Captive::setupLanguages() {
       F("Pengaturan diperbarui"),
       F("Tara Kelembaban Tanah"),
       F("Waktu Siklus (ms)"),
-      F("Waktu Aktif (ms)")
+      F("Waktu Aktif (ms)"),
+      F("Offset")
       };
   #endif //LANGUAGE_ID
 
@@ -207,7 +213,8 @@ void System_Captive::setupLanguages() {
       F("सेटिंग्स अपडेट की गईं"),
       F("मृदा नमी टेर"),
       F("चक्र समय (ms)"),
-      F("जागरण समय (ms)")
+      F("जागरण समय (ms)"),
+      F("ऑफसेट")
       };
   #endif //LANGUAGE_HI
 }

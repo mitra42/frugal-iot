@@ -12,12 +12,15 @@
 #include "sensor/sht.h"
 #include "sensor/dht.h"
 #include "sensor/bh1750.h"
+#include "sensor/bme280.h"
 #include "sensor/button.h"
 #include "sensor/ds18b20.h"
-// #include "sensor/ina219.h" // commented out till library identified and tested
+#include "sensor/dissolvedoxygen.h"
+#include "sensor/ina219.h" // Freestanding over System_I2C, no external library
 #include "sensor/ms5803.h"
 #include "sensor/loadcell.h"
 #include "sensor/ens160aht21.h"
+#include "sensor/ultrasonic.h" // Compiles to nothing unless SENSOR_ULTRASONIC_SLAVE_ID is defined
 
 //TO-ADD-CONTROL
 #include "control/control.h"
@@ -27,6 +30,7 @@
 #include "control/logger_fs.h"
 
 //TO-ADD-SYSTEM - note dont need to add here if adding in system_frugal.h
+#include "system/modbus.h" // Compiles to nothing unless SYSTEM_MODBUS_WANT
 #include "system/fs.h"
 #include "system/frugal.h"
 

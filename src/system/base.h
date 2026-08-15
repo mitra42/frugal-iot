@@ -2,6 +2,7 @@
 #define SYSTEM_BASE_H
 
 //TODO which of these are needed, and if so is there a better place for them?
+#include "_settings.h" // For PIN_NONE
 #include <Arduino.h>
 //TODO-010 Maybe needed on ESP8266
 //#include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
@@ -44,8 +45,8 @@ class System_SensorActuator : public System_Base {
     System_SensorActuator(const char * const id, const String name);
     System_SensorActuator* powerPins(const uint8_t power3v3, const uint8_t power0v) override;
   protected:
-    uint8_t power3v3_ = 0xFF;
-    uint8_t power0v_ = 0xFF;
+    uint8_t power3v3_ = PIN_NONE;
+    uint8_t power0v_ = PIN_NONE;
     virtual void powerUp();   // Optional power management - override in derived classes
     virtual void powerDown(); // Optional power management - override in derived classes
   private:

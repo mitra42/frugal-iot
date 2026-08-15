@@ -4,7 +4,7 @@
 // See other #TO_ADD_LANGUAGE
 enum Language_t {  Language_EN, Language_FR, Language_SP, Language_DE, Language_NL, Language_ID, Language_HI, LANGUAGE_COUNT };
 
-// TO_ADD_LOCALIZABLE_STRING add each new localizable string here
+// TO_ADD_LOCALIZABLE_STRING add each new localizable string here and in each table in language.cpp
 struct Texts {
     const __FlashStringHelper
         *code,
@@ -32,7 +32,8 @@ struct Texts {
         *SettingsUpdated,
         *SoilMoistureTare,
         *CycleTime,
-        *WakeTime
+        *WakeTime,
+        *Offset
         ;
 };
 

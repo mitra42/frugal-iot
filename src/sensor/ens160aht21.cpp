@@ -128,8 +128,7 @@ void Sensor_ensaht::setupAHT() {
 // ENS uses a register value paradigm 
 bool Sensor_ensaht::ENSsend2(uint8_t reg, uint8_t val) {
   // Note dont rely on return code - currently always true
-  uint8_t cmd[2] = {reg, val};
-  bool status = ens->send(cmd, 2); // TODO-101 check sense of return code from ens-send
+  bool status = ens->sendRegister(reg, val); // TODO-101 check sense of return code from ens-send
   #ifdef SENSOR_ENSAHT_DEBUG
     if (!status) {
       Serial.print(F("ENS failed to send")); Serial.print(reg); Serial.println(val);

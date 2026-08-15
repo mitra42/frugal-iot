@@ -4,6 +4,9 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
+#ifndef PLATFORM_H
+#define PLATFORM_H
+
 // PlatformIO Project Configuration File
 //
 //   Build options: build flags, source filter
@@ -125,23 +128,9 @@
 // R4 is the ESP32 version used for all new work.
 
 
-#ifdef TODO_SONOFF_BASIC
-// platform = espressif8266
-// board = sonoff_basic
-//board = esp01_1m
-// ftdi adapter - I think this is my specific one, so probably need to override 
-// monitor_port = /dev/cu.usbserial-A5069RR4
-// board_build.flash_mode = dout ; unique ? to Sonoff
-// build_flags = 
-//     ${common.build_flags}
-#define SERIAL_BAUD 115200
-// #define SYSTEM_OTA_SUFFIX "r2" // No OTA_KEY for Sonoff, there is not enough space (code > flash/2)
-#define PIN_WIRE_SDA -1 // To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA
-#define SDA -1 // To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA
-
-#endif // TODO_SONOFF_BASIC
-
+// ===== [env:r4] -> ARDUINO_ESP32C3_DEV
 #ifdef ARDUINO_ESP32C3_DEV
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = esp32-c3-devkitm-1
 // There is no sonoff_basicr4 variant file - so define locally and will submit PR when tested
@@ -166,7 +155,9 @@
 // JUST FOR TESTING when you dont have a SONOFF handy!
 #endif // ARDUINO_ESP32C3_DEV
 
+// ===== [env:s2_mini] -> ARDUINO_LOLIN_S2_MINI
 #ifdef ARDUINO_LOLIN_S2_MINI
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // monitor_speed = 460800
 // upload_speed = 460800
@@ -183,3 +174,8 @@
 
 #endif // ARDUINO_LOLIN_S2_MINI
 
+#ifndef FRUGAL_IOT_BOARD_CONFIGURED
+  #error "This board has no settings in platform.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP32C3_DEV, ARDUINO_LOLIN_S2_MINI"
+#endif
+
+#endif // PLATFORM_H

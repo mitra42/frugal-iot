@@ -4,6 +4,9 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
+#ifndef PLATFORM_H
+#define PLATFORM_H
+
 // PlatformIO Project Configuration File
 //
 //   Build options: build flags, source filter
@@ -121,7 +124,9 @@
 // monitor_filters = esp8266_exception_decoder
 
 
-#ifdef TODO_ESP32DEV
+// ===== [env:lilygohigrow] -> ARDUINO_ESP32_DEV
+#ifdef ARDUINO_ESP32_DEV
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = esp32dev
 // monitor_port = /dev/cu.usbserial-58950030781  ; This may be specific to my HiGrow or generic across all ?
@@ -132,5 +137,10 @@
 // TODO there are several variations of the LilyGo, e.g. using a DHT instead of SHT,
 // I do not have these boards to test, so not adding them here
 // feel free to add them above
-#endif // TODO_ESP32DEV
+#endif // ARDUINO_ESP32_DEV
 
+#ifndef FRUGAL_IOT_BOARD_CONFIGURED
+  #error "This board has no settings in platform.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP32_DEV"
+#endif
+
+#endif // PLATFORM_H
