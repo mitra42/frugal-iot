@@ -4,8 +4,13 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
-#ifndef ALL_INO_GLOBALS_H
-#define ALL_INO_GLOBALS_H
+#ifndef SONOFF_INO_GLOBALS_H
+#define SONOFF_INO_GLOBALS_H
+
+// Tells the library this file made it into the build. Deliberately outside
+// every #ifdef below: it says "the file is here", not "your board is covered",
+// which is a separate failure with its own #error at the end.
+#define FRUGAL_IOT_GLOBALS_FOUND
 
 // PlatformIO Project Configuration File
 //
@@ -25,8 +30,8 @@
 // custom common options
 
 // [platformio]
-// name: Frugal-IoT All 
-// description: Frugal IoT - Combination file - compile and link everything for testing
+// name: Frugal-IoT Sonoff
+// description: Frugal IoT - Sonoff R2 switch
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
@@ -36,19 +41,6 @@
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
-// lib_deps_lora = 
-//     ${common.lib_deps}
-    //Comment/Uncomment below two lines to switch between live and "new" version
-    //jaimi5/LoRaMesher
-//     https://github.com/loramesher/LoRaMesher.git
-    //https://github.com/mitra42/LoRaMesher.git#new_loramesher
-
-// lib_deps_lora_oled =
-//     ${common.lib_deps_lora}
-//     adafruit/Adafruit SSD1306@^2.5.0
-//     adafruit/Adafruit GFX Library@^1.10.13
-    // adafruit/Adafruit BusIO@^1.14.0  ; transitive dep of Adafruit GFX; chain LDF doesn't auto-resolve; unclear if still needed for any boards
-
 // These are flags common to pretty much all frugal-iot projects
 // comment or uncomment debug flags based on need
 // build_flags_frugaliot =
@@ -98,7 +90,7 @@
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
-#define SYSTEM_OTA_PREFIX "all"
+#define SYSTEM_OTA_PREFIX "sonoff"
 
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
@@ -121,8 +113,9 @@
 //platform_packages = framework-arduinoespressif32@3.3.2 ; also possible, but mostly unneeded and wont always work
 
 // [env]
-// monitor_speed = 460800 ; If not 460800 then also change in main.cpp: frugal_iot.startSerial(newspeed, 5000);
-// upload_speed = 460800
+// R4 are definitely 115200 R2 might also be
+// monitor_speed = 115200 ; If not 460800 then also change in main.cpp: frugal_iot.startSerial(newspeed, 5000);
+// upload_speed = 115200
 // framework = arduino
 // Unclear if next line causes problems either way - if commented out then doesnt recognize uploaded system 
 // board_build.filesystem = littlefs ; Use LittleFS instead of SPIFFS
@@ -134,34 +127,32 @@
 // monitor_filters = esp8266_exception_decoder
 // monitor_filters = esp32_exception_decoder
 
+// Note there are many Sonoffs 
+// R2 is ESP8266 and works well, but cannot be OTA-ed
+// R3 is reputedly hard to program - inaccessible pins
+// R4 is the ESP32 version used for all new work.
 
-// ===== [env:d1_mini_pro] -> ARDUINO_ESP8266_WEMOS_D1MINIPRO
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINIPRO
+
+// ===== [env:r2] -> ARDUINO_ESP8266_SONOFF_BASIC
+#ifdef ARDUINO_ESP8266_SONOFF_BASIC
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = espressif8266
-// board = d1_mini_pro
+// board = sonoff_basic
+//board = esp01_1m
+// ftdi adapter - I think this is my specific one, so probably need to override 
+// monitor_port = /dev/cu.usbserial-A5069RR4
+// board_build.flash_mode = dout ; unique ? to Sonoff
 // build_flags = 
 //     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "d1_mini_pro"
-// board_build.partitions = min_spiffs.csv
+#define SERIAL_BAUD 115200
+// #define SYSTEM_OTA_SUFFIX "r2" // No OTA_KEY for Sonoff, there is not enough space (code > flash/2)
+#define PIN_WIRE_SDA -1 // To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA
+#define SDA -1 // To defeat a check in the Wire library that fails compile if there is no PIN_WIRE_SDA and SDA
 
-#endif // ARDUINO_ESP8266_WEMOS_D1MINIPRO
-
-// ===== [env:d1_mini] -> ARDUINO_ESP8266_WEMOS_D1MINI
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
-#define FRUGAL_IOT_BOARD_CONFIGURED
-// board = d1_mini
-// platform = espressif8266
-// build_flags =
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "d1_mini"
-
-// ===== LORA BOARDS - ALL ESP32 ======================================
-
-#endif // ARDUINO_ESP8266_WEMOS_D1MINI
+#endif // ARDUINO_ESP8266_SONOFF_BASIC
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in all.ino.globals.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP8266_WEMOS_D1MINIPRO, ARDUINO_ESP8266_WEMOS_D1MINI"
+  #error "This board has no settings in esp8266/sonoff.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: (no matching Arduino board)"
 #endif
 
-#endif // ALL_INO_GLOBALS_H
+#endif // SONOFF_INO_GLOBALS_H

@@ -4,8 +4,13 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
-#ifndef BLINKEN_INO_GLOBALS_H
-#define BLINKEN_INO_GLOBALS_H
+#ifndef GSHEETS_INO_GLOBALS_H
+#define GSHEETS_INO_GLOBALS_H
+
+// Tells the library this file made it into the build. Deliberately outside
+// every #ifdef below: it says "the file is here", not "your board is covered",
+// which is a separate failure with its own #error at the end.
+#define FRUGAL_IOT_GLOBALS_FOUND
 
 // PlatformIO Project Configuration File
 //
@@ -25,8 +30,8 @@
 // custom common options
 
 // [platformio]
-// name: Frugal-IoT Blinken 
-// description: Frugal IoT - Demonstration of blinking LED
+// name: Frugal-IoT Google Sheets
+// description: Frugal IoT - Google Sheets - largely abandoned and done on frugal-iot-logger
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
@@ -48,6 +53,7 @@
 //     adafruit/Adafruit SSD1306@^2.5.0
 //     adafruit/Adafruit GFX Library@^1.10.13
     // adafruit/Adafruit BusIO@^1.14.0  ; transitive dep of Adafruit GFX; chain LDF doesn't auto-resolve; unclear if still needed for any boards
+
 
 // These are flags common to pretty much all frugal-iot projects
 // comment or uncomment debug flags based on need
@@ -97,7 +103,8 @@
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
-#define SYSTEM_OTA_PREFIX "blinken"
+#define SYSTEM_OTA_PREFIX "gsheets"
+#define CONTROL_GSHEETS_URL "https://script.google.com/macros/s/AKfycbzBilM_dWlxxcj1cor-JnHc7C1PNnP4T9247w9TmEZId1I33cCNNCzN8IDzqD6-4a3z/exec"
 
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
@@ -160,7 +167,7 @@
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in blinken.ino.globals.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP8266_WEMOS_D1MINIPRO, ARDUINO_ESP8266_WEMOS_D1MINI"
+  #error "This board has no settings in esp8266/gsheets.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"
 #endif
 
-#endif // BLINKEN_INO_GLOBALS_H
+#endif // GSHEETS_INO_GLOBALS_H

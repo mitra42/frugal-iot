@@ -4,8 +4,13 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
-#ifndef GPS_INO_GLOBALS_H
-#define GPS_INO_GLOBALS_H
+#ifndef REMOTEDISPLAY_INO_GLOBALS_H
+#define REMOTEDISPLAY_INO_GLOBALS_H
+
+// Tells the library this file made it into the build. Deliberately outside
+// every #ifdef below: it says "the file is here", not "your board is covered",
+// which is a separate failure with its own #error at the end.
+#define FRUGAL_IOT_GLOBALS_FOUND
 
 // PlatformIO Project Configuration File
 //
@@ -25,8 +30,8 @@
 // custom common options
 
 // [platformio]
-// name: Frugal-IoT GPS
-// description: Frugal IoT - GPS sensor node (Heltec WiFi LoRa 32 V4 + Quectel L76K)
+// name: Frugal-IoT SHT30
+// description: Frugal IoT - Temperature and Humidity Sensor with SHT30
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
@@ -48,7 +53,6 @@
 //     adafruit/Adafruit SSD1306@^2.5.0
 //     adafruit/Adafruit GFX Library@^1.10.13
     // adafruit/Adafruit BusIO@^1.14.0  ; transitive dep of Adafruit GFX; chain LDF doesn't auto-resolve; unclear if still needed for any boards
-//     mikalhart/TinyGPSPlus
 
  
 // These are flags common to pretty much all frugal-iot projects
@@ -80,8 +84,7 @@
 // #define SENSOR_ENSAHT_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
-// #define SENSOR_GPS_DEBUG
-// #define SENSOR_SHT_DEBUG
+#define SENSOR_SHT_DEBUG
 // #define SENSOR_SOIL_DEBUG
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
@@ -101,7 +104,9 @@
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
-#define SYSTEM_OTA_PREFIX "gps"
+    // Specific to SHT 
+// #define SENSOR_SHT_ADDRESS 0x45 // 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
+#define SYSTEM_OTA_PREFIX "sht30"
 
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
@@ -133,9 +138,9 @@
 // lib_deps =  ${common.lib_deps}
 // lib_ldf_mode = chain
 //Uncomment, if seeing exceptions need decoding
-//build_type = debug
+// build_type = debug
 // monitor_filters = esp8266_exception_decoder
-//monitor_filters = esp32_exception_decoder
+// monitor_filters = esp32_exception_decoder
 
 
 // ===== [env:d1_mini_pro] -> ARDUINO_ESP8266_WEMOS_D1MINIPRO
@@ -182,7 +187,7 @@
 #endif // 0
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in gps.ino.globals.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP8266_WEMOS_D1MINIPRO, ARDUINO_ESP8266_WEMOS_D1MINI"
+  #error "This board has no settings in esp8266/remotedisplay.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"
 #endif
 
-#endif // GPS_INO_GLOBALS_H
+#endif // REMOTEDISPLAY_INO_GLOBALS_H

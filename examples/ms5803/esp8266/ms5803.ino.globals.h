@@ -7,6 +7,11 @@
 #ifndef MS5803_INO_GLOBALS_H
 #define MS5803_INO_GLOBALS_H
 
+// Tells the library this file made it into the build. Deliberately outside
+// every #ifdef below: it says "the file is here", not "your board is covered",
+// which is a separate failure with its own #error at the end.
+#define FRUGAL_IOT_GLOBALS_FOUND
+
 // PlatformIO Project Configuration File
 //
 //   Build options: build flags, source filter
@@ -163,7 +168,7 @@
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in ms5803.ino.globals.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP8266_WEMOS_D1MINIPRO, ARDUINO_ESP8266_WEMOS_D1MINI"
+  #error "This board has no settings in esp8266/ms5803.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"
 #endif
 
 #endif // MS5803_INO_GLOBALS_H

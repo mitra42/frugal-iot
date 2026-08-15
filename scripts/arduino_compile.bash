@@ -123,6 +123,18 @@ print(PlatformIOConverter("").get_board_define(sys.argv[2], sys.argv[3]))
 PYEOF
 }
 
+# Same idea for the Tools > Board label, which is what the "no board configured" #error tells the
+# user to go and select. A stale label there sends someone hunting a menu entry that does not
+# exist, so check it against the core rather than trusting the table.
+boardname_for_env() { # $1 = board  $2 = env
+  python3 - "$SCRIPTS_DIR" "$1" "$2" <<'PYEOF'
+import sys
+sys.path.insert(0, sys.argv[1])
+from generate_platform_h import PlatformIOConverter
+print(PlatformIOConverter("").get_board_name(sys.argv[2], sys.argv[3]))
+PYEOF
+}
+
 list_envs() { # $1 = platformio.ini
   grep -oE '^\[env:[^]]+\]' "$1" | sed 's/^\[env://; s/\]$//'
 }
@@ -298,8 +310,22 @@ if [ "${CORE%%:*}" != "esp32" ]; then
   # No include-path workaround needed: _settings.h guards its platform.h include with
   # __has_include (unreachable here, since this core does not put the sketch dir on the include
   # path), and the defines arrive instead from <sketch>.ino.globals.h, which this core
-  # force-includes into every translation unit. Verified building sht30/d1_mini_pro with no
-  # --build-property at all.
+  # force-includes into every translation unit.
+  #
+  # That file ships in the example's esp8266/ subfolder rather than beside the .ino, because a
+  # <sketch>.ino* file in the sketch root makes arduino-cli drop the whole example from
+  # File > Examples (see CLAUDE.md). An IDE user moves it up by hand; here we just point the core
+  # at where it really is. globals.h.source.fqfn is the core's own property for this, so the file
+  # still goes through mkbuildoptglobals.py and gets the same copy/-include/dependency handling.
+  # Without this the build would still go green - on library defaults, not the env's settings,
+  # which is exactly the silent pass this script exists to prevent.
+  GLOBALS_H="$SKETCH_DIR/esp8266/$EXAMPLE.ino.globals.h"
+  if [ -f "$GLOBALS_H" ]; then
+    BUILD_PROPS+=(--build-property "globals.h.source.fqfn=$GLOBALS_H")
+    echo "== ESP8266 globals: $GLOBALS_H"
+  else
+    echo "== ESP8266 globals: none ($EXAMPLE has no espressif8266 env in platformio.ini)"
+  fi
 elif [ -n "$PARTITIONS" ]; then
   SCHEME="${PARTITIONS%.csv}"
   if echo "$BOARD_PROPS" | grep -q "^menu\.PartitionScheme\.$SCHEME="; then
@@ -395,6 +421,23 @@ if [ -n "$BUILD_BOARD" ]; then
     echo "         TO_ADD_BOARD block in _settings.h, or by correcting generate_platform_h.py."
     WARNINGS=$((WARNINGS + 1))
   fi
+fi
+
+# Is the Tools > Board label the "no board configured" #error names still the core's own? Checked
+# with a prefix match, because some entries qualify the board with the menu option that picks its
+# variant ("TTGO LoRa32-OLED, with Board Revision = ...").
+BOARD_LABEL="$(boardname_for_env "$BOARD" "$ENVNAME")"
+CORE_LABEL="$(arduino-cli board details -b "$(echo "$FQBN" | cut -d: -f1-3)" --no-color 2>/dev/null \
+              | grep '^Board name:' | head -1 | sed 's/^Board name:[[:space:]]*//' | tr -d '\r')"
+if [ -n "$CORE_LABEL" ]; then
+  case "$BOARD_LABEL" in
+    "$CORE_LABEL"*) echo "== board label OK: '$CORE_LABEL'" ;;
+    *) echo "WARNING: generate_platform_h.py's board_names calls [env:$ENVNAME] '$BOARD_LABEL',"
+       echo "         but the core's Tools > Board entry for $FQBN is '$CORE_LABEL'. The 'no board"
+       echo "         configured' #error would send the user looking for a menu entry that is not"
+       echo "         there. Fix board_names/env_names in generate_platform_h.py."
+       WARNINGS=$((WARNINGS + 1)) ;;
+  esac
 fi
 echo
 

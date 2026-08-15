@@ -4,8 +4,13 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
-#ifndef LOADCELL_INO_GLOBALS_H
-#define LOADCELL_INO_GLOBALS_H
+#ifndef CLIMATE_INO_GLOBALS_H
+#define CLIMATE_INO_GLOBALS_H
+
+// Tells the library this file made it into the build. Deliberately outside
+// every #ifdef below: it says "the file is here", not "your board is covered",
+// which is a separate failure with its own #error at the end.
+#define FRUGAL_IOT_GLOBALS_FOUND
 
 // PlatformIO Project Configuration File
 //
@@ -25,8 +30,8 @@
 // custom common options
 
 // [platformio]
-// name: Frugal-IoT Loadcell 
-// description: Frugal IoT - Loadcell scales application
+// name: Frugal-IoT Climate
+// description: Frugal IoT - Climate Control with SHT30 sensor and dual relay outputs
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
@@ -97,8 +102,8 @@
 // project specific flags that are needed by the library 
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
-// build_flags_library = 
-#define SYSTEM_OTA_PREFIX "loadcell"
+// build_flags_library =
+#define SYSTEM_OTA_PREFIX "climate"
 
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
@@ -161,7 +166,7 @@
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in loadcell.ino.globals.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP8266_WEMOS_D1MINIPRO, ARDUINO_ESP8266_WEMOS_D1MINI"
+  #error "This board has no settings in esp8266/climate.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"
 #endif
 
-#endif // LOADCELL_INO_GLOBALS_H
+#endif // CLIMATE_INO_GLOBALS_H

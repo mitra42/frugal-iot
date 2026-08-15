@@ -136,20 +136,60 @@ directly, reading the app size from the largest `app` partition in the core's ow
 --build-property build.partitions=min_spiffs --build-property upload.maximum_size=1966080
 ```
 
-### ESP8266 and platform.h — a real limitation
+### ESP8266: `<sketch>.ino.globals.h`, and why it sits in a subfolder
 
 The `platform.h` mechanism relies on a library header (`_settings.h`) being able to
 `#include "platform.h"` from the *sketch* directory. That works on ESP32 only because its
-`compiler.cpreprocessor.flags` carries `"-I{build.source.path}"`. **ESP8266's does not**, so on
-ESP8266 the build fails with `platform.h: No such file or directory` and no per-example flag can
-reach library sources at all.
+`compiler.cpreprocessor.flags` carries `"-I{build.source.path}"`. **ESP8266's does not** — so
+there `platform.h` is unreachable from library sources, and in fact from the `.ino` too. The
+`#include` is wrapped in `__has_include` for exactly that reason, so it does not break the build;
+it just silently contributes nothing.
 
-`arduino_compile.bash` works around it by borrowing the empty `compiler.c/cpp.extra_flags` slots to
-put the sketch dir back on the include path — but **an Arduino IDE user has no such lever**. The
-portable fix, if ESP8266 IDE support matters, is to generate a **`build_opt.h`** instead of (or as
-well as) `platform.h`: both cores honour a sketch-local `build_opt.h` and inject its contents as
-flags into every translation unit, library sources included (`{build.opt.flags}` on ESP8266,
-`"@{build.opt.path}"` on ESP32).
+The one mechanism that does reach library sources on ESP8266 is
+**`<sketch>.ino.globals.h`**: the core copies it into the build and `-include`s it into every
+translation unit. `generate_platform_h.py` emits the ESP8266 `[env:]` blocks into it (measured:
+force-included into all 48 library TUs). ESP32 has no equivalent — its `build_opt.h` is a flat
+compiler response file and cannot hold `#ifdef` — which is why both files exist.
+
+**But that filename hides the example from the Arduino IDE.** arduino-cli — which Arduino IDE 2
+embeds — refuses to recognise a folder as a sketch if it contains *any* file named
+`<sketch>.ino*` besides the sketch itself, and the example then disappears from **File >
+Examples** with no error anywhere. Verified on arduino-cli 1.5.1:
+
+| File alongside `soil.ino` | Listed in `lib examples`? |
+|---|---|
+| `soil.h`, `soil.cpp`, `globals.h`, `soil.globals.h` | yes |
+| `other.ino.globals.h` | yes |
+| `soil.ino.globals.h`, `soil.ino.h`, `soil.ino.txt` | **no** |
+| `esp8266/soil.ino.globals.h` (subfolder) | yes |
+
+The name is not negotiable at either end: the core resolves
+`globals.h.source.fqfn={build.source.path}/{build.project_name}.globals.h` and `build.project_name`
+includes the `.ino`, so `soil.globals.h` is ignored outright (measured: 0 TUs).
+
+So the generated file is parked in the example's **`esp8266/` subfolder**, with a `README.md`
+explaining that an ESP8266 IDE user must move it up beside the `.ino` — one drag, no rename, since
+the filename is already exact. ESP32 and PlatformIO users ignore the folder entirely.
+
+Left unmoved, an ESP8266 IDE build would otherwise succeed on the library's built-in defaults
+instead of the example's settings — silently, since on ESP8266 nothing the example ships is
+reachable at compile time until that file is in place. So the generated file carries a
+`#define FRUGAL_IOT_GLOBALS_FOUND` outside every `#ifdef`, and **`system/frugal.cpp` `#error`s
+without it** on `ESP8266 && !PLATFORMIO`. That marker deliberately means "the file got here", which
+is a different failure from "your board is covered" — the latter is the `FRUGAL_IOT_BOARD_CONFIGURED`
+catch-all at the end of the same file.
+
+The check lives in a `.cpp`, not in `_settings.h`: the ESP8266 core force-includes into ~48
+translation units, so a header would print it 48 times. `SYSTEM_OTA_PREFIX` looks like a tempting
+thing to test instead, but OTA is optional by design (`frugal.h` and `ota.cpp` compile it out
+cleanly when either half is undefined), so requiring it would break legitimate no-OTA builds.
+
+Someone writing their own ESP8266 sketch and happy with the defaults satisfies the check with a
+one-line `<sketch>.ino.globals.h` containing just that define — the same file they need the moment
+they want to configure anything.
+
+`arduino_compile.bash` is unaffected: it puts the sketch dir back on the include path by borrowing
+the empty `compiler.c/cpp.extra_flags` slots, a lever an IDE user does not have.
 
 ## Directory Structure
 
@@ -190,7 +230,10 @@ Frugal-IoT/
 └── test/
 ```
 
-Each example directory contains a `.ino` file (the application) and a `platform.h` (hardware pin/address overrides).
+Each example directory contains a `.ino` file (the application) and a `platform.h` (hardware
+pin/address overrides), plus — for examples with ESP8266 environments — an `esp8266/` subfolder
+holding the equivalent `<sketch>.ino.globals.h` that an ESP8266 Arduino IDE user moves up beside
+the `.ino`. See "ESP8266: `<sketch>.ino.globals.h`" above for why it cannot just live there.
 
 ## Component Architecture
 

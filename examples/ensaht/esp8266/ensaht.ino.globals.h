@@ -4,28 +4,43 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
-#ifndef BH1750_INO_GLOBALS_H
-#define BH1750_INO_GLOBALS_H
+#ifndef ENSAHT_INO_GLOBALS_H
+#define ENSAHT_INO_GLOBALS_H
+
+// Tells the library this file made it into the build. Deliberately outside
+// every #ifdef below: it says "the file is here", not "your board is covered",
+// which is a separate failure with its own #error at the end.
+#define FRUGAL_IOT_GLOBALS_FOUND
 
 // PlatformIO Project Configuration File
-// Docs for this file; https://docs.platformio.org/page/projectconf.html
+//
+//   Build options: build flags, source filter
+//   Upload options: custom upload port, speed and extra flags
+//   Library options: dependencies, extra library storages
+//   Advanced options: extra scripting
+//
+// Please visit documentation for the other options and examples
+// https://docs.platformio.org/page/projectconf.html
 // 
 // Note the board name is defined in e.g. ~/.platformio/platforms/espressif32/boards/ttgo-lora32-v21.json
 // and variants are in ~/.platformio/packages/framework-arduinoespressif32/variants/
 // or ~/.platformio/packages/framework-arduinoespressif8266/variants
 
+
+// custom common options
+
 // [platformio]
-// name: Frugal-IoT BH1750
-// description: Frugal IoT - Light Sensor with BH1750
+// name: Frugal-IoT ENS160AHT20 
+// description: Frugal IoT - Air quality sensor ENS160 + AHT20
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.0.22
+//     Frugal-IoT@^0.1.3
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
-
+ 
 // lib_deps_lora = 
 //     ${common.lib_deps}
     //Comment/Uncomment below two lines to switch between live and "new" version
@@ -39,7 +54,7 @@
 //     adafruit/Adafruit GFX Library@^1.10.13
     // adafruit/Adafruit BusIO@^1.14.0  ; transitive dep of Adafruit GFX; chain LDF doesn't auto-resolve; unclear if still needed for any boards
 
- 
+
 // These are flags common to pretty much all frugal-iot projects
 // comment or uncomment debug flags based on need
 // build_flags_frugaliot =
@@ -64,7 +79,7 @@
 // #define CONTROL_BLINKEN_DEBUG
 // #define CONTROL_CLIMATE_DEBUG
 // #define CONTROL_LOGGERFS_DEBUG
-#define SENSOR_BH1750_DEBUG
+// #define SENSOR_BH1750_DEBUG
 // #define SENSOR_DHT_DEBUG
 // #define SENSOR_ENSAHT_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
@@ -75,7 +90,6 @@
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
-// #define SYSTEM_MESSAGE_DEBUG
 // #define SYSTEM_MQTT_DEBUG
 // #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
@@ -89,9 +103,7 @@
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
-    // Specific to SHT 
-// #define SENSOR_SHT_ADDRESS 0x45 // 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
-#define SYSTEM_OTA_PREFIX "bh1750"
+#define SYSTEM_OTA_PREFIX "ensaht"
 
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
@@ -154,7 +166,7 @@
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in bh1750.ino.globals.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP8266_WEMOS_D1MINIPRO, ARDUINO_ESP8266_WEMOS_D1MINI"
+  #error "This board has no settings in esp8266/ensaht.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"
 #endif
 
-#endif // BH1750_INO_GLOBALS_H
+#endif // ENSAHT_INO_GLOBALS_H

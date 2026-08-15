@@ -491,7 +491,7 @@
 #endif // 0
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in platform.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_LOLIN_C3_PICO, ARDUINO_LOLIN_S2_MINI, ARDUINO_ESP32C3_DEV, ARDUINO_NodeMCU_32S, ARDUINO_TTGO_LoRa32_v21new, ARDUINO_LILYGO_T3_S3_V1_X, ARDUINO_heltec_wifi_lora_32_V3, ARDUINO_T_Beam"
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / ESP32C3 Dev Module / NodeMCU-32S / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"
 #endif
 
 #endif // PLATFORM_H

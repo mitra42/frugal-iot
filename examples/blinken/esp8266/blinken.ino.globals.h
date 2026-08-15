@@ -4,8 +4,13 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
-#ifndef REMOTEDISPLAY_INO_GLOBALS_H
-#define REMOTEDISPLAY_INO_GLOBALS_H
+#ifndef BLINKEN_INO_GLOBALS_H
+#define BLINKEN_INO_GLOBALS_H
+
+// Tells the library this file made it into the build. Deliberately outside
+// every #ifdef below: it says "the file is here", not "your board is covered",
+// which is a separate failure with its own #error at the end.
+#define FRUGAL_IOT_GLOBALS_FOUND
 
 // PlatformIO Project Configuration File
 //
@@ -25,8 +30,8 @@
 // custom common options
 
 // [platformio]
-// name: Frugal-IoT SHT30
-// description: Frugal IoT - Temperature and Humidity Sensor with SHT30
+// name: Frugal-IoT Blinken 
+// description: Frugal IoT - Demonstration of blinking LED
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
@@ -35,7 +40,7 @@
 //     Frugal-IoT@^0.1.3
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
-
+ 
 // lib_deps_lora = 
 //     ${common.lib_deps}
     //Comment/Uncomment below two lines to switch between live and "new" version
@@ -49,7 +54,6 @@
 //     adafruit/Adafruit GFX Library@^1.10.13
     // adafruit/Adafruit BusIO@^1.14.0  ; transitive dep of Adafruit GFX; chain LDF doesn't auto-resolve; unclear if still needed for any boards
 
- 
 // These are flags common to pretty much all frugal-iot projects
 // comment or uncomment debug flags based on need
 // build_flags_frugaliot =
@@ -67,7 +71,7 @@
 // #define SYSTEM_SD_WANT // Uses LittleFS by default
 // #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
     // Flags from other libraries
-#define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
+// #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
 // #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
     // Uncomment debug lines before as needed
 // #define ACTUATOR_LCD_DEBUG
@@ -79,13 +83,12 @@
 // #define SENSOR_ENSAHT_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
-#define SENSOR_SHT_DEBUG
+// #define SENSOR_SHT_DEBUG
 // #define SENSOR_SOIL_DEBUG
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
-// #define SYSTEM_MESSAGE_DEBUG
 // #define SYSTEM_MQTT_DEBUG
 // #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
@@ -99,9 +102,7 @@
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
-    // Specific to SHT 
-// #define SENSOR_SHT_ADDRESS 0x45 // 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
-#define SYSTEM_OTA_PREFIX "sht30"
+#define SYSTEM_OTA_PREFIX "blinken"
 
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
@@ -159,30 +160,12 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "d1_mini"
 
-// As used at Umah Pupa
-#endif // ARDUINO_ESP8266_WEMOS_D1MINI
-
-// ----- [env:d1_mini_4x] also targets ARDUINO_ESP8266_WEMOS_D1MINI, DISABLED
-// Only one env per board can be active in the Arduino IDE, and
-// [env:d1_mini] is the one in effect. To use this one instead, set
-//   custom_arduino_default = yes
-// on [env:d1_mini_4x] in platformio.ini (and remove it from any other env for
-// this board), then re-run scripts/generate_platform_h.py.
-#if 0
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
-// board = d1_mini
-// platform = espressif8266
-// build_flags =
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "d1_mini_4x"
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 // ===== LORA BOARDS - ALL ESP32 ======================================
 
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
-#endif // 0
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in remotedisplay.ino.globals.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP8266_WEMOS_D1MINIPRO, ARDUINO_ESP8266_WEMOS_D1MINI"
+  #error "This board has no settings in esp8266/blinken.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"
 #endif
 
-#endif // REMOTEDISPLAY_INO_GLOBALS_H
+#endif // BLINKEN_INO_GLOBALS_H

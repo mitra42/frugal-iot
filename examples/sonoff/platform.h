@@ -175,7 +175,7 @@
 #endif // ARDUINO_LOLIN_S2_MINI
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in platform.h. Select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Configured here: ARDUINO_ESP32C3_DEV, ARDUINO_LOLIN_S2_MINI"
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: ESP32C3 Dev Module / LOLIN S2 Mini"
 #endif
 
 #endif // PLATFORM_H
