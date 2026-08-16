@@ -13,7 +13,6 @@
 #include "system/base.h"
 #include "system/io.h"
 
-// If need an extra bit, can assume WakeOnTimerBit = LightSleepBit
 #define MsgIsSubscription 0x01
 #define MsgFromFS 0x02
 #define MsgIsSet 0x04

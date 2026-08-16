@@ -411,10 +411,11 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
       frugal_iot.messages->subscribe(payload);  // Should queue for MQTT since we are the gateway
     }
     if (downstream) {
+      Serial.printf("LoRaMesher downstream received: %s=%s", topicPath.c_str(), payload.c_str());
       //Serial.print(F("XXX " __FILE__)); Serial.print(F("downstream ")); Serial.println(topicPath);
       frugal_iot.messages->queueIncoming(topicPath, payload, MsgFromLoRaMesher);
     } else { // upstream (not subscribe)
-      Serial.print(F("LoRaMesher forwarding to MQTT:")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
+      Serial.printf("LoRaMesher forwarding to MQTT: %s=%s",topicPath.c_str(), payload.c_str());
       frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
     }
   }
@@ -495,6 +496,7 @@ bool System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
     Serial.print("LoRaMesher Failed to send:"); Serial.println(send_result.GetErrorMessage().c_str());
     return false; 
   }
+  //Serial.printf("LoRaMesher Sent %X %s=%s", destn, topic, payload);
   sentPacketCounter++;
   return true;
 }
@@ -561,6 +563,7 @@ const __FlashStringHelper* System_LoraMesher::checkRoleString() {
 
 // ========= DOWNSTREAM =================
 
+// TODO dispatch (Downstream) currently handles return of false badly (and is only thing that calls this) 
 bool System_LoraMesher::relayDownstream(uint16_t destn, const String &topic, const String &payload) {
   return buildAndSend(destn, topic, payload, false, QOS_DOWNSTREAM); // retain=12 gives a ascii character "<"
 }
@@ -574,7 +577,7 @@ void System_LoraMesher::dispatch(System_Message &msg) {
     if (match_topic(msg.topicPath, sub.topicPath)) { // Allows for + and # wildcards
       // send over LoRaWan to subscriber
       if (!relayDownstream(sub.src, msg.topicPath, msg.payload)) {
-        Serial.print("XXX TODO-189 failed to send Lora downstream, think about requeueing");
+        Serial.printf("XXX TODO-189 failed to send Lora downstream, think about requeueing %s=%s", msg.topicPath.c_str(), msg.payload);
       }
     }
   }

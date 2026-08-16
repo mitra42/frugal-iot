@@ -14,6 +14,8 @@
  * There is also some reflection - i.e. where an Upstream message is reflected downstream 
  * to a different subscriber instead of going via the broker. 
  * 
+ * Rules: (TODO)
+ * 
  */
 
 #include <Arduino.h>
@@ -96,7 +98,12 @@ void System_Messages::subscribe(const String topicPath) {
       return; // Dont resubscribe
     }
   }
-  outgoing.emplace_back(topicPath); // Implicit new Message (subscription)
+  // Send subscription upstream UNLESS its a purely local !set subscription, in which case it can only be created 
+  // locally and will be reflected by Messages loopback without a subscription. 
+  if ( ! topicPath.startsWith(frugal_iot.messages->topicPrefix) 
+       || topicPath.substring(frugal_iot.messages->topicPrefix.length()).startsWith("set/")) {
+    outgoing.emplace_back(topicPath); // Implicit new Message (subscription)
+  }
 }
 
 // Upstream: module => queue outgoing (no reflection)
@@ -257,10 +264,9 @@ bool System_Message::isSubscription() { return flags_ & MsgIsSubscription; }
 
 // Downstream MQTT -> modules (note that LoRaMesher is a module that forwards based on subscriptions)
 // Message is on the front of the queue and will be destroyed and memory freed by dispatchIncomingQueued once dispatched
-// TODO-210. SMs.dispatchIncomingQueued -> SM.dispatch -> FIOT.dispatch -> 
 void System_Message::dispatch() {
   parse(); 
-  frugal_iot.dispatch(*this);
+  frugal_iot.dispatch(*this); // Send to all modules
 }
 
 void System_Message::maybeWriteToFS(bool appendValue) { // appendValue defaults to false
@@ -280,7 +286,6 @@ void System_Message::maybeEcho() {
   #if defined(SYSTEM_MESSAGE_DEBUG)
     Serial.print(F("Echoing flags=")); Serial.print(flags_, HEX); Serial.print(F(" ")); Serial.print(path); Serial.print(F("=")); Serial.println(payload);
   #endif
-  // TODO-210 maybe more efficient way to get topicPath - need to check e.g. topicPath works here and doesnt include "set"
   frugal_iot.messages->send(path, payload, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 void System_Message::maybeWriteToFSandEcho(bool appendValue) { // appendValue defaults to false
