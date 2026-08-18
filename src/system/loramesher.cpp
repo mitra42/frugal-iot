@@ -144,7 +144,7 @@ void ReceiveTask(void* /*pvParameters*/) {
   for (;;) {
       auto result = loramesher::os::RTOS::instance().ReceiveFromQueue(receive_queue, &msg, MAX_DELAY);
       if (result == loramesher::os::QueueResult::kOk && msg != nullptr) {
-      Serial.print(F("LoRaMesher - app received 0x")); Serial.print(msg->data.size()); Serial.print(F(" bytes from 0x")); Serial.println(msg->source, HEX); 
+      //Serial.print(F("LoRaMesher - app received 0x")); Serial.print(msg->data.size()); Serial.print(F(" bytes from 0x")); Serial.println(msg->source, HEX); 
       // application logic
       frugal_iot.loramesher->processReceivedPacket(msg->source, msg->data);
       delete msg; 
@@ -411,11 +411,11 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
       frugal_iot.messages->subscribe(payload);  // Should queue for MQTT since we are the gateway
     }
     if (downstream) {
-      Serial.printf("LoRaMesher downstream received: %s=%s", topicPath.c_str(), payload.c_str());
+      Serial.printf("LoRaMesher downstream received: %s=%s\n", topicPath.c_str(), payload.c_str());
       //Serial.print(F("XXX " __FILE__)); Serial.print(F("downstream ")); Serial.println(topicPath);
       frugal_iot.messages->queueIncoming(topicPath, payload, MsgFromLoRaMesher);
     } else { // upstream (not subscribe)
-      Serial.printf("LoRaMesher forwarding to MQTT: %s=%s",topicPath.c_str(), payload.c_str());
+      Serial.printf("LoRaMesher forwarding to MQTT: %s=%s\n",topicPath.c_str(), payload.c_str());
       frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
     }
   }
@@ -496,7 +496,7 @@ bool System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
     Serial.print("LoRaMesher Failed to send:"); Serial.println(send_result.GetErrorMessage().c_str());
     return false; 
   }
-  //Serial.printf("LoRaMesher Sent %X %s=%s", destn, topic, payload);
+  Serial.printf("LoRaMesher Sent %X %s=%s\n", destn, topic.c_str(), payload.c_str());
   sentPacketCounter++;
   return true;
 }
@@ -577,7 +577,7 @@ void System_LoraMesher::dispatch(System_Message &msg) {
     if (match_topic(msg.topicPath, sub.topicPath)) { // Allows for + and # wildcards
       // send over LoRaWan to subscriber
       if (!relayDownstream(sub.src, msg.topicPath, msg.payload)) {
-        Serial.printf("XXX TODO-189 failed to send Lora downstream, think about requeueing %s=%s", msg.topicPath.c_str(), msg.payload);
+        Serial.printf("XXX TODO-189 failed to send Lora downstream, think about requeueing %s=%s\n", msg.topicPath.c_str(), msg.payload);
       }
     }
   }
