@@ -2,6 +2,7 @@
  *  Frugal IoT example - LoRaMesher demo - a work in progress
  *
  * Optional:
+ * LORAMESHER_REMOTE_SHT_DEVICE: Full MQTT path prefix of the device publishing SHT temperature/humidity, defaults to this device
  *
  */
 
@@ -13,11 +14,6 @@
   #include "control/oled_loramesher.h"
   #include "control/carousel.h"
   Control_Carousel* carousel;
-#endif
-
-// Full MQTT path prefix of the device publishing SHT temperature/humidity
-#ifndef LORAMESHER_REMOTE_SHT_DEVICE
-  #define LORAMESHER_REMOTE_SHT_DEVICE "dev/lotus/esp32-ac3d7a" //TODO switch to the office one
 #endif
 
 // Change the parameters here to match your ...
@@ -42,7 +38,11 @@ void setup() {
   // LightWiFi=Light + WiFi on (not working);
   // Modem=Modem sleep - works but negligable power saving
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles.
-  frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
+  #ifdef SYSTEM_LORAMESHER_SLEEP
+    frugal_iot.configure_power(Power_Lora, 30000, 30000); // Take a reading every 30 seconds - put to sleep by loRaMesher
+  #else
+    frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
+  #endif
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
@@ -58,10 +58,16 @@ void setup() {
   #ifdef ACTUATOR_OLED_WANT
     Control_Oled_HT* cos = new Control_Oled_HT("Control OLED SHT");
     frugal_iot.controls->add(cos);
-    cos->temperature->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/temperature");
-    cos->humidity->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/humidity");
-    cos->battery->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/battery/battery");
-
+    // If LORAMESHER_REMOTE_SHT_DEVICE is defined point at that device, else point at this device (which hopefully has an sht)
+    #ifdef LORAMESHER_REMOTE_SHT_DEVICE
+      cos->temperature->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/temperature");
+      cos->humidity->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/humidity");
+      cos->battery->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/battery/battery");
+    #else
+      cos->temperature->wireTo(frugal_iot.messages->path("sht/temperature"));
+      cos->humidity->wireTo(frugal_iot.messages->path("sht/humidity"));
+      cos->battery->wireTo(frugal_iot.messages->path("battery/battery"));
+    #endif
 
     Control_Oled_LoRaMesher* col = new Control_Oled_LoRaMesher("Control OLED");
     frugal_iot.controls->add(col);

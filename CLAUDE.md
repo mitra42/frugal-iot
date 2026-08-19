@@ -511,7 +511,7 @@ holding `addr` plus a `TwoWire*` for the shared bus. Prefer these over hand-roll
 
 | Method | Use |
 |--------|-----|
-| `initialize()` | `wire->begin(I2C_SDA, I2C_SCL)`, **de-duplicated per bus** — every device on a bus calls it from its own `setup()` |
+| `initialize()` | `wire->begin(I2C_SDA, I2C_SCL)`, **de-duplicated per bus** — every device on a bus calls it from its own `setup()`. With `-D SYSTEM_I2C_DEBUG` it also runs `scan()`, once per bus |
 | `sendRegister(reg, value)` | Write one byte to a register |
 | `sendRegister16(reg, value)` | Write a big-endian 16-bit register |
 | `send1read(cmd, bytes)` | Send a register/command byte, read N bytes back as a big-endian integer (N ≤ 4) |
@@ -527,6 +527,11 @@ were byte-identical implementations of the register write, and `ms5803.cpp` pair
 guard because every I2C sensor called `wire->begin()` — see the "unnecessary since already
 called" note in the old `ens160aht21.cpp` and TODO-115/TODO-16 in `sht.cpp`. `scan()` previously scanned
 the global `I2C_WIRE` regardless of which bus the object was on.
+
+The automatic `scan()` under `SYSTEM_I2C_DEBUG` hangs off `initialize()`'s per-bus guard, so it
+prints once per `TwoWire` no matter how many devices are on it. `bh1750.cpp`, `sht.cpp` and
+`lcd.cpp` still call `wire->begin()` directly instead of going through `initialize()`, so they
+do not trigger it - they carry their own `scan()` under their own `*_DEBUG` flags.
 
 ### Sensor_INA219
 

@@ -36,6 +36,12 @@ bool System_I2C::busAlreadyBegun() {
 void System_I2C::initialize() {
   if (!busAlreadyBegun()) {
     wire->begin(I2C_SDA, I2C_SCL);  // typically SDA SCL unless board specific in _settings.h or overridden in platformio.ini
+    #ifdef SYSTEM_I2C_DEBUG
+      // Once per bus, from whichever device on it happens to call initialize() first - the
+      // per-bus guard above is what makes this once-per-Wire rather than once-per-device.
+      // Runs before any chip-specific configuration, so what it prints is the bus as wired.
+      scan();
+    #endif
   }
 }
 
@@ -66,7 +72,7 @@ bool System_I2C::read(uint8_t* buf, uint8_t bytes) {
     buf[i] = wire->read(); // TODO allow for failure and return true or false.
   }
   #ifdef SYSTEM_I2C_DEBUG
-    Serial.print(F("I2C read"));
+    Serial.print(F("I2C read "));
     for (uint8_t i = 0; i < bytes; i++) {
       Serial.print(buf[i], HEX); Serial.print(F(" "));
     }
@@ -83,7 +89,7 @@ uint32_t System_I2C::read(uint8_t bytes) {
     result |= wire->read();
   }
   #ifdef SYSTEM_I2C_DEBUG
-    Serial.print(F("I2C read"));  Serial.println(result);
+    Serial.printf("I2C read %x\n",result);
   #endif
   return result;
 }

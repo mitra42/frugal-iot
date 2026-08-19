@@ -22,6 +22,13 @@ class IO {
     String wiredPath; // Topic also listening|sending to when wired
     IO();
     IO(const char * const sensorId, const char * const id, const String name, char const *color, const bool w = true);
+    // Virtual only because the hierarchy is polymorphic and something deletes through an IO
+    // subclass pointer: Sensor_ENS160::setup() drops aqi500 on a part that has no 0..500 index.
+    // That delete is via the exact OUTuint16* type, so it was already well defined - this makes
+    // it stay that way if anything ever deletes through a base pointer, and silences
+    // -Wdelete-non-virtual-dtor. Nothing here owns heap memory beyond IO's own Strings, so the
+    // defaulted body is all that is needed.
+    virtual ~IO() = default;
     virtual void setup();
     void writeConfigToFS(const String &leaf, const String& payload);
     virtual bool dispatch(System_Message &msg);

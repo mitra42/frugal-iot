@@ -113,13 +113,14 @@ Sensor_BME680::Sensor_BME680(const char * const name, uint8_t address, TwoWire* 
   : Sensor("bme680", name, retain),
     temperature(new OUTfloat("bme680", "temperature", "Temperature", 0, 1, DEFAULT_bme680_temperature_min, DEFAULT_bme680_temperature_max, DEFAULT_bme680_temperature_color, false)),
     humidity(new OUTfloat("bme680", "humidity", "Humidity", 0, 1, DEFAULT_bme680_humidity_min, DEFAULT_bme680_humidity_max, DEFAULT_bme680_humidity_color, false)),
+    pressure(new OUTfloat("bme680", "pressure", "Pressure", 0, 1, DEFAULT_bme680_pressure_min, DEFAULT_bme680_pressure_max, DEFAULT_bme680_pressure_color, false)),
     gas(nullptr), // Stays null if wantGas is false - the presence of the output is the flag
     interface(address, wire),
     wire(wire)
 {
   outputs.push_back(temperature);
   outputs.push_back(humidity);
-  outputs.push_back(pressure = new OUTfloat("bme680", "pressure", "Pressure", 0, 1, DEFAULT_bme680_pressure_min, DEFAULT_bme680_pressure_max, DEFAULT_bme680_pressure_color, false));
+  outputs.push_back(pressure);
   temperature->unit = "C";
   humidity->unit = "%";
   pressure->unit = "hPa";

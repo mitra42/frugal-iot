@@ -31,18 +31,23 @@ OUTtext	KEYWORD1
 OUTuint16	KEYWORD1
 SSD1306_Offset	KEYWORD1
 Sensor	KEYWORD1
+Sensor_AHT	KEYWORD1
+Sensor_AHT20	KEYWORD1
+Sensor_AHT21	KEYWORD1
 Sensor_Analog	KEYWORD1
 Sensor_BH1750	KEYWORD1
 Sensor_BME280	KEYWORD1
 Sensor_BME680	KEYWORD1
+Sensor_BMP280	KEYWORD1
+Sensor_BMx280	KEYWORD1
 Sensor_Battery	KEYWORD1
 Sensor_Button	KEYWORD1
 Sensor_DHT	KEYWORD1
 Sensor_DS18B20	KEYWORD1
 Sensor_DissolvedOxygen	KEYWORD1
+Sensor_ENS160	KEYWORD1
 Sensor_Float	KEYWORD1
 Sensor_GPS	KEYWORD1
-Sensor_HT	KEYWORD1
 Sensor_Health	KEYWORD1
 Sensor_INA219	KEYWORD1
 Sensor_LoadCell	KEYWORD1
@@ -50,7 +55,6 @@ Sensor_SHT	KEYWORD1
 Sensor_Soil	KEYWORD1
 Sensor_Uint16	KEYWORD1
 Sensor_Ultrasonic	KEYWORD1
-Sensor_ensaht	KEYWORD1
 Sensor_ms5803	KEYWORD1
 System_Base	KEYWORD1
 System_Buttons	KEYWORD1
@@ -81,13 +85,8 @@ System_WiFi	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 
-AHTspinTillReady	KEYWORD2
 Adafruit_SSD1306	KEYWORD2
 CRC4	KEYWORD2
-ENScommand	KEYWORD2
-ENSsend2	KEYWORD2
-ENSsendAndRead	KEYWORD2
-ENSsetMode	KEYWORD2
 LightWifi_setup	KEYWORD2
 PromoteToNetworkManager	KEYWORD2
 RSSI	KEYWORD2
@@ -117,12 +116,15 @@ canMQTT	KEYWORD2
 canOTA	KEYWORD2
 canRetry	KEYWORD2
 captiveLines	KEYWORD2
+captiveValueLines	KEYWORD2
 checkForUpdate	KEYWORD2
 checkLevel	KEYWORD2
 checkRole	KEYWORD2
 checked	KEYWORD2
+chipIdValid	KEYWORD2
 clickHandlerInner	KEYWORD2
 color565	KEYWORD2
+command	KEYWORD2
 compensateGasHigh	KEYWORD2
 compensateGasLow	KEYWORD2
 compensateHumidity	KEYWORD2
@@ -214,8 +216,6 @@ quickAdvertise	KEYWORD2
 reSubscribeAll	KEYWORD2
 read	KEYWORD2
 read16	KEYWORD2
-readAndSetAHT	KEYWORD2
-readAndSetENS	KEYWORD2
 readCalibration	KEYWORD2
 readConfigFromFS	KEYWORD2
 readFloat	KEYWORD2
@@ -237,6 +237,7 @@ send	KEYWORD2
 send1read	KEYWORD2
 send1read1	KEYWORD2
 sendAndRead	KEYWORD2
+sendAndWait	KEYWORD2
 sendGoogle	KEYWORD2
 sendOutgoingQueued	KEYWORD2
 sendRegister	KEYWORD2
@@ -245,13 +246,12 @@ sendRemote	KEYWORD2
 sendWired	KEYWORD2
 set	KEYWORD2
 setDefaultColor	KEYWORD2
+setEnvData	KEYWORD2
 setLanguage	KEYWORD2
+setMode	KEYWORD2
 setPath	KEYWORD2
 setStatus	KEYWORD2
-setenvdata	KEYWORD2
 setup	KEYWORD2
-setupAHT	KEYWORD2
-setupENS	KEYWORD2
 setupFailed	KEYWORD2
 setupLanguages	KEYWORD2
 setup_after_mqtt	KEYWORD2
@@ -261,6 +261,7 @@ shouldBeDefined	KEYWORD2
 sleep	KEYWORD2
 sleepSafeSecs	KEYWORD2
 slurp	KEYWORD2
+spinTillReady	KEYWORD2
 split	KEYWORD2
 spurt	KEYWORD2
 startSerial	KEYWORD2

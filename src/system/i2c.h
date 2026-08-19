@@ -16,6 +16,7 @@ class System_I2C {
     TwoWire* wire;
     System_I2C(uint8_t addr, TwoWire* wire = &Wire);
     void initialize(); // Idempotent per bus - every device on a bus calls it from its own setup()
+                       // With SYSTEM_I2C_DEBUG, scans the bus once, on the first call for it.
     void send(uint8_t cmd);
     bool send(uint8_t* buf, uint8_t bytes);
     bool read(uint8_t* buf, uint8_t bytes);
