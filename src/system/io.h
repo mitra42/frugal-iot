@@ -13,6 +13,11 @@ class IO {
     const String topicTwig; // e.g. sht/temperature
     const char* color; // String passed to UX
     const char* default_color;
+    // Optional unit for display only ("C", "hPa", "kOhm") - printed by Sensor::captiveLines
+    // after the value. Set on the IO after constructing it; not sent to the UX (the server's
+    // schema owns what the UX displays), and not part of any constructor because that would
+    // mean touching every IO constructor in the library for a captive-portal nicety.
+    const char* unit = nullptr;
     bool const wireable; // True if can wire this to/from others - note this flag is on the control, not on the sensor or actuator
     String wiredPath; // Topic also listening|sending to when wired
     IO();

@@ -32,8 +32,14 @@
 #include "sensor/sht.h"
 
 Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *wire, bool retain)
-    : Sensor_HT("sht", name, retain),
+    : Sensor("sht", name, retain),
+    temperature(new OUTfloat("sht", "temperature", "Temperature", 0, 1, DEFAULT_sht_temperature_min, DEFAULT_sht_temperature_max, DEFAULT_sht_temperature_color, false)),
+    humidity(new OUTfloat("sht", "humidity", "Humidity", 0, 1, DEFAULT_sht_humidity_min, DEFAULT_sht_humidity_max, DEFAULT_sht_humidity_color, false)),
     address(address_init) {
+  outputs.push_back(temperature);
+  outputs.push_back(humidity);
+  temperature->unit = "C";
+  humidity->unit = "%";
   //TODO-19b and TODO-16 It might be that we have to be careful to only setup the Wire once if there are multiple sensors. 
   // Defaults to system defined SDA and SCL 
   wire->begin(I2C_SDA, I2C_SCL);  // These are defined in _settings.h as SDA and SCL unless there is board specifics
@@ -42,7 +48,7 @@ Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address_init, TwoWire *w
 }
 
 void Sensor_SHT::setup() {
-  Sensor_HT::setup(); 
+  Sensor::setup(); 
   sht->begin();
   #ifdef SENSOR_SHT_DEBUG
     Serial.print(F("address: ")); Serial.print(address, HEX);
@@ -81,7 +87,8 @@ void Sensor_SHT::readValidateConvertSet() {
 
       // Only set values if they pass validation
       if (validate(temp, humy)) {
-          set(temp, humy);
+          temperature->set(temp);
+          humidity->set(humy);
       }
     #ifdef SENSOR_SHT_DEBUG
     } else {

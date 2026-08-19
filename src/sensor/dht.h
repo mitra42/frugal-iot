@@ -29,7 +29,7 @@
 #ifndef SENSOR_DHT_H
 #define SENSOR_DHT_H
 
-#include "sensor/ht.h"
+#include "sensor/sensor.h"
 #include <dhtnew.h>                     // https://github.com/RobTillaart/DHTNew
 
 // Default power control pins - can be overridden via constructor parameters
@@ -41,9 +41,11 @@
 #endif
 
 
-class Sensor_DHT : public Sensor_HT {
+class Sensor_DHT : public Sensor {
 public:
   Sensor_DHT(const char * const name, const uint8_t pin, const bool retain);
+  OUTfloat* temperature;
+  OUTfloat* humidity;
 protected:
   DHTNEW * const dht; 
   const uint8_t pin;

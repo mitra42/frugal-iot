@@ -79,7 +79,7 @@ Control_Climate::Control_Climate(const char* const id, const char* const name,
     new INfloat(id, "temperature_hysteresis", "Temp Hysteresis", temp_hysteresis, 1,DEFAULT_climate_temperature_hysteresis_min, DEFAULT_climate_temperature_hysteresis_max, DEFAULT_climate_temperature_hysteresis_color, false),
     new INfloat(id, "humidity_now", "Humidity", humidity_setpoint, 1, DEFAULT_climate_humidity_now_min, DEFAULT_climate_humidity_now_max, DEFAULT_climate_humidity_now_color, true),
     new INfloat(id, "humidity_setpoint", "Humidity Setpoint", humidity_setpoint, 1, DEFAULT_climate_humidity_setpoint_min, DEFAULT_climate_humidity_setpoint_max, DEFAULT_climate_humidity_setpoint_color, false),
-    new INfloat(id, "humidity_hysteresis", "Humidity Hysteresis", humidity_hysteresis, 1, DEFAULT_climate_humidity_hysteresis_min, DEFAULT_climate_humidity_hysteresis_max, DEFAULT_climate_humidity_hysteresis_color,, false)
+    new INfloat(id, "humidity_hysteresis", "Humidity Hysteresis", humidity_hysteresis, 1, DEFAULT_climate_humidity_hysteresis_min, DEFAULT_climate_humidity_hysteresis_max, DEFAULT_climate_humidity_hysteresis_color, false)
   },
   std::vector<OUT*> {
     new OUTbool(id, "temperature_out", "Heating", false, DEFAULT_climate_temperature_out_color, true),

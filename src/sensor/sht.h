@@ -28,7 +28,7 @@
 
 
 
-#include "sensor/ht.h"
+#include "sensor/sensor.h"
 
 // Has to be in .h, so can be used in main.cpp constructor
 #ifndef SENSOR_SHT_ADDRESS
@@ -59,9 +59,11 @@
 #endif
 
 
-class Sensor_SHT : public Sensor_HT {
+class Sensor_SHT : public Sensor {
   public:
     Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, bool retain);
+    OUTfloat* temperature;
+    OUTfloat* humidity;
   protected:
     uint8_t address;
     SENSOR_SHT_DEVICE *sht; 

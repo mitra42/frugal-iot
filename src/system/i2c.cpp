@@ -89,7 +89,7 @@ uint32_t System_I2C::read(uint8_t bytes) {
 }
 
 // Write one byte to a register. The register/value paradigm most chips use - was hand-rolled
-// identically in Sensor_ensaht::ENSsend2() and Sensor_BME280::writeReg() before this existed.
+// identically in the ENS160's sendAndWait() and the BME280's writeReg() before this existed.
 bool System_I2C::sendRegister(uint8_t reg, uint8_t value) {
   uint8_t buf[2] = { reg, value };
   return send(buf, 2);

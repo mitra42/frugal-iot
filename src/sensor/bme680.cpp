@@ -110,17 +110,24 @@
 #define BME680_CONCAT_BYTES(msb, lsb)   (((uint16_t)msb << 8) | (uint16_t)lsb)
 
 Sensor_BME680::Sensor_BME680(const char * const name, uint8_t address, TwoWire* wire, bool retain, bool wantGas)
-  : Sensor_HT("bme680", name, retain),
+  : Sensor("bme680", name, retain),
+    temperature(new OUTfloat("bme680", "temperature", "Temperature", 0, 1, DEFAULT_bme680_temperature_min, DEFAULT_bme680_temperature_max, DEFAULT_bme680_temperature_color, false)),
+    humidity(new OUTfloat("bme680", "humidity", "Humidity", 0, 1, DEFAULT_bme680_humidity_min, DEFAULT_bme680_humidity_max, DEFAULT_bme680_humidity_color, false)),
     gas(nullptr), // Stays null if wantGas is false - the presence of the output is the flag
     interface(address, wire),
     wire(wire)
 {
-  //TODO-213 define min/max/color in the UX defaults (generate-defaults.js) - literals for now, as bh1750 does
-  outputs.push_back(pressure = new OUTfloat("bme680", "pressure", "Pressure", 0, 1, 300, 1100, "blue", false));
+  outputs.push_back(temperature);
+  outputs.push_back(humidity);
+  outputs.push_back(pressure = new OUTfloat("bme680", "pressure", "Pressure", 0, 1, DEFAULT_bme680_pressure_min, DEFAULT_bme680_pressure_max, DEFAULT_bme680_pressure_color, false));
+  temperature->unit = "C";
+  humidity->unit = "%";
+  pressure->unit = "hPa";
   if (wantGas) {
     // Practical range is a few kOhm in dirty air to a few hundred in clean air, but it is a
-    // relative measure - see the note on IAQ in bme680.h. TODO-213 as above.
-    outputs.push_back(gas = new OUTfloat("bme680", "gas", "Gas Resistance", 0, 1, 0, 500, "green", false));
+    // relative measure - see the note on IAQ in bme680.h.
+    outputs.push_back(gas = new OUTfloat("bme680", "gas", "Gas Resistance", 0, 1, DEFAULT_bme680_gas_min, DEFAULT_bme680_gas_max, DEFAULT_bme680_gas_color, false));
+    gas->unit = "kOhm";
   }
 }
 
@@ -174,7 +181,7 @@ bool Sensor_BME680::readCalibration() {
 }
 
 void Sensor_BME680::setup() {
-  Sensor_HT::setup(); // Will readConfigFromFS - do before touching the device
+  Sensor::setup(); // Will readConfigFromFS - do before touching the device
   interface.initialize();
   delay(10);
   interface.sendRegister(BME680_REG_RESET, BME680_CMD_RESET);
@@ -409,7 +416,8 @@ void Sensor_BME680::readValidateConvertSet() {
         #endif
         if (validate(temp, humy, press)) {
           connected = true;
-          set(temp, humy);          // Sensor_HT sets temperature and humidity
+          temperature->set(temp);
+          humidity->set(humy);
           pressure->set(press);
           ambient_c = (int8_t)temp; // Feeds the next cycle's heater resistance
           if (gas) {
@@ -442,16 +450,4 @@ void Sensor_BME680::readValidateConvertSet() {
       }
     }
   }
-}
-
-void Sensor_BME680::captiveLines(AsyncResponseStream* response) {
-  // Sensor_HT::captiveLines only knows about temperature and humidity
-  String line = String(F("<p><label>")) + name
-    + "<br>Temperature: " + temperature->StringValue() + " C"
-    + "<br>Humidity: " + humidity->StringValue() + " %"
-    + "<br>Pressure: " + pressure->StringValue() + " hPa";
-  if (gas) {
-    line += "<br>Gas: " + gas->StringValue() + " kOhm";
-  }
-  response->print(line + "</label></p>");
 }

@@ -1,6 +1,16 @@
 /* 
  *  Frugal IoT example - ENS160 AHT21 environment sensor
  * 
+ *  The common little "ENS160+AHT21" breakout carries two independent I2C chips, and this
+ *  example adds one Frugal-IoT sensor for each:
+ *
+ *    Sensor_AHT21  (sensor/aht.h)    - temperature and humidity
+ *    Sensor_ENS160 (sensor/ens160.h) - air quality: AQI, TVOC, eCO2
+ *
+ *  The ENS160 needs an ambient temperature and humidity to compensate its gas plate, and takes
+ *  them as *inputs* rather than reading a sensor of its own. That is the wiring this example
+ *  makes below - and since those are ordinary wireable inputs, on a node that already has (say)
+ *  an SHT30, the ENS160 can be wired to that instead and the AHT21 left out altogether.
  */
 
 #include "Frugal-IoT.h"
@@ -33,7 +43,16 @@ void setup() {
   
   // Add sensors, actuators and controls
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
-  frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS160 AHT21"));
+  Sensor_AHT21* aht = new Sensor_AHT21("AHT21");
+  frugal_iot.sensors->add(aht);
+  Sensor_ENS160* ens = new Sensor_ENS160("ENS160");
+  frugal_iot.sensors->add(ens);
+  // Feed the AHT21's readings to the ENS160 for its compensation. Sensor_ENS160::setup() would
+  // do exactly this on its own (SENSOR_ENS160_TEMPERATURE_PATH / _HUMIDITY_PATH default to the
+  // AHT21's topics), but it is spelled out here because it is the point of the example - and
+  // because wiring it explicitly is what you would edit to feed it from a different sensor.
+  ens->temperature->wireTo(aht->temperature->path());
+  ens->humidity->wireTo(aht->humidity->path());
   
   Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);

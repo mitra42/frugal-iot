@@ -56,7 +56,11 @@ void setup() {
   
   frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", 5, 0, true));
 
-  frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS160 AHT21"));
+  // The ENS160+AHT21 board is two chips, and so two sensors. The ENS160 needs an ambient
+  // temperature and humidity for its compensation, and wires itself to the AHT21's outputs
+  // unless told otherwise - so nothing extra is needed here.
+  frugal_iot.sensors->add(new Sensor_AHT21("AHT21"));
+  frugal_iot.sensors->add(new Sensor_ENS160("ENS160"));
 
   // Add a new loadcell sensor max=2000, color="pink", retain=true, DOUTpin=0, SCKpin=1, times=10, offset=0, scale=2000
   // Define default pins, can override in platformio.ini

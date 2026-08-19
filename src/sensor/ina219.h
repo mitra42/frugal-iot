@@ -125,7 +125,7 @@ class Sensor_INA219 : public Sensor {
     bool needs_config = false; // Set by powerUp(), acted on at the next read - see .h notes
     void setup() override;
     void readValidateConvertSet() override;
-    void captiveLines(AsyncResponseStream* response) override;
+    // No captiveLines() override - Sensor::captiveLines lists every output with its unit
     void powerDown() override; // Puts the chip in MODE 000 before dropping any power pins
     void powerUp() override;   // Restores power pins, defers reconfiguration to the next read
     void writeConfig(uint8_t mode);  // SENSOR_INA219_CONFIG with these MODE bits

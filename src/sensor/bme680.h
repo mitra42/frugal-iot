@@ -68,7 +68,7 @@
 #include "_settings.h"  // Settings for what to include etc
 #include <Arduino.h>
 #include "system/i2c.h"
-#include "sensor/ht.h"
+#include "sensor/sensor.h"
 
 #ifndef SENSOR_BME680_ADDRESS
   #define SENSOR_BME680_ADDRESS 0x76
@@ -83,10 +83,12 @@
   #define SENSOR_BME680_MEASURE_TIMEOUT_MS 500
 #endif
 
-class Sensor_BME680 : public Sensor_HT {
+class Sensor_BME680 : public Sensor {
   public:
     Sensor_BME680(const char * const name, uint8_t address = SENSOR_BME680_ADDRESS,
       TwoWire* wire = &I2C_WIRE, bool retain = true, bool wantGas = true);
+    OUTfloat* temperature;
+    OUTfloat* humidity;
   protected:
     OUTfloat* pressure;
     OUTfloat* gas;        // nullptr if the constructor was passed gas=false
@@ -115,7 +117,7 @@ class Sensor_BME680 : public Sensor_HT {
 
     void setup() override;
     void readValidateConvertSet() override;
-    void captiveLines(AsyncResponseStream* response) override;
+    // No captiveLines() override - Sensor::captiveLines lists every output with its unit
 
     bool readCalibration();
     void configureMeasurement(); // Heater + oversampling registers, rewritten before each read

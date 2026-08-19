@@ -60,6 +60,11 @@ Sensor_INA219::Sensor_INA219(const char* const id, const char * const name,
   outputs.push_back(current = new OUTfloat(id, "current", "Current",       0, 2, -max_ma, max_ma, "red", false));
   outputs.push_back(power   = new OUTfloat(id, "power",   "Power",         0, 2, 0, 32 * max_ma, "orange", false));
   outputs.push_back(load    = new OUTfloat(id, "load",    "Load Voltage",  0, 3, 0, 32,     "green",  false));
+  shunt->unit = "mV";
+  bus->unit = "V";
+  current->unit = "mA";
+  power->unit = "mW";
+  load->unit = "V";
 }
 
 // SENSOR_INA219_CONFIG with the MODE bits replaced - the caller owns the mode, and whatever
@@ -201,13 +206,4 @@ void Sensor_INA219::readValidateConvertSet() {
       writeConfig(INA219_MODE_POWERDOWN);
     #endif
   }
-}
-
-void Sensor_INA219::captiveLines(AsyncResponseStream* response) {
-  response->print(String(F("<p><label>")) + name
-    + "<br>Shunt: "   + shunt->StringValue()   + " mV"
-    + "<br>Bus: "     + bus->StringValue()     + " V"
-    + "<br>Current: " + current->StringValue() + " mA"
-    + "<br>Power: "   + power->StringValue()   + " mW"
-    + "<br>Load: "    + load->StringValue()    + " V</label></p>");
 }

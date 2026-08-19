@@ -78,7 +78,8 @@
   // TO-ADD-SENSOR TO-ADD-CONTROL TO-ADD-ACTUATOR TO-ADD-SYSTEm
   #define CONTROL_BLINKEN_DEBUG
   #define CONTROL_LOGGERFS_DEBUG
-  #define SENSOR_ENSAHT_DEBUG
+  #define SENSOR_AHT_DEBUG
+  #define SENSOR_ENS160_DEBUG
   #define SENSOR_LOADCELL_DEBUG
   #define SENSOR_MS5803_DEBUG
   #define SENSOR_SHT_DEBUG
@@ -118,8 +119,10 @@
 #endif
 
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
-#if defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG) || defined(SENSOR_BME280_DEBUG) || defined(SENSOR_BME680_DEBUG)
-  #define SENSOR_HT_DEBUG
+// (there is no SENSOR_HT_DEBUG any more - Sensor_HT is gone, and the temperature/humidity
+// sensors that used to share it now extend Sensor directly, so each lists itself below)
+#if defined(SENSOR_BME280_DEBUG) || defined(SENSOR_BMP280_DEBUG)
+  #define SENSOR_BMX280_DEBUG // One implementation for both chips - either flag turns it on
 #endif
 #if defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG) || defined(SENSOR_DO_DEBUG)
   #define SENSOR_ANALOG_DEBUG
@@ -130,7 +133,7 @@
 #if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG) || defined(SENSOR_ULTRASONIC_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
-#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_HT_DEBUG) || defined(SENSOR_ENSAHT_DEBUG)  || defined(SENSOR_GPS_DEBUG) || defined(SENSOR_INA219_DEBUG)
+#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG) || defined(SENSOR_BMX280_DEBUG) || defined(SENSOR_BME680_DEBUG) || defined(SENSOR_AHT_DEBUG) || defined(SENSOR_ENS160_DEBUG) || defined(SENSOR_GPS_DEBUG) || defined(SENSOR_INA219_DEBUG)
   #define SENSOR_DEBUG // Only used for ANY_DEBUG below
 #endif
 

@@ -202,9 +202,9 @@ Frugal-IoT/
 │   ├── misc.h/cpp         # Shared helpers (e.g. StringF)
 │   ├── system/            # Infrastructure: frugal (System_Frugal), wifi, mqtt, ota, power,
 │   │                       #   fs, i2c, spi, time, watchdog, base, group, io, message, discovery…
-│   ├── sensor/            # One file pair per sensor type (sht, dht, ht, soil, battery, bh1750,
-│   │                       #   loadcell, ds18b20, ms5803, ens160aht21, button, analog, float,
-│   │                       #   uint16, health, gps, sensor [base class]…)
+│   ├── sensor/            # One file pair per sensor type (sht, dht, soil, battery, bh1750,
+│   │                       #   loadcell, ds18b20, ms5803, aht, ens160, bmx280, bme680, button,
+│   │                       #   analog, float, uint16, health, gps, sensor [base class]…)
 │   ├── actuator/          # LED, digital output, OLED, LCD (actuator.h is the base class)
 │   └── control/           # Logic blocks (hysteresis, logger, logger_fs, blinken, carousel,
 │                           #   oled, oled_loramesher, gsheets, control.h [base class]…)
@@ -374,7 +374,7 @@ Which group a component uses depends on its role:
 
 | Base class | Holds | Example |
 |------------|-------|---------|
-| `Sensor` (`sensor/sensor.h`) | `std::vector<OUT*> outputs` | `Sensor_HT` has `OUTfloat* temperature; OUTfloat* humidity;` |
+| `Sensor` (`sensor/sensor.h`) | `std::vector<OUT*> outputs` | `Sensor_SHT` has `OUTfloat* temperature; OUTfloat* humidity;` |
 | `Actuator` (`actuator/actuator.h`) | `std::vector<IN*> inputs` | `Actuator_Digital` has `INbool* input` |
 | `Control` (`control/control.h`) | both `inputs` and `outputs` | `Control_Hysteresis` — 4 `IN`s (now/greater/limit/hysteresis), 1 `OUTbool` (out) |
 
@@ -420,27 +420,89 @@ a readable one — both just build the topic string, the actual subscribe only h
 
 | Class | File | Measures |
 |-------|------|---------|
-| `Sensor_HT` | sensor/ht | Base class for temp+humidity sensors (`OUTfloat* temperature/humidity`) — not instantiated directly |
-| `Sensor_SHT` | sensor/sht | Temperature + humidity (SHT30/SHT40/SHT85); extends `Sensor_HT` |
-| `Sensor_DHT` | sensor/dht | Temperature + humidity (DHT11/22); extends `Sensor_HT` |
+| `Sensor_SHT` | sensor/sht | Temperature + humidity (SHT30/SHT40/SHT85) |
+| `Sensor_DHT` | sensor/dht | Temperature + humidity (DHT11/22) |
+| `Sensor_AHT` | sensor/aht | Base class for the AHT20/AHT21 — not instantiated directly |
+| `Sensor_AHT20` | sensor/aht | Temperature + humidity (AHT20) |
+| `Sensor_AHT21` | sensor/aht | Temperature + humidity (AHT21), as on the ENS160+AHT21 breakout |
 | `Sensor_Soil` | sensor/soil | Soil moisture (capacitive) |
 | `Sensor_Battery` | sensor/battery | Battery voltage |
 | `Sensor_BH1750` | sensor/bh1750 | Light (lux) |
-| `Sensor_BME280` | sensor/bme280 | Temperature + humidity + pressure (hPa); extends `Sensor_HT`. Freestanding, no external library |
-| `Sensor_BME680` | sensor/bme680 | Temperature + humidity + pressure (hPa) + gas resistance (kΩ); extends `Sensor_HT`. Also handles the BME688. Freestanding, no external library |
+| `Sensor_BMx280` | sensor/bmx280 | Base class for the BMP280/BME280 — not instantiated directly |
+| `Sensor_BMP280` | sensor/bmx280 | Temperature + pressure (hPa). Freestanding, no external library |
+| `Sensor_BME280` | sensor/bmx280 | Temperature + pressure (hPa) + humidity. Freestanding, no external library |
+| `Sensor_BME680` | sensor/bme680 | Temperature + humidity + pressure (hPa) + gas resistance (kΩ). Also handles the BME688. Freestanding, no external library |
 | `Sensor_LoadCell` | sensor/loadcell | Weight via HX711 |
 | `Sensor_DS18B20` | sensor/ds18b20 | 1-Wire temperature |
 | `Sensor_MS5803` | sensor/ms5803 | Pressure + temperature |
-| `Sensor_ENS160AHT21` | sensor/ens160aht21 | Air quality + temp/humidity |
+| `Sensor_ENS160` | sensor/ens160 | Air quality — AQI, TVOC, eCO2 (+ aqi500 on an ENS161). Takes temperature and humidity as **`IN`s** for its compensation |
 | `Sensor_Button` | sensor/button | Button press events |
 | `Sensor_Analog` | sensor/analog | Raw ADC |
 | `Sensor_INA219` | sensor/ina219 | Current/voltage/power monitor — shunt (mV), bus (V), current (mA), power (mW), load (V). Freestanding, no external library |
-| `Sensor_DissolvedOxygen` | sensor/dissolvedoxygen | Dissolved oxygen (mg/L) from an analog probe, temperature compensated; extends `Sensor_Analog`. **The only Sensor with an `IN`** |
+| `Sensor_DissolvedOxygen` | sensor/dissolvedoxygen | Dissolved oxygen (mg/L) from an analog probe, temperature compensated; extends `Sensor_Analog`. Has an `IN` (as `Sensor_ENS160` does) |
 | `Sensor_Float` | sensor/float | Arbitrary float value |
 | `Sensor_UInt16` | sensor/uint16 | Arbitrary uint16 value |
 | `Sensor_Health` | sensor/health | Device health metrics |
 | `Sensor_GPS` | sensor/gps | GPS location (lat/lon/altitude/speed/course/hdop/satellites/UTC time) via NMEA serial module |
 | `Sensor_Ultrasonic` | sensor/ultrasonic | Distance (mm) from an RS485/Modbus ultrasonic module (A01ANY4B); needs `SENSOR_ULTRASONIC_SLAVE_ID` |
+
+### There is no `Sensor_HT` — and `captiveLines()` is on `Sensor`
+
+`Sensor_HT` used to be the base class for every temperature+humidity sensor (SHT, DHT, BME280,
+BME680, the old ENS160+AHT21). It has been **removed**: all it did was construct the two
+`OUTfloat`s, offer `set(temp, humy)`, and print those two values in the captive portal — while
+blocking anything that has temperature but not humidity (a BMP280) from sharing code with
+something that has both.
+
+What replaced it:
+
+- **The outputs live in the sensor.** Each class declares its own `OUTfloat* temperature;` and
+  `OUTfloat* humidity;`, constructs them in its initialiser list and `push_back`s them onto
+  `outputs`. Two lines each, and the class is then free to choose its own base — which is what
+  lets `Sensor_BME280` sit under `Sensor_BMx280` next to a humidity-less `Sensor_BMP280`.
+- **`set(temp, humy)` is gone**; call `temperature->set(t); humidity->set(h);`.
+- **`Sensor::captiveLines()` is generic.** It prints one read-only line per entry in `outputs`
+  using that output's `name` and its optional `unit`, so a sensor that just reports values needs
+  no override at all — `Sensor_BME280`, `Sensor_BME680` and `Sensor_INA219` each dropped a
+  hand-written one. `captiveValueLines()` returns just the `<br>Name: value unit` fragment, for
+  a sensor that has something extra to show (`Sensor_ENS160` appends its two `IN`s).
+- **`IO::unit`** (`system/io.h`) is a `const char*`, default `nullptr`, set on the output after
+  constructing it (`temperature->unit = "C";`). Display only — it is not sent to the UX, which
+  gets its labels from the server's schema — and it is not a constructor argument because that
+  would mean touching every `IO` constructor in the library for a captive-portal nicety.
+
+Sensors whose captive-portal entry is *editable* — `Sensor_Float` (calibrate), `Sensor_Soil` and
+`Sensor_LoadCell` (tare) — still override `captiveLines()` with `captive->addNumber()`/
+`addButton()`, and are unaffected.
+
+### `OutputRange` — UX defaults through a shared base class
+
+`defaults.h` is generated from the server's `modules.yaml`, keyed by **module id**:
+`DEFAULT_aht21_temperature_min`, `DEFAULT_bmp280_pressure_max` and so on. A base class shared by
+several chips cannot name those macros — `Sensor_AHT` does not know whether it is an `aht20` or
+an `aht21` until the subclass tells it. So the subclass passes them down as an `OutputRange`
+(`{min, max, color}`, in `sensor/sensor.h`):
+
+```cpp
+Sensor_AHT21::Sensor_AHT21(...)
+  : Sensor_AHT("aht21", name, address, wire, retain,
+      {DEFAULT_aht21_temperature_min, DEFAULT_aht21_temperature_max, DEFAULT_aht21_temperature_color},
+      {DEFAULT_aht21_humidity_min, DEFAULT_aht21_humidity_max, DEFAULT_aht21_humidity_color})
+  { }
+```
+
+Sensors with a fixed id (`Sensor_BME680`, `Sensor_ENS160`) just name their macros directly.
+Sensors whose id comes from the sketch and whose ranges are computed at runtime — `Sensor_INA219`
+scales `current`/`power` from `MAX_CURRENT`, `Sensor_Ultrasonic` takes a max — deliberately keep
+those runtime values, which are more accurate than a schema constant.
+
+**Adding a sensor means adding to `modules.yaml` too.** A module id with no entry there gets no
+UX labels, and `generate-defaults.js` emits no `DEFAULT_<module>_*` macros for it. Every module
+the library can publish now has one; the workflow is: edit
+`frugal-iot-server/config.d/schema/{modules,topics}.yaml`, copy both to the three
+`frugal-iot-logger/examples/*/config.d/schema/` directories, run
+`node scripts/generate-defaults.js` in `frugal-iot-logger`, and copy the resulting `defaults.h`
+over `src/defaults.h` here.
 
 ### System_I2C helpers
 
@@ -459,11 +521,11 @@ holding `addr` plus a `TwoWire*` for the shared bus. Prefer these over hand-roll
 | `scan()` | Print every address that ACKs **on this object's bus** |
 
 `sendRegister`, `sendRegister16`, `send1read` and `isPresent` were added after finding the same
-code hand-rolled in several sensors: `Sensor_ensaht::ENSsend2()` and `Sensor_BME280::writeReg()`
+code hand-rolled in several sensors: the ENS160's `sendAndWait()` and the BME280's `writeReg()`
 were byte-identical implementations of the register write, and `ms5803.cpp` paired
 `send()`+`read()` five times where `send1read()` now does it. `initialize()` gained the per-bus
 guard because every I2C sensor called `wire->begin()` — see the "unnecessary since already
-called" note in `ens160aht21.cpp` and TODO-115/TODO-16 in `sht.cpp`. `scan()` previously scanned
+called" note in the old `ens160aht21.cpp` and TODO-115/TODO-16 in `sht.cpp`. `scan()` previously scanned
 the global `I2C_WIRE` regardless of which bus the object was on.
 
 ### Sensor_INA219
@@ -535,16 +597,15 @@ Extends `Sensor_Analog`, enabled by passing a pin (`SENSOR_DO_PIN` in the demo).
 Note the method names: `Sensor_Analog` replaces `Sensor_Float`'s chain with **int** versions —
 `readInt()`, `validate(int)`, `convert(int)` — so `readFloat()` is not involved at all.
 
-**This is the first `Sensor` with an `IN`**, and there are three traps if you add another:
+**This was the first `Sensor` with an `IN`** (`Sensor_ENS160` is the second), and there are
+three traps if you add another:
 
 1. `Sensor` has only `std::vector<OUT*> outputs` — no `inputs`. The input is a plain member.
 2. `Sensor::dispatch()` wraps everything in `if (msg.module() == id)`, but a *wired* input
    receives messages published by a **different** module. So the input's `dispatch()` must be
    called **outside** that test, before delegating upward — exactly what `Control::dispatch()`
    does, and the reason it can't simply be delegated.
-3. Hold it as `IN*`, not `INfloat*` — `INfloat::dispatch()` and `::discover()` are protected
-   overrides, reachable only through the public `IN` declarations. Also call `input->setup()`
-   and add it to `discover()`, neither of which `Sensor` does for you.
+3. Call `input->setup()` yourself and add it to `discover()` — `Sensor` does neither for you.
 
 The input wires itself in `setup()` to `SENSOR_DO_TEMPERATURE_PATH` (default
 `"ds18b20/ds18b20"`) **only if** nothing already wired it, so a path stored on LittleFS or set
@@ -563,54 +624,131 @@ build_flags =
 offers it as an editable number, which on a `Sensor_Analog` means `calibrate()` and would set a
 `scale` that the next temperature message immediately overwrites.
 
-### Sensor_BME280
+### Sensor_BMP280 and Sensor_BME280
 
-Extends `Sensor_HT` (which already supplies `temperature` and `humidity`) and adds a
-`pressure` output in hPa. Freestanding over `System_I2C` — **no external library** — in the
-same spirit as `Sensor_ms5803`.
+Both chips are driven by **one** class, `Sensor_BMx280` (`sensor/bmx280.h`), with two
+three-line subclasses that fix the module id and the chip id it insists on. A BME280 is a
+BMP280 plus a humidity channel, right down to the register map — same chip-id/reset/status/
+ctrl_meas/config registers, same 26-byte temperature+pressure calibration block at `0x88`, same
+forced-mode sequence — so the extra 7-byte humidity calibration block at `0xE1`, the `ctrl_hum`
+register and two more data bytes are all the difference there is. On a BMP280 the `humidity`
+output is simply `nullptr`, the same "absent output is a null pointer" pattern
+`Sensor_BME680` uses for its gas channel.
 
-The compensation arithmetic and calibration unpacking are ported from Bosch's own reference
-driver, `boschsensortec/BME280_SensorAPI` (`bme280.c`, `BME280_DOUBLE_ENABLE`), which is
-BSD-3-Clause and therefore compatible with this library's MIT licence — the attribution
-notice at the top of `bme280.h`/`.cpp` is the requirement. Port rather than reimplement,
-because `dig_h4`/`dig_h5` sign-extend the MSB *before* shifting
+Freestanding over `System_I2C` — **no external library** — in the same spirit as
+`Sensor_ms5803`. The compensation arithmetic and calibration unpacking are ported from Bosch's
+own reference driver, `boschsensortec/BME280_SensorAPI` (`bme280.c`, `BME280_DOUBLE_ENABLE`),
+which is BSD-3-Clause and therefore compatible with this library's MIT licence — the
+attribution notice at the top of `bmx280.h`/`.cpp` is the requirement. Port rather than
+reimplement, because `dig_h4`/`dig_h5` sign-extend the MSB *before* shifting
 (`(int16_t)(int8_t)reg_data[3] * 16`), which is easy to get subtly wrong and yields
 plausible-but-incorrect humidity.
 
 `double` not `float`: the pressure polynomial divides by constants up to `2147483648.0`,
 beyond a 24-bit float mantissa. It runs once per read cycle, so the cost is irrelevant.
 
+**The chip id is enforced, not sniffed.** `setup()` resets the device and requires `0x60` for a
+`Sensor_BME280`, or `0x58` (plus Bosch's `0x56`/`0x57` engineering samples) for a
+`Sensor_BMP280`, calling `setupFailed()` otherwise. The two boards look identical and are sold
+interchangeably, and a BME280 driven as a BMP280 would publish perfectly plausible temperature
+and pressure while silently having no humidity — so the sketch has to say which one is fitted.
+`0x61` is a BME680/BME688, a different register map entirely.
+
 Reads in Bosch's **weather monitoring** configuration — forced mode, 1× oversampling on all
-three channels, IIR filter off — so the chip sleeps between reads, which suits one reading
-per wake cycle. `setup()` resets the device, requires chip id `0x60` (a BMP280 answers `0x58`
-and has no humidity, so it cannot sit under `Sensor_HT`) and calls `setupFailed()` otherwise.
-Each read also rejects an all-`0xFF` data block, because Bosch's compensation clamps to the
-rated range and would otherwise silently publish 85 °C for a disconnected device.
+channels, IIR filter off — so the chip sleeps between reads, which suits one reading per wake
+cycle. Each read also rejects an all-`0xFF` data block, because Bosch's compensation clamps to
+the rated range and would otherwise silently publish 85 °C for a disconnected device.
 
 Altitude is deliberately **not** published — it is a re-expression of pressure against an
-assumed sea-level reference, better derived downstream from `bme280/pressure`.
+assumed sea-level reference, better derived downstream from `<id>/pressure`.
 
 ```ini
-; platformio.ini — the class is always compiled; this flag is main.cpp's per-board switch
+; platformio.ini — the classes are always compiled; these flags are main.cpp's per-board switch
 build_flags =
     -D SENSOR_BME280_WANT
     ;-D SENSOR_BME280_ADDRESS=0x77   ; default 0x76; 0x77 if SDO is tied high
-    ;-D SENSOR_BME280_DEBUG
+    ;-D SENSOR_BMP280_ADDRESS=0x77   ; ditto for the BMP280
+    ;-D SENSOR_BME280_DEBUG          ; either DEBUG flag turns on the shared debug output
+    ;-D SENSOR_BMP280_DEBUG
 ```
 
 ```cpp
-frugal_iot.sensors->add(new Sensor_BME280("BME280"));
+frugal_iot.sensors->add(new Sensor_BME280("BME280"));   // bme280/temperature|humidity|pressure
+frugal_iot.sensors->add(new Sensor_BMP280("BMP280"));   // bmp280/temperature|pressure
 // or: new Sensor_BME280("BME280", 0x77, &I2C_WIRE, true)
 ```
 
 Verification: the port was cross-checked against Bosch's functions on the host over 200,000
 randomized calibration/raw-value combinations — calibration unpacking, 20/16-bit raw
-assembly, `t_fine`, and all three compensated outputs were bit-identical.
+assembly, `t_fine`, and all three compensated outputs were bit-identical. That check predates
+the split into `bmx280.cpp`, which moved the arithmetic unchanged.
+
+### Sensor_AHT20 and Sensor_AHT21
+
+One base class (`Sensor_AHT`, `sensor/aht.h`) and two subclasses that differ **only** in their
+module id — `aht20/temperature` vs `aht21/temperature`. As far as this driver is concerned the
+two chips are the same device: same address, same soft-reset/trigger/status commands, same
+20-bit humidity-then-temperature layout, same conversion. The subclasses exist so the topics,
+and the sketch, say which chip is actually fitted.
+
+Freestanding over `System_I2C`; lessons and some bits from `adafruit/Adafruit_AHTX0` (MIT).
+This is the AHT half of the old `sensor/ens160aht21.cpp` — see `Sensor_ENS160` below.
+
+`SENSOR_AHT_CMD_INIT` defaults to `0xE1`, which is Adafruit's value and what the ENS160+AHT21
+boards here have always been sent. Both datasheets specify `0xBE` (`0xE1` is the AHT10's), and
+these parts are factory calibrated either way, so it is close to a no-op — but it is a `#define`
+so a board that objects can be given `0xBE` without touching the driver.
+
+Two things the old code got wrong, fixed here: the busy-wait had **no timeout**, so a missing
+chip spun forever (a watchdog reset, not an error message); and nothing validated the reading,
+so the characteristic 0 °C/0 % failure was published as real data.
+
+```cpp
+frugal_iot.sensors->add(new Sensor_AHT21("AHT21"));
+// ;-D SENSOR_AHT_ADDRESS=0x39  ;-D SENSOR_AHT_CMD_INIT=0xBE  ;-D SENSOR_AHT_DEBUG
+```
+
+### Sensor_ENS160 — and why the ENS160+AHT21 is now two sensors
+
+`sensor/ens160.h`. Publishes `aqi` (1–5), `tvoc` (ppb) and `eco2` (ppm), plus `aqi500` on an
+ENS161. Was half of `sensor/ens160aht21.cpp`, which drove both chips of the common
+"ENS160+AHT21" breakout from a single class.
+
+**The split.** The ENS160 needs an ambient temperature and humidity to compensate its gas
+plate, but it does not care where they come from — the AHT21 sharing the breakout, an SHT30
+elsewhere on the node, or a reading published by another node entirely. Welding the two chips
+together made the AHT21 unusable on its own, made the ENS160 unusable without one, and hid the
+dependency from the UX. So the compensation values are now `IN`s (the `Sensor_DissolvedOxygen`
+shape) that default to `aht21/temperature` and `aht21/humidity` — the combined board still
+works with no wiring in the sketch, and anything else is one `wireTo()` away.
+
+```cpp
+Sensor_AHT21* aht = new Sensor_AHT21("AHT21");
+Sensor_ENS160* ens = new Sensor_ENS160("ENS160");
+frugal_iot.sensors->add(aht);
+frugal_iot.sensors->add(ens);
+ens->temperature->wireTo(aht->temperature->path()); // What setup() would do anyway
+ens->humidity->wireTo(aht->humidity->path());
+// ;-D SENSOR_ENS160_ADDRESS=0x52  ;-D SENSOR_ENS160_TEMPERATURE_PATH=\"sht/temperature\"
+// ;-D SENSOR_ENS160_HUMIDITY_PATH=\"sht/humidity\"  ;-D SENSOR_ENS160_DEBUG
+```
+
+`eco2` is *equivalent* CO2 — derived from the VOC reading, not measured, so it will not see
+CO2 from breathing unless VOCs come with it.
+
+Three fixes came with the split: the part id was previously read only inside an `#ifdef DEBUG`,
+leaving `isENS161` **uninitialised** in a normal build (and with it, whether `aqi500` meant
+anything); `aqi500` is now dropped from `outputs` in `setup()` on an ENS160 rather than
+discovered as a topic that only ever carries its initial 0; and the wait for new data has a
+timeout instead of spinning forever on a missing chip.
 
 ### Sensor_BME680
 
-Same shape as `Sensor_BME280` — extends `Sensor_HT`, freestanding over `System_I2C`, no
-external library — plus a `pressure` output in hPa and a `gas` output in kΩ.
+Same shape as `Sensor_BME280` — `temperature` and `humidity` outputs, freestanding over
+`System_I2C`, no external library — plus a `pressure` output in hPa and a `gas` output in kΩ.
+It does **not** share `Sensor_BMx280`: the BME680's register map, calibration layout and
+compensation are a different Bosch driver altogether, so there would be nothing to share but
+the name.
 
 ```ini
 ; platformio.ini — the class is always compiled; this flag is main.cpp's per-board switch
@@ -628,9 +766,9 @@ frugal_iot.sensors->add(new Sensor_BME680("BME680"));
 // new Sensor_BME680("BME680", SENSOR_BME680_ADDRESS, &I2C_WIRE, true, false)
 ```
 
-**Ported from a different upstream to bme280.cpp.** Bosch retired `BME680_driver`; the
+**Ported from a different upstream to bmx280.cpp.** Bosch retired `BME680_driver`; the
 current reference is `boschsensortec/BME68x-Sensor-API` (`bme68x.c`), also BSD-3-Clause,
-covering both chips. And unlike bme280.cpp this port is **`float`, not `double`** — Bosch's
+covering both chips. And unlike bmx280.cpp this port is **`float`, not `double`** — Bosch's
 default variant for this chip is single precision (`BME68X_USE_FPU`), and matching it exactly
 is what makes a bit-for-bit host check possible. There is no RobTillaart BME680 library to
 cross-read against; the ones that exist (Adafruit, Zanduino, DFRobot) all wrap Bosch's driver.
@@ -811,9 +949,12 @@ SYSTEM_WIFI_DEBUG
 SYSTEM_LORAMESHER_DEBUG
 CONTROL_BLINKEN_DEBUG
 CONTROL_LOGGERFS_DEBUG
+SENSOR_AHT_DEBUG
 SENSOR_BH1750_DEBUG
+SENSOR_BME280_DEBUG / SENSOR_BMP280_DEBUG (either sets SENSOR_BMX280_DEBUG)
+SENSOR_BME680_DEBUG
 SENSOR_DHT_DEBUG
-SENSOR_ENSAHT_DEBUG
+SENSOR_ENS160_DEBUG
 SENSOR_LOADCELL_DEBUG
 SENSOR_MS5803_DEBUG
 SENSOR_SHT_DEBUG
