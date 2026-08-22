@@ -128,7 +128,12 @@ MeshSubscription::MeshSubscription(const String topicPath, const uint16_t src)
 #ifdef SYSTEM_LORAMESHER_DEBUG
   // If you want to debug, provide a function in our .ino (or main.cpp) that implements this, 
   // see examples/loramesher/loramesher.ino for an example that writes to OLED
-  extern void printAppData();
+  // Weak, so that not providing one is a choice rather than a link error: a sketch that turns
+  // SYSTEM_LORAMESHER_DEBUG on without writing a printAppData() gets a null here and the calls
+  // below skip it. Declared, never defined - which is what lets the address be null. Do not give
+  // it an empty weak *definition* instead: that links, but the compiler may inline the empty body
+  // at these call sites and then a sketch that does provide one would silently never be called.
+  extern void printAppData() __attribute__((weak));
 #endif // SYSTEM_LORAMESHER_DEBUG
 
 
@@ -294,7 +299,7 @@ void System_LoraMesher::setup() {
   }
   checkRole(); // Probably wont do anything as MQTT probably not up yet - but will repeat in periodically
   #ifdef SYSTEM_LORAMESHER_DEBUG
-    printAppData();
+    if (printAppData) printAppData();
   #endif
 }
 
@@ -309,7 +314,7 @@ void System_LoraMesher::setup() {
 void System_LoraMesher::periodically() {
   checkRole(); // Adjust routing tables to reflect if we have a MQTT connection or not
   #ifdef SYSTEM_LORAMESHER_DEBUG
-    printAppData();
+    if (printAppData) printAppData();
   #endif
 }
 #ifdef SYSTEM_LORAMESHER_DEBUG
@@ -393,7 +398,7 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
     #ifdef SYSTEM_LORAMESHER_DEBUG
       lastTopicPath = topicPath;
       lastPayload = payload; 
-      printAppData(); // See note above about this being an extern
+      if (printAppData) printAppData(); // See note above about this being an extern
     #endif
     Serial.print(F("LoRaMesher received ")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
 
