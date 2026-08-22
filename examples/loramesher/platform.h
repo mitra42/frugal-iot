@@ -24,7 +24,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.4
+//     Frugal-IoT@^0.1.5
 
 // lib_deps_lora = 
 //     ${common.lib_deps}
@@ -74,7 +74,9 @@
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
+// #define SYSTEM_LORAMESHER_SLEEP // define to use LoRaMesher's experimental sleep mode
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
+// #define SYSTEM_MESSAGE_DEBUG // debug the message passing process and messages in/out
 // #define SYSTEM_MQTT_DEBUG
 // #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
@@ -175,6 +177,8 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x_sht"
 #define SENSOR_SHT_WANT // I2C Sensor
+#define SENSOR_SHT_DEBUG
+#define SYSTEM_MESSAGE_DEBUG
 //     ${common.build_flags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps = 
@@ -192,6 +196,7 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v3"
 //     ${common.build_flags_loramesher}
+#define SYSTEM_MESSAGE_DEBUG
 // board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
@@ -212,6 +217,7 @@
 //     ${common.build_flags}
 #define ARDUINO_heltec_wifi_lora_32_V32 // If using 3.2 board uncomment this
 #define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v32"
+#define SYSTEM_MESSAGE_DEBUG
 //     ${common.build_flags_loramesher}
 // board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
 // lib_deps = 
@@ -256,26 +262,11 @@
 // lib_deps =
 //     ${common.lib_deps_lora_oled}
 
-
-// This option doesnt actually do LoRa but its to support testing
 #endif // ARDUINO_T_Beam
 #endif // 0
 
-// ===== [env:esp32] -> ARDUINO_ESP32_DEV
-#ifdef ARDUINO_ESP32_DEV
-#define FRUGAL_IOT_BOARD_CONFIGURED
-// platform = espressif32
-// board = esp32dev
-// framework = arduino
-// monitor_speed = 115200
-// build_flags =
-//     -DCONFIG_ESP_INT_WDT_TIMEOUT_MS=2000
-//     -DCONFIG_ESP_TASK_WDT_TIMEOUT_S=10
-
-#endif // ARDUINO_ESP32_DEV
-
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam / ESP32 Dev Module"
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"
 #endif
 
 #endif // PLATFORM_H

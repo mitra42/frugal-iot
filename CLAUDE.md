@@ -1,7 +1,7 @@
 # Frugal-IoT Library
 
 A platform for affordable, easily built sensor networks running on ESP32/ESP8266 microcontrollers.
-Library version: 0.1.4. MIT licence. Author: Mitra Ardron.
+Library version: 0.1.5. MIT licence. Author: Mitra Ardron.
 
 Wiki: https://github.com/mitra42/frugal-iot/wiki
 Repo: https://github.com/mitra42/frugal-iot
@@ -10,7 +10,7 @@ Repo: https://github.com/mitra42/frugal-iot
 
 Every example `.ino` file must work in **both**:
 - **Arduino IDE** — open the `.ino` directly; dependencies installed via Library Manager
-- **PlatformIO** — referenced via `lib_deps = Frugal-IoT@^0.1.4` in `platformio.ini`
+- **PlatformIO** — referenced via `lib_deps = Frugal-IoT@^0.1.5` in `platformio.ini`
 
 Each example directory contains a `platform.h` file alongside the `.ino`. This file is
 **auto-generated** from the example's `platformio.ini` by running `scripts/prerelease.bash`
@@ -1025,7 +1025,7 @@ LoRa support is enabled automatically on boards that define `SYSTEM_LORAMESHER_W
 
 ```ini
 lib_deps =
-    Frugal-IoT@^0.1.4
+    Frugal-IoT@^0.1.5
     jaimi5/LoRaMesher
     adafruit/Adafruit SSD1306@^2.5.0
     adafruit/Adafruit GFX Library@^1.10.13
@@ -1054,7 +1054,7 @@ See `examples/loramesher/` for a gateway + node pair.
 
 ## Testing an Example Against Local Library Changes
 
-Every example's `platformio.ini` pulls `Frugal-IoT@^0.1.4` from the registry, not this repo's
+Every example's `platformio.ini` pulls `Frugal-IoT@^0.1.5` from the registry, not this repo's
 `src/`, so building inside `examples/<name>/` only exercises the last released version - it
 won't see uncommitted library changes. `lib_deps = symlink://../..` looks like the fix but
 doesn't correctly resolve the library's own transitive deps (e.g. it'll fail with `fatal
@@ -1066,7 +1066,7 @@ local `lib/` folder auto-detection, which does resolve transitive deps correctly
 sibling `frugal-iot-demo` project's `src/main.cpp`. If you also want the example's own
 `platformio.ini` (for its board matrix/build flags) rather than just the `.ino` body, comment
 out two lines in it first:
-- `Frugal-IoT@^0.1.4` in `[common]` `lib_deps` - so it resolves to the local `lib/` copy
+- `Frugal-IoT@^0.1.5` in `[common]` `lib_deps` - so it resolves to the local `lib/` copy
   instead of the registry
 - `src_dir = .` in `[platformio]` - the host project's sources live under `src/`, not at its
   root the way a standalone example's do
