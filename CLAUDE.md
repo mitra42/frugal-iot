@@ -1042,6 +1042,39 @@ See `examples/loramesher/` for a gateway + node pair.
 - Device config: `data/frugal_iot/` — project name, description, MQTT overrides.
 - Use `board_build.filesystem = littlefs` in `platformio.ini`.
 
+## Flash size
+
+`FLASH_SIZE.md` is the user-facing page (wiki-ready) on what to do when a build no longer fits,
+ordered by payoff — partition table, `-fno-exceptions`, sensor costs, debug flags, languages.
+
+Three scripts in `scripts/` support it. They find the project by walking up from the working
+directory for a `platformio.ini`, so they run from any project that has this library, not just
+from here:
+
+| Script | Does |
+|--------|------|
+| `size_report.py <env>` | Per-library and per-source-file flash from the linker map, plus which objects were discarded entirely. Needs `-Wl,-Map=$BUILD_DIR/firmware.map` in `build_flags` |
+| `size_check.py` | Builds the envs listed in the project's `size_baseline.json` and fails past a 2% growth margin. `--update --note "why"` re-records |
+| `price_modules.py -e <env>` | What each optional sensor/actuator/control costs, by building a bare sketch then one per module. Never touches `src/main.cpp` |
+
+Two things worth knowing before trusting any size number:
+
+- **PlatformIO's `Flash: nn%` under-reports on RISC-V** by the size of `.eh_frame` (~64 KB on a
+  C3). Use `ls -l .pio/build/<env>/firmware.bin`. Xtensa folds `.eh_frame` into `.flash.rodata`,
+  so its figure is about right.
+- **`size_report.py` reconciles itself against the ELF section headers** and says so if the
+  numbers do not add up. That check exists because the linker map is written for humans and is
+  easy to misread — merged string pools in particular are credited to whichever input section
+  happened to be placed first, which once attributed 137,557 bytes to a 1-byte section.
+
+On ESP32 the pioarduino platform sets `lib_archive = False` ("to make weak defs in framework and
+libs possible"), so **every** `.cpp` of every library is linked as a loose object rather than
+pulled from an archive on demand. Unused code is kept out purely by `-ffunction-sections
+-fdata-sections` plus `--gc-sections`. That works — 27 of 58 objects and every unused third-party
+sensor library contribute zero bytes — but it is more fragile than archive laziness: anything
+anchored by a **file-scope constructor** survives along with everything it references. That is how
+LoRaMesher's `std::ostringstream` was pulling in 230 KB of `std::locale`.
+
 ## Adding a New Sensor to an Existing Example
 
 1. Include `Frugal-IoT.h` (already done).
