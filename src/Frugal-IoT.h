@@ -18,6 +18,7 @@
 #include "sensor/button.h"
 #include "sensor/ds18b20.h"
 #include "sensor/dissolvedoxygen.h"
+#include "sensor/gps.h"
 #include "sensor/ina219.h" // Freestanding over System_I2C, no external library
 #include "sensor/ms5803.h"
 #include "sensor/loadcell.h"
@@ -27,6 +28,7 @@
 //TO-ADD-CONTROL
 #include "control/control.h"
 #include "control/blinken.h"
+#include "control/carousel.h"
 #include "control/gsheets.h"
 #include "control/hysteresis.h"
 #include "control/logger_fs.h"
