@@ -27,10 +27,6 @@ void setup() {
     frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
   #endif
 
-  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
-  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
-
   // Configure power handling - type, cycle_ms, wake_ms
   // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type
   // Loop= awake all the time;
@@ -43,6 +39,10 @@ void setup() {
   #else
     frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
   #endif
+
+  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
+  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
+  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 

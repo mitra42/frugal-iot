@@ -996,9 +996,9 @@ void loop() {
 System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "climate", "Climate Control");
 
 void setup() {
+  frugal_iot.configure_power(Power_Loop, 30000, 30000);
   frugal_iot.pre_setup();
   frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
-  frugal_iot.configure_power(Power_Loop, 30000, 30000);
 
   Sensor_SHT* sht = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true);
   frugal_iot.sensors->add(sht);

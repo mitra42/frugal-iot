@@ -17,15 +17,15 @@ void setup() {
     frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
   #endif
   
-  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
-
-  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
-
   // See https://github.com/mitra42/frugal-iot/wiki/Frugal%E2%80%90IoT:-Power-reduction for explanation
   //   frugal_iot.configure_power(Power_Loop, 60000, 10000); 
   //   frugal_iot.configure_power(Power_LightWiFi, 20000, 10000); 
   frugal_iot.configure_power(Power_Deep, 70000, 60000); 
+
+  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
+
+  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
+  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
