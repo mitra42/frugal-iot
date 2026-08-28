@@ -10,6 +10,8 @@
  *   SYSTEM_MDNS_PORT       Port to register and POST to (default 80)
  *   SYSTEM_MDNS_DEBUG      Enable verbose debug prints
  */
+#include "_settings.h" // Before the #ifdef - that is where SYSTEM_MDNS_WANT comes from on Arduino
+
 #ifdef SYSTEM_MDNS_WANT
 
 #ifndef SYSTEM_MDNS_H

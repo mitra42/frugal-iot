@@ -9,11 +9,6 @@
 System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "all", "All sensors - just for testing"); 
 
 void setup() {
-  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
-
-  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
-
   // Configure power handling - type, cycle_ms, wake_ms 
   // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
   // Loop= awake all the time; 
@@ -22,6 +17,11 @@ void setup() {
   // Modem=Modem sleep - works but negligable power saving
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
   frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
+
+  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
+
+  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
+  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
@@ -56,7 +56,11 @@ void setup() {
   
   frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", 5, 0, true));
 
-  frugal_iot.sensors->add(new Sensor_ensaht("ensaht","ENS160 AHT21"));
+  // The ENS160+AHT21 board is two chips, and so two sensors. The ENS160 needs an ambient
+  // temperature and humidity for its compensation, and wires itself to the AHT21's outputs
+  // unless told otherwise - so nothing extra is needed here.
+  frugal_iot.sensors->add(new Sensor_AHT21("AHT21"));
+  frugal_iot.sensors->add(new Sensor_ENS160("ENS160"));
 
   // Add a new loadcell sensor max=2000, color="pink", retain=true, DOUTpin=0, SCKpin=1, times=10, offset=0, scale=2000
   // Define default pins, can override in platformio.ini
@@ -83,10 +87,27 @@ void setup() {
   // MS5803 is set via jumper to 76 or 77
   frugal_iot.sensors->add(new Sensor_ms5803("ms5803", "MS5803", 0x77));
 
+  // Bosch pressure/humidity family. All three default to 0x76, which is a real address clash on
+  // hardware - fine here, since nothing in this sketch is ever meant to be run.
+  frugal_iot.sensors->add(new Sensor_BMP280("BMP280"));
+  frugal_iot.sensors->add(new Sensor_BME280("BME280"));
+  frugal_iot.sensors->add(new Sensor_BME680("BME680"));
+
+  // Current/voltage/power monitor. Address, shunt and max current all have defaults.
+  frugal_iot.sensors->add(new Sensor_INA219("ina219", "Current"));
+
+  // Dissolved oxygen - an analog probe with a wireable temperature input for compensation, which
+  // makes it the only Sensor that has an IN. Wired to the SHT below, once that exists.
+  Sensor_DissolvedOxygen* dox = new Sensor_DissolvedOxygen("do", "Dissolved Oxygen", 36);
+  frugal_iot.sensors->add(dox);
+
   // Temperature and Humidity sensor (SHT30)
   Sensor_SHT* sht;
   frugal_iot.sensors->add(sht = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
+  // The dissolved oxygen probe compensates against water temperature; the SHT will do here.
+  dox->watertemperature->wireTo(sht->temperature->path());
+
   // Soil sensor 0%=4095 100%=0 pin=32 smooth=0 color=brown
   frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil", 32, 4095, -100.0/4095, "brown", true));
   
@@ -94,8 +115,39 @@ void setup() {
   // Salt sensor 0%=0 100%=5000 pin=34 color=green
   frugal_iot.sensors->add(new Sensor_Analog("salt", "Salt", 34, 1, 0, 100, 0, 0.02, "green", true));
   
+  // GPS over a hardware UART. ESP32 only: the ESP8266 envs in this example have no second UART
+  // that can receive, and Sensor_GPS needs to read NMEA.
+  #ifdef ESP32
+    #ifndef SENSOR_GPS_RX_PIN
+      #define SENSOR_GPS_RX_PIN 20
+    #endif
+    #ifndef SENSOR_GPS_TX_PIN
+      #define SENSOR_GPS_TX_PIN 21
+    #endif
+    frugal_iot.sensors->add(new Sensor_GPS("GPS", &Serial1,
+      SENSOR_GPS_RX_PIN, SENSOR_GPS_TX_PIN));
+  #endif
+
+  // Ultrasonic depth sensor, over Modbus/RS485. Needs three defines together - the slave id turns
+  // on SYSTEM_MODBUS_WANT, which then #errors without the UART pins - so it is off unless
+  // platformio.ini asks for it. See the note beside SENSOR_ULTRASONIC_SLAVE_ID there.
+  #ifdef SENSOR_ULTRASONIC_SLAVE_ID
+    // One System_RS485 per physical bus, shared by every slave on it. It is a plain class, not a
+    // System_Base, so it is not added to frugal_iot.system - the sensor holds the pointer and
+    // calls initialize() from its own setup(). Pins default from the SYSTEM_RS485_* defines.
+    System_RS485* rs485 = new System_RS485(&Serial1);
+    frugal_iot.sensors->add(new Sensor_Ultrasonic("ultrasonic", "Depth",
+      DEFAULT_ultrasonic_ultrasonic_max, DEFAULT_ultrasonic_ultrasonic_color, true, rs485));
+  #endif
+
   // ========= Actuators  ==============
   // Note Actuator_LedBuiltin added automatically if a pin is defined
+
+  // Character LCD over I2C. Only when platformio.ini asks for it, since ACTUATOR_LCD_WANT is what
+  // compiles the class in at all.
+  #ifdef ACTUATOR_LCD_WANT
+    frugal_iot.actuators->add(new Actuator_LCD());
+  #endif
 
   // TODO-115 there is also a relay pin 19 on LilyGo - haven't tested it yet 
   #ifndef ACTUATOR_DIGITAL_PIN
@@ -115,6 +167,11 @@ void setup() {
   Control_Hysteresis* ch = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(ch);
   ch->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+
+  // Carousel cycles between Control_Oled displays, so it only makes sense on a board with one.
+  #ifdef ACTUATOR_OLED_WANT
+    frugal_iot.controls->add(new Control_Carousel("Carousel"));
+  #endif
 
   //=================================LOGGER======
   // Add time if needed, which is currently only for data logging.

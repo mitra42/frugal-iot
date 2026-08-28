@@ -43,10 +43,6 @@ void setup() {
     frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
   #endif
   
-  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
-  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
-
   // Configure power handling - type, cycle_ms, wake_ms 
   // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
   // Loop= awake all the time; 
@@ -55,7 +51,11 @@ void setup() {
   // Modem=Modem sleep - works but negligable power saving
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
   frugal_iot.configure_power(Power_Loop, 2000, 2000); // Take a reading every 30 seconds - awake all the time
-  
+
+  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
+  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
+  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
+
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
   

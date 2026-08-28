@@ -16,14 +16,6 @@ void setup() {
     frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
   #endif
   
-  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
-
-  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
-
-// Soil sensor 0%=4095 100%=0 pin=3 smooth=0 color=brown
-  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil",3, 4095, -100.0/4095, "brown", true));
-
   // Configure power handling - type, cycle_ms, wake_ms 
   // power will be awake wake_ms then for the rest of cycle_ms be in a mode defined by type 
   // Loop= awake all the time; 
@@ -32,6 +24,14 @@ void setup() {
   // Modem=Modem sleep - works but negligable power saving
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
   frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
+
+  frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
+
+  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
+  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
+
+// Soil sensor 0%=4095 100%=0 pin=3 smooth=0 color=brown
+  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil",3, 4095, -100.0/4095, "brown", true));
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 

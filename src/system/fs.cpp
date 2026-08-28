@@ -216,7 +216,7 @@ void System_SD::setup() {
   if (!SD.begin(pin)) { 
     setupFailed();
   } else {
-    #ifdef SYSTEM_SD_DEBUG_DIR
+    #ifdef SYSTEM_FS_DEBUG_DIR
       printDirectory("/"); // For debugging
     #endif
   }
@@ -239,7 +239,7 @@ void System_LittleFS::pre_setup() {
     #ifdef SYSTEM_LITTLEFS_DEBUG
       Serial.println(F("initialization done."));
     #endif
-    #ifdef SYSTEM_LITTLEFS_DEBUG_DIR
+    #ifdef SYSTEM_FS_DEBUG_DIR
       printDirectory("/"); // For debugging
     #endif
   }

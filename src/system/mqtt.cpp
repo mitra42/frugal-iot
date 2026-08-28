@@ -97,7 +97,12 @@ bool System_MQTT::connect() {
     // Theoretically "skip=true" should be good, dont close if connected, but leads to error code=6
     if (!client.connect(frugal_iot.nodeid.c_str(), username, password)) {
       /* Still not connected */
-      Serial.printf(F("MQTT: Connect Fail %d %d\n"), client.lastError(), client.returnCode());
+      // No F() here. F() yields a __FlashStringHelper* on BOTH cores, but only ESP32's Print has
+      // a printf() overload taking one - ESP8266 has printf(const char*) and printf_P(PGM_P)
+      // only, so F() there is a compile error. printf_P is not portable either (ESP32 has no
+      // such method), so a plain literal is the only form that works on both.
+      // Serial.print(F(...))/println(F(...)) ARE fine everywhere - both cores have those.
+      Serial.printf("MQTT: Connect Fail %d %d\n", client.lastError(), client.returnCode());
       /* https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h */
       // -3 is LWMQTT_NETWORK_FAILED_CONNECT -10 is userid/password fail
       // 6 is LWMQTT_UNKNOWN_RETURN_CODE 

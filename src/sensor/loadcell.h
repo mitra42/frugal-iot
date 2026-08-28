@@ -1,8 +1,13 @@
 /* Frugal IoT - Load Sensor 
  * 
  * This is a load sensor that uses the HX711 chip to read the load cell.
- * 
- * The load cell is a xKg load cell with a ??? output. 
+ *
+ * Required library - all of the HX711 bit-banging protocol, averaging/median modes and the
+ * tare/scale handling is theirs; this class just wires it to a Sensor_Float:
+ *   https://github.com/RobTillaart/HX711  - Copyright (c) Rob Tillaart, MIT licence
+ *   (also at https://registry.platformio.org/libraries/robtillaart/HX711)
+ *
+ * The load cell is a xKg load cell with a ??? output.
  * The HX711 chip amplifies the signal and converts it to a digital value
  * It is not one of the standard buses (I2C or SPI) but a custom protocol.
  * 

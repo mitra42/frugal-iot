@@ -4,6 +4,9 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
+#ifndef PLATFORM_H
+#define PLATFORM_H
+
 // PlatformIO Project Configuration File
 //
 //   Build options: build flags, source filter
@@ -29,7 +32,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.2
+//     Frugal-IoT@^0.1.5
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -59,7 +62,8 @@
 // #define CONTROL_LOGGERFS_DEBUG
 // #define SENSOR_BH1750_DEBUG
 // #define SENSOR_DHT_DEBUG
-// #define SENSOR_ENSAHT_DEBUG
+// #define SENSOR_AHT_DEBUG
+// #define SENSOR_ENS160_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
 // #define SENSOR_SHT_DEBUG
@@ -121,7 +125,9 @@
 // monitor_filters = esp8266_exception_decoder
 
 
-#ifdef TODO_ESP32DEV
+// ===== [env:lilygohigrow] -> ARDUINO_ESP32_DEV
+#ifdef ARDUINO_ESP32_DEV
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = esp32dev
 // monitor_port = /dev/cu.usbserial-58950030781  ; This may be specific to my HiGrow or generic across all ?
@@ -132,5 +138,10 @@
 // TODO there are several variations of the LilyGo, e.g. using a DHT instead of SHT,
 // I do not have these boards to test, so not adding them here
 // feel free to add them above
-#endif // TODO_ESP32DEV
+#endif // ARDUINO_ESP32_DEV
 
+#ifndef FRUGAL_IOT_BOARD_CONFIGURED
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: ESP32 Dev Module"
+#endif
+
+#endif // PLATFORM_H

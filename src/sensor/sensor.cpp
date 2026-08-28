@@ -40,6 +40,29 @@ void Sensor::discover() {
     output->discover();
   }
 }
+// One read-only line per output, e.g. "Temperature: 21.5 C", using each output's own name and
+// its `unit` if one was set. This is what most sensors want, and is why Sensor_HT no longer
+// exists - printing temperature and humidity was most of what it did.
+// Sensors whose captive-portal entry is *editable* - Sensor_Float (calibrate), Sensor_Soil and
+// Sensor_LoadCell (tare) - override this with captive->addNumber()/addButton() instead.
+void Sensor::captiveLines(AsyncResponseStream* response) {
+  response->print(String(F("<p><label>")) + name + captiveValueLines() + "</label></p>");
+}
+
+// Split out so a sensor with something extra to show - an input, typically, which is not in
+// `outputs` - can add to this rather than reimplement it. See Sensor_ENS160.
+String Sensor::captiveValueLines() {
+  String lines;
+  for (auto &output : outputs) {
+    lines += "<br>" + output->name + ": " + output->StringValue();
+    if (output->unit) {
+      lines += " ";
+      lines += output->unit;
+    }
+  }
+  return lines;
+}
+
 void Sensor::dispatch(System_Message &msg) {
   if (msg.module() == id) {
     for (auto &output : outputs) {

@@ -64,15 +64,15 @@ void Sensor_GPS::setup() {
   Sensor::setup(); // calls powerUp() — drives power0v_pin LOW (or power3v3_pin HIGH)
 
   // GNSS_WAKE: keep HIGH so the module never enters sleep between reads.
-  // On Heltec V4 this is GPIO 40; 0xFF means the board does not have this pin.
-  if (SENSOR_GPS_WAKE_PIN != 0xFF) {
+  // On Heltec V4 this is GPIO 40; PIN_NONE means the board does not have this pin.
+  if (SENSOR_GPS_WAKE_PIN != PIN_NONE) {
     pinMode(SENSOR_GPS_WAKE_PIN, OUTPUT);
     digitalWrite(SENSOR_GPS_WAKE_PIN, HIGH);
   }
 
   // GNSS_RST: active-LOW reset — drive HIGH to release the module from reset.
   // On Heltec V4 this is GPIO 42.
-  if (SENSOR_GPS_RST_PIN != 0xFF) {
+  if (SENSOR_GPS_RST_PIN != PIN_NONE) {
     pinMode(SENSOR_GPS_RST_PIN, OUTPUT);
     digitalWrite(SENSOR_GPS_RST_PIN, HIGH);
   }
@@ -89,8 +89,8 @@ void Sensor_GPS::setup() {
     Serial.print(F("GPS UART started rx="));  Serial.print(_rx_pin);
     Serial.print(F(" tx="));                  Serial.print(_tx_pin);
     Serial.print(F(" baud="));                Serial.println(_baud);
-    if (SENSOR_GPS_WAKE_PIN != 0xFF) { Serial.print(F(" wake=")); Serial.print(SENSOR_GPS_WAKE_PIN); }
-    if (SENSOR_GPS_RST_PIN  != 0xFF) { Serial.print(F(" rst="));  Serial.print(SENSOR_GPS_RST_PIN);  }
+    if (SENSOR_GPS_WAKE_PIN != PIN_NONE) { Serial.print(F(" wake=")); Serial.print(SENSOR_GPS_WAKE_PIN); }
+    if (SENSOR_GPS_RST_PIN  != PIN_NONE) { Serial.print(F(" rst="));  Serial.print(SENSOR_GPS_RST_PIN);  }
     Serial.println();
   #endif
 }

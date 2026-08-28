@@ -4,6 +4,14 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
+#ifndef DATALOGGER_INO_GLOBALS_H
+#define DATALOGGER_INO_GLOBALS_H
+
+// Tells the library this file made it into the build. Deliberately outside
+// every #ifdef below: it says "the file is here", not "your board is covered",
+// which is a separate failure with its own #error at the end.
+#define FRUGAL_IOT_GLOBALS_FOUND
+
 // PlatformIO Project Configuration File
 //
 //   Build options: build flags, source filter
@@ -22,14 +30,14 @@
 // custom common options
 
 // [platformio]
-// name: Frugal-IoT Climate
-// description: Frugal IoT - Climate Control with SHT30 sensor and dual relay outputs
+// name: Frugal-IoT Data Logger 
+// description: Frugal IoT - Demonstrate Data Logger - Work in Progress
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.2
+//     Frugal-IoT@^0.1.5
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -73,7 +81,8 @@
 // #define CONTROL_LOGGERFS_DEBUG
 // #define SENSOR_BH1750_DEBUG
 // #define SENSOR_DHT_DEBUG
-// #define SENSOR_ENSAHT_DEBUG
+// #define SENSOR_AHT_DEBUG
+// #define SENSOR_ENS160_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
 // #define SENSOR_SHT_DEBUG
@@ -94,8 +103,8 @@
 // project specific flags that are needed by the library 
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
-// build_flags_library =
-#define SYSTEM_OTA_PREFIX "climate"
+// build_flags_library = 
+#define SYSTEM_OTA_PREFIX "datalogger"
 
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
@@ -132,45 +141,9 @@
 // monitor_filters = esp32_exception_decoder
 
 
-#ifdef ARDUINO_LOLIN_C3_PICO
-// platform = ${common.platform_esp32}
-// board = lolin_c3_mini ; use c3_mini board defs - but note define below which is special cased
-// board_build.variant = lolin_c3_pico
-// board_build.partitions = min_spiffs.csv
-// build_flags = 
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "c3_pico"
-#define ARDUINO_LOLIN_C3_PICO // if using C3_PICO use lolin_c3_mini as board and define here
-    // PR submitted https://github.com/espressif/arduino-esp32/pull/11851
-    // Until then patched into variant file but if that is auto-updated, can define below
-    // Remove this comment when PR accepted, and new version of Arudino-esp32 gets installed
-    // See Home(bottom left)/Platforms/espresif32/updates (none as of 2025sep23 even though PR merged)
-// #define RGB_BUILTIN_LED_COLOR_ORDER LED_COLOR_ORDER_RGB
-
-#endif // ARDUINO_LOLIN_C3_PICO
-
-#ifdef ARDUINO_LOLIN_S2_MINI
-// platform = ${common.platform_esp32}
-// board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI
-// build_flags = 
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "s2_mini"
-
-#endif // ARDUINO_LOLIN_S2_MINI
-
-#ifdef ARDUINO_NodeMCU_32S
-// platform = ${common.platform_esp32}
-// board = nodemcu-32s
-// build_flags = 
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "nodemcu-32s"
-// board_build.partitions = min_spiffs.csv
-
-// ==== ESP8266 boards ================================================
-
-#endif // ARDUINO_NodeMCU_32S
-
+// ===== [env:d1_mini_pro] -> ARDUINO_ESP8266_WEMOS_D1MINIPRO
 #ifdef ARDUINO_ESP8266_WEMOS_D1MINIPRO
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = espressif8266
 // board = d1_mini_pro
 // build_flags = 
@@ -180,7 +153,9 @@
 
 #endif // ARDUINO_ESP8266_WEMOS_D1MINIPRO
 
+// ===== [env:d1_mini] -> ARDUINO_ESP8266_WEMOS_D1MINI
 #ifdef ARDUINO_ESP8266_WEMOS_D1MINI
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // board = d1_mini
 // platform = espressif8266
 // build_flags =
@@ -191,101 +166,8 @@
 
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
-#ifdef ARDUINO_TTGO_LoRa32_v21new
-// platform = ${common.platform_esp32}
-// board = ttgo-lora32-v21 ; defines ARDUINO_TTGO_LoRa32_v21new
-// build_flags = 
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "ttgo-lora32-v21"
-//     ${common.build_flags_loramesher}
-// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
-// lib_deps = 
-//     ${common.lib_deps_lora_oled}
+#ifndef FRUGAL_IOT_BOARD_CONFIGURED
+  #error "This board has no settings in esp8266/datalogger.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"
+#endif
 
-#endif // ARDUINO_TTGO_LoRa32_v21new
-
-#ifdef ARDUINO_LILYGO_T3_S3_V1_X
-// platform = ${common.platform_esp32}
-// board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
-// board_build.variant = lilygo_t3_s3_sx127x
-// build_flags = 
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x"
-//     ${common.build_flags_loramesher}
-// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
-// lib_deps = 
-//     ${common.lib_deps_lora_oled}
-
-#endif // ARDUINO_LILYGO_T3_S3_V1_X
-
-#ifdef ARDUINO_LILYGO_T3_S3_V1_X
-// platform = ${common.platform_esp32}
-// board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
-// board_build.variant = lilygo_t3_s3_sx127x
-// build_flags = 
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x_sht"
-#define SENSOR_SHT_WANT // I2C Sensor
-//     ${common.build_flags_loramesher}
-// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
-// lib_deps = 
-//     ${common.lib_deps_lora_oled}
-
-#endif // ARDUINO_LILYGO_T3_S3_V1_X
-
-#ifdef TODO_HELTEC_WIFI_LORA_32_V3
-// platform = ${common.platform_esp32}
-// board = heltec_wifi_lora_32_V3  ; there are not yet separate board and variant files for V3
-// build_flags = 
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v3"
-//     ${common.build_flags_loramesher}
-// board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
-// lib_deps = 
-//     ${common.lib_deps_lora_oled}
-
-#endif // TODO_HELTEC_WIFI_LORA_32_V3
-
-#ifdef TODO_HELTEC_WIFI_LORA_32_V3
-// platform = ${common.platform_esp32}
-// board = heltec_wifi_lora_32_V3  ; defines ARDUINO_heltec_wifi_lora_32_V3; default variant heltec_wifi_lora_32_V3
-// build_flags = 
-//     ${common.build_flags}
-#define ARDUINO_heltec_wifi_lora_32_V32 // If using 3.2 board uncomment this
-#define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v32"
-//     ${common.build_flags_loramesher}
-// board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
-// lib_deps = 
-//     ${common.lib_deps_lora_oled}
-
-#endif // TODO_HELTEC_WIFI_LORA_32_V3
-
-#ifdef TODO_TTGO_T_BEAM
-// platform = ${common.platform_esp32}
-// board = ttgo-t-beam ; defines ARDUINO_T_Beam
-// build_flags =
-//     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "ttgo-t-beam"
-//     ${common.build_flags_loramesher}
-//  oard_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
-// lib_deps =
-//     ${common.lib_deps_lora}
-
-#endif // TODO_TTGO_T_BEAM
-
-#ifdef TODO_TTGO_T_BEAM
-// platform = ${common.platform_esp32}
-// board = ttgo-t-beam ; defines ARDUINO_T_Beam
-// build_flags =
-//     ${common.build_flags}
-    // OLED is an add on for tbeams
-#define OLED_SDA 21
-#define OLED_SCL 22
-#define SYSTEM_OTA_SUFFIX "ttgo-t-beam-oled"
-//     ${common.build_flags_loramesher}
-// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
-// lib_deps =
-//     ${common.lib_deps_lora_oled}
-
-#endif // TODO_TTGO_T_BEAM
-
+#endif // DATALOGGER_INO_GLOBALS_H

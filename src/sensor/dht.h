@@ -13,7 +13,8 @@
  * similar at https://arduinomodules.info/ky-015-temperature-humidity-sensor-module/ 
  * or non-blocking DHT at https://github.com/toannv17/DHT-Sensors-Non-Blocking/blob/main/DHT_Async.cpp (this is a library)
  *
- * This version uses Rob Tillart's library (who also did the SHT library we use) 
+ * This version uses Rob Tillaart's library (who also did the SHT library we use)
+ *   https://github.com/RobTillaart/DHTNew  - Copyright (c) Rob Tillaart, MIT licence
  * 
  * Known Pins for various boards
  *  LilyGo HiGrow:        GPIO_NUM_16
@@ -28,13 +29,23 @@
 #ifndef SENSOR_DHT_H
 #define SENSOR_DHT_H
 
-#include "sensor/ht.h"
+#include "sensor/sensor.h"
 #include <dhtnew.h>                     // https://github.com/RobTillaart/DHTNew
 
+// Default power control pins - can be overridden via constructor parameters
+#ifndef SENSOR_DHT_POWER0_PIN
+  #define SENSOR_DHT_POWER0_PIN 0xff
+#endif
+#ifndef SENSOR_DHT_POWER3v3_PIN
+  #define SENSOR_DHT_POWER3v3_PIN 0xff
+#endif
 
-class Sensor_DHT : public Sensor_HT {
+
+class Sensor_DHT : public Sensor {
 public:
   Sensor_DHT(const char * const name, const uint8_t pin, const bool retain);
+  OUTfloat* temperature;
+  OUTfloat* humidity;
 protected:
   DHTNEW * const dht; 
   const uint8_t pin;

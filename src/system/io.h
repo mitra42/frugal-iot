@@ -13,10 +13,22 @@ class IO {
     const String topicTwig; // e.g. sht/temperature
     const char* color; // String passed to UX
     const char* default_color;
+    // Optional unit for display only ("C", "hPa", "kOhm") - printed by Sensor::captiveLines
+    // after the value. Set on the IO after constructing it; not sent to the UX (the server's
+    // schema owns what the UX displays), and not part of any constructor because that would
+    // mean touching every IO constructor in the library for a captive-portal nicety.
+    const char* unit = nullptr;
     bool const wireable; // True if can wire this to/from others - note this flag is on the control, not on the sensor or actuator
     String wiredPath; // Topic also listening|sending to when wired
     IO();
     IO(const char * const sensorId, const char * const id, const String name, char const *color, const bool w = true);
+    // Virtual only because the hierarchy is polymorphic and something deletes through an IO
+    // subclass pointer: Sensor_ENS160::setup() drops aqi500 on a part that has no 0..500 index.
+    // That delete is via the exact OUTuint16* type, so it was already well defined - this makes
+    // it stay that way if anything ever deletes through a base pointer, and silences
+    // -Wdelete-non-virtual-dtor. Nothing here owns heap memory beyond IO's own Strings, so the
+    // defaulted body is all that is needed.
+    virtual ~IO() = default;
     virtual void setup();
     void writeConfigToFS(const String &leaf, const String& payload);
     virtual bool dispatch(System_Message &msg);
@@ -69,6 +81,8 @@ class INfloat : public IN {
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
     uint8_t width; // Cant be protected because used in e.g. control_oled_ht.cpp 
     virtual String StringValue();
+    void discover() override;
+    bool dispatch(System_Message &msg) override;
   protected:
     float value;
     float min;
@@ -76,7 +90,6 @@ class INfloat : public IN {
     float default_min;
     float default_max;
     bool boolValue() override;
-    bool dispatch(System_Message &msg) override;
     // Copy assignment operator
     /*
     INfloat& operator=(const INfloat &other) {
@@ -93,7 +106,6 @@ class INfloat : public IN {
     */
     bool convertAndSet(const String &payload) override;
     void debug(const char* const where);
-    void discover() override;
 };
 class INuint16 : public IN {
   public:

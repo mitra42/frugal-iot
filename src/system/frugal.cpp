@@ -28,6 +28,28 @@
 
 
 #include "_settings.h" // Note - ideally shouldnt be dependent on anything here
+
+// Did the sketch's settings actually reach this build?
+//
+// On ESP32 and under PlatformIO they always do - platform.h is on the include path, or the flags
+// come straight from platformio.ini. On ESP8266 in the Arduino IDE there is exactly one route,
+// <sketch>.ino.globals.h next to the .ino, which the core force-includes into every translation
+// unit; that file ships in the example's esp8266/ subfolder and has to be moved up by hand
+// (see its README.md for why it cannot ship in place). Miss that step and every per-sketch setting
+// - pins, I2C addresses, SYSTEM_OTA_PREFIX/SUFFIX, debug flags - silently reverts to the library
+// defaults, and the build still goes green. Nothing downstream can detect that: on ESP8266 the
+// library cannot see anything the example ships until this file is in place. So check here.
+//
+// Deliberately in a .cpp, not in _settings.h: the ESP8266 core force-includes into ~48 translation
+// units, and a header would print this once per unit.
+//
+// Writing your own sketch and happy with the defaults? Create <sketch>.ino.globals.h next to your
+// .ino containing just:  #define FRUGAL_IOT_GLOBALS_FOUND
+// It is the same file you will need the moment you want to configure anything, so it is worth
+// having from the start.
+#if !defined(PLATFORMIO) && defined(ESP8266) && !defined(FRUGAL_IOT_GLOBALS_FOUND)
+  #error "ESP8266 + Arduino IDE: no <sketch>.ino.globals.h reached this build, so none of the sketch's settings did either. For a bundled example, open Sketch > Show Sketch Folder and move esp8266/<sketch>.ino.globals.h up one level, next to the .ino. For your own sketch, see the note above this line in system/frugal.cpp."
+#endif
 #include "system/frugal.h"
 #include "misc.h"
 #include "system/group.h"

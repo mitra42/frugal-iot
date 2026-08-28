@@ -131,7 +131,12 @@ MeshSubscription::MeshSubscription(const String topicPath, const uint16_t src)
 #ifdef SYSTEM_LORAMESHER_DEBUG
   // If you want to debug, provide a function in our .ino (or main.cpp) that implements this, 
   // see examples/loramesher/loramesher.ino for an example that writes to OLED
-  extern void printAppData();
+  // Weak, so that not providing one is a choice rather than a link error: a sketch that turns
+  // SYSTEM_LORAMESHER_DEBUG on without writing a printAppData() gets a null here and the calls
+  // below skip it. Declared, never defined - which is what lets the address be null. Do not give
+  // it an empty weak *definition* instead: that links, but the compiler may inline the empty body
+  // at these call sites and then a sketch that does provide one would silently never be called.
+  extern void printAppData() __attribute__((weak));
 #endif // SYSTEM_LORAMESHER_DEBUG
 
 
@@ -147,7 +152,7 @@ void ReceiveTask(void* /*pvParameters*/) {
   for (;;) {
       auto result = loramesher::os::RTOS::instance().ReceiveFromQueue(receive_queue, &msg, MAX_DELAY);
       if (result == loramesher::os::QueueResult::kOk && msg != nullptr) {
-      Serial.print(F("LoRaMesher - app received 0x")); Serial.print(msg->data.size()); Serial.print(F(" bytes from 0x")); Serial.println(msg->source, HEX); 
+      //Serial.print(F("LoRaMesher - app received 0x")); Serial.print(msg->data.size()); Serial.print(F(" bytes from 0x")); Serial.println(msg->source, HEX); 
       // application logic
       frugal_iot.loramesher->processReceivedPacket(msg->source, msg->data);
       delete msg; 
@@ -314,7 +319,7 @@ void System_LoraMesher::setup() {
   }
   checkRole(); // Probably wont do anything as MQTT probably not up yet - but will repeat in periodically
   #ifdef SYSTEM_LORAMESHER_DEBUG
-    printAppData();
+    if (printAppData) printAppData();
   #endif
 }
 
@@ -329,7 +334,7 @@ void System_LoraMesher::setup() {
 void System_LoraMesher::periodically() {
   checkRole(); // Adjust routing tables to reflect if we have a MQTT connection or not
   #ifdef SYSTEM_LORAMESHER_DEBUG
-    printAppData();
+    if (printAppData) printAppData();
   #endif
 }
 #ifdef SYSTEM_LORAMESHER_DEBUG
@@ -413,7 +418,7 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
     #ifdef SYSTEM_LORAMESHER_DEBUG
       lastTopicPath = topicPath;
       lastPayload = payload; 
-      printAppData(); // See note above about this being an extern
+      if (printAppData) printAppData(); // See note above about this being an extern
     #endif
     Serial.print(F("LoRaMesher received ")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
 
@@ -431,10 +436,11 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
       frugal_iot.messages->subscribe(payload);  // Should queue for MQTT since we are the gateway
     }
     if (downstream) {
+      Serial.printf("LoRaMesher downstream received: %s=%s\n", topicPath.c_str(), payload.c_str());
       //Serial.print(F("XXX " __FILE__)); Serial.print(F("downstream ")); Serial.println(topicPath);
       frugal_iot.messages->queueIncoming(topicPath, payload, MsgFromLoRaMesher);
     } else { // upstream (not subscribe)
-      Serial.print(F("LoRaMesher forwarding to MQTT:")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
+      Serial.printf("LoRaMesher forwarding to MQTT: %s=%s\n",topicPath.c_str(), payload.c_str());
       frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
     }
   }
@@ -515,6 +521,7 @@ bool System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const 
     Serial.print("LoRaMesher Failed to send:"); Serial.println(send_result.GetErrorMessage().c_str());
     return false; 
   }
+  Serial.printf("LoRaMesher Sent %X %s=%s\n", destn, topic.c_str(), payload.c_str());
   sentPacketCounter++;
   return true;
 }
@@ -581,6 +588,7 @@ const __FlashStringHelper* System_LoraMesher::checkRoleString() {
 
 // ========= DOWNSTREAM =================
 
+// TODO dispatch (Downstream) currently handles return of false badly (and is only thing that calls this) 
 bool System_LoraMesher::relayDownstream(uint16_t destn, const String &topic, const String &payload) {
   return buildAndSend(destn, topic, payload, false, QOS_DOWNSTREAM); // retain=12 gives a ascii character "<"
 }
@@ -594,7 +602,7 @@ void System_LoraMesher::dispatch(System_Message &msg) {
     if (match_topic(msg.topicPath, sub.topicPath)) { // Allows for + and # wildcards
       // send over LoRaWan to subscriber
       if (!relayDownstream(sub.src, msg.topicPath, msg.payload)) {
-        Serial.print("XXX TODO-189 failed to send Lora downstream, think about requeueing");
+        Serial.printf("XXX TODO-189 failed to send Lora downstream, think about requeueing %s=%s\n", msg.topicPath.c_str(), msg.payload);
       }
     }
   }
