@@ -210,7 +210,6 @@ Frugal-IoT/
 │                           #   oled, oled_loramesher, gsheets, control.h [base class]…)
 ├── examples/              # One subdirectory per example application
 │   ├── sht30/             # Temperature + humidity with optional OLED
-│   ├── climate/           # Dual-channel hysteresis control (heating + humidifier relays)
 │   ├── loadcell/          # HX711 weight scale
 │   ├── soil/              # Soil moisture
 │   ├── loramesher/        # LoRa mesh gateway + node
@@ -988,7 +987,7 @@ void loop() {
 }
 ```
 
-## Example: Control with Wiring (climate)
+## Example: Control with Wiring
 
 ```cpp
 #include "Frugal-IoT.h"
