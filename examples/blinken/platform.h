@@ -40,7 +40,13 @@
 //     ${common.lib_deps}
     //Comment/Uncomment below two lines to switch between live and "new" version
     //jaimi5/LoRaMesher
-//     https://github.com/loramesher/LoRaMesher.git
+    //Comment/Uncomment below to switch between upstream and our fork.
+    //Upstream, once mitra42/LoRaMesher#perf/avoid-iostreams (or equivalent) is merged there:
+    //https://github.com/loramesher/LoRaMesher.git
+    //Our fork, branched from upstream 1abec4a. Drops C++ iostreams from LoRaMesher's diagnostic
+    //string building, which was anchoring the whole std::locale facet set: worth 230,464 bytes
+    //(t3_s3 94.5% -> 82.8%). See FLASH_SIZE.md.
+//     https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
     //https://github.com/mitra42/LoRaMesher.git#new_loramesher
 
 // lib_deps_lora_oled =
@@ -63,11 +69,29 @@
 // #define SENSOR_SHT_ADDRESS 0x45 // 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
 // #define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 // #define SENSOR_SOIL_PIN 4
+    // The ultrasonic sensor talks Modbus over RS485. Its slave id switches on SYSTEM_MODBUS_WANT,
+    // which then needs the UART pins as well - all three, or system/modbus.h stops the build with
+    // an #error. Costs ~20k of flash (ModbusMaster + the RS485/Modbus classes).
+// #define SENSOR_ULTRASONIC_SLAVE_ID 1
+// #define SYSTEM_RS485_RX_PIN 20
+// #define SYSTEM_RS485_TX_PIN 21
 // #define SYSTEM_SD_WANT // Uses LittleFS by default
 // #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
     // Flags from other libraries
 // #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
 // #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
+    // Turn off C++ exceptions. Worth 75,166 bytes on c3_pico (73.3% of the app partition down to
+    // ~69.1%): ~53k of that is .eh_frame unwind tables and ~22k is the exception-handling code
+    // itself. Nothing in Frugal-IoT catches anything except the LoRaMesher glue in
+    // system/loramesher.cpp, so on a non-LoRa board this changes no behaviour.
+    // LoRaMesher DOES throw, in ten-odd files, so the LoRa boards take this flag back off again
+    // with build_unflags below - see common.build_unflags_loramesher. Removing it that way is
+    // free; countering it with -fexceptions instead would cost those boards 6,232 bytes, because
+    // -fexceptions also adds unwind tables to C sources that the default leaves out.
+    // Note PlatformIO's "Flash: nn%" line does not count .eh_frame, so on the RISC-V boards the
+    // real firmware.bin is bigger than reported (c3_pico was 73.3% real vs 70.0% reported). The
+    // Xtensa boards fold .eh_frame into .flash.rodata, so their reported figure is about right.
+    //-fno-exceptions
     // Uncomment debug lines before as needed
 // #define ACTUATOR_LCD_DEBUG
 // #define CONTROL_BLINKEN_DEBUG
@@ -84,7 +108,9 @@
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
+// #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
+// #define SYSTEM_MESSAGE_DEBUG // report messages received, sent, looped etc
 // #define SYSTEM_MQTT_DEBUG
 // #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
@@ -100,6 +126,12 @@
 // build_flags_library = 
 #define SYSTEM_OTA_PREFIX "blinken"
 
+// LoRaMesher throws, so the boards that use it need C++ exceptions back on. build_unflags REMOVES
+// -fno-exceptions rather than countering it with -fexceptions - measured as byte-identical to a
+// build that never had the flag, where -fexceptions would have cost 6,232 bytes.
+// build_unflags_loramesher =
+//     -fno-exceptions
+
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
     // LoRaMesher, for now, has a lot of flags here, will move some of this to main.cpp
@@ -110,11 +142,18 @@
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 
+// Ask the linker for a map file. scripts/size_report.py reads it to say which archive members
+// were linked in and which symbol pulled each one - the definitive answer to "is code from a
+// sensor I am not using taking up flash". Build-time only, nothing reaches the device.
+// build_flags_map =
+//     -Wl,-Map=$BUILD_DIR/firmware.map
+
 // Flags specific to project, but vary across dev-boards or variants
 // build_flags = 
 //     ${common.build_flags_frugaliot}
 //     ${common.build_flags_main}
 //     ${common.build_flags_library}
+//     ${common.build_flags_map}
    
 // selecting a platform for board descriotions
 // platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
@@ -188,6 +227,7 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "ttgo-lora32-v21"
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
@@ -204,6 +244,7 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x"
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
@@ -226,6 +267,7 @@
 #define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x_sht"
 #define SENSOR_SHT_WANT // I2C Sensor
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
@@ -242,6 +284,7 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v3"
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
@@ -263,6 +306,7 @@
 #define ARDUINO_heltec_wifi_lora_32_V32 // If using 3.2 board uncomment this
 #define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v32"
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
@@ -279,7 +323,8 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "ttgo-t-beam"
 //     ${common.build_flags_loramesher}
-//  oard_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
+// build_unflags = ${common.build_unflags_loramesher}
+// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps =
 //     ${common.lib_deps_lora}
 
@@ -302,6 +347,7 @@
 #define OLED_SCL 22
 #define SYSTEM_OTA_SUFFIX "ttgo-t-beam-oled"
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps =
 //     ${common.lib_deps_lora_oled}
