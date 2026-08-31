@@ -27,7 +27,9 @@ class System_Group : public System_Base {
     void loop() override;
     void periodically() override;
     void infrequently() override;
-    void captiveLines(AsyncResponseStream* response) override; 
+    void captiveLines(AsyncResponseStream* response) override;
+  private:
+    void forEach(const char* fnName, void (System_Base::*fn)());
 };
 
 #endif //SYSTEM_GROUP_H
