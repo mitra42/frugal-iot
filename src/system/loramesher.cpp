@@ -375,24 +375,37 @@ void System_LoraMesher::createReceiveMessages() {
 // or Upstream (from another node)
 void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, const std::vector<uint8_t>& data) {
   rcvdPacketCounter++;
-  if ((data.size() > SYSTEM_LORAMESHER_MAXLEGITPACKET) ||(data.size() <= 0)) {
-    Serial.printf("LoRaMesher Received bad packet length=%d\n", data.size());
+  // Three bytes is the shortest packet that can be read at all: qos, retain, and one byte of topic.
+  // The old test was (data.size() <= 0), which for an unsigned size only rejects an empty vector -
+  // a one-byte packet then read data[1], and a two-byte one took the address of data[2], both past
+  // the end. Nothing but the radio decides how long a packet is, so this has to be checked here.
+  if ((data.size() > SYSTEM_LORAMESHER_MAXLEGITPACKET) || (data.size() < 3)) {
+    Serial.printf("LoRaMesher Received bad packet length=%u\n", (unsigned)data.size());
   } else {
     // Serial.print(F("XXX payloadSize=")); Serial.println(appPacket->payloadSize);
     const uint8_t qos = data[0] - '0';
     const bool downstream = data[0] == ('0'+QOS_DOWNSTREAM);
     const bool retain = data[1] - '0'; // will be 0 or 1
-    // Assume appPacket->payload is a uint8_t* or char* and is null-terminated from [2] onward
-    const char* str = (const char*)&data[2];
+    // buildAndSend writes "%c%c%s:%s" and includes the terminating NUL in what it sends, but these
+    // bytes arrived over the air, so nothing guarantees one is present. strchr() and String() both
+    // read until they find a NUL, so a packet without one would run off the end of the vector.
+    // Copying into a buffer that is terminated here means neither can. The buffer is sized from
+    // SYSTEM_LORAMESHER_MAXLEGITPACKET, which the test above has already enforced; it sits on the
+    // App_LoRa_Recv task's 4096-byte stack, so raising that setting a long way would need a bigger
+    // stack in createReceiveMessages() too.
+    char body[SYSTEM_LORAMESHER_MAXLEGITPACKET + 1];
+    const size_t bodyLen = data.size() - 2;
+    memcpy(body, &data[2], bodyLen);
+    body[bodyLen] = '\0';
     String topicPath;
     String payload;
 
-    const char* eq = strchr(str, ':');
+    const char* eq = strchr(body, ':');
     if (eq) {
-        topicPath = String(str).substring(0, eq - str);
+        topicPath = String(body).substring(0, eq - body);
         payload = eq+1;
     } else { // Shouldnt have this case
-        topicPath = str;
+        topicPath = body;
         payload = String();
     }
     #ifdef SYSTEM_LORAMESHER_DEBUG
