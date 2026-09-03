@@ -71,7 +71,7 @@
 #include "sensor/sensor.h"
 
 #ifndef SENSOR_BME680_ADDRESS
-  #define SENSOR_BME680_ADDRESS 0x76
+  #define SENSOR_BME680_ADDRESS 0x77
 #endif
 #ifndef SENSOR_BME680_HEATER_TEMP_C
   #define SENSOR_BME680_HEATER_TEMP_C 320 // Bosch's own default profile is 320C for 150ms
@@ -82,6 +82,15 @@
 #ifndef SENSOR_BME680_MEASURE_TIMEOUT_MS
   #define SENSOR_BME680_MEASURE_TIMEOUT_MS 500
 #endif
+// Default power control pins - can be overridden via constructor parameters
+#ifndef SENSOR_BME680_POWER0_PIN
+  #define SENSOR_BME680_POWER0_PIN 0xff
+#endif
+#ifndef SENSOR_BME680_POWER3v3_PIN
+  #define SENSOR_BME680_POWER3v3_PIN 0xff
+#endif
+
+
 
 class Sensor_BME680 : public Sensor {
   public:

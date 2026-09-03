@@ -7,22 +7,22 @@
 #include "actuator/oled.h"
 
 //TO-ADD-SENSOR - add any new sensors here (in alphabetical order)
-#include "sensor/soil.h"
-#include "sensor/battery.h"
-#include "sensor/sht.h"
-#include "sensor/dht.h"
 #include "sensor/aht.h" // Sensor_AHT20 and Sensor_AHT21 share one implementation
+#include "sensor/battery.h"
 #include "sensor/bh1750.h"
 #include "sensor/bmx280.h" // Sensor_BMP280 and Sensor_BME280 share one implementation
 #include "sensor/bme680.h"
 #include "sensor/button.h"
+#include "sensor/dht.h"
+#include "sensor/ens160.h"
+#include "sensor/sht.h"
+#include "sensor/soil.h"
 #include "sensor/ds18b20.h"
 #include "sensor/dissolvedoxygen.h"
 #include "sensor/gps.h"
 #include "sensor/ina219.h" // Freestanding over System_I2C, no external library
-#include "sensor/ms5803.h"
 #include "sensor/loadcell.h"
-#include "sensor/ens160.h"
+#include "sensor/ms5803.h"
 #include "sensor/ultrasonic.h" // Compiles to nothing unless SENSOR_ULTRASONIC_SLAVE_ID is defined
 
 //TO-ADD-CONTROL
