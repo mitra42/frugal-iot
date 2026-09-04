@@ -56,6 +56,11 @@ class System_MQTT : public System_Base {
     // No read, no write, no broker access. See SECURITY-REVIEW.md section 6.
     const char* enrolmentSecret = nullptr;
     bool enrolTried = false;         // one attempt per boot, so a refusal is not a hot loop
+    // Consecutive refusals of the stored credential. The broker can legitimately forget a node -
+    // an administrator resetting it from the dashboard, or dynsec state restored from an older
+    // backup - and a node holding a credential would otherwise never enrol again, because it has
+    // one. So a credential the broker keeps rejecting is discarded and a new one asked for.
+    uint8_t authFailures = 0;
     bool inReceived = false;
     unsigned long ms;
     unsigned long nextLoopTime; // Not sleepSafeSecs as frequent.
@@ -69,6 +74,7 @@ class System_MQTT : public System_Base {
     // Fetch this node's own broker credential from the server, over HTTPS, if it has none yet.
     // Does nothing if it already has one, or if no enrolment secret was configured.
     void enrolIfNeeded();
+    void noteAuthFailure();          // called when the broker rejects our credential
     const char* mqttUsername();     // stored if enrolled, else the compiled-in one
     const char* mqttPassword();
     void dispatch(System_Message &msg) override;

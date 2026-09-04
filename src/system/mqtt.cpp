@@ -55,6 +55,13 @@ static String jsonField(const String& json, const char* field) {
   #define SYSTEM_MQTT_ENROL_PATH "/enrol"
 #endif
 
+// How many consecutive "not authorised" answers before the stored credential is treated as dead.
+// More than one, because a broker restarting can refuse a connection in passing; few enough that a
+// node reset from the dashboard recovers in a minute or two rather than needing a visit.
+#ifndef SYSTEM_MQTT_ENROL_RETRY_AFTER
+  #define SYSTEM_MQTT_ENROL_RETRY_AFTER 5
+#endif
+
 #ifndef SYSTEM_MQTT_BACKOFF
   #define SYSTEM_MQTT_BACKOFF 5000 // Reasonable backoff on MQTT conncetion failure - 5 seconds (was 10ms ! )
 #endif
@@ -241,10 +248,18 @@ bool System_MQTT::connect() {
       // -3 is LWMQTT_NETWORK_FAILED_CONNECT -10 is userid/password fail
       // 6 is LWMQTT_UNKNOWN_RETURN_CODE 
       // https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L116
+      // Return code 5 is "not authorized" in MQTT 3.1.1, and lastError -10 is the library's own
+      // way of saying the same thing. Only those count: a network failure is not the broker
+      // telling us our credential is wrong, and discarding a good credential because the WiFi
+      // dropped would be worse than the problem being solved.
+      if ((client.returnCode() == 5) || (client.lastError() == -10)) {
+        noteAuthFailure();
+      }
       return false;
     } else { 
       /* Fresh connection */
       Serial.println(F("MQTT: Connected "));
+      authFailures = 0;   // the credential works; earlier refusals were not about it
       if (!client.sessionPresent()) {
         subscriptionsDone = false; // No session so will need to redo subscriptions 
       } else {
@@ -266,6 +281,32 @@ bool System_MQTT::connect() {
   client.setCleanSession(false);  // Next time use the session created
   return true;
 }
+/*
+ * The broker has refused our credential. If it keeps doing so, throw it away and enrol again.
+ *
+ * This is what makes "reset this node" work from the dashboard for a node that is alive and well:
+ * the server forgets it and deletes its broker account, the node's next few connections are
+ * refused, and it then asks for a new credential. Without this a reset would strand exactly the
+ * nodes that were working - they hold a credential, so they would never enrol - and someone would
+ * have to go and erase the flash by hand.
+ *
+ * Only reached on an authorisation refusal, never on a network failure.
+ */
+void System_MQTT::noteAuthFailure() {
+  if (!enrolmentSecret) return;            // nothing to enrol with; the credential is all we have
+  if (!storedUsername.length()) return;    // using the compiled-in pair, which enrolling cannot fix
+  if (++authFailures < SYSTEM_MQTT_ENROL_RETRY_AFTER) return;
+  Serial.print(F("MQTT: credential refused ")); Serial.print(authFailures);
+  Serial.println(F(" times - discarding it and enrolling again"));
+  storedUsername = String();
+  storedPassword = String();
+  frugal_iot.fs_LittleFS->spurt("/mqtt/username", String());
+  frugal_iot.fs_LittleFS->spurt("/mqtt/password", String());
+  authFailures = 0;
+  enrolTried = false;                      // let enrolIfNeeded run again
+  enrolIfNeeded();
+}
+
 // This is for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname
 void System_MQTT::dispatch(System_Message &msg) {
   // TODO-206 no need to resend, but *do* need to test changing via SPIFFS
