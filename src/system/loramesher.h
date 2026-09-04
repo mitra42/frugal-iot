@@ -51,7 +51,10 @@ class System_LoraMesher : public System_Base {
       String lastTopicPath = String(); // Used by printAppData
       String lastPayload = String(); // Used by printAppData
     #endif
-    void processReceivedPacket(loramesher::AddressType source, const std::vector<uint8_t>& data); 
+    void processReceivedPacket(loramesher::AddressType source, const std::vector<uint8_t>& data);
+    // May this address speak for this topic? Checks the organization/project prefix, and binds the
+    // node id to the address that first claimed it. Reports and returns false when it may not.
+    bool relayPermitted(loramesher::AddressType source, const String& topicPath); 
     // == OUTGOING (up or downstream)
     bool connected();
     // Match mqtt.client profile
@@ -74,6 +77,20 @@ class System_LoraMesher : public System_Base {
     // == INCOMING (up or downstream)
     uint16_t rcvdPacketCounter = 0;
     std::forward_list<MeshSubscription> meshSubscriptions;
+    /*
+     * Which node id each LoRaMesher address has claimed, remembered from the first topic it sent.
+     *
+     * A gateway republishes what it hears onto MQTT under its OWN broker account, so the broker
+     * cannot tell a relayed reading from an invented one - it has to trust the gateway. That makes
+     * the gateway the only place a relayed topic can be checked at all, which is why these checks
+     * are here and not in an ACL. See SECURITY-REVIEW.md S7.
+     *
+     * Trust on first sight: the first address to claim a node id keeps it, so a later transmitter
+     * cannot take over an existing node's topics. It does not stop one that is first, which is
+     * accepted residual risk - a rogue node inside the organization is not the threat this is for.
+     */
+    struct MeshIdentity { uint16_t address; String nodeid; };
+    std::forward_list<MeshIdentity> meshIdentities;
     // == OUTGOING (up or downstream)
     uint16_t sentPacketCounter = 0; 
     bool findGatewayNode();

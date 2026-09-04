@@ -371,6 +371,68 @@ void System_LoraMesher::createReceiveMessages() {
 }
 
 
+/*
+ * Whether this LoRa address is allowed to have this gateway publish that topic on its behalf.
+ *
+ * Two questions, both cheap, and neither of which the broker can ask:
+ *
+ * 1. Is the topic in THIS gateway's own organization and project? Without this, anything in radio
+ *    range with the right sync word could have its topics republished anywhere the gateway's own
+ *    broker account can reach - which is the whole organization.
+ * 2. For a topic in a node's OWN subtree, does the node id match the address that first claimed it?
+ *    Node ids come off the air and are self-asserted, so without a binding one transmitter can
+ *    publish as another node - forging its readings, or overwriting its retained values.
+ *
+ * A "set/" topic is exempt from the second check, deliberately: one node commanding another is what
+ * a control driving an actuator elsewhere needs, and it is what the broker allows over MQTT too
+ * (publishClientSend <org>/+/+/set/#). So this closes forging another node's READINGS and leaves
+ * commanding it alone - which is the same line the broker draws.
+ *
+ * Deliberately NOT checked: that the sender is a node we have heard of. A node's first packet is
+ * how we learn it exists, and refusing unknown nodes would mean no node could ever join.
+ */
+bool System_LoraMesher::relayPermitted(loramesher::AddressType source, const String& topicPath) {
+  const String prefix = frugal_iot.org + "/" + frugal_iot.project + "/";
+  if (!topicPath.startsWith(prefix)) {
+    Serial.print(F("LoRaMesher refusing to relay outside ")); Serial.print(prefix);
+    Serial.print(F(" : ")); Serial.println(topicPath);
+    return false;
+  }
+  // org/project/nodeid/... - the segment after the prefix
+  const String rest = topicPath.substring(prefix.length());
+  const int slash = rest.indexOf('/');
+  const String nodeid = (slash < 0) ? rest : rest.substring(0, slash);
+  if (!nodeid.length()) {
+    Serial.print(F("LoRaMesher refusing a topic with no node in it: ")); Serial.println(topicPath);
+    return false;
+  }
+  // Commanding another node stays open, as it is over MQTT. Note it does not establish a binding
+  // either: a node whose first packet is a "set/" for somebody else must not thereby become them.
+  const String afterNode = (slash < 0) ? String() : rest.substring(slash + 1);
+  if (afterNode.startsWith("set/")) {
+    return true;
+  }
+  for (auto &known : meshIdentities) {
+    if (known.address == source) {
+      if (known.nodeid == nodeid) return true;
+      Serial.print(F("LoRaMesher refusing: address ")); Serial.print(source, HEX);
+      Serial.print(F(" is ")); Serial.print(known.nodeid);
+      Serial.print(F(" but claimed ")); Serial.println(nodeid);
+      return false;
+    }
+    if (known.nodeid == nodeid) {
+      // Somebody else already speaks for this node
+      Serial.print(F("LoRaMesher refusing: ")); Serial.print(nodeid);
+      Serial.print(F(" already belongs to address ")); Serial.println(known.address, HEX);
+      return false;
+    }
+  }
+  meshIdentities.push_front({source, nodeid});   // first sight: this address is that node
+  Serial.print(F("LoRaMesher: address ")); Serial.print(source, HEX);
+  Serial.print(F(" is ")); Serial.println(nodeid);
+  return true;
+}
+
 // Note that received Packet could be Downstream (from MQTT broker via gateway) 
 // or Upstream (from another node)
 void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, const std::vector<uint8_t>& data) {
@@ -423,6 +485,12 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
     // Cant use src as there may be multiple gateways AND could be message reflected at gateway
     // For now - may change this - use retain=12 (character is '<' on "a" and "b"
     if (topicPath == "subscribe") { // Will always be UPSTREAM
+      // The same check as for a publish, on the topic being subscribed to. Without it an off-air
+      // "subscribe" makes the gateway read anything its own broker account can reach and relay it
+      // back over the radio - the read side of exactly the same hole.
+      if (!relayPermitted(source, payload)) {
+        return;   // reported by relayPermitted
+      }
       Serial.print(F("LoRaMesher forwarding subscription to MQTT ")); Serial.println(payload);
       // Need to remember the subscription before calling subscribe, because there may be retained data returned immediately
       meshSubscriptions.emplace_front(payload, source);
@@ -433,6 +501,12 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
       //Serial.print(F("XXX " __FILE__)); Serial.print(F("downstream ")); Serial.println(topicPath);
       frugal_iot.messages->queueIncoming(topicPath, payload, MsgFromLoRaMesher);
     } else { // upstream (not subscribe)
+      // This is the one that mattered: without it, anything in radio range could have any topic in
+      // the organization republished under the gateway's account - forged readings for any node,
+      // commands to any actuator, retained values overwritten.
+      if (!relayPermitted(source, topicPath)) {
+        return;   // reported by relayPermitted
+      }
       Serial.printf("LoRaMesher forwarding to MQTT: %s=%s\n",topicPath.c_str(), payload.c_str());
       frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
     }
