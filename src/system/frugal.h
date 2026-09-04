@@ -83,6 +83,11 @@ class System_Frugal : public System_Group {
     bool timeForPeriodic = true;
     System_Frugal(const char* org, const char* project, const char* id, const char* name);
     void configure_mqtt(const char* hostname, const char* username, const char* password);
+    // Preferred over configure_mqtt's username/password: the node fetches its OWN broker credential
+    // from the server at first boot, so no shared password is compiled into the image. The three
+    // argument form still works, for a sketch that has not been changed and for a server too old to
+    // enrol anything.
+    void configure_mqtt_enrolled(const char* hostname, const char* enrolment_secret);
     void configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms);
     #if defined(SENSOR_BATTERY_PIN) && defined(SENSOR_BATTERY_VOLTAGE_DIVIDER) // Only support default constructor if PIN and DIVIDER defined
       void configure_battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_VOLTAGE_DIVIDER);

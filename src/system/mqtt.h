@@ -31,6 +31,7 @@
 class System_MQTT : public System_Base {
   public:
     System_MQTT(const char* hostname, const char* username, const char* password);
+    void configure_enrolment(const char* secret) { enrolmentSecret = secret; }
     void setup_after_wifi();
     bool connected(); // Check if connected, dont change status
     void prepare() override;
@@ -45,6 +46,16 @@ class System_MQTT : public System_Base {
     MQTTClient client; //was using (512,128) as discover message was bouncing back, but no longer subscribing to "device" topic.
     WiFiClient net;
     String hostname; 
+    // The credential this node was issued by the server, read from LittleFS at setup and written
+    // there by enrol(). Empty until it has enrolled, in which case the compiled-in username and
+    // password below are used instead - which is how a sketch using the older
+    // configure_mqtt(host, user, password) form keeps working.
+    String storedUsername;
+    String storedPassword;
+    // Set by configure_enrolment(). Grants exactly one thing: "create a node in this organization".
+    // No read, no write, no broker access. See SECURITY-REVIEW.md section 6.
+    const char* enrolmentSecret = nullptr;
+    bool enrolTried = false;         // one attempt per boot, so a refusal is not a hot loop
     bool inReceived = false;
     unsigned long ms;
     unsigned long nextLoopTime; // Not sleepSafeSecs as frequent.
@@ -55,6 +66,11 @@ class System_MQTT : public System_Base {
     void captiveLines(AsyncResponseStream* response) override;
     void loop() override;
     bool connect(); // Connect to MQTT broker and - if necessary - resubscribe to all topics
+    // Fetch this node's own broker credential from the server, over HTTPS, if it has none yet.
+    // Does nothing if it already has one, or if no enrolment secret was configured.
+    void enrolIfNeeded();
+    const char* mqttUsername();     // stored if enrolled, else the compiled-in one
+    const char* mqttPassword();
     void dispatch(System_Message &msg) override;
 };
 

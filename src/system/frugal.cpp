@@ -194,6 +194,12 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
 void System_Frugal::configure_mqtt(const char* hostname, const char* username, const char* password) {
   system->add(mqtt = new System_MQTT(hostname, username, password));  
 }
+// No username or password in the image: the node asks the server for its own at first boot, and
+// keeps it in LittleFS. The enrolment secret it presents grants only enrolment.
+void System_Frugal::configure_mqtt_enrolled(const char* hostname, const char* enrolment_secret) {
+  system->add(mqtt = new System_MQTT(hostname, nullptr, nullptr));
+  mqtt->configure_enrolment(enrolment_secret);
+}
 void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
   powercontroller->configure(t, cycle_ms, wake_ms);
 }
