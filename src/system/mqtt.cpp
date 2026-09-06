@@ -51,8 +51,22 @@ static String jsonField(const String& json, const char* field) {
   return json.substring(open + 1, close);
 }
 
-#ifndef SYSTEM_MQTT_ENROL_PATH
-  #define SYSTEM_MQTT_ENROL_PATH "/enrol"
+/*
+ * Where to enrol. A whole URL, not a path, and set at compile time the way
+ * SYSTEM_OTA_SERVERPORTPATH is - for the same reason.
+ *
+ * It cannot be derived from the MQTT hostname, which is what the first version of this did. On
+ * production the broker and the server happen to share a name and the server is HTTPS on 443, so
+ * deriving it works by luck; anywhere else it does not. On a Pi the broker is
+ * frugaliot.local:1883 and the server is frugaliot.local:8080 over plain HTTP, so a derived
+ * "https://<broker host>/enrol" is wrong in the scheme AND the port.
+ *
+ * An http:// URL is honoured, which is what makes a local Pi testable. It sends the enrolment
+ * secret in the clear - no worse than the rest of that link, where MQTT itself is plaintext on
+ * 1883, but a deliberate step down from production and worth knowing you have taken it.
+ */
+#ifndef SYSTEM_MQTT_ENROL_URL
+  #define SYSTEM_MQTT_ENROL_URL "https://frugaliot.naturalinnovation.org/enrol"
 #endif
 
 // How many consecutive "not authorised" answers before the stored credential is treated as dead.
@@ -115,20 +129,29 @@ void System_MQTT::enrolIfNeeded() {
   if (storedUsername.length() && storedPassword.length()) return;   // already has one
   if (!frugal_iot.wifi->connected()) return;               // needs the network
 
-  #ifdef ESP32
-    WiFiClientSecure secure;
-    secure.setCACert(rootCAForServer());
-  #elif defined(ESP8266)
-    WiFiClientSecure secure;
-    // Unverified, as OTA is on this chip - see SEC-10, accepted: few or no ESP8266s going forward,
-    // and setting a trust anchor here has been observed to crash the ESP8266 TLS stack.
-    secure.setInsecure();
-  #else
-    return;                                                // no HTTPS on this chip
-  #endif
-  secure.setTimeout(20000);
+  const String url = String(SYSTEM_MQTT_ENROL_URL);
+  const bool plainHttp = url.startsWith("http://");
 
-  String url = String(F("https://")) + hostname + SYSTEM_MQTT_ENROL_PATH;
+  // One client or the other, chosen by the URL. Declared together rather than in branches because
+  // HTTPClient::begin keeps a reference to whichever it is given, so it has to outlive the request.
+  WiFiClient plain;
+  WiFiClientSecure secure;
+  if (!plainHttp) {
+    #ifdef ESP32
+      secure.setCACert(rootCAForServer());
+    #elif defined(ESP8266)
+      // Unverified, as OTA is on this chip - see SEC-10, accepted: few or no ESP8266s going
+      // forward, and setting a trust anchor here has been observed to crash the ESP8266 TLS stack.
+      secure.setInsecure();
+    #endif
+    secure.setTimeout(20000);
+  } else {
+    plain.setTimeout(20000);
+  }
+  // Not "net" - that is the member this class holds for the MQTT connection itself, and shadowing
+  // it here would compile while meaning something else entirely.
+  WiFiClient& httpNet = plainHttp ? plain : (WiFiClient&)secure;
+
   String body = String(F("{\"org\":\"")) + frugal_iot.org
               + F("\",\"project\":\"") + frugal_iot.project
               + F("\",\"nodeid\":\"") + frugal_iot.nodeid
@@ -145,7 +168,7 @@ void System_MQTT::enrolIfNeeded() {
 
   HTTPClient http;
   Serial.print(F("Enrolling at ")); Serial.println(url);
-  if (!http.begin(secure, url)) {
+  if (!http.begin(httpNet, url)) {
     Serial.println(F("Enrol: could not start the request"));
     return;
   }
