@@ -54,8 +54,24 @@ class System_MQTT : public System_Base {
     String storedPassword;
     // Set by configure_enrolment(). Grants exactly one thing: "create a node in this organization".
     // No read, no write, no broker access. See SECURITY-REVIEW.md section 6.
+    // Set by configure_enrolment(). May be the empty string: that still means "this node enrols",
+    // it just has nothing to present, which is a node an administrator can approve from the
+    // dashboard. A null pointer means the sketch uses configure_mqtt(host, user, password) and does
+    // not enrol at all.
     const char* enrolmentSecret = nullptr;
-    bool enrolTried = false;         // one attempt per boot, so a refusal is not a hot loop
+    /*
+     * When to ask again, rather than once per boot.
+     *
+     * Once per boot stranded exactly the node this exists for. A node whose secret has been
+     * withdrawn, or that is waiting to be approved on the dashboard, gets one refusal and then
+     * never asks again - and nobody can reach it to reboot it, which is why it is being approved
+     * remotely in the first place. It also meant a server that was simply down when the node
+     * booted cost that node its only attempt.
+     *
+     * Slow on purpose: a node that will never be approved asks twice an hour, and the server rate
+     * limits per organization and per node id on top of that.
+     */
+    unsigned long nextEnrolTime = 0;
     // Consecutive refusals of the stored credential. The broker can legitimately forget a node -
     // an administrator resetting it from the dashboard, or dynsec state restored from an older
     // backup - and a node holding a credential would otherwise never enrol again, because it has

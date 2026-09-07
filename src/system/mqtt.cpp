@@ -79,6 +79,12 @@ static String jsonField(const String& json, const char* field) {
 #ifndef SYSTEM_MQTT_BACKOFF
   #define SYSTEM_MQTT_BACKOFF 5000 // Reasonable backoff on MQTT conncetion failure - 5 seconds (was 10ms ! )
 #endif
+#ifndef SYSTEM_MQTT_ENROL_RETRY_MS
+  // How long between enrolment attempts. Half an hour: a node waiting to be approved on the
+  // dashboard has to keep asking, because being approved is the only way it can come back, but it
+  // may be waiting for days and there is nothing to be gained by asking often.
+  #define SYSTEM_MQTT_ENROL_RETRY_MS 1800000
+#endif
 // mqtt client -> System_MQTT callback
 // Note intentionally outside class, passed as callback to Mqtt client
 void MqttMessageReceived(String &topicPath, String &payload) { // cant be constant as dispatch isnt
@@ -112,22 +118,31 @@ const char* System_MQTT::mqttPassword() {
 }
 
 /*
- * Ask the server for this node's own broker credential, once per boot.
+ * Ask the server for this node's own broker credential.
  *
  * Only if it has none: a credential in LittleFS survives a reboot, and re-enrolling would be
  * refused anyway unless the node proves it holds the current one (which it would, but there is no
- * reason to ask). Nothing here is retried in a tight loop - a refused enrolment is usually a
- * configuration matter, not a transient one, and a node hammering the server helps nobody.
+ * reason to ask).
+ *
+ * Retried on a slow timer rather than once per boot, and called from loop() as well as at startup.
+ * Three reasons, all of them nodes that could not otherwise come back: the server may simply have
+ * been down when this node booted; a withdrawn enrolment secret is refused until an administrator
+ * approves this node id on the dashboard, which may be hours later; and nobody can reach a node in
+ * a field to restart it. Half an hour between attempts, and the server rate limits per organization
+ * and per node id on top of that.
  *
  * The reply is two short strings, so it is read with indexOf rather than by adding a JSON parser to
  * every image for this one request.
  */
 void System_MQTT::enrolIfNeeded() {
-  if (enrolTried) return;                                  // once per boot
-  enrolTried = true;
   if (!enrolmentSecret) return;                            // sketch uses the three-argument form
   if (storedUsername.length() && storedPassword.length()) return;   // already has one
   if (!frugal_iot.wifi->connected()) return;               // needs the network
+  // Not once per boot: see nextEnrolTime in the header for why that stranded nodes. Subtract and
+  // compare as signed, so the comparison still holds when millis() wraps at 49 days - a node
+  // waiting to be approved is exactly the one that would still be waiting by then.
+  if (nextEnrolTime && ((long)(millis() - nextEnrolTime) < 0)) return;
+  nextEnrolTime = millis() + SYSTEM_MQTT_ENROL_RETRY_MS;
 
   const String url = String(SYSTEM_MQTT_ENROL_URL);
   const bool plainHttp = url.startsWith("http://");
@@ -227,6 +242,10 @@ void System_MQTT::captiveLines(AsyncResponseStream* response) {
 
 void System_MQTT::loop() {
   if (nextLoopTime <= millis()) {
+    // A node with no credential asks again from here, not only at boot: WiFi can be up while the
+    // server is down, an administrator may approve it hours later, and nobody can reach it to
+    // restart it. enrolIfNeeded returns at once unless it is both needed and due.
+    enrolIfNeeded();
     // Automatically reconnect
     if (connect()) { ; // If Wifi is connected, this is blocking till timeout
       if (!client.loop()) {
@@ -317,8 +336,15 @@ bool System_MQTT::connect() {
  */
 void System_MQTT::noteAuthFailure() {
   if (!enrolmentSecret) return;            // nothing to enrol with; the credential is all we have
-  if (!storedUsername.length()) return;    // using the compiled-in pair, which enrolling cannot fix
   if (++authFailures < SYSTEM_MQTT_ENROL_RETRY_AFTER) return;
+  // No "already has nothing stored, so give up" here, deliberately. That guard stranded exactly
+  // the node this is for: one that has just discarded a refused credential holds nothing, and
+  // would then never ask to enrol again until it was rebooted.
+  if (!storedUsername.length()) {
+    authFailures = 0;
+    enrolIfNeeded();                       // nothing to discard; just ask again when due
+    return;
+  }
   Serial.print(F("MQTT: credential refused ")); Serial.print(authFailures);
   Serial.println(F(" times - discarding it and enrolling again"));
   storedUsername = String();
@@ -326,7 +352,7 @@ void System_MQTT::noteAuthFailure() {
   frugal_iot.fs_LittleFS->spurt("/mqtt/username", String());
   frugal_iot.fs_LittleFS->spurt("/mqtt/password", String());
   authFailures = 0;
-  enrolTried = false;                      // let enrolIfNeeded run again
+  nextEnrolTime = 0;                       // ask now rather than waiting for the next window
   enrolIfNeeded();
 }
 
