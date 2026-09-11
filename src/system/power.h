@@ -36,6 +36,20 @@ class System_Power : public System_Base {
     uint8_t timer_next(); // Return an index to a timer that can be used
     void timer_set(uint8_t i, uint32_t t_secs);
     bool timer_expired(uint8_t i); 
+    /* Keep armed timers sane when the wall clock is stepped.
+     *
+     * timer_set() stores sleepSafeSecs() + secs as an ABSOLUTE value, and sleepSafeSecs() is
+     * gettimeofday() - the very clock that settimeofday() and NTP move. So stepping the clock
+     * moves every armed timer relative to "now": forward, and they all expire at once; backward,
+     * and they can become unreachable for years, silently stopping OTA, discovery and the
+     * watchdog's periodic work on a device nobody can reach.
+     *
+     * Use timers_shift() where the size of the step is known (System_Time::set()), and
+     * timers_clampFuture() where it is not - SNTP steps the clock inside the IDF and only tells
+     * us the new time, never the old one.
+     */
+    void timers_shift(int64_t delta_secs);
+    void timers_clampFuture(uint32_t max_secs);
     bool maybeSleep();
     void pre_setup();
     #ifdef ESP32

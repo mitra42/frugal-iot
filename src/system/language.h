@@ -33,7 +33,10 @@ struct Texts {
         *SoilMoistureTare,
         *CycleTime,
         *WakeTime,
-        *Offset
+        *Offset,
+        *DeviceTime,
+        *SetTimeFromBrowser,
+        *TimeNotSet
         ;
 };
 
