@@ -6,7 +6,8 @@
 #include <Arduino.h>
 #include <string>     // std::string, std::stoi
 #include "system/io.h"
-#include "misc.h" // For StringF
+#include "misc.h" // For StringF, changed(), IO_PAYLOAD_INVALID
+#include <cmath> // for std::isnan
 #include "system/frugal.h" // For frugal_iot
 
 // ========== IO - base class for IN and OUT ===== 
@@ -64,6 +65,10 @@ bool IN::boolValue() {
   shouldBeDefined();
   return false; 
 }
+// Base: types with no NaN cannot express "no reading", so they are always valid. INfloat overrides.
+bool IN::isValid() {
+  return true;
+}
 float INuint16::floatValue() {
   return value;
 }
@@ -80,9 +85,13 @@ float INfloat::floatValue() {
 bool INfloat::boolValue() {
   return value;
 }
+bool INfloat::isValid() {
+  return !std::isnan(value);
+}
 // TODO do we really need all these interconversions, it might be for something we never do 
 String INfloat::StringValue() {
-  return String(value, (int)width);
+  // Canonical, not String(NAN, width) - see IO_PAYLOAD_INVALID in misc.h for why that pads
+  return std::isnan(value) ? String(F(IO_PAYLOAD_INVALID)) : String(value, (int)width);
 }
 
 float INbool::floatValue() {
@@ -122,7 +131,9 @@ bool OUTfloat::boolValue() {
   return value;
 }
 String OUTfloat::StringValue() {
-  return String(value, (int)width);
+  // This is what goes on the wire, so the invalid form has to be exactly IO_PAYLOAD_INVALID and
+  // not whatever dtostrf pads it to - see misc.h.
+  return std::isnan(value) ? String(F(IO_PAYLOAD_INVALID)) : String(value, (int)width);
 }
 float OUTuint16::floatValue() {
   return value;
@@ -481,8 +492,10 @@ INtext::INtext(const INtext &other) :
 
 // TO_ADD_INxxx
 bool INfloat::convertAndSet(const String &p) {
-  float v = p.toFloat();
-  if (v != value) {
+  // Explicit rather than relying on toFloat()/atof() to parse "nan" - it does on newlib, but the
+  // wire contract should not depend on the C library's spelling of it.
+  const float v = (p == IO_PAYLOAD_INVALID) ? NAN : p.toFloat();
+  if (changed(v, value)) {
     value = v;
     return true; // Need to rerun calcs
   }
@@ -490,7 +503,7 @@ bool INfloat::convertAndSet(const String &p) {
 }
 bool INuint16::convertAndSet(const String &p) {
   uint16_t v = p.toInt();
-  if (v != value) {
+  if (changed(v, value)) {
     value = v;
     return true; // Need to rerun calcs
   }
@@ -499,7 +512,7 @@ bool INuint16::convertAndSet(const String &p) {
 bool INbool::convertAndSet(const String &payload) {
   const bool v = payload.toInt();
   //Serial.print("XXX "); Serial.print(id); Serial.print(F(" converted ")); Serial.print(payload); Serial.print(F(" to ")); Serial.println(v);
-  if (v != value) {
+  if (changed(v, value)) {
     value = v;
     return true; // Need to rerun calcs
   }
@@ -519,7 +532,7 @@ bool INcolor::convertAndSet(const char* p1) {
   uint8_t r = (rgb >> 16) & 0xFF;
   uint8_t g = (rgb >> 8) & 0xFF;
   uint8_t b = rgb & 0xFF;
-  if ((r != this->r) || (g != this->g) || (b != this->b)) {
+  if (changed(r, this->r) || changed(g, this->g) || changed(b, this->b)) {
     this->r = r;
     this->g = g;
     this->b = b;
@@ -528,7 +541,7 @@ bool INcolor::convertAndSet(const char* p1) {
   return false; // nothing changed
 }
 bool INtext::convertAndSet(const String &payload) {
-  if (!(payload == value)) {
+  if (changed(payload, value)) {
     value = payload; 
     return true; // Need to rerun calcs
   }
@@ -623,21 +636,23 @@ void OUT::sendWired(bool retain, uint8_t qos) { // defaults to MQTT_RETAIN MQTT_
 }
 // TO-ADD-OUTxxx
 void OUTfloat::set(const float newvalue) {
-  if (newvalue != value) {
+  // changed() not != : NAN != NAN is true, so a sensor stuck invalid would otherwise resend
+  // IO_PAYLOAD_INVALID every single read and re-run every wired control with it.
+  if (changed(newvalue, value)) {
     value = newvalue;
     send();
     sendWired();
   }
 }
 void OUTuint16::set(const uint16_t newvalue) {
-  if (newvalue != value) {
+  if (changed(newvalue, value)) {
     value = newvalue;
     send();
     sendWired();
   }
 }
 void OUTtext::set(const String newvalue) {
-  if (newvalue != value) {
+  if (changed(newvalue, value)) {
     value = newvalue;
     send();
     sendWired();
@@ -648,11 +663,17 @@ void OUTbool::send() {
   frugal_iot.messages->send(path(), String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 void OUTbool::set(const bool newvalue) {
-  if (newvalue != value) {
+  if (changed(newvalue, value)) {
     value = newvalue;
     send();
     sendWired();
   }
+}
+// Base is a no-op - see the declaration in io.h. A uint16, bool or text output has no value it
+// could publish that does not also look like a legitimate reading, so it stays as it was.
+void OUT::setInvalid() { }
+void OUTfloat::setInvalid() {
+  set(NAN); // changed() in set() means this publishes once on the transition, not every read
 }
 
 // TO-ADD-OUTxxx

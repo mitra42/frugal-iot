@@ -52,6 +52,21 @@ class IN : public IO {
     // TO-ADD-INxxx
     virtual float floatValue();
     virtual bool boolValue();
+    /* Does this input currently hold a real reading?
+     *
+     * False once the sensor feeding it has published IO_PAYLOAD_INVALID, i.e. its validate()
+     * failed and it has no reading to give. A Control that cares should test this before
+     * trusting floatValue() - which deliberately keeps returning the last good value, so a
+     * control that does NOT test it behaves exactly as it did before this existed.
+     *
+     * Note this is about "there is no reading", not "the reading looks wrong": a sensor may
+     * legitimately pass an extreme value outside its declared min/max straight through, and
+     * that value is valid. Out-of-range display is a separate concern, handled in the UX.
+     *
+     * Only the float types can express invalid (there is no NaN for uint16 or bool), so the
+     * base returns true and INfloat overrides it.
+     */
+    virtual bool isValid();
     virtual bool convertAndSet(const String &payload);
     bool dispatch(System_Message &msg) override;
     void setup();
@@ -67,6 +82,14 @@ class OUT : public IO {
     virtual float floatValue();
     virtual bool boolValue();
     virtual void sendWired(bool retain = MQTT_RETAIN, uint8_t qos = MQTT_QOS_ATLEAST1);
+    /* Publish "there is no reading" on this output.
+     *
+     * Called by a sensor when it could not get a reading - a failed read, an absent device, a
+     * validate() that rejected the value. Virtual rather than a cast in Sensor, because only the
+     * float types have a NaN to carry it: the base is a deliberate no-op so OUTuint16/OUTbool/
+     * OUTtext simply do not participate, and no RTTI is needed to tell them apart.
+     */
+    virtual void setInvalid();
     bool dispatch(System_Message &msg) override;
   protected: // Most of IN appears to need to be public
 };
@@ -79,6 +102,7 @@ class INfloat : public IN {
     INfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, float default_min, float default_max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
+    bool isValid() override; // False when value is NaN, i.e. the sensor published IO_PAYLOAD_INVALID
     uint8_t width; // Cant be protected because used in e.g. control_oled_ht.cpp 
     virtual String StringValue();
     void discover() override;
@@ -191,6 +215,7 @@ class OUTfloat : public OUT {
     OUTfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, float default_min, float default_max, char const * const color, const bool wireable);
     OUTfloat(const OUTfloat &other);
     void set(const float newvalue); // Set and send if changed
+    void setInvalid() override; // set(NAN) - publishes IO_PAYLOAD_INVALID
     bool dispatch(System_Message &msg) override;
     void discover() override;
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required

@@ -26,6 +26,21 @@ void Control_Hysteresis::debug(const char* const where) {
 #endif //CONTROL_HYSTERESIS_DEBUG
 
 void Control_Hysteresis::act() {
+  if (!allInputsValid()) {
+    // One of the inputs is carrying "no reading", so there is no basis on which to change the
+    // output - hold it where it is. Note holding is not automatically the safe choice: a control
+    // driving something with a safe state of its own (an irrigation valve wants to close, not
+    // stay open) should override act() rather than inherit this.
+    #ifdef CONTROL_HYSTERESIS_DEBUG
+      debug("Control_Hysteresis holding - an input has no reading");
+    #endif
+  } else {
+    actInner();
+  }
+};
+
+// The original body, reached only when every input holds a real reading
+void Control_Hysteresis::actInner() {
   const float now = inputs[0]->floatValue();
   const bool greater = inputs[1]->boolValue();
   const float lim = inputs[2]->floatValue();

@@ -119,5 +119,8 @@ void Sensor_DHT::readValidateConvertSet() {
 
     temperature->set(temp); // Will also send message
     humidity->set(humy);
+  } else {
+    // Note Sensor_DHT has no validate() - the library's own error code is the only check
+    setOutputsInvalid();
   }
 }

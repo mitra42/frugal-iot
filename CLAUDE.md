@@ -415,6 +415,62 @@ cc->outputs[0]->wireTo(frugal_iot.messages->setPath("heating/on"));
 Paths follow the pattern `<device_id>/<leaf>`. `setPath` creates a writable endpoint; `path` creates
 a readable one — both just build the topic string, the actual subscribe only happens via `IN::wireTo()`.
 
+## Invalid readings — how "there is no reading" propagates
+
+A sensor that cannot get a reading publishes `nan` rather than publishing nothing. Before this
+existed, a failed read was *silent*: `Sensor_Float::readValidateConvertSet()` dropped the value,
+no message went out, and every downstream `IN` kept its last good reading indefinitely. Since
+`OUT::set()` is send-on-change, "the sensor is dead" and "the value has not changed" looked
+identical on the wire — so a `Control_Hysteresis` driving a valve would hold it open forever on
+the last reading before the cable was cut.
+
+**The mechanism, end to end:**
+
+1. `validate()` fails (or the bus read fails, or the device is absent).
+2. The sensor calls `setOutputsInvalid()` (`sensor.h`), or `setInvalid()` on one output where
+   only some are affected.
+3. `OUTfloat::setInvalid()` is `set(NAN)`, and `OUTfloat::StringValue()` serialises NaN as the
+   canonical `IO_PAYLOAD_INVALID` — so `nan` goes out on the topic and to `wiredPath`.
+4. `INfloat::convertAndSet()` recognises it and stores NaN; `IN::isValid()` returns false.
+5. A `Control` can test `allInputsValid()` in `act()` and do something sensible.
+
+**Three things that are easy to get wrong here:**
+
+- **`changed()`, never `!=`.** IEEE says `NaN != NaN`, so a plain `newvalue != value` reports
+  "changed" on *every* read while a sensor is invalid — republishing `nan` every cycle and
+  re-running every wired control with it. `changed()` (`misc.h`) treats two NaNs as equal, so
+  the transition into and out of invalid publishes once. Every `set()` and `convertAndSet()` in
+  `io.cpp` uses it, including the types with no NaN, so they all read the same way.
+- **Do not build the payload with `String(NAN, width)`.** Arduino's `String(double, dp)` calls
+  `dtostrf(v, dp+2, dp, buf)`, which right-justifies to that width — so a width of 2 yields
+  `" nan"` with a leading space while a width of 1 yields `"nan"`. The wire form would then vary
+  by sensor. `StringValue()` emits `IO_PAYLOAD_INVALID` directly instead.
+- **Invalid is not the same as out-of-range.** Invalid means *there is no reading*. A sensor may
+  deliberately pass an extreme value outside its declared `min`/`max` straight through, and that
+  value is valid — a real 70°C from a probe declared 0..50 is information, not an error. Custom
+  `validate()` overrides should keep that distinction; flagging out-of-range is the UX's job
+  (`frugal-iot-client` already has an `outOfRange` notion for it).
+
+**Only the float types can express it.** There is no NaN for a `uint16` or a `bool`, and any
+sentinel would be indistinguishable from a real reading. `OUT::setInvalid()` is therefore a
+deliberate no-op on `OUTuint16`/`OUTbool`/`OUTtext` and `IN::isValid()` returns true for them, so
+`setOutputsInvalid()` is safe to call on a sensor with mixed output types — it marks the floats
+and leaves the rest. `Sensor_Uint16`, `Sensor_ENS160` and `Sensor_Health` consequently have no
+invalid path at all.
+
+**Deep sleep:** nothing here uses `millis()`, a timer slot, or RTC memory. `nan` is an ordinary
+retained MQTT value, so a node waking from deep sleep or reconnecting receives the sensor's last
+known state along with everything else.
+
+**Known gap:** this detects "the sensor could not read", not "the node went away". A node that
+dies while its last reading was valid leaves that value retained, and nothing currently notices.
+Catching that needs a time-based staleness check on `IN`, which is a separate piece of work —
+relevant once sensors and actuators live on physically separate devices.
+
+**Other repos:** `nan` has to be understood by `frugal-iot-logger` and `frugal-iot-client`, which
+each carry their own copy of `valueFromText()` (the comment in both says so). `frugal-iot-server`
+needs nothing — `lib/data-loader.js` already filters `isNaN` out of the graph series.
+
 ## Available Sensors
 
 | Class | File | Measures |
