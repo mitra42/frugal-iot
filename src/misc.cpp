@@ -9,7 +9,19 @@
 //#include <stdarg.h> // Doesnt appear to be needed - was in sample code from Jonathan Semple
 //#include "WString.h" // Doesnt appear to be needed - was in sample code from Jonathan Semple
 
+#include <cmath> // for std::isnan in changed()
+
 #define PRINTF_BUFFER_SIZE 256 // Size of buffer used by printf functions
+
+// See misc.h for why these exist. Changed unless the two are equal, or both are NaN - note
+// (a == b) is already false when either is NaN, so the second test is what makes an invalid
+// reading compare equal to itself.
+bool changed(float a, float b) {
+  return !((a == b) || (std::isnan(a) && std::isnan(b)));
+}
+bool changed(double a, double b) {
+  return !((a == b) || (std::isnan(a) && std::isnan(b)));
+}
 
 const String StringF(const char* format, ...) {
     char buffer[PRINTF_BUFFER_SIZE]; // out of scope at end of this

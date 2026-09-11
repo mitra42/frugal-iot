@@ -107,7 +107,10 @@ bool Sensor_AHT::validate(float temp, float humy) {
 }
 
 void Sensor_AHT::readValidateConvertSet() {
-  if (present) {
+  if (!present) {
+    // Absent at setup() and not retried - say so rather than publishing nothing at all
+    setOutputsInvalid();
+  } else {
     uint8_t cmd[3] = { AHT_CMD_TRIGGER, AHT_CMD_TRIGGER_ARG1, AHT_CMD_TRIGGER_ARG2 };
     uint8_t data[AHT_LEN_DATA];
     bool ok;
@@ -115,6 +118,7 @@ void Sensor_AHT::readValidateConvertSet() {
     spinTillReady(ok);
     if (!ok || !interface.read(data, AHT_LEN_DATA)) {
       connected = false;
+      setOutputsInvalid();
       #ifdef SENSOR_AHT_DEBUG
         Serial.print(id); Serial.println(F(": failed to read"));
       #endif
@@ -142,10 +146,11 @@ void Sensor_AHT::readValidateConvertSet() {
         connected = true;
         temperature->set(temp);
         humidity->set(humy);
-      #ifdef SENSOR_AHT_DEBUG
       } else {
-        Serial.print(id); Serial.println(F(": reading failed validation"));
-      #endif
+        setOutputsInvalid();
+        #ifdef SENSOR_AHT_DEBUG
+          Serial.print(id); Serial.println(F(": reading failed validation"));
+        #endif
       }
     }
   }

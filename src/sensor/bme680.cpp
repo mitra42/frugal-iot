@@ -362,7 +362,10 @@ bool Sensor_BME680::validateGas(float kohm) {
 }
 
 void Sensor_BME680::readValidateConvertSet() {
-  if (present) {
+  if (!present) {
+    // Absent at setup() and not retried - say so rather than publishing nothing at all
+    setOutputsInvalid();
+  } else {
     configureMeasurement();
     // Trigger one measurement; the chip returns to sleep on its own afterwards
     interface.sendRegister(BME680_REG_CTRL_MEAS, BME680_CTRL_MEAS_FORCED_X1);
@@ -381,6 +384,7 @@ void Sensor_BME680::readValidateConvertSet() {
     uint8_t d[BME680_LEN_FIELD];
     if (!(status & BME680_NEW_DATA_MSK)) {
       connected = false;
+      setOutputsInvalid();
       #ifdef SENSOR_BME680_DEBUG
         Serial.println(F("BME680: timed out waiting for a measurement"));
       #endif
@@ -394,6 +398,7 @@ void Sensor_BME680::readValidateConvertSet() {
       }
       if (allff) {
         connected = false;
+        setOutputsInvalid();
         #ifdef SENSOR_BME680_DEBUG
           Serial.println(F("BME680: all 0xFF - device not responding"));
         #endif
@@ -415,7 +420,12 @@ void Sensor_BME680::readValidateConvertSet() {
           Serial.print(humy, 1); Serial.print(F("% "));
           Serial.print(press, 1); Serial.print(F("hPa status=0x")); Serial.println(gas_lsb, HEX);
         #endif
-        if (validate(temp, humy, press)) {
+        if (!validate(temp, humy, press)) {
+          setOutputsInvalid();
+          #ifdef SENSOR_BME680_DEBUG
+            Serial.println(F("BME680: reading failed validation"));
+          #endif
+        } else {
           connected = true;
           temperature->set(temp);
           humidity->set(humy);
@@ -432,23 +442,24 @@ void Sensor_BME680::readValidateConvertSet() {
               #endif
               if (validateGas(kohm)) {
                 gas->set(kohm);
-              #ifdef SENSOR_BME680_DEBUG
               } else {
-                Serial.println(F("BME680: gas reading failed validation"));
-              #endif
+                gas->setInvalid(); // Only gas - the other three readings are good
+                #ifdef SENSOR_BME680_DEBUG
+                  Serial.println(F("BME680: gas reading failed validation"));
+                #endif
               }
-            #ifdef SENSOR_BME680_DEBUG
             } else {
-              Serial.println(F("BME680: gas invalid or heater not stable - skipping gas"));
-            #endif
+              gas->setInvalid();
+              #ifdef SENSOR_BME680_DEBUG
+                Serial.println(F("BME680: gas invalid or heater not stable - skipping gas"));
+              #endif
             }
           }
-        #ifdef SENSOR_BME680_DEBUG
-        } else {
-          Serial.println(F("BME680: reading failed validation"));
-        #endif
         }
       }
+    } else {
+      connected = false;
+      setOutputsInvalid(); // The read itself failed - previously fell through silently
     }
   }
 }

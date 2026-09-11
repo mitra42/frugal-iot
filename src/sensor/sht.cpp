@@ -89,15 +89,22 @@ void Sensor_SHT::readValidateConvertSet() {
       if (validate(temp, humy)) {
           temperature->set(temp);
           humidity->set(humy);
+      } else {
+        setOutputsInvalid(); // Publish "no reading" rather than leaving the last one standing
+        #ifdef SENSOR_SHT_DEBUG
+          Serial.println(F("SHT reading failed validation"));
+        #endif // SENSOR_SHT_DEBUG
       }
-    #ifdef SENSOR_SHT_DEBUG
     } else {
-      Serial.println(F("SHT sensor did not return data"));
-    #endif // SENSOR_SHT_DEBUG
+      setOutputsInvalid();
+      #ifdef SENSOR_SHT_DEBUG
+        Serial.println(F("SHT sensor did not return data"));
+      #endif // SENSOR_SHT_DEBUG
     }
-  #ifdef SENSOR_SHT_DEBUG
   } else {
-    Serial.println(F("SHT sensor not ready"));
-  #endif
+    setOutputsInvalid();
+    #ifdef SENSOR_SHT_DEBUG
+      Serial.println(F("SHT sensor not ready"));
+    #endif // SENSOR_SHT_DEBUG
   }
 }
