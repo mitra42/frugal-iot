@@ -432,7 +432,7 @@ a readable one — both just build the topic string, the actual subscribe only h
 | `Sensor_BME280` | sensor/bmx280 | Temperature + pressure (hPa) + humidity. Freestanding, no external library |
 | `Sensor_BME680` | sensor/bme680 | Temperature + humidity + pressure (hPa) + gas resistance (kΩ). Also handles the BME688. Freestanding, no external library |
 | `Sensor_LoadCell` | sensor/loadcell | Weight via HX711 |
-| `Sensor_DS18B20` | sensor/ds18b20 | 1-Wire temperature |
+| `Sensor_DS18B20` | sensor/ds18b20 | 1-Wire temperature. Bound to a probe by ROM id, not bus position - see "1-Wire" below |
 | `Sensor_MS5803` | sensor/ms5803 | Pressure + temperature |
 | `Sensor_ENS160` | sensor/ens160 | Air quality — AQI, TVOC, eCO2 (+ aqi500 on an ENS161). Takes temperature and humidity as **`IN`s** for its compensation |
 | `Sensor_Button` | sensor/button | Button press events |
@@ -814,6 +814,87 @@ Bosch's own `calc_*` functions (compiled from `bme68x.c`) over 200,000 randomize
 calibration/raw combinations plus 20,000 randomized register maps for the calibration
 unpacking. Temperature, pressure, humidity, `t_fine`, both gas formulas, `res_heat` and
 `gas_wait` were bit-identical, and all 26 unpacked coefficients matched.
+
+### 1-Wire (`system/onewire.h`) and how DS18B20 probes are bound
+
+`System_OneWire` is one object per physical bus, shared by every device on it - the same split as
+`System_RS485`/`System_Modbus` and `System_I2C`/`TwoWire`. Two things drove it:
+
+**Position is not identity.** `DallasTemperature::getTempCByIndex(n)` re-walks the OneWire search
+tree on every read and returns whatever sits at position *n*. Add, remove or replace a probe and
+everything after it renumbers — so two believable temperatures end up attributed to the wrong
+things, with nothing reporting an error. `Sensor_DS18B20` addresses by ROM id instead.
+
+**A conversion is expensive and shared.** `requestTemperatures()` broadcasts a convert to the
+whole bus and then blocks until it completes — 750 ms at 12-bit, because `waitForConversion`
+defaults to true. A sensor owning its own bus object pays that itself, so three probes on one pin
+cost 2.25 s of blocking per cycle for one conversion's worth of information. The bus converts at
+most once per `SYSTEM_ONEWIRE_RECONVERT_MS` (1 s), so the first sensor in a `periodically()` pass
+pays the 750 ms and the rest read the scratchpad it filled. `converted` starts false and the
+object is rebuilt by the restart that deep sleep really is, so the first read after any boot or
+wake always converts rather than reading a scratchpad nothing ever filled. `millis()` is the right
+clock here — this is sub-cycle timing, and the flag covers the sleep case.
+
+**Binding needs no attention in the ordinary case, and is never typed into a sketch.** A stored
+binding whose probe is present is always used. Beyond that there is exactly one automatic rule:
+
+> If exactly one sensor on the bus is unbound **and** exactly one probe is unclaimed, they are
+> matched up.
+
+That single rule covers everything worth automating:
+
+| Situation | What happens |
+|---|---|
+| One sensor, one probe, nothing configured | Matched — the ordinary node needs no configuration at all |
+| A probe replaced on a multi-probe bus | The others keep their stored bindings, so the orphaned sensor and the new probe are the only two left over, and are matched |
+| Binding a multi-probe bus by hand | Name all but one; the last follows |
+| Two or more unbound, or two or more unclaimed | Left alone — guessing which probe is the air one and which is the battery one is precisely the silent mis-attribution that ROM-id addressing exists to prevent. Unbound sensors publish `nan` and the portal lists the ids to choose from |
+| A stored binding whose probe has gone | Dropped, so the sensor becomes an orphan and the rule above may re-match it. The stored id stays on disk on purpose: if that probe is reconnected, the explicit choice wins again |
+
+An automatic match is deliberately **not** persisted — storing it would mean that replacing the
+probe left the node bound to an id that no longer exists, turning a setup that works into one
+that does not, for no gain, since the same match is made again on the next boot.
+
+The matching is the one decision no single sensor has the information to make, so it lives on the
+bus (`System_OneWire::resolveUnbound()`, reached through a small `OneWireDevice` interface so that
+`system/` need not know about `sensor/`). It runs on the first read rather than in `setup()`,
+because at setup time the other sensors on the bus may not have read their own config yet;
+`periodically()` only runs once the whole group is set up. It re-runs after any binding changes,
+which is what lets naming the second of three probes pull in the third.
+
+Binding is `set/<sensorid>/id = <romid>`, persisted to LittleFS, so the captive portal, the UX and
+MQTT all reach it the same way. The portal shows the dropdown only when there is more than one
+probe — with one there is nothing to choose and a row of hex is noise. So a multi-probe node is
+given meaningful sensor ids in the sketch and bound once, on site, from a phone:
+
+```cpp
+System_OneWire* ow = System_OneWire::forPin(SENSOR_DS18B20_PIN);
+frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20-air",  "Air Temperature",     ow, true));
+frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20-batt", "Battery Temperature", ow, true));
+```
+
+The single-probe case stays one line and needs no bus object — the pin-taking constructor calls
+`System_OneWire::forPin()`, which returns the shared bus for that pin, so two sensors on one pin
+share automatically whether or not the sketch knows buses exist.
+
+```cpp
+frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", SENSOR_DS18B20_PIN, true));
+```
+
+**Setup cost, which every deep-sleep wake pays.** `begin()` is ~90 ms — a 50 ms settle plus an
+enumeration, retried up to three times only if nothing is found — and `getDeviceCount()` is free,
+returning the count `begin()` cached. Sharing the bus means that is paid once rather than per
+sensor, and the old per-sensor dummy `requestTemperatures()` in `setup()` is gone, so a
+three-probe bus went from roughly 2.5 s of every wake to about 110 ms. (That dummy conversion
+carried a comment saying it was needed "to reset OneWire which seems to fail otherwise"; it looks
+redundant given the first real read converts anyway, but it was clearly added empirically and has
+not been re-tested on hardware.)
+
+**`validate()` does not reject 0.0 °C.** It used to, presumably to catch a startup artifact. That
+was survivable while a rejected reading was silently dropped, but once invalid readings began
+being published it meant a probe at freezing reported "no reading" and any wired
+`Control_Hysteresis` held. The disconnected sentinel (`DEVICE_DISCONNECTED_C`, -127 — the same
+value OSPIT uses) and the 85 °C power-on value are still rejected.
 
 ### Modbus over RS485 (`system/modbus.h`)
 

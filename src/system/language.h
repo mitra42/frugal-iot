@@ -33,7 +33,9 @@ struct Texts {
         *SoilMoistureTare,
         *CycleTime,
         *WakeTime,
-        *Offset
+        *Offset,
+        *OneWireProbe,
+        *OneWireUnbound
         ;
 };
 

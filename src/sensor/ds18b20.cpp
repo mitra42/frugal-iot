@@ -1,89 +1,127 @@
-/* Frugal-IoT DS18B20 sensor
+/* Frugal-IoT DS18B20 sensor - see ds18b20.h for the binding rules
 
-It should be noted, that it seems to require an  ~4.7k resistor between data and positive.
-Our test are run at 3.3V though it is supposed to also run at 5V.
-
+It should be noted, that it seems to require an ~4.7k resistor between data and positive.
+Our tests are run at 3.3V though it is supposed to also run at 5V.
 */
 #include "sensor/ds18b20.h"
+#include "system/frugal.h"
+#include "system/language.h" // for Texts
 #include <cmath>
+#include <string.h> // for memcpy
 
-//#define SENSOR_DS18B20_DEBUG
-
-/**
- * @brief Constructor
- * 
- * Sets up OneWire communication and defines operational parameters.
- * Temperature range: -55°C to +125°C
- * Color label "orange" for UI or visualization systems.
- */
-Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain)
+Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, System_OneWire* bus, bool retain)
   : Sensor_Float(id, name, 1, DEFAULT_ds18b20_ds18b20_min, DEFAULT_ds18b20_ds18b20_max, DEFAULT_ds18b20_ds18b20_color, retain),  // width=1 for 1 decimal place
-    _oneWire(pin),
-    _sensors(&_oneWire),
-    _index(index) {
+    bus(bus) {
   //TODO-213 fix this: setDefaultColor(DEFAULT_ds18b20_ds18b20_color);
 }
 
-/**
- * @brief Initializes DS18B20 sensor bus
- * 
- * Starts the DallasTemperature library, which scans for devices on the bus.
- * Each connected DS18B20 can be accessed by index or by unique 64-bit address.
- * Sets resolution to 12-bit for full precision (0.0625°C).
- */
+Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, bool retain)
+  : Sensor_DS18B20(id, name, System_OneWire::forPin(pin), retain) { }
+
 void Sensor_DS18B20::setup() {
-    Sensor_Float::setup(); 
-    _sensors.begin();
-    // Set 12-bit resolution for full precision (0.0625°C)
-    _sensors.setResolution(12);
-    _sensors.requestTemperatures(); // thisd is just to reset OneWire which seems to fail otherwise.
+    bus->initialize();     // Idempotent - every probe on this bus calls it
+    bus->add(this);        // So the bus can match unbound sensors to unclaimed probes
+    Sensor_Float::setup(); // Reads config from the filesystem, which may dispatch a stored id
+    if (bound && !bus->isPresent(addr)) {
+        // Configured for a probe that is not on the bus. Drop the binding rather than read
+        // whatever else is there - resolveUnbound() may well re-match this sensor to a
+        // replacement probe. The stored id is left on disk on purpose: if that probe is ever
+        // reconnected, the explicit choice should win again.
+        bound = false;
+        #ifdef SENSOR_DS18B20_DEBUG
+            Serial.print(id); Serial.println(F(": bound probe not on the bus"));
+        #endif
+    }
+    // Not resolved here: the other sensors on this bus have not necessarily run setup() yet, so
+    // which of them are unbound is not yet known. Deferred to the first read - see readFloat().
+}
+
+bool Sensor_DS18B20::setAddress(const String& s) {
+    const bool ok = System_OneWire::addressFromString(s, addr);
+    if (ok) {
+        bound = true;
+        resolved = false; // Binding one sensor can leave exactly one other to be matched up
+    }
+    return ok;
+}
+
+void Sensor_DS18B20::owBindTo(const uint8_t* a) {
+    memcpy(addr, a, SYSTEM_ONEWIRE_ADDRLEN);
+    bound = true;
+    // Deliberately not written to the filesystem. Storing an automatic match would mean that
+    // replacing this probe left the node bound to an id that no longer exists - turning a setup
+    // that works into one that does not, for no gain, since the same match is made again next boot.
     #ifdef SENSOR_DS18B20_DEBUG
-        Serial.print(F("DS18B20 sensor initialized on index ")); Serial.print(_index); 
-        Serial.print(F(" with resolution: ")); Serial.println(_sensors.getResolution());
+        Serial.print(id); Serial.print(F(": auto-bound to ")); Serial.println(System_OneWire::addressToString(addr));
     #endif
 }
 
-/**
- * @brief Validates the temperature reading
- * 
- * The DS18B20 sensor can return invalid values:
- * - 85°C: power-on reset value (sensor not initialized)
- * - 0°C: sometimes returned during startup before sensor is ready
- * - NaN: sensor disconnected
- * 
- * This override rejects all these invalid readings.
- * 
- * @param v The temperature value to validate
- * @return bool True if the value is valid, false otherwise
- */
 bool Sensor_DS18B20::validate(float v) {
-    return !std::isnan(v) && (v != 0.0f) && (v < 80);
+    // DEVICE_DISCONNECTED_C is -127, and 85C is the power-on reset value of an uninitialised
+    // probe. 0.0C is NOT excluded - it is a real temperature, and excluding it made a probe at
+    // freezing publish "no reading".
+    return !std::isnan(v) && (v > DEVICE_DISCONNECTED_C) && (v < 80);
 }
 
-/**
- * @brief Reads temperature from the specified DS18B20 sensor with full precision with full precision
- * 
- * Requests temperature data from all devices on the OneWire bus and then
- * retrieves the temperature for the configured sensor index.
- * Returns the full precision value WITHOUT rounding.
- * 
- * @return float Temperature in Celsius with decimal precision, or NAN if sensor is disconnected.
- */
 float Sensor_DS18B20::readFloat() {
-    _sensors.requestTemperatures();                 // Trigger measurement on all sensors
-    float tempC = _sensors.getTempCByIndex(_index); // Read temperature for specific index
-
-    if (tempC != DEVICE_DISCONNECTED_C) {
+    if (!resolved) {
+        // First read after setup, or after a binding changed. Every sensor on this bus has run
+        // setup() by now - periodically() only runs once the whole group is set up - so which
+        // sensors are unbound is finally known.
+        resolved = true;
+        bus->resolveUnbound();
+    }
+    float tempC = NAN;
+    if (!bound) {
+        // Nothing to read from. Returning NAN publishes the invalid state, which is the honest
+        // answer and is visible in the UX, rather than silently reporting some other probe.
         #ifdef SENSOR_DS18B20_DEBUG
-            Serial.print(F("DS18b20 returned:")); Serial.println(tempC);
+            Serial.print(id); Serial.println(F(": unbound - set its id in the portal"));
         #endif
-        return tempC;  // Return full precision temperature (no rounding!)
     } else {
+        tempC = bus->tempC(addr);
         #ifdef SENSOR_DS18B20_DEBUG
-            Serial.print(F("Error: DS18B20 sensor index "));
-            Serial.print(_index);
-            Serial.println(F(" not detected or disconnected"));
+            Serial.print(id); Serial.print(F(" returned:")); Serial.println(tempC);
         #endif
-        return NAN; // Return Not-A-Number if sensor missing
+    }
+    return tempC; // validate() turns the disconnected sentinel into "no reading"
+}
+
+void Sensor_DS18B20::dispatch(System_Message &msg) {
+    if (msg.isSet() && (msg.module() == id) && (msg.leaf() == "id")) {
+        if (setAddress(msg.payload)) {
+            msg.maybeWriteToFSandEcho(); // Persisted: which probe is which survives a reboot
+        } else {
+            Serial.print(id); Serial.print(F(": not a 1-Wire id: ")); Serial.println(msg.payload);
+        }
+    } else {
+        Sensor::dispatch(msg);
+    }
+}
+
+/* The reading, plus - when there is a choice to make - the ids actually on the bus.
+ *
+ * Only shown when there is more than one probe, because with one there is nothing to choose and
+ * a row of hex would be noise. Readable from a phone on the node's own AP, so binding a probe
+ * never needs a serial cable.
+ */
+void Sensor_DS18B20::captiveLines(AsyncResponseStream* response) {
+    Sensor_Float::captiveLines(response);
+    const uint8_t n = bus->count();
+    if (n > 1) {
+        response->print(String(F("<p><label>")) + name + " " + T->OneWireProbe + ":<br>");
+        response->print(String(F("<select name='")) + id + "/id' onchange=\"s(this.name,this.value)\">");
+        uint8_t a[SYSTEM_ONEWIRE_ADDRLEN];
+        for (uint8_t i = 0; i < n; i++) {
+            if (bus->addressAt(i, a)) {
+                const String s = System_OneWire::addressToString(a);
+                const bool isMine = bound && (memcmp(a, addr, SYSTEM_ONEWIRE_ADDRLEN) == 0);
+                response->print(String(F("<option value='")) + s + "'" + (isMine ? " selected" : "") + ">" + s + "</option>");
+            }
+        }
+        if (!bound) { // Nothing chosen yet - do not let the first entry look like a choice made
+            response->print(String(F("<option value='' selected>")) + T->OneWireUnbound + "</option>");
+        }
+        response->print(F("</select></label></p>"));
     }
 }

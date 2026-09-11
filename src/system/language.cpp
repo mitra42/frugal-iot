@@ -33,7 +33,9 @@ void System_Captive::setupLanguages() {
     F("Soil Moisture Tare"),
     F("Cycle Time (ms)"),
     F("Wake Time (ms)"),
-    F("Offset")
+    F("Offset"),
+    F("Probe"),
+    F("not selected")
   };
 
   T = TT[Language_EN];
@@ -64,7 +66,9 @@ void System_Captive::setupLanguages() {
       F("Humidité du Sol Tare"),
       F("Temps de Cycle (ms)"),
       F("Temps d'Éveil (ms)"),
-      F("Décalage")
+      F("Décalage"),
+      F("Sonde"),
+      F("non selectionnee")
       };
   #endif //LANGUAGE_FR
 
@@ -94,7 +98,9 @@ void System_Captive::setupLanguages() {
       F("Tara de Humedad del Suelo"),
       F("Tiempo de Ciclo (ms)"),
       F("Tiempo de Activación (ms)"),
-      F("Desplazamiento")
+      F("Desplazamiento"),
+      F("Sonda"),
+      F("sin seleccionar")
  };
   #endif //LANGUAGE_SP
 
@@ -124,7 +130,9 @@ void System_Captive::setupLanguages() {
       F("Bodenfeuchtigkeit Tara"),
       F("Zykluszeit (ms)"),
       F("Aufwachzeit (ms)"),
-      F("Versatz")
+      F("Versatz"),
+      F("Fuehler"),
+      F("nicht gewaehlt")
       };
   #endif //LANGUAGE_DE
 
@@ -154,7 +162,9 @@ void System_Captive::setupLanguages() {
       F("Bodemvocht Tarra"),
       F("Cyclustijd (ms)"),
       F("Wektijd (ms)"),
-      F("Correctie")
+      F("Correctie"),
+      F("Sensor"),
+      F("niet gekozen")
       };
   #endif //LANGUAGE_NL
 
@@ -184,7 +194,9 @@ void System_Captive::setupLanguages() {
       F("Tara Kelembaban Tanah"),
       F("Waktu Siklus (ms)"),
       F("Waktu Aktif (ms)"),
-      F("Offset")
+      F("Offset"),
+      F("Probe"),
+      F("belum dipilih")
       };
   #endif //LANGUAGE_ID
 
@@ -214,7 +226,9 @@ void System_Captive::setupLanguages() {
       F("मृदा नमी टेर"),
       F("चक्र समय (ms)"),
       F("जागरण समय (ms)"),
-      F("ऑफसेट")
+      F("ऑफसेट"),
+      F("प्रोब"),
+      F("चयनित नहीं")
       };
   #endif //LANGUAGE_HI
 }

@@ -35,6 +35,7 @@
 
 //TO-ADD-SYSTEM - note dont need to add here if adding in system_frugal.h
 #include "system/modbus.h" // Compiles to nothing unless SYSTEM_MODBUS_WANT
+#include "system/onewire.h" // Shared 1-Wire bus, used by Sensor_DS18B20
 #include "system/fs.h"
 #include "system/frugal.h"
 
