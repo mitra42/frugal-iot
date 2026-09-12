@@ -79,7 +79,7 @@
 class Sensor_DissolvedOxygen : public Sensor_Analog {
   public:
     Sensor_DissolvedOxygen(const char* const id, const char * const name, const uint8_t pin,
-      const char* color = "blue", const bool retain = true);
+      const char* color = DEFAULT_do_do_color, const bool retain = true);
     // Held as IN* not INfloat* deliberately: INfloat::dispatch() and ::discover() are
     // protected overrides, only reachable through the public IN declarations.
     INfloat* watertemperature;

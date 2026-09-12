@@ -495,6 +495,24 @@ Sensors whose id comes from the sketch and whose ranges are computed at runtime 
 scales `current`/`power` from `MAX_CURRENT`, `Sensor_Ultrasonic` takes a max — deliberately keep
 those runtime values, which are more accurate than a schema constant.
 
+**Colours come from the macros, not from literals.** `DEFAULT_<module>_<leaf>_color` is the one
+place a colour is decided; writing `"blue"` or `"#0000ff"` into a constructor creates a second
+place that can drift from the schema silently. Note the macro is named for the **schema module**,
+which is not always the file: `Sensor_BH1750` uses `DEFAULT_lux_lux_color`, because the module is
+`lux`.
+
+Three kinds of colour literal are deliberately still there, and are not the same thing:
+
+- **Values, not display colours.** `Actuator_Ledbuiltin`'s colour argument is what the LED
+  actually glows, not how the UX draws it. A schema display colour would be the wrong source.
+- **Generic defaults with no module.** `OUTtext`'s `color="#000000"` default argument belongs to
+  no module or leaf, so no macro applies.
+- **Leaves the schema does not describe.** `Sensor_Button` publishes `click`/`long`/`double`/
+  `triple` against a schema with only `button`; `Sensor_DissolvedOxygen`'s water-temperature input
+  and `Control_Gsheets` are not described at all; and `Control_Oled_LoRaMesher` defines its own
+  `DEFAULT_*` macros in its header, with a comment saying it is "not in schema yet - and may never
+  be". Those are schema decisions, not conversions.
+
 **Adding a sensor means adding to `modules.yaml` too.** A module id with no entry there gets no
 UX labels, and `generate-defaults.js` emits no `DEFAULT_<module>_*` macros for it. Every module
 the library can publish now has one; the workflow is: edit
