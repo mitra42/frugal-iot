@@ -55,11 +55,11 @@ Sensor_INA219::Sensor_INA219(const char* const id, const char * const name,
   //TODO-213 define min/max/color in the UX defaults (generate-defaults.js) - literals for now
   // Current and power ranges scale with max_current, which is why they are not plain literals
   const float max_ma = max_current * 1000.0;
-  outputs.push_back(shunt   = new OUTfloat(id, "shunt",   "Shunt Voltage", 0, 2, -320, 320, "blue",   false));
-  outputs.push_back(bus     = new OUTfloat(id, "bus",     "Bus Voltage",   0, 3, 0, 32,     "green",  false));
-  outputs.push_back(current = new OUTfloat(id, "current", "Current",       0, 2, -max_ma, max_ma, "red", false));
-  outputs.push_back(power   = new OUTfloat(id, "power",   "Power",         0, 2, 0, 32 * max_ma, "orange", false));
-  outputs.push_back(load    = new OUTfloat(id, "load",    "Load Voltage",  0, 3, 0, 32,     "green",  false));
+  outputs.push_back(shunt   = new OUTfloat(id, "shunt",   "Shunt Voltage", 0, 2, -320, 320, DEFAULT_ina219_shunt_color,   false));
+  outputs.push_back(bus     = new OUTfloat(id, "bus",     "Bus Voltage",   0, 3, 0, 32,     DEFAULT_ina219_bus_color,  false));
+  outputs.push_back(current = new OUTfloat(id, "current", "Current",       0, 2, -max_ma, max_ma, DEFAULT_ina219_current_color, false));
+  outputs.push_back(power   = new OUTfloat(id, "power",   "Power",         0, 2, 0, 32 * max_ma, DEFAULT_ina219_power_color, false));
+  outputs.push_back(load    = new OUTfloat(id, "load",    "Load Voltage",  0, 3, 0, 32,     DEFAULT_ina219_load_color,  false));
   shunt->unit = "mV";
   bus->unit = "V";
   current->unit = "mA";

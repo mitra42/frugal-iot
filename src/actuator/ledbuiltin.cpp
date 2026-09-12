@@ -41,7 +41,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 Actuator_Ledbuiltin::Actuator_Ledbuiltin(const uint8_t pin, uint8_t brightnessInit, const char* colorInit) :
-  Actuator_Digital("ledbuiltin", "Built in LED", pin,  "yellow")
+  Actuator_Digital("ledbuiltin", "Built in LED", pin,  DEFAULT_ledbuiltin_on_color)
   { 
     #ifdef RGB_BUILTIN
       inputs.push_back(color = new INcolor("ledbuiltin", "color", "LED color", colorInit, false)); //TODO-131 color of UX should reflect color of LED
