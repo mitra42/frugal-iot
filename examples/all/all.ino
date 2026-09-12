@@ -168,6 +168,13 @@ void setup() {
   frugal_iot.controls->add(ch);
   ch->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
 
+  // A voltage out. Guarded by the pin, since it needs one wired to something that wants a control
+  // voltage - and on a C3 or S3, where this becomes PWM, an RC filter as well (see analog.h).
+  #ifdef ACTUATOR_ANALOG_PIN
+    frugal_iot.actuators->add(new Actuator_Analog("analog", "Analog Out", ACTUATOR_ANALOG_PIN,
+      DEFAULT_relay_on_color)); // No schema module of its own yet, so borrowing a colour
+  #endif
+
   // Carousel cycles between Control_Oled displays, so it only makes sense on a board with one.
   #ifdef ACTUATOR_OLED_WANT
     frugal_iot.controls->add(new Control_Carousel("Carousel"));
