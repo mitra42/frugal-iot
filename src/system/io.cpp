@@ -82,9 +82,7 @@ void IO::statusLines(Print* out, bool full) {
   if (full || wiredPath.length()) {
     statusLine(out, "wired", wiredPath, persisted("wired"));
   }
-  // strcmp, not the pointer comparison discover() uses. color and default_color are initialised
-  // from the same constructor argument, so "color != default_color" there compares a pointer with
-  // itself and never fires - that is TODO-213. Comparing the strings is what was meant.
+  // Same test discover() makes - see the note there on why it is strcmp
   if (full || (color && default_color && strcmp(color, default_color))) {
     statusLine(out, "color", String(color), persisted("color"), full ? String(default_color) : String());
   }
@@ -95,7 +93,19 @@ void IO::discover() {
   if (wireable) {
     frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "wired"), wiredPath, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   }
-  if (color != default_color) { //TODO-213 this is probably not a valid compare, will prob compare ptr not value
+  /* strcmp, not "color != default_color", which compared the two pointers.
+   *
+   * Both are initialised from the same constructor argument, so for almost every IO that was a
+   * pointer compared with itself: always equal, so the colour was never sent no matter how far
+   * the code had drifted from the schema. The exceptions were the sensors that call
+   * setDefaultColor() - Sensor_Soil, Sensor_LoadCell - where the two pointers differ and the
+   * colour was sent even when the strings were identical.
+   *
+   * setDefaultColor() is what shows the intent: those sensors take a colour from the sketch and
+   * record the schema's value as the default, so the question being asked is "did the sketch
+   * override it" - which is about the values, not about where they are stored.
+   */
+  if (color && default_color && strcmp(color, default_color)) {
     frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "color"), String(color), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   }
 }

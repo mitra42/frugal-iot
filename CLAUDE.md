@@ -396,6 +396,25 @@ feature is misbehaving, adding a `statusLine(out, "whatever", ...)` under `if (f
 two-line change that puts the answer on a page reachable from a phone, with no serial cable and no
 reflash.
 
+**Two `discover()` bugs were fixed alongside this**, both found by writing the same tests here:
+
+- `INfloat::discover()` and `INuint16::discover()` tested `min != default_max` where they meant
+  `max != default_max`, so `max` was sent or withheld on the strength of comparing the wrong
+  field. `OUTfloat`/`OUTuint16` had it right.
+- `IO::discover()` tested `color != default_color`, comparing the two **pointers**. Both are
+  initialised from the same constructor argument, so for almost every IO that was a pointer
+  compared with itself — the colour was never sent however far the code had drifted from the
+  schema. The exceptions were the sensors calling `setDefaultColor()` (`Sensor_Soil`,
+  `Sensor_LoadCell`), where the pointers differ and the colour was sent even when the strings
+  matched. `setDefaultColor()` shows the intent: those sensors take a colour from the sketch and
+  record the schema's as the default, so the question is "did the sketch override it" — about the
+  values, not where they live. Now `strcmp`.
+
+That second fix has a merge-order consequence worth knowing: on `main` six IOs have a code colour
+differing from the schema, so this makes them start publishing it. Merge the colours branch first
+(which makes code and schema agree) and the fix publishes nothing at all. The end state is the
+same either way.
+
 **Traversal, and where to override it.** `System_Base::statusLines(Print*, bool full)` defaults to
 printing nothing, because most system components have no IO. Four classes override it to walk
 their IOs — `Sensor` (outputs), `Actuator` (inputs), `Control` (both), and `System_Buttons`, which
