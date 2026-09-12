@@ -14,7 +14,10 @@ Actuator_Analog::Actuator_Analog(const char * const id, const char * const name,
   // Volts, two decimals - a step is ~13mV on an 8-bit DAC at 3.3V, so a third digit would be
   // claiming precision the hardware does not have. Wireable: driving this from a control is the
   // point of it existing.
-  input(new INfloat(id, "volts", "Volts", 0, 2, 0, vref, color, true))
+  // Range is 0..vref, the hardware's actual span; the schema's 0..3.3 are the defaults, so
+  // discover() only reports min/max when a board has passed a vref that is not the plain rail.
+  input(new INfloat(id, "volts", "Volts", 0, 2, 0, vref,
+    DEFAULT_analog_volts_min, DEFAULT_analog_volts_max, color, true))
 {
   inputs.push_back(input);
 };

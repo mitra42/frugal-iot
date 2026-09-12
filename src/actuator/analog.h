@@ -17,8 +17,43 @@
  *
  * It is a square wave whose *average* is the value asked for and whose instantaneous value is
  * either 0 or Vdd - never the number you set. Feeding that straight into something expecting a
- * control voltage will not do what the DAC would. A series R into a capacitor to ground is
- * usually enough; the higher ACTUATOR_ANALOG_PWM_FREQ is, the smaller they can be.
+ * control voltage will not do what the DAC would.
+ *
+ * The filter is a resistor in series with the pin and a capacitor from there to ground, with the
+ * output taken across the capacitor. Worst-case ripple is at 50% duty:
+ *
+ *     Vripple (peak-to-peak)  ~=  Vdd / (4 * f * R * C)
+ *
+ * so for ripple under one step of the output, R*C >= (steps-1) / (4*f), and settling to within a
+ * step after a change takes about R*C * bits * 0.7. Values that work, rather than a formula to
+ * guess from - at the default 20kHz and 10 bits, where one step is 3.2mV of a 3.3V rail:
+ *
+ *     R = 10k,  C = 1uF     ripple 4.1mV (1.3 steps), settles 70ms, output impedance 10k
+ *     R = 4.7k, C = 2.2uF   ripple 4.0mV,             settles 72ms, output impedance 4.7k
+ *
+ * Raising ACTUATOR_ANALOG_PWM_FREQ shrinks the capacitor in proportion. At 78kHz, the most that
+ * 10-bit allows on an ESP32 (f_max = 80MHz / 2^bits):
+ *
+ *     R = 10k,  C = 220nF   ripple 4.8mV, settles 15ms, output impedance 10k
+ *     R = 1k,   C = 2.2uF   ripple 4.8mV, settles 15ms, output impedance 1k
+ *
+ * At 8 bits the requirement is four times easier - R*C >= 3.2ms at 20kHz, so 10k and 330nF.
+ * At 12 bits it is four times harder - R*C >= 51ms at 20kHz, i.e. 10k and 5.6uF, settling in
+ * 0.4s. Resolution is not free: every extra bit costs four times the RC, hence four times the
+ * settling time.
+ *
+ * WATCH THE OUTPUT IMPEDANCE - this is the part that catches people. R sits in series with
+ * whatever is being driven, so any current the load draws appears as an error across it:
+ *
+ *     R = 10k   drawing  10uA -> 100mV out    drawing 100uA -> 1.0V out
+ *     R = 1k    drawing  10uA ->  10mV out    drawing 100uA -> 100mV out
+ *
+ * Into an op-amp or comparator input drawing nanoamps that is nothing. Into anything that loads
+ * it, it is the dominant error and no amount of filtering helps. Either take the low-R/high-C
+ * pairing above, or buffer the filter with an op-amp follower.
+ *
+ * Use a ceramic (X7R or better) or film capacitor: an electrolytic's own leakage is a load in
+ * exactly the sense above, and its tolerance is wide enough to move the ripple noticeably.
  * ---------------------------------------------------------------------------------------------
  *
  * Volts are nominal on both paths. The DAC is ratiometric to Vdd, so a 3.3V rail reading 3.26
@@ -69,8 +104,21 @@
 
 class Actuator_Analog : public Actuator {
   public:
+    /* vref is the voltage the output reaches at full scale: the chip's supply rail, so 3.3 on
+     * everything here, which is the default. It does not change what the hardware does - it is
+     * the scale between the number set and the steps written - but there are two reasons to pass
+     * something else:
+     *
+     *   Accuracy. Both paths are ratiometric to the actual rail, so on a board whose 3.3V rail
+     *   measures 3.26, asking for 1.65 gets 1.63. Passing the measured value corrects that.
+     *
+     *   A gain stage. If the pin feeds an amplifier, pass the full-scale voltage at ITS output,
+     *   and the value then means volts where they matter rather than volts at the pin.
+     *
+     * The input's range follows vref, so the UX slider spans the right values either way.
+     */
     Actuator_Analog(const char * const id, const char * const name, const uint8_t pin,
-      const char* color, const float vref = ACTUATOR_ANALOG_VREF);
+      const char* color = DEFAULT_analog_volts_color, const float vref = ACTUATOR_ANALOG_VREF);
     // What this hardware can actually do - ask, do not assume. See the note above on control loops.
     uint16_t steps() const { return ACTUATOR_ANALOG_STEPS; }
     float stepVolts() const { return vref / (ACTUATOR_ANALOG_STEPS - 1); }
