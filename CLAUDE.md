@@ -987,6 +987,15 @@ That single rule covers everything worth automating:
 | Two or more unbound, or two or more unclaimed | Left alone — guessing which probe is the air one and which is the battery one is precisely the silent mis-attribution that ROM-id addressing exists to prevent. Unbound sensors publish `nan` and the portal lists the ids to choose from |
 | A stored binding whose probe has gone | Dropped, so the sensor becomes an orphan and the rule above may re-match it. The stored id stays on disk on purpose: if that probe is reconnected, the explicit choice wins again |
 
+Binding by hand is the captive portal or MQTT, **not** the frugal-iot-client dashboard, and that
+is a decision rather than an oversight. The client cannot enumerate a 1-Wire bus — it only sees
+MQTT — so offering a list of discovered probes there would mean the node publishing its bus
+contents purely for a remote client to re-display, plus a new schema key and a new widget type,
+across four repos. It would buy very little: the automatic rule above covers a single-probe node
+and a replaced probe, so the only moment a human is needed is commissioning a bus with two or
+more probes on it — which is exactly when someone is stood next to the hardware and the node's
+own AP is the easiest thing to reach.
+
 An automatic match is deliberately **not** persisted — storing it would mean that replacing the
 probe left the node bound to an id that no longer exists, turning a setup that works into one
 that does not, for no gain, since the same match is made again on the next boot.
