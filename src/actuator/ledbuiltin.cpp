@@ -34,6 +34,8 @@
 #include "actuator/digital.h"
 #include "misc.h" // for StringF
 
+#ifdef LED_BUILTIN // No built-in LED on this board - see the note in ledbuiltin.h
+
 #define ACTUATOR_LEDBUILTIN_WHITE "#FFFFFF"
 
 #pragma GCC diagnostic push
@@ -87,3 +89,5 @@ void Actuator_Ledbuiltin::act() {
     #endif
   #endif 
 }
+
+#endif // LED_BUILTIN

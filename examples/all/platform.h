@@ -49,6 +49,16 @@
 //     https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
     //https://github.com/mitra42/LoRaMesher.git#new_loramesher
 
+// lib_deps_oled =
+//     ${common.lib_deps}
+//     adafruit/Adafruit SSD1306@^2.5.0
+//     adafruit/Adafruit GFX Library@^1.10.13
+
+// lib_deps_oled_ssd1327 =
+//     ${common.lib_deps}
+//     adafruit/Adafruit SSD1327@^1.0.4
+//     adafruit/Adafruit GFX Library@^1.10.13
+
 // lib_deps_lora_oled =
 //     ${common.lib_deps_lora}
 //     adafruit/Adafruit SSD1306@^2.5.0
@@ -214,9 +224,49 @@
 #define SYSTEM_OTA_SUFFIX "nodemcu-32s"
 // board_build.partitions = min_spiffs.csv
 
-// ==== ESP8266 boards ================================================
+// ==== FF-ESP32-OpenMPPT ============================================
+// The solar charge controller board OSPIT runs on - a plain ESP32 with an I2C OLED on 21/22 and
+// a UEXT header carrying UART2 and HSPI. Two envs because the header cannot do both jobs at once:
+// see the note on the ssd1327 env below.
 
 #endif // ARDUINO_NodeMCU_32S
+
+// ===== [env:ff_openmppt_ssd1327] -> ARDUINO_ESP32_DEV
+#ifdef ARDUINO_ESP32_DEV
+#define FRUGAL_IOT_BOARD_CONFIGURED
+// Only one FF env, deliberately. Arduino has no concept of environments - it compiles one config
+// per board - so generate_platform_h.py keeps the first env targeting a given ARDUINO_* macro and
+// marks any later one DISABLED. Two FF envs therefore look fine and silently build the same
+// firmware twice. This example exists for compile coverage, so the env here is the one that
+// exercises the SSD1327 path; a node that wants the I2C SSD1306 this board more usually carries
+// sets instead:
+// #define ACTUATOR_OLED_IS_SSD1306
+// #define OLED_RST_X -1 -D ACTUATOR_OLED_WIDTH=128 -D ACTUATOR_OLED_HEIGHT=64
+// with lib_deps ${common.lib_deps_oled}.
+// MUTUALLY EXCLUSIVE WITH THE MODBUS SOIL SENSORS. The panel needs dc=16 and rst=17, which are
+// the UEXT RX_2/TX_2 pins - and those are exactly the pins OSPIT drives UART2 on for its
+// RS485 soil probes (uart.setup(2, ..., {tx = 17, rx = 16})). You get the display or the probes,
+// not both, which is why OSPIT's own init.lua loads SSD1306.lua and leaves the SSD1327 line
+// commented out: on an irrigation controller the probes win.
+// platform = ${common.platform_esp32}
+// board = esp32dev
+// build_flags =
+//     ${common.build_flags}
+#define ACTUATOR_OLED_WANT
+#define ACTUATOR_OLED_IS_SSD1327
+#define ACTUATOR_OLED_SPI_SCLK 18
+#define ACTUATOR_OLED_SPI_MOSI 23
+#define ACTUATOR_OLED_SPI_CS 5
+#define ACTUATOR_OLED_SPI_DC 16
+#define ACTUATOR_OLED_SPI_RST 17
+#define SYSTEM_OTA_SUFFIX "ff_openmppt_ssd1327"
+// board_build.partitions = min_spiffs.csv
+// lib_deps =
+//     ${common.lib_deps_oled_ssd1327}
+
+// ==== ESP8266 boards ================================================
+
+#endif // ARDUINO_ESP32_DEV
 
 // ===== [env:ttgo-lora32-v21] -> ARDUINO_TTGO_LoRa32_v21new
 #ifdef ARDUINO_TTGO_LoRa32_v21new
@@ -356,7 +406,7 @@
 #endif // 0
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / NodeMCU-32S / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / NodeMCU-32S / ESP32 Dev Module / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"
 #endif
 
 #endif // PLATFORM_H

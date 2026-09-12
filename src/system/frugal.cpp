@@ -148,7 +148,11 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
     messages(new System_Messages()),
   // mqtt is added in main.cpp > configure_mqtt(host,user,password)
   #ifdef ACTUATOR_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
-    oled(new Actuator_OLED(&OLED_WIRE)),
+    #ifdef OLED_WIRE
+      oled(new Actuator_OLED(&OLED_WIRE)),
+    #else // An SPI panel has no I2C bus to name - the constructor defaults the unused argument
+      oled(new Actuator_OLED()),
+    #endif
   #endif // ACTUATOR_OLED_WANT
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     ota(new System_OTA()), // Must be after Power (for timers)

@@ -142,7 +142,9 @@ void System_OTA::checkForUpdate() {
   // Set this if you want your OTA server to be able to return a redirect to force devices to collect the firmware from e.g. githubraw
   HTTPUPDATE.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS); 
 
-  HTTPUPDATE.setLedPin(LED_BUILTIN, LOW); // Note that this is subject to usual issues with LED_BUILTIN being wrong on some boards (see actuator_ledbuiltin)
+  #ifdef LED_BUILTIN // A board is allowed to have no built-in LED - see actuator/ledbuiltin.h
+    HTTPUPDATE.setLedPin(LED_BUILTIN, LOW); // Note that this is subject to usual issues with LED_BUILTIN being wrong on some boards (see actuator_ledbuiltin)
+  #endif
   HTTPUPDATE.onStart(otaStartCB);
   HTTPUPDATE.onProgress(otaProgressCB);
   HTTPUPDATE.onEnd(otaEndCB);

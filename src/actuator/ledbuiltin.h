@@ -49,10 +49,15 @@
   #define RGB_BUILTIN LED_BUILTIN
 #endif
 
-#ifndef LED_BUILTIN
-  // May need to comment this out if encounter voards with no LED as this is now always compiled
-  #error "No ACTUATOR_LEDBUILTIN_PIN pin defined and no default known for this board"
-#endif
+/* Everything below needs LED_BUILTIN, and a board is allowed not to have one.
+ *
+ * This used to #error instead. Since the header is included unconditionally, that made an LED pin
+ * mandatory on every board - yet System_Frugal only adds the actuator inside #ifdef LED_BUILTIN
+ * and nothing else refers to it, so the requirement bought nothing and the only way past it was
+ * to name a pin that does not exist. On a custom board that pin is likely to be doing something
+ * else: on the FF-ESP32-OpenMPPT the obvious guess, GPIO 2, is its 1-Wire bus.
+ */
+#ifdef LED_BUILTIN
 
 // Oddity - some digital boards are inverted 
 // TODO-141 reconfirm this  - including checking definition of HIGH and LOW 
@@ -86,5 +91,7 @@ class Actuator_Ledbuiltin : public Actuator_Digital {
       INcolor* color;
     #endif
 };
+
+#endif // LED_BUILTIN - board has no built-in LED, so no actuator and nothing to configure
 
 #endif // ACTUATOR_LEDBUILTIN_H
