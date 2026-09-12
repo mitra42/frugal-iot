@@ -1096,7 +1096,7 @@ the `SYSTEM_MODBUS_WANT` derivation in `_settings.h`.
 |-------|------|-------|
 | `Actuator_LEDBuiltin` | actuator/ledbuiltin | Built-in LED; added automatically on supported boards |
 | `Actuator_Digital` | actuator/digital | Any digital output (relay, LED) |
-| `Actuator_OLED` | actuator/oled | SSD1306 OLED; added automatically on supported boards |
+| `Actuator_OLED` | actuator/oled | SSD1306 or SSD1327 OLED; added automatically on supported boards. See "Two OLED chips" below |
 | `Actuator_LCD` | actuator/lcd | HD44780 LCD via I2C backpack; requires `ACTUATOR_LCD_WANT` |
 
 ### Actuator_LCD
@@ -1120,6 +1120,88 @@ someControl->outputs[0]->wireTo(frugal_iot.messages->setPath("lcd/message"));
 
 The `message` input accepts a `String`; lines are split on `\n` (ASCII 10). Lines longer than
 `ACTUATOR_LCD_COLS` are silently truncated. The display is cleared on every update.
+
+### Two OLED chips, chosen at compile time
+
+`Actuator_OLED` drives either an SSD1306 (1 bit per pixel, usually I2C, what every board with a
+built-in display carries) or an SSD1327 (4-bit greyscale, 128x128, usually SPI, always externally
+wired). Which one is a **compile-time** choice: a board has exactly one display, so there is no
+reason to pay a vtable and an indirection per call on a device where the redraw is already the
+expensive part.
+
+**What a control must do to work on both.** Two rules, and neither is enforced by the compiler —
+code that breaks them builds cleanly and then draws nothing:
+
+```cpp
+auto* display = &frugal_iot.oled->display; // not Adafruit_SSD1306*, which is only one of the two
+display->setTextColor(OLED_FG);            // not SSD1306_WHITE
+```
+
+`OLED_FG`/`OLED_BG` exist because the chips disagree about white: it is `1` on an SSD1306 and
+`0xF` on an SSD1327. A control written with `SSD1306_WHITE` compiles perfectly against an
+SSD1327 and draws in the darkest grey there is, i.e. invisibly.
+
+**There are two offset wrappers, not one template**, and that is deliberate. The wrapper exists so
+(0,0) means the first visible pixel on panels with a dead margin. Which methods need offsetting
+depends on what the driver overrides: `Adafruit_SSD1306` has its own fast-path `drawFastHLine`,
+`drawFastVLine` and `fillRect` that bypass `drawPixel`, so all four need it — whereas
+`Adafruit_SSD1327` goes through `Adafruit_GrayOLED`, which overrides nothing but `drawPixel`, so
+the other three fall through to `Adafruit_GFX`'s generic versions that themselves call
+`drawPixel`. Offsetting those in the wrapper as well would apply the offset twice.
+
+**Configuring an externally wired panel.** No board has an SSD1327 built in, so there is nothing
+to key a board `#elif` on - chip, interface and pins all come from build flags in a board env:
+
+```ini
+-D ACTUATOR_OLED_WANT
+-D ACTUATOR_OLED_IS_SSD1327
+-D ACTUATOR_OLED_SPI_SCLK=18 -D ACTUATOR_OLED_SPI_MOSI=23
+-D ACTUATOR_OLED_SPI_CS=5 -D ACTUATOR_OLED_SPI_DC=16 -D ACTUATOR_OLED_SPI_RST=17
+```
+
+Omitting `ACTUATOR_OLED_SPI_CS` selects the I2C form instead, and size defaults to the SSD1327's
+native 128x128.
+
+**There is deliberately no default chip.** Every board either names one in its `#elif` in
+`oled.h` or has one in its build flags; anything else stops at `#error have not defined OLED
+chip driver`. For the same reason every place the two chips diverge - the driver include, the
+colours, the offset wrapper, the constructor and the bring-up in `setup()` - lists the chips it
+supports explicitly and `#error`s on anything else, rather than falling through to an `#else`
+that assumes an SSD1306. Someone adding a display to a board that has none built in must say
+which chip it is: guessing wrong compiles cleanly and then draws nothing, which is the most
+expensive kind of wrong on a device you have to walk to.
+
+### A board is allowed to have no built-in LED
+
+`actuator/ledbuiltin.h` used to `#error` unless `LED_BUILTIN` was defined, and it is included
+unconditionally, so *every* board had to name an LED pin - even though `System_Frugal` only adds
+the actuator inside `#ifdef LED_BUILTIN` and nothing else refers to it. The requirement bought
+nothing, and the only way past it was to name a pin that does not exist; on a custom board that
+pin is likely to be doing something else, and on the FF-ESP32-OpenMPPT the obvious guess, GPIO 2,
+is its 1-Wire bus.
+
+The header and its `.cpp` now compile to nothing when `LED_BUILTIN` is undefined. **No flag is
+needed and none should be added** - the absence of `LED_BUILTIN` is the whole signal.
+`system/ota.cpp` needed the same `#ifdef`, having passed `LED_BUILTIN` to `setLedPin()`
+unconditionally.
+
+### FF-ESP32-OpenMPPT: the display and the soil probes are mutually exclusive
+
+`examples/all` has an `ff_openmppt_ssd1327` env for the board OSPIT runs on. Worth knowing before
+planning anything for it: **the SPI panel and the Modbus soil probes cannot both be fitted.** The
+panel needs dc=16 and rst=17, which are the UEXT header's RX_2/TX_2 - and those are exactly the
+pins OSPIT drives UART2 on for its RS485 probes (`uart.setup(2, ..., {tx = 17, rx = 16})`). That
+is why OSPIT's own `init.lua` loads `SSD1306.lua` and leaves the SSD1327 line commented out: on an
+irrigation controller the probes win. The I2C SSD1306 on pins 21/22 has no such conflict.
+
+There is only **one** FF env, also deliberately. Arduino has no concept of environments - it
+compiles one configuration per board - so `generate_platform_h.py` keeps the first env targeting a
+given `ARDUINO_*` macro and marks any later one `DISABLED`. Two envs on one board therefore look
+fine in `platformio.ini` and silently build the same firmware twice, which is how a first attempt
+at this "compiled the SSD1327 env" three times without ever compiling an SSD1327. If you add a
+second env for a board that already has one, check the generated `platform.h` for `DISABLED`
+before believing a green build. (`lilygo_t3_s3_sx127x_sht`, `heltec_wifi_lora_32_V32` and
+`tbeam_oled` are all in this state today.)
 
 ## Available Controls
 

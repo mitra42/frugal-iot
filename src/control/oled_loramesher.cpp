@@ -14,7 +14,7 @@ Control_Oled_LoRaMesher::Control_Oled_LoRaMesher(const char* name)
     if (enabled) {
       // Called when any of the inputs change
       //TODO-176 probably want other things to trigger that aren't "inputs"
-      Adafruit_SSD1306* display  = &frugal_iot.oled->display;
+      auto* display = &frugal_iot.oled->display; // auto: the concrete driver is chosen at compile time, see actuator/oled.h
       display->clearDisplay();
       display->setCursor(0,0);
       display->setTextSize(1);
