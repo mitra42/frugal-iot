@@ -63,6 +63,13 @@ String Sensor::captiveValueLines() {
   return lines;
 }
 
+void Sensor::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full); // Module-level settings first, then the IOs
+  for (auto &output : outputs) {
+    output->statusLines(out, full);
+  }
+}
+
 void Sensor::dispatch(System_Message &msg) {
   if (msg.module() == id) {
     for (auto &output : outputs) {

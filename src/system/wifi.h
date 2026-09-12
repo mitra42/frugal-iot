@@ -42,6 +42,7 @@ class System_WiFi : public System_Base {
     #endif
     void setup() override;
     void addWiFi(String ssid, String password);
+    void statusLines(Print* out, bool full) override;
     void dispatch(System_Message &msg) override;
 };
 

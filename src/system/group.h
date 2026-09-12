@@ -28,6 +28,7 @@ class System_Group : public System_Base {
     void periodically() override;
     void infrequently() override;
     void captiveLines(AsyncResponseStream* response) override;
+    void statusLines(Print* out, bool full) override;
   private:
     void forEach(const char* fnName, void (System_Base::*fn)());
 };

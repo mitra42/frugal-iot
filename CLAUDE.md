@@ -347,6 +347,72 @@ void MyThing::infrequently() {
   measure an elapsed duration), call `frugal_iot.powercontroller->sleepSafeSecs()` /
   `sleepSafeMillis()` directly instead.
 
+## The status page (`/status`)
+
+A plain-text dump of every module's IO, served on the captive portal's AP. Plain text because the
+point of it is to be **copied into a message to someone else** — it selects cleanly, pastes
+without markup, and renders monospace so the values line up.
+
+```
+esp32-a41f3c dev/lotus
+SHT30 Sensor - Temperature and humidity
+awake 412s
+time 12/09/26 14:07:33 GMT
+
+sht/temperature 21.5
+sht/temperature/min 0.0 *
+sht/humidity 63.2
+controlhysteresis/limit 22.0 *
+controlhysteresis/limit/wired esp32-a41f3c/sht/temperature
+```
+
+`/status?full` gives every parameter with its default in brackets.
+
+**The `*` means the filesystem holds it**, so it survives a restart. That is the one thing on the
+page you cannot find out any other way — a value that is only in RAM looks identical to one that
+will come back after a reboot, and on a node in a field that difference is most of what you want
+to know. It is tested against the path `maybeWriteToFS()` would have written to:
+`/<topicTwig>/<param>`, or `/<topicTwig>/value` for the IO's own value.
+
+**What the short form shows:** the value; the wired path when there is one; and min/max/color only
+when they **differ from the default** — the same test `discover()` makes. A parameter persisted at
+its default value is a no-op, since it changes nothing at setup, so a line saying so is noise.
+
+**System modules report what they hold too.** `System_Base::statusLines` gives every module its
+`name` when that has been persisted (i.e. renamed — the compiled-in name is already in the header),
+and `System_Base::statusLine(out, leaf, value)` prints a module-level setting that is not an IO,
+checked against the `/<id>/<leaf>` path `writeConfigToFS()` uses. The rule is that the short form
+carries whatever `dispatch()` handles and keeps in a member:
+
+| Module | Short form | Full form adds |
+|---|---|---|
+| `mqtt` | `hostname` | `connected` |
+| `power` | `wake`, `cycle`, `mode` | |
+| `captive` | `language_code` | |
+| `wifi` | nothing — credentials live in `/wifi/<ssid>`, not in a member | `ssid`, `bars`, `status` |
+
+`System_MQTT::statusLines` is the shape to copy. The full form is meant to be edited: when a
+feature is misbehaving, adding a `statusLine(out, "whatever", ...)` under `if (full)` is a
+two-line change that puts the answer on a page reachable from a phone, with no serial cable and no
+reflash.
+
+**Traversal, and where to override it.** `System_Base::statusLines(Print*, bool full)` defaults to
+printing nothing, because most system components have no IO. Four classes override it to walk
+their IOs — `Sensor` (outputs), `Actuator` (inputs), `Control` (both), and `System_Buttons`, which
+is a `System_Group` that also owns outputs — and `System_Group` recurses into its members. Those
+are the only IO-carrying classes in the library, so that is the complete default; a class wanting
+to say something else about itself overrides `statusLines` too.
+
+It takes a `Print*` rather than the web response on purpose, so the same dump can go to `Serial`
+when a node will not join WiFi and the portal cannot be reached at all.
+
+**Only on the AP so far.** `System_Captive::addSTARoute()` exists but hardcodes `HTTP_POST`, so
+serving this on the station interface needs a one-line GET variant of that helper.
+
+**Cost:** one `LittleFS::exists()` per line, so roughly 60–100 lookups for a page. Fine for
+something loaded occasionally; if it ever is not, the fix is to list each module's directory once
+and test membership rather than stat each path.
+
 ## IO Classes (IN / OUT) — how sensors, actuators and controls actually connect
 
 Every value a component reads or writes is a member object, not a plain field — an `IN` (input)

@@ -107,6 +107,27 @@ void System_Frugal::discover() {
   System_Group::discover();
 }
 
+/* A header saying which node this came from and when, then every module.
+ *
+ * The header matters because these get pasted into bug reports: without it a dump is just a list
+ * of numbers that could have come from anywhere.
+ */
+void System_Frugal::statusLines(Print* out, bool full) {
+  out->print(nodeid); out->print(' '); out->print(org); out->print('/'); out->println(project);
+  out->print(name); out->print(" - "); out->println(description);
+  // Uptime is millis(), which deep sleep resets - so on a sleeping node this is time since the
+  // last wake, not since power on. Said plainly rather than quietly reported as uptime.
+  out->print(F("awake ")); out->print(millis() / 1000); out->println(F("s"));
+  if (time && time->isTimeSet()) {
+    out->print(F("time ")); out->println(time->dateTime());
+  } else {
+    // Distinguishes "no clock" from "clock says 1970", which look the same in a bare timestamp
+    out->println(F("time not set"));
+  }
+  out->println();
+  System_Group::statusLines(out, full);
+}
+
 void System_Frugal::captiveLines(AsyncResponseStream* response) {
   captive->addString(response, id, "project", project, T->Project, 2, 15);
   captive->addString(response, id, "name", name, T->DeviceName, 3, 15);

@@ -48,6 +48,18 @@ void System_MQTT::setup() {
 }
 
 // Setup MQTT, connect and subscribe - note if WiFi is connected, this will block till MQTT times out 
+/* hostname is what dispatch() handles and keeps. The rest is only in the full form: it is not
+ * settings but state, and state is what you want when the question is "why is nothing arriving".
+ * This is the shape for the other system modules - add a line here when debugging something.
+ */
+void System_MQTT::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full);
+  statusLine(out, "hostname", hostname);
+  if (full) {
+    statusLine(out, "connected", String(connected() ? 1 : 0));
+  }
+}
+
 void System_MQTT::setup_after_wifi() {
   // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
   // by Arduino. You need to set the IP address directly.

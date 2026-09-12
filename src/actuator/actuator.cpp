@@ -35,6 +35,13 @@ void Actuator::dispatch(System_Message &msg) {
         act();
     }
 }
+void Actuator::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full); // Module-level settings first, then the IOs
+  for (auto &input : inputs) {
+    input->statusLines(out, full);
+  }
+}
+
 void Actuator::discover() {
   for (auto &input : inputs) {
     input->discover();

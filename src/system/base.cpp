@@ -12,6 +12,27 @@ System_Base::System_Base(const char * const id, const String name)
 : id(id), name(name) { };
 
 // Defaults for routines that can, but often are not, overridden in sub-class.
+void System_Base::statusLine(Print* out, const char* leaf, const String& value) {
+  out->print(id); out->print('/'); out->print(leaf);
+  out->print(' '); out->print(value);
+  if (frugal_iot.fs_LittleFS && frugal_iot.fs_LittleFS->exists(String("/") + id + "/" + leaf)) {
+    out->print(" *");
+  }
+  out->print('\n');
+}
+
+/* The default every module inherits: its name, which System_Base::dispatch handles and stores.
+ *
+ * Only when it has been persisted, i.e. someone renamed this module - the compiled-in name is
+ * already on the page in the header and is not news. Modules with more state of their own
+ * override this and add to it; see System_MQTT for the shape.
+ */
+void System_Base::statusLines(Print* out, bool full) {
+  if (full || (frugal_iot.fs_LittleFS && frugal_iot.fs_LittleFS->exists(String("/") + id + "/name"))) {
+    statusLine(out, "name", name);
+  }
+}
+
 void System_Base::setup() { };
 void System_Base::setupFailed() { // Call this from setup() if fails
   Serial.print(id); Serial.println(F(" Failed in setup"));

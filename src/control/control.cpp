@@ -71,6 +71,16 @@ void Control::dispatch(System_Message &msg) {
     }
 }
 
+void Control::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full); // Module-level settings first, then the IOs
+  for (auto &input : inputs) {
+    input->statusLines(out, full);
+  }
+  for (auto &output : outputs) {
+    output->statusLines(out, full);
+  }
+}
+
 void Control::discover() {
   for (auto &input : inputs) {
     input->discover();
