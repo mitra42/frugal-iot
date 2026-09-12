@@ -28,8 +28,9 @@ void Sensor_Ultrasonic::setup() {
   modbus.initialize();
 }
 
-// Raw distance in mm, or NAN if the slave did not answer - Sensor_Float::validate rejects NAN
-// so a failed read leaves the last good value published rather than publishing a bogus one.
+// Raw distance in mm, or NAN if the slave did not answer. Sensor_Float::validate rejects NAN,
+// which now publishes "nan" rather than silently leaving the last reading standing - see
+// "Invalid readings" in CLAUDE.md. (This comment described the older behaviour.)
 float Sensor_Ultrasonic::readFloat() {
   uint16_t raw = 0;
   float v = NAN;

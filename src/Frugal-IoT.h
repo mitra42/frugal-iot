@@ -18,6 +18,7 @@
 #include "sensor/sht.h"
 #include "sensor/soil.h"
 #include "sensor/ds18b20.h"
+#include "sensor/soilmodbus.h" // Compiles to nothing unless SENSOR_SOILMODBUS_WANT
 #include "sensor/dissolvedoxygen.h"
 #include "sensor/gps.h"
 #include "sensor/ina219.h" // Freestanding over System_I2C, no external library

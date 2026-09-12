@@ -221,6 +221,12 @@
 // board = nodemcu-32s
 // build_flags = 
 //     ${common.build_flags}
+    // Compile coverage for the RS485/Modbus path. The soil probes need no slave id here - theirs
+    // are constructor arguments, one per sector - but they do need the bus pins, and defining
+    // SENSOR_SOILMODBUS_WANT turns on SYSTEM_MODBUS_WANT which #errors without them.
+#define SENSOR_SOILMODBUS_WANT
+#define SYSTEM_RS485_RX_PIN 16
+#define SYSTEM_RS485_TX_PIN 17
 #define SYSTEM_OTA_SUFFIX "nodemcu-32s"
 // board_build.partitions = min_spiffs.csv
 

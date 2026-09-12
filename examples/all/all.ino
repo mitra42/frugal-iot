@@ -140,6 +140,18 @@ void setup() {
       DEFAULT_ultrasonic_ultrasonic_max, DEFAULT_ultrasonic_ultrasonic_color, true, rs485));
   #endif
 
+  // Soil probes over the same kind of bus. Two of them, because the point of RS485 being
+  // multi-drop is that one transceiver serves several probes - one per irrigation sector - each
+  // addressed by its own slave id. A probe that does not answer publishes "nan" rather than
+  // leaving a stale reading standing.
+  #ifdef SENSOR_SOILMODBUS_WANT
+    #ifndef SENSOR_ULTRASONIC_SLAVE_ID // Otherwise share the bus built just above
+      System_RS485* rs485 = new System_RS485(&Serial1);
+    #endif
+    frugal_iot.sensors->add(new Sensor_SoilModbus("soil1", "Sector 1", 1, rs485, true));
+    frugal_iot.sensors->add(new Sensor_SoilModbus("soil2", "Sector 2", 2, rs485, true));
+  #endif
+
   // ========= Actuators  ==============
   // Note Actuator_LedBuiltin added automatically if a pin is defined
 

@@ -99,6 +99,31 @@ void System_Modbus::initialize() {
 
 // A silent slave costs 2 s per attempt, so once one has failed we skip
 // SYSTEM_MODBUS_RETRY_CYCLES read cycles before trying it again.
+// Same connected/retry handling as readRegister - see the "Timing" note in modbus.h for why a
+// silent slave must not be retried every cycle.
+bool System_Modbus::readRegisters(uint16_t reg, uint16_t count, uint16_t* out) {
+  bool ok = false;
+  if (connected || (retry_countdown == 0)) {
+    ok = bus->readHoldingRegisters(slave_id, reg, count);
+    if (ok) {
+      for (uint16_t i = 0; i < count; i++) {
+        out[i] = bus->responseBuffer(i);
+      }
+    } else {
+      retry_countdown = SYSTEM_MODBUS_RETRY_CYCLES;
+      #ifdef SYSTEM_MODBUS_DEBUG
+        Serial.print(F("Modbus slave=")); Serial.print(slave_id);
+        Serial.print(F(" silent, skipping ")); Serial.print(SYSTEM_MODBUS_RETRY_CYCLES);
+        Serial.println(F(" cycles"));
+      #endif
+    }
+    connected = ok;
+  } else {
+    retry_countdown--;
+  }
+  return ok;
+}
+
 bool System_Modbus::readRegister(uint16_t reg, uint16_t* value) {
   bool ok = false;
   if (connected || (retry_countdown == 0)) {
