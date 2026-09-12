@@ -51,7 +51,7 @@ void setup() {
     ->powerPins(SENSOR_DHT_POWER3v3_PIN, SENSOR_DHT_POWER0_PIN);
   #endif
   #ifdef SENSOR_DS18B20_PIN
-    frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Water Temperature", SENSOR_DS18B20_PIN, 0, true))
+    frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Water Temperature", SENSOR_DS18B20_PIN, true))
     ->powerPins(SENSOR_DS18B20_POWER3v3_PIN, SENSOR_DS18B20_POWER0_PIN);
   #endif
   #ifdef SENSOR_TDS_PIN

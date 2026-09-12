@@ -36,7 +36,9 @@ void System_Captive::setupLanguages() {
     F("Offset"),
     F("Device Time"),
     F("Set time from this device"),
-    F("not set")
+    F("not set"),
+    F("Probe"),
+    F("not selected")
   };
 
   T = TT[Language_EN];
@@ -70,7 +72,9 @@ void System_Captive::setupLanguages() {
       F("Décalage"),
       F("Heure de l'appareil"),
       F("Regler depuis cet appareil"),
-      F("non reglee")
+      F("non reglee"),
+      F("Sonde"),
+      F("non selectionnee")
       };
   #endif //LANGUAGE_FR
 
@@ -103,7 +107,9 @@ void System_Captive::setupLanguages() {
       F("Desplazamiento"),
       F("Hora del dispositivo"),
       F("Ajustar desde este dispositivo"),
-      F("sin ajustar")
+      F("sin ajustar"),
+      F("Sonda"),
+      F("sin seleccionar")
  };
   #endif //LANGUAGE_SP
 
@@ -136,7 +142,9 @@ void System_Captive::setupLanguages() {
       F("Versatz"),
       F("Geraetezeit"),
       F("Zeit von diesem Geraet setzen"),
-      F("nicht gesetzt")
+      F("nicht gesetzt"),
+      F("Fuehler"),
+      F("nicht gewaehlt")
       };
   #endif //LANGUAGE_DE
 
@@ -169,7 +177,9 @@ void System_Captive::setupLanguages() {
       F("Correctie"),
       F("Apparaattijd"),
       F("Tijd instellen vanaf dit apparaat"),
-      F("niet ingesteld")
+      F("niet ingesteld"),
+      F("Sensor"),
+      F("niet gekozen")
       };
   #endif //LANGUAGE_NL
 
@@ -202,7 +212,9 @@ void System_Captive::setupLanguages() {
       F("Offset"),
       F("Waktu Perangkat"),
       F("Atur waktu dari perangkat ini"),
-      F("belum diatur")
+      F("belum diatur"),
+      F("Probe"),
+      F("belum dipilih")
       };
   #endif //LANGUAGE_ID
 
@@ -235,7 +247,9 @@ void System_Captive::setupLanguages() {
       F("ऑफसेट"),
       F("डिवाइस का समय"),
       F("इस डिवाइस से समय सेट करें"),
-      F("सेट नहीं है")
+      F("सेट नहीं है"),
+      F("प्रोब"),
+      F("चयनित नहीं")
       };
   #endif //LANGUAGE_HI
 }

@@ -36,7 +36,9 @@ struct Texts {
         *Offset,
         *DeviceTime,
         *SetTimeFromBrowser,
-        *TimeNotSet
+        *TimeNotSet,
+        *OneWireProbe,
+        *OneWireUnbound
         ;
 };
 

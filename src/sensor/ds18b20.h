@@ -1,15 +1,36 @@
-// DS18B20 waterproof temperature sensor for soil or environment monitoring
-// Supports multiple sensors on a single OneWire bus using sensor index.
-// The DS18B20 sensor returns 85°C as its power-on reset value, which is invalid.
-// This class overrides validate() to filter out these bad readings and
-// returns full precision temperature values (no rounding).
+/* DS18B20 waterproof temperature sensor
+ *
+ * Bound to a probe by its ROM id - its identity - not by its position in the bus enumeration.
+ * Position is what the library's getTempCByIndex() uses, and it renumbers silently whenever a
+ * probe is added, removed or replaced: two believable temperatures, attributed to the wrong
+ * things, with nothing reporting an error.
+ *
+ * Binding is meant to need no attention in the ordinary case, and is never something to type
+ * into a sketch:
+ *
+ *   - A stored binding whose probe is present: used.
+ *   - Otherwise, if exactly one sensor on the bus is unbound and exactly one probe is unclaimed,
+ *     they are matched up - deliberately NOT persisted, so replacing a probe keeps working. That
+ *     one rule covers the ordinary single-probe node, a probe replaced on a multi-probe bus, and
+ *     binding a three-probe bus by naming only two of them. See System_OneWire::resolveUnbound.
+ *   - Anything more ambiguous: unbound, which publishes "nan" - see "Invalid readings" in
+ *     CLAUDE.md - and the captive portal lists the ids actually on the bus so one can be chosen.
+ *     Guessing between two unbound probes is the silent mis-attribution this exists to prevent.
+ *
+ * Binding is set/<sensorid>/id = <romid>, persisted to LittleFS, so the captive portal, the UX
+ * and MQTT all reach it by the same path. Several probes on one bus are therefore given
+ * meaningful ids in the sketch and bound once on site:
+ *
+ *   System_OneWire* ow = System_OneWire::forPin(SENSOR_DS18B20_PIN);
+ *   frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20-air",  "Air Temperature",     ow, true));
+ *   frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20-batt", "Battery Temperature", ow, true));
+ */
 
 #ifndef SENSOR_DS18B20_H
 #define SENSOR_DS18B20_H
 
 #include "sensor/float.h"
-#include <OneWire.h>
-#include <DallasTemperature.h>
+#include "system/onewire.h"
 
 // Default power control pins - can be overridden via constructor parameters
 #ifndef SENSOR_DS18B20_POWER0_PIN
@@ -19,53 +40,39 @@
   #define SENSOR_DS18B20_POWER3v3_PIN 0xff
 #endif
 
-/**
- * @brief DS18B20 sensor with validation and full precision
- * 
- * Inherits from Sensor_Float and provides:
- * - Validation to reject NaN and values >= 80°C (power-on reset is 85°C)
- * - Full precision temperature readings (no rounding)
- */
-class Sensor_DS18B20 : public Sensor_Float {
+class Sensor_DS18B20 : public Sensor_Float, public OneWireDevice {
 public:
-    /**
-     * @brief Constructor for DS18B20 temperature sensor
-     * 
-     * @param id        Unique ID for the sensor
-     * @param name      Human-readable sensor name
-     * @param pin       GPIO pin connected to the DS18B20 data line
-     * @param index     Sensor index on the OneWire bus (default = 0)
-     * @param retain    Whether to retain last sensor value (true/false)
-     * 
-     * Note: Index 0 reads the first DS18B20 detected. Use higher index values
-     * if multiple sensors share the same OneWire bus.
+    /* pin form: the bus for that pin is looked up (and created once) by System_OneWire::forPin,
+     * so a sketch adding two probes on the same pin gets a shared bus without knowing buses
+     * exist - which matters, because the conversion that a shared bus does once costs 750ms.
      */
-    Sensor_DS18B20(const char* id, const char* name, uint8_t pin, uint8_t index, bool retain);
+    Sensor_DS18B20(const char* id, const char* name, uint8_t pin, bool retain);
+    // Explicit bus, matching how Sensor_Ultrasonic takes its System_RS485
+    Sensor_DS18B20(const char* id, const char* name, System_OneWire* bus, bool retain);
 
 protected:
-    /**
-     * @brief Reads the current temperature in Celsius with full precision
-     * @return float Temperature value or NAN if disconnected
-     */
     float readFloat() override;
-
-    /**
-     * @brief Validates the temperature reading
-     * Rejects NaN, 0°C (startup error), and values >= 80°C (power-on reset is 85°C)
-     * @param v The temperature value to validate
-     * @return bool True if the value is valid
+    /* Rejects the disconnected sentinel and the 85C power-on value.
+     * Note it does NOT reject 0.0C: that is a real temperature, and rejecting it made a probe at
+     * freezing report "no reading" once invalid readings started being published.
      */
     bool validate(float v) override;
-
-    /**
-     * @brief Initializes the sensor bus and prepares communication
-     */
     void setup() override;
+    void dispatch(System_Message &msg) override;
+    void captiveLines(AsyncResponseStream* response) override;
+
+    // OneWireDevice - lets the bus match unbound sensors to unclaimed probes across the whole bus,
+    // which is the one decision no single sensor has the information to make for itself.
+    bool owBound() const override { return bound; }
+    const uint8_t* owAddress() const override { return addr; }
+    void owBindTo(const uint8_t* a) override;
 
 private:
-    OneWire _oneWire;          // OneWire interface for DS18B20 communication
-    DallasTemperature _sensors;// DallasTemperature driver instance
-    uint8_t _index;            // Sensor index on the OneWire bus
+    System_OneWire* bus;
+    uint8_t addr[SYSTEM_ONEWIRE_ADDRLEN];
+    bool bound = false;
+    bool resolved = false;             // resolveUnbound has run since the last binding change
+    bool setAddress(const String& s);  // From a stored or posted romid; false if unparsable
 };
 
 #endif // SENSOR_DS18B20_H
