@@ -500,6 +500,7 @@ needs nothing — `lib/data-loader.js` already filters `isNaN` out of the graph 
 | `Sensor_Health` | sensor/health | Device health metrics |
 | `Sensor_GPS` | sensor/gps | GPS location (lat/lon/altitude/speed/course/hdop/satellites/UTC time) via NMEA serial module |
 | `Sensor_Ultrasonic` | sensor/ultrasonic | Distance (mm) from an RS485/Modbus ultrasonic module (A01ANY4B); needs `SENSOR_ULTRASONIC_SLAVE_ID` |
+| `Sensor_SoilModbus` | sensor/soilmodbus | Soil moisture (%) + temperature from an RS485/Modbus probe (DFRobot SEN0600 and similar); needs `SENSOR_SOILMODBUS_WANT` |
 
 ### There is no `Sensor_HT` — and `captiveLines()` is on `Sensor`
 
@@ -947,6 +948,39 @@ C++ object, not a number — and note that ESP32-C3/S2 have no `Serial2`.
 `System_Modbus` member built from `(slave_id, bus)`, call `modbus.initialize()` in `setup()`,
 and make `readFloat()` a `modbus.readRegister(reg, &raw)` call. Then add its enabling flag to
 the `SYSTEM_MODBUS_WANT` derivation in `_settings.h`.
+
+### Sensor_SoilModbus
+
+Soil moisture and temperature from an RS485/Modbus probe, one instance per probe. Ported from
+OSPIT's `modbr.lua`, which is the authority on the register layout: function `0x03`, two
+consecutive holding registers from `0x0000`, moisture first then temperature, **both scaled by
+ten, and temperature signed two's complement**. Without that sign handling a probe below freezing
+reads as about +6500 °C. The decode is checked against the Lua on the host, including the
+boundary at 0xFFFF (-0.1 °C) and both ends of the datasheet range.
+
+```cpp
+System_RS485* rs485 = new System_RS485(&Serial2);   // one transceiver, shared
+frugal_iot.sensors->add(new Sensor_SoilModbus("soil1", "Sector 1", 1, rs485, true));
+frugal_iot.sensors->add(new Sensor_SoilModbus("soil2", "Sector 2", 2, rs485, true));
+```
+
+**Slave ids are constructor arguments, not a build flag.** `Sensor_Ultrasonic` is enabled by
+`SENSOR_ULTRASONIC_SLAVE_ID` because a node has one of those; an irrigation node has one probe per
+sector on the same multi-drop bus, so `SENSOR_SOILMODBUS_WANT` turns the class on and each
+instance carries its own id.
+
+**A probe that does not answer publishes `nan` on both outputs** rather than leaving stale
+readings standing - see "Invalid readings" above. That is the same signal OSPIT carries as `-127`,
+and it is what lets an irrigation control skip a sector whose probe is missing by asking
+`isValid()` instead of comparing against a magic number. The bus's retry backoff means an absent
+probe costs one 2 s stall per `SYSTEM_MODBUS_RETRY_CYCLES` cycles rather than one every cycle.
+
+**`System_Modbus::readRegisters(reg, count, out)`** was added for this: `readRegister` reads one,
+and reading moisture and temperature as two transactions would double the bus time and could pair
+a value from one moment with a value from another.
+
+`SENSOR_SOILMODBUS_REGISTER` (default `0x0000`) moves the pair, since DFRobot's soil range varies
+by part - some add conductivity and pH.
 
 ## Available Actuators
 
