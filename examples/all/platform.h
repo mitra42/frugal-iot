@@ -193,6 +193,9 @@
 // board_build.partitions = min_spiffs.csv
 // build_flags = 
 //     ${common.build_flags}
+    // A C3 has no DAC, so this env exercises the PWM path - which needs an RC filter on the pin
+    // to be a voltage at all, see actuator/analog.h
+#define ACTUATOR_ANALOG_PIN 10
 #define SYSTEM_OTA_SUFFIX "c3_pico"
 #define ARDUINO_LOLIN_C3_PICO // if using C3_PICO use lolin_c3_mini as board and define here
     // PR submitted https://github.com/espressif/arduino-esp32/pull/11851
@@ -227,6 +230,8 @@
 #define SENSOR_SOILMODBUS_WANT
 #define SYSTEM_RS485_RX_PIN 16
 #define SYSTEM_RS485_TX_PIN 17
+    // GPIO 25 is DAC1 on a plain ESP32, so this env exercises the DAC path
+#define ACTUATOR_ANALOG_PIN 25
 #define SYSTEM_OTA_SUFFIX "nodemcu-32s"
 // board_build.partitions = min_spiffs.csv
 
