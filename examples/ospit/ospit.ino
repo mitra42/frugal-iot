@@ -33,6 +33,7 @@
 #include "Frugal-IoT.h"
 #include "control_irrigation.h"
 #include "sensor_tank.h"
+#include "control_oled_ospit.h"
 
 // Change the parameters here to match your ...
 // organization, project, device name, description
@@ -67,23 +68,48 @@ void setup() {
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
 
-  // ---- Actuators: one valve per sector, plus the pump -----------------------------------
-  // On the FF board the pump pin is also the main load output and OSPIT's low-voltage disconnect
-  // switch - three jobs on one pin. Here it is only the pump; if your board shares it, wire the
-  // other users to `pump/on` rather than driving the pin behind this actuator's back.
+  /* ---- Actuators: the valves, and optionally a pump and a load switch ------------------
+   *
+   * OSPIT has ONE output (pin 14) with two possible roles, chosen by its `pump_is_load` flag: a
+   * pump the irrigation sequence drives with each valve, or a load output the low-voltage
+   * disconnect opens. Here they are two independent optional pins, so a board can have either,
+   * both, or neither:
+   *
+   *   OSPIT_PUMP_PIN  driven by Control_Irrigation whenever irrigation is running
+   *                   (equivalent to OSPIT's pump_is_load = false)
+   *   OSPIT_LOAD_PIN  switched off by the battery interlock below
+   *                   (equivalent to OSPIT's pump_is_load = true, minus MPPT)
+   *
+   * On the FF board these cannot BOTH be pin 14, which is why platformio.ini defines one of them
+   * there and says what the other choice would look like.
+   */
   frugal_iot.actuators->add(new Actuator_Digital("valve1", "Valve 1", OSPIT_VALVE1_PIN, DEFAULT_valve_on_color));
   frugal_iot.actuators->add(new Actuator_Digital("valve2", "Valve 2", OSPIT_VALVE2_PIN, DEFAULT_valve_on_color));
   frugal_iot.actuators->add(new Actuator_Digital("valve3", "Valve 3", OSPIT_VALVE3_PIN, DEFAULT_valve_on_color));
-  frugal_iot.actuators->add(new Actuator_Digital("pump", "Pump", OSPIT_PUMP_PIN, DEFAULT_pump_on_color));
+  #ifdef OSPIT_PUMP_PIN
+    frugal_iot.actuators->add(new Actuator_Digital("pump", "Pump", OSPIT_PUMP_PIN, DEFAULT_pump_on_color));
+  #endif
+  #ifdef OSPIT_LOAD_PIN
+    frugal_iot.actuators->add(new Actuator_Digital("load", "Load", OSPIT_LOAD_PIN, DEFAULT_load_on_color));
+  #endif
 
   // ---- Sensors -------------------------------------------------------------------------
   // One RS485 bus, one probe per sector, slave ids 1..3. A probe that does not answer publishes
   // "nan", which is what makes Control_Irrigation skip that sector - the same job OSPIT's -127
   // does, but without doubling as the switch that turns an output into a USB socket.
+  /* One RS485 bus, one probe per sector. A probe that does not answer publishes "nan", which is
+   * what makes Control_Irrigation skip that sector - the same job OSPIT's -127 does, but without
+   * doubling as the switch that turns an output into a USB socket.
+   *
+   * Slave ids start at 2, NOT 1. Address 1 is the factory default every probe ships with, and
+   * SENSOR_SOILMODBUS_AUTOPROVISION needs it to keep meaning "not yet provisioned" - see
+   * sensor/soilmodbus.h. With that flag set, commissioning is: plug in sector 2's probe, wait a
+   * few cycles, plug in sector 3's, and so on IN ORDER.
+   */
   System_RS485* rs485 = new System_RS485(&OSPIT_RS485_UART);
-  frugal_iot.sensors->add(new Sensor_SoilModbus("soil1", "Sector 1 probe", 1, rs485, true));
-  frugal_iot.sensors->add(new Sensor_SoilModbus("soil2", "Sector 2 probe", 2, rs485, true));
-  frugal_iot.sensors->add(new Sensor_SoilModbus("soil3", "Sector 3 probe", 3, rs485, true));
+  frugal_iot.sensors->add(new Sensor_SoilModbus("soil1", "Sector 1 probe", 2, rs485, true));
+  frugal_iot.sensors->add(new Sensor_SoilModbus("soil2", "Sector 2 probe", 3, rs485, true));
+  frugal_iot.sensors->add(new Sensor_SoilModbus("soil3", "Sector 3 probe", 4, rs485, true));
 
   // Resistive float sender in the tank. Publishes "nan" if no sender is fitted, which is NOT
   // treated as an empty tank - see sensor_tank.h.
@@ -101,13 +127,27 @@ void setup() {
                                                   12100, 0, 10000, 15000, 200);
   frugal_iot.controls->add(ch);
   ch->inputs[0]->wireTo(frugal_iot.messages->path("battery/battery"));
+  #ifdef OSPIT_LOAD_PIN
+    /* The interlock drives the load switch, and irrigation takes its permission from the load's
+     * published state rather than from the control directly - so "may I irrigate?" is answered by
+     * "is the load on?", which is exactly what OSPIT's low_voltage_disconnect_state means. One
+     * OUT has one wiredPath, so chaining them this way is also the only way to feed both.
+     */
+    ch->outputs[0]->wireTo(frugal_iot.messages->setPath("load/on"));
+  #else
+    ch->outputs[0]->wireTo(frugal_iot.messages->setPath("irrigation/power"));
+  #endif
 
   // ---- Irrigation ------------------------------------------------------------------------
   Control_Irrigation* irr = new Control_Irrigation("irrigation", "Irrigation");
   frugal_iot.controls->add(irr);
   irr->tank->wireTo(frugal_iot.messages->path("tank/tank"));
-  irr->pump->wireTo(frugal_iot.messages->setPath("pump/on"));
-  ch->outputs[0]->wireTo(frugal_iot.messages->setPath("irrigation/power"));
+  #ifdef OSPIT_PUMP_PIN
+    irr->pump->wireTo(frugal_iot.messages->setPath("pump/on"));
+  #endif
+  #ifdef OSPIT_LOAD_PIN
+    irr->power->wireTo(frugal_iot.messages->path("load/on"));
+  #endif
 
   // Sectors run in the order they are added. addSector() registers each one as a control in its
   // own right, so each gets its own portal section, MQTT topics and discovery.
@@ -122,6 +162,24 @@ void setup() {
   Control_Sector* s3 = irr->addSector("sector3", "Sector 3");
   s3->moisture->wireTo(frugal_iot.messages->path("soil3/humidity"));
   s3->valve->wireTo(frugal_iot.messages->setPath("valve3/on"));
+
+  /* ---- Display ---------------------------------------------------------------------------
+   *
+   * Three pages in a carousel, ported from OSPIT's display.lua. It advances on its own; wire a
+   * button to carousel/select/cycle, or publish to it, to step through by hand.
+   */
+  #ifdef ACTUATOR_OLED_WANT
+    Control_Carousel* display = ospitDisplay();
+    (void)display; // Nothing else to wire to it here - a button would go to carousel/select/cycle
+    ((Control_Oled_OspitPower*)display->controls[0])->battery
+      ->wireTo(frugal_iot.messages->path("battery/battery"));
+    Control_Oled_OspitSoil* soilPage = (Control_Oled_OspitSoil*)display->controls[1];
+    soilPage->moisture1->wireTo(frugal_iot.messages->path("soil1/humidity"));
+    soilPage->moisture2->wireTo(frugal_iot.messages->path("soil2/humidity"));
+    soilPage->moisture3->wireTo(frugal_iot.messages->path("soil3/humidity"));
+    soilPage->tank->wireTo(frugal_iot.messages->path("tank/tank"));
+    soilPage->active->wireTo(frugal_iot.messages->path("irrigation/active"));
+  #endif
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and system

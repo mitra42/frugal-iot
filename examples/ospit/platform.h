@@ -112,16 +112,27 @@
 #define OSPIT_VALVE1_PIN 26
 #define OSPIT_VALVE2_PIN 27
 #define OSPIT_VALVE3_PIN 12
+    // Pin 14 can be a pump OR a load switch, not both - see the note in ospit.ino. OSPIT's own
+    // default (pump_is_load=true) is the load role; the pump role is chosen here because P2 has no
+    // MPPT to own a load output and because it exercises the pump path. To swap, comment out
+    // OSPIT_PUMP_PIN and uncomment OSPIT_LOAD_PIN.
 #define OSPIT_PUMP_PIN 14
+// #define OSPIT_LOAD_PIN 14
 #define OSPIT_TANK_PIN 32
-    // --- RS485 soil probes, one per sector, slave ids 1..3 ---
+    // --- RS485 soil probes. Slave ids are set in ospit.ino and start at 2: address 1 is the
+    // factory default and has to stay meaning "not yet provisioned" - see sensor/soilmodbus.h
 #define SENSOR_SOILMODBUS_WANT
+#define SENSOR_SOILMODBUS_AUTOPROVISION
 #define SYSTEM_RS485_RX_PIN 16
 #define SYSTEM_RS485_TX_PIN 17
 #define OSPIT_RS485_UART Serial2
     // --- battery, for the low-voltage interlock ---
 #define SENSOR_BATTERY_PIN 33
-#define SENSOR_BATTERY_VOLTAGE_DIVIDER 16 // 1k/15k, i.e. OSPIT's 0.0625 ratio inverted
+    // OSPIT's own divider: 1k/15k, the 0.0625 ratio in mp2.lua's Voutmeasure(), so a factor of 16.
+    // At 12.6V that puts only 0.79V on the pin, using about a quarter of the ADC's range. Changing
+    // the divider to 3k3/15k - ratio 0.1803, so a factor of 5.546 - gives noticeably better
+    // resolution if you are building the hardware rather than working with an existing board.
+#define SENSOR_BATTERY_VOLTAGE_DIVIDER 16
     // --- display ---
     // This board has no OLED in its board definition, so the chip, the bus and the panel size all
     // have to be stated explicitly - actuator/oled.h #errors rather than guessing any of them.
@@ -156,10 +167,14 @@
 #define OSPIT_VALVE1_PIN 10
 #define OSPIT_VALVE2_PIN 13
 #define OSPIT_VALVE3_PIN 14
+    // Unlike the FF board this one has pins to spare, so it carries both roles separately - which
+    // also means this env is the one that compiles both paths.
 #define OSPIT_PUMP_PIN 38 // digital-only pin; examples/agri already drives 38 as an output
+#define OSPIT_LOAD_PIN 40 // digital-only, from the wiki's 37-44 set (37 and 39 are UART0)
 #define OSPIT_TANK_PIN 6 // ADC1_CH5
-    // --- RS485 soil probes ---
+    // --- RS485 soil probes - slave ids from 2, see the note in the FF env ---
 #define SENSOR_SOILMODBUS_WANT
+#define SENSOR_SOILMODBUS_AUTOPROVISION
 #define SYSTEM_RS485_RX_PIN 16
 #define SYSTEM_RS485_TX_PIN 18
 #define OSPIT_RS485_UART Serial1 // The S2 has Serial0 and Serial1 only - there is no Serial2

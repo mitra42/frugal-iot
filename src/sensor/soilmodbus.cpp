@@ -19,13 +19,18 @@ Sensor_SoilModbus::Sensor_SoilModbus(const char* const id, const char * const na
       DEFAULT_soilmodbus_temperature_min, DEFAULT_soilmodbus_temperature_max,
       DEFAULT_soilmodbus_temperature_color, false)),
     modbus(slave_id, bus),
+    slave_id(slave_id),
     reg(reg)
   {
     humidity->unit = "%";
     temperature->unit = "C";
     outputs.push_back(humidity);
     outputs.push_back(temperature);
+    all.push_back(this); // Construction order is the order probes get provisioned - see the header
   }
+
+std::vector<Sensor_SoilModbus*> Sensor_SoilModbus::all;
+uint8_t Sensor_SoilModbus::provision_countdown = 0;
 
 void Sensor_SoilModbus::setup() {
   Sensor::setup();
@@ -41,6 +46,71 @@ bool Sensor_SoilModbus::validate(float humy, float temp) {
       && (temp >= -40.0f) && (temp <= 85.0f); // Datasheet operating range for this class of probe
 }
 
+bool Sensor_SoilModbus::provision() {
+  bool done = false;
+  if (slave_id == SENSOR_SOILMODBUS_FACTORY_ID) {
+    // Nothing to do, and doing it would be indistinguishable from doing nothing - see the header
+    Serial.print(id); Serial.println(F(": slave id is the factory default, cannot provision"));
+  } else {
+    // The read is the test for "exactly one probe is listening there" - two would collide
+    uint16_t probe[SENSOR_SOILMODBUS_COUNT];
+    if (!modbus.bus()->readHoldingRegisters(SENSOR_SOILMODBUS_FACTORY_ID, reg, SENSOR_SOILMODBUS_COUNT)) {
+      #ifdef SENSOR_SOILMODBUS_DEBUG
+        Serial.print(id); Serial.println(F(": nothing answering at the factory address"));
+      #endif
+    } else {
+      (void)probe;
+      done = modbus.bus()->writeSingleRegister(SENSOR_SOILMODBUS_FACTORY_ID,
+                                               SENSOR_SOILMODBUS_IDREGISTER, slave_id);
+      Serial.print(id);
+      if (done) {
+        Serial.print(F(": provisioned a probe as slave ")); Serial.println(slave_id);
+      } else {
+        Serial.println(F(": a probe answered at the factory address but would not take a new id"));
+      }
+    }
+  }
+  return done;
+}
+
+#ifdef SENSOR_SOILMODBUS_AUTOPROVISION
+void Sensor_SoilModbus::autoProvision() {
+  if (provision_countdown) {
+    // An unanswered read at the factory address costs a full ModbusMaster timeout, so do not pay
+    // it every cycle just because a sector is empty - same reasoning as System_Modbus's backoff.
+    provision_countdown--;
+  } else {
+    provision_countdown = SYSTEM_MODBUS_RETRY_CYCLES;
+    for (Sensor_SoilModbus* s : all) {
+      if (!s->modbus.connected) {
+        s->provision(); // At most one per call - the first sector still waiting for a probe
+        break;
+      }
+    }
+  }
+}
+#endif // SENSOR_SOILMODBUS_AUTOPROVISION
+
+/* The one button: hand the probe at the factory address this sector's id.
+ *
+ * The fallback for a bus that already has several probes on it at the factory default, where
+ * autoProvision() correctly refuses to guess - unplug all but one and press.
+ */
+void Sensor_SoilModbus::captiveLines(AsyncResponseStream* response) {
+  Sensor::captiveLines(response);
+  response->print(String(F("<p>")) + name + F(": slave ") + slave_id
+    + (modbus.connected ? F(" (answering)") : F(" (no reply)")) + F("</p>"));
+  frugal_iot.captive->addButton(response, id, "provision", "1", "Assign to new probe");
+}
+
+void Sensor_SoilModbus::dispatch(System_Message &msg) {
+  if (msg.isSet() && (msg.module() == id) && (msg.leaf() == "provision")) {
+    provision(); // Deliberately not persisted - it is an action, not a setting
+  } else {
+    Sensor::dispatch(msg);
+  }
+}
+
 void Sensor_SoilModbus::readValidateConvertSet() {
   uint16_t raw[SENSOR_SOILMODBUS_COUNT] = {0, 0};
   if (!modbus.readRegisters(reg, SENSOR_SOILMODBUS_COUNT, raw)) {
@@ -49,6 +119,10 @@ void Sensor_SoilModbus::readValidateConvertSet() {
     setOutputsInvalid();
     #ifdef SENSOR_SOILMODBUS_DEBUG
       Serial.print(id); Serial.println(F(": no reply"));
+    #endif
+    #ifdef SENSOR_SOILMODBUS_AUTOPROVISION
+      // A sector with no probe is the only reason to go looking for an unprovisioned one
+      autoProvision();
     #endif
   } else {
     // Both registers are scaled by ten. Temperature is signed two's complement - without the
