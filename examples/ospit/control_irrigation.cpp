@@ -3,7 +3,6 @@
  */
 
 #include "control_irrigation.h"
-#include "misc.h" // for changed()
 #include "Frugal-IoT.h"
 #include <cmath> // for NAN
 
@@ -26,13 +25,6 @@ Control_Sector::Control_Sector(const char* const id, const char* const name)
   inputs.push_back(target);
   inputs.push_back(enable);
   outputs.push_back(valve);
-}
-
-void Control_Sector::setEnable(const bool v) {
-  if (changed(v, enable->value)) {
-    enable->value = v;
-    enable->send();
-  }
 }
 
 /* Inputs changed.
@@ -86,7 +78,7 @@ bool Control_Sector::step() {
 
 void Control_Sector::stop() {
   valve->set(false);
-  setEnable(false);
+  enable->set(false);
 }
 
 // ================= Control_Irrigation =============================================
@@ -185,12 +177,12 @@ void Control_Irrigation::startNext() {
       // sector - which is what OSPIT's "Irrigation Emergency Stop" does.
       i = (int8_t)sectors.size();
     } else {
-      sectors[i]->setEnable(true);
+      sectors[i]->enable->set(true);
       if (sectors[i]->start()) {
         frugal_iot.powercontroller->timer_set(t, (uint32_t)(maxminutes->floatValue() * 60.0f));
         break;
       }
-      sectors[i]->setEnable(false); // Did not start - do not leave it looking armed
+      sectors[i]->enable->set(false); // Did not start - do not leave it looking armed
     }
   }
 }

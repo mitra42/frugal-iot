@@ -115,13 +115,6 @@ class Control_Sector : public Control {
      */
     bool step();
     void stop(); // Close the valve and drop enable. Safe to call when not running.
-    /* Set `enable` and publish the change.
-     *
-     * IN has no set() of its own - the library's inputs are normally driven from a wire or from
-     * MQTT, not from code - so this writes the value and calls send() to put it on the bus, which
-     * is what makes the sector's state visible in the UX while a cycle runs.
-     */
-    void setEnable(bool v);
   protected:
     void act() override;
 };

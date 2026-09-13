@@ -27,7 +27,6 @@
  *    irrigation/hour, irrigation/minute   when the daily run starts, local time (default 03:00)
  *    irrigation/maxminutes                longest any one valve may stay open (default 5)
  *    sectorN/target                       moisture % at which sector N is satisfied (default 80)
- *    controlhysteresis/hysteresis         see the battery interlock note below
  *  ============================================================================================
  */
 
@@ -66,9 +65,9 @@ void setup() {
   // On the FF board the pump pin is also the main load output and OSPIT's low-voltage disconnect
   // switch - three jobs on one pin. Here it is only the pump; if your board shares it, wire the
   // other users to `pump/on` rather than driving the pin behind this actuator's back.
-  frugal_iot.actuators->add(new Actuator_Digital("valve1", "Valve 1", OSPIT_VALVE1_PIN, DEFAULT_valve1_on_color));
-  frugal_iot.actuators->add(new Actuator_Digital("valve2", "Valve 2", OSPIT_VALVE2_PIN, DEFAULT_valve2_on_color));
-  frugal_iot.actuators->add(new Actuator_Digital("valve3", "Valve 3", OSPIT_VALVE3_PIN, DEFAULT_valve3_on_color));
+  frugal_iot.actuators->add(new Actuator_Digital("valve1", "Valve 1", OSPIT_VALVE1_PIN, DEFAULT_valve_on_color));
+  frugal_iot.actuators->add(new Actuator_Digital("valve2", "Valve 2", OSPIT_VALVE2_PIN, DEFAULT_valve_on_color));
+  frugal_iot.actuators->add(new Actuator_Digital("valve3", "Valve 3", OSPIT_VALVE3_PIN, DEFAULT_valve_on_color));
   frugal_iot.actuators->add(new Actuator_Digital("pump", "Pump", OSPIT_PUMP_PIN, DEFAULT_pump_on_color));
 
   // ---- Sensors -------------------------------------------------------------------------
@@ -87,18 +86,13 @@ void setup() {
   // ---- Battery interlock ----------------------------------------------------------------
   /* Reproduces OSPIT's low_voltage_disconnect: stop irrigating when the battery is too low.
    *
-   * Battery readings are millivolts, so 12100 is 12.1 V - between OSPIT's 11.9 V disconnect and
-   * 12.3 V reconnect. `greater` defaults true, so `out` is true (irrigation permitted) above the
-   * limit.
-   *
-   * TODO the dead band is 0 here, i.e. one bare threshold, so a battery hovering at 12.1 V under
-   * a pump load will chatter. OSPIT's 11.9/12.3 pair is a hysteresis of 200 mV, which belongs in
-   * `controlhysteresis/hysteresis` - but INfloat has no public setter, so an example cannot set a
-   * control's starting hysteresis from code. Set it once from the portal or by publishing
-   * `set/<device>/controlhysteresis/hysteresis` = 200; it persists. A public setter on INfloat
-   * would remove the need and is a library change worth making.
+   * Battery readings are millivolts, so this is OSPIT's 11.9 V cut-out / 12.3 V restore pair
+   * written as a limit of 12.1 V with a 200 mV dead band - without which a battery sagging under
+   * the pump load would chatter the interlock. `greater` defaults true, so `out` is true
+   * (irrigation permitted) above the limit.
    */
-  Control_Hysteresis* ch = new Control_Hysteresis("controlhysteresis", "Battery interlock", 12100, 0, 10000, 15000);
+  Control_Hysteresis* ch = new Control_Hysteresis("controlhysteresis", "Battery interlock",
+                                                  12100, 0, 10000, 15000, 200);
   frugal_iot.controls->add(ch);
   ch->inputs[0]->wireTo(frugal_iot.messages->path("battery/battery"));
 
