@@ -208,6 +208,8 @@
 // platform = espressif8266
 // build_flags =
 //     ${common.build_flags}
+    // ESP8266 has no DAC either - analogWrite, and the same filter caveat
+#define ACTUATOR_ANALOG_PIN D6
 #define SYSTEM_OTA_SUFFIX "d1_mini"
 
 // ===== LORA BOARDS - ALL ESP32 ======================================

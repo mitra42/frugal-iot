@@ -1159,6 +1159,68 @@ by part - some add conductivity and pH.
 | `Actuator_Digital` | actuator/digital | Any digital output (relay, LED) |
 | `Actuator_OLED` | actuator/oled | SSD1306 or SSD1327 OLED; added automatically on supported boards. See "Two OLED chips" below |
 | `Actuator_LCD` | actuator/lcd | HD44780 LCD via I2C backpack; requires `ACTUATOR_LCD_WANT` |
+| `Actuator_Analog` | actuator/analog | A voltage out — DAC where the chip has one, PWM where it does not |
+
+### Actuator_Analog — a value out as a voltage
+
+Set it volts and it produces them, on whatever the chip has. **The choice is automatic**, so one
+sketch compiles for all of them and asks for the same voltage on each:
+
+| Chip | Path | Resolution | Pins |
+|---|---|---|---|
+| ESP32, ESP32-S2 | built-in DAC | 8 bit, ~13 mV at 3.3 V | fixed: 25/26, or 17/18 on S2 |
+| ESP32-C3, -S3 | PWM via `ledc` | `ACTUATOR_ANALOG_PWM_BITS` (10) | any |
+| ESP8266 | PWM via `analogWrite` | as above | any |
+
+`SOC_DAC_SUPPORTED` is the test — 1 on ESP32 and S2, undefined on C3 and S3.
+`ACTUATOR_ANALOG_FORCE_PWM` overrides it, which is needed for two real cases: the DAC pins are
+fixed, so any other pin on an ESP32 must use PWM; and PWM gives finer resolution than 8 bits.
+
+> **The PWM path is not a voltage without an RC filter.** It is a square wave whose *average* is
+> the value you asked for and whose instantaneous value is either 0 or Vdd — never the number set.
+
+A resistor in series with the pin, a capacitor to ground, output across the capacitor. Worst-case
+ripple (at 50% duty) is `Vdd / (4·f·R·C)`, so for under one step `R·C ≥ (steps−1)/(4·f)`, and
+settling takes about `R·C · bits · 0.7`. Values rather than a formula, at the default 20 kHz and
+10 bits (one step = 3.2 mV):
+
+| f | R | C | ripple | settles | output impedance |
+|---|---|---|---|---|---|
+| 20 kHz | 10 k | 1 µF | 4.1 mV | 70 ms | 10 k |
+| 20 kHz | 4.7 k | 2.2 µF | 4.0 mV | 72 ms | 4.7 k |
+| 78 kHz | 10 k | 220 nF | 4.8 mV | 15 ms | 10 k |
+| 78 kHz | 1 k | 2.2 µF | 4.8 mV | 15 ms | 1 k |
+
+Every extra bit costs **four times** the RC, so four times the settling: 8-bit at 20 kHz needs
+only 10 k + 330 nF, 12-bit needs 10 k + 5.6 µF and takes 0.4 s to settle.
+
+**Watch the output impedance** — this is what catches people. R is in series with the load, so
+current it draws is error: 10 k drawing 100 µA is a **whole volt** out. Fine into an op-amp or
+comparator drawing nanoamps; hopeless into anything that loads it, and no amount of filtering
+helps. Use the low-R/high-C pairing, or buffer with an op-amp follower. Ceramic (X7R) or film for
+C — an electrolytic's leakage is itself a load.
+
+**Volts are nominal on both paths.** The DAC is ratiometric to Vdd, so a 3.3 V rail actually at
+3.26 shifts everything; the PWM path also depends on the filter and what loads it. Anything
+needing better than a few percent wants measuring, not trusting.
+
+**Resolution is native per chip rather than flattened**, so each gives its best — and
+`steps()`/`stepVolts()` report it, because a control loop stepping one LSB moves ~13 mV on an
+ESP32's DAC and ~3 mV at 10-bit PWM. An MPPT tracker with a ±30 mV deadband — about two DAC steps
+— should ask rather than assume.
+
+On ESP32 frequency and resolution trade off: `f_max = 80 MHz / 2^bits`, so 12-bit caps at about
+19.5 kHz. `ACTUATOR_ANALOG_PWM_FREQ` defaults to 20 kHz, above audio so nothing in the circuit
+sings, and low enough to leave headroom at 10-bit.
+
+`vref` is the voltage reached at full scale — the supply rail, so 3.3 by default. Pass something
+else to trim to a rail that actually measures 3.26, or to give the full-scale voltage at the
+output of a gain stage the pin feeds, so the value means volts where they matter. The input range
+follows it; the schema's 0–3.3 remain the defaults it is compared against.
+
+The input is a wireable `INfloat` in volts, so a control can drive it, and it is settable over
+MQTT like anything else. A DAC pin that has no DAC is caught at `setup()` — `dacWrite` reports it
+— rather than silently producing nothing.
 
 ### Actuator_LCD
 
