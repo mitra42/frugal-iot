@@ -164,6 +164,10 @@ uint32_t System_Power::timer(uint8_t i) {
 void System_Power::timer_set(const uint8_t i, const uint32_t t_secs) {
     timers[i] = sleepSafeSecs() + t_secs;
 }
+// Absolute form - see power.h. sleepSafeSecs() IS the epoch, so there is nothing to convert.
+void System_Power::timer_set_to(const uint8_t i, const uint32_t t_secs_absolute) {
+    timers[i] = t_secs_absolute;
+}
 bool System_Power::timer_expired(const uint8_t i) {
   return (timer(i) <= sleepSafeSecs());
 }

@@ -35,7 +35,24 @@ class System_Power : public System_Base {
     System_Power_Type mode; 
     uint8_t timer_next(); // Return an index to a timer that can be used
     void timer_set(uint8_t i, uint32_t t_secs);
-    bool timer_expired(uint8_t i); 
+    /* Arm a timer for an ABSOLUTE time, rather than "t_secs from now".
+     *
+     * sleepSafeSecs() returns gettimeofday()'s tv_sec - the epoch itself - so the argument is
+     * directly comparable with System_Time::now(): "fire at 03:00 tomorrow" is just
+     * timer_set_to(i, the_epoch_of_that_moment).
+     *
+     * Note how this differs from timer_set() when the clock is stepped. timers_shift() preserves
+     * a timer's INTERVAL, which is what timer_set() callers want (OTA, discovery, watchdog) but is
+     * wrong for a wall-clock appointment - an NTP correction would slide it. So a caller using
+     * this should re-arm from its own freshly computed absolute time rather than trust the value
+     * it last wrote; Control_Irrigation::periodically() in examples/ospit does that every cycle
+     * while idle, and is therefore self-correcting after a clock step.
+     *
+     * TODO This belongs in the library proper rather than arriving alongside examples/ospit - it
+     * is one line and generally useful. On ospit-p2 for now, as agreed.
+     */
+    void timer_set_to(uint8_t i, uint32_t t_secs_absolute);
+    bool timer_expired(uint8_t i);
     /* Keep armed timers sane when the wall clock is stepped.
      *
      * timer_set() stores sleepSafeSecs() + secs as an ABSOLUTE value, and sleepSafeSecs() is
