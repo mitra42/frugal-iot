@@ -221,7 +221,11 @@
 #define SENSOR_DS18B20_POWER0_PIN 7
 #define SENSOR_DS18B20_POWER3v3_PIN 8
 #define SENSOR_DS18B20_PIN 11
-#define SENSOR_BATTERY_PIN 16 // Read battery voltage on pin 16 as its external
+    // GPIO5 is ADC1_CH4. This was pin 16, which is ADC2 - and ADC2 is shared with WiFi on
+    // the S2, so a reading taken while the radio is busy can fail or come back stale.
+    // NOTE this moves the wire: a board already built to read the divider on pin 16 has to
+    // have that lead moved to pin 5.
+#define SENSOR_BATTERY_PIN 5
 #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Power 1 & 2 are both 100k+100k
 #define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 
@@ -254,7 +258,11 @@
 #define SENSOR_DS18B20_POWER0_PIN 6
 #define SENSOR_DS18B20_POWER3v3_PIN 8
 #define SENSOR_DS18B20_PIN 10
-#define SENSOR_BATTERY_PIN 16 // Read battery voltage on pin 10 as its external
+    // GPIO5 is ADC1_CH4. This was pin 16, which is ADC2 - and ADC2 is shared with WiFi on
+    // the S2, so a reading taken while the radio is busy can fail or come back stale.
+    // NOTE this moves the wire: a board already built to read the divider on pin 16 has to
+    // have that lead moved to pin 5.
+#define SENSOR_BATTERY_PIN 5
 #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Power 1 & 2 are both 100k+100k
 #define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 #define SENSOR_DS18B20_DEBUG
@@ -293,7 +301,11 @@
 #define SENSOR_DS18B20_POWER0_PIN 6
 #define SENSOR_DS18B20_POWER3v3_PIN 10
 #define SENSOR_DS18B20_PIN 8
-#define SENSOR_BATTERY_PIN 16 // Read battery voltage on pin 10 as its external
+    // GPIO5 is ADC1_CH4. This was pin 16, which is ADC2 - and ADC2 is shared with WiFi on
+    // the S2, so a reading taken while the radio is busy can fail or come back stale.
+    // NOTE this moves the wire: a board already built to read the divider on pin 16 has to
+    // have that lead moved to pin 5.
+#define SENSOR_BATTERY_PIN 5
 #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Power 1 & 2 are both 100k+100k
 #define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 #define SENSOR_DS18B20_DEBUG
