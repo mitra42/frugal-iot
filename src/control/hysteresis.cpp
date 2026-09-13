@@ -60,13 +60,13 @@ void Control_Hysteresis::actInner() {
   // If  lim-histerisis < hum < lim+histerisis then don't change setting (or reverse if !greater)
 };
 
-Control_Hysteresis::Control_Hysteresis (const char* const id, const char * const name, float now, uint8_t width, float min, float max) 
+Control_Hysteresis::Control_Hysteresis (const char* const id, const char * const name, float now, uint8_t width, float min, float max, float hysteresis) 
 : Control(id, name,
   std::vector<IN*> {
     new INfloat(id, "now", "Now", now, width, min, max, DEFAULT_controlhysteresis_now_min, DEFAULT_controlhysteresis_now_max, DEFAULT_controlhysteresis_now_color, true),
     new INbool(id, "greater", "Greater than", true, DEFAULT_controlhysteresis_greater_color, false),
     new INfloat(id, "limit", "Limit", now, width, min, max, DEFAULT_controlhysteresis_limit_min, DEFAULT_controlhysteresis_limit_max, DEFAULT_controlhysteresis_limit_color, true),
-    new INfloat(id, "hysteresis", "Hysteresis", 0, width, min, max, DEFAULT_controlhysteresis_hysteresis_min, DEFAULT_controlhysteresis_hysteresis_max, DEFAULT_controlhysteresis_hysteresis_color, false)
+    new INfloat(id, "hysteresis", "Hysteresis", hysteresis, width, min, max, DEFAULT_controlhysteresis_hysteresis_min, DEFAULT_controlhysteresis_hysteresis_max, DEFAULT_controlhysteresis_hysteresis_color, false)
   },
   std::vector<OUT*> {
     // Note assumptions here, and in superclasses e.g. Control_Sonoff that output[0]="out" and is the output
