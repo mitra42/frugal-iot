@@ -19,9 +19,9 @@
 
 // Note voltage divider is board specific - known defaults in sensor_battery.h
 
-Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider)
+Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider, float min, float max)
 //(id, name, pin, width, min, max, offset, scale, color, retain)
-: Sensor_Analog("battery", "Battery", pin_init, 0, DEFAULT_battery_battery_min, DEFAULT_battery_battery_max, 0, voltage_divider, DEFAULT_battery_battery_color, true) //TODO-1
+: Sensor_Analog("battery", "Battery", pin_init, 0, min, max, 0, voltage_divider, DEFAULT_battery_battery_color, true) //TODO-1
   {
       pinMode(pin, INPUT); // Maybe not needed, but really need to be sure for power
       // Battery power pins are defined in battery.h unlikely to be be overriden in platformio.ini

@@ -81,6 +81,12 @@ void Control_Sector::stop() {
   enable->set(false);
 }
 
+void Control_Sector::forceOff() {
+  valve->set(false);   // Sends only if this control had it open ...
+  valve->sendWired();  // ... so push it regardless, in case something else did - see closeAll()
+  enable->set(false);
+}
+
 // ================= Control_Irrigation =============================================
 
 Control_Irrigation::Control_Irrigation(const char* const id, const char* const name)
@@ -170,6 +176,14 @@ bool Control_Irrigation::blocked() {
   return !enabled->value || !power->value || !tankOk();
 }
 
+void Control_Irrigation::closeAll() {
+  for (Control_Sector* s : sectors) {
+    if (s->moisture->isValid()) {
+      s->forceOff();
+    }
+  }
+}
+
 void Control_Irrigation::startNext() {
   while (++i < (int8_t)sectors.size()) {
     if (blocked()) {
@@ -251,6 +265,7 @@ void Control_Irrigation::act() {
   if (running() && blocked()) {
     sectors[i]->stop();
     i = (int8_t)sectors.size();
+    closeAll(); // An interlock aborting a run closes everything, not just the sector that was open
     active->set(0);
   }
   setPump();
@@ -258,6 +273,7 @@ void Control_Irrigation::act() {
 
 void Control_Irrigation::periodically() {
   System_Power* p = frugal_iot.powercontroller;
+  bool cycleEnded = false;
   if (running()) {
     // Three ways a sector's turn ends: its time ran out, an interlock opened, or the soil reached
     // target. stop() closes the valve in all three; startNext() then finds the next sector that
@@ -265,10 +281,16 @@ void Control_Irrigation::periodically() {
     if (p->timer_expired(t) || blocked() || !sectors[i]->step()) {
       sectors[i]->stop();
       startNext();
+      cycleEnded = !running();
     }
   } else if (p->timer_expired(t) && !blocked() && tankCanStart()) {
     i = -1; // startNext() pre-increments, so this starts the search at sector 0
     startNext();
+    cycleEnded = !running(); // A cycle was due and attempted, but no sector wanted water
+  }
+  if (cycleEnded) {
+    // Once per cycle, not once per pass - so this is a handful of messages a day, not a stream
+    closeAll();
   }
   if (!running()) {
     /* Re-arm for the next run, every pass while idle.

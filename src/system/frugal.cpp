@@ -201,8 +201,8 @@ void System_Frugal::configure_mqtt(const char* hostname, const char* username, c
 void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
   powercontroller->configure(t, cycle_ms, wake_ms);
 }
-void System_Frugal::configure_battery(const uint8_t pin, float_t voltage_divider) {
-  sensors->add(battery = new Sensor_Battery(pin, voltage_divider));
+void System_Frugal::configure_battery(const uint8_t pin, float_t voltage_divider, float min, float max) {
+  sensors->add(battery = new Sensor_Battery(pin, voltage_divider, min, max));
 } 
 
 void System_Frugal::pre_setup() {

@@ -3,6 +3,7 @@
  */
 
 #include "sensor_tank.h"
+#include "system/language.h" // for Texts
 #include "Frugal-IoT.h"
 
 // offset/scale map raw counts onto 0..100 %: convert() in Sensor_Analog is (v - offset) * scale,
@@ -37,4 +38,12 @@ float Sensor_Tank::convert(int v) {
   } else {
     return pc;
   }
+}
+
+// Tare against an empty tank, then enter the true percentage with it full. Sensor_Analog::dispatch
+// does the work and persists both offset and scale - see the note in sensor_tank.h.
+void Sensor_Tank::captiveLines(AsyncResponseStream* response) {
+  frugal_iot.captive->addButton(response, id, "output", "0", T->Tare);
+  frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(), 3),
+                                T->Calibrate, output->min, output->max);
 }

@@ -62,6 +62,15 @@ class Sensor_Tank : public Sensor_Analog {
     int raw_disconnected;
     bool validate(int v) override;
     float convert(int v) override;
+    /* Two-point calibration from the portal, the same mechanism Sensor_Soil offers.
+     *
+     * Sensor_Analog already has it all: writing 0 to <id>/output tares (the current raw reading
+     * becomes 0%), writing any other number calibrates (scale is set so the current reading means
+     * that number), and both offset and scale are persisted. So: empty the tank, press Tare; fill
+     * it, type 100. The constructor's raw_empty/raw_full are only the starting guess, computed
+     * from the sender resistances in OSPIT's comment and never measured against real hardware.
+     */
+    void captiveLines(AsyncResponseStream* response) override;
 };
 
 #endif // SENSOR_TANK_H

@@ -115,6 +115,12 @@ class Control_Sector : public Control {
      */
     bool step();
     void stop(); // Close the valve and drop enable. Safe to call when not running.
+    /* Push "closed" onto the valve whether or not this control believes it is already closed.
+     *
+     * stop() goes through OUTbool::set(), which only sends on a change - so a valve opened by
+     * hand from the portal, which never touched this OUT, would be left open. See closeAll().
+     */
+    void forceOff();
   protected:
     void act() override;
 };
@@ -170,6 +176,20 @@ class Control_Irrigation : public Control {
     bool tankOk();      // Tank is fitted and above the empty threshold, or no tank is fitted
     bool tankCanStart(); // As tankOk, but against the higher "enough to bother starting" threshold
     void startNext();   // Advance i to the next sector that will run; leaves it idle if none will
+    /* Close every sector's valve at the end of a cycle, whoever opened it.
+     *
+     * Manual control is allowed to fight the sequencer and win for a while - but when the run
+     * that would have closed a valve reaches its end, it closes. That needs forceOff() rather
+     * than stop(), and it needs to reach sectors the run skipped, neither of which falls out of
+     * the per-sector path. OSPIT does exactly this in its reset branch.
+     *
+     * Sectors with no reading are left alone, as OSPIT leaves its `humidities[i] ~= -127` ones:
+     * we promised never to drive a valve we have no feedback from, and that promise holds for
+     * closing as well as opening.
+     * TODO manual override needs application-specific thought - "the schedule wins eventually"
+     * is one answer, "manual latches until someone clears it" is another.
+     */
+    void closeAll();
     time_t nextStartTime(); // Absolute epoch of the next hour:minute, always in the future
     void setPump();
     void act() override;

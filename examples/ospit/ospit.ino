@@ -39,9 +39,15 @@
 System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "ospit", "OSPIT Irrigation");
 
 void setup() {
-  // Battery sensor has to come before pre_setup, all others should come after
+  /* Battery sensor has to come before pre_setup, all others should come after.
+   *
+   * 10000..15000 mV rather than the 3000..5000 default: this is a 12V lead-acid bank, not a
+   * single lithium cell, so every gauge in the UX would otherwise sit pegged at maximum. The
+   * divider is set per board in platformio.ini - on the FF board it is OSPIT's own 1k/15k,
+   * i.e. the 0.0625 ratio in mp2.lua's Voutmeasure(), so a factor of 16.
+   */
   #ifdef SENSOR_BATTERY_PIN
-    frugal_iot.configure_battery(SENSOR_BATTERY_PIN);
+    frugal_iot.configure_battery(SENSOR_BATTERY_PIN, SENSOR_BATTERY_VOLTAGE_DIVIDER, 10000, 15000);
   #endif
 
   /* Awake all the time, on a 10 second cycle.
