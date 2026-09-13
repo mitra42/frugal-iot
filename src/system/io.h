@@ -67,6 +67,18 @@ class IN : public IO {
      * base returns true and INfloat overrides it.
      */
     virtual bool isValid();
+    /* Setting an IN from code.
+     *
+     * An IN is normally driven by a wire or by MQTT, not by the component that owns it, so most
+     * have no setter. These exist for the cases where a component genuinely does own the value -
+     * Control_Irrigation writing each sector's `enable` as the sequence advances - and for a
+     * sketch giving a control a starting value the constructor does not take.
+     *
+     * Like OUTbool::set they only act on a real change, and they send() so the new value reaches
+     * the UX. They do NOT sendWired(): an IN's wiredPath is something it subscribes to, so there
+     * is nothing to push to. Declared on the typed subclasses rather than here because the value
+     * types differ - see INfloat::set and INbool::set.
+     */
     virtual bool convertAndSet(const String &payload);
     bool dispatch(System_Message &msg) override;
     void setup();
@@ -102,6 +114,7 @@ class INfloat : public IN {
     INfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, float default_min, float default_max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
+    void set(const float newvalue); // Set and send if changed - see the note on IN::convertAndSet
     bool isValid() override; // False when value is NaN, i.e. the sensor published IO_PAYLOAD_INVALID
     uint8_t width; // Cant be protected because used in e.g. control_oled_ht.cpp 
     virtual String StringValue();
@@ -156,6 +169,7 @@ class INbool : public IN {
     //INbool(); 
     INbool(char const * const sensorId, char const * const id, const String name, bool value, char const * const color, const bool wireable);
     INbool(const INuint16 &other);
+    void set(const bool newvalue); // Set and send if changed - see the note on IN::convertAndSet
     bool value;
   protected:
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
