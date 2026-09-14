@@ -92,6 +92,14 @@ class System_RS485 {
     void initialize();  // Idempotent - every device on the bus calls it from its own setup()
     // Blocking. Returns true on success, after which responseBuffer() holds the values.
     bool readHoldingRegisters(uint8_t slave_id, uint16_t reg, uint16_t count);
+    /* Modbus function 0x06, write one holding register. Blocking, true on success.
+     *
+     * Deliberately on the BUS rather than on System_Modbus: the one thing anybody writes to a
+     * probe of this kind is its own slave address, and that transaction is addressed to whatever
+     * the probe answers to now, not to the id it is about to have. See
+     * Sensor_SoilModbus::provision().
+     */
+    bool writeSingleRegister(uint8_t slave_id, uint16_t reg, uint16_t value);
     uint16_t responseBuffer(uint8_t i);
     uint8_t lastResult() { return last_result; }
   protected:
@@ -131,9 +139,16 @@ class System_Modbus {
      * `count` is bounded by ModbusMaster's 64-register response buffer.
      */
     bool readRegisters(uint16_t reg, uint16_t count, uint16_t* out);
+    /* The shared bus this slave sits on.
+     *
+     * Exposed because a transaction addressed to something OTHER than this slave id is
+     * occasionally the point - Sensor_SoilModbus::provision() talks to whatever answers at the
+     * factory address in order to turn it into this slave.
+     */
+    System_RS485* bus() { return _bus; }
   protected:
     uint8_t slave_id;
-    System_RS485* bus;
+    System_RS485* _bus;
     uint8_t retry_countdown = 0; // Cycles still to skip before retrying a silent slave
 };
 
