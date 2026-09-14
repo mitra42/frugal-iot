@@ -9,6 +9,7 @@
 
 //TO-ADD-SENSOR - add any new sensors here (in alphabetical order)
 #include "sensor/aht.h" // Sensor_AHT20 and Sensor_AHT21 share one implementation
+#include "sensor/voltage.h" // Any DC voltage through a divider; Sensor_Battery subclasses it
 #include "sensor/battery.h"
 #include "sensor/bh1750.h"
 #include "sensor/bmx280.h" // Sensor_BMP280 and Sensor_BME280 share one implementation
