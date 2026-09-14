@@ -223,8 +223,6 @@ Frugal-IoT/
 │   ├── lcd_ht/           # HD44780 LCD showing a remote HT (e.g. SHT) node's readings over MQTT
 │   ├── lilygohigrow/      # Plant watering (LilyGo HiGrow)
 │   ├── ms5803/            # MS5803 pressure sensor
-│   ├── ospit/             # Sequenced soil-moisture irrigation - a port of OSPIT. Carries its
-│   │                       #   own Control_Irrigation/Control_Sector and Sensor_Tank
 │   ├── power/             # Power mode demonstration
 │   ├── remotedisplay/     # OLED showing a remote SHT node's readings over MQTT
 │   └── sonoff/            # Sonoff relay module
@@ -1341,55 +1339,6 @@ before believing a green build. (`lilygo_t3_s3_sx127x_sht`, `heltec_wifi_lora_32
 | `Control_LoggerFS` | control/logger_fs | LittleFS CSV data logger |
 | `Control_Logger` | control/logger | Serial logger |
 | `Control_GSheets` | control/gsheets | Push readings to Google Sheets |
-| `Control_Irrigation` | examples/ospit | Daily, one-sector-at-a-time irrigation sequencer. In the example, not the library - see below |
-| `Control_Sector` | examples/ospit | One irrigation sector: moisture, target, enable, valve |
-
-### examples/ospit — sequenced irrigation, and why it is not in the library
-
-`examples/ospit` is a port of the irrigation half of [OSPIT](https://github.com/mitra42/ospit),
-the NodeMCU-Lua solar irrigation controller. It brings three classes, and they live in the example
-directory rather than in `src/` on purpose: the control options are expected to be wrong for the
-next application that needs them, so they are somewhere a person can copy and edit rather than
-somewhere a person has to extend. `Control_Sector`, in particular, is small enough to rewrite.
-
-| Class | What it is |
-|-------|-----------|
-| `Control_Irrigation` | The sequencer: the clock, the interlocks, the pump, and an ordered list of sectors |
-| `Control_Sector` | One sector - `moisture` and `target` `IN`s, an `enable` `IN`, a `valve` `OUT` |
-| `Sensor_Tank` | A resistive float sender on an ADC pin, as a percentage |
-
-**One timer, two jobs.** `Control_Irrigation` claims a single sleep-safe timer slot and uses it for
-the current sector's maximum open time while a cycle runs, and for the absolute time of the next
-cycle while idle. They are never both needed, and because the timer array is in `RTC_DATA_ATTR`
-the whole schedule survives deep sleep with no state of its own. The idle branch re-arms from a
-freshly computed `nextStartTime()` on *every* pass, which is what makes it self-correcting: an NTP
-step moves armed timers to preserve their interval (right for OTA, wrong for "03:00"), and the
-next pass simply overwrites it. `System_Power::timer_set_to()` was added for this - it is one line,
-and belongs in the library proper rather than arriving alongside an example.
-
-**A sector with no reading is skipped, and its valve is never driven.** On OSPIT this was not a
-nicety but the board's configuration mechanism: its third output is either sector 3's valve or a
-USB supply, and `shumidity3 == -127` is the only switch deciding which - `irrigation.lua` skips the
-sector and `mp2.lua` claims the same pin. Here a sector exists because you constructed one, so the
-overloading is gone; the skip stays, because opening a valve you have no feedback from is worse
-than not watering. This is `IN::isValid()` doing the job OSPIT's `-127` did - see "Invalid
-readings" above.
-
-**"No tank sensor" and "tank empty" are different answers.** `Sensor_Tank::validate()` rejects an
-open-circuit reading so the sensor publishes `nan`, and `Control_Irrigation` treats that as "do not
-let the tank block irrigation" while still treating a genuine 0% as "stop". OSPIT conflates them
-(`if tankgaugeadc > 4000 then tankgauge = 0`), so an unplugged sender there silently stops all
-irrigation and looks exactly like a dry tank.
-
-**Deep sleep.** `Control_Irrigation::allowSleep()` returns false while a cycle is running. Nothing
-calls it yet - it is the hook for the sleep management being built separately. `setup()` resets to
-idle on every boot, so a cycle interrupted by a sleep is abandoned rather than resumed from stale
-state, and every valve is closed by `Actuator_Digital::setup()`.
-
-**Two boards, one application.** `ff_openmppt` (the real OSPIT hardware, an ESP32) and `s2_mini`.
-Different `ARDUINO_*` macros, so `generate_platform_h.py` emits both rather than marking one
-DISABLED. MPPT is not implemented in either - that is a later phase, and this build simply leaves
-the FF board's charge hardware alone.
 
 ### Irrigation lives in its own repository
 
