@@ -85,9 +85,12 @@ class System_Frugal : public System_Group {
     void configure_mqtt(const char* hostname, const char* username, const char* password);
     void configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms);
     #if defined(SENSOR_BATTERY_PIN) && defined(SENSOR_BATTERY_VOLTAGE_DIVIDER) // Only support default constructor if PIN and DIVIDER defined
-      void configure_battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_VOLTAGE_DIVIDER);
+      // min/max are the display range in millivolts - see the note on Sensor_Battery
+      void configure_battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_VOLTAGE_DIVIDER,
+                             float min = DEFAULT_battery_battery_min, float max = DEFAULT_battery_battery_max);
     #else
-      void configure_battery(const uint8_t pin, float_t voltage_divider);
+      void configure_battery(const uint8_t pin, float_t voltage_divider,
+                             float min = DEFAULT_battery_battery_min, float max = DEFAULT_battery_battery_max);
     #endif
     void startSerial(uint32_t baud, uint16_t serial_delay);
     void startSerial(); // Encapsulate setting up and starting serial

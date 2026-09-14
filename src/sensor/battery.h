@@ -93,12 +93,19 @@
   #endif
 #endif
 
+/* min/max are the DISPLAY range in millivolts, not a validity test - nothing is rejected for
+ * falling outside them. They default to the schema's 3000..5000, which is a single lithium cell.
+ * A node running from something else has to say so or every gauge in the UX pegs: a 12V
+ * lead-acid bank, for instance, sits at 10000..15000.
+ */
 class Sensor_Battery : public Sensor_Analog {
   public: 
     #if defined(SENSOR_BATTERY_SCALE) && defined(SENSOR_BATTERY_PIN)
-      Sensor_Battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_SCALE); // Where SENSOR_BATTERY_PIN and SENSOR_BATTERY_VOLTAGE_DIVIDER defined
+      Sensor_Battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_SCALE,
+                     float min = DEFAULT_battery_battery_min, float max = DEFAULT_battery_battery_max); // Where SENSOR_BATTERY_PIN and SENSOR_BATTERY_VOLTAGE_DIVIDER defined
     #else
-      Sensor_Battery(const uint8_t pin, float_t voltage_divider);
+      Sensor_Battery(const uint8_t pin, float_t voltage_divider,
+                     float min = DEFAULT_battery_battery_min, float max = DEFAULT_battery_battery_max);
     #endif
   protected:
     #ifdef ESP32
