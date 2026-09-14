@@ -153,6 +153,7 @@ class INuint16 : public IN {
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, char const * const color, const bool wireable);
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, uint16_t default_min, uint16_t default_max, char const * const color, const bool wireable);
     INuint16(const INuint16 &other);
+    void set(const uint16_t newvalue); // Set and send if changed - see the note on IN::convertAndSet
     bool dispatch(System_Message &msg) override;
     void discover() override;
   protected:

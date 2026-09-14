@@ -102,6 +102,13 @@ void INfloat::set(const float newvalue) {
   }
 }
 
+void INuint16::set(const uint16_t newvalue) {
+  if (changed(newvalue, value)) {
+    value = newvalue;
+    send();
+  }
+}
+
 float INbool::floatValue() {
   return value;
 }
