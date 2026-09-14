@@ -21,7 +21,7 @@
 #ifndef SENSOR_BATTERY_H
 #define SENSOR_BATTERY_H
 
-#include "sensor/analog.h"
+#include "sensor/voltage.h"
 
 #ifndef SENSOR_BATTERY_VOLTAGE_DIVIDER
   // Defines defaults - can use SENSOR_BATTERY_VOLTAGE_DIVIDER in main.cpp
@@ -93,12 +93,20 @@
   #endif
 #endif
 
-/* min/max are the DISPLAY range in millivolts, not a validity test - nothing is rejected for
+/* The board's own battery, as a Sensor_Voltage with this board's pin and divider defaults.
+ *
+ * Distinct from a bare Sensor_Voltage in three ways, all of them battery-specific: the
+ * SENSOR_BATTERY_* defaults above, the power-control pins some boards put in front of the
+ * divider, and the fact that System_Frugal::configure_battery() keeps a pointer to it so
+ * System_Power::checkLevel() can refuse to boot on a flat battery. A solar panel wants none of
+ * those, so it uses Sensor_Voltage directly.
+ *
+ * min/max are the DISPLAY range in millivolts, not a validity test - nothing is rejected for
  * falling outside them. They default to the schema's 3000..5000, which is a single lithium cell.
  * A node running from something else has to say so or every gauge in the UX pegs: a 12V
  * lead-acid bank, for instance, sits at 10000..15000.
  */
-class Sensor_Battery : public Sensor_Analog {
+class Sensor_Battery : public Sensor_Voltage {
   public: 
     #if defined(SENSOR_BATTERY_SCALE) && defined(SENSOR_BATTERY_PIN)
       Sensor_Battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_SCALE,
@@ -106,10 +114,6 @@ class Sensor_Battery : public Sensor_Analog {
     #else
       Sensor_Battery(const uint8_t pin, float_t voltage_divider,
                      float min = DEFAULT_battery_battery_min, float max = DEFAULT_battery_battery_max);
-    #endif
-  protected:
-    #ifdef ESP32
-      int readInt() override;
     #endif
 };
 

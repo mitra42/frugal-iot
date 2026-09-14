@@ -544,7 +544,8 @@ needs nothing — `lib/data-loader.js` already filters `isNaN` out of the graph 
 | `Sensor_AHT20` | sensor/aht | Temperature + humidity (AHT20) |
 | `Sensor_AHT21` | sensor/aht | Temperature + humidity (AHT21), as on the ENS160+AHT21 breakout |
 | `Sensor_Soil` | sensor/soil | Soil moisture (capacitive) |
-| `Sensor_Battery` | sensor/battery | Battery voltage |
+| `Sensor_Voltage` | sensor/voltage | Any DC voltage through a resistor divider (mV). Uses the calibrated `analogReadMilliVolts()`, unlike `Sensor_Analog` |
+| `Sensor_Battery` | sensor/battery | Battery voltage - `Sensor_Voltage` with this board's pin/divider defaults, and the instance `checkLevel()` consults |
 | `Sensor_BH1750` | sensor/bh1750 | Light (lux) |
 | `Sensor_BMx280` | sensor/bmx280 | Base class for the BMP280/BME280 — not instantiated directly |
 | `Sensor_BMP280` | sensor/bmx280 | Temperature + pressure (hPa). Freestanding, no external library |
@@ -1389,6 +1390,22 @@ state, and every valve is closed by `Actuator_Digital::setup()`.
 Different `ARDUINO_*` macros, so `generate_platform_h.py` emits both rather than marking one
 DISABLED. MPPT is not implemented in either - that is a later phase, and this build simply leaves
 the FF board's charge hardware alone.
+
+### Irrigation lives in its own repository
+
+The sequenced-irrigation application built on this library is
+[frugal-iot-irrigation](https://github.com/mitra42/frugal-iot-irrigation) - it started life as
+`examples/ospit` here and was split out so that someone working on irrigation is not also looking
+at every sensor driver in the world. It carries `Control_Irrigation`, `Control_Sector`,
+`Sensor_Tank` and its own OLED pages: all things expected to be re-coded for the next application,
+which is why they are not here.
+
+What stayed in the library, because none of it is irrigation-specific: `Sensor_SoilModbus` and its
+address auto-provisioning, `System_RS485`/`System_Modbus`, `Actuator_Analog`, `Sensor_Voltage`,
+`INfloat::set`/`INbool::set`, `Control_Hysteresis`'s optional dead band, and
+`System_Power::timer_set_to()`.
+
+That repository builds against the `ospit-p1` branch of this library until it is merged to `main`.
 
 ## Debug Flags
 
