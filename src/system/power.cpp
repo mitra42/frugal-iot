@@ -199,6 +199,15 @@ void System_Power::timers_clampFuture(const uint32_t max_secs) {
 // This section can contain ifdef-ed parts that manage things like power at the board level such as on LILYGOHIGROW
 
 // Check level on the battery if possible, take actions to handle low battery to avoid brown out (see notes at top of file)
+/* Re-check the battery once per wake cycle - see the note on checkLevel() in power.h.
+ *
+ * Deliberately not on one of the eight sleep-safe timer slots: this costs a single ADC read, the
+ * slots are scarce, and a check that is skipped is a check that was not done.
+ */
+void System_Power::infrequently() {
+  checkLevel();
+}
+
 void System_Power::checkLevel() {
   // Note Serial is not enabled at this point
   // TODO-194 handle case where no battery measurement possible

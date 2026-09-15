@@ -80,7 +80,16 @@ class System_Power : public System_Base {
     #endif
     System_Power();
     void configure(System_Power_Type mode_init, unsigned long cycle_ms_init, unsigned long wake_ms_init);
+    /* Read the battery and, if it is below SYSTEM_POWER_LOW_MV, deep sleep for SYSTEM_POWER_LOW_MS
+     * so the panel gets a chance to put something back.
+     *
+     * Called from pre_setup() on every boot - which in a sleeping power mode means every wake, so
+     * such a node checks continually. A node in Power_Loop boots once and then never sleeps, so
+     * without infrequently() below it would check exactly once, at power-on, and then run its
+     * battery flat without noticing. That is the case a solar charge controller is in.
+     */
     void checkLevel();
+    void infrequently() override;
   protected: // Move any of these needed to public above
   private:
     uint32_t timer(uint8_t i); // Return value of timer (seconds)
