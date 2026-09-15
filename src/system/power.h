@@ -1,4 +1,4 @@
-// Deep Sleep issues: this IS the deep sleep machinery. millis() resets, so anything measuring across a sleep must use sleepSafeSecs().
+// Deep Sleep issues: this IS the deep sleep machinery. millis() resets, so use sleepSafeSecs(); RTC_DATA_ATTR wake_count is how a deep-sleep wake is told apart from a power-on, and is what makes setup() call recover().
 /* Frugal IoT - System Power - control power managemwent 
  * 
  */

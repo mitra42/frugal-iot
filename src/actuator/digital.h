@@ -12,9 +12,12 @@
  *
  * Holding is three things, and missing any one of them looks like it works until it does not:
  *   prepare()  gpio_hold_en() on the pin, before the sleep
- *   recover()  gpio_hold_dis(), then re-assert - for a LIGHT sleep, which returns here
- *   setup()    gpio_hold_dis() before pinMode, because a DEEP sleep does not return to recover()
- *              at all; it reboots, and a held pin silently ignores pinMode and digitalWrite
+ *   recover()  gpio_hold_dis(), then re-assert
+ *   setup()    gpio_hold_dis() before pinMode - and this is the one that matters after a DEEP
+ *              sleep. recover() IS reached on that path (System_Power::setup() calls it when
+ *              RTC_DATA_ATTR wake_count says we woke rather than powered on), but the system group
+ *              is set up LAST, so an actuator's own setup() has already run by then. A held pin
+ *              silently ignores pinMode and digitalWrite, so releasing it late would be too late.
  *
  * Plus gpio_deep_sleep_hold_en() once, in System_Power, or the holds are dropped as the chip
  * powers down the digital domain.

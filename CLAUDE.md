@@ -1356,6 +1356,47 @@ address auto-provisioning, `System_RS485`/`System_Modbus`, `Actuator_Analog`, `S
 
 That repository builds against the `ospit-p1` branch of this library until it is merged to `main`.
 
+### How a deep-sleep wake is told apart from a power-on
+
+`RTC_DATA_ATTR wake_count` in `system/power.cpp`. It is incremented just before sleeping, and
+survives because RTC memory does; a power-on leaves it zero. `System_Power::setup()` tests it and
+calls `recover()` when it is non-zero, which is how things like `System_Discovery`'s
+`doneFullAdvertise` get restored without being persisted to flash.
+
+So **`recover()` IS reached after a deep sleep** - the obvious assumption that "deep sleep reboots,
+therefore only `setup()` runs" is wrong and cost me a wrong comment in three files. What is true is
+the ORDER: `System_Frugal` adds `actuators`, `sensors`, `controls`, `buttons` and only then
+`system`, so every module's own `setup()` has already run by the time `System_Power::setup()` calls
+`recover()`. Anything that must happen before a module touches its hardware - releasing a GPIO
+hold, for instance - belongs in that module's `setup()`, not in `recover()`.
+
+### Verifying that code is really there
+
+Two traps, both of which produced a confident wrong answer during the OSPIT port:
+
+- **`strings` has a four-character minimum**, and the linker pools string literals by SUFFIX. A
+  three-character state name `"hot"` was both invisible to `strings` and merged into the tail of
+  `"dac_oneshot"`, so even a raw byte search could not find it. The code was correct and
+  unverifiable. Name things long enough to be distinctive if you intend to check for them.
+- **Check the ELF exists before trusting a symbol count.** A stale or absent build reports zero
+  occurrences of everything, which looks exactly like successful conditional compilation. Rebuild,
+  then inspect - twice in one session this nearly passed as proof.
+
+And when a `#ifdef` guards a feature nobody has enabled, compile it once with the flag set. Code
+behind a flag no build sets is code nobody has compiled.
+
+### Regenerating defaults.h
+
+`defaults.h` is generated from the server's schema by `frugal-iot-logger/scripts/generate-defaults.js`,
+and the trap is that it emits macros for **whatever schema tree you point it at**. Point it at one
+branch while the firmware has three merged in, and the other two's macros silently vanish - which
+breaks the build in a place unrelated to whatever you were doing. Generate from a scratch merge of
+every schema branch the firmware actually uses.
+
+Check the result by comparing the sorted SETS of macro names before and after, not by reading the
+diff: inserting a module shifts everything below it, so a line-based check reports moves as
+removals. That produced two false alarms before I changed the check.
+
 ### Every module says what deep sleep does to it
 
 The first line of every header in `src/` is a `// Deep Sleep issues:` note - either `none` with the

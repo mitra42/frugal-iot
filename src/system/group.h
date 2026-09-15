@@ -1,4 +1,4 @@
-// Deep Sleep issues: none, but note recover() is only reached after a light sleep; see System_Base.
+// Deep Sleep issues: none. Note the group order: actuators, sensors, controls, then system - so a module's own setup() runs before System_Power::setup() calls recover().
 /* Frugal-IoT - system_group 
  * 
  * System_Group is a collection of System_Base (which could include other System_Group) and the 
