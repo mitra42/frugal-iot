@@ -67,6 +67,11 @@ class System_Power : public System_Base {
      */
     void timers_shift(int64_t delta_secs);
     void timers_clampFuture(uint32_t max_secs);
+    /* TODO-SLEEP actuators are not in the sleep lifecycle, and their pins are released by deep
+     * sleep. prepare()/recover() below reach frugal_iot.sensors and nothing else. See the long
+     * note on Actuator_Digital in actuator/digital.h - the fix belongs there, but this is where
+     * the hooks would have to start calling it.
+     */
     bool maybeSleep();
     void pre_setup();
     #ifdef ESP32

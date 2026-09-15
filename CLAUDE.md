@@ -1356,6 +1356,24 @@ address auto-provisioning, `System_RS485`/`System_Modbus`, `Actuator_Analog`, `S
 
 That repository builds against the `ospit-p1` branch of this library until it is merged to `main`.
 
+### Known gap: actuators and sleep (TODO-SLEEP)
+
+An actuator's pin does not survive deep sleep, and nothing tells an actuator that sleep is
+happening. Two things, both easy to miss because they cannot bite a node that does not sleep:
+
+- `System_Power::prepare()`/`recover()` call `frugal_iot.sensors->prepare()`/`recover()` and
+  nothing else. Actuators are simply not in the sleep lifecycle.
+- On ESP32 a GPIO is **released** during deep sleep unless it is an RTC-capable pad *and*
+  `gpio_hold_en()` is called with `gpio_deep_sleep_hold_en()`. So a relay can drop out, or follow
+  a board pull the other way - the FF-OpenMPPT board pulls its load switch UP, so a node sleeping
+  to save power could switch its load back ON.
+
+**Light sleep does not have this problem** - the digital domain stays powered and outputs are
+retained - so `Power_Light` is the better fit for a node with actuators until this is fixed.
+
+Search `TODO-SLEEP`; the full note is on `Actuator_Digital` in `actuator/digital.h`, which is
+where the work goes.
+
 ## Debug Flags
 
 Passed as `-D FLAG` in `platformio.ini` or `#define FLAG` before the include in Arduino IDE.

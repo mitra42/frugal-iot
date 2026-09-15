@@ -298,6 +298,8 @@ void System_Power::prepare() {
   #endif
   if (mode) { // Not set here ! 
     // Power down sensors before sleep
+    // TODO-SLEEP actuators are not told about sleep at all, and deep sleep releases their pins -
+    // see the note on Actuator_Digital in actuator/digital.h
     frugal_iot.sensors->prepare();
     // Some things wont be done if just looping
     #ifdef LILYGOHIGROW
@@ -420,6 +422,7 @@ void System_Power::recover() {
       }
     #endif
     // Power up sensors after sleep
+    // TODO-SLEEP see prepare() above - actuators need the same, and more
     frugal_iot.sensors->recover();
     delay(SYSTEM_POWER_ON_DELAY); // Allow power to sensors and actuators to stabilize
   }
