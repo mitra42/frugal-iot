@@ -1,3 +1,4 @@
+// Deep Sleep issues: OPEN QUESTION - a DAC is not a GPIO and is not held. See the note below.
 /* Frugal IoT - Actuator_Analog - a value out as a voltage
  *
  * Set it a voltage and it produces one, on whatever the chip has:

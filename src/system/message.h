@@ -1,3 +1,4 @@
+// Deep Sleep issues: subscriptions are lost and re-made in setup(). Anything published while asleep is missed unless the broker retains it.
 /* Frugal IoT - message class
  *
  * This is a common class used by MQTT and LoraMesher 

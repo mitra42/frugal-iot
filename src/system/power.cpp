@@ -228,11 +228,19 @@ void System_Power::checkLevel() {
       if ( (vv > SYSTEM_POWER_BAD_READING_MV) && (vv < SYSTEM_POWER_LOW_MV)) {
         Serial.println(" low power going sleep");
         // options here could be .... send readings, but with long gaps; just deep sleep now for longer time (so e.g. check every 60 mins for power back)
-        /* prepare() first. This path used to call sleep() directly, so NOTHING was prepared on it
-         * - not the actuators, and not even the sensors that maybeSleep() has always powered down.
-         * It is also the path that matters most, being the one that sleeps on a flat battery.
+        /* NO prepare() here, deliberately - do not "fix" this.
+         *
+         * checkLevel() exists to get to deep sleep FAST when the battery is low, before the rail
+         * collapses far enough that the board browns out and never comes back. An ESP32-C3 in
+         * particular will grey out and simply not reboot. maybeSleep() is the orderly path, where
+         * there is time to power sensors down and hold pins; this one is the emergency, and
+         * anything done on the way is time the battery does not have.
+         *
+         * The cost is that the pins are released on this path, so an output goes wherever the
+         * board's pulls take it - see Actuator::preserveDuringSleep. Holding them would only be a
+         * few register writes, but it would also hold a valve OPEN on a flat battery, so it is
+         * not obviously the safer choice and has not been done.
          */
-        prepare();
         sleep(Power_Deep, SYSTEM_POWER_LOW_MS);
       }
     #endif

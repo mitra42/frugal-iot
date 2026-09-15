@@ -1,3 +1,4 @@
+// Deep Sleep issues: auto-binding re-runs on every wake by design (see resolveUnbound); bindings made by hand are persisted and survive.
 /* Frugal-IoT - shared OneWire bus for DS18B20 (and any future 1-Wire device)
  *
  * Split the same way System_RS485 is split from System_Modbus, and System_I2C from the TwoWire

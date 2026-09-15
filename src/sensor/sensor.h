@@ -1,3 +1,4 @@
+// Deep Sleep issues: none in itself - see the individual sensors.
 #ifndef SENSOR_H
 #define SENSOR_H
 

@@ -1,3 +1,4 @@
+// Deep Sleep issues: none. Note System_Power::checkLevel() reads this before setup() on every wake, to sleep again fast if the battery is flat.
 /*
  * Sensor Battery
  * Read from some internal setup - that is board specific and report millivolts

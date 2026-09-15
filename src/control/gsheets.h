@@ -1,3 +1,4 @@
+// Deep Sleep issues: a wake is only long enough to post if WiFi reconnects in time; anything not sent is lost rather than queued.
 #ifndef CONTROL_GSHEETS_H
 #define CONTROL_GSHEETS_H
 

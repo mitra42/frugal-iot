@@ -1,3 +1,4 @@
+// Deep Sleep issues: reconnects on every wake, typically a few seconds - usually the largest single cost of a short deep-sleep cycle.
 #ifndef SYSTEM_WIFI_H
 #define SYSTEM_WIFI_H
 

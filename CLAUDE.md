@@ -1356,6 +1356,18 @@ address auto-provisioning, `System_RS485`/`System_Modbus`, `Actuator_Analog`, `S
 
 That repository builds against the `ospit-p1` branch of this library until it is merged to `main`.
 
+### Every module says what deep sleep does to it
+
+The first line of every header in `src/` is a `// Deep Sleep issues:` note - either `none` with the
+reason, or a sentence on what breaks. `grep -rn "Deep Sleep issues" src/` reads as a survey.
+
+It is worth keeping up to date, because the failures are quiet ones. Deep sleep is a reboot: RAM is
+gone except `RTC_DATA_ATTR`, `millis()` restarts at zero, and GPIOs are released. So a module is
+affected if it holds state in a member, measures time with `millis()`, needs the hardware to warm
+up, or drives a pin. Most sensors read fresh each wake and genuinely have no issue; the ones that
+do - ENS160's warm-up, GPS re-acquiring a fix, BME680's gas heater, smoothing in `Sensor_Uint16` -
+degrade silently rather than failing, which is why they are written down.
+
 ### Actuators and sleep
 
 An ESP32 releases every GPIO when it enters deep sleep, so without help an output goes wherever the

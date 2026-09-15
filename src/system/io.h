@@ -1,3 +1,4 @@
+// Deep Sleep issues: values are lost and then restored from LittleFS by readConfigFromFS(); anything never persisted starts at its constructor default.
 #ifndef SYSTEM_IO_H
 #define SYSTEM_IO_H
 

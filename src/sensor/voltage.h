@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - read fresh on each wake.
 /* Sensor_Voltage - a DC voltage read through a resistor divider, reported in millivolts.
  *
  * Sensor_Battery was this class with its id hard-coded to "battery". A node often has more than

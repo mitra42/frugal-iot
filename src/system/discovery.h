@@ -1,3 +1,4 @@
+// Deep Sleep issues: doneFullAdvertise is a plain member, so every wake re-advertises everything. Harmless but chatty on a short cycle - see TODO-23.
 #ifndef SYSTEM_DISCOVERY_H
 #define SYSTEM_DISCOVERY_H
 

@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - gettimeofday() is RTC-backed and keeps running; the timezone is persisted.
 #ifndef SYSTEM_TIME_H
 #define SYSTEM_TIME_H
 

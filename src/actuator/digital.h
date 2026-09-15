@@ -1,3 +1,4 @@
+// Deep Sleep issues: handled - the pin is held through the sleep unless preserveDuringSleep(false). See below.
 #ifndef ACTUATOR_DIGITAL_H
 #define ACTUATOR_DIGITAL_H
 

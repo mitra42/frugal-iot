@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - LittleFS is on flash, so config and logs survive.
 #ifndef SYSTEM_FS_H
 #define SYSTEM_FS_H
 

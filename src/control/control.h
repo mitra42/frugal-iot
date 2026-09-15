@@ -1,3 +1,4 @@
+// Deep Sleep issues: none in itself - inputs are restored from LittleFS; see the individual controls.
 /*
  * Generic base class for controls
  *

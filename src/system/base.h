@@ -1,3 +1,4 @@
+// Deep Sleep issues: none in itself. prepare()/recover() are the sleep hooks, but recover() runs only after a LIGHT sleep - a deep one reboots into setup().
 #ifndef SYSTEM_BASE_H
 #define SYSTEM_BASE_H
 

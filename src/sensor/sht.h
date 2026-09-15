@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - read fresh on each wake.
 /*
  * Temperature and Humidity sensor, 
  * Based on SHT85_demo_async.ino in https://github.com/RobTillaart/SHT85

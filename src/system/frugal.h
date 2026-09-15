@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - setup() running afresh on every wake is what makes deep sleep work at all.
 /* Frugal-Iot main controller class 
  * 
  * One class to rule them all .... 

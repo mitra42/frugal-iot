@@ -1,3 +1,4 @@
+// Deep Sleep issues: this IS the deep sleep machinery. millis() resets, so anything measuring across a sleep must use sleepSafeSecs().
 /* Frugal IoT - System Power - control power managemwent 
  * 
  */
@@ -80,8 +81,12 @@ class System_Power : public System_Base {
     #endif
     System_Power();
     void configure(System_Power_Type mode_init, unsigned long cycle_ms_init, unsigned long wake_ms_init);
-    /* Read the battery and, if it is below SYSTEM_POWER_LOW_MV, deep sleep for SYSTEM_POWER_LOW_MS
-     * so the panel gets a chance to put something back.
+    /* Read the battery and, if it is below SYSTEM_POWER_LOW_MV, deep sleep HARD and FAST for
+     * SYSTEM_POWER_LOW_MS, so the panel gets a chance to put something back.
+     *
+     * Fast is the point: below a certain voltage a dev board browns out and never reboots - an
+     * ESP32-C3 will grey out and stay that way - so this sleeps without the orderly preparation
+     * maybeSleep() does. See the comment in checkLevel() before adding anything to that path.
      *
      * Called from pre_setup() on every boot - which in a sleeping power mode means every wake, so
      * such a node checks continually. A node in Power_Loop boots once and then never sleeps, so

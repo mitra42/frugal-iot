@@ -1,3 +1,4 @@
+// Deep Sleep issues: the panel is re-initialised in setup() and blank during the sleep.
 /* Frugal IoT - OLED Display hanler
  * This is a port of code from demo for TTGO Lora board - expand as needed
  * 

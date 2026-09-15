@@ -1,3 +1,4 @@
+// Deep Sleep issues: the pin is released unless preserveDuringSleep is set - which it is by default. See below.
 #ifndef ACTUATOR_H
 #define ACTUATOR_H
 

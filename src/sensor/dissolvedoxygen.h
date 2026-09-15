@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - calibration is persisted.
 /* Frugal IoT - Dissolved Oxygen sensor (analog, temperature compensated)
  *
  * NOTE - AS OF 2026-08-03 THIS IS UNTESTED CODE
