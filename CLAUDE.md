@@ -1371,6 +1371,12 @@ happening. Two things, both easy to miss because they cannot bite a node that do
 **Light sleep does not have this problem** - the digital domain stays powered and outputs are
 retained - so `Power_Light` is the better fit for a node with actuators until this is fixed.
 
+The intended shape of the fix is a per-actuator opt-in - a flag, or a `preserveDuringSleep()` call
+on the newly constructed object - rather than a blanket policy. The question it really asks is not
+"can this pin be held" but "is this output safe to leave unattended for a whole sleep interval",
+which only the application knows: a valve that might need shutting within seconds wants
+`Power_Light`, while one filling a tank over an hour is content with five minutes.
+
 Search `TODO-SLEEP`; the full note is on `Actuator_Digital` in `actuator/digital.h`, which is
 where the work goes.
 

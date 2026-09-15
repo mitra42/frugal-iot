@@ -28,8 +28,19 @@
  *     so the honest answer for those is to say so at compile time rather than appear to work.
  *   - recover() AND setup(): gpio_hold_dis(pin) before writing, or the write is silently ignored
  *     while the hold is in place. Deep sleep exits through setup(), not recover().
- *   - decide what an actuator SHOULD do when its pin cannot be held: hold the last state is
- *     usually wrong for a valve and right for a light, so it probably belongs to the subclass.
+ *   - whether to hold at all is PER ACTUATOR, not a blanket policy. Mitra's shape for it: a flag
+ *     on Actuator, or a preserveDuringSleep() call on the newly constructed object, e.g.
+ *
+ *         frugal_iot.actuators->add(new Actuator_Digital("valve1", ...))->preserveDuringSleep();
+ *
+ *     Most things genuinely do want the last state held. A valve is the good example: it stays as
+ *     it was, and the responsibility that moves to the user is choosing a sleep interval short
+ *     enough that the decision it is waiting on can wait that long. A valve that might need
+ *     shutting within seconds wants Power_Light rather than a long deep sleep; one filling a tank
+ *     that takes an hour, with plenty of headroom, is perfectly happy with five minutes.
+ *
+ *     So the flag is not really "can this survive sleep" - it is "is this output safe to leave
+ *     unattended for a sleep interval", which only the application knows.
  *
  * Not urgent for any node that never deep sleeps, which is every node with actuators today.
  */
