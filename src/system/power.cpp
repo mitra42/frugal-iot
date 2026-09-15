@@ -201,10 +201,12 @@ void System_Power::timers_clampFuture(const uint32_t max_secs) {
 // Check level on the battery if possible, take actions to handle low battery to avoid brown out (see notes at top of file)
 /* Re-check the battery once per wake cycle - see the note on checkLevel() in power.h.
  *
- * Deliberately not on one of the eight sleep-safe timer slots: this costs a single ADC read, the
- * slots are scarce, and a check that is skipped is a check that was not done.
+ * periodically(), not infrequently(): the two run equally often, but infrequently() is where a
+ * component checks its OWN timer to throttle itself to something longer than the wake cycle, and
+ * this has no timer. Deliberately no timer either - the check is a single ADC read, and the eight
+ * sleep-safe slots are scarce.
  */
-void System_Power::infrequently() {
+void System_Power::periodically() {
   checkLevel();
 }
 
