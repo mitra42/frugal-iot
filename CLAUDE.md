@@ -1356,29 +1356,47 @@ address auto-provisioning, `System_RS485`/`System_Modbus`, `Actuator_Analog`, `S
 
 That repository builds against the `ospit-p1` branch of this library until it is merged to `main`.
 
-### Known gap: actuators and sleep (TODO-SLEEP)
+### Actuators and sleep
 
-An actuator's pin does not survive deep sleep, and nothing tells an actuator that sleep is
-happening. Two things, both easy to miss because they cannot bite a node that does not sleep:
+An ESP32 releases every GPIO when it enters deep sleep, so without help an output goes wherever the
+board's pull resistors take it. The case that prompted this: the FF-OpenMPPT board pulls its load
+switch UP, so a node sleeping to save power could have switched its load back ON.
 
-- `System_Power::prepare()`/`recover()` call `frugal_iot.sensors->prepare()`/`recover()` and
-  nothing else. Actuators are simply not in the sleep lifecycle.
-- On ESP32 a GPIO is **released** during deep sleep unless it is an RTC-capable pad *and*
-  `gpio_hold_en()` is called with `gpio_deep_sleep_hold_en()`. So a relay can drop out, or follow
-  a board pull the other way - the FF-OpenMPPT board pulls its load switch UP, so a node sleeping
-  to save power could switch its load back ON.
+`Actuator_Digital` therefore holds its pin, and `Actuator::preserveDuringSleep(bool)` chooses
+whether to - defaulting to **true**, because "as it was" is at least predictable where "released"
+is not. Chain it onto the add, the same way `powerPins()` is chained:
 
-**Light sleep does not have this problem** - the digital domain stays powered and outputs are
-retained - so `Power_Light` is the better fit for a node with actuators until this is fixed.
+```cpp
+frugal_iot.actuators->add((new Actuator_Digital("valve1", ...))->preserveDuringSleep(false));
+```
 
-The intended shape of the fix is a per-actuator opt-in - a flag, or a `preserveDuringSleep()` call
-on the newly constructed object - rather than a blanket policy. The question it really asks is not
-"can this pin be held" but "is this output safe to leave unattended for a whole sleep interval",
-which only the application knows: a valve that might need shutting within seconds wants
-`Power_Light`, while one filling a tank over an hour is content with five minutes.
+Holding takes three things, and missing any one looks like it works until it does not:
 
-Search `TODO-SLEEP`; the full note is on `Actuator_Digital` in `actuator/digital.h`, which is
-where the work goes.
+| Where | What | Why |
+|---|---|---|
+| `prepare()` | `gpio_hold_en()` | before the sleep |
+| `recover()` | `gpio_hold_dis()`, then re-assert | a LIGHT sleep returns here |
+| `setup()` | `gpio_hold_dis()` before `pinMode` | a DEEP sleep never reaches `recover()` - it reboots, and a held pin silently ignores `pinMode` and `digitalWrite` |
+
+plus `gpio_deep_sleep_hold_en()` once in `System_Power::sleep()`, or the holds are dropped as the
+digital domain powers down.
+
+Two things fixed alongside it, both of which had hidden the problem:
+
+- **Actuators were not in the sleep lifecycle at all.** `System_Power::prepare()`/`recover()`
+  called `frugal_iot.sensors->` and nothing else, which is why only sensors had ever needed it.
+- **`checkLevel()` bypassed `prepare()` entirely**, calling `sleep()` directly - so the low-voltage
+  sleep, the path that matters most, prepared neither sensors nor actuators.
+
+**The responsibility that comes with preserving** is choosing the sleep interval. An output that
+might need changing within seconds should not be behind a long deep sleep at all - `Power_Light`
+keeps the digital domain powered and needs none of this. One filling a tank over an hour is
+perfectly happy with five minutes.
+
+**Still open:** not every pad can be held, the RTC-capable set differs between ESP32, S2, S3 and
+C3, and the pin is a constructor argument so it cannot be a compile-time error - `setup()` warns on
+the serial port instead. And `Actuator_Analog` (a DAC, not a GPIO) is not covered; see the note in
+`actuator/analog.h`.
 
 ## Debug Flags
 

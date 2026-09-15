@@ -45,6 +45,9 @@
 #endif
 #include "_settings.h"
 #include "system/power.h"
+#ifdef ESP32
+  #include "driver/gpio.h" // gpio_deep_sleep_hold_en
+#endif
 #include "system/frugal.h"
 
 // Low battery configuration ======
@@ -225,6 +228,11 @@ void System_Power::checkLevel() {
       if ( (vv > SYSTEM_POWER_BAD_READING_MV) && (vv < SYSTEM_POWER_LOW_MV)) {
         Serial.println(" low power going sleep");
         // options here could be .... send readings, but with long gaps; just deep sleep now for longer time (so e.g. check every 60 mins for power back)
+        /* prepare() first. This path used to call sleep() directly, so NOTHING was prepared on it
+         * - not the actuators, and not even the sensors that maybeSleep() has always powered down.
+         * It is also the path that matters most, being the one that sleeps on a flat battery.
+         */
+        prepare();
         sleep(Power_Deep, SYSTEM_POWER_LOW_MS);
       }
     #endif
@@ -296,9 +304,11 @@ void System_Power::prepare() {
   #endif
   if (mode) { // Not set here ! 
     // Power down sensors before sleep
-    // TODO-SLEEP actuators are not told about sleep at all, and deep sleep releases their pins -
-    // see the note on Actuator_Digital in actuator/digital.h
     frugal_iot.sensors->prepare();
+    /* And tell the actuators, which until now were never in the sleep lifecycle at all - which is
+     * why deep sleep releasing their pins had gone unnoticed. See actuator/digital.h.
+     */
+    frugal_iot.actuators->prepare();
     // Some things wont be done if just looping
     #ifdef LILYGOHIGROW
       digitalWrite(POWER_CTRL, LOW);
@@ -362,6 +372,14 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
     #endif
     #ifdef ESP32
       if (forceMode & DeepSleepBit) {
+        /* Make the pin holds survive the sleep itself.
+         *
+         * gpio_hold_en() alone is dropped as the digital domain powers down; this is what carries
+         * it through. Chip-wide rather than per-pin, so it belongs here rather than in the
+         * actuator - and this is the only place that knows the sleep is really a deep one, since
+         * checkLevel() forces one whatever `mode` says.
+         */
+        gpio_deep_sleep_hold_en();
         if (forceMode & WakeOnTimerBit) {
           // millis() and esp_timer_get_time() both reset to 0 after deep sleep - see sleepSafeSecs().
           esp_deep_sleep(sleep_millisecs * 1000UL);
@@ -420,8 +438,8 @@ void System_Power::recover() {
       }
     #endif
     // Power up sensors after sleep
-    // TODO-SLEEP see prepare() above - actuators need the same, and more
     frugal_iot.sensors->recover();
+    frugal_iot.actuators->recover(); // Release the pin holds and re-assert - see prepare()
     delay(SYSTEM_POWER_ON_DELAY); // Allow power to sensors and actuators to stabilize
   }
 }

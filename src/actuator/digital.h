@@ -3,46 +3,25 @@
 
 #include "actuator/actuator.h" // Superclass
 
-/* TODO-SLEEP an actuator does not survive deep sleep, and nothing currently tells it about sleep
- * at all.
+/* Deep sleep and this pin - see Actuator::preserveDuringSleep in actuator.h for the choice.
  *
- * Two separate gaps, found while writing the low-voltage sleep for the OSPIT charge controller:
+ * An ESP32 releases every GPIO when it enters deep sleep, so an output would otherwise go wherever
+ * the board's pull resistors take it. The FF-OpenMPPT board is the example that prompted this: it
+ * pulls its load switch UP, so a node sleeping to save power could have switched its load back ON.
  *
- * 1. System_Power::prepare() and recover() call frugal_iot.sensors->prepare()/recover() and
- *    nothing else. Actuators are never in the sleep lifecycle, which is why this has never shown
- *    up - sensors are the only group that hears about it.
+ * Holding is three things, and missing any one of them looks like it works until it does not:
+ *   prepare()  gpio_hold_en() on the pin, before the sleep
+ *   recover()  gpio_hold_dis(), then re-assert - for a LIGHT sleep, which returns here
+ *   setup()    gpio_hold_dis() before pinMode, because a DEEP sleep does not return to recover()
+ *              at all; it reboots, and a held pin silently ignores pinMode and digitalWrite
  *
- * 2. On ESP32 a GPIO is RELEASED during DEEP sleep - it stops being driven and floats, or follows
- *    whatever pull the board has on it - unless it is an RTC-capable pad AND gpio_hold_en(pin) is
- *    called, with gpio_deep_sleep_hold_en() to make holds survive the sleep itself. So a relay can
- *    drop out, or worse be pulled the other way: the FF-OpenMPPT board configures its load switch
- *    with PULL_UP, so a node sleeping to save power could switch its load back ON.
+ * Plus gpio_deep_sleep_hold_en() once, in System_Power, or the holds are dropped as the chip
+ * powers down the digital domain.
  *
- *    LIGHT sleep does not have this problem - the digital domain stays powered and output states
- *    are retained - which makes Power_Light the better fit for a node with actuators, and is worth
- *    saying in the docs as well as fixing here.
- *
- * What a fix has to cover:
- *   - prepare(): hold the pin, if this pin can be held on this chip. The RTC-capable set differs
- *     between ESP32, S2, S3 and C3, and a non-RTC pin CANNOT be held through deep sleep at all -
- *     so the honest answer for those is to say so at compile time rather than appear to work.
- *   - recover() AND setup(): gpio_hold_dis(pin) before writing, or the write is silently ignored
- *     while the hold is in place. Deep sleep exits through setup(), not recover().
- *   - whether to hold at all is PER ACTUATOR, not a blanket policy. Mitra's shape for it: a flag
- *     on Actuator, or a preserveDuringSleep() call on the newly constructed object, e.g.
- *
- *         frugal_iot.actuators->add(new Actuator_Digital("valve1", ...))->preserveDuringSleep();
- *
- *     Most things genuinely do want the last state held. A valve is the good example: it stays as
- *     it was, and the responsibility that moves to the user is choosing a sleep interval short
- *     enough that the decision it is waiting on can wait that long. A valve that might need
- *     shutting within seconds wants Power_Light rather than a long deep sleep; one filling a tank
- *     that takes an hour, with plenty of headroom, is perfectly happy with five minutes.
- *
- *     So the flag is not really "can this survive sleep" - it is "is this output safe to leave
- *     unattended for a sleep interval", which only the application knows.
- *
- * Not urgent for any node that never deep sleeps, which is every node with actuators today.
+ * Not every pad can be held. The RTC-capable set differs between ESP32, S2, S3 and C3, and the
+ * pin is a constructor argument rather than a constant, so this cannot be a compile-time error -
+ * setup() says so on the serial port instead. Whether a non-RTC pad really holds through deep
+ * sleep on a given chip is one of the things HARDWARE-QUESTIONS.md asks a tester to measure.
  */
 class Actuator_Digital : public Actuator {
   public: 
@@ -54,6 +33,8 @@ class Actuator_Digital : public Actuator {
     void act() override;
     virtual void set(const bool v);
     virtual void setup() override;
+    void prepare() override; // Hold the pin, so a deep sleep does not release it
+    void recover() override; // Release and re-assert, after a light sleep
     void captiveLines(AsyncResponseStream* response);
 }; // Class Actuator_Digital
 

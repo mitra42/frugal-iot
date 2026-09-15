@@ -102,6 +102,17 @@
   #error Actuator_Analog does not know how to make a voltage on this chip
 #endif
 
+/* NOTE deep sleep and this output are an open question.
+ *
+ * Actuator_Digital holds its pin through a deep sleep (see Actuator::preserveDuringSleep), but a
+ * DAC is not a GPIO and gpio_hold_en does not describe it. On ESP32 the DAC is an RTC peripheral,
+ * so its output may well persist - but "may well" is not something to build a battery charger on,
+ * and the consequence of being wrong is a charge controller whose setpoint goes somewhere unknown
+ * while the node sleeps. preserveDuringSleep() is accepted here and currently does nothing.
+ *
+ * It is question 10 in frugal-iot-irrigation's HARDWARE-QUESTIONS.md: measure the panel voltage
+ * while the board is asleep and see whether charging carries on, stops, or changes.
+ */
 class Actuator_Analog : public Actuator {
   public:
     /* vref is the voltage the output reaches at full scale: the chip's supply rail, so 3.3 on
