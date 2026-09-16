@@ -22,10 +22,14 @@
  * Plus gpio_deep_sleep_hold_en() once, in System_Power, or the holds are dropped as the chip
  * powers down the digital domain.
  *
- * Not every pad can be held. The RTC-capable set differs between ESP32, S2, S3 and C3, and the
- * pin is a constructor argument rather than a constant, so this cannot be a compile-time error -
- * setup() says so on the serial port instead. Whether a non-RTC pad really holds through deep
- * sleep on a given chip is one of the things HARDWARE-QUESTIONS.md asks a tester to measure.
+ * Which pads can be held differs by chip, and not in the way you would guess (figures read out of
+ * the IDF's soc_caps.h, not from memory):
+ *   ESP32     RTC pads only - 0, 2, 4, 12-15, 25-27, 32-39 (34-39 are input only)
+ *   ESP32-S2  RTC pads only - GPIO0-21, so its digital-only pins 33-40 CANNOT be held
+ *   ESP32-C3  no RTC IO mux at all (SOC_RTCIO_PIN_COUNT is 0); holds digital pads instead, so
+ *             every GPIO can be held
+ * setup() therefore warns about a non-RTC pin only on the chips where that distinction exists.
+ * The pin is a constructor argument, so it cannot be a compile-time error either way.
  */
 class Actuator_Digital : public Actuator {
   public: 

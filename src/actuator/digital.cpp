@@ -16,8 +16,11 @@
 #include "actuator/digital.h" // defines ACUATOR_DIGITAL_DEBUG
 #include "system/frugal.h" // for frugal_iot
 #ifdef ESP32
+  #include "soc/soc_caps.h"  // SOC_RTCIO_HOLD_SUPPORTED - which chips hold via RTC pads
   #include "driver/gpio.h"   // gpio_hold_en / gpio_hold_dis
-  #include "driver/rtc_io.h" // rtc_gpio_is_valid_gpio, for the warning in setup()
+  #if defined(SOC_RTCIO_HOLD_SUPPORTED) && SOC_RTCIO_HOLD_SUPPORTED
+    #include "driver/rtc_io.h" // rtc_gpio_is_valid_gpio, for the warning in setup()
+  #endif
 #endif
 
 Actuator_Digital::Actuator_Digital(const char * const id, const char * const name, const uint8_t pin, const char* color)
@@ -57,12 +60,22 @@ void Actuator_Digital::setup() {
      * Harmless when no hold was set.
      */
     gpio_hold_dis((gpio_num_t)pin);
-    if (preserve_during_sleep && !rtc_gpio_is_valid_gpio((gpio_num_t)pin)) {
-      // Not fatal - it may still hold on this chip - but it is the case to check on real hardware
-      Serial.print(id);
-      Serial.print(F(": pin ")); Serial.print(pin);
-      Serial.println(F(" is not an RTC pad, so holding it through deep sleep may not work"));
-    }
+    #if defined(SOC_RTCIO_HOLD_SUPPORTED) && SOC_RTCIO_HOLD_SUPPORTED
+      /* On chips with an RTC IO mux - the original ESP32 and the S2 - only RTC pads hold through
+       * deep sleep, so a pin outside that set is worth flagging. Not fatal; it may still work, and
+       * it is one of the things a tester can measure.
+       *
+       * Deliberately NOT done on the C3, which has no RTC IO mux at all (SOC_RTCIO_PIN_COUNT is 0)
+       * and holds digital pads instead. rtc_gpio_is_valid_gpio() still compiles there but returns
+       * false for EVERY pin, so an unguarded check would warn about all of them - on one of the
+       * commonest boards in this project.
+       */
+      if (preserve_during_sleep && !rtc_gpio_is_valid_gpio((gpio_num_t)pin)) {
+        Serial.print(id);
+        Serial.print(F(": pin ")); Serial.print(pin);
+        Serial.println(F(" is not an RTC pad, so holding it through deep sleep may not work"));
+      }
+    #endif
   #endif
   // initialize the digital pin as an output.
   pinMode(pin, OUTPUT);  // Set pin after reading config as may change
