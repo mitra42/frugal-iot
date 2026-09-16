@@ -22,14 +22,19 @@
  * Plus gpio_deep_sleep_hold_en() once, in System_Power, or the holds are dropped as the chip
  * powers down the digital domain.
  *
- * Which pads can be held differs by chip, and not in the way you would guess (figures read out of
- * the IDF's soc_caps.h, not from memory):
- *   ESP32     RTC pads only - 0, 2, 4, 12-15, 25-27, 32-39 (34-39 are input only)
- *   ESP32-S2  RTC pads only - GPIO0-21, so its digital-only pins 33-40 CANNOT be held
- *   ESP32-C3  no RTC IO mux at all (SOC_RTCIO_PIN_COUNT is 0); holds digital pads instead, so
- *             every GPIO can be held
- * setup() therefore warns about a non-RTC pin only on the chips where that distinction exists.
- * The pin is a constructor argument, so it cannot be a compile-time error either way.
+ * Any output-capable pin can be held THROUGH the sleep, RTC pad or not, provided
+ * gpio_deep_sleep_hold_en() has been called - which System_Power does. What the RTC pads buy you is
+ * the WAKE: an RTC hold survives the reset that ends deep sleep and stays until gpio_hold_dis(), so
+ * the pin never stops being driven. A digital hold is dropped at wake, so the pin floats for the
+ * couple of hundred milliseconds of boot before setup() re-drives it. For a valve or a pump that is
+ * a real glitch, which is why setup() says so.
+ *
+ * The RTC sets, read out of the IDF's soc_caps.h and rtc_io_channel.h rather than from memory:
+ *   ESP32     0, 2, 4, 12-15, 25-27, 32-39 (34-39 are input only, so no use to an actuator)
+ *   ESP32-S2  GPIO0-21, so its digital-only pins 33-40 glitch at wake
+ *   ESP32-C3  no RTC IO mux at all (SOC_RTCIO_PIN_COUNT is 0), so EVERY pin glitches at wake and
+ *             there is nothing to choose between them - no warning is issued
+ * The pin is a constructor argument, so none of this can be a compile-time error.
  */
 class Actuator_Digital : public Actuator {
   public: 

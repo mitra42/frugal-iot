@@ -61,19 +61,18 @@ void Actuator_Digital::setup() {
      */
     gpio_hold_dis((gpio_num_t)pin);
     #if defined(SOC_RTCIO_HOLD_SUPPORTED) && SOC_RTCIO_HOLD_SUPPORTED
-      /* On chips with an RTC IO mux - the original ESP32 and the S2 - only RTC pads hold through
-       * deep sleep, so a pin outside that set is worth flagging. Not fatal; it may still work, and
-       * it is one of the things a tester can measure.
+      /* The hold itself works either way. This is about the wake: see digital.h. On a chip that has
+       * an RTC IO mux, an RTC pad is the better choice, so a pin outside that set is worth saying.
        *
-       * Deliberately NOT done on the C3, which has no RTC IO mux at all (SOC_RTCIO_PIN_COUNT is 0)
-       * and holds digital pads instead. rtc_gpio_is_valid_gpio() still compiles there but returns
-       * false for EVERY pin, so an unguarded check would warn about all of them - on one of the
-       * commonest boards in this project.
+       * Deliberately NOT done on the C3, which has no RTC IO mux at all (SOC_RTCIO_PIN_COUNT is 0).
+       * rtc_gpio_is_valid_gpio() still compiles there but returns false for EVERY pin, so an
+       * unguarded check would warn about all of them - on one of the commonest boards here - and
+       * about something the user could not fix anyway.
        */
       if (preserve_during_sleep && !rtc_gpio_is_valid_gpio((gpio_num_t)pin)) {
         Serial.print(id);
         Serial.print(F(": pin ")); Serial.print(pin);
-        Serial.println(F(" is not an RTC pad, so holding it through deep sleep may not work"));
+        Serial.println(F(" is not an RTC pad, so it will float for the first moments after waking"));
       }
     #endif
   #endif
