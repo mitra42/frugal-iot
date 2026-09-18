@@ -55,7 +55,13 @@ void setup() {
     ->powerPins(SENSOR_DS18B20_POWER3v3_PIN, SENSOR_DS18B20_POWER0_PIN);
   #endif
   #ifdef SENSOR_TDS_PIN
-    frugal_iot.sensors->add(new Sensor_Analog("tds", "TDS", SENSOR_TDS_PIN, 2, 0, 100, SENSOR_TDS_OFFSET, SENSOR_TDS_SCALE, "purple", true))
+    // Electrical conductivity / salinity, from a DFRobot analog EC meter (K=10) - so this
+    // publishes mS/cm, not the ppm a true TDS meter would give. The id and the SENSOR_TDS_*
+    // flags are spelled "tds" because DFRobot's sample code heads this section "TDS Sensor";
+    // they stay that way so the MQTT topic (tds/tds) and its retained history keep working.
+    // Raw ADC -> mS/cm as (raw - offset) * scale, both from platformio.ini.
+    // See https://wiki.colabs.commonroom.info/Sensor_Laut
+    frugal_iot.sensors->add(new Sensor_Analog("tds", "EC / Salinity (mS/cm)", SENSOR_TDS_PIN, 2, 0, 100, SENSOR_TDS_OFFSET, SENSOR_TDS_SCALE, "purple", true))
       ->powerPins(SENSOR_TDS_POWER3v3_PIN, PIN_NONE);
   #endif 
   #ifdef SENSOR_DO_PIN
