@@ -114,7 +114,10 @@
 
 // TO_ADD_SENSOR - a sensor that talks Modbus over RS485 pulls in the bus classes by
 // defining its slave id; see system/modbus.h
-#if defined(SENSOR_ULTRASONIC_SLAVE_ID)
+// Sensor_Ultrasonic is enabled by its slave id because there is one of them; Sensor_SoilModbus
+// has one instance per irrigation sector on the same bus, so its ids are constructor arguments
+// and a plain WANT flag turns the class on.
+#if defined(SENSOR_ULTRASONIC_SLAVE_ID) || defined(SENSOR_SOILMODBUS_WANT)
   #define SYSTEM_MODBUS_WANT
 #endif
 
@@ -133,7 +136,7 @@
 #if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG) || defined(SENSOR_ULTRASONIC_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
-#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG) || defined(SENSOR_BMX280_DEBUG) || defined(SENSOR_BME680_DEBUG) || defined(SENSOR_AHT_DEBUG) || defined(SENSOR_ENS160_DEBUG) || defined(SENSOR_GPS_DEBUG) || defined(SENSOR_INA219_DEBUG)
+#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG) || defined(SENSOR_BMX280_DEBUG) || defined(SENSOR_BME680_DEBUG) || defined(SENSOR_AHT_DEBUG) || defined(SENSOR_ENS160_DEBUG) || defined(SENSOR_GPS_DEBUG) || defined(SENSOR_INA219_DEBUG) || defined(SENSOR_SOILMODBUS_DEBUG)
   #define SENSOR_DEBUG // Only used for ANY_DEBUG below
 #endif
 

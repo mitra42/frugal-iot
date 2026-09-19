@@ -123,6 +123,14 @@ class System_Modbus {
     bool connected = false;
     // Read one holding register into *value. False if the read failed or was skipped.
     bool readRegister(uint16_t reg, uint16_t* value);
+    /* Read `count` consecutive holding registers into out[0..count-1].
+     *
+     * One transaction, not `count` of them - which matters beyond speed when the registers are
+     * related: reading a probe's humidity and temperature separately can pair a value from one
+     * moment with a value from another, and doubles the bus time on a multi-drop line.
+     * `count` is bounded by ModbusMaster's 64-register response buffer.
+     */
+    bool readRegisters(uint16_t reg, uint16_t count, uint16_t* out);
   protected:
     uint8_t slave_id;
     System_RS485* bus;
