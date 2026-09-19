@@ -126,14 +126,21 @@ void Sensor_GPS::readValidateConvertSet() {
     longitude->set((float)lon);
     altitude->set((float)alt);
 
+    // Per-output: a fix can be good while these individual fields are not yet reported
     if (_gps.speed.isValid()) {
       speed->set((float)_gps.speed.kmph());
+    } else {
+      speed->setInvalid();
     }
     if (_gps.course.isValid()) {
       course->set((float)_gps.course.deg());
+    } else {
+      course->setInvalid();
     }
     if (_gps.hdop.isValid()) {
       hdop->set((float)_gps.hdop.hdop());
+    } else {
+      hdop->setInvalid();
     }
     if (_gps.satellites.isValid()) {
       satellites->set((uint16_t)_gps.satellites.value());
@@ -166,9 +173,10 @@ void Sensor_GPS::readValidateConvertSet() {
       Serial.println(_gps_dbg);
     }
     #endif
-  #ifdef SENSOR_GPS_DEBUG
   } else {
-    Serial.println(F("GPS: no fix within timeout"));
-  #endif
+    setOutputsInvalid(); // No fix - the text and uint16 outputs are no-ops, see OUT::setInvalid
+    #ifdef SENSOR_GPS_DEBUG
+      Serial.println(F("GPS: no fix within timeout"));
+    #endif
   }
 }

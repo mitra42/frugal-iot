@@ -149,7 +149,10 @@ bool Sensor_INA219::awaitConversion() {
 void Sensor_INA219::readValidateConvertSet() {
   // A device that was absent at setup() is not retried - restart after fixing the wiring,
   // same behaviour as Sensor_BME280
-  if (present) {
+  if (!present) {
+    // Absent at setup() and not retried - say so rather than publishing nothing at all
+    setOutputsInvalid();
+  } else {
     if (needs_config) { // Woke from sleep - the chip may have lost its registers
       configure();
       needs_config = false;
@@ -162,6 +165,7 @@ void Sensor_INA219::readValidateConvertSet() {
     #endif
     if (!ready) {
       connected = false;
+      setOutputsInvalid();
     } else {
       const int16_t  raw_shunt   = (int16_t)interface.send1read(INA219_REG_SHUNT_VOLTAGE, 2);
       const uint16_t raw_bus     = (uint16_t)interface.send1read(INA219_REG_BUS_VOLTAGE, 2);
@@ -170,6 +174,7 @@ void Sensor_INA219::readValidateConvertSet() {
       if (raw_bus == 0xFFFF) {
         // Every bit high means nothing drove the bus - the device has gone away
         connected = false;
+        setOutputsInvalid();
         #ifdef SENSOR_INA219_DEBUG
           Serial.println(F("INA219: all 1s - device not responding"));
         #endif
@@ -178,6 +183,11 @@ void Sensor_INA219::readValidateConvertSet() {
         // Shunt and bus are still good, so publish them and skip the derived pair.
         shunt->set(raw_shunt * INA219_SHUNT_LSB_MV);
         bus->set((raw_bus >> 3) * INA219_BUS_LSB_V);
+        // Per-output rather than setOutputsInvalid(): only these two are meaningless here
+        current->setInvalid();
+        power->setInvalid();
+        // TODO load is bus + shunt/1000 and so is still computable in this branch - it is left
+        // holding its previous value here, as it was before, rather than changing that silently
         Serial.println(F("INA219: math overflow - raise SENSOR_INA219_MAX_CURRENT"));
       } else {
         const float shunt_mv   = raw_shunt * INA219_SHUNT_LSB_MV;

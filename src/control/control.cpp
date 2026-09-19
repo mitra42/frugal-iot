@@ -45,6 +45,17 @@ void Control::setup() {
   readConfigFromFS(); // Reads config (inputs or outputs) and passes to our dispatch - should be after inputs and outputs setup (probably)
 }
 
+// See control.h. Deliberately loops rather than returning early, so one pass covers every input.
+bool Control::allInputsValid() {
+    bool valid = true;
+    for (auto &input : inputs) {
+        if (!input->isValid()) {
+            valid = false;
+        }
+    }
+    return valid;
+}
+
 void Control::act() {
     // Default is to do nothing - though that will rarely be correct - expect this to be overridden
 }
