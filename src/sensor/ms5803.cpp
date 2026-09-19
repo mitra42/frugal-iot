@@ -46,8 +46,8 @@ Sensor_ms5803::Sensor_ms5803(const char* const id, const char * const name, uint
   interface(address, wire) 
 {
  
-  outputs.push_back(pressure = new OUTfloat(id, "pressure", "Pressure", 0, 1, 0, 99, "blue", false));
-  outputs.push_back(temperature = new OUTfloat(id, "temperature", "Temperature", 0, 1, 0, 99, "red", false));
+  outputs.push_back(pressure = new OUTfloat(id, "pressure", "Pressure", 0, 1, 0, 99, DEFAULT_ms5803_pressure_color, false));
+  outputs.push_back(temperature = new OUTfloat(id, "temperature", "Temperature", 0, 1, 0, 99, DEFAULT_ms5803_temperature_color, false));
 }
 
 void Sensor_ms5803::setup() {
