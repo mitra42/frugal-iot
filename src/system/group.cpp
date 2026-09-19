@@ -128,6 +128,8 @@ void System_Group::infrequently() { forEach("infrequently", &System_Base::infreq
 
 void System_Group::captiveLines(AsyncResponseStream* response)
   { for (System_Base* fb: group) { fb->captiveLines(response); } }
+void System_Group::statusLines(Print* out, bool full)
+  { for (System_Base* fb: group) { fb->statusLines(out, full); } }
   
 void System_Group::dispatch(System_Message &msg) {
   for (System_Base* fb: group) {

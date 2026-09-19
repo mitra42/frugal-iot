@@ -36,6 +36,17 @@ class System_Base {
     virtual void loop();
     virtual void periodically();
     virtual void captiveLines(AsyncResponseStream* response) { };
+    /* Plain-text lines for the status page, and for dumping to Serial.
+     *
+     * The default is nothing, because most System_Base subclasses have no IO to report. The
+     * classes that do - Sensor, Actuator, Control and System_Buttons - override it to walk their
+     * IOs, and System_Group to walk its members. Any class wanting to say something else about
+     * itself overrides it too.
+     *
+     * Print* rather than the web response, so the same dump can go to Serial when a node will not
+     * join WiFi and the portal cannot be reached at all.
+     */
+    virtual void statusLines(Print* out, bool full);
     virtual void infrequently();
     void powerUp(uint8_t pin3v3, uint8_t pin0v);
     virtual void powerUp();
@@ -51,6 +62,11 @@ class System_Base {
      */
     virtual System_Base* preserveDuringSleep(bool on = true) { (void)on; return this; }
   protected: 
+    /* One line "<id>/<leaf> <value>[ *]" for a module-level setting that is not an IO - the
+     * things a system module handles in dispatch() and keeps in a member, such as mqtt/hostname.
+     * The * means the filesystem holds it, tested against the path writeConfigToFS() uses.
+     */
+    void statusLine(Print* out, const char* leaf, const String& value);
     String name; // Name of actuator, sensor or control
     String leaf2path(const char* leaf);  // eg. sht/temperature or sht/temperature/max -> dev/lotus/esp123/sht/temperature ...
     String leaf2path(const String& leaf); 

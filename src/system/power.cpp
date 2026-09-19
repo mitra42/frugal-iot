@@ -118,6 +118,14 @@ System_Power::System_Power()
   timer_index(0)
 { }
 
+// wake, cycle and mode are exactly what dispatch() below accepts and stores
+void System_Power::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full);
+  statusLine(out, "wake", String(wake_ms));
+  statusLine(out, "cycle", String(cycle_ms));
+  statusLine(out, "mode", String((int)mode));
+}
+
 // The power module can be configured - from the SPIFFS, Captive or MQTT 
 // beware that changing power mode while running may not always do what is expected and a restart may be recommended. 
 void System_Power::dispatch(System_Message &msg) {

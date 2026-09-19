@@ -22,6 +22,13 @@ void System_Buttons::dispatch(System_Message &msg) {
     System_Base::dispatch(msg);
   }
 }
+void System_Buttons::statusLines(Print* out, bool full) {
+  System_Group::statusLines(out, full); // The buttons themselves
+  for (auto &output : outputs) {        // ... and this group's own outputs
+    output->statusLines(out, full);
+  }
+}
+
 void System_Buttons::discover() {
   for (auto &output : outputs) {
     output->discover();

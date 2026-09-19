@@ -450,6 +450,19 @@ void System_WiFi::loop() {
     stateMachine();
   }
 }
+/* Nothing here is dispatch-handled - the credentials live in /wifi/<ssid> on the filesystem,
+ * not in a member - so the short form says nothing. The full form answers the first question
+ * anyone asks of a node that is misbehaving: which network, and how well.
+ */
+void System_WiFi::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full);
+  if (full) {
+    statusLine(out, "ssid", SSID());
+    statusLine(out, "bars", String(bars()));
+    statusLine(out, "status", String((int)status));
+  }
+}
+
 void System_WiFi::dispatch(System_Message &msg) {
   // Setting on wifi e.g. esp1234/set/wifi/foo/bar is setting the wifi password to "bar" for ssid=foo
   // No need to echo this to the UX

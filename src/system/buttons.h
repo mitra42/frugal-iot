@@ -13,6 +13,8 @@ class System_Buttons : public System_Group {
   protected:
     void setup();
     void dispatch(System_Message &msg) override;
+    // A System_Group that also owns outputs, so it needs its own rather than only recursing
+    void statusLines(Print* out, bool full) override;
     void discover();
 };
 

@@ -36,6 +36,7 @@ class Control : public System_Base {
     bool allInputsValid();
     virtual void act();
     void discover() override;
+    void statusLines(Print* out, bool full) override; // Inputs then outputs
     void dispatch(System_Message &msg) override;
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const blah);

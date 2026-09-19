@@ -106,7 +106,10 @@ class System_Frugal : public System_Group {
     void loop() override; // Call this from main.cpp
     void infrequently() override;
     void periodically() override;
-    void captiveLines(AsyncResponseStream* response) override; 
+    void captiveLines(AsyncResponseStream* response) override;
+    // Whole-node plain text dump - a header identifying the node, then every module's IO.
+    // Reached at /status on the captive portal, or call it with &Serial.
+    void statusLines(Print* out, bool full) override; 
     bool canOTA();
     bool canMQTT();
     void discover() override;

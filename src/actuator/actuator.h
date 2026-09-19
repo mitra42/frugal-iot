@@ -32,6 +32,7 @@ class Actuator : public System_Base {
     bool preserve_during_sleep = true;
     // An Actuator has a group of inputs used to control it. Some things (like dispatch) will loop through them.
     std::vector<IN*> inputs; // Vector of inputs
+    void statusLines(Print* out, bool full) override; // One block per input
     //Actuator();
     Actuator(const char * const id, const char * const name);
     void discover() override;

@@ -314,6 +314,17 @@ void System_Captive::setup() {
     message = T->SettingsUpdated;
   }).setFilter(ON_AP_FILTER);
 
+  /* Plain text so it selects and pastes cleanly - the point of this page is to be copied into a
+   * message to someone else. text/plain also renders monospace, which lines the values up.
+   * Before the catch-all portal handler below, which claims every path.
+   * /status for the short form, /status?full for every parameter with its default.
+   */
+  server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
+    AsyncResponseStream *response = request->beginResponseStream("text/plain; charset=utf-8");
+    frugal_iot.statusLines(response, request->hasParam("full"));
+    request->send(response);
+  }).setFilter(ON_AP_FILTER);
+
   server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
     Serial.println(F("POST /restart"));
     request->send(200, "text/plain",T->RestartingPleaseWait);
@@ -386,6 +397,11 @@ bool System_Captive::setLanguage(const String& payload) {
     }
   }
   return false; // not found
+}
+
+void System_Captive::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full);
+  statusLine(out, "language_code", language_code);
 }
 
 void System_Captive::dispatch(System_Message &msg) {
