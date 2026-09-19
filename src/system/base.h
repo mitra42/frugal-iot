@@ -18,6 +18,16 @@ class System_Base {
     void setupFailed(); // Called from overrides of setup() on failure.
     const char* id = nullptr; // Name of actuator, sensor or control 
     bool connected = false; 
+    /* Has this module finished describing itself to the server?
+     *
+     * This is discovery's resume position. It is per-INSTANCE rather than an index into a group
+     * because System_Group::discover() is recursive: a nested group can itself stop partway, and
+     * an index in the parent cannot express that. See the comment on System_Group::discover().
+     *
+     * A leaf module never sets this itself - its parent group marks it, because a leaf always
+     * finishes in one call. Only System_Group overrides that.
+     */
+    bool discovered = false;
     virtual void setup();
     virtual void dispatch(System_Message &msg);
     virtual void discover();

@@ -97,6 +97,9 @@ class System_Messages : public System_Base {
     String path(const String topicTwig); 
     //String twig(const String &topicPath); // unused
     bool reSubscribeAll(); // Called by MQTT after reconnection
+    // How many messages are waiting to go upstream. Discovery uses this as backpressure - see
+    // System_Group::discover(). std::list::size() is O(1), so this is cheap enough to call in a loop.
+    size_t outgoingCount() const { return outgoing.size(); }
     void queueIncoming(const String &topicPath, const String &payload, uint16_t flags); // Called by MQTT and LoRaMesher
     void queueFromCaptive(const String &twig, const String &payload);
     void queueLoopback(const String &topicPath, const String &payload);

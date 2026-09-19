@@ -114,20 +114,54 @@ bool System_LittleFS::remove(const String &filename) {
 
 // Copied from system_wifi.cpp which got it from ESP-WiFiSettings library
 bool System_FS::spurt(const String& filename, const String& content) {
+    bool ok = false;
     File f = open(filename, "w"); // Virtual, knows what kind of FS
     if (!f) {
       Serial.print(F("Failed to open for writing ")); Serial.println(filename);
-      return false;
+      /* Say WHY, because the obvious guess is wrong.
+       *
+       * A missing directory is NOT the cause: System_LittleFS::open() passes create=true, and
+       * arduino-esp32's VFSImpl::open() then walks the path calling mkdir() on each level before
+       * opening. mkdir() also returns true for a directory that already exists. So the path being
+       * absent cannot produce this.
+       *
+       * What DOES produce it: a parent that exists as a FILE (mkdir returns false and open gives
+       * up), a filesystem that is not mounted, no space left, or malloc failing inside mkdir()
+       * because the heap is exhausted - which this firmware used to manage during discovery.
+       */
+      if (!mounted) {
+        Serial.println(F("  the filesystem is not mounted - see the LittleFS lines at startup"));
+      }
+      int slash = filename.lastIndexOf('/');
+      if (slash > 0) {
+        String parent = filename.substring(0, slash);
+        File p = open(parent, "r");
+        if (!p) {
+          Serial.print(F("  parent ")); Serial.print(parent);
+          Serial.println(F(" absent and could not be created - filesystem unmounted, full, or out of heap"));
+        } else {
+          if (!p.isDirectory()) {
+            Serial.print(F("  parent ")); Serial.print(parent);
+            Serial.println(F(" EXISTS AS A FILE - nothing beneath it can ever be written; delete it"));
+          } else {
+            Serial.print(F("  parent ")); Serial.print(parent);
+            Serial.println(F(" is a directory, so this is the filesystem being full or unmounted"));
+          }
+          p.close();
+        }
+      }
+    } else {
+      auto w = f.print(content);
+      f.close();
+      if (w != content.length()) {
+        Serial.print(F("Failed to write to ")); Serial.println(filename);
+      }
+      #ifdef SYSTEM_FS_DEBUG
+        Serial.print(F("Written to:")); Serial.print(filename); Serial.print(F("=")); Serial.println(content);
+      #endif
+      ok = (w == content.length());
     }
-    auto w = f.print(content);
-    f.close();
-    if (w != content.length()) {
-      Serial.print(F("Failed to write to ")); Serial.println(filename);
-    }
-    #ifdef SYSTEM_FS_DEBUG
-      Serial.print(F("Written to:")); Serial.print(filename); Serial.print(F("=")); Serial.println(content);
-    #endif
-    return w == content.length();
+    return ok;
 }
 // fn is path like /frugal_iot/project, note the leading slash
 String System_FS::slurp(const String& fn, const bool quietfail) {
@@ -221,23 +255,66 @@ void System_SD::setup() {
     #endif
   }
 }
-// Note pre_setup is usually running in frugal_iot constructor BEFORE serial setup
-// If need to debug, uncomment the Serial's below, and move the call of this to main.cpp AFTER Serial started
+/* Bring up LittleFS, formatting a blank partition, and SAY SO EITHER WAY.
+ *
+ * System_Frugal::pre_setup() calls this after startSerial(), so these prints are seen - the note
+ * that used to be here about running inside the constructor before Serial is no longer true.
+ *
+ * The failure branch used to be an empty block with the only message commented out. That is why a
+ * board whose filesystem never came up was indistinguishable from a healthy one: nothing was
+ * reported here, and the first sign was every later config write failing with a per-file error
+ * that pointed at the file rather than at the filesystem.
+ */
 void System_LittleFS::pre_setup() {
-  #ifdef SYSTEM_LITTLEFS_DEBUG
-    Serial.print(F("LittleFS "));
-  #endif
   #ifdef ESP8266
-    // On ESP8266 it uses ESP8266/FS.cpp  which has no parameters to begin() and so does NOT format a non-existant file system
-    if (!ESPFS.begin())
+    // ESP8266/FS.cpp has no parameters to begin() and so does NOT format a non-existent filesystem
+    mounted = ESPFS.begin();
   #else
-    if (!ESPFS.begin(true)) // Format LittleFS if its not there.
+    mounted = ESPFS.begin(true); // Format LittleFS if its not there
   #endif
-  {
-    //Serial.println(F("initialization failed!"));
-  } else {
-    #ifdef SYSTEM_LITTLEFS_DEBUG
-      Serial.println(F("initialization done."));
+  if (!mounted) {
+    // On ESP32 begin(true) has already tried formatting, so reaching here means something more
+    // basic - most often no partition for it to use at all. Try once explicitly, then say plainly
+    // that nothing can be saved, because every settings write from here on will fail.
+    Serial.println(F("LittleFS mount failed - formatting"));
+    if (ESPFS.format()) {
+      #ifdef ESP8266
+        mounted = ESPFS.begin();
+      #else
+        mounted = ESPFS.begin(false);
+      #endif
+    }
+    if (mounted) {
+      Serial.println(F("LittleFS formatted - any previous settings are gone"));
+    } else {
+      Serial.println(F("LittleFS UNUSABLE - no settings can be saved."));
+      Serial.println(F("  Check the partition table has a 'spiffs' entry (board_build.partitions)."));
+    }
+  }
+  if (mounted) {
+    // Unconditional, and cheap: it answers "is there a filesystem on this board, and is anything
+    // in it" at a glance, which is otherwise surprisingly hard to find out on a deployed node.
+    #ifndef ESP8266
+      size_t used = ESPFS.usedBytes();
+      size_t total = ESPFS.totalBytes();
+      Serial.printf("LittleFS mounted: %u of %u bytes used\n", (unsigned)used, (unsigned)total);
+      /* A filesystem that mounts but has no room is worse than one that fails to mount, because
+       * begin(true) only formats when the MOUNT fails - a full one is accepted as healthy and
+       * then refuses every mkdir and every write. That is usually a leftover filesystem from
+       * whatever firmware was on the board before, not anything this code did.
+       * Not formatted automatically: that would throw away a working node's saved settings on
+       * any boot where the numbers looked bad.
+       */
+      if (total && (used >= total)) {
+        Serial.println(F("LittleFS is FULL - no settings can be saved, and directories cannot be created."));
+        // Almost always directories rather than data: each one is a metadata pair, two erase
+        // blocks, 8KB here however empty it is. A 128KB partition holds the root pair plus 15.
+        Serial.printf("  each directory costs %u bytes, so this partition holds %u of them\n",
+          (unsigned)8192, (unsigned)((total / 8192) - 1));
+        Serial.println(F("  Erase it with: pio run -t uploadfs -e <env>   (this discards saved settings)"));
+      }
+    #else
+      Serial.println(F("LittleFS mounted"));
     #endif
     #ifdef SYSTEM_FS_DEBUG_DIR
       printDirectory("/"); // For debugging

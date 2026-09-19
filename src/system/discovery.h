@@ -11,6 +11,7 @@ class System_Discovery : public System_Base {
     System_Discovery();
     void fullAdvertise();
     void setup();
+    void loop() override;
     void infrequently() override;
   private: 
     uint8_t timer_index;

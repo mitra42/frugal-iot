@@ -38,6 +38,13 @@
 class System_FS : public System_Base {
   public:
     System_FS(const char* const id, const char* const name);
+    /* Did the filesystem actually come up? Defaults true so System_SD, which has no equivalent
+     * check, behaves as before. System_LittleFS::pre_setup() sets it for real.
+     *
+     * Worth having as a flag rather than re-deriving it: when the filesystem is down EVERY write
+     * fails, and the per-file error is then noise pointing at the wrong thing.
+     */
+    bool mounted = true;
     bool spurt(const String& fn, const String& content);
     String slurp(const String& fn, const bool quietfail=false);
     // --- these are just the underlying FS methods exposed

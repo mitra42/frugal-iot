@@ -110,6 +110,10 @@ class System_Frugal : public System_Group {
     bool canOTA();
     bool canMQTT();
     void discover() override;
+    // System_Frugal::discover() is re-entered each time discovery resumes, so its own two topics
+    // need a marker of their own - System_Base::discovered belongs to the whole group and is not
+    // set until every member is done.
+    bool discoveredSelf = false;
 };
 
 extern System_Frugal frugal_iot;

@@ -100,11 +100,14 @@ void System_Frugal::dispatch(System_Message &msg) {
 }
 
 void System_Frugal::discover() {
-  messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  if (!discoveredSelf) {
+    messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+    messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+    discoveredSelf = true;
+  }
   // Commented out because already sending ota_key which contains it.
   //messages->send(leaf2path("board"), SYSTEM_OTA_SUFFIX, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  System_Group::discover();
+  System_Group::discover(); // Sets our own 'discovered' when every member is done
 }
 
 void System_Frugal::captiveLines(AsyncResponseStream* response) {
@@ -234,6 +237,16 @@ void System_Frugal::setup() {
   #ifdef SYSTEM_FRUGAL_DEBUG
     Serial.print(F("Setup: "));
   #endif
+  #ifdef SYSTEM_GROUP_HEAP_DEBUG
+    // Baseline before any module runs, so the per-module lines below can be read as deltas.
+    Serial.printf("heap at start of setup: free=%u largest=%u\n",
+      (unsigned)ESP.getFreeHeap(),
+      #ifdef ESP8266
+        (unsigned)ESP.getMaxFreeBlockSize());
+      #else
+        (unsigned)ESP.getMaxAllocHeap());
+      #endif
+  #endif
   System_Group::setup(); // includes WiFi
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     ota->setup_after_mqtt_setup(); // just initializes - and not totally sure why do here and not in setup_after_wifi
@@ -303,7 +316,7 @@ void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
     }
     */
     #ifdef ESP32
-      if (!wake_count) {
+      if (!wake_count) { // wake count is only zero on first boot, not after a deep sleep
     #endif
         delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
     #ifdef ESP32

@@ -226,7 +226,7 @@ void System_Power::checkLevel() {
     #endif // SYSTEM_POWER_PANIC_MV
     #ifdef SYSTEM_POWER_LOW_MV
       if ( (vv > SYSTEM_POWER_BAD_READING_MV) && (vv < SYSTEM_POWER_LOW_MV)) {
-        Serial.println(" low power going sleep");
+        Serial.print(vv); Serial.println("mv low voltage going go sleep");
         // options here could be .... send readings, but with long gaps; just deep sleep now for longer time (so e.g. check every 60 mins for power back)
         /* NO prepare() here, deliberately - do not "fix" this.
          *
