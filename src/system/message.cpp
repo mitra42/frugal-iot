@@ -271,10 +271,11 @@ void System_Message::dispatch() {
 
 void System_Message::maybeWriteToFS(bool appendValue) { // appendValue defaults to false
   if (!(flags_ & MsgFromFS)) {
-    String path = String("/") + module() + "/" + leaf(); // e.g. sht/temperature or sht/temperature/max
+    String twig = leaf(); // e.g. temperature or temperature/max
     if (appendValue) {
-      path = path + "/value";
+      twig += "/value";
     }
+    const String path = frugal_iot.fs_LittleFS->configPath(module(), twig);
     #if defined(SYSTEM_LITTLEFS_DEBUG) || defined(SYSTEM_MESSAGE_DEBUG)
       Serial.print(F("Writing config flags=")); Serial.print(flags_, HEX); Serial.print(F(" ")); Serial.print(path); Serial.print(F("=")); Serial.print(payload);
     #endif

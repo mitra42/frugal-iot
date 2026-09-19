@@ -25,6 +25,7 @@
 #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
 #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
 
+#include <vector>
 #include "system/fs.h"
 #include "system/base.h"
 #include "system/io.h"
@@ -102,6 +103,145 @@ fs::File System_LittleFS::open(const String &filename, const char *mode) {
 bool System_LittleFS::mkdir(const String &path) { 
   return ESPFS.mkdir(path);
 }
+bool System_LittleFS::rmdir(const String &path) {
+  return ESPFS.rmdir(path);
+}
+
+/* Flat config paths - see the comment on these in fs.h for why the layout is flat at all.
+ *
+ * Encoding, in this order: '%' -> "%25", '.' -> "%2E", then the leaf's own '/' -> '.'.
+ * Doing '%' first matters, or the "%2E" written for a dot would itself be re-escaped.
+ * Decoding reverses it: '.' -> '/' first (an escape sequence contains no literal '.'), then
+ * unescape. So "a.b/c" -> "a%2Eb.c" -> "a.b/c" round-trips, and so does "100%".
+ */
+String System_FS::configEncode(const String& leaf) {
+  String r;
+  r.reserve(leaf.length() + 8);
+  for (unsigned int i = 0; i < leaf.length(); i++) {
+    const char c = leaf.charAt(i);
+    if (c == '%') {
+      r += F("%25");
+    } else if (c == '.') {
+      r += F("%2E");
+    } else if (c == '/') {
+      r += '.';
+    } else {
+      r += c;
+    }
+  }
+  return r;
+}
+String System_FS::configDecode(const String& encoded) {
+  String r;
+  r.reserve(encoded.length());
+  for (unsigned int i = 0; i < encoded.length(); i++) {
+    const char c = encoded.charAt(i);
+    if (c == '.') {
+      r += '/';
+    } else if ((c == '%') && ((i + 2) < encoded.length())) {
+      const String hex = encoded.substring(i + 1, i + 3);
+      if (hex == "25") {
+        r += '%'; i += 2;
+      } else if (hex == "2E") {
+        r += '.'; i += 2;
+      } else {
+        r += c; // Not one of ours - leave it alone rather than mangling it
+      }
+    } else {
+      r += c;
+    }
+  }
+  return r;
+}
+String System_FS::configPath(const String& id, const String& leaf) {
+  return String("/") + id + "." + configEncode(leaf);
+}
+
+#ifdef SYSTEM_LITTLEFS_SUPPORTDEPRECATED
+// Gather everything under one old module directory, WITHOUT changing anything yet - see the
+// ordering note in convertDeprecatedLayout(). Recursive because the old layout nested a level for
+// parameters: /sht/temperature/max, and /sht/temperature/value for the reading itself.
+static void collectDeprecated(System_LittleFS* fs, const String& dirPath, const String& leafSoFar,
+                              std::vector<String>& leaves, std::vector<String>& payloads,
+                              std::vector<String>& files, std::vector<String>& dirs) {
+  File dir = fs->open(dirPath, "r");
+  if (dir) {
+    while (true) {
+      File entry = dir.openNextFile();
+      if (!entry) {
+        break;
+      }
+      const String entryName = entry.name(); // basename
+      const String childPath = dirPath + "/" + entryName;
+      const String childLeaf = leafSoFar.length() ? (leafSoFar + "/" + entryName) : entryName;
+      if (entry.isDirectory()) {
+        entry.close();
+        collectDeprecated(fs, childPath, childLeaf, leaves, payloads, files, dirs);
+        dirs.push_back(childPath);
+      } else {
+        String payload = entry.readString();
+        entry.close();
+        payload.trim();
+        leaves.push_back(childLeaf);
+        payloads.push_back(payload);
+        files.push_back(childPath);
+      }
+    }
+    dir.close();
+  }
+}
+
+/* Move a board from the directory-per-module layout to the flat one, once, at startup.
+ *
+ * Trigger is "any directory in the root", not specifically /wifi: a board may have been
+ * configured without ever joining a network, and would then have old directories but no /wifi.
+ *
+ * ORDER MATTERS. Everything is read into RAM first, then the old files and directories are
+ * DELETED, and only then are the new files written. On a board where the old layout filled the
+ * filesystem - which is the whole reason for this change - there is no room for a single new file
+ * until a directory has been freed, and each one is 8KB. Reading first also means a module's
+ * config survives right up to the delete; a power cut between the delete and the write loses that
+ * module's settings, which is the one window this cannot close and is why it only runs once.
+ */
+void System_LittleFS::convertDeprecatedLayout() {
+  std::vector<String> moduleDirs;
+  File root = open("/", "r");
+  if (root) {
+    while (true) {
+      File entry = root.openNextFile();
+      if (!entry) {
+        break;
+      }
+      if (entry.isDirectory()) {
+        moduleDirs.push_back(String(entry.name()));
+      }
+      entry.close();
+    }
+    root.close();
+  }
+  if (!moduleDirs.empty()) {
+    Serial.print(F("LittleFS: converting ")); Serial.print(moduleDirs.size());
+    Serial.println(F(" module directories to the flat config layout"));
+    for (const String& m : moduleDirs) {
+      std::vector<String> leaves, payloads, files, dirs;
+      collectDeprecated(this, String("/") + m, "", leaves, payloads, files, dirs);
+      for (const String& f: files) {
+        remove(f);
+      }
+      for (auto it = dirs.rbegin(); it != dirs.rend(); ++it) { // Deepest first
+        rmdir(*it);
+      }
+      rmdir(String("/") + m);
+      for (size_t i = 0; i < leaves.size(); i++) {
+        const String to = configPath(m, leaves[i]);
+        Serial.print(F("  /")); Serial.print(m); Serial.print(F("/")); Serial.print(leaves[i]);
+        Serial.print(F(" -> ")); Serial.println(to);
+        spurt(to, payloads[i]);
+      }
+    }
+  }
+}
+#endif // SYSTEM_LITTLEFS_SUPPORTDEPRECATED
 boolean System_LittleFS::exists(const char *filename) {
   return ESPFS.exists(filename);
 }
@@ -315,6 +455,9 @@ void System_LittleFS::pre_setup() {
       }
     #else
       Serial.println(F("LittleFS mounted"));
+    #endif
+    #ifdef SYSTEM_LITTLEFS_SUPPORTDEPRECATED
+      convertDeprecatedLayout(); // Must be before any module calls readConfigFromFS()
     #endif
     #ifdef SYSTEM_FS_DEBUG_DIR
       printDirectory("/"); // For debugging

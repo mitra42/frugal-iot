@@ -31,7 +31,6 @@ class IO {
     // defaulted body is all that is needed.
     virtual ~IO() = default;
     virtual void setup();
-    void writeConfigToFS(const String &leaf, const String& payload);
     virtual bool dispatch(System_Message &msg);
     virtual String StringValue();
     virtual void send();

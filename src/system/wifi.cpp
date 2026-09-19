@@ -148,7 +148,7 @@ void System_WiFi::connectOneAndAllReset() {
 }
 bool System_WiFi::connectOne(String ssid, int32_t rssi) {
   Serial.print(ssid); Serial.print(F(" ")); if (rssi) { Serial.print(rssi); }; Serial.print(F(" "));
-  String filename = String("/wifi/") + ssid ;
+  String filename = frugal_iot.fs_LittleFS->configPath(id, ssid);
   String pw = frugal_iot.fs_LittleFS->slurp(filename, true);
   if (pw.length()) { // Do we have a password
     connectInnerAsync(ssid, pw); // Try and connect

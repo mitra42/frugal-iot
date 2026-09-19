@@ -31,7 +31,6 @@ class System_Base {
     virtual void setup();
     virtual void dispatch(System_Message &msg);
     virtual void discover();
-    void readConfigFromFS(File dir, const String* leaf);
     void writeConfigToFS(const String& topicTwig, const String& payload);
     virtual void loop();
     virtual void periodically();

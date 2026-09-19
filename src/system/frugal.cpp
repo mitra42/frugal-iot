@@ -245,7 +245,7 @@ void System_Frugal::pre_setup() {
   fs_LittleFS->pre_setup();
   powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
   // Project BEFORE it builds the prefix for topics, which will happen when reads first entry in readConfigFromFS()
-  String newProject = fs_LittleFS->slurp("/frugal_iot/project", true); // ignores if not found
+  String newProject = fs_LittleFS->slurp(fs_LittleFS->configPath(id, "project"), true); // ignores if not found
   if (newProject.length()) {
     Serial.print(F("Project set to:")); Serial.println(project);
     project = newProject;
