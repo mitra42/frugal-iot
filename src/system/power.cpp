@@ -167,6 +167,28 @@ void System_Power::timer_set(const uint8_t i, const uint32_t t_secs) {
 bool System_Power::timer_expired(const uint8_t i) {
   return (timer(i) <= sleepSafeSecs());
 }
+// See power.h. A timer of 0 is left alone - that is the "never armed, fires on the first check"
+// default, and shifting it would arm it.
+void System_Power::timers_shift(const int64_t delta_secs) {
+  for (uint8_t i = 0; i < TIMER_LENGTH; i++) {
+    if (timers[i]) {
+      const int64_t t = (int64_t)timers[i] + delta_secs;
+      timers[i] = (t < 0) ? 0 : (uint32_t)t;
+    }
+  }
+}
+// Bound the damage from a clock step of unknown size. Nothing in the library arms a timer for
+// more than SYSTEM_OTA_S (an hour), so anything further out than max_secs is not a real interval
+// - it is an interval measured against a clock that has since moved. Re-arm it to fire now:
+// firing one cycle early is recoverable, waiting years is not.
+void System_Power::timers_clampFuture(const uint32_t max_secs) {
+  const uint32_t now = sleepSafeSecs();
+  for (uint8_t i = 0; i < TIMER_LENGTH; i++) {
+    if (timers[i] > (now + max_secs)) {
+      timers[i] = now;
+    }
+  }
+}
 
 
 // ================== setup =========== called from main.cpp::setup ========

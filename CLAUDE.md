@@ -347,6 +347,67 @@ void MyThing::infrequently() {
   measure an elapsed duration), call `frugal_iot.powercontroller->sleepSafeSecs()` /
   `sleepSafeMillis()` directly instead.
 
+### Setting the clock, and why that moves the timers
+
+A node can be given the time by whoever is looking at its captive portal: `System_Time` renders
+the device's current time and a button that POSTs the browser's epoch and UTC offset. The AP is
+always up (`System_Captive::setup()` calls `softAP()` unconditionally, not only on WiFi failure),
+so this works on a site with no internet and no NTP — which is what makes time-of-day behaviour
+usable there at all. It rides the ordinary message bus as `set/time/epoch` and `set/time/offset`,
+so the same path works over MQTT, letting a gateway set the clock of a node that has no NTP.
+
+**`System_Time::set()` is the only sanctioned way to step the clock**, because the wall clock and
+the sleep-safe timers are the same clock:
+
+```cpp
+void timer_set(i, secs) { timers[i] = sleepSafeSecs() + secs; }   // ABSOLUTE
+bool timer_expired(i)   { return timers[i] <= sleepSafeSecs(); }
+uint32_t sleepSafeSecs() { gettimeofday(&tv, NULL); return tv.tv_sec; }
+```
+
+So stepping the clock moves every armed timer relative to "now":
+
+- **Forward** (the usual 1970 → now jump on a cold boot): every armed timer expires at once and
+  fires a cycle early. Harmless, and this has always happened on the first NTP sync.
+- **Backward** — a phone with a wrong clock, or NTP correcting one — the timers still hold values
+  from the old, higher clock and can be unreachable for **months**, silently stopping OTA,
+  discovery and the watchdog's periodic work on a device nobody can reach.
+
+Two tools on `System_Power`, used where each is possible:
+
+| | Use when | Used by |
+|---|---|---|
+| `timers_shift(delta)` | The size of the step is known | `System_Time::set()` |
+| `timers_clampFuture(max)` | It is not | the SNTP sync callback |
+
+SNTP steps the clock inside the IDF and its notification callback is handed only the *new* time,
+so the delta cannot be recovered there — hence the clamp, which needs no knowledge of the step.
+Nothing in the library arms a timer for more than `SYSTEM_OTA_S`, so anything further out than a
+day is measuring against a clock that has since moved, and is re-armed to fire now. ESP8266 has
+no equivalent callback and keeps the old behaviour.
+
+**Timezone comes from the browser as a plain UTC offset**, which `setTimezoneOffset()` turns into
+a POSIX TZ string — noting that POSIX *inverts the sign*, so UTC+7 is `<+07>-7`. No DST rule is
+appended and none can be: a browser reports the offset it is using now, not the zone it is in.
+That is exactly right year-round where there is no DST (Indonesia and most of Asia) and an hour
+out across a transition elsewhere until the button is pressed again. Encoding zones properly
+would need an IANA-to-POSIX table, which is real flash on a node.
+
+**What persists.** The offset is written to LittleFS and restored by `setup()`; the epoch
+deliberately is **not** — a stored epoch would be replayed at the next boot and would set the
+clock to whenever it was last written, which is worse than the RTC value it would overwrite.
+`settimeofday()` moves the RTC-backed clock, so a time set once survives deep sleep and every
+reset short of a power cycle.
+
+**`System_Time` is opt-in.** `frugal_iot.time` is `nullptr` unless the sketch adds it:
+
+```cpp
+frugal_iot.system->add(frugal_iot.time = new System_Time());
+```
+
+Adding it to the group is what makes `setup()`, `dispatch()`, `captiveLines()` and
+`infrequently()` run, so the button only appears on sketches that do this (`all`, `datalogger`).
+
 ## IO Classes (IN / OUT) — how sensors, actuators and controls actually connect
 
 Every value a component reads or writes is a member object, not a plain field — an `IN` (input)
