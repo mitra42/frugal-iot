@@ -3,6 +3,7 @@
 #######################################
 
 Actuator	KEYWORD1
+Actuator_Analog	KEYWORD1
 Actuator_Digital	KEYWORD1
 Actuator_LCD	KEYWORD1
 Actuator_Ledbuiltin	KEYWORD1
@@ -24,12 +25,13 @@ INtext	KEYWORD1
 INuint16	KEYWORD1
 IO	KEYWORD1
 MeshSubscription	KEYWORD1
+OLED_Offset	KEYWORD1
 OUT	KEYWORD1
 OUTbool	KEYWORD1
 OUTfloat	KEYWORD1
 OUTtext	KEYWORD1
 OUTuint16	KEYWORD1
-SSD1306_Offset	KEYWORD1
+OneWireDevice	KEYWORD1
 Sensor	KEYWORD1
 Sensor_AHT	KEYWORD1
 Sensor_AHT20	KEYWORD1
@@ -53,8 +55,10 @@ Sensor_INA219	KEYWORD1
 Sensor_LoadCell	KEYWORD1
 Sensor_SHT	KEYWORD1
 Sensor_Soil	KEYWORD1
+Sensor_SoilModbus	KEYWORD1
 Sensor_Uint16	KEYWORD1
 Sensor_Ultrasonic	KEYWORD1
+Sensor_Voltage	KEYWORD1
 Sensor_ms5803	KEYWORD1
 System_Base	KEYWORD1
 System_Buttons	KEYWORD1
@@ -72,6 +76,7 @@ System_Message	KEYWORD1
 System_Messages	KEYWORD1
 System_Modbus	KEYWORD1
 System_OTA	KEYWORD1
+System_OneWire	KEYWORD1
 System_Power	KEYWORD1
 System_RS485	KEYWORD1
 System_SD	KEYWORD1
@@ -94,6 +99,8 @@ SSID	KEYWORD2
 StringValue	KEYWORD2
 ack	KEYWORD2
 act	KEYWORD2
+actInner	KEYWORD2
+add	KEYWORD2
 addBool	KEYWORD2
 addButton	KEYWORD2
 addNumber	KEYWORD2
@@ -101,6 +108,8 @@ addPeerSubscription	KEYWORD2
 addSTARoute	KEYWORD2
 addString	KEYWORD2
 addWiFi	KEYWORD2
+addressAt	KEYWORD2
+allInputsValid	KEYWORD2
 append	KEYWORD2
 attemptMdns	KEYWORD2
 awaitConversion	KEYWORD2
@@ -117,6 +126,7 @@ canOTA	KEYWORD2
 canRetry	KEYWORD2
 captiveLines	KEYWORD2
 captiveValueLines	KEYWORD2
+changed	KEYWORD2
 checkForUpdate	KEYWORD2
 checkLevel	KEYWORD2
 checkRole	KEYWORD2
@@ -130,6 +140,9 @@ compensateGasLow	KEYWORD2
 compensateHumidity	KEYWORD2
 compensatePressure	KEYWORD2
 compensateTemperature	KEYWORD2
+configDecode	KEYWORD2
+configEncode	KEYWORD2
+configPath	KEYWORD2
 configure	KEYWORD2
 configureMeasurement	KEYWORD2
 configure_battery	KEYWORD2
@@ -143,6 +156,8 @@ connectOneAndAllReset	KEYWORD2
 connected	KEYWORD2
 convert	KEYWORD2
 convertAndSet	KEYWORD2
+convertDeprecatedLayout	KEYWORD2
+count	KEYWORD2
 createReceiveMessages	KEYWORD2
 dateTime	KEYWORD2
 debug	KEYWORD2
@@ -157,6 +172,7 @@ exists	KEYWORD2
 fillRect	KEYWORD2
 findGatewayNode	KEYWORD2
 floatValue	KEYWORD2
+forEach	KEYWORD2
 formatBytes	KEYWORD2
 fullAdvertise	KEYWORD2
 heap_print	KEYWORD2
@@ -165,6 +181,7 @@ in_network	KEYWORD2
 infrequently	KEYWORD2
 init	KEYWORD2
 initialize	KEYWORD2
+isClaimed	KEYWORD2
 isGateway	KEYWORD2
 isOK	KEYWORD2
 isPresent	KEYWORD2
@@ -172,6 +189,7 @@ isSet	KEYWORD2
 isSubscription	KEYWORD2
 isThisNode	KEYWORD2
 isTimeSet	KEYWORD2
+isValid	KEYWORD2
 lastResult	KEYWORD2
 leaf	KEYWORD2
 leaf2path	KEYWORD2
@@ -191,10 +209,14 @@ now	KEYWORD2
 onNewPeer	KEYWORD2
 onPeerLost	KEYWORD2
 open	KEYWORD2
+outgoingCount	KEYWORD2
+owBindTo	KEYWORD2
+owBound	KEYWORD2
 parse	KEYWORD2
 path	KEYWORD2
 pauseWiFi	KEYWORD2
 periodically	KEYWORD2
+persisted	KEYWORD2
 powerDown	KEYWORD2
 powerUp	KEYWORD2
 pre_setup	KEYWORD2
@@ -204,6 +226,7 @@ printDirectory	KEYWORD2
 printNetworkStatus	KEYWORD2
 printRouteTable	KEYWORD2
 processReceivedPacket	KEYWORD2
+provision	KEYWORD2
 publish	KEYWORD2
 publishToPeer	KEYWORD2
 publishToSubscribers	KEYWORD2
@@ -222,6 +245,7 @@ readFloat	KEYWORD2
 readHoldingRegisters	KEYWORD2
 readInt	KEYWORD2
 readRegister	KEYWORD2
+readRegisters	KEYWORD2
 readUint16	KEYWORD2
 readValidateConvert	KEYWORD2
 readValidateConvertSet	KEYWORD2
@@ -229,8 +253,11 @@ recover	KEYWORD2
 recoverWiFi	KEYWORD2
 relayDownstream	KEYWORD2
 remove	KEYWORD2
+requestIfDue	KEYWORD2
 rescan	KEYWORD2
+resolveUnbound	KEYWORD2
 responseBuffer	KEYWORD2
+rmdir	KEYWORD2
 rssi_to_bars	KEYWORD2
 scan	KEYWORD2
 send	KEYWORD2
@@ -245,12 +272,16 @@ sendRegister16	KEYWORD2
 sendRemote	KEYWORD2
 sendWired	KEYWORD2
 set	KEYWORD2
+setAddress	KEYWORD2
 setDefaultColor	KEYWORD2
 setEnvData	KEYWORD2
+setInvalid	KEYWORD2
 setLanguage	KEYWORD2
 setMode	KEYWORD2
+setOutputsInvalid	KEYWORD2
 setPath	KEYWORD2
 setStatus	KEYWORD2
+setTimezoneOffset	KEYWORD2
 setup	KEYWORD2
 setupFailed	KEYWORD2
 setupLanguages	KEYWORD2
@@ -266,15 +297,23 @@ split	KEYWORD2
 spurt	KEYWORD2
 startSerial	KEYWORD2
 stateMachine	KEYWORD2
+statusLine	KEYWORD2
+statusLines	KEYWORD2
+stepVolts	KEYWORD2
+steps	KEYWORD2
 subscribe	KEYWORD2
 subscribeViaMdns	KEYWORD2
 switchSSID	KEYWORD2
 sync	KEYWORD2
 tare	KEYWORD2
+tempC	KEYWORD2
 timer	KEYWORD2
 timer_expired	KEYWORD2
 timer_next	KEYWORD2
 timer_set	KEYWORD2
+timer_set_to	KEYWORD2
+timers_clampFuture	KEYWORD2
+timers_shift	KEYWORD2
 topicTwig	KEYWORD2
 track	KEYWORD2
 txEnable	KEYWORD2
@@ -285,3 +324,4 @@ visibleWidth	KEYWORD2
 wireTo	KEYWORD2
 writeConfig	KEYWORD2
 writeConfigToFS	KEYWORD2
+writeSingleRegister	KEYWORD2
