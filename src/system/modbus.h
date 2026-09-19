@@ -1,3 +1,4 @@
+// Deep Sleep issues: `connected` and `retry_countdown` are lost, so a silent slave costs a full 2s timeout again on the first read after each wake.
 /* Frugal IoT - Modbus RTU over RS485
  * 
  * NOTE - AS OF 2026-08-03 THIS IS UNTESTED CODE

@@ -1,3 +1,4 @@
+// Deep Sleep issues: the chip wants a warm-up before its air-quality figures mean anything, and deep sleep restarts that on every wake - AQI/TVOC/eCO2 are unreliable on short cycles.
 /* Frugal IoT - ENS160 air quality sensor (AQI, TVOC, eCO2)
  *
  * ScioSense ENS160 (and ENS161) over I2C, freestanding - no external library, just System_I2C.

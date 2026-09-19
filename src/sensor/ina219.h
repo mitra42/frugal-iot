@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - read fresh on each wake.
 /* Frugal IoT - INA219 current, voltage and power monitor
  *
  * NOTE - AS OF 2026-08-10 THIS IS UNTESTED CODE

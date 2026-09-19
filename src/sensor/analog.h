@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - the tare offset and calibration scale are persisted.
 /*
  * Sensor Analog
  * Read from a pin and send message

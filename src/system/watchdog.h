@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - its timer slot is in RTC_DATA_ATTR.
 /* Frugal IoT - watchdog and monitorying */
 #ifndef SYSTEM_WATCHDOG_H
 #define SYSTEM_WATCHDOG_H

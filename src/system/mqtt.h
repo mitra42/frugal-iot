@@ -1,3 +1,4 @@
+// Deep Sleep issues: the session is lost and reconnected every wake - seconds, and a re-subscribe. Retained topics survive on the broker.
 #ifndef SYSTEM_MQTT_H
 #define SYSTEM_MQTT_H
 
@@ -33,6 +34,7 @@ class System_MQTT : public System_Base {
     System_MQTT(const char* hostname, const char* username, const char* password);
     void setup_after_wifi();
     bool connected(); // Check if connected, dont change status
+    void statusLines(Print* out, bool full) override;
     void prepare() override;
     void recover() override;
     // Downstream

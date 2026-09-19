@@ -1,3 +1,4 @@
+// Deep Sleep issues: the gas heater needs several readings to settle and deep sleep restarts that every wake, so gas resistance is unreliable on short cycles. Temperature, humidity and pressure are fine.
 /* Frugal IoT - BME680 temperature, humidity, pressure and gas sensor
  *
  * NOTE - AS OF 2026-08-11 THIS IS UNTESTED CODE

@@ -55,10 +55,6 @@ static void sntp_time_synced(struct timeval *tv) {
 #ifndef SYSTEM_TIME_ZONE
   #define SYSTEM_TIME_ZONE "GMT0BST,M3.5.0/1,M10.5.0" // Get yours at https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv 
 #endif
-#ifndef SYSTEM_TIME_ZONE_ABBREV
-  #define SYSTEM_TIME_ZONE_ABBREV "GMT" // The typical way time is described locally 
-#endif
-
 #ifndef SYSTEM_TIME_S
   #define SYSTEM_TIME_S 360
 #endif
@@ -122,9 +118,30 @@ time_t System_Time::now() {
   return _now;
 }
 
+/* Formats _localTime, which localtime_r() has already put in whatever zone TZ currently names -
+ * so the zone label has to come from that same zone, via strftime's %Z.
+ *
+ * It used to be a SYSTEM_TIME_ZONE_ABBREV #define, defaulting to "GMT" and printed whatever the
+ * zone actually was. That was true while the zone could only be set at compile time, and stopped
+ * being true when setTimezoneOffset() started taking one from a phone in the captive portal: a
+ * node set from a browser at UTC+10 read "18:52 GMT" while 18:52 was local and GMT was 08:52.
+ * A fixed label cannot describe a zone chosen at runtime, so there is no #define any more.
+ *
+ * %Z gives "GMT"/"BST" as the date requires for the compile-time default zone (itself better
+ * than the old constant, which said GMT all summer), and the name setTimezoneOffset() built -
+ * "+10" - for a browser-set one.
+ */
 String System_Time::dateTime() {
   // Note String is on stack so safe but not for long term use
-  return StringF("%02d/%02d/%02d %02d:%02d:%02d %s", _localTime.tm_mday, _localTime.tm_mon + 1, _localTime.tm_year > 100 ? _localTime.tm_year - 100 : _localTime.tm_year, _localTime.tm_hour, _localTime.tm_min, _localTime.tm_sec, SYSTEM_TIME_ZONE_ABBREV);
+  char buf[48];
+  const size_t n = strftime(buf, sizeof(buf), "%d/%m/%y %H:%M:%S %Z", &_localTime);
+  // %Z expands to nothing if this core's newlib has no zone name for TZ. %z (+1000) is computed
+  // from the offset rather than looked up, so it always says something - and saying which zone
+  // the time is in is the entire point of printing one.
+  if (!n || buf[n - 1] == ' ') {
+    strftime(buf, sizeof(buf), "%d/%m/%y %H:%M:%S UTC%z", &_localTime);
+  }
+  return String(buf);
 }
 
 /* Step the clock, keeping the sleep-safe timers pointing at the same real moments.

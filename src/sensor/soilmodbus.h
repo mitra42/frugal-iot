@@ -1,3 +1,4 @@
+// Deep Sleep issues: address auto-provisioning state is lost, so it re-probes the factory address after each wake; ids already written into probes are in the probes and survive.
 /* Soil moisture and temperature probe over RS485 / Modbus RTU (DFRobot SEN0600 and similar)
  *
  * NOTE - UNTESTED AGAINST HARDWARE

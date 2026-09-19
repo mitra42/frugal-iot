@@ -1,3 +1,4 @@
+// Deep Sleep issues: none in itself - see the individual sensors.
 #ifndef SENSOR_H
 #define SENSOR_H
 
@@ -46,6 +47,7 @@ class Sensor : public System_SensorActuator {
     void discover() override;
     void dispatch(System_Message &msg) override;
     void captiveLines(AsyncResponseStream* response) override; // Read-only list of the outputs
+    void statusLines(Print* out, bool full) override; // One block per output
     String captiveValueLines(); // The "<br>Name: value unit" fragment, for overrides to extend
 }; // Class Sensor
 

@@ -35,8 +35,20 @@ void Actuator::dispatch(System_Message &msg) {
         act();
     }
 }
+void Actuator::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full); // Module-level settings first, then the IOs
+  for (auto &input : inputs) {
+    input->statusLines(out, full);
+  }
+}
+
 void Actuator::discover() {
   for (auto &input : inputs) {
     input->discover();
   }
+}
+// See the note in actuator.h. Returns Actuator* so it can be chained onto a group add().
+Actuator* Actuator::preserveDuringSleep(bool on) {
+  preserve_during_sleep = on;
+  return this;
 }

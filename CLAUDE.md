@@ -408,6 +408,91 @@ frugal_iot.system->add(frugal_iot.time = new System_Time());
 Adding it to the group is what makes `setup()`, `dispatch()`, `captiveLines()` and
 `infrequently()` run, so the button only appears on sketches that do this (`all`, `datalogger`).
 
+## The status page (`/status`)
+
+A plain-text dump of every module's IO, served on the captive portal's AP. Plain text because the
+point of it is to be **copied into a message to someone else** — it selects cleanly, pastes
+without markup, and renders monospace so the values line up.
+
+```
+esp32-a41f3c dev/lotus
+SHT30 Sensor - Temperature and humidity
+awake 412s
+time 12/09/26 14:07:33 GMT
+
+sht/temperature 21.5
+sht/temperature/min 0.0 *
+sht/humidity 63.2
+controlhysteresis/limit 22.0 *
+controlhysteresis/limit/wired esp32-a41f3c/sht/temperature
+```
+
+`/status?full` gives every parameter with its default in brackets.
+
+**The `*` means the filesystem holds it**, so it survives a restart. That is the one thing on the
+page you cannot find out any other way — a value that is only in RAM looks identical to one that
+will come back after a reboot, and on a node in a field that difference is most of what you want
+to know. It is tested against the path `maybeWriteToFS()` would have written to:
+`/<topicTwig>/<param>`, or `/<topicTwig>/value` for the IO's own value.
+
+**What the short form shows:** the value; the wired path when there is one; and min/max/color only
+when they **differ from the default** — the same test `discover()` makes. A parameter persisted at
+its default value is a no-op, since it changes nothing at setup, so a line saying so is noise.
+
+**System modules report what they hold too.** `System_Base::statusLines` gives every module its
+`name` when that has been persisted (i.e. renamed — the compiled-in name is already in the header),
+and `System_Base::statusLine(out, leaf, value)` prints a module-level setting that is not an IO,
+checked against the `/<id>/<leaf>` path `writeConfigToFS()` uses. The rule is that the short form
+carries whatever `dispatch()` handles and keeps in a member:
+
+| Module | Short form | Full form adds |
+|---|---|---|
+| `mqtt` | `hostname` | `connected` |
+| `power` | `wake`, `cycle`, `mode` | |
+| `captive` | `language_code` | |
+| `wifi` | nothing — credentials live in `/wifi/<ssid>`, not in a member | `ssid`, `bars`, `status` |
+
+`System_MQTT::statusLines` is the shape to copy. The full form is meant to be edited: when a
+feature is misbehaving, adding a `statusLine(out, "whatever", ...)` under `if (full)` is a
+two-line change that puts the answer on a page reachable from a phone, with no serial cable and no
+reflash.
+
+**Two `discover()` bugs were fixed alongside this**, both found by writing the same tests here:
+
+- `INfloat::discover()` and `INuint16::discover()` tested `min != default_max` where they meant
+  `max != default_max`, so `max` was sent or withheld on the strength of comparing the wrong
+  field. `OUTfloat`/`OUTuint16` had it right.
+- `IO::discover()` tested `color != default_color`, comparing the two **pointers**. Both are
+  initialised from the same constructor argument, so for almost every IO that was a pointer
+  compared with itself — the colour was never sent however far the code had drifted from the
+  schema. The exceptions were the sensors calling `setDefaultColor()` (`Sensor_Soil`,
+  `Sensor_LoadCell`), where the pointers differ and the colour was sent even when the strings
+  matched. `setDefaultColor()` shows the intent: those sensors take a colour from the sketch and
+  record the schema's as the default, so the question is "did the sketch override it" — about the
+  values, not where they live. Now `strcmp`.
+
+That second fix has a merge-order consequence worth knowing: on `main` six IOs have a code colour
+differing from the schema, so this makes them start publishing it. Merge the colours branch first
+(which makes code and schema agree) and the fix publishes nothing at all. The end state is the
+same either way.
+
+**Traversal, and where to override it.** `System_Base::statusLines(Print*, bool full)` defaults to
+printing nothing, because most system components have no IO. Four classes override it to walk
+their IOs — `Sensor` (outputs), `Actuator` (inputs), `Control` (both), and `System_Buttons`, which
+is a `System_Group` that also owns outputs — and `System_Group` recurses into its members. Those
+are the only IO-carrying classes in the library, so that is the complete default; a class wanting
+to say something else about itself overrides `statusLines` too.
+
+It takes a `Print*` rather than the web response on purpose, so the same dump can go to `Serial`
+when a node will not join WiFi and the portal cannot be reached at all.
+
+**Only on the AP so far.** `System_Captive::addSTARoute()` exists but hardcodes `HTTP_POST`, so
+serving this on the station interface needs a one-line GET variant of that helper.
+
+**Cost:** one `LittleFS::exists()` per line, so roughly 60–100 lookups for a page. Fine for
+something loaded occasionally; if it ever is not, the fix is to list each module's directory once
+and test membership rather than stat each path.
+
 ## IO Classes (IN / OUT) — how sensors, actuators and controls actually connect
 
 Every value a component reads or writes is a member object, not a plain field — an `IN` (input)
@@ -1355,6 +1440,101 @@ address auto-provisioning, `System_RS485`/`System_Modbus`, `Actuator_Analog`, `S
 `System_Power::timer_set_to()`.
 
 That repository builds against the `ospit-p1` branch of this library until it is merged to `main`.
+
+### How a deep-sleep wake is told apart from a power-on
+
+`RTC_DATA_ATTR wake_count` in `system/power.cpp`. It is incremented just before sleeping, and
+survives because RTC memory does; a power-on leaves it zero. `System_Power::setup()` tests it and
+calls `recover()` when it is non-zero, which is how things like `System_Discovery`'s
+`doneFullAdvertise` get restored without being persisted to flash.
+
+So **`recover()` IS reached after a deep sleep** - the obvious assumption that "deep sleep reboots,
+therefore only `setup()` runs" is wrong and cost me a wrong comment in three files. What is true is
+the ORDER: `System_Frugal` adds `actuators`, `sensors`, `controls`, `buttons` and only then
+`system`, so every module's own `setup()` has already run by the time `System_Power::setup()` calls
+`recover()`. Anything that must happen before a module touches its hardware - releasing a GPIO
+hold, for instance - belongs in that module's `setup()`, not in `recover()`.
+
+### Verifying that code is really there
+
+Two traps, both of which produced a confident wrong answer during the OSPIT port:
+
+- **`strings` has a four-character minimum**, and the linker pools string literals by SUFFIX. A
+  three-character state name `"hot"` was both invisible to `strings` and merged into the tail of
+  `"dac_oneshot"`, so even a raw byte search could not find it. The code was correct and
+  unverifiable. Name things long enough to be distinctive if you intend to check for them.
+- **Check the ELF exists before trusting a symbol count.** A stale or absent build reports zero
+  occurrences of everything, which looks exactly like successful conditional compilation. Rebuild,
+  then inspect - twice in one session this nearly passed as proof.
+
+And when a `#ifdef` guards a feature nobody has enabled, compile it once with the flag set. Code
+behind a flag no build sets is code nobody has compiled.
+
+### Regenerating defaults.h
+
+`defaults.h` is generated from the server's schema by `frugal-iot-logger/scripts/generate-defaults.js`,
+and the trap is that it emits macros for **whatever schema tree you point it at**. Point it at one
+branch while the firmware has three merged in, and the other two's macros silently vanish - which
+breaks the build in a place unrelated to whatever you were doing. Generate from a scratch merge of
+every schema branch the firmware actually uses.
+
+Check the result by comparing the sorted SETS of macro names before and after, not by reading the
+diff: inserting a module shifts everything below it, so a line-based check reports moves as
+removals. That produced two false alarms before I changed the check.
+
+### Every module says what deep sleep does to it
+
+The first line of every header in `src/` is a `// Deep Sleep issues:` note - either `none` with the
+reason, or a sentence on what breaks. `grep -rn "Deep Sleep issues" src/` reads as a survey.
+
+It is worth keeping up to date, because the failures are quiet ones. Deep sleep is a reboot: RAM is
+gone except `RTC_DATA_ATTR`, `millis()` restarts at zero, and GPIOs are released. So a module is
+affected if it holds state in a member, measures time with `millis()`, needs the hardware to warm
+up, or drives a pin. Most sensors read fresh each wake and genuinely have no issue; the ones that
+do - ENS160's warm-up, GPS re-acquiring a fix, BME680's gas heater, smoothing in `Sensor_Uint16` -
+degrade silently rather than failing, which is why they are written down.
+
+### Actuators and sleep
+
+An ESP32 releases every GPIO when it enters deep sleep, so without help an output goes wherever the
+board's pull resistors take it. The case that prompted this: the FF-OpenMPPT board pulls its load
+switch UP, so a node sleeping to save power could have switched its load back ON.
+
+`Actuator_Digital` therefore holds its pin, and `Actuator::preserveDuringSleep(bool)` chooses
+whether to - defaulting to **true**, because "as it was" is at least predictable where "released"
+is not. Chain it onto the add, the same way `powerPins()` is chained:
+
+```cpp
+frugal_iot.actuators->add((new Actuator_Digital("valve1", ...))->preserveDuringSleep(false));
+```
+
+Holding takes three things, and missing any one looks like it works until it does not:
+
+| Where | What | Why |
+|---|---|---|
+| `prepare()` | `gpio_hold_en()` | before the sleep |
+| `recover()` | `gpio_hold_dis()`, then re-assert | a LIGHT sleep returns here |
+| `setup()` | `gpio_hold_dis()` before `pinMode` | a DEEP sleep never reaches `recover()` - it reboots, and a held pin silently ignores `pinMode` and `digitalWrite` |
+
+plus `gpio_deep_sleep_hold_en()` once in `System_Power::sleep()`, or the holds are dropped as the
+digital domain powers down.
+
+Two things fixed alongside it, both of which had hidden the problem:
+
+- **Actuators were not in the sleep lifecycle at all.** `System_Power::prepare()`/`recover()`
+  called `frugal_iot.sensors->` and nothing else, which is why only sensors had ever needed it.
+- **`checkLevel()` bypassed `prepare()` entirely**, calling `sleep()` directly - so the low-voltage
+  sleep, the path that matters most, prepared neither sensors nor actuators.
+
+**The responsibility that comes with preserving** is choosing the sleep interval. An output that
+might need changing within seconds should not be behind a long deep sleep at all - `Power_Light`
+keeps the digital domain powered and needs none of this. One filling a tank over an hour is
+perfectly happy with five minutes.
+
+**Still open:** not every pad can be held, the RTC-capable set differs between ESP32, S2, S3 and
+C3, and the pin is a constructor argument so it cannot be a compile-time error - `setup()` warns on
+the serial port instead. And `Actuator_Analog` (a DAC, not a GPIO) is not covered; see the note in
+`actuator/analog.h`.
 
 ## Debug Flags
 

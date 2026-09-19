@@ -90,6 +90,19 @@ void System_WiFi::setup() {
   #endif
 }
 bool System_WiFi::rescan() {
+  // The softAP and the STA share ONE radio, and a scan hops every channel for a couple of seconds.
+  // For that whole time the AP is simply not on air: a phone sitting on the captive portal loses
+  // its HTTP connection part-way through the page (so the portal comes up blank even though the
+  // handler ran to the end), and any device trying to associate just fails. Since this fires every
+  // SYSTEM_WIFI_SCANPERIOD while unconnected - which is exactly when someone is using the portal -
+  // it is almost guaranteed to land in the middle of a page load.
+  // So: while anyone is attached to the portal, don't scan. Nothing is lost by waiting. They are
+  // there to TELL us which network to join, and the captive POST handler calls switchSSID()
+  // directly, which does not need a fresh scan. Scanning resumes when they disconnect.
+  // Returning false leaves the state machine in WIFI_NEEDSCAN, which retries in 2s.
+  if (WiFi.softAPgetStationNum() > 0) {
+    return false;
+  }
   // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
   //bool async = false, bool show_hidden = false, bool passive = false, uint32_t max_ms_per_chan = 300, uint8_t channel = 0, const char *ssid = nullptr, const uint8_t *bssid = nullptr
   #ifdef ESP32
@@ -135,7 +148,7 @@ void System_WiFi::connectOneAndAllReset() {
 }
 bool System_WiFi::connectOne(String ssid, int32_t rssi) {
   Serial.print(ssid); Serial.print(F(" ")); if (rssi) { Serial.print(rssi); }; Serial.print(F(" "));
-  String filename = String("/wifi/") + ssid ;
+  String filename = frugal_iot.fs_LittleFS->configPath(id, ssid);
   String pw = frugal_iot.fs_LittleFS->slurp(filename, true);
   if (pw.length()) { // Do we have a password
     connectInnerAsync(ssid, pw); // Try and connect
@@ -437,6 +450,19 @@ void System_WiFi::loop() {
     stateMachine();
   }
 }
+/* Nothing here is dispatch-handled - the credentials live in /wifi/<ssid> on the filesystem,
+ * not in a member - so the short form says nothing. The full form answers the first question
+ * anyone asks of a node that is misbehaving: which network, and how well.
+ */
+void System_WiFi::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full);
+  if (full) {
+    statusLine(out, "ssid", SSID());
+    statusLine(out, "bars", String(bars()));
+    statusLine(out, "status", String((int)status));
+  }
+}
+
 void System_WiFi::dispatch(System_Message &msg) {
   // Setting on wifi e.g. esp1234/set/wifi/foo/bar is setting the wifi password to "bar" for ssid=foo
   // No need to echo this to the UX

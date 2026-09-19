@@ -100,11 +100,35 @@ void System_Frugal::dispatch(System_Message &msg) {
 }
 
 void System_Frugal::discover() {
-  messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  if (!discoveredSelf) {
+    messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+    messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+    discoveredSelf = true;
+  }
   // Commented out because already sending ota_key which contains it.
   //messages->send(leaf2path("board"), SYSTEM_OTA_SUFFIX, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  System_Group::discover();
+  System_Group::discover(); // Sets our own 'discovered' when every member is done
+}
+
+/* A header saying which node this came from and when, then every module.
+ *
+ * The header matters because these get pasted into bug reports: without it a dump is just a list
+ * of numbers that could have come from anywhere.
+ */
+void System_Frugal::statusLines(Print* out, bool full) {
+  out->print(nodeid); out->print(' '); out->print(org); out->print('/'); out->println(project);
+  out->print(name); out->print(" - "); out->println(description);
+  // Uptime is millis(), which deep sleep resets - so on a sleeping node this is time since the
+  // last wake, not since power on. Said plainly rather than quietly reported as uptime.
+  out->print(F("awake ")); out->print(millis() / 1000); out->println(F("s"));
+  if (time && time->isTimeSet()) {
+    out->print(F("time ")); out->println(time->dateTime());
+  } else {
+    // Distinguishes "no clock" from "clock says 1970", which look the same in a bare timestamp
+    out->println(F("time not set"));
+  }
+  out->println();
+  System_Group::statusLines(out, full);
 }
 
 void System_Frugal::captiveLines(AsyncResponseStream* response) {
@@ -221,7 +245,7 @@ void System_Frugal::pre_setup() {
   fs_LittleFS->pre_setup();
   powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
   // Project BEFORE it builds the prefix for topics, which will happen when reads first entry in readConfigFromFS()
-  String newProject = fs_LittleFS->slurp("/frugal_iot/project", true); // ignores if not found
+  String newProject = fs_LittleFS->slurp(fs_LittleFS->configPath(id, "project"), true); // ignores if not found
   if (newProject.length()) {
     Serial.print(F("Project set to:")); Serial.println(project);
     project = newProject;
@@ -233,6 +257,16 @@ void System_Frugal::setup() {
   // By the time this is run, mqtt should have been added, and serial started in main.cpp -> pre_setup
   #ifdef SYSTEM_FRUGAL_DEBUG
     Serial.print(F("Setup: "));
+  #endif
+  #ifdef SYSTEM_GROUP_HEAP_DEBUG
+    // Baseline before any module runs, so the per-module lines below can be read as deltas.
+    Serial.printf("heap at start of setup: free=%u largest=%u\n",
+      (unsigned)ESP.getFreeHeap(),
+      #ifdef ESP8266
+        (unsigned)ESP.getMaxFreeBlockSize());
+      #else
+        (unsigned)ESP.getMaxAllocHeap());
+      #endif
   #endif
   System_Group::setup(); // includes WiFi
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
@@ -303,7 +337,7 @@ void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
     }
     */
     #ifdef ESP32
-      if (!wake_count) {
+      if (!wake_count) { // wake count is only zero on first boot, not after a deep sleep
     #endif
         delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
     #ifdef ESP32

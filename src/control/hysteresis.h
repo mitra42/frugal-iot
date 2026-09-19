@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - the output state is persisted and restored, so it does not flip on waking.
 #ifndef CONTROL_HYSTERESIS_H
 #define CONTROL_HYSTERESIS_H
 

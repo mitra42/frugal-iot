@@ -31,12 +31,8 @@
     //Comment/Uncomment below two lines to switch between live and "new" version
     //jaimi5/LoRaMesher
     //Comment/Uncomment below to switch between upstream and our fork.
-    //Upstream, once mitra42/LoRaMesher#perf/avoid-iostreams (or equivalent) is merged there:
-    //https://github.com/loramesher/LoRaMesher.git
-    //Our fork, branched from upstream 1abec4a. Drops C++ iostreams from LoRaMesher's diagnostic
-    //string building, which was anchoring the whole std::locale facet set: worth 230,464 bytes
-    //(t3_s3 94.5% -> 82.8%). See FLASH_SIZE.md.
-//     https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
+//         https://github.com/loramesher/LoRaMesher.git
+    //https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
     //https://github.com/mitra42/LoRaMesher.git#new_loramesher
 
 // lib_deps_lora_oled =
@@ -99,6 +95,11 @@
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
+#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration of saved config from /<id>/<leaf>
+                                         // directories to flat /<id>.<leaf> files. A LittleFS
+                                         // directory costs a 2-block metadata pair (8KB), so the
+                                         // old layout filled a 128KB partition after 15 modules.
+                                         // Remove once no board in the field has the old layout.
 // #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG
@@ -207,9 +208,30 @@
 #define SYSTEM_OTA_SUFFIX "nodemcu-32s"
 // board_build.partitions = min_spiffs.csv
 
+// This is the tiny supermini board from Tencent (and clones)
+#endif // ARDUINO_NodeMCU_32S
+
+// ===== [env:supermini-4x] -> ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
+#ifdef ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
+#define FRUGAL_IOT_BOARD_CONFIGURED
+// platform = ${common.platform_esp32}
+// board = nologo_esp32c3_super_mini // defines -DARDUINO_ESP32C3_DEV (as does esp32-c3-devkitm-1)
+// monochrome LED on GPIO8, unlike esp32-c3-devkitm-1's RGB LED
+// variant defaults to nologo_esp32c3_super_mini
+// board_build.partitions = min_spiffs.csv
+// build_flags =
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "supermini-4x"
+    // SDA=8 SCL=9(grey) is the standard for this board but 8 is LED, so override with I2C_SDA and I2C_SCL
+#define I2C_SDA 6
+#define I2C_SCL 5
+#define SENSOR_BH1750_POWER3v3_PIN 7
+#define SYSTEM_MDNS_WANT // device should report directly to other local devices
+#define SYSTEM_MDNS_DEBUG
+ 
 // ==== ESP8266 boards ================================================
 
-#endif // ARDUINO_NodeMCU_32S
+#endif // ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
 
 // ===== [env:ttgo-lora32-v21] -> ARDUINO_TTGO_LoRa32_v21new
 #ifdef ARDUINO_TTGO_LoRa32_v21new
@@ -349,7 +371,7 @@
 #endif // 0
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / NodeMCU-32S / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / NodeMCU-32S / Nologo ESP32C3 Super Mini / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"
 #endif
 
 #endif // PLATFORM_H

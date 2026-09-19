@@ -1,3 +1,4 @@
+// Deep Sleep issues: auto-binding re-runs each wake, which is cheap; an id chosen by hand is persisted.
 /* DS18B20 waterproof temperature sensor
  *
  * Bound to a probe by its ROM id - its identity - not by its position in the bus enumeration.

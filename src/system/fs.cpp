@@ -25,6 +25,7 @@
 #include <SPI.h>  // SD shield for D1 mini uses SPI. https://www.arduino.cc/en/Reference/SD
 #include <SD.h>   // Defines "SD" object ~/Documents/Arduino/hardware/esp8266com/esp8266/libraries/SD/src/SD.h
 
+#include <vector>
 #include "system/fs.h"
 #include "system/base.h"
 #include "system/io.h"
@@ -102,6 +103,145 @@ fs::File System_LittleFS::open(const String &filename, const char *mode) {
 bool System_LittleFS::mkdir(const String &path) { 
   return ESPFS.mkdir(path);
 }
+bool System_LittleFS::rmdir(const String &path) {
+  return ESPFS.rmdir(path);
+}
+
+/* Flat config paths - see the comment on these in fs.h for why the layout is flat at all.
+ *
+ * Encoding, in this order: '%' -> "%25", '.' -> "%2E", then the leaf's own '/' -> '.'.
+ * Doing '%' first matters, or the "%2E" written for a dot would itself be re-escaped.
+ * Decoding reverses it: '.' -> '/' first (an escape sequence contains no literal '.'), then
+ * unescape. So "a.b/c" -> "a%2Eb.c" -> "a.b/c" round-trips, and so does "100%".
+ */
+String System_FS::configEncode(const String& leaf) {
+  String r;
+  r.reserve(leaf.length() + 8);
+  for (unsigned int i = 0; i < leaf.length(); i++) {
+    const char c = leaf.charAt(i);
+    if (c == '%') {
+      r += F("%25");
+    } else if (c == '.') {
+      r += F("%2E");
+    } else if (c == '/') {
+      r += '.';
+    } else {
+      r += c;
+    }
+  }
+  return r;
+}
+String System_FS::configDecode(const String& encoded) {
+  String r;
+  r.reserve(encoded.length());
+  for (unsigned int i = 0; i < encoded.length(); i++) {
+    const char c = encoded.charAt(i);
+    if (c == '.') {
+      r += '/';
+    } else if ((c == '%') && ((i + 2) < encoded.length())) {
+      const String hex = encoded.substring(i + 1, i + 3);
+      if (hex == "25") {
+        r += '%'; i += 2;
+      } else if (hex == "2E") {
+        r += '.'; i += 2;
+      } else {
+        r += c; // Not one of ours - leave it alone rather than mangling it
+      }
+    } else {
+      r += c;
+    }
+  }
+  return r;
+}
+String System_FS::configPath(const String& id, const String& leaf) {
+  return String("/") + id + "." + configEncode(leaf);
+}
+
+#ifdef SYSTEM_LITTLEFS_SUPPORTDEPRECATED
+// Gather everything under one old module directory, WITHOUT changing anything yet - see the
+// ordering note in convertDeprecatedLayout(). Recursive because the old layout nested a level for
+// parameters: /sht/temperature/max, and /sht/temperature/value for the reading itself.
+static void collectDeprecated(System_LittleFS* fs, const String& dirPath, const String& leafSoFar,
+                              std::vector<String>& leaves, std::vector<String>& payloads,
+                              std::vector<String>& files, std::vector<String>& dirs) {
+  File dir = fs->open(dirPath, "r");
+  if (dir) {
+    while (true) {
+      File entry = dir.openNextFile();
+      if (!entry) {
+        break;
+      }
+      const String entryName = entry.name(); // basename
+      const String childPath = dirPath + "/" + entryName;
+      const String childLeaf = leafSoFar.length() ? (leafSoFar + "/" + entryName) : entryName;
+      if (entry.isDirectory()) {
+        entry.close();
+        collectDeprecated(fs, childPath, childLeaf, leaves, payloads, files, dirs);
+        dirs.push_back(childPath);
+      } else {
+        String payload = entry.readString();
+        entry.close();
+        payload.trim();
+        leaves.push_back(childLeaf);
+        payloads.push_back(payload);
+        files.push_back(childPath);
+      }
+    }
+    dir.close();
+  }
+}
+
+/* Move a board from the directory-per-module layout to the flat one, once, at startup.
+ *
+ * Trigger is "any directory in the root", not specifically /wifi: a board may have been
+ * configured without ever joining a network, and would then have old directories but no /wifi.
+ *
+ * ORDER MATTERS. Everything is read into RAM first, then the old files and directories are
+ * DELETED, and only then are the new files written. On a board where the old layout filled the
+ * filesystem - which is the whole reason for this change - there is no room for a single new file
+ * until a directory has been freed, and each one is 8KB. Reading first also means a module's
+ * config survives right up to the delete; a power cut between the delete and the write loses that
+ * module's settings, which is the one window this cannot close and is why it only runs once.
+ */
+void System_LittleFS::convertDeprecatedLayout() {
+  std::vector<String> moduleDirs;
+  File root = open("/", "r");
+  if (root) {
+    while (true) {
+      File entry = root.openNextFile();
+      if (!entry) {
+        break;
+      }
+      if (entry.isDirectory()) {
+        moduleDirs.push_back(String(entry.name()));
+      }
+      entry.close();
+    }
+    root.close();
+  }
+  if (!moduleDirs.empty()) {
+    Serial.print(F("LittleFS: converting ")); Serial.print(moduleDirs.size());
+    Serial.println(F(" module directories to the flat config layout"));
+    for (const String& m : moduleDirs) {
+      std::vector<String> leaves, payloads, files, dirs;
+      collectDeprecated(this, String("/") + m, "", leaves, payloads, files, dirs);
+      for (const String& f: files) {
+        remove(f);
+      }
+      for (auto it = dirs.rbegin(); it != dirs.rend(); ++it) { // Deepest first
+        rmdir(*it);
+      }
+      rmdir(String("/") + m);
+      for (size_t i = 0; i < leaves.size(); i++) {
+        const String to = configPath(m, leaves[i]);
+        Serial.print(F("  /")); Serial.print(m); Serial.print(F("/")); Serial.print(leaves[i]);
+        Serial.print(F(" -> ")); Serial.println(to);
+        spurt(to, payloads[i]);
+      }
+    }
+  }
+}
+#endif // SYSTEM_LITTLEFS_SUPPORTDEPRECATED
 boolean System_LittleFS::exists(const char *filename) {
   return ESPFS.exists(filename);
 }
@@ -114,20 +254,54 @@ bool System_LittleFS::remove(const String &filename) {
 
 // Copied from system_wifi.cpp which got it from ESP-WiFiSettings library
 bool System_FS::spurt(const String& filename, const String& content) {
+    bool ok = false;
     File f = open(filename, "w"); // Virtual, knows what kind of FS
     if (!f) {
       Serial.print(F("Failed to open for writing ")); Serial.println(filename);
-      return false;
+      /* Say WHY, because the obvious guess is wrong.
+       *
+       * A missing directory is NOT the cause: System_LittleFS::open() passes create=true, and
+       * arduino-esp32's VFSImpl::open() then walks the path calling mkdir() on each level before
+       * opening. mkdir() also returns true for a directory that already exists. So the path being
+       * absent cannot produce this.
+       *
+       * What DOES produce it: a parent that exists as a FILE (mkdir returns false and open gives
+       * up), a filesystem that is not mounted, no space left, or malloc failing inside mkdir()
+       * because the heap is exhausted - which this firmware used to manage during discovery.
+       */
+      if (!mounted) {
+        Serial.println(F("  the filesystem is not mounted - see the LittleFS lines at startup"));
+      }
+      int slash = filename.lastIndexOf('/');
+      if (slash > 0) {
+        String parent = filename.substring(0, slash);
+        File p = open(parent, "r");
+        if (!p) {
+          Serial.print(F("  parent ")); Serial.print(parent);
+          Serial.println(F(" absent and could not be created - filesystem unmounted, full, or out of heap"));
+        } else {
+          if (!p.isDirectory()) {
+            Serial.print(F("  parent ")); Serial.print(parent);
+            Serial.println(F(" EXISTS AS A FILE - nothing beneath it can ever be written; delete it"));
+          } else {
+            Serial.print(F("  parent ")); Serial.print(parent);
+            Serial.println(F(" is a directory, so this is the filesystem being full or unmounted"));
+          }
+          p.close();
+        }
+      }
+    } else {
+      auto w = f.print(content);
+      f.close();
+      if (w != content.length()) {
+        Serial.print(F("Failed to write to ")); Serial.println(filename);
+      }
+      #ifdef SYSTEM_FS_DEBUG
+        Serial.print(F("Written to:")); Serial.print(filename); Serial.print(F("=")); Serial.println(content);
+      #endif
+      ok = (w == content.length());
     }
-    auto w = f.print(content);
-    f.close();
-    if (w != content.length()) {
-      Serial.print(F("Failed to write to ")); Serial.println(filename);
-    }
-    #ifdef SYSTEM_FS_DEBUG
-      Serial.print(F("Written to:")); Serial.print(filename); Serial.print(F("=")); Serial.println(content);
-    #endif
-    return w == content.length();
+    return ok;
 }
 // fn is path like /frugal_iot/project, note the leading slash
 String System_FS::slurp(const String& fn, const bool quietfail) {
@@ -221,23 +395,69 @@ void System_SD::setup() {
     #endif
   }
 }
-// Note pre_setup is usually running in frugal_iot constructor BEFORE serial setup
-// If need to debug, uncomment the Serial's below, and move the call of this to main.cpp AFTER Serial started
+/* Bring up LittleFS, formatting a blank partition, and SAY SO EITHER WAY.
+ *
+ * System_Frugal::pre_setup() calls this after startSerial(), so these prints are seen - the note
+ * that used to be here about running inside the constructor before Serial is no longer true.
+ *
+ * The failure branch used to be an empty block with the only message commented out. That is why a
+ * board whose filesystem never came up was indistinguishable from a healthy one: nothing was
+ * reported here, and the first sign was every later config write failing with a per-file error
+ * that pointed at the file rather than at the filesystem.
+ */
 void System_LittleFS::pre_setup() {
-  #ifdef SYSTEM_LITTLEFS_DEBUG
-    Serial.print(F("LittleFS "));
-  #endif
   #ifdef ESP8266
-    // On ESP8266 it uses ESP8266/FS.cpp  which has no parameters to begin() and so does NOT format a non-existant file system
-    if (!ESPFS.begin())
+    // ESP8266/FS.cpp has no parameters to begin() and so does NOT format a non-existent filesystem
+    mounted = ESPFS.begin();
   #else
-    if (!ESPFS.begin(true)) // Format LittleFS if its not there.
+    mounted = ESPFS.begin(true); // Format LittleFS if its not there
   #endif
-  {
-    //Serial.println(F("initialization failed!"));
-  } else {
-    #ifdef SYSTEM_LITTLEFS_DEBUG
-      Serial.println(F("initialization done."));
+  if (!mounted) {
+    // On ESP32 begin(true) has already tried formatting, so reaching here means something more
+    // basic - most often no partition for it to use at all. Try once explicitly, then say plainly
+    // that nothing can be saved, because every settings write from here on will fail.
+    Serial.println(F("LittleFS mount failed - formatting"));
+    if (ESPFS.format()) {
+      #ifdef ESP8266
+        mounted = ESPFS.begin();
+      #else
+        mounted = ESPFS.begin(false);
+      #endif
+    }
+    if (mounted) {
+      Serial.println(F("LittleFS formatted - any previous settings are gone"));
+    } else {
+      Serial.println(F("LittleFS UNUSABLE - no settings can be saved."));
+      Serial.println(F("  Check the partition table has a 'spiffs' entry (board_build.partitions)."));
+    }
+  }
+  if (mounted) {
+    // Unconditional, and cheap: it answers "is there a filesystem on this board, and is anything
+    // in it" at a glance, which is otherwise surprisingly hard to find out on a deployed node.
+    #ifndef ESP8266
+      size_t used = ESPFS.usedBytes();
+      size_t total = ESPFS.totalBytes();
+      Serial.printf("LittleFS mounted: %u of %u bytes used\n", (unsigned)used, (unsigned)total);
+      /* A filesystem that mounts but has no room is worse than one that fails to mount, because
+       * begin(true) only formats when the MOUNT fails - a full one is accepted as healthy and
+       * then refuses every mkdir and every write. That is usually a leftover filesystem from
+       * whatever firmware was on the board before, not anything this code did.
+       * Not formatted automatically: that would throw away a working node's saved settings on
+       * any boot where the numbers looked bad.
+       */
+      if (total && (used >= total)) {
+        Serial.println(F("LittleFS is FULL - no settings can be saved, and directories cannot be created."));
+        // Almost always directories rather than data: each one is a metadata pair, two erase
+        // blocks, 8KB here however empty it is. A 128KB partition holds the root pair plus 15.
+        Serial.printf("  each directory costs %u bytes, so this partition holds %u of them\n",
+          (unsigned)8192, (unsigned)((total / 8192) - 1));
+        Serial.println(F("  Erase it with: pio run -t uploadfs -e <env>   (this discards saved settings)"));
+      }
+    #else
+      Serial.println(F("LittleFS mounted"));
+    #endif
+    #ifdef SYSTEM_LITTLEFS_SUPPORTDEPRECATED
+      convertDeprecatedLayout(); // Must be before any module calls readConfigFromFS()
     #endif
     #ifdef SYSTEM_FS_DEBUG_DIR
       printDirectory("/"); // For debugging

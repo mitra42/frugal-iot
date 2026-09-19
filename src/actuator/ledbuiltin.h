@@ -1,3 +1,4 @@
+// Deep Sleep issues: as Actuator_Digital - the pin is held if preserveDuringSleep is set, which it is by default.
 /* Frugal IoT - LED control 
  *
  * LEDs have some historical problems, and legacy bugs so some of this code may look weird, 

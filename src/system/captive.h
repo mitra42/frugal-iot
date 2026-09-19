@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - the AP and web server are rebuilt in setup(), so anyone browsing it is disconnected for the sleep.
 /* Frugal IoT - captive portal
  * 
  * This is a trivial captive portal, that allows for configuration etc. 
@@ -33,6 +34,7 @@ class System_Captive : public System_Base {
     void addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, bool init, String label);
     void addButton(AsyncResponseStream* response, const char* id, const char* topicTwig, String val, String label);
     bool setLanguage(const String& language_code);
+    void statusLines(Print* out, bool full) override;
     void dispatch(System_Message &msg) override;
     void captiveLines(AsyncResponseStream* response);
     // Register a POST handler on the station WiFi interface (used by System_MDNS)

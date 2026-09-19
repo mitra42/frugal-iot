@@ -1,3 +1,4 @@
+// Deep Sleep issues: blink timing uses millis(), which resets, so a pattern restarts from the beginning after each wake.
 /* Frugal IoT - Blinken demo, a simple control that blinks a light
  *
  * Optional: CONTROL_BLINKEN_DEBUG

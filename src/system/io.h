@@ -1,3 +1,4 @@
+// Deep Sleep issues: values are lost and then restored from LittleFS by readConfigFromFS(); anything never persisted starts at its constructor default.
 #ifndef SYSTEM_IO_H
 #define SYSTEM_IO_H
 
@@ -30,7 +31,6 @@ class IO {
     // defaulted body is all that is needed.
     virtual ~IO() = default;
     virtual void setup();
-    void writeConfigToFS(const String &leaf, const String& payload);
     virtual bool dispatch(System_Message &msg);
     virtual String StringValue();
     virtual void send();
@@ -41,10 +41,27 @@ class IO {
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
     virtual void discover();
+    /* Lines for the status page - see System_Base::statusLines.
+     *
+     * full=false gives the value, the wired path when there is one, and min/max/color only where
+     * they differ from the default - the same "worth mentioning" rule discover() uses to decide
+     * what to send. full=true gives every parameter with its default in brackets.
+     */
+    virtual void statusLines(Print* out, bool full);
     void wireTo(String topicPath);
     void wireTo(IO* io);
     String path();
   protected: // Most of IO appears to need to be public
+    /* One line: "<topicTwig>[/<param>] <value>[ (<default>)][ *]".
+     *
+     * param nullptr means the IO's own value. The trailing * means the filesystem holds this, so
+     * it survives a restart - tested against the path maybeWriteToFS() would have used, which is
+     * /<topicTwig>/<param> for a parameter and /<topicTwig>/value for the value itself.
+     * An empty defaultValue omits the brackets.
+     */
+    void statusLine(Print* out, const char* param, const String& value, bool isPersisted, const String& defaultValue = String());
+    // Does the filesystem hold this, i.e. will it survive a restart? param nullptr = the value.
+    bool persisted(const char* param);
 };
 class IN : public IO {
   public:
@@ -118,6 +135,7 @@ class INfloat : public IN {
     bool isValid() override; // False when value is NaN, i.e. the sensor published IO_PAYLOAD_INVALID
     uint8_t width; // Cant be protected because used in e.g. control_oled_ht.cpp 
     virtual String StringValue();
+    void statusLines(Print* out, bool full) override; // Adds min and max
     void discover() override;
     bool dispatch(System_Message &msg) override;
   protected:
@@ -153,7 +171,9 @@ class INuint16 : public IN {
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, char const * const color, const bool wireable);
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, uint16_t default_min, uint16_t default_max, char const * const color, const bool wireable);
     INuint16(const INuint16 &other);
+    void set(const uint16_t newvalue); // Set and send if changed - see the note on IN::convertAndSet
     bool dispatch(System_Message &msg) override;
+    void statusLines(Print* out, bool full) override; // Adds min and max
     void discover() override;
   protected:
     uint16_t default_min;
@@ -231,6 +251,7 @@ class OUTfloat : public OUT {
     void set(const float newvalue); // Set and send if changed
     void setInvalid() override; // set(NAN) - publishes IO_PAYLOAD_INVALID
     bool dispatch(System_Message &msg) override;
+    void statusLines(Print* out, bool full) override; // Adds min and max
     void discover() override;
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;
@@ -266,6 +287,7 @@ class OUTuint16 : public OUT {
     OUTuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool wireable);
     OUTuint16(const OUTuint16 &other);
     void set(const uint16_t newvalue);
+    void statusLines(Print* out, bool full) override; // Adds min and max
     void discover() override;
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;

@@ -1,7 +1,8 @@
 /*
  * Ultrasonic distance sensor over RS485 / Modbus RTU (e.g. A01ANY4B).
  *
- * NOTE - AS OF 2026-08-03 THIS IS UNTESTED CODE
+ * NOTE - AS OF 2026-09-19 THIS IS UNTESTED CODE AS WE DONT HAVE THE HARDWARE - 
+ * BUG REPORTS OR CONFIRMATION THAT IT WORKS VERY WELCOME
  *
  * See sensor/ultrasonic.h for build flags and the offset/scale convention,
  * and system/modbus.h for the bus itself.

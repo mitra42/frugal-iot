@@ -41,6 +41,27 @@
 
 static DNSServer dnsServer;
 static AsyncWebServer server(80);
+
+// AsyncResponseStream buffers the WHOLE page in RAM and grows its cbuf by realloc whenever a
+// print() does not fit. The default is 1460 bytes, and this page is several KB built from ~80
+// small print() calls, so it reallocates dozens of times, each needing the old and new buffer
+// alive at once. On a heap fragmented by WiFi, MQTT and LittleFS that can fail - and when it
+// does, write() silently returns short and the client gets a truncated page, or an empty one if
+// even the first allocation failed. Ask for a realistic size once instead.
+#ifndef SYSTEM_CAPTIVE_PAGE_BUFFER
+  #define SYSTEM_CAPTIVE_PAGE_BUFFER 4096
+#endif
+
+#ifdef SYSTEM_CAPTIVE_DEBUG
+  // ESP.getMaxAllocHeap() is ESP32-only; the ESP8266 spelling of "largest block I could actually
+  // allocate" is different. That number matters more than the free total - fragmentation, not
+  // exhaustion, is what breaks a multi-KB buffer.
+  #ifdef ESP8266
+    #define CAPTIVE_LARGEST_BLOCK() ESP.getMaxFreeBlockSize()
+  #else
+    #define CAPTIVE_LARGEST_BLOCK() ESP.getMaxAllocHeap()
+  #endif
+#endif
 String message; // Not in class, as accessed from Lambda functions
 
 String html_entities(const String& raw) {
@@ -67,6 +88,23 @@ class CaptiveRequestHandler : public AsyncWebHandler {
 
   void handleRequest(AsyncWebServerRequest *request) {
     Serial.println(F("Captive: Handling request with captive portal"));
+    #ifdef SYSTEM_CAPTIVE_DEBUG
+      // handleRequest() returning is NOT proof the page was delivered - request->send() only
+      // queues it, and the bytes leave later from the AsyncTCP task. These three tell the
+      // difference between "never built", "built but too big to allocate" and "built, queued,
+      // and the client went away before it was sent".
+      // heap/largest are INTERNAL RAM only - that is what ESP.getFreeHeap() measures. psram is
+      // reported separately because it is NOT interchangeable: WiFi and lwIP need internal.
+      Serial.printf("Captive: %s %s host=%s heap=%u largest=%u psram=%u/%u\n",
+        request->methodToString(), request->url().c_str(), request->host().c_str(),
+        (unsigned)ESP.getFreeHeap(), (unsigned)CAPTIVE_LARGEST_BLOCK(),
+        #ifdef ESP8266
+          0u, 0u);
+        #else
+          (unsigned)ESP.getFreePsram(), (unsigned)ESP.getMaxAllocPsram());
+        #endif
+      request->onDisconnect([](){ Serial.println(F("Captive: client disconnected")); });
+    #endif
     //Serial.print(F("XXX Host=")); Serial.println(request->host());
     //Serial.print(F("XXX User-Agent:")); Serial.println(request->getHeader("User-Agent")->value());
     String ip = WiFi.softAPIP().toString();
@@ -80,13 +118,22 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", ip);
       response->addHeader("Location", "http://" + ip + "/");
       request->send(response);
+    #ifdef SYSTEM_CAPTIVE_MINIMAL
+    } else {
+      // Bisect build: answer with the smallest possible page, skipping the scan list, the CSS and
+      // every module's captiveLines(). If THIS renders on the phone, the transport is fine and the
+      // fault is in the size or the content of the real page. If it does not, the fault is below
+      // HTTP - association, DHCP, or the response never being transmitted at all.
+      request->send(200, "text/html", "<html><body><h1>Frugal-IoT</h1></body></html>");
+    #else
     } else {
       // BULD THE CAPTIVE PORTAL HERE
       //Serial.println(F("XXX Matching host and ip - i.e. acessed by IP address, not name"));      
-      AsyncResponseStream *response = request->beginResponseStream("text/html; charset=utf-8");
+      AsyncResponseStream *response = request->beginResponseStream("text/html; charset=utf-8", SYSTEM_CAPTIVE_PAGE_BUFFER);
       response->print(F("<!DOCTYPE html><html><head><title>"));
       response->print(T->CaptivePortal);
       response->print(F("</title></head><body>"));
+      Serial.print("XXX "); Serial.println(__LINE__);
       response->print(F(
             "<meta name=viewport content='width=device-width,initial-scale=1'>"
             "<style>"
@@ -107,6 +154,7 @@ class CaptiveRequestHandler : public AsyncWebHandler {
             ".w,.i{background:#aaa;min-height:3em}"
             "</style>"
       ));
+      Serial.print("XXX "); Serial.println(__LINE__);
       response->print(F("<script>function s(name,value){let fd=new FormData();fd.set(name,value);fetch('/',{method:'POST',body:fd,credentials:'same-origin'}).catch(e=>console.error(e));};</script>"));
       if (message) {
         response->print(F("<h4>"));
@@ -116,7 +164,13 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       }
       response->print(F("<form action=\"/restart\" method=post><input type=submit value=\""));
       response->print(T->RESTART);
-      response->print(F("\"></form><hr>"));
+      response->print(F("\"></form>"));
+      /* The only way anyone reaches /status. iOS shows this page in the Captive Network Assistant,
+       * which has no address bar, so an unlinked path is unreachable there however well it works.
+       * Absolute http://<ip>/ so it stays on the device even if the page was reached by some
+       * other host name.
+       */
+      response->print(String(F("<p><a href=\"http://")) + ip + F("/status\">Status</a> &middot; <a href=\"http://") + ip + F("/status?full\">Status (full)</a></p><hr>"));
 
       //Dropdown of SSIDs (see WiFiSettings.cpp ~L310)
       response->print(F("<form method=post action=\"/\"><label>"));
@@ -125,8 +179,21 @@ class CaptiveRequestHandler : public AsyncWebHandler {
         "<option hidden>"));
       response->print(T->SelectOne);
       response->print(F("</option>"));
-      while (WiFi.scanComplete() < 0) {  }; // Careful in case this blocks everything mid-scan, seems to be ok.
-      for (int i = 0; i < frugal_iot.wifi->num_networks; i++) {
+      Serial.print("XXX "); Serial.println(__LINE__);
+
+      // NEVER block in here. handleRequest() runs on the AsyncTCP task, which is also the only
+      // thing that can transmit the response we are building - so spinning on the scan starves the
+      // very connection we are answering, and on a single-core S2 it starves lwIP and the softAP
+      // with it. The page then "sends" (every Serial print below is reached) and the phone still
+      // sees nothing. The old spin could also never exit at all: WiFi.scanComplete() returns
+      // WIFI_SCAN_FAILED (-2), not RUNNING, in the window after rescan()'s scanDelete() and before
+      // the next scan has started.
+      // Whatever the last completed scan found is good enough for a dropdown - and use its count,
+      // not System_WiFi::num_networks, which is written by the state machine on the main task and
+      // may describe a scan whose results have since been freed.
+      int16_t n_networks = WiFi.scanComplete(); // <0 = running, or none yet - neither is an error here
+      if (n_networks < 0) { n_networks = 0; }   // empty list; reloading the page fills it in
+      for (int i = 0; i < n_networks; i++) {
         String s = WiFi.SSID(i);
         uint8_t bars =  frugal_iot.wifi->rssi_to_bars(WiFi.RSSI(i));
         wifi_auth_mode_t mode = WiFi.encryptionType(i); //uint8_t on ESP8266
@@ -138,7 +205,9 @@ class CaptiveRequestHandler : public AsyncWebHandler {
         response->print(WiFi.SSID(i));
         #ifndef ESP8266
           // Something like this probably works in ESP8266 but throws warning and untested
-          if (!WIFI_AUTH_OPEN) { response->print(F(" &#x1f512;")); }  // Lock icon
+          // WIFI_AUTH_OPEN is 0, so the old "!WIFI_AUTH_OPEN" was a compile-time true and every
+          // network got a padlock whether or not it was encrypted.
+          if (mode != WIFI_AUTH_OPEN) { response->print(F(" &#x1f512;")); }  // Lock icon
         #endif
         const char* bb[] = {" ", "&#x2804", "&#x2806", "&#x2807", "&#x2847", "&#x283f" };
         for (uint8_t b = 0; b <= bars; b++) {
@@ -155,12 +224,25 @@ class CaptiveRequestHandler : public AsyncWebHandler {
         "<input type=submit value=\""));
       response->print(T->SETWIFI);
       response->print(F("\" style='font-size:100%'></form><hr>"));
+      Serial.print("XXX "); Serial.println(__LINE__);
 
       // Each captive line should be of form from addString etc below 
       // <p><label>...:<br><input...></label></p>  
+      Serial.print("XXX "); Serial.println(__LINE__);
       frugal_iot.captiveLines(response); // Calls back to captive.string etc 
       response->print(F("</body></html>"));
+      Serial.print("XXX "); Serial.println(__LINE__);
+      #ifdef SYSTEM_CAPTIVE_DEBUG
+        // available() is the whole page, buffered in RAM. AsyncResponseStream grows its cbuf by
+        // realloc on nearly every print() above, so a page of a few KB is dozens of reallocations
+        // needing old+new at once - it can come up short on a fragmented heap and then only part
+        // of the page is written, with no error visible from here.
+        Serial.printf("Captive: page %u bytes, heap=%u largest=%u\n",
+          (unsigned)response->available(), (unsigned)ESP.getFreeHeap(), (unsigned)CAPTIVE_LARGEST_BLOCK());
+      #endif
       request->send(response);
+      Serial.print("XXX "); Serial.println(__LINE__);
+    #endif // SYSTEM_CAPTIVE_MINIMAL
     }
   }
 };
@@ -182,9 +264,23 @@ void System_Captive::setup() {
     }
     dnsServer.setTTL(0); //grabbed from old WiFiSettings  - unclear if needed or useful
     dnsServer.start(53, "*", WiFi.softAPIP());
+    // Nested, not "defined(ESP32) && ESP_IDF_VERSION >= ...": the preprocessor evaluates the
+    // whole expression, and ESP_IDF_VERSION_VAL is an undefined function-like macro on ESP8266,
+    // which is a syntax error rather than a false operand.
+    #ifdef ESP32
+     #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 2)
+      // RFC8910: hand the portal URL to the client in the DHCP lease (option 114) instead of
+      // relying on it guessing from an intercepted probe. iOS 14+ and Android 11+ read it and go
+      // straight to http://<ip>/ - which matters because probe interception is the part that
+      // fails silently: iOS remembers per-SSID that a network has no portal, and then never asks
+      // again however correctly we answer. Not available on ESP8266; logs and returns false if
+      // the AP is not up, which is why it is after softAP().
+      WiFi.AP.enableDhcpCaptivePortal();
+     #endif
+    #endif
   #endif
   String ip = WiFi.softAPIP().toString(); // Note how this is used by redirect 
-  Serial.print(F("Access point on: ")); Serial.println(ip);
+  Serial.printf("Access point on: %s at %s\n", frugal_iot.nodeid.c_str(), ip.c_str());
 
   // Order is important - this has to come BEFORE the catch-all default portal.
   // ON_AP_FILTER restricts this handler to clients on the device's own AP;
@@ -238,6 +334,17 @@ void System_Captive::setup() {
     message = T->SettingsUpdated;
   }).setFilter(ON_AP_FILTER);
 
+  /* Plain text so it selects and pastes cleanly - the point of this page is to be copied into a
+   * message to someone else. text/plain also renders monospace, which lines the values up.
+   * Before the catch-all portal handler below, which claims every path.
+   * /status for the short form, /status?full for every parameter with its default.
+   */
+  server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
+    AsyncResponseStream *response = request->beginResponseStream("text/plain; charset=utf-8");
+    frugal_iot.statusLines(response, request->hasParam("full"));
+    request->send(response);
+  }).setFilter(ON_AP_FILTER);
+
   server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
     Serial.println(F("POST /restart"));
     request->send(200, "text/plain",T->RestartingPleaseWait);
@@ -252,7 +359,17 @@ void System_Captive::setup() {
     server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);  // only when requested from AP
   #endif
   server.onNotFound([](AsyncWebServerRequest *request){
-    Serial.println(F("XXX NotFound handler called - shouldnt happen"));
+    // Reachable, despite the name. ON_AP_FILTER is "WiFi.localIP() != request->client()->localIP()",
+    // and while the STA is not connected WiFi.localIP() is 0.0.0.0 - which is also what
+    // AsyncClient::localIP() returns once its pcb has gone. Such a request fails the filter, misses
+    // CaptiveRequestHandler and lands here.
+    // A handler that returns without calling request->send() leaves the connection open with no
+    // reply at all, so the browser sits on a blank page until it times out. Always answer.
+    Serial.print(F("Captive: NotFound ")); Serial.println(request->url());
+    String ip = WiFi.softAPIP().toString();
+    AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", ip);
+    response->addHeader("Location", "http://" + ip + "/");
+    request->send(response);
   });
   server.begin();
 }
@@ -300,6 +417,11 @@ bool System_Captive::setLanguage(const String& payload) {
     }
   }
   return false; // not found
+}
+
+void System_Captive::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full);
+  statusLine(out, "language_code", language_code);
 }
 
 void System_Captive::dispatch(System_Message &msg) {

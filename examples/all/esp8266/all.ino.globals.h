@@ -46,12 +46,8 @@
     //Comment/Uncomment below two lines to switch between live and "new" version
     //jaimi5/LoRaMesher
     //Comment/Uncomment below to switch between upstream and our fork.
-    //Upstream, once mitra42/LoRaMesher#perf/avoid-iostreams (or equivalent) is merged there:
-    //https://github.com/loramesher/LoRaMesher.git
-    //Our fork, branched from upstream 1abec4a. Drops C++ iostreams from LoRaMesher's diagnostic
-    //string building, which was anchoring the whole std::locale facet set: worth 230,464 bytes
-    //(t3_s3 94.5% -> 82.8%). See FLASH_SIZE.md.
-//     https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
+//         https://github.com/loramesher/LoRaMesher.git
+    //https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
     //https://github.com/mitra42/LoRaMesher.git#new_loramesher
 
 // lib_deps_oled =
@@ -123,6 +119,11 @@
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
+#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration of saved config from /<id>/<leaf>
+                                         // directories to flat /<id>.<leaf> files. A LittleFS
+                                         // directory costs a 2-block metadata pair (8KB), so the
+                                         // old layout filled a 128KB partition after 15 modules.
+                                         // Remove once no board in the field has the old layout.
 // #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG
