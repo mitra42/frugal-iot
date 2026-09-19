@@ -1,6 +1,7 @@
 /* Frugal IoT - Modbus RTU over RS485
  *
- * NOTE - AS OF 2026-08-03 THIS IS UNTESTED CODE
+ * NOTE - AS OF 2026-09-19 THIS IS UNTESTED CODE AS WE DONT HAVE THE HARDWARE - 
+ * BUG REPORTS OR CONFIRMATION THAT IT WORKS VERY WELCOME
  *
  * See system/modbus.h for the bus/device split, wiring, build flags and the retry strategy.
  */
