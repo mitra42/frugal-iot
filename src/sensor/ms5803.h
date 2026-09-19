@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - read fresh on each wake.
 #ifndef SENSOR_MS5803_H
 #define SENSOR_MS5803_H
 /* Frugal IoT MS803 pressure sensor support

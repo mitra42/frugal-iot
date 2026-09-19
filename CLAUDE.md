@@ -542,14 +542,15 @@ needs nothing — `lib/data-loader.js` already filters `isNaN` out of the graph 
 | `Sensor_AHT20` | sensor/aht | Temperature + humidity (AHT20) |
 | `Sensor_AHT21` | sensor/aht | Temperature + humidity (AHT21), as on the ENS160+AHT21 breakout |
 | `Sensor_Soil` | sensor/soil | Soil moisture (capacitive) |
-| `Sensor_Battery` | sensor/battery | Battery voltage |
+| `Sensor_Voltage` | sensor/voltage | Any DC voltage through a resistor divider (mV). Uses the calibrated `analogReadMilliVolts()`, unlike `Sensor_Analog` |
+| `Sensor_Battery` | sensor/battery | Battery voltage - `Sensor_Voltage` with this board's pin/divider defaults, and the instance `checkLevel()` consults |
 | `Sensor_BH1750` | sensor/bh1750 | Light (lux) |
 | `Sensor_BMx280` | sensor/bmx280 | Base class for the BMP280/BME280 — not instantiated directly |
 | `Sensor_BMP280` | sensor/bmx280 | Temperature + pressure (hPa). Freestanding, no external library |
 | `Sensor_BME280` | sensor/bmx280 | Temperature + pressure (hPa) + humidity. Freestanding, no external library |
 | `Sensor_BME680` | sensor/bme680 | Temperature + humidity + pressure (hPa) + gas resistance (kΩ). Also handles the BME688. Freestanding, no external library |
 | `Sensor_LoadCell` | sensor/loadcell | Weight via HX711 |
-| `Sensor_DS18B20` | sensor/ds18b20 | 1-Wire temperature |
+| `Sensor_DS18B20` | sensor/ds18b20 | 1-Wire temperature. Bound to a probe by ROM id, not bus position - see "1-Wire" below |
 | `Sensor_MS5803` | sensor/ms5803 | Pressure + temperature |
 | `Sensor_ENS160` | sensor/ens160 | Air quality — AQI, TVOC, eCO2 (+ aqi500 on an ENS161). Takes temperature and humidity as **`IN`s** for its compensation |
 | `Sensor_Button` | sensor/button | Button press events |
@@ -951,6 +952,96 @@ calibration/raw combinations plus 20,000 randomized register maps for the calibr
 unpacking. Temperature, pressure, humidity, `t_fine`, both gas formulas, `res_heat` and
 `gas_wait` were bit-identical, and all 26 unpacked coefficients matched.
 
+### 1-Wire (`system/onewire.h`) and how DS18B20 probes are bound
+
+`System_OneWire` is one object per physical bus, shared by every device on it - the same split as
+`System_RS485`/`System_Modbus` and `System_I2C`/`TwoWire`. Two things drove it:
+
+**Position is not identity.** `DallasTemperature::getTempCByIndex(n)` re-walks the OneWire search
+tree on every read and returns whatever sits at position *n*. Add, remove or replace a probe and
+everything after it renumbers — so two believable temperatures end up attributed to the wrong
+things, with nothing reporting an error. `Sensor_DS18B20` addresses by ROM id instead.
+
+**A conversion is expensive and shared.** `requestTemperatures()` broadcasts a convert to the
+whole bus and then blocks until it completes — 750 ms at 12-bit, because `waitForConversion`
+defaults to true. A sensor owning its own bus object pays that itself, so three probes on one pin
+cost 2.25 s of blocking per cycle for one conversion's worth of information. The bus converts at
+most once per `SYSTEM_ONEWIRE_RECONVERT_MS` (1 s), so the first sensor in a `periodically()` pass
+pays the 750 ms and the rest read the scratchpad it filled. `converted` starts false and the
+object is rebuilt by the restart that deep sleep really is, so the first read after any boot or
+wake always converts rather than reading a scratchpad nothing ever filled. `millis()` is the right
+clock here — this is sub-cycle timing, and the flag covers the sleep case.
+
+**Binding needs no attention in the ordinary case, and is never typed into a sketch.** A stored
+binding whose probe is present is always used. Beyond that there is exactly one automatic rule:
+
+> If exactly one sensor on the bus is unbound **and** exactly one probe is unclaimed, they are
+> matched up.
+
+That single rule covers everything worth automating:
+
+| Situation | What happens |
+|---|---|
+| One sensor, one probe, nothing configured | Matched — the ordinary node needs no configuration at all |
+| A probe replaced on a multi-probe bus | The others keep their stored bindings, so the orphaned sensor and the new probe are the only two left over, and are matched |
+| Binding a multi-probe bus by hand | Name all but one; the last follows |
+| Two or more unbound, or two or more unclaimed | Left alone — guessing which probe is the air one and which is the battery one is precisely the silent mis-attribution that ROM-id addressing exists to prevent. Unbound sensors publish `nan` and the portal lists the ids to choose from |
+| A stored binding whose probe has gone | Dropped, so the sensor becomes an orphan and the rule above may re-match it. The stored id stays on disk on purpose: if that probe is reconnected, the explicit choice wins again |
+
+Binding by hand is the captive portal or MQTT, **not** the frugal-iot-client dashboard, and that
+is a decision rather than an oversight. The client cannot enumerate a 1-Wire bus — it only sees
+MQTT — so offering a list of discovered probes there would mean the node publishing its bus
+contents purely for a remote client to re-display, plus a new schema key and a new widget type,
+across four repos. It would buy very little: the automatic rule above covers a single-probe node
+and a replaced probe, so the only moment a human is needed is commissioning a bus with two or
+more probes on it — which is exactly when someone is stood next to the hardware and the node's
+own AP is the easiest thing to reach.
+
+An automatic match is deliberately **not** persisted — storing it would mean that replacing the
+probe left the node bound to an id that no longer exists, turning a setup that works into one
+that does not, for no gain, since the same match is made again on the next boot.
+
+The matching is the one decision no single sensor has the information to make, so it lives on the
+bus (`System_OneWire::resolveUnbound()`, reached through a small `OneWireDevice` interface so that
+`system/` need not know about `sensor/`). It runs on the first read rather than in `setup()`,
+because at setup time the other sensors on the bus may not have read their own config yet;
+`periodically()` only runs once the whole group is set up. It re-runs after any binding changes,
+which is what lets naming the second of three probes pull in the third.
+
+Binding is `set/<sensorid>/id = <romid>`, persisted to LittleFS, so the captive portal, the UX and
+MQTT all reach it the same way. The portal shows the dropdown only when there is more than one
+probe — with one there is nothing to choose and a row of hex is noise. So a multi-probe node is
+given meaningful sensor ids in the sketch and bound once, on site, from a phone:
+
+```cpp
+System_OneWire* ow = System_OneWire::forPin(SENSOR_DS18B20_PIN);
+frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20-air",  "Air Temperature",     ow, true));
+frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20-batt", "Battery Temperature", ow, true));
+```
+
+The single-probe case stays one line and needs no bus object — the pin-taking constructor calls
+`System_OneWire::forPin()`, which returns the shared bus for that pin, so two sensors on one pin
+share automatically whether or not the sketch knows buses exist.
+
+```cpp
+frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", SENSOR_DS18B20_PIN, true));
+```
+
+**Setup cost, which every deep-sleep wake pays.** `begin()` is ~90 ms — a 50 ms settle plus an
+enumeration, retried up to three times only if nothing is found — and `getDeviceCount()` is free,
+returning the count `begin()` cached. Sharing the bus means that is paid once rather than per
+sensor, and the old per-sensor dummy `requestTemperatures()` in `setup()` is gone, so a
+three-probe bus went from roughly 2.5 s of every wake to about 110 ms. (That dummy conversion
+carried a comment saying it was needed "to reset OneWire which seems to fail otherwise"; it looks
+redundant given the first real read converts anyway, but it was clearly added empirically and has
+not been re-tested on hardware.)
+
+**`validate()` does not reject 0.0 °C.** It used to, presumably to catch a startup artifact. That
+was survivable while a rejected reading was silently dropped, but once invalid readings began
+being published it meant a probe at freezing reported "no reading" and any wired
+`Control_Hysteresis` held. The disconnected sentinel (`DEVICE_DISCONNECTED_C`, -127 — the same
+value OSPIT uses) and the 85 °C power-on value are still rejected.
+
 ### Modbus over RS485 (`system/modbus.h`)
 
 Two plain classes — not `System_Base` subclasses — split the same way `System_I2C` is split
@@ -1067,7 +1158,7 @@ by part - some add conductivity and pH.
 |-------|------|-------|
 | `Actuator_LEDBuiltin` | actuator/ledbuiltin | Built-in LED; added automatically on supported boards |
 | `Actuator_Digital` | actuator/digital | Any digital output (relay, LED) |
-| `Actuator_OLED` | actuator/oled | SSD1306 OLED; added automatically on supported boards |
+| `Actuator_OLED` | actuator/oled | SSD1306 or SSD1327 OLED; added automatically on supported boards. See "Two OLED chips" below |
 | `Actuator_LCD` | actuator/lcd | HD44780 LCD via I2C backpack; requires `ACTUATOR_LCD_WANT` |
 | `Actuator_Analog` | actuator/analog | A voltage out — DAC where the chip has one, PWM where it does not |
 
@@ -1154,6 +1245,88 @@ someControl->outputs[0]->wireTo(frugal_iot.messages->setPath("lcd/message"));
 The `message` input accepts a `String`; lines are split on `\n` (ASCII 10). Lines longer than
 `ACTUATOR_LCD_COLS` are silently truncated. The display is cleared on every update.
 
+### Two OLED chips, chosen at compile time
+
+`Actuator_OLED` drives either an SSD1306 (1 bit per pixel, usually I2C, what every board with a
+built-in display carries) or an SSD1327 (4-bit greyscale, 128x128, usually SPI, always externally
+wired). Which one is a **compile-time** choice: a board has exactly one display, so there is no
+reason to pay a vtable and an indirection per call on a device where the redraw is already the
+expensive part.
+
+**What a control must do to work on both.** Two rules, and neither is enforced by the compiler —
+code that breaks them builds cleanly and then draws nothing:
+
+```cpp
+auto* display = &frugal_iot.oled->display; // not Adafruit_SSD1306*, which is only one of the two
+display->setTextColor(OLED_FG);            // not SSD1306_WHITE
+```
+
+`OLED_FG`/`OLED_BG` exist because the chips disagree about white: it is `1` on an SSD1306 and
+`0xF` on an SSD1327. A control written with `SSD1306_WHITE` compiles perfectly against an
+SSD1327 and draws in the darkest grey there is, i.e. invisibly.
+
+**There are two offset wrappers, not one template**, and that is deliberate. The wrapper exists so
+(0,0) means the first visible pixel on panels with a dead margin. Which methods need offsetting
+depends on what the driver overrides: `Adafruit_SSD1306` has its own fast-path `drawFastHLine`,
+`drawFastVLine` and `fillRect` that bypass `drawPixel`, so all four need it — whereas
+`Adafruit_SSD1327` goes through `Adafruit_GrayOLED`, which overrides nothing but `drawPixel`, so
+the other three fall through to `Adafruit_GFX`'s generic versions that themselves call
+`drawPixel`. Offsetting those in the wrapper as well would apply the offset twice.
+
+**Configuring an externally wired panel.** No board has an SSD1327 built in, so there is nothing
+to key a board `#elif` on - chip, interface and pins all come from build flags in a board env:
+
+```ini
+-D ACTUATOR_OLED_WANT
+-D ACTUATOR_OLED_IS_SSD1327
+-D ACTUATOR_OLED_SPI_SCLK=18 -D ACTUATOR_OLED_SPI_MOSI=23
+-D ACTUATOR_OLED_SPI_CS=5 -D ACTUATOR_OLED_SPI_DC=16 -D ACTUATOR_OLED_SPI_RST=17
+```
+
+Omitting `ACTUATOR_OLED_SPI_CS` selects the I2C form instead, and size defaults to the SSD1327's
+native 128x128.
+
+**There is deliberately no default chip.** Every board either names one in its `#elif` in
+`oled.h` or has one in its build flags; anything else stops at `#error have not defined OLED
+chip driver`. For the same reason every place the two chips diverge - the driver include, the
+colours, the offset wrapper, the constructor and the bring-up in `setup()` - lists the chips it
+supports explicitly and `#error`s on anything else, rather than falling through to an `#else`
+that assumes an SSD1306. Someone adding a display to a board that has none built in must say
+which chip it is: guessing wrong compiles cleanly and then draws nothing, which is the most
+expensive kind of wrong on a device you have to walk to.
+
+### A board is allowed to have no built-in LED
+
+`actuator/ledbuiltin.h` used to `#error` unless `LED_BUILTIN` was defined, and it is included
+unconditionally, so *every* board had to name an LED pin - even though `System_Frugal` only adds
+the actuator inside `#ifdef LED_BUILTIN` and nothing else refers to it. The requirement bought
+nothing, and the only way past it was to name a pin that does not exist; on a custom board that
+pin is likely to be doing something else, and on the FF-ESP32-OpenMPPT the obvious guess, GPIO 2,
+is its 1-Wire bus.
+
+The header and its `.cpp` now compile to nothing when `LED_BUILTIN` is undefined. **No flag is
+needed and none should be added** - the absence of `LED_BUILTIN` is the whole signal.
+`system/ota.cpp` needed the same `#ifdef`, having passed `LED_BUILTIN` to `setLedPin()`
+unconditionally.
+
+### FF-ESP32-OpenMPPT: the display and the soil probes are mutually exclusive
+
+`examples/all` has an `ff_openmppt_ssd1327` env for the board OSPIT runs on. Worth knowing before
+planning anything for it: **the SPI panel and the Modbus soil probes cannot both be fitted.** The
+panel needs dc=16 and rst=17, which are the UEXT header's RX_2/TX_2 - and those are exactly the
+pins OSPIT drives UART2 on for its RS485 probes (`uart.setup(2, ..., {tx = 17, rx = 16})`). That
+is why OSPIT's own `init.lua` loads `SSD1306.lua` and leaves the SSD1327 line commented out: on an
+irrigation controller the probes win. The I2C SSD1306 on pins 21/22 has no such conflict.
+
+There is only **one** FF env, also deliberately. Arduino has no concept of environments - it
+compiles one configuration per board - so `generate_platform_h.py` keeps the first env targeting a
+given `ARDUINO_*` macro and marks any later one `DISABLED`. Two envs on one board therefore look
+fine in `platformio.ini` and silently build the same firmware twice, which is how a first attempt
+at this "compiled the SSD1327 env" three times without ever compiling an SSD1327. If you add a
+second env for a board that already has one, check the generated `platform.h` for `DISABLED`
+before believing a green build. (`lilygo_t3_s3_sx127x_sht`, `heltec_wifi_lora_32_V32` and
+`tbeam_oled` are all in this state today.)
+
 ## Available Controls
 
 | Class | File | Notes |
@@ -1166,6 +1339,117 @@ The `message` input accepts a `String`; lines are split on `\n` (ASCII 10). Line
 | `Control_LoggerFS` | control/logger_fs | LittleFS CSV data logger |
 | `Control_Logger` | control/logger | Serial logger |
 | `Control_GSheets` | control/gsheets | Push readings to Google Sheets |
+
+### Irrigation lives in its own repository
+
+The sequenced-irrigation application built on this library is
+[frugal-iot-irrigation](https://github.com/mitra42/frugal-iot-irrigation) - it started life as
+`examples/ospit` here and was split out so that someone working on irrigation is not also looking
+at every sensor driver in the world. It carries `Control_Irrigation`, `Control_Sector`,
+`Sensor_Tank` and its own OLED pages: all things expected to be re-coded for the next application,
+which is why they are not here.
+
+What stayed in the library, because none of it is irrigation-specific: `Sensor_SoilModbus` and its
+address auto-provisioning, `System_RS485`/`System_Modbus`, `Actuator_Analog`, `Sensor_Voltage`,
+`INfloat::set`/`INbool::set`, `Control_Hysteresis`'s optional dead band, and
+`System_Power::timer_set_to()`.
+
+That repository builds against the `ospit-p1` branch of this library until it is merged to `main`.
+
+### How a deep-sleep wake is told apart from a power-on
+
+`RTC_DATA_ATTR wake_count` in `system/power.cpp`. It is incremented just before sleeping, and
+survives because RTC memory does; a power-on leaves it zero. `System_Power::setup()` tests it and
+calls `recover()` when it is non-zero, which is how things like `System_Discovery`'s
+`doneFullAdvertise` get restored without being persisted to flash.
+
+So **`recover()` IS reached after a deep sleep** - the obvious assumption that "deep sleep reboots,
+therefore only `setup()` runs" is wrong and cost me a wrong comment in three files. What is true is
+the ORDER: `System_Frugal` adds `actuators`, `sensors`, `controls`, `buttons` and only then
+`system`, so every module's own `setup()` has already run by the time `System_Power::setup()` calls
+`recover()`. Anything that must happen before a module touches its hardware - releasing a GPIO
+hold, for instance - belongs in that module's `setup()`, not in `recover()`.
+
+### Verifying that code is really there
+
+Two traps, both of which produced a confident wrong answer during the OSPIT port:
+
+- **`strings` has a four-character minimum**, and the linker pools string literals by SUFFIX. A
+  three-character state name `"hot"` was both invisible to `strings` and merged into the tail of
+  `"dac_oneshot"`, so even a raw byte search could not find it. The code was correct and
+  unverifiable. Name things long enough to be distinctive if you intend to check for them.
+- **Check the ELF exists before trusting a symbol count.** A stale or absent build reports zero
+  occurrences of everything, which looks exactly like successful conditional compilation. Rebuild,
+  then inspect - twice in one session this nearly passed as proof.
+
+And when a `#ifdef` guards a feature nobody has enabled, compile it once with the flag set. Code
+behind a flag no build sets is code nobody has compiled.
+
+### Regenerating defaults.h
+
+`defaults.h` is generated from the server's schema by `frugal-iot-logger/scripts/generate-defaults.js`,
+and the trap is that it emits macros for **whatever schema tree you point it at**. Point it at one
+branch while the firmware has three merged in, and the other two's macros silently vanish - which
+breaks the build in a place unrelated to whatever you were doing. Generate from a scratch merge of
+every schema branch the firmware actually uses.
+
+Check the result by comparing the sorted SETS of macro names before and after, not by reading the
+diff: inserting a module shifts everything below it, so a line-based check reports moves as
+removals. That produced two false alarms before I changed the check.
+
+### Every module says what deep sleep does to it
+
+The first line of every header in `src/` is a `// Deep Sleep issues:` note - either `none` with the
+reason, or a sentence on what breaks. `grep -rn "Deep Sleep issues" src/` reads as a survey.
+
+It is worth keeping up to date, because the failures are quiet ones. Deep sleep is a reboot: RAM is
+gone except `RTC_DATA_ATTR`, `millis()` restarts at zero, and GPIOs are released. So a module is
+affected if it holds state in a member, measures time with `millis()`, needs the hardware to warm
+up, or drives a pin. Most sensors read fresh each wake and genuinely have no issue; the ones that
+do - ENS160's warm-up, GPS re-acquiring a fix, BME680's gas heater, smoothing in `Sensor_Uint16` -
+degrade silently rather than failing, which is why they are written down.
+
+### Actuators and sleep
+
+An ESP32 releases every GPIO when it enters deep sleep, so without help an output goes wherever the
+board's pull resistors take it. The case that prompted this: the FF-OpenMPPT board pulls its load
+switch UP, so a node sleeping to save power could have switched its load back ON.
+
+`Actuator_Digital` therefore holds its pin, and `Actuator::preserveDuringSleep(bool)` chooses
+whether to - defaulting to **true**, because "as it was" is at least predictable where "released"
+is not. Chain it onto the add, the same way `powerPins()` is chained:
+
+```cpp
+frugal_iot.actuators->add((new Actuator_Digital("valve1", ...))->preserveDuringSleep(false));
+```
+
+Holding takes three things, and missing any one looks like it works until it does not:
+
+| Where | What | Why |
+|---|---|---|
+| `prepare()` | `gpio_hold_en()` | before the sleep |
+| `recover()` | `gpio_hold_dis()`, then re-assert | a LIGHT sleep returns here |
+| `setup()` | `gpio_hold_dis()` before `pinMode` | a DEEP sleep never reaches `recover()` - it reboots, and a held pin silently ignores `pinMode` and `digitalWrite` |
+
+plus `gpio_deep_sleep_hold_en()` once in `System_Power::sleep()`, or the holds are dropped as the
+digital domain powers down.
+
+Two things fixed alongside it, both of which had hidden the problem:
+
+- **Actuators were not in the sleep lifecycle at all.** `System_Power::prepare()`/`recover()`
+  called `frugal_iot.sensors->` and nothing else, which is why only sensors had ever needed it.
+- **`checkLevel()` bypassed `prepare()` entirely**, calling `sleep()` directly - so the low-voltage
+  sleep, the path that matters most, prepared neither sensors nor actuators.
+
+**The responsibility that comes with preserving** is choosing the sleep interval. An output that
+might need changing within seconds should not be behind a long deep sleep at all - `Power_Light`
+keeps the digital domain powered and needs none of this. One filling a tank over an hour is
+perfectly happy with five minutes.
+
+**Still open:** not every pad can be held, the RTC-capable set differs between ESP32, S2, S3 and
+C3, and the pin is a constructor argument so it cannot be a compile-time error - `setup()` warns on
+the serial port instead. And `Actuator_Analog` (a DAC, not a GPIO) is not covered; see the note in
+`actuator/analog.h`.
 
 ## Debug Flags
 

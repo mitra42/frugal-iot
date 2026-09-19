@@ -94,8 +94,29 @@ String INfloat::StringValue() {
   return std::isnan(value) ? String(F(IO_PAYLOAD_INVALID)) : String(value, (int)width);
 }
 
+// See the note on IN::convertAndSet in io.h for when an IN has a setter at all
+void INfloat::set(const float newvalue) {
+  if (changed(newvalue, value)) {
+    value = newvalue;
+    send(); // No sendWired() - an IN subscribes to its wiredPath, it does not publish to it
+  }
+}
+
+void INuint16::set(const uint16_t newvalue) {
+  if (changed(newvalue, value)) {
+    value = newvalue;
+    send();
+  }
+}
+
 float INbool::floatValue() {
   return value;
+}
+void INbool::set(const bool newvalue) {
+  if (changed(newvalue, value)) {
+    value = newvalue;
+    send();
+  }
 }
 bool INbool::boolValue() {
   return value;

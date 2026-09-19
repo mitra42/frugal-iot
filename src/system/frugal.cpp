@@ -100,11 +100,14 @@ void System_Frugal::dispatch(System_Message &msg) {
 }
 
 void System_Frugal::discover() {
-  messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+  if (!discoveredSelf) {
+    messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+    messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+    discoveredSelf = true;
+  }
   // Commented out because already sending ota_key which contains it.
   //messages->send(leaf2path("board"), SYSTEM_OTA_SUFFIX, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
-  System_Group::discover();
+  System_Group::discover(); // Sets our own 'discovered' when every member is done
 }
 
 void System_Frugal::captiveLines(AsyncResponseStream* response) {
@@ -148,7 +151,11 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
     messages(new System_Messages()),
   // mqtt is added in main.cpp > configure_mqtt(host,user,password)
   #ifdef ACTUATOR_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
-    oled(new Actuator_OLED(&OLED_WIRE)),
+    #ifdef OLED_WIRE
+      oled(new Actuator_OLED(&OLED_WIRE)),
+    #else // An SPI panel has no I2C bus to name - the constructor defaults the unused argument
+      oled(new Actuator_OLED()),
+    #endif
   #endif // ACTUATOR_OLED_WANT
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     ota(new System_OTA()), // Must be after Power (for timers)
@@ -197,8 +204,8 @@ void System_Frugal::configure_mqtt(const char* hostname, const char* username, c
 void System_Frugal::configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms) {
   powercontroller->configure(t, cycle_ms, wake_ms);
 }
-void System_Frugal::configure_battery(const uint8_t pin, float_t voltage_divider) {
-  sensors->add(battery = new Sensor_Battery(pin, voltage_divider));
+void System_Frugal::configure_battery(const uint8_t pin, float_t voltage_divider, float min, float max) {
+  sensors->add(battery = new Sensor_Battery(pin, voltage_divider, min, max));
 } 
 
 void System_Frugal::pre_setup() {
@@ -229,6 +236,16 @@ void System_Frugal::setup() {
   // By the time this is run, mqtt should have been added, and serial started in main.cpp -> pre_setup
   #ifdef SYSTEM_FRUGAL_DEBUG
     Serial.print(F("Setup: "));
+  #endif
+  #ifdef SYSTEM_GROUP_HEAP_DEBUG
+    // Baseline before any module runs, so the per-module lines below can be read as deltas.
+    Serial.printf("heap at start of setup: free=%u largest=%u\n",
+      (unsigned)ESP.getFreeHeap(),
+      #ifdef ESP8266
+        (unsigned)ESP.getMaxFreeBlockSize());
+      #else
+        (unsigned)ESP.getMaxAllocHeap());
+      #endif
   #endif
   System_Group::setup(); // includes WiFi
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
@@ -299,7 +316,7 @@ void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
     }
     */
     #ifdef ESP32
-      if (!wake_count) {
+      if (!wake_count) { // wake count is only zero on first boot, not after a deep sleep
     #endif
         delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
     #ifdef ESP32

@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - read fresh on each wake.
 /* Frugal IoT - BMP280 / BME280 temperature, pressure (and on the BME280, humidity) sensor
  *
  * NOTE - AS OF 2026-08-18 THIS IS UNTESTED CODE

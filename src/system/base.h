@@ -1,3 +1,4 @@
+// Deep Sleep issues: none in itself. prepare()/recover() are the sleep hooks; recover() IS reached after a deep sleep, from System_Power::setup() when wake_count says it was one - but only AFTER the actuators and sensors have run their own setup().
 #ifndef SYSTEM_BASE_H
 #define SYSTEM_BASE_H
 
@@ -17,6 +18,16 @@ class System_Base {
     void setupFailed(); // Called from overrides of setup() on failure.
     const char* id = nullptr; // Name of actuator, sensor or control 
     bool connected = false; 
+    /* Has this module finished describing itself to the server?
+     *
+     * This is discovery's resume position. It is per-INSTANCE rather than an index into a group
+     * because System_Group::discover() is recursive: a nested group can itself stop partway, and
+     * an index in the parent cannot express that. See the comment on System_Group::discover().
+     *
+     * A leaf module never sets this itself - its parent group marks it, because a leaf always
+     * finishes in one call. Only System_Group overrides that.
+     */
+    bool discovered = false;
     virtual void setup();
     virtual void dispatch(System_Message &msg);
     virtual void discover();
@@ -33,6 +44,12 @@ class System_Base {
     virtual void prepare() { }   // Optional - prepare before sleep (overridden in subclasses)
     virtual void recover() { }   // Optional - recover after sleep (overridden in subclasses)
     virtual System_Base* powerPins(const uint8_t power3v3, const uint8_t power0v); // Just here to allow chaining in Group
+    /* Should this output keep its state through a deep sleep? See Actuator::preserveDuringSleep.
+     *
+     * Here for the same reason powerPins is - so it can be chained onto a System_Group::add(),
+     * which returns a System_Base*. Does nothing on anything that is not an actuator.
+     */
+    virtual System_Base* preserveDuringSleep(bool on = true) { (void)on; return this; }
   protected: 
     String name; // Name of actuator, sensor or control
     String leaf2path(const char* leaf);  // eg. sht/temperature or sht/temperature/max -> dev/lotus/esp123/sht/temperature ...

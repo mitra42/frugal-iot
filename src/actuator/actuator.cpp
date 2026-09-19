@@ -40,3 +40,8 @@ void Actuator::discover() {
     input->discover();
   }
 }
+// See the note in actuator.h. Returns Actuator* so it can be chained onto a group add().
+Actuator* Actuator::preserveDuringSleep(bool on) {
+  preserve_during_sleep = on;
+  return this;
+}

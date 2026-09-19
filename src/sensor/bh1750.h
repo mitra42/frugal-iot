@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - read fresh on each wake.
 #ifndef SENSOR_BH1750_H
 #define SENSOR_BH1750_H
 

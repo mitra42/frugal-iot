@@ -54,7 +54,7 @@ void setup() {
   #endif
   frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, true));
   
-  frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", 5, 0, true));
+  frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", 5, true));
 
   // The ENS160+AHT21 board is two chips, and so two sensors. The ENS160 needs an ambient
   // temperature and humidity for its compensation, and wires itself to the AHT21's outputs

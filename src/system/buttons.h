@@ -1,3 +1,4 @@
+// Deep Sleep issues: a press during sleep is missed; nothing here wakes the chip on a button.
 #ifndef SYSTEM_BUTTONS_H
 #define SYSTEM_BUTTONS_H
 

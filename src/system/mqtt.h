@@ -1,3 +1,4 @@
+// Deep Sleep issues: the session is lost and reconnected every wake - seconds, and a re-subscribe. Retained topics survive on the broker.
 #ifndef SYSTEM_MQTT_H
 #define SYSTEM_MQTT_H
 

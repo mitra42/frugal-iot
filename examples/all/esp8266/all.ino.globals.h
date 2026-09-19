@@ -54,6 +54,16 @@
 //     https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
     //https://github.com/mitra42/LoRaMesher.git#new_loramesher
 
+// lib_deps_oled =
+//     ${common.lib_deps}
+//     adafruit/Adafruit SSD1306@^2.5.0
+//     adafruit/Adafruit GFX Library@^1.10.13
+
+// lib_deps_oled_ssd1327 =
+//     ${common.lib_deps}
+//     adafruit/Adafruit SSD1327@^1.0.4
+//     adafruit/Adafruit GFX Library@^1.10.13
+
 // lib_deps_lora_oled =
 //     ${common.lib_deps_lora}
 //     adafruit/Adafruit SSD1306@^2.5.0

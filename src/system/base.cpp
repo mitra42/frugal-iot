@@ -41,10 +41,27 @@ void System_Base::readConfigFromFS() {
   File dir = frugal_iot.fs_LittleFS->open(path, "r"); // TODO call via System_FS virtual 
   if (dir) {
     readConfigFromFS(dir, nullptr); // closes directory
-  } else {
-    frugal_iot.fs_LittleFS->mkdir(path); // There should be a directory, so can write config received over MQTT
-    Serial.print(F("Creating:")); Serial.println(path);
   }
+  /* Deliberately NOT creating the directory here when it is absent.
+   *
+   * It used to mkdir("/<id>") for every module at boot, "so can write config received over MQTT".
+   * That was unnecessary and, on a small filesystem, fatal.
+   *
+   * Unnecessary, because nothing needs it: System_LittleFS::open() passes create=true, so
+   * arduino-esp32's VFSImpl::open() walks the path and creates each level at the moment of the
+   * first write. A module that never saves anything never needs a directory at all.
+   *
+   * Fatal, because a LittleFS directory is a metadata PAIR - two erase blocks - however empty it
+   * is. With the 4096-byte blocks of SPI flash that is 8KB per directory, so the 128KB 'spiffs'
+   * partition of min_spiffs.csv holds the root pair plus exactly FIFTEEN directories:
+   *     8192 + 15 * 8192 = 131072
+   * Creating one per module used the entire filesystem before anything had been saved. The
+   * fifteenth module succeeded, every module after it failed, and so did every later write -
+   * which is how "cannot save the WiFi password" turned out to have nothing to do with WiFi.
+   *
+   * There is still a ceiling of 15 CONFIGURED modules on a partition this size. That is a
+   * partition-table question, not this function's.
+   */
 }
 // dir could be sht or one level lower e.g. sht/temperature
 void System_Base::readConfigFromFS(File dir, const String* leaf) {

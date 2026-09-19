@@ -92,23 +92,37 @@ uint16_t System_RS485::responseBuffer(uint8_t i) {
 }
 
 System_Modbus::System_Modbus(uint8_t slave_id, System_RS485* bus)
-  : slave_id(slave_id), bus(bus) { }
+  : slave_id(slave_id), _bus(bus) { }
 
 void System_Modbus::initialize() {
-  bus->initialize();
+  _bus->initialize();
 }
 
 // A silent slave costs 2 s per attempt, so once one has failed we skip
 // SYSTEM_MODBUS_RETRY_CYCLES read cycles before trying it again.
 // Same connected/retry handling as readRegister - see the "Timing" note in modbus.h for why a
 // silent slave must not be retried every cycle.
+bool System_RS485::writeSingleRegister(uint8_t slave_id, uint16_t reg, uint16_t value) {
+  node.begin(slave_id, *serial);
+  transacting = this;
+  last_result = node.writeSingleRegister(reg, value);
+  transacting = nullptr;
+  #ifdef SYSTEM_MODBUS_DEBUG
+    Serial.print(F("Modbus WRITE slave=")); Serial.print(slave_id);
+    Serial.print(F(" reg=0x")); Serial.print(reg, HEX);
+    Serial.print(F(" value=")); Serial.print(value);
+    Serial.print(F(" result=0x")); Serial.println(last_result, HEX);
+  #endif
+  return last_result == ModbusMaster::ku8MBSuccess;
+}
+
 bool System_Modbus::readRegisters(uint16_t reg, uint16_t count, uint16_t* out) {
   bool ok = false;
   if (connected || (retry_countdown == 0)) {
-    ok = bus->readHoldingRegisters(slave_id, reg, count);
+    ok = _bus->readHoldingRegisters(slave_id, reg, count);
     if (ok) {
       for (uint16_t i = 0; i < count; i++) {
-        out[i] = bus->responseBuffer(i);
+        out[i] = _bus->responseBuffer(i);
       }
     } else {
       retry_countdown = SYSTEM_MODBUS_RETRY_CYCLES;
@@ -128,9 +142,9 @@ bool System_Modbus::readRegisters(uint16_t reg, uint16_t count, uint16_t* out) {
 bool System_Modbus::readRegister(uint16_t reg, uint16_t* value) {
   bool ok = false;
   if (connected || (retry_countdown == 0)) {
-    ok = bus->readHoldingRegisters(slave_id, reg, 1);
+    ok = _bus->readHoldingRegisters(slave_id, reg, 1);
     if (ok) {
-      *value = bus->responseBuffer(0);
+      *value = _bus->responseBuffer(0);
     } else {
       retry_countdown = SYSTEM_MODBUS_RETRY_CYCLES;
       #ifdef SYSTEM_MODBUS_DEBUG

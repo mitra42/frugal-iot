@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - the AP and web server are rebuilt in setup(), so anyone browsing it is disconnected for the sleep.
 /* Frugal IoT - captive portal
  * 
  * This is a trivial captive portal, that allows for configuration etc. 

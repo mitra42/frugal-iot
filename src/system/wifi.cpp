@@ -90,6 +90,19 @@ void System_WiFi::setup() {
   #endif
 }
 bool System_WiFi::rescan() {
+  // The softAP and the STA share ONE radio, and a scan hops every channel for a couple of seconds.
+  // For that whole time the AP is simply not on air: a phone sitting on the captive portal loses
+  // its HTTP connection part-way through the page (so the portal comes up blank even though the
+  // handler ran to the end), and any device trying to associate just fails. Since this fires every
+  // SYSTEM_WIFI_SCANPERIOD while unconnected - which is exactly when someone is using the portal -
+  // it is almost guaranteed to land in the middle of a page load.
+  // So: while anyone is attached to the portal, don't scan. Nothing is lost by waiting. They are
+  // there to TELL us which network to join, and the captive POST handler calls switchSSID()
+  // directly, which does not need a fresh scan. Scanning resumes when they disconnect.
+  // Returning false leaves the state machine in WIFI_NEEDSCAN, which retries in 2s.
+  if (WiFi.softAPgetStationNum() > 0) {
+    return false;
+  }
   // ESP8266 scanNetworks(bool async = false, bool show_hidden = false, uint8 channel = 0, uint8* ssid = NULL);
   //bool async = false, bool show_hidden = false, bool passive = false, uint32_t max_ms_per_chan = 300, uint8_t channel = 0, const char *ssid = nullptr, const uint8_t *bssid = nullptr
   #ifdef ESP32

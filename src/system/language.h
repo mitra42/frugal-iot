@@ -1,3 +1,4 @@
+// Deep Sleep issues: none.
 #ifndef SYSTEM_LANGUAGE_H
 #define SYSTEM_LANGUAGE_H
 
@@ -36,7 +37,9 @@ struct Texts {
         *Offset,
         *DeviceTime,
         *SetTimeFromBrowser,
-        *TimeNotSet
+        *TimeNotSet,
+        *OneWireProbe,
+        *OneWireUnbound
         ;
 };
 

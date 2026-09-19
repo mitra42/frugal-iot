@@ -1,3 +1,4 @@
+// Deep Sleep issues: the selected page is lost and returns to the first.
 #ifndef CONTROL_CAROUSEL_H
 #define CONTROL_CAROUSEL_H
 

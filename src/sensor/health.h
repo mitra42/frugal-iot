@@ -1,3 +1,4 @@
+// Deep Sleep issues: none today, but anything uptime-like added here would measure time since the last WAKE, not since power-on.
 /*  Frugal IoT - Health sensor 
  * 
  *  This will be an aggregation of health fields 
