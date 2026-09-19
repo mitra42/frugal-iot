@@ -164,7 +164,13 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       }
       response->print(F("<form action=\"/restart\" method=post><input type=submit value=\""));
       response->print(T->RESTART);
-      response->print(F("\"></form><hr>"));
+      response->print(F("\"></form>"));
+      /* The only way anyone reaches /status. iOS shows this page in the Captive Network Assistant,
+       * which has no address bar, so an unlinked path is unreachable there however well it works.
+       * Absolute http://<ip>/ so it stays on the device even if the page was reached by some
+       * other host name.
+       */
+      response->print(String(F("<p><a href=\"http://")) + ip + F("/status\">Status</a> &middot; <a href=\"http://") + ip + F("/status?full\">Status (full)</a></p><hr>"));
 
       //Dropdown of SSIDs (see WiFiSettings.cpp ~L310)
       response->print(F("<form method=post action=\"/\"><label>"));
@@ -258,9 +264,23 @@ void System_Captive::setup() {
     }
     dnsServer.setTTL(0); //grabbed from old WiFiSettings  - unclear if needed or useful
     dnsServer.start(53, "*", WiFi.softAPIP());
+    // Nested, not "defined(ESP32) && ESP_IDF_VERSION >= ...": the preprocessor evaluates the
+    // whole expression, and ESP_IDF_VERSION_VAL is an undefined function-like macro on ESP8266,
+    // which is a syntax error rather than a false operand.
+    #ifdef ESP32
+     #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 2)
+      // RFC8910: hand the portal URL to the client in the DHCP lease (option 114) instead of
+      // relying on it guessing from an intercepted probe. iOS 14+ and Android 11+ read it and go
+      // straight to http://<ip>/ - which matters because probe interception is the part that
+      // fails silently: iOS remembers per-SSID that a network has no portal, and then never asks
+      // again however correctly we answer. Not available on ESP8266; logs and returns false if
+      // the AP is not up, which is why it is after softAP().
+      WiFi.AP.enableDhcpCaptivePortal();
+     #endif
+    #endif
   #endif
   String ip = WiFi.softAPIP().toString(); // Note how this is used by redirect 
-  Serial.printf(F("Access point on: %s at %s\n"), frugal_iot.nodeid.c_str(), ip.c_str());
+  Serial.printf("Access point on: %s at %s\n", frugal_iot.nodeid.c_str(), ip.c_str());
 
   // Order is important - this has to come BEFORE the catch-all default portal.
   // ON_AP_FILTER restricts this handler to clients on the device's own AP;
