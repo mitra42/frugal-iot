@@ -25,10 +25,10 @@ Control_Oled_GPS::Control_Oled_GPS(const char* name)
 void Control_Oled_GPS::setup() {
   Control_Oled::setup();
   if (enabled) {
-    Adafruit_SSD1306* display = &frugal_iot.oled->display;
+    auto* display = &frugal_iot.oled->display; // auto: the concrete driver is chosen at compile time, see actuator/oled.h
     display->clearDisplay();
     display->setTextSize(1);
-    display->setTextColor(SSD1306_WHITE);
+    display->setTextColor(OLED_FG);
     display->setCursor(0, 28);
     display->print(name);
     display->display();
@@ -37,10 +37,10 @@ void Control_Oled_GPS::setup() {
 
 void Control_Oled_GPS::act() {
   if (enabled) {
-    Adafruit_SSD1306* display = &frugal_iot.oled->display;
+    auto* display = &frugal_iot.oled->display; // auto: the concrete driver is chosen at compile time, see actuator/oled.h
     display->clearDisplay();
     display->setTextSize(1);
-    display->setTextColor(SSD1306_WHITE);
+    display->setTextColor(OLED_FG);
 
     // Line 1 (y=0): latitude with sign, 6 decimal places
     display->setCursor(0, 0);
