@@ -62,8 +62,6 @@
 // #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
 // #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
 // #define SENSOR_DS18B20_PIN 6
-// #define SENSOR_SHT_ADDRESS 0x45 // 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
-// #define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 // #define SENSOR_SOIL_PIN 4
     // The ultrasonic sensor talks Modbus over RS485. Its slave id switches on SYSTEM_MODBUS_WANT,
     // which then needs the UART pins as well - all three, or system/modbus.h stops the build with
@@ -192,7 +190,6 @@
     // See Home(bottom left)/Platforms/espresif32/updates (none as of 2025sep23 even though PR merged)
 // #define RGB_BUILTIN_LED_COLOR_ORDER LED_COLOR_ORDER_RGB
 // #define SYSTEM_POWER_DEBUG
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 #define SENSOR_SOIL_PIN 4
 #define SENSOR_DS18B20_PIN 6
 #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
@@ -228,7 +225,6 @@
     // have that lead moved to pin 5.
 #define SENSOR_BATTERY_PIN 5
 #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Power 1 & 2 are both 100k+100k
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 
 // S2 Agri sensor including power control
 #endif // ARDUINO_LOLIN_S2_MINI
@@ -265,7 +261,6 @@
     // have that lead moved to pin 5.
 #define SENSOR_BATTERY_PIN 5
 #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Power 1 & 2 are both 100k+100k
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 #define SENSOR_DS18B20_DEBUG
 #define SENSOR_SOIL_DEBUG
 #define SENSOR_SHT_DEBUG
@@ -308,7 +303,6 @@
     // have that lead moved to pin 5.
 #define SENSOR_BATTERY_PIN 5
 #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Power 1 & 2 are both 100k+100k
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 #define SENSOR_DS18B20_DEBUG
 #define SENSOR_SOIL_DEBUG
 #define SENSOR_SHT_DEBUG
@@ -326,7 +320,6 @@
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "c3_wedoo"
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 #define SYSTEM_POWER_DEBUG
 // #define SENSOR_SOIL_PIN 4
 #define ARDUINO_USB_MODE 1

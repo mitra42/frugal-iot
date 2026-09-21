@@ -1,7 +1,7 @@
 /*
  *  Frugal IoT example - SHT30 temperature and humidity sensor
  *
- * Optional: SENSOR_SHT_ADDRESS - defaults to 0x44, (note the D1 shields default to 0x45)
+ * Optional: SENSOR_SHT_ADDRESS - defaults to auto-select
  */
 
 // defines SENSOR_SHT_ADDRESS if dont define here or in platformio.ini

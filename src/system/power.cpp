@@ -315,10 +315,10 @@ void System_Power::configure(const System_Power_Type mode_init, const unsigned l
 
 // prepare - just before sleeping  (loop->maybeSleep->prepare)
 void System_Power::prepare() {
-  #ifdef SYSTEM_POWER_DEBUG
-    Serial.println(F("Power Management: preparing"));
-  #endif
   if (mode) { // Not set here ! 
+    #ifdef SYSTEM_POWER_DEBUG
+      Serial.println(F("Power Management: preparing"));
+    #endif
     // Power down sensors before sleep
     frugal_iot.sensors->prepare();
     /* And tell the actuators, which until now were never in the sleep lifecycle at all - which is

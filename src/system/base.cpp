@@ -117,7 +117,7 @@ void System_Base::powerUp(uint8_t pin3v3, uint8_t pin0v) {
   }
 }
 void System_Base::powerUp() {
-  // By default do nothing
+  // By default do nothing but see System_SensorActuator::powerUp()
 }
 
 void System_Base::powerDown(uint8_t pin3v3, uint8_t pin0v) {
@@ -137,12 +137,13 @@ System_SensorActuator::System_SensorActuator(const char * const id, const String
 : System_Base(id, name) {}
 
 System_SensorActuator* System_SensorActuator::powerPins(const uint8_t power3v3, const uint8_t power0v) {
+  Serial.printf("XXX powering up %d\n",power3v3);
   power3v3_ = power3v3;
   power0v_ = power0v;
   if (power3v3_ != PIN_NONE) { 
         pinMode(power3v3_, OUTPUT);
   }
-  if (power3v3_ != PIN_NONE) { 
+  if (power0v_ != PIN_NONE) { 
         pinMode(power0v_, OUTPUT);
   }
   return this; // For chaining
@@ -158,6 +159,7 @@ void System_SensorActuator::powerUp() {
 void System_SensorActuator::powerDown() {
   // Default implementation: call System_Base method with stored pins if valid
   if (power3v3_ != PIN_NONE || power0v_ != PIN_NONE) {
+    Serial.printf("XXX powering down %d\n",power3v3_);
     System_Base::powerDown(power3v3_, power0v_);
   }
 }

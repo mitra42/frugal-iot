@@ -161,6 +161,7 @@ count	KEYWORD2
 createReceiveMessages	KEYWORD2
 dateTime	KEYWORD2
 debug	KEYWORD2
+detect	KEYWORD2
 discover	KEYWORD2
 dispatch	KEYWORD2
 dispatchIncomingQueued	KEYWORD2
@@ -225,6 +226,8 @@ prepareForLightSleep	KEYWORD2
 printDirectory	KEYWORD2
 printNetworkStatus	KEYWORD2
 printRouteTable	KEYWORD2
+probe3x	KEYWORD2
+probe4x	KEYWORD2
 processReceivedPacket	KEYWORD2
 provision	KEYWORD2
 publish	KEYWORD2
@@ -249,6 +252,7 @@ readRegisters	KEYWORD2
 readUint16	KEYWORD2
 readValidateConvert	KEYWORD2
 readValidateConvertSet	KEYWORD2
+readWords	KEYWORD2
 recover	KEYWORD2
 recoverWiFi	KEYWORD2
 relayDownstream	KEYWORD2
@@ -263,6 +267,7 @@ scan	KEYWORD2
 send	KEYWORD2
 send1read	KEYWORD2
 send1read1	KEYWORD2
+send3x	KEYWORD2
 sendAndRead	KEYWORD2
 sendAndWait	KEYWORD2
 sendGoogle	KEYWORD2

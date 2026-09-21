@@ -50,7 +50,6 @@ void Actuator_Digital::set(const bool v) {
 #pragma GCC diagnostic pop
 
 void Actuator_Digital::setup() {
-  Actuator::setup(); // Read config AFTER setup inputs
   #ifdef ESP32
     /* Release any hold left by a deep sleep BEFORE touching the pin.
      *
@@ -76,8 +75,19 @@ void Actuator_Digital::setup() {
       }
     #endif
   #endif
-  // initialize the digital pin as an output.
-  pinMode(pin, OUTPUT);  // Set pin after reading config as may change
+  /* Initialize the digital pin as an output, BEFORE Actuator::setup() reads the config.
+   *
+   * Restoring a saved value dispatches it, and Actuator_Digital::set() calls act(), which
+   * digitalWrites the pin - see the note in set(). With the config read first, that write
+   * landed on a pin the peripheral manager still had as ESP32_BUS_TYPE_INIT, so the ESP32
+   * core refused it and logged "IO n is not set as GPIO". Harmless, since the act() below
+   * repeated the write, but it put a red error in every boot log of a board with a saved value.
+   *
+   * The previous ordering was justified with "set pin after reading config as may change",
+   * but `pin` is a constructor argument (digital.h) and nothing assigns it from config.
+   */
+  pinMode(pin, OUTPUT);
+  Actuator::setup(); // Read config AFTER setup inputs, and now also after the pin is an output
   act(); // Set the digital output to match initial conditions.
 }
 

@@ -621,7 +621,7 @@ needs nothing — `lib/data-loader.js` already filters `isNaN` out of the graph 
 
 | Class | File | Measures |
 |-------|------|---------|
-| `Sensor_SHT` | sensor/sht | Temperature + humidity (SHT30/SHT40/SHT85) |
+| `Sensor_SHT` | sensor/sht | Temperature + humidity (SHT3x/SHT4x). Freestanding, no external library; which family is fitted is detected at runtime |
 | `Sensor_DHT` | sensor/dht | Temperature + humidity (DHT11/22) |
 | `Sensor_AHT` | sensor/aht | Base class for the AHT20/AHT21 — not instantiated directly |
 | `Sensor_AHT20` | sensor/aht | Temperature + humidity (AHT20) |
@@ -750,9 +750,16 @@ called" note in the old `ens160aht21.cpp` and TODO-115/TODO-16 in `sht.cpp`. `sc
 the global `I2C_WIRE` regardless of which bus the object was on.
 
 The automatic `scan()` under `SYSTEM_I2C_DEBUG` hangs off `initialize()`'s per-bus guard, so it
-prints once per `TwoWire` no matter how many devices are on it. `bh1750.cpp`, `sht.cpp` and
-`lcd.cpp` still call `wire->begin()` directly instead of going through `initialize()`, so they
-do not trigger it - they carry their own `scan()` under their own `*_DEBUG` flags.
+prints once per `TwoWire` no matter how many devices are on it. `bh1750.cpp` and `lcd.cpp` still
+call `wire->begin()` directly instead of going through `initialize()`, so they do not trigger it -
+they carry their own `scan()` under their own `*_DEBUG` flags. `sht.cpp` used to be in that list
+and no longer is.
+
+`read()` returns **false when the device supplied nothing** (the old TODO-101). It used to return
+true unconditionally, and a NACKed read filled the buffer with `wire->read()`'s -1 - a block of
+`0xFF` the caller could not tell from data. A sensor that signals "not ready yet" by NACKing the
+read, which is what both SHT families do with clock stretching disabled, cannot be driven at all
+without this.
 
 ### Sensor_INA219
 
@@ -967,6 +974,68 @@ leaving `isENS161` **uninitialised** in a normal build (and with it, whether `aq
 anything); `aqi500` is now dropped from `outputs` in `setup()` on an ENS160 rather than
 discovered as a topic that only ever carries its initial 0; and the wait for new data has a
 timeout instead of spinning forever on a missing chip.
+
+### Sensor_SHT — and why it detects the chip at runtime
+
+`sensor/sht.h`. Publishes `sht/temperature` and `sht/humidity`. Handles **both** the SHT3x and
+the SHT4x families, freestanding over `System_I2C`. It replaced a version that drove
+RobTillaart's `SHT85` and `SHT4x` libraries, one or the other selected by `SENSOR_SHT_SHT4x` at
+compile time; both dependencies are now gone from `library.json` and `library.properties`.
+
+**Runtime detection, because getting this wrong is invisible.** The two families look identical,
+sit at the same 0x44, and both acknowledge their address - and the old `begin()` did nothing but
+range-check the address and send a one-byte soft reset, which *both* families acknowledge. So a
+node built for the wrong chip reported `begin ok`, scanned a perfectly healthy bus, and then
+returned nothing forever. `detect()` asks each family for something only it can answer, and the
+CRC on the reply is what makes the answer trustworthy:
+
+| Family | Question | What the other one does |
+|---|---|---|
+| SHT3x | 16-bit `0xF32D`, status register, 3 bytes | `0xF3` is not an SHT4x command, and unknown commands are not acknowledged - so it NACKs the write and is left with nothing half-sent |
+| SHT4x | one-byte `0x89`, serial number, 6 bytes | an SHT3x reads `0x89` as the FIRST HALF of a 16-bit command, waits for a second byte, and NACKs the read |
+
+A failed probe costs one core-level I2C error line in the log. SHT3x is tried first, being the
+commoner part and the historical default, so those boards boot clean. **`SENSOR_SHT_SHT4x` no
+longer selects a driver** - it now only means "expect a 4x", flipping the probe order so a known
+SHT4x board boots clean instead. Every `platformio.ini` and `platform.h` that sets it keeps
+working unchanged.
+
+**Do not go back to a fixed delay before the read.** Both families are driven in single-shot mode
+with clock stretching disabled, and that is how they report "still converting" - they NACK the
+read. So the read *is* the readiness test, and the settle time is only an estimate of when to
+start asking. The libraries' `dataReady()` was a timer that never asked the chip, and its SHT3x
+estimate needed 16 ms elapsed while a high-repeatability conversion is specified at up to 15.5 ms
+- so the first conversion after a reset regularly outran it and **the first reading of every boot
+came back `nan`**. `readValidateConvertSet()` retries the read until the part answers or
+`SENSOR_SHT_TIMEOUT_MS` (50) is up, and reports how long it took when it needed more than one go.
+
+**The address is searched too, for the same reason.** Both families answer on 0x44 or 0x45,
+chosen by a link on the breakout, and the parts are unlabelled - so on a sensor somebody has just
+been handed, "one of those two" is all that is known.
+
+| `SENSOR_SHT_ADDRESS` | Behaviour |
+|---|---|
+| undefined (the default) | try 0x44, then 0x45 |
+| defined, or an address passed to the constructor | **only** that address; not finding it is an error |
+
+Pinning it is what you want once a board is known: a mis-set link is then reported instead of
+silently working, which matters when the two addresses are two different sensors on one bus. The
+sentinel for "nothing said" is `SENSOR_SHT_ADDRESS_AUTO` (0x00, not usable as a device address),
+which is what `SENSOR_SHT_ADDRESS` now defaults to - so every existing sketch passing
+`SENSOR_SHT_ADDRESS` to the constructor gets the search without being touched.
+
+The search leads with `System_I2C::isPresent()`, a zero-length probe the ESP32 core logs at
+`log_v` rather than `log_e`. An address with nothing on it is therefore silent, and only a failed
+*family* probe costs an error line - so the common case (an SHT3x at 0x44) still boots clean.
+
+```cpp
+frugal_iot.sensors->add(new Sensor_SHT("SHT"));          // address/wire/retain all default
+// ;-D SENSOR_SHT_ADDRESS=0x45  ;-D SENSOR_SHT_SHT4x  ;-D SENSOR_SHT_TIMEOUT_MS=50  ;-D SENSOR_SHT_DEBUG
+```
+
+Temperature is the same formula on both (`-45 + 175*raw/65535`); humidity is not (`100*raw/65535`
+on a 3x, `-6 + 125*raw/65535` clamped to 0..100 on a 4x). The CRC-8 is poly `0x31` init `0xFF`,
+shared by both families, and covers every 16-bit word either of them returns.
 
 ### Sensor_BME680
 
