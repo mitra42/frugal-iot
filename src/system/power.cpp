@@ -45,6 +45,9 @@
 #endif
 #include "_settings.h"
 #include "system/power.h"
+#ifdef ESP32
+  #include "driver/gpio.h" // gpio_deep_sleep_hold_en
+#endif
 #include "system/frugal.h"
 
 // Low battery configuration ======
@@ -115,6 +118,14 @@ System_Power::System_Power()
   timer_index(0)
 { }
 
+// wake, cycle and mode are exactly what dispatch() below accepts and stores
+void System_Power::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full);
+  statusLine(out, "wake", String(wake_ms));
+  statusLine(out, "cycle", String(cycle_ms));
+  statusLine(out, "mode", String((int)mode));
+}
+
 // The power module can be configured - from the SPIFFS, Captive or MQTT 
 // beware that changing power mode while running may not always do what is expected and a restart may be recommended. 
 void System_Power::dispatch(System_Message &msg) {
@@ -164,8 +175,34 @@ uint32_t System_Power::timer(uint8_t i) {
 void System_Power::timer_set(const uint8_t i, const uint32_t t_secs) {
     timers[i] = sleepSafeSecs() + t_secs;
 }
+// Absolute form - see power.h. sleepSafeSecs() IS the epoch, so there is nothing to convert.
+void System_Power::timer_set_to(const uint8_t i, const uint32_t t_secs_absolute) {
+    timers[i] = t_secs_absolute;
+}
 bool System_Power::timer_expired(const uint8_t i) {
   return (timer(i) <= sleepSafeSecs());
+}
+// See power.h. A timer of 0 is left alone - that is the "never armed, fires on the first check"
+// default, and shifting it would arm it.
+void System_Power::timers_shift(const int64_t delta_secs) {
+  for (uint8_t i = 0; i < TIMER_LENGTH; i++) {
+    if (timers[i]) {
+      const int64_t t = (int64_t)timers[i] + delta_secs;
+      timers[i] = (t < 0) ? 0 : (uint32_t)t;
+    }
+  }
+}
+// Bound the damage from a clock step of unknown size. Nothing in the library arms a timer for
+// more than SYSTEM_OTA_S (an hour), so anything further out than max_secs is not a real interval
+// - it is an interval measured against a clock that has since moved. Re-arm it to fire now:
+// firing one cycle early is recoverable, waiting years is not.
+void System_Power::timers_clampFuture(const uint32_t max_secs) {
+  const uint32_t now = sleepSafeSecs();
+  for (uint8_t i = 0; i < TIMER_LENGTH; i++) {
+    if (timers[i] > (now + max_secs)) {
+      timers[i] = now;
+    }
+  }
 }
 
 
@@ -173,6 +210,13 @@ bool System_Power::timer_expired(const uint8_t i) {
 // This section can contain ifdef-ed parts that manage things like power at the board level such as on LILYGOHIGROW
 
 // Check level on the battery if possible, take actions to handle low battery to avoid brown out (see notes at top of file)
+/* Re-check the battery once per wake cycle - see the note on checkLevel() in power.h.
+ *
+ */
+void System_Power::periodically() {
+  checkLevel();
+}
+
 void System_Power::checkLevel() {
   // Note Serial is not enabled at this point
   // TODO-194 handle case where no battery measurement possible
@@ -190,8 +234,21 @@ void System_Power::checkLevel() {
     #endif // SYSTEM_POWER_PANIC_MV
     #ifdef SYSTEM_POWER_LOW_MV
       if ( (vv > SYSTEM_POWER_BAD_READING_MV) && (vv < SYSTEM_POWER_LOW_MV)) {
-        Serial.println(" low power going sleep");
+        Serial.print(vv); Serial.println("mv low voltage going go sleep");
         // options here could be .... send readings, but with long gaps; just deep sleep now for longer time (so e.g. check every 60 mins for power back)
+        /* NO prepare() here, deliberately - do not "fix" this.
+         *
+         * checkLevel() exists to get to deep sleep FAST when the battery is low, before the rail
+         * collapses far enough that the board browns out and never comes back. An ESP32-C3 in
+         * particular will grey out and simply not reboot. maybeSleep() is the orderly path, where
+         * there is time to power sensors down and hold pins; this one is the emergency, and
+         * anything done on the way is time the battery does not have.
+         *
+         * The cost is that the pins are released on this path, so an output goes wherever the
+         * board's pulls take it - see Actuator::preserveDuringSleep. Holding them would only be a
+         * few register writes, but it would also hold a valve OPEN on a flat battery, so it is
+         * not obviously the safer choice and has not been done.
+         */
         sleep(Power_Deep, SYSTEM_POWER_LOW_MS);
       }
     #endif
@@ -258,12 +315,16 @@ void System_Power::configure(const System_Power_Type mode_init, const unsigned l
 
 // prepare - just before sleeping  (loop->maybeSleep->prepare)
 void System_Power::prepare() {
-  #ifdef SYSTEM_POWER_DEBUG
-    Serial.println(F("Power Management: preparing"));
-  #endif
   if (mode) { // Not set here ! 
+    #ifdef SYSTEM_POWER_DEBUG
+      Serial.println(F("Power Management: preparing"));
+    #endif
     // Power down sensors before sleep
     frugal_iot.sensors->prepare();
+    /* And tell the actuators, which until now were never in the sleep lifecycle at all - which is
+     * why deep sleep releasing their pins had gone unnoticed. See actuator/digital.h.
+     */
+    frugal_iot.actuators->prepare();
     // Some things wont be done if just looping
     #ifdef LILYGOHIGROW
       digitalWrite(POWER_CTRL, LOW);
@@ -327,6 +388,14 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
     #endif
     #ifdef ESP32
       if (forceMode & DeepSleepBit) {
+        /* Make the pin holds survive the sleep itself.
+         *
+         * gpio_hold_en() alone is dropped as the digital domain powers down; this is what carries
+         * it through. Chip-wide rather than per-pin, so it belongs here rather than in the
+         * actuator - and this is the only place that knows the sleep is really a deep one, since
+         * checkLevel() forces one whatever `mode` says.
+         */
+        gpio_deep_sleep_hold_en();
         if (forceMode & WakeOnTimerBit) {
           // millis() and esp_timer_get_time() both reset to 0 after deep sleep - see sleepSafeSecs().
           esp_deep_sleep(sleep_millisecs * 1000UL);
@@ -386,6 +455,7 @@ void System_Power::recover() {
     #endif
     // Power up sensors after sleep
     frugal_iot.sensors->recover();
+    frugal_iot.actuators->recover(); // Release the pin holds and re-assert - see prepare()
     delay(SYSTEM_POWER_ON_DELAY); // Allow power to sensors and actuators to stabilize
   }
 }

@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - setup() running afresh on every wake is what makes deep sleep work at all.
 /* Frugal-Iot main controller class 
  * 
  * One class to rule them all .... 
@@ -90,9 +91,12 @@ class System_Frugal : public System_Group {
     void configure_mqtt_enrolled(const char* hostname, const char* enrolment_secret);
     void configure_power(System_Power_Type t, unsigned long cycle_ms, unsigned long wake_ms);
     #if defined(SENSOR_BATTERY_PIN) && defined(SENSOR_BATTERY_VOLTAGE_DIVIDER) // Only support default constructor if PIN and DIVIDER defined
-      void configure_battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_VOLTAGE_DIVIDER);
+      // min/max are the display range in millivolts - see the note on Sensor_Battery
+      void configure_battery(const uint8_t pin = SENSOR_BATTERY_PIN, float_t voltage_divider = SENSOR_BATTERY_VOLTAGE_DIVIDER,
+                             float min = DEFAULT_battery_battery_min, float max = DEFAULT_battery_battery_max);
     #else
-      void configure_battery(const uint8_t pin, float_t voltage_divider);
+      void configure_battery(const uint8_t pin, float_t voltage_divider,
+                             float min = DEFAULT_battery_battery_min, float max = DEFAULT_battery_battery_max);
     #endif
     void startSerial(uint32_t baud, uint16_t serial_delay);
     void startSerial(); // Encapsulate setting up and starting serial
@@ -107,10 +111,17 @@ class System_Frugal : public System_Group {
     void loop() override; // Call this from main.cpp
     void infrequently() override;
     void periodically() override;
-    void captiveLines(AsyncResponseStream* response) override; 
+    void captiveLines(AsyncResponseStream* response) override;
+    // Whole-node plain text dump - a header identifying the node, then every module's IO.
+    // Reached at /status on the captive portal, or call it with &Serial.
+    void statusLines(Print* out, bool full) override; 
     bool canOTA();
     bool canMQTT();
     void discover() override;
+    // System_Frugal::discover() is re-entered each time discovery resumes, so its own two topics
+    // need a marker of their own - System_Base::discovered belongs to the whole group and is not
+    // set until every member is done.
+    bool discoveredSelf = false;
 };
 
 extern System_Frugal frugal_iot;

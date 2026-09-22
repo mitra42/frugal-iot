@@ -32,7 +32,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.6
+//     Frugal-IoT@^0.1.7
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
 
@@ -41,12 +41,8 @@
     //Comment/Uncomment below two lines to switch between live and "new" version
     //jaimi5/LoRaMesher
     //Comment/Uncomment below to switch between upstream and our fork.
-    //Upstream, once mitra42/LoRaMesher#perf/avoid-iostreams (or equivalent) is merged there:
-    //https://github.com/loramesher/LoRaMesher.git
-    //Our fork, branched from upstream 1abec4a. Drops C++ iostreams from LoRaMesher's diagnostic
-    //string building, which was anchoring the whole std::locale facet set: worth 230,464 bytes
-    //(t3_s3 94.5% -> 82.8%). See FLASH_SIZE.md.
-//     https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
+//         https://github.com/loramesher/LoRaMesher.git
+    //https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
     //https://github.com/mitra42/LoRaMesher.git#new_loramesher
 
 // lib_deps_lora_oled =
@@ -67,8 +63,6 @@
 // #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
 // #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
 // #define SENSOR_DS18B20_PIN 6
-// #define SENSOR_SHT_ADDRESS 0x45 // 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
-// #define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 // #define SENSOR_SOIL_PIN 4
     // The ultrasonic sensor talks Modbus over RS485. Its slave id switches on SYSTEM_MODBUS_WANT,
     // which then needs the UART pins as well - all three, or system/modbus.h stops the build with
@@ -92,7 +86,7 @@
     // Note PlatformIO's "Flash: nn%" line does not count .eh_frame, so on the RISC-V boards the
     // real firmware.bin is bigger than reported (c3_pico was 73.3% real vs 70.0% reported). The
     // Xtensa boards fold .eh_frame into .flash.rodata, so their reported figure is about right.
-    //-fno-exceptions
+//     -fno-exceptions
     // Uncomment debug lines before as needed
 // #define ACTUATOR_LEDBUILTIN_DEBUG
 // #define ACTUATOR_LCD_DEBUG
@@ -100,6 +94,7 @@
 // #define CONTROL_CLIMATE_DEBUG
 // #define CONTROL_LOGGERFS_DEBUG
 // #define SENSOR_BH1750_DEBUG
+// #define SENSOR_BME680_DEBUG
 // #define SENSOR_DHT_DEBUG
 // #define SENSOR_AHT_DEBUG
 // #define SENSOR_ENS160_DEBUG
@@ -110,14 +105,19 @@
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
+#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration of saved config from /<id>/<leaf>
+                                         // directories to flat /<id>.<leaf> files. A LittleFS
+                                         // directory costs a 2-block metadata pair (8KB), so the
+                                         // old layout filled a 128KB partition after 15 modules.
+                                         // Remove once no board in the field has the old layout.
 // #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
-#define SYSTEM_MESSAGE_DEBUG
+#define SYSTEM_MESSAGE_DEBUG // report messages received, sent, looped etc
 // #define SYSTEM_MQTT_DEBUG
 // #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
 // #define SYSTEM_TIME_DEBUG
-// #define SYSTEM_WIFI_DEBUG
+#define SYSTEM_WIFI_DEBUG
 
 // flags that apply only in main (the library can see them, but doesnt need them)
 // build_flags_main = 
@@ -127,7 +127,6 @@
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
     // Specific to SHT 
-// #define SENSOR_SHT_ADDRESS 0x45 // 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
 #define SYSTEM_OTA_PREFIX "sht30"
 
 // LoRaMesher throws, so the boards that use it need C++ exceptions back on. build_unflags REMOVES
@@ -221,7 +220,6 @@
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "s2_mini_4x"
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 
 #endif // ARDUINO_LOLIN_S2_MINI
 #endif // 0
@@ -275,10 +273,11 @@
 #define I2C_SDA 6
 #define I2C_SCL 5
 #define SENSOR_SHT_POWER3v3_PIN 7
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
+#define SENSOR_BATTERY_PIN 4 // next to 3v3 for easy wiring
 #define SYSTEM_MDNS_WANT // device should report directly to other local devices
 #define SYSTEM_MDNS_DEBUG
- 
+#define SYSTEM_I2C_DEBUG
+
 // ==== ESP8266 boards ================================================
 
 #endif // ARDUINO_NOLOGO_ESP32C3_SUPER_MINI

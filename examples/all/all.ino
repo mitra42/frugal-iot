@@ -54,7 +54,7 @@ void setup() {
   #endif
   frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, true));
   
-  frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", 5, 0, true));
+  frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", 5, true));
 
   // The ENS160+AHT21 board is two chips, and so two sensors. The ENS160 needs an ambient
   // temperature and humidity for its compensation, and wires itself to the AHT21's outputs
@@ -140,6 +140,18 @@ void setup() {
       DEFAULT_ultrasonic_ultrasonic_max, DEFAULT_ultrasonic_ultrasonic_color, true, rs485));
   #endif
 
+  // Soil probes over the same kind of bus. Two of them, because the point of RS485 being
+  // multi-drop is that one transceiver serves several probes - one per irrigation sector - each
+  // addressed by its own slave id. A probe that does not answer publishes "nan" rather than
+  // leaving a stale reading standing.
+  #ifdef SENSOR_SOILMODBUS_WANT
+    #ifndef SENSOR_ULTRASONIC_SLAVE_ID // Otherwise share the bus built just above
+      System_RS485* rs485 = new System_RS485(&Serial1);
+    #endif
+    frugal_iot.sensors->add(new Sensor_SoilModbus("soil1", "Sector 1", 1, rs485, true));
+    frugal_iot.sensors->add(new Sensor_SoilModbus("soil2", "Sector 2", 2, rs485, true));
+  #endif
+
   // ========= Actuators  ==============
   // Note Actuator_LedBuiltin added automatically if a pin is defined
 
@@ -167,6 +179,12 @@ void setup() {
   Control_Hysteresis* ch = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(ch);
   ch->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+
+  // A voltage out. Guarded by the pin, since it needs one wired to something that wants a control
+  // voltage - and on a C3 or S3, where this becomes PWM, an RC filter as well (see analog.h).
+  #ifdef ACTUATOR_ANALOG_PIN
+    frugal_iot.actuators->add(new Actuator_Analog("analog", "Analog Out", ACTUATOR_ANALOG_PIN));
+  #endif
 
   // Carousel cycles between Control_Oled displays, so it only makes sense on a board with one.
   #ifdef ACTUATOR_OLED_WANT

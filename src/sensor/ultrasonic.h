@@ -1,3 +1,4 @@
+// Deep Sleep issues: as system/modbus - the slave's connected state is lost, so a missing sensor costs its timeout again after each wake.
 /*
  * Ultrasonic distance sensor over RS485 / Modbus RTU (e.g. A01ANY4B).
  *

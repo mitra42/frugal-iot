@@ -14,7 +14,7 @@
 
 Actuator_LCD::Actuator_LCD()
 : Actuator("lcd", "LCD"),
-  input(new INtext("lcd", "message", "Message", "", "white", true))
+  input(new INtext("lcd", "message", "Message", "", DEFAULT_lcd_message_color, true))
 {
   inputs.push_back(input);
 }

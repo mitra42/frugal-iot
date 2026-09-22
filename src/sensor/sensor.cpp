@@ -30,6 +30,14 @@ void Sensor::readValidateConvertSet() { shouldBeDefined(); }
 void Sensor::periodically() {
   readValidateConvertSet();
 }
+// See sensor.h. OUT::setInvalid() is a no-op on the types with no NaN, so this is safe to call
+// on a sensor whose outputs are a mix of floats and uint16s.
+void Sensor::setOutputsInvalid() {
+  for (auto &output : outputs) {
+    output->setInvalid();
+  }
+}
+
 void Sensor::setup() {
   powerUp(); // Ensure sensor is powered up during setup
   readConfigFromFS(); // Reads config (one of the outputs) and passes to our dispatch - should be after inputs and outputs setup (probably)
@@ -61,6 +69,13 @@ String Sensor::captiveValueLines() {
     }
   }
   return lines;
+}
+
+void Sensor::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full); // Module-level settings first, then the IOs
+  for (auto &output : outputs) {
+    output->statusLines(out, full);
+  }
 }
 
 void Sensor::dispatch(System_Message &msg) {

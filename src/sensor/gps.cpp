@@ -38,15 +38,15 @@ Sensor_GPS::Sensor_GPS(const char* const name,
                        uint32_t baud,
                        bool retain)
   : Sensor("gps", name, retain),
-    latitude(new OUTfloat(  "gps", "latitude",   "Latitude",   0, 6, -90.0f,   90.0f,   "blue",   false)),
-    longitude(new OUTfloat( "gps", "longitude",  "Longitude",  0, 6, -180.0f,  180.0f,  "blue",   false)),
-    altitude(new OUTfloat(  "gps", "altitude",   "Altitude",   0, 1, -500.0f,  9000.0f, "green",  false)),
-    speed(new OUTfloat(     "gps", "speed",      "Speed",      0, 1,    0.0f,   999.0f, "orange", false)),
-    course(new OUTfloat(    "gps", "course",     "Course",     0, 1,    0.0f,   360.0f, "black",  false)),
-    hdop(new OUTfloat(      "gps", "hdop",       "HDOP",       0, 2,    0.0f,    50.0f, "black",  false)),
-    satellites(new OUTuint16("gps", "satellites", "Satellites", 0,    0,      32,  "black",  false)),
-    position(new OUTtext(   "gps", "position",   "Position",  "",            "black",  false)),
-    utc_time(new OUTtext(   "gps", "utc_time",   "UTC Time",  "",            "black",  false)),
+    latitude(new OUTfloat(  "gps", "latitude",   "Latitude",   0, 6, -90.0f,   90.0f,   DEFAULT_gps_latitude_color,   false)),
+    longitude(new OUTfloat( "gps", "longitude",  "Longitude",  0, 6, -180.0f,  180.0f,  DEFAULT_gps_longitude_color,   false)),
+    altitude(new OUTfloat(  "gps", "altitude",   "Altitude",   0, 1, -500.0f,  9000.0f, DEFAULT_gps_altitude_color,  false)),
+    speed(new OUTfloat(     "gps", "speed",      "Speed",      0, 1,    0.0f,   999.0f, DEFAULT_gps_speed_color, false)),
+    course(new OUTfloat(    "gps", "course",     "Course",     0, 1,    0.0f,   360.0f, DEFAULT_gps_course_color,  false)),
+    hdop(new OUTfloat(      "gps", "hdop",       "HDOP",       0, 2,    0.0f,    50.0f, DEFAULT_gps_hdop_color,  false)),
+    satellites(new OUTuint16("gps", "satellites", "Satellites", 0,    0,      32,  DEFAULT_gps_satellites_color,  false)),
+    position(new OUTtext(   "gps", "position",   "Position",  "",            DEFAULT_gps_position_color,  false)),
+    utc_time(new OUTtext(   "gps", "utc_time",   "UTC Time",  "",            DEFAULT_gps_utc_time_color,  false)),
     _serial(serial), _rx_pin(rx_pin), _tx_pin(tx_pin), _baud(baud)
 {
   outputs.push_back(latitude);
@@ -126,14 +126,21 @@ void Sensor_GPS::readValidateConvertSet() {
     longitude->set((float)lon);
     altitude->set((float)alt);
 
+    // Per-output: a fix can be good while these individual fields are not yet reported
     if (_gps.speed.isValid()) {
       speed->set((float)_gps.speed.kmph());
+    } else {
+      speed->setInvalid();
     }
     if (_gps.course.isValid()) {
       course->set((float)_gps.course.deg());
+    } else {
+      course->setInvalid();
     }
     if (_gps.hdop.isValid()) {
       hdop->set((float)_gps.hdop.hdop());
+    } else {
+      hdop->setInvalid();
     }
     if (_gps.satellites.isValid()) {
       satellites->set((uint16_t)_gps.satellites.value());
@@ -166,9 +173,10 @@ void Sensor_GPS::readValidateConvertSet() {
       Serial.println(_gps_dbg);
     }
     #endif
-  #ifdef SENSOR_GPS_DEBUG
   } else {
-    Serial.println(F("GPS: no fix within timeout"));
-  #endif
+    setOutputsInvalid(); // No fix - the text and uint16 outputs are no-ops, see OUT::setInvalid
+    #ifdef SENSOR_GPS_DEBUG
+      Serial.println(F("GPS: no fix within timeout"));
+    #endif
   }
 }

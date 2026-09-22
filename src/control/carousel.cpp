@@ -17,7 +17,8 @@
 Control_Carousel::Control_Carousel(const char* name)
   : Control("carousel", name, std::vector<IN*>{}, std::vector<OUT*>{}),
     selected(0),
-    select(new INuint16("carousel", "select", "Select", 0, 0, 0, "#000000", true))
+    // max stays 0 here - setup() raises it to the number of controls
+    select(new INuint16("carousel", "select", "Select", 0, DEFAULT_carousel_select_min, 0, DEFAULT_carousel_select_color, true))
 {
   inputs.push_back(select);
 }

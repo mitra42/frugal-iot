@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - the bus is re-initialised in setup().
 #ifndef SYSTEM_I2C_H
 #define SYSTEM_I2C_H
 #include <Arduino.h>

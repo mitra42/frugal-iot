@@ -2,12 +2,14 @@
 
 #include "_settings.h" // Load board definitions first
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
+#include "actuator/analog.h"
 #include "actuator/ledbuiltin.h"
 #include "actuator/lcd.h"
 #include "actuator/oled.h"
 
 //TO-ADD-SENSOR - add any new sensors here (in alphabetical order)
 #include "sensor/aht.h" // Sensor_AHT20 and Sensor_AHT21 share one implementation
+#include "sensor/voltage.h" // Any DC voltage through a divider; Sensor_Battery subclasses it
 #include "sensor/battery.h"
 #include "sensor/bh1750.h"
 #include "sensor/bmx280.h" // Sensor_BMP280 and Sensor_BME280 share one implementation
@@ -18,6 +20,7 @@
 #include "sensor/sht.h"
 #include "sensor/soil.h"
 #include "sensor/ds18b20.h"
+#include "sensor/soilmodbus.h" // Compiles to nothing unless SENSOR_SOILMODBUS_WANT
 #include "sensor/dissolvedoxygen.h"
 #include "sensor/gps.h"
 #include "sensor/ina219.h" // Freestanding over System_I2C, no external library
@@ -35,6 +38,7 @@
 
 //TO-ADD-SYSTEM - note dont need to add here if adding in system_frugal.h
 #include "system/modbus.h" // Compiles to nothing unless SYSTEM_MODBUS_WANT
+#include "system/onewire.h" // Shared 1-Wire bus, used by Sensor_DS18B20
 #include "system/fs.h"
 #include "system/frugal.h"
 

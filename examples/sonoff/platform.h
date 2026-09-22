@@ -32,7 +32,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.6
+//     Frugal-IoT@^0.1.7
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -47,8 +47,6 @@
 // #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
 // #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
 // #define SENSOR_DS18B20_PIN 6
-// #define SENSOR_SHT_ADDRESS 0x45 // 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
-// #define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 // #define SENSOR_SOIL_PIN 4
     // The ultrasonic sensor talks Modbus over RS485. Its slave id switches on SYSTEM_MODBUS_WANT,
     // which then needs the UART pins as well - all three, or system/modbus.h stops the build with
@@ -89,6 +87,11 @@
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
+#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration of saved config from /<id>/<leaf>
+                                         // directories to flat /<id>.<leaf> files. A LittleFS
+                                         // directory costs a 2-block metadata pair (8KB), so the
+                                         // old layout filled a 128KB partition after 15 modules.
+                                         // Remove once no board in the field has the old layout.
 // #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG

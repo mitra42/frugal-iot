@@ -1,3 +1,4 @@
+// Deep Sleep issues: values are lost and then restored from LittleFS by readConfigFromFS(); anything never persisted starts at its constructor default.
 #ifndef SYSTEM_IO_H
 #define SYSTEM_IO_H
 
@@ -30,7 +31,6 @@ class IO {
     // defaulted body is all that is needed.
     virtual ~IO() = default;
     virtual void setup();
-    void writeConfigToFS(const String &leaf, const String& payload);
     virtual bool dispatch(System_Message &msg);
     virtual String StringValue();
     virtual void send();
@@ -41,10 +41,27 @@ class IO {
     //virtual void set(const float newvalue); // Similarly - setting into types from variety of values
     //virtual void set(const bool newvalue);
     virtual void discover();
+    /* Lines for the status page - see System_Base::statusLines.
+     *
+     * full=false gives the value, the wired path when there is one, and min/max/color only where
+     * they differ from the default - the same "worth mentioning" rule discover() uses to decide
+     * what to send. full=true gives every parameter with its default in brackets.
+     */
+    virtual void statusLines(Print* out, bool full);
     void wireTo(String topicPath);
     void wireTo(IO* io);
     String path();
   protected: // Most of IO appears to need to be public
+    /* One line: "<topicTwig>[/<param>] <value>[ (<default>)][ *]".
+     *
+     * param nullptr means the IO's own value. The trailing * means the filesystem holds this, so
+     * it survives a restart - tested against the path maybeWriteToFS() would have used, which is
+     * /<topicTwig>/<param> for a parameter and /<topicTwig>/value for the value itself.
+     * An empty defaultValue omits the brackets.
+     */
+    void statusLine(Print* out, const char* param, const String& value, bool isPersisted, const String& defaultValue = String());
+    // Does the filesystem hold this, i.e. will it survive a restart? param nullptr = the value.
+    bool persisted(const char* param);
 };
 class IN : public IO {
   public:
@@ -52,6 +69,33 @@ class IN : public IO {
     // TO-ADD-INxxx
     virtual float floatValue();
     virtual bool boolValue();
+    /* Does this input currently hold a real reading?
+     *
+     * False once the sensor feeding it has published IO_PAYLOAD_INVALID, i.e. its validate()
+     * failed and it has no reading to give. A Control that cares should test this before
+     * trusting floatValue() - which deliberately keeps returning the last good value, so a
+     * control that does NOT test it behaves exactly as it did before this existed.
+     *
+     * Note this is about "there is no reading", not "the reading looks wrong": a sensor may
+     * legitimately pass an extreme value outside its declared min/max straight through, and
+     * that value is valid. Out-of-range display is a separate concern, handled in the UX.
+     *
+     * Only the float types can express invalid (there is no NaN for uint16 or bool), so the
+     * base returns true and INfloat overrides it.
+     */
+    virtual bool isValid();
+    /* Setting an IN from code.
+     *
+     * An IN is normally driven by a wire or by MQTT, not by the component that owns it, so most
+     * have no setter. These exist for the cases where a component genuinely does own the value -
+     * Control_Irrigation writing each sector's `enable` as the sequence advances - and for a
+     * sketch giving a control a starting value the constructor does not take.
+     *
+     * Like OUTbool::set they only act on a real change, and they send() so the new value reaches
+     * the UX. They do NOT sendWired(): an IN's wiredPath is something it subscribes to, so there
+     * is nothing to push to. Declared on the typed subclasses rather than here because the value
+     * types differ - see INfloat::set and INbool::set.
+     */
     virtual bool convertAndSet(const String &payload);
     bool dispatch(System_Message &msg) override;
     void setup();
@@ -67,6 +111,14 @@ class OUT : public IO {
     virtual float floatValue();
     virtual bool boolValue();
     virtual void sendWired(bool retain = MQTT_RETAIN, uint8_t qos = MQTT_QOS_ATLEAST1);
+    /* Publish "there is no reading" on this output.
+     *
+     * Called by a sensor when it could not get a reading - a failed read, an absent device, a
+     * validate() that rejected the value. Virtual rather than a cast in Sensor, because only the
+     * float types have a NaN to carry it: the base is a deliberate no-op so OUTuint16/OUTbool/
+     * OUTtext simply do not participate, and no RTTI is needed to tell them apart.
+     */
+    virtual void setInvalid();
     bool dispatch(System_Message &msg) override;
   protected: // Most of IN appears to need to be public
 };
@@ -79,8 +131,11 @@ class INfloat : public IN {
     INfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, float default_min, float default_max, char const * const color, const bool wireable);
     INfloat(const INfloat &other);
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
+    void set(const float newvalue); // Set and send if changed - see the note on IN::convertAndSet
+    bool isValid() override; // False when value is NaN, i.e. the sensor published IO_PAYLOAD_INVALID
     uint8_t width; // Cant be protected because used in e.g. control_oled_ht.cpp 
     virtual String StringValue();
+    void statusLines(Print* out, bool full) override; // Adds min and max
     void discover() override;
     bool dispatch(System_Message &msg) override;
   protected:
@@ -116,7 +171,9 @@ class INuint16 : public IN {
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, char const * const color, const bool wireable);
     INuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t min, uint16_t max, uint16_t default_min, uint16_t default_max, char const * const color, const bool wireable);
     INuint16(const INuint16 &other);
+    void set(const uint16_t newvalue); // Set and send if changed - see the note on IN::convertAndSet
     bool dispatch(System_Message &msg) override;
+    void statusLines(Print* out, bool full) override; // Adds min and max
     void discover() override;
   protected:
     uint16_t default_min;
@@ -132,6 +189,7 @@ class INbool : public IN {
     //INbool(); 
     INbool(char const * const sensorId, char const * const id, const String name, bool value, char const * const color, const bool wireable);
     INbool(const INuint16 &other);
+    void set(const bool newvalue); // Set and send if changed - see the note on IN::convertAndSet
     bool value;
   protected:
     float floatValue() override; // This is so that other subclasses e.g. INuint16 can still return a float if required
@@ -191,7 +249,9 @@ class OUTfloat : public OUT {
     OUTfloat(char const * const sensorId, char const * const id, const String name, float v, uint8_t width, float min, float max, float default_min, float default_max, char const * const color, const bool wireable);
     OUTfloat(const OUTfloat &other);
     void set(const float newvalue); // Set and send if changed
+    void setInvalid() override; // set(NAN) - publishes IO_PAYLOAD_INVALID
     bool dispatch(System_Message &msg) override;
+    void statusLines(Print* out, bool full) override; // Adds min and max
     void discover() override;
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;
@@ -227,6 +287,7 @@ class OUTuint16 : public OUT {
     OUTuint16(char const * const sensorId, char const * const id, const String name, uint16_t v, uint16_t mn, uint16_t mx, char const * const color, const bool wireable);
     OUTuint16(const OUTuint16 &other);
     void set(const uint16_t newvalue);
+    void statusLines(Print* out, bool full) override; // Adds min and max
     void discover() override;
     float floatValue() override; // This is so that other subclasses e.g. OUTuint16 can still return a float if required
     bool boolValue() override;

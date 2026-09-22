@@ -1,3 +1,4 @@
+// Deep Sleep issues: none. Note the group order: actuators, sensors, controls, then system - so a module's own setup() runs before System_Power::setup() calls recover().
 /* Frugal-IoT - system_group 
  * 
  * System_Group is a collection of System_Base (which could include other System_Group) and the 
@@ -28,6 +29,7 @@ class System_Group : public System_Base {
     void periodically() override;
     void infrequently() override;
     void captiveLines(AsyncResponseStream* response) override;
+    void statusLines(Print* out, bool full) override;
   private:
     void forEach(const char* fnName, void (System_Base::*fn)());
 };

@@ -1,3 +1,4 @@
+// Deep Sleep issues: none in itself - inputs are restored from LittleFS; see the individual controls.
 /*
  * Generic base class for controls
  *
@@ -23,8 +24,19 @@ class Control : public System_Base {
 
     Control(const char * const id, const char * const name, std::vector<IN*> i, std::vector<OUT*> o);
     void setup() override;
+    /* False if any input is currently carrying "no reading" - see IN::isValid().
+     *
+     * A control that acts on physical hardware should generally test this in act() before
+     * trusting floatValue(), which deliberately keeps returning the last good value. Types with
+     * no NaN always report valid, so this is safe on a control with mixed input types.
+     *
+     * What to do when it is false is the control's decision, not this class's: holding the
+     * output is right for a thermostat but wrong for an irrigation valve, which wants to close.
+     */
+    bool allInputsValid();
     virtual void act();
     void discover() override;
+    void statusLines(Print* out, bool full) override; // Inputs then outputs
     void dispatch(System_Message &msg) override;
     #ifdef CONTROL_DEBUG
       virtual void debug(const char* const blah);

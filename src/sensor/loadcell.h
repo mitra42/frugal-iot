@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - tare and scale are persisted.
 /* Frugal IoT - Load Sensor 
  * 
  * This is a load sensor that uses the HX711 chip to read the load cell.

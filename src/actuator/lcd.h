@@ -1,3 +1,4 @@
+// Deep Sleep issues: the display is cleared by the reset and redrawn on the next act(); it shows nothing during the sleep.
 /* Frugal IoT - HD44780 LCD display actuator
  *
  * Drives an HD44780-compatible LCD via an I2C backpack (PCF8574 expander).

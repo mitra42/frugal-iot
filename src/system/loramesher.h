@@ -1,3 +1,4 @@
+// Deep Sleep issues: the mesh has to be re-joined on every wake and routing tables are lost, so deep sleep and a LoRa mesh do not combine well.
 /* Frugal IoT - LoRaMesher wrapper 
  *
  * Based on examples at https://github.com/LoRaMesher/LoRaMesher

@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - serial output, nothing held across the sleep.
 #ifndef CONTROL_LOGGER_H
 #define CONTROL_LOGGER_H
 

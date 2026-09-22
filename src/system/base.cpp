@@ -5,6 +5,7 @@
 #include "_settings.h"  // Settings for what to include etc
 #include <Arduino.h>
 #include <string>     // std::string, std::stoi
+#include <vector>
 #include "system/base.h"
 #include "system/frugal.h"
 
@@ -12,6 +13,27 @@ System_Base::System_Base(const char * const id, const String name)
 : id(id), name(name) { };
 
 // Defaults for routines that can, but often are not, overridden in sub-class.
+void System_Base::statusLine(Print* out, const char* leaf, const String& value) {
+  out->print(id); out->print('/'); out->print(leaf);
+  out->print(' '); out->print(value);
+  if (frugal_iot.fs_LittleFS && frugal_iot.fs_LittleFS->exists(String("/") + id + "/" + leaf)) {
+    out->print(" *");
+  }
+  out->print('\n');
+}
+
+/* The default every module inherits: its name, which System_Base::dispatch handles and stores.
+ *
+ * Only when it has been persisted, i.e. someone renamed this module - the compiled-in name is
+ * already on the page in the header and is not news. Modules with more state of their own
+ * override this and add to it; see System_MQTT for the shape.
+ */
+void System_Base::statusLines(Print* out, bool full) {
+  if (full || (frugal_iot.fs_LittleFS && frugal_iot.fs_LittleFS->exists(String("/") + id + "/name"))) {
+    statusLine(out, "name", name);
+  }
+}
+
 void System_Base::setup() { };
 void System_Base::setupFailed() { // Call this from setup() if fails
   Serial.print(id); Serial.println(F(" Failed in setup"));
@@ -34,49 +56,48 @@ void System_Base::dispatch(System_Message &msg) {
   }
 }
 
-// Basic read configuration - based on the object's "id"
+/* Read this module's saved config: the flat files named /<id>.<leaf> - see System_FS::configPath.
+ *
+ * This scans the ROOT for our own prefix rather than opening a directory of our own, because
+ * there are no per-module directories any more: each one cost a two-block metadata pair (8KB on
+ * a 128KB partition), so creating one per module used the whole filesystem after fifteen modules
+ * and nothing could be saved at all.
+ *
+ * Names are collected before anything is read, and the directory handle closed, because
+ * dispatch() below can write to - or delete - files, and modifying a directory while iterating it
+ * is not defined. The old code had the same hazard inside one module's directory; here it would
+ * be the whole root.
+ */
 void System_Base::readConfigFromFS() {
-  // Note LittleFS should have been setup in frugal_iot constructor so this should not be null
-  String path = String("/") + id;
-  File dir = frugal_iot.fs_LittleFS->open(path, "r"); // TODO call via System_FS virtual 
-  if (dir) {
-    readConfigFromFS(dir, nullptr); // closes directory
-  } else {
-    frugal_iot.fs_LittleFS->mkdir(path); // There should be a directory, so can write config received over MQTT
-    Serial.print(F("Creating:")); Serial.println(path);
+  const String prefix = String(id) + ".";
+  std::vector<String> names;
+  File root = frugal_iot.fs_LittleFS->open("/", "r");
+  if (root) {
+    while (true) {
+      File entry = root.openNextFile();
+      if (!entry) {
+        break;
+      }
+      const String entryName = entry.name(); // basename
+      if (!entry.isDirectory() && entryName.startsWith(prefix)) {
+        names.push_back(entryName);
+      }
+      entry.close();
+    }
+    root.close();
+  }
+  for (const String& entryName: names) {
+    const String newleaf = frugal_iot.fs_LittleFS->configDecode(entryName.substring(prefix.length()));
+    String payload = frugal_iot.fs_LittleFS->slurp(String("/") + entryName, true);
+    payload.trim();
+    Serial.print(id); Serial.print(F("/")); Serial.print(newleaf); Serial.print(F("=")); Serial.println(payload);
+    System_Message msg(frugal_iot.messages->topicPrefix + "set/" + id + "/" + newleaf, payload, false, 0, MsgFromFS);
+    msg.parse();
+    dispatch(msg);
   }
 }
-// dir could be sht or one level lower e.g. sht/temperature
-void System_Base::readConfigFromFS(File dir, const String* leaf) {
-  while (true) {
-    File entry = dir.openNextFile(); // ESP32 default to "r", ESP8266 takes no argument and always does "r"
-    if (!entry) {
-      // no more files
-      break;
-    }
-    // Lets presume reading a:  wifi/foo  or b:  sht/temperature or c: sht/temperature/max
-    //Serial.print(id); Serial.print(F("/")); Serial.print(leaf); Serial.print(F("/")); Serial.print(entry.name());
-    const String newleaf = (leaf ? (*leaf + "/") : "") + entry.name();
-    Serial.print(id); Serial.print(F("/")); Serial.print(newleaf);
-    if (entry.isDirectory()) { // b: entry is directory sht/temperature 
-      Serial.println(F("/"));
-      readConfigFromFS(entry, &newleaf);  // will close entry
-    } else { // a: id=wifi twiglet=nullptr entry is foo   or c: id=sht twiglet=temperature entry is max
-      String payload = entry.readString();
-      entry.close(); // Must close before dispatch which might delete the file
-      payload.trim(); // Remove leading/trailing whitespace
-      Serial.print(F("=")); Serial.println(payload);
-      System_Message msg(frugal_iot.messages->topicPrefix + "set/" + id + "/" + newleaf, payload, false, 0, MsgFromFS);
-      msg.parse();
-      dispatch(msg);
-    }
-  }
-  dir.close();
-}
-// Note there is also a IO::writeConfigToFS
 void System_Base::writeConfigToFS(const String& topicLeaf, const String& payload) {
-  String filepath = String("/") + id + "/" + topicLeaf;
-  frugal_iot.fs_LittleFS->spurt(filepath, payload);
+  frugal_iot.fs_LittleFS->spurt(frugal_iot.fs_LittleFS->configPath(id, topicLeaf), payload);
 }
 String System_Base::leaf2path(const char* const leaf) { 
   return frugal_iot.messages->path(id, leaf);
@@ -96,7 +117,7 @@ void System_Base::powerUp(uint8_t pin3v3, uint8_t pin0v) {
   }
 }
 void System_Base::powerUp() {
-  // By default do nothing
+  // By default do nothing but see System_SensorActuator::powerUp()
 }
 
 void System_Base::powerDown(uint8_t pin3v3, uint8_t pin0v) {
@@ -116,12 +137,13 @@ System_SensorActuator::System_SensorActuator(const char * const id, const String
 : System_Base(id, name) {}
 
 System_SensorActuator* System_SensorActuator::powerPins(const uint8_t power3v3, const uint8_t power0v) {
+  Serial.printf("XXX powering up %d\n",power3v3);
   power3v3_ = power3v3;
   power0v_ = power0v;
   if (power3v3_ != PIN_NONE) { 
         pinMode(power3v3_, OUTPUT);
   }
-  if (power3v3_ != PIN_NONE) { 
+  if (power0v_ != PIN_NONE) { 
         pinMode(power0v_, OUTPUT);
   }
   return this; // For chaining
@@ -137,6 +159,7 @@ void System_SensorActuator::powerUp() {
 void System_SensorActuator::powerDown() {
   // Default implementation: call System_Base method with stored pins if valid
   if (power3v3_ != PIN_NONE || power0v_ != PIN_NONE) {
+    Serial.printf("XXX powering down %d\n",power3v3_);
     System_Base::powerDown(power3v3_, power0v_);
   }
 }

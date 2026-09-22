@@ -14,13 +14,14 @@
 // TODO need a way to useful handle logarithnic values like lux - more of a UX issue than a node issue
 // Practical range of lux unknown - apparantly can go from 0.001 to 65k 
 Sensor_BH1750::Sensor_BH1750( const char* const id, const char * const name, const uint8_t addr, TwoWire* wire, const bool retain)
-  : Sensor_Float(id, name, 3, 0, 65000, "#b8860b", retain), //TODO-213 define min/max/color in UX
+    // The schema module is "lux", not "bh1750" - which is why these macros are not named after
+    // the file. Was 0, 65000 and "#b8860b" as literals; the schema is now the only place they live.
+  : Sensor_Float(id, name, 3, DEFAULT_lux_lux_min, DEFAULT_lux_lux_max, DEFAULT_lux_lux_color, retain),
     addr(addr), wire(wire), lightmeter(addr) {
       // Note lightmeter(addr) calls the constructor and saves address
       #ifdef SENSOR_BH1750_DEBUG
         Serial.print(F("Setting up BH1750 at 0x")); Serial.print(addr, HEX); Serial.print(F(" SDA=")); Serial.print(SDA); Serial.print(F(" SCL=")); Serial.println(SCL);
       #endif
-      //TODO-213 setDefaultColor(DEFAULT_bh1750_bh1750_color)
   }
 
 // TODO add to docs - BH1750 default I2C address is 0x23

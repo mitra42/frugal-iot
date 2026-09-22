@@ -1,3 +1,4 @@
+// Deep Sleep issues: a press during sleep is missed.
 #ifndef SENSOR_BUTTON_H
 #define SENSOR_BUTTON_H
 /* 

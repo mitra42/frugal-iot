@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - read fresh on each wake.
 /* Frugal IoT - AHT20 / AHT21 temperature and humidity sensor
  *
  * NOTE - the AHT21 path is the code that used to live inside sensor/ens160aht21.cpp and has run

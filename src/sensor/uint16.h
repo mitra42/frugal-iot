@@ -1,3 +1,4 @@
+// Deep Sleep issues: smoothing restarts from the first reading after each wake, so a smoothed value is noisier on a short deep-sleep cycle than when running continuously.
 #ifndef SENSOR_UINT16_H
 #define SENSOR_UINT16_H
 

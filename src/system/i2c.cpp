@@ -65,20 +65,33 @@ bool System_I2C::send(uint8_t* buf, uint8_t bytes) {
   wire->endTransmission(); //TODO-101 want to return this value, but need to check others dont rely on inverse (1 = success)
   return true;
 }
-// Read buffer from I2C - arbitrary length
+/* Read buffer from I2C - arbitrary length. False if the device did not supply them.
+ *
+ * TODO-101, now done for this one: this used to return true unconditionally, and on a device
+ * that NACKed the read every byte came back as wire->read()'s -1, i.e. a buffer of 0xFF that
+ * the caller had no way to tell from real data. A sensor that signals "not ready yet" by
+ * NACKing the read - which is what both SHT families do with clock stretching disabled -
+ * cannot be driven at all without this.
+ */
 bool System_I2C::read(uint8_t* buf, uint8_t bytes) {
-  wire->requestFrom(addr, bytes);
-  for (uint8_t i = 0; i < bytes; i++) {
-    buf[i] = wire->read(); // TODO allow for failure and return true or false.
+  bool ok = (wire->requestFrom(addr, bytes) == bytes);
+  if (ok) {
+    for (uint8_t i = 0; i < bytes; i++) {
+      buf[i] = wire->read();
+    }
   }
   #ifdef SYSTEM_I2C_DEBUG
-    Serial.print(F("I2C read "));
-    for (uint8_t i = 0; i < bytes; i++) {
-      Serial.print(buf[i], HEX); Serial.print(F(" "));
+    if (ok) {
+      Serial.print(F("I2C read "));
+      for (uint8_t i = 0; i < bytes; i++) {
+        Serial.print(buf[i], HEX); Serial.print(F(" "));
+      }
+      Serial.println();
+    } else {
+      Serial.printf("I2C read of %u bytes from 0x%02X got nothing\n", bytes, addr);
     }
-    Serial.println();
   #endif
-  return true;
+  return ok;
 }
 // Read from I2C - up to 4 bytes into a uint32_t
 uint32_t System_I2C::read(uint8_t bytes) {
