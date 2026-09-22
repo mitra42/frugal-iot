@@ -1181,14 +1181,43 @@ share automatically whether or not the sketch knows buses exist.
 frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", SENSOR_DS18B20_PIN, true));
 ```
 
+**The bus scan must happen after `powerUp()`, and is retried while it finds nothing.** Both halves
+of that were regressions when the bus was split out of `Sensor_DS18B20`, and together they made a
+working node stop reading entirely. `Sensor_DS18B20::setup()` called `bus->initialize()` *before*
+`Sensor_Float::setup()` - and `Sensor::setup()` is what calls `powerUp()`. On a node whose probe
+or whose 4.7k pull-up hangs off a switched pin (`powerPins()`), that pin is an OUTPUT sitting LOW
+from the moment `powerPins()` ran, so the scan searched a bus that was actively held low and found
+nothing. The old per-sensor code happened to get this right by calling `Sensor_Float::setup()`
+first, as every other sensor in the library does.
+
+On its own that would have been a slow first reading rather than a dead sensor, except that the
+count was latched: `initialize()` is `if (!initialized)`, and `getDeviceCount()` only returns the
+number `begin()` cached, so nothing ever walked the bus a second time. The old code called
+`getTempCByIndex()`, which re-searches on every read, and so recovered by accident. `scan()` now
+calls `begin()` (the thing that actually searches) and `resolveUnbound()` calls `rescanIfEmpty()`
+before trying to match, so a bus that has never found anything is re-walked once per read cycle -
+which also picks up a probe plugged in after boot. `Sensor_DS18B20::readFloat()` latches its
+`resolved` flag only once it is bound, for the same reason.
+
 **Setup cost, which every deep-sleep wake pays.** `begin()` is ~90 ms — a 50 ms settle plus an
 enumeration, retried up to three times only if nothing is found — and `getDeviceCount()` is free,
 returning the count `begin()` cached. Sharing the bus means that is paid once rather than per
 sensor, and the old per-sensor dummy `requestTemperatures()` in `setup()` is gone, so a
-three-probe bus went from roughly 2.5 s of every wake to about 110 ms. (That dummy conversion
-carried a comment saying it was needed "to reset OneWire which seems to fail otherwise"; it looks
-redundant given the first real read converts anyway, but it was clearly added empirically and has
-not been re-tested on hardware.)
+three-probe bus went from roughly 2.5 s of every wake to about 110 ms.
+
+**That dummy conversion was not redundant, and dropping it cost a reading.** Its comment said it
+was there "to reset OneWire which seems to fail otherwise", and the reasoning for removing it was
+that the first real read converts anyway - true, and beside the point: what it was doing was
+throwing the FIRST conversion away, and the first conversion after power reaches a probe regularly
+fails. Without it the first reading of every boot came back -127 (`DEVICE_DISCONNECTED_C`) and
+every one after it was correct. `System_OneWire::tempC()` now retries a disconnected answer once
+with a **fresh conversion** rather than a fresh read of the same scratchpad. That costs nothing on
+a bus that is answering, rather than 750 ms of every boot and every deep-sleep wake, and it also
+covers a probe that recovers later in the life of the node rather than only at setup.
+
+Note this is the second time a "looks redundant, was clearly added empirically" line in this file
+turned out to be load-bearing - the SHT's settle time was the first. Both were about a part not
+being ready as soon as the code was.
 
 **`validate()` does not reject 0.0 °C.** It used to, presumably to catch a startup artifact. That
 was survivable while a rejected reading was silently dropped, but once invalid readings began

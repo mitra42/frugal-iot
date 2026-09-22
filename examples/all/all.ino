@@ -54,7 +54,12 @@ void setup() {
   #endif
   frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, true));
   
-  frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", 5, true));
+  // 1-Wire temperature probe. The pin form looks the bus up via System_OneWire::forPin, so
+  // several probes given the same pin share one bus - see ds18b20.h for the explicit-bus form.
+  #ifndef SENSOR_DS18B20_PIN
+    #define SENSOR_DS18B20_PIN 6
+  #endif
+  frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", SENSOR_DS18B20_PIN, true));
 
   // The ENS160+AHT21 board is two chips, and so two sensors. The ENS160 needs an ambient
   // temperature and humidity for its compensation, and wires itself to the AHT21's outputs

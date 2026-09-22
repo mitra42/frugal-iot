@@ -19,9 +19,15 @@ Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, bo
   : Sensor_DS18B20(id, name, System_OneWire::forPin(pin), retain) { }
 
 void Sensor_DS18B20::setup() {
+    /* Sensor_Float::setup() FIRST, as in every other sensor, because it is what calls powerUp().
+     * On a node whose probe - or whose 4.7k pull-up - hangs off a switched pin (powerPins()),
+     * that pin is still an OUTPUT sitting LOW until powerUp() drives it, so a bus scan before
+     * this point searches an unpowered bus and finds nothing. It reads config from the
+     * filesystem too, which may dispatch a stored id, so the binding is known before the scan.
+     */
+    Sensor_Float::setup();
     bus->initialize();     // Idempotent - every probe on this bus calls it
     bus->add(this);        // So the bus can match unbound sensors to unclaimed probes
-    Sensor_Float::setup(); // Reads config from the filesystem, which may dispatch a stored id
     if (bound && !bus->isPresent(addr)) {
         // Configured for a probe that is not on the bus. Drop the binding rather than read
         // whatever else is there - resolveUnbound() may well re-match this sensor to a
@@ -68,8 +74,14 @@ float Sensor_DS18B20::readFloat() {
         // First read after setup, or after a binding changed. Every sensor on this bus has run
         // setup() by now - periodically() only runs once the whole group is set up - so which
         // sensors are unbound is finally known.
-        resolved = true;
         bus->resolveUnbound();
+        /* Latched only once it worked. A bus that scanned empty is worth trying again on the
+         * next read - a probe plugged in after boot, or one whose power came up late - whereas
+         * latching on the first attempt turns a momentary empty scan into a sensor that never
+         * reads again. Once bound there is nothing left to resolve, so this runs at most once
+         * per read cycle and stops entirely as soon as it succeeds.
+         */
+        resolved = bound;
     }
     float tempC = NAN;
     if (!bound) {

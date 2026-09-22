@@ -75,8 +75,9 @@ class System_OneWire {
     bool isClaimed(const uint8_t* addr);
 
     System_OneWire(uint8_t pin);
-    void initialize();                  // begin() + resolution; idempotent, call from each device's setup()
-    uint8_t count();                    // Devices found at initialize()
+    void initialize();                  // begin() + scan; idempotent, call from each device's setup()
+    void rescanIfEmpty();               // Re-walk the bus only while nothing has ever been found
+    uint8_t count();                    // Devices found by the last scan()
     bool addressAt(uint8_t index, uint8_t* addr); // Enumerate, for listing choices in the UX
     bool isPresent(const uint8_t* addr);
     float tempC(const uint8_t* addr);   // Converts if due, then reads this device's scratchpad
@@ -87,6 +88,7 @@ class System_OneWire {
 
     const uint8_t pin;
   private:
+    void scan();
     void requestIfDue();
     std::vector<OneWireDevice*> users; // Sensors on this bus, for resolveUnbound()
     OneWire wire;
