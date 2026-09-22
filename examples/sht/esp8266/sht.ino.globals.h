@@ -4,8 +4,8 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
-#ifndef SHT30_INO_GLOBALS_H
-#define SHT30_INO_GLOBALS_H
+#ifndef SHT_INO_GLOBALS_H
+#define SHT_INO_GLOBALS_H
 
 // Tells the library this file made it into the build. Deliberately outside
 // every #ifdef below: it says "the file is here", not "your board is covered",
@@ -37,17 +37,16 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.7
-    // Libraries specific to this hardware - sensor, actuator, etc
-    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
-
+    // Even if developing with a local copy in lib/Frugal-IoT keep this uncommented
+    // Note that if local copy, that the version number won't be enforced.
+//     Frugal-IoT@^2.0.0
+    // Add any Libraries specific to this hardware - sensor, actuator, etc but not dependencies of Frugal-IoT
+ 
 // lib_deps_lora = 
 //     ${common.lib_deps}
-    //Comment/Uncomment below two lines to switch between live and "new" version
+    //Comment/Uncomment below to switch between upstream, our fork or Jaimi's dev fork
+//     https://github.com/loramesher/LoRaMesher.git
     //jaimi5/LoRaMesher
-    //Comment/Uncomment below to switch between upstream and our fork.
-//         https://github.com/loramesher/LoRaMesher.git
-    //https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
     //https://github.com/mitra42/LoRaMesher.git#new_loramesher
 
 // lib_deps_lora_oled =
@@ -226,7 +225,7 @@
 #endif // 0
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in esp8266/sht30.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"
+  #error "This board has no settings in esp8266/sht.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"
 #endif
 
-#endif // SHT30_INO_GLOBALS_H
+#endif // SHT_INO_GLOBALS_H

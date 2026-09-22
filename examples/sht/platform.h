@@ -32,17 +32,16 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.7
-    // Libraries specific to this hardware - sensor, actuator, etc
-    // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
-
+    // Even if developing with a local copy in lib/Frugal-IoT keep this uncommented
+    // Note that if local copy, that the version number won't be enforced.
+//     Frugal-IoT@^2.0.0
+    // Add any Libraries specific to this hardware - sensor, actuator, etc but not dependencies of Frugal-IoT
+ 
 // lib_deps_lora = 
 //     ${common.lib_deps}
-    //Comment/Uncomment below two lines to switch between live and "new" version
+    //Comment/Uncomment below to switch between upstream, our fork or Jaimi's dev fork
+//     https://github.com/loramesher/LoRaMesher.git
     //jaimi5/LoRaMesher
-    //Comment/Uncomment below to switch between upstream and our fork.
-//         https://github.com/loramesher/LoRaMesher.git
-    //https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
     //https://github.com/mitra42/LoRaMesher.git#new_loramesher
 
 // lib_deps_lora_oled =
@@ -258,7 +257,7 @@
 // This is the tiny supermini board from Tencent (and clones)
 #endif // ARDUINO_LOLIN_C3_MINI
 
-// ===== [env:supermini-4x] -> ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
+// ===== [env:supermini] -> ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
 #ifdef ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
@@ -268,12 +267,14 @@
 // board_build.partitions = min_spiffs.csv
 // build_flags =
 //     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "supermini-4x"
+#define SYSTEM_OTA_SUFFIX "supermini"
     // SDA=8 SCL=9(grey) is the standard for this board but 8 is LED, so override with I2C_SDA and I2C_SCL
 #define I2C_SDA 6
 #define I2C_SCL 5
 #define SENSOR_SHT_POWER3v3_PIN 7
-#define SENSOR_BATTERY_PIN 4 // next to 3v3 for easy wiring
+// #define SENSOR_BATTERY_PIN 4 // next to 3v3 for easy wiring
+#define SENSOR_BATTERY_DEBUG
+#define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // 100k + 100k
 #define SYSTEM_MDNS_WANT // device should report directly to other local devices
 #define SYSTEM_MDNS_DEBUG
 #define SYSTEM_I2C_DEBUG

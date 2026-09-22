@@ -22,7 +22,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.7
+//     Frugal-IoT@^2.0.0
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
 

@@ -146,7 +146,9 @@ configPath	KEYWORD2
 configure	KEYWORD2
 configureMeasurement	KEYWORD2
 configure_battery	KEYWORD2
+configure_enrolment	KEYWORD2
 configure_mqtt	KEYWORD2
+configure_mqtt_enrolled	KEYWORD2
 configure_power	KEYWORD2
 connect	KEYWORD2
 connectInnerAsync	KEYWORD2
@@ -169,6 +171,7 @@ drawFastHLine	KEYWORD2
 drawFastVLine	KEYWORD2
 drawPixel	KEYWORD2
 drawXbox	KEYWORD2
+enrolIfNeeded	KEYWORD2
 exists	KEYWORD2
 fillRect	KEYWORD2
 findGatewayNode	KEYWORD2
@@ -205,6 +208,7 @@ messageReceived	KEYWORD2
 mkdir	KEYWORD2
 module	KEYWORD2
 ms5803CRC4	KEYWORD2
+noteAuthFailure	KEYWORD2
 notifyPeersOfSubscription	KEYWORD2
 now	KEYWORD2
 onNewPeer	KEYWORD2
@@ -256,9 +260,11 @@ readWords	KEYWORD2
 recover	KEYWORD2
 recoverWiFi	KEYWORD2
 relayDownstream	KEYWORD2
+relayPermitted	KEYWORD2
 remove	KEYWORD2
 requestIfDue	KEYWORD2
 rescan	KEYWORD2
+rescanIfEmpty	KEYWORD2
 resolveUnbound	KEYWORD2
 responseBuffer	KEYWORD2
 rmdir	KEYWORD2

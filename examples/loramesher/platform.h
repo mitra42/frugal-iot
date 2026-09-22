@@ -24,7 +24,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.7
+//     Frugal-IoT@^2.0.0
 
 // lib_deps_lora = 
 //     ${common.lib_deps}
