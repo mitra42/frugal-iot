@@ -7,6 +7,9 @@
  * Configuration options.
  * Optional: SENSOR_ANALOG_REFERENCE for ESP8266 only  // TODO-141 phase out
  * Optional: SENSOR_ANALOG_ATTENTUATION // TODO-141 phase out
+ * Optional: SENSOR_ANALOG_RESOLUTION - bits analogRead() returns; defaults to 12 on ESP32,
+ *           which is what every raw-count constant in this library assumes. See the block
+ *           below - the ESP32-S2 and S3 default to 13 and silently halve every such constant.
  * TODO: There is a lot more clever stuff on https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html
  * Its ESP32 specific, but looks like a range of capabilities that could be integrated.
  * 
@@ -36,6 +39,31 @@
   #endif
 #endif //  SENSOR_ANALOG_REFERENCE
 
+/* SENSOR_ANALOG_RESOLUTION - how many bits analogRead() returns.
+ *
+ * Every raw-count constant in this library assumes 12 bits, i.e. 0..4095 - Sensor_Tank's
+ * SENSOR_TANK_RAW_FULL and SENSOR_TANK_RAW_DISCONNECTED, and anything a user tares or
+ * calibrates by hand against a number they read off the portal once.
+ *
+ * The ESP32 Arduino core does NOT default to 12 everywhere. It sets __analogReturnedWidth to
+ * SOC_ADC_RTC_MAX_BITWIDTH, which is 13 on the S2 and S3 and 12 on the original ESP32 and the
+ * C3. So the same sketch, the same divider and the same sensor give readings a factor of two
+ * apart between boards, and every constant above is silently wrong on half of them. On an S2 a
+ * full tank reads ~1407 against a 703 "full" constant, converts to ~200% and is clamped to 100%
+ * - so the tank appears full from about half way up, and nothing looks broken.
+ *
+ * Defaulting to 12 on all ESP32 variants makes those constants mean what they say. Override it
+ * only if you want the extra bit AND have recalibrated every raw constant for your board.
+ *
+ * This does NOT affect Sensor_Voltage, and so not Sensor_Battery, which overrides readInt() with
+ * analogReadMilliVolts() - that returns millivolts whatever the resolution is set to.
+ */
+#ifndef SENSOR_ANALOG_RESOLUTION
+  #ifdef ESP32
+    #define SENSOR_ANALOG_RESOLUTION 12
+  #endif
+#endif // SENSOR_ANALOG_RESOLUTION
+
 #ifndef SENSOR_ANALOG_UNSUPPORTED
 // If Analog unsupported then a linker error will be generated if try and add one. 
 
@@ -59,8 +87,19 @@ void Sensor_Analog::setup() {
   #ifdef SENSOR_ANALOG_REFERENCE
     analogReference(SENSOR_ANALOG_REFERENCE); // TODO see TODO's in the sensor/analog.h
   #endif 
+  /* Global, not per-pin - analogReadResolution() and analogSetAttenuation() both apply to the
+   * whole ADC. Setting them once per sensor is therefore redundant, but harmless, and it keeps
+   * the configuration next to the pinMode it belongs with rather than in a board init nobody
+   * reads. See the note on SENSOR_ANALOG_RESOLUTION at the top of this file for why 12 matters.
+   */
+  #ifdef SENSOR_ANALOG_RESOLUTION
+    analogReadResolution(SENSOR_ANALOG_RESOLUTION);
+  #endif
   #ifdef SENSOR_ANALOG_ATTENTUATION
-    analogSetAttentuation(SENSOR_ANALOG_ATTENTUATION)
+    // Was analogSetAttentuation(...) with no semicolon - misspelt and unterminated, so defining
+    // SENSOR_ANALOG_ATTENTUATION did not change the attenuation, it failed to compile. Never
+    // exercised, because nothing in the tree defines it.
+    analogSetAttenuation((adc_attenuation_t)SENSOR_ANALOG_ATTENTUATION);
   #endif
 }
 
