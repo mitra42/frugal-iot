@@ -1,5 +1,5 @@
 /*
- *  Frugal IoT example - SHT30 temperature and humidity sensor
+ *  Frugal IoT example - SHT30 or SHT40 temperature and humidity sensor
  *
  * Optional: SENSOR_SHT_ADDRESS - defaults to auto-select
  */
@@ -27,9 +27,8 @@ void setup() {
   // LightWiFi=Light + WiFi on (not working); 
   // Modem=Modem sleep - works but negligable power saving
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles. 
-  frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
-
-  //frugal_iot.configure_power(Power_Deep, 600000, 30000); // Take a reading every 10 mins deep sleep between
+  // frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
+  frugal_iot.configure_power(Power_Deep, 600000, 30000); // Take a reading every 10 mins deep sleep between
 
   // Encapsulate setting up and starting serial and read main config also checks power ok.
   // This has to happen AFTER battery and power are setup, and before mqtt and adding sensors actuators etc.
