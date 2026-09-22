@@ -29,17 +29,52 @@ System_OneWire::System_OneWire(uint8_t pin)
 void System_OneWire::initialize() {
   if (!initialized) {
     initialized = true;
-    dallas.begin();
+    scan();
+  }
+}
+
+/* Walk the bus and remember what is on it.
+ *
+ * It is begin() that does the walking - getDeviceCount() only hands back the number begin()
+ * cached, so re-reading it without another begin() would return the same answer forever.
+ *
+ * Separate from initialize() because a scan that finds nothing is not necessarily the final
+ * answer - the probe may be on switched power that is not up yet, or simply not plugged in yet -
+ * and that count is what everything else is driven from: resolveUnbound() has nothing to match
+ * against when it is zero, and the captive portal has nothing to list. See rescanIfEmpty().
+ */
+void System_OneWire::scan() {
+  dallas.begin();
+  devices = dallas.getDeviceCount();
+  if (devices > 0) {
+    // Here rather than in initialize(): setResolution() walks the bus writing to each device it
+    // finds, so on an empty bus it writes nothing, and a probe that appeared later would be left
+    // at whatever resolution it powered up with.
     dallas.setResolution(SYSTEM_ONEWIRE_RESOLUTION);
-    devices = dallas.getDeviceCount();
-    #ifdef SYSTEM_ONEWIRE_DEBUG
-      Serial.print(F("OneWire pin ")); Serial.print(pin);
-      Serial.print(F(": ")); Serial.print(devices); Serial.println(F(" device(s)"));
-      uint8_t a[SYSTEM_ONEWIRE_ADDRLEN];
-      for (uint8_t i = 0; i < devices; i++) {
-        if (addressAt(i, a)) { Serial.print(F("  ")); Serial.println(addressToString(a)); }
-      }
-    #endif
+  }
+  #ifdef SYSTEM_ONEWIRE_DEBUG
+    Serial.print(F("OneWire pin ")); Serial.print(pin);
+    Serial.print(F(": ")); Serial.print(devices); Serial.println(F(" device(s)"));
+    // Worth printing: a probe with VDD unconnected powers itself off the data line through the
+    // pull-up, which is a different and much more marginal way to run a conversion.
+    if (dallas.isParasitePowerMode()) { Serial.println(F("  parasite powered - VDD is not connected")); }
+    uint8_t a[SYSTEM_ONEWIRE_ADDRLEN];
+    for (uint8_t i = 0; i < devices; i++) {
+      if (addressAt(i, a)) { Serial.print(F("  ")); Serial.println(addressToString(a)); }
+    }
+  #endif
+}
+
+/* Free on a bus that has found something, which is the case that matters - one comparison.
+ *
+ * On a bus that is still empty it costs a whole begin(), and begin() retries three times with a
+ * 50ms settle before giving up, so roughly 150ms. That is the price of a node whose probe is not
+ * plugged in, paid once per read cycle, and it buys the node that IS plugged in but was not ready
+ * at setup() - which is the more common of the two, and the one that used to fail permanently.
+ */
+void System_OneWire::rescanIfEmpty() {
+  if (devices == 0) {
+    scan();
   }
 }
 
@@ -63,6 +98,7 @@ bool System_OneWire::isClaimed(const uint8_t* addr) {
 
 // See onewire.h for why the rule is exactly one-to-one and nothing looser.
 void System_OneWire::resolveUnbound() {
+  rescanIfEmpty(); // The probe may have been powered up, or plugged in, since initialize()
   OneWireDevice* orphan = nullptr;
   uint8_t orphans = 0;
   for (auto u : users) {
@@ -116,9 +152,33 @@ void System_OneWire::requestIfDue() {
   }
 }
 
+/* Read this device's scratchpad, converting first if the last conversion is stale.
+ *
+ * Retried once, with a fresh conversion rather than just a fresh read, because the FIRST
+ * conversion after power is applied to a probe regularly fails and every one after it is fine.
+ * The version of this code before the bus was split out did a throwaway requestTemperatures() in
+ * setup(), with a comment saying it was needed "to reset OneWire which seems to fail otherwise";
+ * the split dropped it as redundant, since the first real read converts anyway - which is true,
+ * and missed that the point was that the first conversion is the one that gets thrown away.
+ *
+ * Doing it here rather than back in setup() costs nothing on a bus that is answering, instead of
+ * 750ms of every boot and every deep-sleep wake, and it also covers a probe that recovers later
+ * in the life of the node rather than only at setup.
+ */
 float System_OneWire::tempC(const uint8_t* addr) {
   requestIfDue();
-  return dallas.getTempC(addr); // DEVICE_DISCONNECTED_C (-127) if it did not answer
+  float c = dallas.getTempC(addr); // DEVICE_DISCONNECTED_C (-127) if it did not answer
+  if (c == DEVICE_DISCONNECTED_C) {
+    converted = false; // Force requestIfDue() to convert again rather than re-read the same scratchpad
+    requestIfDue();
+    c = dallas.getTempC(addr);
+    #ifdef SYSTEM_ONEWIRE_DEBUG
+      Serial.print(F("OneWire pin ")); Serial.print(pin);
+      Serial.print(F(": ")); Serial.print(addressToString(addr));
+      Serial.print(F(" did not answer the first conversion, retried: ")); Serial.println(c);
+    #endif
+  }
+  return c;
 }
 
 bool System_OneWire::addressFromString(const String& s, uint8_t* addr) {
