@@ -48,25 +48,14 @@ class System_Base {
      */
     virtual void statusLines(Print* out, bool full);
     virtual void infrequently();
-    // Both return true if a pin was actually driven, i.e. power really was switched
-    bool powerUp(uint8_t pin3v3, uint8_t pin0v);
-    virtual void powerUp();
-    bool powerDown(uint8_t pin3v3, uint8_t pin0v);
-    virtual void powerDown();
     virtual void prepare() { }   // Optional - prepare before sleep (overridden in subclasses)
     virtual void recover() { }   // Optional - recover after sleep (overridden in subclasses)
-    virtual System_Base* powerPins(const uint8_t power3v3, const uint8_t power0v); // Just here to allow chaining in Group
-    /* The shared bus this module talks over, when it has one - null otherwise.
-     *
-     * Overridden as a one-liner by everything with a `System_I2C interface`, a System_OneWire or
-     * a System_Modbus, returning that bus. Null here because a device on a pin of its own - an
-     * analog probe, a DHT, a GPS on its own UART - owns its power outright, and because most
-     * System_Base subclasses are not hardware at all.
-     *
-     * Here rather than on System_SensorActuator so that Actuator, which extends System_Base
-     * directly, can answer it too - Actuator_LCD is on the I2C bus like any sensor.
+    /* Switched power belongs to System_SensorActuator, not here - a Control or a System_MQTT is
+     * not a piece of hardware and has no rail to switch. This is only the chaining stub, so that
+     * powerPins() can be written straight onto a System_Group::add(), which returns System_Base*.
+     * It does nothing on anything that is not a sensor or an actuator.
      */
-    virtual System_Interface* powerInterface() { return nullptr; }
+    virtual System_Base* powerPins(const uint8_t power3v3, const uint8_t power0v);
     /* Should this output keep its state through a deep sleep? See Actuator::preserveDuringSleep.
      *
      * Here for the same reason powerPins is - so it can be chained onto a System_Group::add(),
@@ -85,22 +74,45 @@ class System_Base {
     void readConfigFromFS();
 }; // Class System_Base
 
+/* A module that IS a piece of hardware - a Sensor or an Actuator - and so may have a pin that
+ * switches its power.
+ *
+ * Both of those extend this. Actuator did not until 2026-09-23: the power pins were added for
+ * sensors and the actuator half of the job, which the class name has promised all along, was
+ * never finished. The visible symptom was that powerPins() on an actuator silently did nothing,
+ * having reached System_Base's stub, and that Actuator_LCD::powerInterface() was never consulted
+ * even though its I2C bus may well be on a switched rail.
+ *
+ * Not everything in sensor/ or actuator/ is under here even now: Actuator_OLED and Sensor_Button
+ * both extend System_Base directly, so neither can take power pins. The OLED is the one of those
+ * two worth fixing - blanking a display is exactly what a battery node wants - but it is a
+ * bigger change than this, since Actuator_OLED is not an Actuator either.
+ */
 class System_SensorActuator : public System_Base {
   public:
     System_SensorActuator(const char * const id, const String name);
     /* Claim the pins that switch power to this device.
      *
      * On a device that talks over a SHARED bus the pins are handed to that bus instead of being
-     * kept here - see System_Base::powerInterface(), and system/interface.h for why. The sketch writes
+     * kept here - see powerInterface() below, and system/interface.h for why. The sketch writes
      * the same line either way.
      */
     System_SensorActuator* powerPins(const uint8_t power3v3, const uint8_t power0v) override;
+    /* The shared bus this device talks over, when it has one - null otherwise.
+     *
+     * Overridden as a one-liner by everything with a `System_I2C interface`, a System_OneWire or
+     * a System_Modbus, returning that bus. Null here because a device on a pin of its own - an
+     * analog probe, a DHT, a GPS on its own UART - owns its power outright.
+     */
+    virtual System_Interface* powerInterface() { return nullptr; }
   protected:
     uint8_t power3v3_ = PIN_NONE;
     uint8_t power0v_ = PIN_NONE;
-    virtual void powerUp();   // Optional power management - override in derived classes
-    virtual void powerDown(); // Optional power management - override in derived classes
-  private:
+    // Both no-ops unless powerPins() was called AND kept the pins - see powerPins() above.
+    // Override in a derived class that has something to do to the chip itself first; the pattern
+    // is Sensor_INA219, which writes its power-down register before the supply goes.
+    virtual void powerUp();
+    virtual void powerDown();
 }; // Class System_SensorActuator
 
 

@@ -46,6 +46,7 @@
 #include "_settings.h"
 #include "system/power.h"
 #include "system/interface.h"
+#include "misc.h" // pinsPowerUp / pinsPowerDown - System_Power is not a System_SensorActuator
 #ifdef ESP32
   #include "driver/gpio.h" // gpio_deep_sleep_hold_en
 #endif
@@ -263,7 +264,7 @@ void System_Power::checkLevel() {
  * setup(). See SYSTEM_POWER3v3_PIN in power.h.
  */
 void System_Power::pre_setup() {
-  if (powerUp(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN)) {
+  if (pinsPowerUp(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN)) {
     delay(SYSTEM_POWER_ON_DELAY); // Nothing may be read until this rail is up
   }
 }
@@ -334,7 +335,7 @@ void System_Power::prepare() {
      */
     frugal_iot.actuators->prepare();
     System_Interface::powerDownAll(); // Every I2C, 1-Wire and RS485 bus - after the devices on them
-    powerDown(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN); // And the whole-node rail, outside those
+    pinsPowerDown(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN); // And the whole-node rail, outside those
     #ifdef ESP32 // ESP8266 does not define UART_NUM_0 may be different way to shut down if relevant
       if (mode & PauseUARTBit) {
         // Need to turn anything off that could keep it awake
@@ -431,7 +432,7 @@ void System_Power::recover() {
      * the buses; then the buses, because they feed the devices; then each device's own pin below.
      * Nothing is talked to until the settle delay at the end.
      */
-    powerUp(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN);
+    pinsPowerUp(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN);
     System_Interface::powerUpAll();
     #ifdef SYSTEM_POWER_DEBUG
       Serial.print(F("Waking for")); Serial.println(wake_ms);

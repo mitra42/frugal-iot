@@ -107,22 +107,9 @@ String System_Base::leaf2path(const char* const leaf) {
 String System_Base::leaf2path(const String& leaf) { 
   return frugal_iot.messages->path(id, leaf);
 }
-// This is here so can do an "add" on a Group that contains System_Base, does nothing on Control or System subclasses, overridden in Sensor and Actuator (via System_SensorActuator)
+// The chaining stub - see base.h. Does nothing on a Control or a System module; overridden in
+// System_SensorActuator, which both Sensor and Actuator extend.
 System_Base* System_Base::powerPins(const uint8_t power3v3, const uint8_t power0v) { return this; }
-
-bool System_Base::powerUp(uint8_t pin3v3, uint8_t pin0v) {
-  return pinsPowerUp(pin3v3, pin0v);
-}
-void System_Base::powerUp() {
-  // By default do nothing but see System_SensorActuator::powerUp()
-}
-
-bool System_Base::powerDown(uint8_t pin3v3, uint8_t pin0v) {
-  return pinsPowerDown(pin3v3, pin0v); // To power down, go to high impedance input
-}
-void System_Base::powerDown() {
-  // By default do nothing
-}
 
 System_SensorActuator::System_SensorActuator(const char * const id, const String name) 
 : System_Base(id, name) {}
@@ -151,12 +138,12 @@ System_SensorActuator* System_SensorActuator::powerPins(const uint8_t power3v3, 
   }
   return this; // For chaining
 }
-// Power management methods - no-ops when powerPins() handed the pins to a bus instead
+// Both no-ops when there are no pins, or when powerPins() handed them to a bus instead
 void System_SensorActuator::powerUp() {
-  System_Base::powerUp(power3v3_, power0v_);
+  pinsPowerUp(power3v3_, power0v_);
 }
 
 void System_SensorActuator::powerDown() {
-  System_Base::powerDown(power3v3_, power0v_);
+  pinsPowerDown(power3v3_, power0v_); // To high impedance, not driven low - see misc.h
 }
 

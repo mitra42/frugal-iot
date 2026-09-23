@@ -26,8 +26,9 @@ void shouldBeDefined();
  * its supply is gone.
  *
  * Free functions rather than methods because both halves of the library need them and they have
- * no state: System_Base::powerUp()/powerDown() for a sensor's or actuator's own pins, and
- * System_Interface for the pins that feed a whole bus (system/interface.h).
+ * no state: System_SensorActuator::powerUp()/powerDown() for a sensor's or actuator's own pins,
+ * System_Interface for the pins that feed a whole bus (system/interface.h), and System_Power for
+ * the whole node's rail.
  *
  * pinMode(OUTPUT) is set on every power up, not once when the pins are declared, because
  * powering down leaves them as INPUTs - and digitalWrite() on an INPUT pin only switches the

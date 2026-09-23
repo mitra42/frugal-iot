@@ -246,8 +246,8 @@ Frugal-IoT uses four component groups managed by `System_Frugal`:
 | `frugal_iot.controls` | `Control_*` | Logic: transform/route signals |
 | `frugal_iot.system` | `System_*` | Infrastructure (WiFi, MQTT, OTA…) |
 
-All components inherit from `System_Base` — `Sensor` via the intermediate `System_SensorActuator`,
-`Actuator` and `Control` directly. `System_Group` is a separate `System_Base` subclass used as a
+All components inherit from `System_Base` — `Sensor` and `Actuator` via the intermediate
+`System_SensorActuator`, `Control` directly. `System_Group` is a separate `System_Base` subclass used as a
 *container*: `frugal_iot.sensors`, `frugal_iot.actuators`, `frugal_iot.controls` and `frugal_iot.system`
 are each a `System_Group` holding a list of components and forwarding `setup()`/`loop()`/`dispatch()`
 to each member.
@@ -297,8 +297,11 @@ left driving a bus whose supply has gone:
 | Level | Set by | Lives on |
 |---|---|---|
 | The whole node | `SYSTEM_POWER3v3_PIN` / `SYSTEM_POWER0_PIN` | `System_Power` (`system/power.h`) |
-| One shared bus | `SYSTEM_I2C_POWER3v3_PIN`, `SYSTEM_ONEWIRE_POWER3v3_PIN`, `SYSTEM_RS485_POWER3v3_PIN` (and their `_POWER0_PIN` partners), or `powerPins()` on a sensor that has a bus | `System_Interface` (`system/interface.h`) |
-| One device | `powerPins(p3v3, p0v)` on a sensor with no bus | `System_SensorActuator` (`system/base.h`) |
+| One shared bus | `SYSTEM_I2C_POWER3v3_PIN`, `SYSTEM_ONEWIRE_POWER3v3_PIN`, `SYSTEM_RS485_POWER3v3_PIN` (and their `_POWER0_PIN` partners), or `powerPins()` on a device that has a bus | `System_Interface` (`system/interface.h`) |
+| One device | `powerPins(p3v3, p0v)` on a device with no bus | `System_SensorActuator` (`system/base.h`) |
+
+The pin-level primitives are the free functions `pinsPowerUp()`/`pinsPowerDown()` in `misc.h`, which
+all three levels call. They are free functions because the three owners share no base class.
 
 ```
 pre_setup()        node rail on
@@ -346,6 +349,32 @@ defines `SYSTEM_POWER3v3_PIN` as `POWER_CTRL` on that board. It used to be three
 `System_Power::pre_setup()` also moved ahead of `checkLevel()` in `System_Frugal::pre_setup()`,
 because on a board where one pin gates everything it may gate the battery divider too, and the
 battery reading was being taken with it off.
+
+**Only `System_SensorActuator` has power pins**, and `Sensor` and `Actuator` are what extend it.
+`System_Base` carries nothing but the `powerPins()` chaining stub, so that the call can be written
+straight onto a `System_Group::add()` (which returns `System_Base*`) — a `Control` or a
+`System_MQTT` is not hardware and has no rail to switch.
+
+`Actuator` only joined `System_SensorActuator` on 2026-09-23. The power pins were added for sensors
+and the actuator half, which the class name had promised all along, was never finished: `Actuator`
+extended `System_Base` directly, so `powerPins()` on an actuator reached the do-nothing stub and
+**silently did nothing**, and `Actuator_LCD::powerInterface()` was never consulted even though its
+I2C bus may well be switched. Moving it down also let `powerUp()`, `powerDown()` and
+`powerInterface()` move out of `System_Base` — the fix made that class smaller, not larger.
+
+Two hardware classes are still outside it and so still cannot take power pins: **`Actuator_OLED`
+and `Sensor_Button` both extend `System_Base` directly**, and `Actuator_OLED` is not an `Actuator`
+at all. Blanking a display is exactly what a battery node wants, so the OLED is the one worth
+fixing — but it is a larger change than moving a base class.
+
+**`Actuator::prepare()`/`recover()` deliberately do NOT power-cycle**, unlike `Sensor`'s. Cutting an
+actuator's supply for the sleep contradicts `preserveDuringSleep`, which defaults to true and is the
+whole reason `Actuator_Digital` holds its pin — the hold would freeze a GPIO whose load has no power
+behind it. Which should win is a decision about the hardware, not about the code: a valve that must
+stay open needs its supply, a relay board on a battery node wants it gone. So neither is assumed,
+and an actuator that wants the sleep half overrides `prepare()`/`recover()` and calls
+`powerDown()`/`powerUp()` itself. `Actuator::setup()` does call `powerUp()`, as `Sensor::setup()`
+does — a device with a power pin has to be powered to be set up at all.
 
 **None of it happens under `Power_Loop`**, because `System_Power::prepare()` and `recover()` are
 both guarded by `if (mode)` and `Power_Loop` is 0. A looping node powers everything up at boot and
