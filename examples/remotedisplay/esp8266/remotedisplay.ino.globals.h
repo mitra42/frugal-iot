@@ -181,7 +181,7 @@
 
 
 // ===== [env:d1_mini_pro] -> ARDUINO_ESP8266_WEMOS_D1MINIPRO
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINIPRO
+#if defined(ARDUINO_ESP8266_WEMOS_D1MINIPRO) || defined(D1_MINI_PRO)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = espressif8266
 // board = d1_mini_pro
@@ -192,8 +192,12 @@
 
 #endif // ARDUINO_ESP8266_WEMOS_D1MINIPRO
 
-// ===== [env:d1_mini] -> ARDUINO_ESP8266_WEMOS_D1MINI
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
+// D1_MINI, D1_MINI_4X are alternative [env:] settings for one board - at most one.
+#if (defined(D1_MINI) + defined(D1_MINI_4X)) > 1
+  #error "Define at most one of D1_MINI, D1_MINI_4X - they are alternative settings for the same board, and defining two applies both."
+#endif
+// ===== [env:d1_mini] -> ARDUINO_ESP8266_WEMOS_D1MINI, the DEFAULT for this board
+#if (defined(ARDUINO_ESP8266_WEMOS_D1MINI) && !defined(D1_MINI_4X)) || defined(D1_MINI)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // board = d1_mini
 // platform = espressif8266
@@ -204,14 +208,18 @@
 // As used at Umah Pupa
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
-// ----- [env:d1_mini_4x] also targets ARDUINO_ESP8266_WEMOS_D1MINI, DISABLED
-// Only one env per board can be active in the Arduino IDE, and
-// [env:d1_mini] is the one in effect. To use this one instead, set
+// ----- [env:d1_mini_4x] also targets ARDUINO_ESP8266_WEMOS_D1MINI
+// Only one env per board can be active in the Arduino IDE, and [env:d1_mini]
+// is the default. To use this one instead, define D1_MINI_4X for the WHOLE
+// build - it has to reach the library's sources too, so a #define in the .ino
+// is not enough:
+//   #define D1_MINI_4X at the TOP of this file, which regenerating discards.
+// To make it the default instead, and so need no define at all, set
 //   custom_arduino_default = yes
 // on [env:d1_mini_4x] in platformio.ini (and remove it from any other env for
 // this board), then re-run scripts/generate_platform_h.py.
-#if 0
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
+#if defined(D1_MINI_4X)
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // board = d1_mini
 // platform = espressif8266
 // build_flags =
@@ -219,8 +227,7 @@
 #define SYSTEM_OTA_SUFFIX "d1_mini_4x"
 // ===== LORA BOARDS - ALL ESP32 ======================================
 
-#endif // ARDUINO_ESP8266_WEMOS_D1MINI
-#endif // 0
+#endif // D1_MINI_4X
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
   #error "This board has no settings in esp8266/remotedisplay.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"

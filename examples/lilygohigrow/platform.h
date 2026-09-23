@@ -162,7 +162,7 @@
 
 
 // ===== [env:lilygohigrow] -> ARDUINO_ESP32_DEV
-#ifdef ARDUINO_ESP32_DEV
+#if defined(ARDUINO_ESP32_DEV) || defined(LILYGOHIGROW)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = esp32dev

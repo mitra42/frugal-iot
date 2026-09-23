@@ -170,7 +170,7 @@
 
 
 // ===== [env:r2] -> ARDUINO_ESP8266_SONOFF_BASIC
-#ifdef ARDUINO_ESP8266_SONOFF_BASIC
+#if defined(ARDUINO_ESP8266_SONOFF_BASIC) || defined(R2)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = espressif8266
 // board = sonoff_basic

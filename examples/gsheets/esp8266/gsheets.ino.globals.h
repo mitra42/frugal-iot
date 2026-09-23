@@ -181,7 +181,7 @@
 
 
 // ===== [env:d1_mini_pro] -> ARDUINO_ESP8266_WEMOS_D1MINIPRO
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINIPRO
+#if defined(ARDUINO_ESP8266_WEMOS_D1MINIPRO) || defined(D1_MINI_PRO)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = espressif8266
 // board = d1_mini_pro
@@ -193,7 +193,7 @@
 #endif // ARDUINO_ESP8266_WEMOS_D1MINIPRO
 
 // ===== [env:d1_mini] -> ARDUINO_ESP8266_WEMOS_D1MINI
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
+#if defined(ARDUINO_ESP8266_WEMOS_D1MINI) || defined(D1_MINI)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // board = d1_mini
 // platform = espressif8266

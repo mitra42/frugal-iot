@@ -176,7 +176,7 @@
 
 
 // ===== [env:c3_pico] -> ARDUINO_LOLIN_C3_PICO
-#ifdef ARDUINO_LOLIN_C3_PICO
+#if defined(ARDUINO_LOLIN_C3_PICO) || defined(C3_PICO)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lolin_c3_mini ; use c3_mini board defs - but note define below which is special cased
@@ -195,7 +195,7 @@
 #endif // ARDUINO_LOLIN_C3_PICO
 
 // ===== [env:s2_mini] -> ARDUINO_LOLIN_S2_MINI
-#ifdef ARDUINO_LOLIN_S2_MINI
+#if defined(ARDUINO_LOLIN_S2_MINI) || defined(S2_MINI)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI
@@ -206,7 +206,7 @@
 #endif // ARDUINO_LOLIN_S2_MINI
 
 // ===== [env:nodemcu-32s] -> ARDUINO_NodeMCU_32S
-#ifdef ARDUINO_NodeMCU_32S
+#if defined(ARDUINO_NodeMCU_32S) || defined(NODEMCU_32S)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = nodemcu-32s
@@ -220,7 +220,7 @@
 #endif // ARDUINO_NodeMCU_32S
 
 // ===== [env:ttgo-lora32-v21] -> ARDUINO_TTGO_LoRa32_v21new
-#ifdef ARDUINO_TTGO_LoRa32_v21new
+#if defined(ARDUINO_TTGO_LoRa32_v21new) || defined(TTGO_LORA32_V21)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = ttgo-lora32-v21 ; defines ARDUINO_TTGO_LoRa32_v21new
@@ -235,8 +235,12 @@
 
 #endif // ARDUINO_TTGO_LoRa32_v21new
 
-// ===== [env:lilygo_t3_s3_sx127x] -> ARDUINO_LILYGO_T3_S3_V1_X
-#ifdef ARDUINO_LILYGO_T3_S3_V1_X
+// LILYGO_T3_S3_SX127X, LILYGO_T3_S3_SX127X_SHT are alternative [env:] settings for one board - at most one.
+#if (defined(LILYGO_T3_S3_SX127X) + defined(LILYGO_T3_S3_SX127X_SHT)) > 1
+  #error "Define at most one of LILYGO_T3_S3_SX127X, LILYGO_T3_S3_SX127X_SHT - they are alternative settings for the same board, and defining two applies both."
+#endif
+// ===== [env:lilygo_t3_s3_sx127x] -> ARDUINO_LILYGO_T3_S3_V1_X, the DEFAULT for this board
+#if (defined(ARDUINO_LILYGO_T3_S3_V1_X) && !defined(LILYGO_T3_S3_SX127X_SHT)) || defined(LILYGO_T3_S3_SX127X)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
@@ -252,14 +256,20 @@
 
 #endif // ARDUINO_LILYGO_T3_S3_V1_X
 
-// ----- [env:lilygo_t3_s3_sx127x_sht] also targets ARDUINO_LILYGO_T3_S3_V1_X, DISABLED
-// Only one env per board can be active in the Arduino IDE, and
-// [env:lilygo_t3_s3_sx127x] is the one in effect. To use this one instead, set
+// ----- [env:lilygo_t3_s3_sx127x_sht] also targets ARDUINO_LILYGO_T3_S3_V1_X
+// Only one env per board can be active in the Arduino IDE, and [env:lilygo_t3_s3_sx127x]
+// is the default. To use this one instead, define LILYGO_T3_S3_SX127X_SHT for the WHOLE
+// build - it has to reach the library's sources too, so a #define in the .ino
+// is not enough. Either:
+//   put the flag -DLILYGO_T3_S3_SX127X_SHT (not a #define) in a file called build_opt.h
+//     beside the .ino - it survives this file being regenerated - or
+//   #define LILYGO_T3_S3_SX127X_SHT at the TOP of this file, which regenerating discards.
+// To make it the default instead, and so need no define at all, set
 //   custom_arduino_default = yes
 // on [env:lilygo_t3_s3_sx127x_sht] in platformio.ini (and remove it from any other env for
 // this board), then re-run scripts/generate_platform_h.py.
-#if 0
-#ifdef ARDUINO_LILYGO_T3_S3_V1_X
+#if defined(LILYGO_T3_S3_SX127X_SHT)
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
 // board_build.variant = lilygo_t3_s3_sx127x
@@ -273,11 +283,14 @@
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
 
-#endif // ARDUINO_LILYGO_T3_S3_V1_X
-#endif // 0
+#endif // LILYGO_T3_S3_SX127X_SHT
 
-// ===== [env:heltec_wifi_lora_32_V3] -> ARDUINO_heltec_wifi_lora_32_V3
-#ifdef ARDUINO_heltec_wifi_lora_32_V3
+// HELTEC_WIFI_LORA_32_V3, HELTEC_WIFI_LORA_32_V32 are alternative [env:] settings for one board - at most one.
+#if (defined(HELTEC_WIFI_LORA_32_V3) + defined(HELTEC_WIFI_LORA_32_V32)) > 1
+  #error "Define at most one of HELTEC_WIFI_LORA_32_V3, HELTEC_WIFI_LORA_32_V32 - they are alternative settings for the same board, and defining two applies both."
+#endif
+// ===== [env:heltec_wifi_lora_32_V3] -> ARDUINO_heltec_wifi_lora_32_V3, the DEFAULT for this board
+#if (defined(ARDUINO_heltec_wifi_lora_32_V3) && !defined(HELTEC_WIFI_LORA_32_V32)) || defined(HELTEC_WIFI_LORA_32_V3)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = heltec_wifi_lora_32_V3  ; there are not yet separate board and variant files for V3
@@ -292,14 +305,20 @@
 
 #endif // ARDUINO_heltec_wifi_lora_32_V3
 
-// ----- [env:heltec_wifi_lora_32_V32] also targets ARDUINO_heltec_wifi_lora_32_V3, DISABLED
-// Only one env per board can be active in the Arduino IDE, and
-// [env:heltec_wifi_lora_32_V3] is the one in effect. To use this one instead, set
+// ----- [env:heltec_wifi_lora_32_V32] also targets ARDUINO_heltec_wifi_lora_32_V3
+// Only one env per board can be active in the Arduino IDE, and [env:heltec_wifi_lora_32_V3]
+// is the default. To use this one instead, define HELTEC_WIFI_LORA_32_V32 for the WHOLE
+// build - it has to reach the library's sources too, so a #define in the .ino
+// is not enough. Either:
+//   put the flag -DHELTEC_WIFI_LORA_32_V32 (not a #define) in a file called build_opt.h
+//     beside the .ino - it survives this file being regenerated - or
+//   #define HELTEC_WIFI_LORA_32_V32 at the TOP of this file, which regenerating discards.
+// To make it the default instead, and so need no define at all, set
 //   custom_arduino_default = yes
 // on [env:heltec_wifi_lora_32_V32] in platformio.ini (and remove it from any other env for
 // this board), then re-run scripts/generate_platform_h.py.
-#if 0
-#ifdef ARDUINO_heltec_wifi_lora_32_V3
+#if defined(HELTEC_WIFI_LORA_32_V32)
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = heltec_wifi_lora_32_V3  ; defines ARDUINO_heltec_wifi_lora_32_V3; default variant heltec_wifi_lora_32_V3
 // build_flags = 
@@ -312,11 +331,14 @@
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
 
-#endif // ARDUINO_heltec_wifi_lora_32_V3
-#endif // 0
+#endif // HELTEC_WIFI_LORA_32_V32
 
-// ===== [env:tbeam] -> ARDUINO_T_Beam
-#ifdef ARDUINO_T_Beam
+// TBEAM, TBEAM_OLED are alternative [env:] settings for one board - at most one.
+#if (defined(TBEAM) + defined(TBEAM_OLED)) > 1
+  #error "Define at most one of TBEAM, TBEAM_OLED - they are alternative settings for the same board, and defining two applies both."
+#endif
+// ===== [env:tbeam] -> ARDUINO_T_Beam, the DEFAULT for this board
+#if (defined(ARDUINO_T_Beam) && !defined(TBEAM_OLED)) || defined(TBEAM)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = ttgo-t-beam ; defines ARDUINO_T_Beam
@@ -331,14 +353,20 @@
 
 #endif // ARDUINO_T_Beam
 
-// ----- [env:tbeam_oled] also targets ARDUINO_T_Beam, DISABLED
-// Only one env per board can be active in the Arduino IDE, and
-// [env:tbeam] is the one in effect. To use this one instead, set
+// ----- [env:tbeam_oled] also targets ARDUINO_T_Beam
+// Only one env per board can be active in the Arduino IDE, and [env:tbeam]
+// is the default. To use this one instead, define TBEAM_OLED for the WHOLE
+// build - it has to reach the library's sources too, so a #define in the .ino
+// is not enough. Either:
+//   put the flag -DTBEAM_OLED (not a #define) in a file called build_opt.h
+//     beside the .ino - it survives this file being regenerated - or
+//   #define TBEAM_OLED at the TOP of this file, which regenerating discards.
+// To make it the default instead, and so need no define at all, set
 //   custom_arduino_default = yes
 // on [env:tbeam_oled] in platformio.ini (and remove it from any other env for
 // this board), then re-run scripts/generate_platform_h.py.
-#if 0
-#ifdef ARDUINO_T_Beam
+#if defined(TBEAM_OLED)
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = ttgo-t-beam ; defines ARDUINO_T_Beam
 // build_flags =
@@ -353,8 +381,7 @@
 // lib_deps =
 //     ${common.lib_deps_lora_oled}
 
-#endif // ARDUINO_T_Beam
-#endif // 0
+#endif // TBEAM_OLED
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
   #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / NodeMCU-32S / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"

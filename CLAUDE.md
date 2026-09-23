@@ -33,9 +33,21 @@ nothing needs opening). Run it from the `scripts` directory:
 ```
 cd lib/Frugal-IoT/scripts
 ./arduino_compile.bash commonroom nodemcu_tambak
+./arduino_compile.bash sht s2_mini_4x -D SENSOR_SHT_DEBUG   # extra defines, repeatable
 ./arduino_compile.bash --list          # every example and its environments
 ./arduino_compile.bash --install-deps  # core + library.properties deps (ESP32 core is >1GB)
 ```
+
+`-D` goes in through `compiler.{c,cpp,S}.extra_flags`, which is the one slot that is **empty in
+both cores** and named in all three compile recipes, so it reaches every translation unit and
+displaces nothing. `build.extra_flags` is the trap: it looks like the obvious place and on ESP32
+already carries `-DESP32`, `-DCORE_DEBUG_LEVEL` and the per-MCU USB defines, which overriding
+would silently remove. The IDE's own equivalents, for a user without this script, are a
+`build_opt.h` beside the `.ino` (ESP32 - `platform.txt`'s prebuild hook copies it into the build
+and every recipe passes it as `@build_opt.h`) and a `/*@create-file:build.opt@ ... */` block in
+`<sketch>.ino.globals.h` (ESP8266 - `mkbuildoptglobals.py` lifts it out into
+`{build.path}/core/build.opt`). Both hold **flags, not C** - see the table under "Several envs on
+one board".
 
 It passes `--library ..` so the **working tree** is compiled, not whatever stale copy sits in
 `~/Documents/Arduino/libraries`. It regenerates `platform.h` first, and checks two things a bare
@@ -188,8 +200,83 @@ Someone writing their own ESP8266 sketch and happy with the defaults satisfies t
 one-line `<sketch>.ino.globals.h` containing just that define — the same file they need the moment
 they want to configure anything.
 
-`arduino_compile.bash` is unaffected: it puts the sketch dir back on the include path by borrowing
-the empty `compiler.c/cpp.extra_flags` slots, a lever an IDE user does not have.
+`arduino_compile.bash` is unaffected: it points the core's own `globals.h.source.fqfn` property at
+the file in the `esp8266/` subfolder, so the file goes through `mkbuildoptglobals.py` and gets the
+same copy/`-include`/dependency handling it would have had sitting beside the `.ino`. (It borrows
+the empty `compiler.c/cpp.extra_flags` slots too, but for `-D` arguments - see above.)
+
+### Several envs on one board: selector macros
+
+Nothing stops `platformio.ini` having two `[env:]` blocks on one `board =`. PlatformIO picks
+between them by name; the Arduino IDE cannot, since it has only Tools > Board. So
+`generate_platform_h.py` gives **every env a selector macro** - the env name uppercased, with
+anything that is not `[A-Za-z0-9_]` turned into `_`:
+
+```c
+// A board with one env - the selector is an alternative to picking the board
+// ===== [env:c3_pico] -> ARDUINO_LOLIN_C3_PICO
+#if defined(ARDUINO_LOLIN_C3_PICO) || defined(C3_PICO)
+
+// A board with two - the default stands down when the other is asked for
+// S2_MINI, S2_MINI_4X are alternative [env:] settings for one board - at most one.
+#if (defined(S2_MINI) + defined(S2_MINI_4X)) > 1
+  #error "Define at most one of S2_MINI, S2_MINI_4X - ..."
+#endif
+// ===== [env:s2_mini] -> ARDUINO_LOLIN_S2_MINI, the DEFAULT for this board
+#if (defined(ARDUINO_LOLIN_S2_MINI) && !defined(S2_MINI_4X)) || defined(S2_MINI)
+...
+// ----- [env:s2_mini_4x] also targets ARDUINO_LOLIN_S2_MINI
+#if defined(S2_MINI_4X)
+```
+
+Selecting a non-default env is then **one `#define`**, added at the top of the generated file
+above the first `// =====` block. It replaced a scheme where the non-default env was emitted
+inside `#if 0` and choosing it meant editing two `#if` lines.
+
+Four things about the shape that are not obvious:
+
+- **A board with only one env gets a selector too**, even though its board macro alone would do.
+  Without it, a name someone had defined would quietly stop working the day a second env for that
+  board is added or removed - a change of behaviour rather than a build error. The selector is the
+  stable way to name an env, whatever the `.ini` does around it.
+- **The default's guard has to stand down for each sibling.** The board macro comes from
+  Tools > Board and stays defined whichever env is wanted, so a bare
+  `defined(BOARD) || defined(S2_MINI)` would leave *both* blocks firing when `S2_MINI_4X` is
+  defined. Where the two envs share a setting that is a macro-redefinition warning; where they do
+  not it is silent.
+- **Defining two selectors is an `#error`**, for the same reason. `defined(X)` is 1 or 0 in an
+  `#if` expression, so the count is just a sum.
+- **The define has to reach every translation unit, so it does not go in the sketch.**
+  `_settings.h` pulls `platform.h` into *every* translation unit, the library's own `.cpp` files
+  included, so a `#define` in the `.ino` reaches only the sketch's - leaving the rest of the
+  library built against the default env's settings, which is worse than not trying.
+
+Three ways to do that, and they are not interchangeable:
+
+| | Where | Form | Survives regeneration |
+|---|---|---|---|
+| ESP32 | `build_opt.h` beside the `.ino` | `-DS2_MINI_4X` | **yes** |
+| ESP8266 | top of `<sketch>.ino.globals.h` | `#define D1_MINI_4X` | no |
+| either | top of the generated header | `#define S2_MINI_4X` | no |
+
+**`build_opt.h` is a gcc response file, not a header.** The `.h` is a lie the ESP32 core tells:
+`platform.txt` passes it as `"@{build.opt.path}"`, so it holds compiler flags. A `#define` in it
+is parsed as two filenames and the build stops with *no such file or directory* - verified, not
+assumed. ESP8266's `/*@create-file:build.opt@ ... */` block is the same kind of thing, and there
+`mkbuildoptglobals.py` *skips* lines starting with `#`, so a `#define` in that block is dropped in
+silence. It is also inside `<sketch>.ino.globals.h`, which this script regenerates - so it buys
+nothing over the plain `#define` above it, and the plain one is what the generated file suggests.
+
+Everything but `build_opt.h` is a local edit to a generated file. `custom_arduino_default = yes`
+on an `[env:]` in `platformio.ini` is the durable form: it makes that env the one needing no
+define at all, and survives regeneration.
+
+**`arduino_compile.bash` passes the named env's selector automatically**, which is what makes it
+able to test a non-default env at all. It takes an example and an env name and maps the env to an
+FQBN - and an FQBN cannot tell two envs on one board apart, so before the selectors existed asking
+it for `lilygo_t3_s3_sx127x_sht` compiled `lilygo_t3_s3_sx127x`'s settings and then reported
+success under the name you typed. It also takes `-D NAME[=VAL]`, repeatable, for anything else you
+want in front of the build.
 
 ## Directory Structure
 
@@ -230,10 +317,30 @@ Frugal-IoT/
 └── test/
 ```
 
-Each example directory contains a `.ino` file (the application) and a `platform.h` (hardware
-pin/address overrides), plus — for examples with ESP8266 environments — an `esp8266/` subfolder
-holding the equivalent `<sketch>.ino.globals.h` that an ESP8266 Arduino IDE user moves up beside
-the `.ino`. See "ESP8266: `<sketch>.ino.globals.h`" above for why it cannot just live there.
+Each example directory contains a `.ino` file (the application), a `platform.h` (hardware
+pin/address overrides) and a `README.md`, plus — for examples with ESP8266 environments — an
+`esp8266/` subfolder holding the equivalent `<sketch>.ino.globals.h` that an ESP8266 Arduino IDE
+user moves up beside the `.ino`. See "ESP8266: `<sketch>.ino.globals.h`" above for why it cannot
+just live there.
+
+**The README is generated too**, by the same script, and says which Tools > Board to pick for each
+`[env:]`, what to define for a board that has more than one, the ESP8266 extra step and what to do
+when a build overflows the partition. Only the part between
+
+```
+<!-- BEGIN generated by scripts/generate_platform_h.py - do not edit inside -->
+<!-- END generated -->
+```
+
+is rewritten: text above or below it is left alone, which is how `loramesher/README.md` keeps its
+hand-written gateway/node instructions and still gets the board table. An example with no README
+gets one whose title and description come from `[platformio] name`/`description`, outside the
+markers so they stay editable. The board table is built from the same `group_envs()` `platform.h`
+is, so it cannot name a different env as the board's default than the header actually configures.
+
+A `README.md` in a sketch folder does **not** hide the example from **File > Examples** — only a
+`<sketch>.ino*` file does (see above). Checked with `arduino-cli lib examples` against a throwaway
+sketchbook: all 20 still listed.
 
 ## Component Architecture
 
@@ -1616,13 +1723,14 @@ is why OSPIT's own `init.lua` loads `SSD1306.lua` and leaves the SSD1327 line co
 irrigation controller the probes win. The I2C SSD1306 on pins 21/22 has no such conflict.
 
 There is only **one** FF env, also deliberately. Arduino has no concept of environments - it
-compiles one configuration per board - so `generate_platform_h.py` keeps the first env targeting a
-given `ARDUINO_*` macro and marks any later one `DISABLED`. Two envs on one board therefore look
-fine in `platformio.ini` and silently build the same firmware twice, which is how a first attempt
-at this "compiled the SSD1327 env" three times without ever compiling an SSD1327. If you add a
-second env for a board that already has one, check the generated `platform.h` for `DISABLED`
-before believing a green build. (`lilygo_t3_s3_sx127x_sht`, `heltec_wifi_lora_32_V32` and
-`tbeam_oled` are all in this state today.)
+compiles one configuration per board - so only one env per board can be the default, and the rest
+need asking for by name. Two envs on one board therefore look fine in `platformio.ini` and, unless
+the selector is defined, silently build the same firmware twice - which is how a first attempt at
+this "compiled the SSD1327 env" three times without ever compiling an SSD1327. If you add a second
+env for a board that already has one, check which of the two `platform.h` marks
+`the DEFAULT for this board` before believing a green build. (`lilygo_t3_s3_sx127x_sht`,
+`heltec_wifi_lora_32_V32` and `tbeam_oled` are all non-default today.) See
+"Several envs on one board" below.
 
 ## Available Controls
 

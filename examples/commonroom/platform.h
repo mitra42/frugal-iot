@@ -175,7 +175,7 @@
 // S2 Agri sensor including power control
 
 // ===== [env:s2_mini] -> ARDUINO_LOLIN_S2_MINI
-#ifdef ARDUINO_LOLIN_S2_MINI
+#if defined(ARDUINO_LOLIN_S2_MINI) || defined(S2_MINI)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI ; defines ARDUINO_LOLIN_S2_MINI variant=lolin_s2_mini
@@ -204,8 +204,12 @@
 
 #endif // ARDUINO_LOLIN_S2_MINI
 
-// ===== [env:nodemcu_tambak] -> ARDUINO_NodeMCU_32S
-#ifdef ARDUINO_NodeMCU_32S
+// NODEMCU_TAMBAK, NODEMCU_LAUT are alternative [env:] settings for one board - at most one.
+#if (defined(NODEMCU_TAMBAK) + defined(NODEMCU_LAUT)) > 1
+  #error "Define at most one of NODEMCU_TAMBAK, NODEMCU_LAUT - they are alternative settings for the same board, and defining two applies both."
+#endif
+// ===== [env:nodemcu_tambak] -> ARDUINO_NodeMCU_32S, the DEFAULT for this board
+#if (defined(ARDUINO_NodeMCU_32S) && !defined(NODEMCU_LAUT)) || defined(NODEMCU_TAMBAK)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = nodemcu-32s ; defines ARDUINO_NodeMCU_32S
@@ -281,14 +285,20 @@
 // https://wiki.colabs.commonroom.info/Sensor_Laut
 #endif // ARDUINO_NodeMCU_32S
 
-// ----- [env:nodemcu_laut] also targets ARDUINO_NodeMCU_32S, DISABLED
-// Only one env per board can be active in the Arduino IDE, and
-// [env:nodemcu_tambak] is the one in effect. To use this one instead, set
+// ----- [env:nodemcu_laut] also targets ARDUINO_NodeMCU_32S
+// Only one env per board can be active in the Arduino IDE, and [env:nodemcu_tambak]
+// is the default. To use this one instead, define NODEMCU_LAUT for the WHOLE
+// build - it has to reach the library's sources too, so a #define in the .ino
+// is not enough. Either:
+//   put the flag -DNODEMCU_LAUT (not a #define) in a file called build_opt.h
+//     beside the .ino - it survives this file being regenerated - or
+//   #define NODEMCU_LAUT at the TOP of this file, which regenerating discards.
+// To make it the default instead, and so need no define at all, set
 //   custom_arduino_default = yes
 // on [env:nodemcu_laut] in platformio.ini (and remove it from any other env for
 // this board), then re-run scripts/generate_platform_h.py.
-#if 0
-#ifdef ARDUINO_NodeMCU_32S
+#if defined(NODEMCU_LAUT)
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = nodemcu-32s ; defines ARDUINO_NodeMCU_32S
 // board_build.partitions = min_spiffs.csv
@@ -345,11 +355,10 @@
 
 // ===== LORA BOARDS - ALL ESP32 ======================================
 
-#endif // ARDUINO_NodeMCU_32S
-#endif // 0
+#endif // NODEMCU_LAUT
 
 // ===== [env:heltec_wifi_lora_32_V32] -> ARDUINO_heltec_wifi_lora_32_V3
-#ifdef ARDUINO_heltec_wifi_lora_32_V3
+#if defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(HELTEC_WIFI_LORA_32_V32)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = heltec_wifi_lora_32_V3  ; defines ARDUINO_heltec_wifi_lora_32_V3; default variant heltec_wifi_lora_32_V3

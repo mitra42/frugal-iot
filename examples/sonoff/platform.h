@@ -165,7 +165,7 @@
 
 
 // ===== [env:r4] -> ARDUINO_ESP32C3_DEV
-#ifdef ARDUINO_ESP32C3_DEV
+#if defined(ARDUINO_ESP32C3_DEV) || defined(R4)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = esp32-c3-devkitm-1
@@ -192,7 +192,7 @@
 #endif // ARDUINO_ESP32C3_DEV
 
 // ===== [env:s2_mini] -> ARDUINO_LOLIN_S2_MINI
-#ifdef ARDUINO_LOLIN_S2_MINI
+#if defined(ARDUINO_LOLIN_S2_MINI) || defined(S2_MINI)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // monitor_speed = 460800
