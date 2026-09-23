@@ -25,6 +25,7 @@
 #include <hd44780.h>
 #include <hd44780ioClass/hd44780_I2Cexp.h>
 #include "actuator/actuator.h"
+#include "system/i2c.h"
 
 #ifndef ACTUATOR_LCD_COLS
   #define ACTUATOR_LCD_COLS 16
@@ -41,6 +42,13 @@ class Actuator_LCD : public Actuator {
     // (tries 0x20–0x27 then 0x38–0x3F). To pin a specific address use e.g.:
     //   hd44780_I2Cexp lcd(0x27);
     hd44780_I2Cexp lcd;
+    /* The shared bus - for begin() and for power, not for the talking, which hd44780_I2Cexp does
+     * itself (it hardcodes Wire throughout and calls Wire.begin() inside its own begin()).
+     * Address 0 because the backpack's address is the library's to find; nothing here talks to it.
+     */
+    System_I2C interface;
+    // powerPins() applies to the shared bus, not to this object - see system/interface.h
+    System_Interface* powerInterface() override { return interface.bus(); }
     INtext* input;
     void setup() override;
     void act() override;

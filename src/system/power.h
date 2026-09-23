@@ -9,6 +9,39 @@
 #include "system/base.h"
 #include "system/io.h"
 
+/* The pins that switch power to the WHOLE node's peripherals - the outermost of the three levels.
+ *
+ * For the board that has one pin gating everything hanging off it, rather than a pin per sensor
+ * or per bus. Turned on in pre_setup(), before anything reads anything, and off in prepare() after
+ * every bus and every sensor has been powered down; back on at the head of recover(), before them.
+ *
+ * The LilyGo HiGrow's POWER_CTRL is exactly this, and is wired to it below - it used to be three
+ * hard-coded #ifdef LILYGOHIGROW blocks in power.cpp with a TODO-115 asking for this.
+ *
+ * The two levels inside it are the buses (SYSTEM_I2C_POWER3v3_PIN and friends, system/interface.h)
+ * and each device's own powerPins().
+ */
+#ifndef SYSTEM_POWER3v3_PIN
+  #if defined(LILYGOHIGROW) && defined(POWER_CTRL)
+    #define SYSTEM_POWER3v3_PIN POWER_CTRL
+  #else
+    #define SYSTEM_POWER3v3_PIN PIN_NONE
+  #endif
+#endif
+#ifndef SYSTEM_POWER0_PIN
+  #define SYSTEM_POWER0_PIN PIN_NONE
+#endif
+
+/* How long to let a rail settle after switching it on, before talking to anything on it.
+ *
+ * In the header rather than power.cpp because System_Frugal::setup() waits the same amount after
+ * bringing the buses up at boot.
+ */
+#ifndef SYSTEM_POWER_ON_DELAY
+  #define SYSTEM_POWER_ON_DELAY 100 // Sufficient for most sensors or actuator power to stabilize
+  // Intention is to extend this if needed e.g. based on a certain sensor leave it longer
+#endif
+
 // TO-ADD-POWER
 
 // If need an extra bit, can assume WakeOnTimerBit = LightSleepBit

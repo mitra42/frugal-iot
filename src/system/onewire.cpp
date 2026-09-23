@@ -6,31 +6,53 @@
 #include <string.h> // for memcmp/memcpy
 #include "system/onewire.h"
 
-// One bus per pin, for the lifetime of the process. A std::vector rather than a map: a node has
-// one or two 1-Wire pins, so a linear scan is smaller and faster than anything cleverer.
-static std::vector<System_OneWire*> buses;
+/* One bus per pin, for the lifetime of the process. A std::vector rather than a map: a node has
+ * one or two 1-Wire pins, so a linear scan is smaller and faster than anything cleverer.
+ *
+ * Function-local rather than a file static so that it is guaranteed to exist even if a bus is
+ * created during static initialization - see System_I2C_Bus::forWire(), same shape.
+ */
+static std::vector<System_OneWire*>& onewire_buses() {
+  static std::vector<System_OneWire*> buses;
+  return buses;
+}
 
 System_OneWire* System_OneWire::forPin(uint8_t pin) {
-  for (auto b : buses) {
+  for (auto b : onewire_buses()) {
     if (b->pin == pin) {
       return b;
     }
   }
   System_OneWire* b = new System_OneWire(pin);
-  buses.push_back(b);
+  onewire_buses().push_back(b);
   return b;
 }
 
 System_OneWire::System_OneWire(uint8_t pin)
-: pin(pin), wire(pin), dallas(&wire) { }
+: pin(pin), wire(pin), dallas(&wire) {
+  powerPins(SYSTEM_ONEWIRE_POWER3v3_PIN, SYSTEM_ONEWIRE_POWER0_PIN);
+}
 
 // Idempotent, so every device on the bus can safely call it from its own setup() - the same
-// contract as System_I2C::initialize() and System_RS485::initialize().
+// contract as System_I2C_Bus::initialize() and System_RS485::initialize().
+// powerUp() first for the same reason as System_I2C_Bus::initialize() - a bus reached outside
+// the System_Power lifecycle still needs its rail - and because scan() below talks to the probes.
 void System_OneWire::initialize() {
   if (!initialized) {
     initialized = true;
+    powerUp();
     scan();
   }
+}
+
+// See onewire.h - the enumeration does not survive the power going away
+bool System_OneWire::powerDown() {
+  const bool any = System_Interface::powerDown();
+  if (any) {
+    devices = 0;
+    converted = false; // The scratchpads went with the power, so read nothing back from them
+  }
+  return any;
 }
 
 /* Walk the bus and remember what is on it.

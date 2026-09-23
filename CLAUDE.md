@@ -201,7 +201,8 @@ Frugal-IoT/
 │   ├── defaults.h         # Default values for all settings
 │   ├── misc.h/cpp         # Shared helpers (e.g. StringF)
 │   ├── system/            # Infrastructure: frugal (System_Frugal), wifi, mqtt, ota, power,
-│   │                       #   fs, i2c, spi, time, watchdog, base, group, io, message, discovery…
+│   │                       #   fs, i2c, onewire, modbus, interface, spi, time, watchdog, base,
+│   │                       #   group, io, message, discovery…
 │   ├── sensor/            # One file pair per sensor type (sht, dht, soil, battery, bh1750,
 │   │                       #   loadcell, ds18b20, ms5803, aht, ens160, bmx280, bme680, button,
 │   │                       #   analog, float, uint16, health, gps, sensor [base class]…)
@@ -245,8 +246,8 @@ Frugal-IoT uses four component groups managed by `System_Frugal`:
 | `frugal_iot.controls` | `Control_*` | Logic: transform/route signals |
 | `frugal_iot.system` | `System_*` | Infrastructure (WiFi, MQTT, OTA…) |
 
-All components inherit from `System_Base` — `Sensor` via the intermediate `System_SensorActuator`,
-`Actuator` and `Control` directly. `System_Group` is a separate `System_Base` subclass used as a
+All components inherit from `System_Base` — `Sensor` and `Actuator` via the intermediate
+`System_SensorActuator`, `Control` directly. `System_Group` is a separate `System_Base` subclass used as a
 *container*: `frugal_iot.sensors`, `frugal_iot.actuators`, `frugal_iot.controls` and `frugal_iot.system`
 are each a `System_Group` holding a list of components and forwarding `setup()`/`loop()`/`dispatch()`
 to each member.
@@ -286,6 +287,99 @@ frugal_iot.configure_power(type, cycle_ms, wake_ms);
 | `Power_Light` | ESP32 light sleep |
 | `Power_Modem` | Modem sleep (minimal saving) |
 | `Power_Deep` | Deep sleep — slow to reconnect; use cycle_ms ≥ 60 000 |
+
+### Switching power to peripherals — three nested levels
+
+Power to anything hanging off the board is switched at three levels, powered up outside in and
+down inside out, so that nothing is ever talked to across a rail that is not up and no device is
+left driving a bus whose supply has gone:
+
+| Level | Set by | Lives on |
+|---|---|---|
+| The whole node | `SYSTEM_POWER3v3_PIN` / `SYSTEM_POWER0_PIN` | `System_Power` (`system/power.h`) |
+| One shared bus | `SYSTEM_I2C_POWER3v3_PIN`, `SYSTEM_ONEWIRE_POWER3v3_PIN`, `SYSTEM_RS485_POWER3v3_PIN` (and their `_POWER0_PIN` partners), or `powerPins()` on a device that has a bus | `System_Interface` (`system/interface.h`) |
+| One device | `powerPins(p3v3, p0v)` on a device with no bus | `System_SensorActuator` (`system/base.h`) |
+
+The pin-level primitives are the free functions `pinsPowerUp()`/`pinsPowerDown()` in `misc.h`, which
+all three levels call. They are free functions because the three owners share no base class.
+
+```
+pre_setup()        node rail on
+frugal.setup()       buses on -> settle -> each module's setup() powers its own pin
+...readings...
+prepare()              each device's pin off -> buses off -> node rail off
+  sleep()
+recover()          node rail on -> buses on -> each device's pin on -> settle -> buses re-begun
+```
+
+**`powerPins()` on a device with a bus applies to the BUS, not to the device.** The sketch writes
+the same line either way — `->powerPins(SENSOR_SHT_POWER3v3_PIN, SENSOR_SHT_POWER0_PIN)` — but
+`System_SensorActuator::powerPins()` asks `powerInterface()` first and hands the pins over when
+there is one, leaving the object's own `power3v3_`/`power0v_` at `PIN_NONE`.
+
+That is not a tidiness choice. The rail feeding an I2C sensor feeds the bus **pull-ups** as well,
+and a 1-Wire probe's 4.7k is the same story, so doing it per device is wrong in both directions:
+the first sensor to be powered down kills the bus under the second, and nothing is left that knows
+the bus has to be `begin()`-ed again when the power comes back. Hence the separate pass over the
+buses in `System_Power::prepare()`/`recover()`, outside the pass over the sensors.
+
+**`initialize()` is called again after a power cycle**, by `System_Interface::initializeAll()`, and
+that is why it is separate from `powerUpAll()` — it runs *after* `SYSTEM_POWER_ON_DELAY`, because a
+1-Wire scan and an RS485 `begin()` both talk to hardware that has to be awake to answer. Only a bus
+that actually lost power is re-initialized: `System_Interface::powerDown()` does nothing at all
+when the bus has no power pins, so the `initialized` flag it clears stays set and `initialize()`
+stays a no-op. `System_OneWire` also drops its device count and `converted` flag, since the
+scratchpads and the enumeration went with the power.
+
+**Adding a bus class** means deriving from `System_Interface`, calling `powerPins(<its> _POWER3v3_PIN,
+<its> _POWER0_PIN)` in the constructor, and making `initialize()` an idempotent `if (!initialized)`
+that calls `powerUp()` first. Registration into the all-buses list is the base constructor's job.
+**Adding a sensor on an existing bus** means one line: `System_Interface* powerInterface() override
+{ return interface.bus(); }` (or `return bus;` / `return modbus.bus();`).
+
+**One pair of pins per bus.** Two devices on one bus asking for different pins is a wiring or
+configuration mistake — the second wins and the first's pin is left an unpowered OUTPUT — so
+`System_Interface::powerPins()` prints a warning when the pins change under it. A board that
+genuinely has two buses on two different rails names the exception directly:
+`System_I2C_Bus::forWire(&Wire1)->powerPins(pin, PIN_NONE)`.
+
+**`LILYGOHIGROW`'s `POWER_CTRL` is the whole-node level**, and is now wired to it — `power.h`
+defines `SYSTEM_POWER3v3_PIN` as `POWER_CTRL` on that board. It used to be three hard-coded
+`#ifdef LILYGOHIGROW` blocks in `power.cpp` carrying a TODO-115 asking for exactly this.
+`System_Power::pre_setup()` also moved ahead of `checkLevel()` in `System_Frugal::pre_setup()`,
+because on a board where one pin gates everything it may gate the battery divider too, and the
+battery reading was being taken with it off.
+
+**Only `System_SensorActuator` has power pins**, and `Sensor` and `Actuator` are what extend it.
+`System_Base` carries nothing but the `powerPins()` chaining stub, so that the call can be written
+straight onto a `System_Group::add()` (which returns `System_Base*`) — a `Control` or a
+`System_MQTT` is not hardware and has no rail to switch.
+
+`Actuator` only joined `System_SensorActuator` on 2026-09-23. The power pins were added for sensors
+and the actuator half, which the class name had promised all along, was never finished: `Actuator`
+extended `System_Base` directly, so `powerPins()` on an actuator reached the do-nothing stub and
+**silently did nothing**, and `Actuator_LCD::powerInterface()` was never consulted even though its
+I2C bus may well be switched. Moving it down also let `powerUp()`, `powerDown()` and
+`powerInterface()` move out of `System_Base` — the fix made that class smaller, not larger.
+
+Two hardware classes are still outside it and so still cannot take power pins: **`Actuator_OLED`
+and `Sensor_Button` both extend `System_Base` directly**, and `Actuator_OLED` is not an `Actuator`
+at all. Blanking a display is exactly what a battery node wants, so the OLED is the one worth
+fixing — but it is a larger change than moving a base class.
+
+**`Actuator::prepare()`/`recover()` deliberately do NOT power-cycle**, unlike `Sensor`'s. Cutting an
+actuator's supply for the sleep contradicts `preserveDuringSleep`, which defaults to true and is the
+whole reason `Actuator_Digital` holds its pin — the hold would freeze a GPIO whose load has no power
+behind it. Which should win is a decision about the hardware, not about the code: a valve that must
+stay open needs its supply, a relay board on a battery node wants it gone. So neither is assumed,
+and an actuator that wants the sleep half overrides `prepare()`/`recover()` and calls
+`powerDown()`/`powerUp()` itself. `Actuator::setup()` does call `powerUp()`, as `Sensor::setup()`
+does — a device with a power pin has to be powered to be set up at all.
+
+**None of it happens under `Power_Loop`**, because `System_Power::prepare()` and `recover()` are
+both guarded by `if (mode)` and `Power_Loop` is 0. A looping node powers everything up at boot and
+leaves it up, which is what sensors have always done — see the same note under `Sensor_INA219`,
+whose triggered mode exists because of it.
 
 ### Timing across deep sleep
 
@@ -728,11 +822,16 @@ over `src/defaults.h` here.
 ### System_I2C helpers
 
 `System_I2C` is a plain class (not `System_Base`), one instance **per addressed device**,
-holding `addr` plus a `TwoWire*` for the shared bus. Prefer these over hand-rolling:
+holding `addr` plus a `TwoWire*` and a pointer to the shared `System_I2C_Bus`. That second class
+is one object per physical bus - `System_I2C_Bus::forWire(wire)`, the same shape as
+`System_OneWire::forPin()` - and owns everything that is per-bus rather than per-device: the
+`begin()` and its de-duplication, the `scan()`, and the bus's power pins (see "Switching power to
+peripherals" above). Prefer these over hand-rolling:
 
 | Method | Use |
 |--------|-----|
-| `initialize()` | `wire->begin(I2C_SDA, I2C_SCL)`, **de-duplicated per bus** — every device on a bus calls it from its own `setup()`. With `-D SYSTEM_I2C_DEBUG` it also runs `scan()`, once per bus |
+| `initialize()` | `wire->begin(I2C_SDA, I2C_SCL)` on the shared bus, **de-duplicated per bus** — every device on a bus calls it from its own `setup()`. Powers the bus first, and is called again after a power cycle. With `-D SYSTEM_I2C_DEBUG` it also runs `scan()`, each time the bus comes up |
+| `bus()` | The shared `System_I2C_Bus` — what a sensor's `powerInterface()` returns, and where a sketch reaches a second bus's `powerPins()` |
 | `sendRegister(reg, value)` | Write one byte to a register |
 | `sendRegister16(reg, value)` | Write a big-endian 16-bit register |
 | `send1read(cmd, bytes)` | Send a register/command byte, read N bytes back as a big-endian integer (N ≤ 4) |
@@ -750,10 +849,10 @@ called" note in the old `ens160aht21.cpp` and TODO-115/TODO-16 in `sht.cpp`. `sc
 the global `I2C_WIRE` regardless of which bus the object was on.
 
 The automatic `scan()` under `SYSTEM_I2C_DEBUG` hangs off `initialize()`'s per-bus guard, so it
-prints once per `TwoWire` no matter how many devices are on it. `bh1750.cpp` and `lcd.cpp` still
-call `wire->begin()` directly instead of going through `initialize()`, so they do not trigger it -
-they carry their own `scan()` under their own `*_DEBUG` flags. `sht.cpp` used to be in that list
-and no longer is.
+prints once per `TwoWire` no matter how many devices are on it. `sht.cpp`, then `bh1750.cpp` and
+`lcd.cpp`, used to call `wire->begin()` directly and so missed it; all three now hold a
+`System_I2C` and go through `initialize()`, which is also what gives their `powerPins()` a bus to
+land on. They keep their own `scan()` calls under their own `*_DEBUG` flags.
 
 `read()` returns **false when the device supplied nothing** (the old TODO-101). It used to return
 true unconditionally, and a NACKed read filled the buffer with `wire->read()`'s -1 - a block of
@@ -808,7 +907,9 @@ This is the pattern to copy for any sensor with a low-power mode:
 
 Note the triggered mode helps in **every** power mode, not just sleep:
 `System_Power::prepare()` is guarded by `if (mode)`, so under `Power_Loop` nothing ever calls
-`prepare()`/`recover()` and a continuously-converting chip would draw its ~1 mA forever.
+`prepare()`/`recover()` and a continuously-converting chip would draw its ~1 mA forever. That
+guard is also why none of the switched rails in "Switching power to peripherals" are cycled under
+`Power_Loop` either.
 
 `SENSOR_INA219_CONFIG` (default `0x3FF8`) holds only the range/gain/averaging bits — the low 3
 MODE bits are owned by the class and masked off whatever you pass, so a datasheet-literal
@@ -1109,7 +1210,8 @@ unpacking. Temperature, pressure, humidity, `t_fine`, both gas formulas, `res_he
 ### 1-Wire (`system/onewire.h`) and how DS18B20 probes are bound
 
 `System_OneWire` is one object per physical bus, shared by every device on it - the same split as
-`System_RS485`/`System_Modbus` and `System_I2C`/`TwoWire`. Two things drove it:
+`System_RS485`/`System_Modbus` and `System_I2C`/`System_I2C_Bus`, and all three are
+`System_Interface` subclasses so that the bus is what carries the power pins. Two things drove it:
 
 **Position is not identity.** `DallasTemperature::getTempCByIndex(n)` re-walks the OneWire search
 tree on every read and returns whatever sits at position *n*. Add, remove or replace a probe and
@@ -1181,14 +1283,19 @@ share automatically whether or not the sketch knows buses exist.
 frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", SENSOR_DS18B20_PIN, true));
 ```
 
-**The bus scan must happen after `powerUp()`, and is retried while it finds nothing.** Both halves
-of that were regressions when the bus was split out of `Sensor_DS18B20`, and together they made a
-working node stop reading entirely. `Sensor_DS18B20::setup()` called `bus->initialize()` *before*
-`Sensor_Float::setup()` - and `Sensor::setup()` is what calls `powerUp()`. On a node whose probe
-or whose 4.7k pull-up hangs off a switched pin (`powerPins()`), that pin is an OUTPUT sitting LOW
-from the moment `powerPins()` ran, so the scan searched a bus that was actively held low and found
-nothing. The old per-sensor code happened to get this right by calling `Sensor_Float::setup()`
-first, as every other sensor in the library does.
+**The bus scan must happen after the rail is up, and is retried while it finds nothing.** Both
+halves of that were regressions when the bus was split out of `Sensor_DS18B20`, and together they
+made a working node stop reading entirely. `Sensor_DS18B20::setup()` called `bus->initialize()`
+*before* `Sensor_Float::setup()` - and `Sensor::setup()` is what called `powerUp()`. On a node
+whose probe or whose 4.7k pull-up hangs off a switched pin (`powerPins()`), that pin was an OUTPUT
+sitting LOW from the moment `powerPins()` ran, so the scan searched a bus that was actively held
+low and found nothing. The old per-sensor code happened to get this right by calling
+`Sensor_Float::setup()` first, as every other sensor in the library does.
+
+That particular trap is now closed three times over - `powerPins()` on a 1-Wire sensor reaches the
+BUS, `System_Frugal::setup()` powers every bus before any module's `setup()`, and
+`System_OneWire::initialize()` powers its own rail - but the ordering in `setup()` is kept, since
+it is also what reads a stored binding from the filesystem before the scan uses it.
 
 On its own that would have been a slow first reading rather than a dead sensor, except that the
 count was latched: `initialize()` is `if (!initialized)`, and `getDeviceCount()` only returns the
@@ -1244,6 +1351,13 @@ carries two `uint16_t[64]` buffers, 256 bytes.
 A sensor holds its `System_Modbus` **by value** and builds it from `(slave_id, bus)` in its
 constructor — compare `Sensor_ms5803`'s `System_I2C interface;`. `System_RS485::initialize()`
 is idempotent, so every device on the bus can safely call it from its own `setup()`.
+
+`System_RS485` is a `System_Interface`, so `SYSTEM_RS485_POWER3v3_PIN`/`_POWER0_PIN` — or a
+`powerPins()` call on any sensor on the bus — switch the transceiver and the probes together. That
+is the right shape for RS485 in practice: a probe is normally fed from the same pair of wires that
+carry the data, so there is one rail per bus rather than one per slave. A board that really does
+switch each probe separately should leave those flags undefined; its sensors' `powerPins()` would
+then still reach the bus, so it wants its own per-device pin handling instead.
 
 Enabled by `SYSTEM_MODBUS_WANT`, which `_settings.h` derives from any sensor that needs it
 (currently `SENSOR_ULTRASONIC_SLAVE_ID`). Bus flags: `SYSTEM_RS485_RX_PIN` and
@@ -1637,6 +1751,9 @@ the serial port instead. And `Actuator_Analog` (a DAC, not a GPIO) is not covere
 ## Debug Flags
 
 Passed as `-D FLAG` in `platformio.ini` or `#define FLAG` before the include in Arduino IDE.
+
+`SYSTEM_POWER_DEBUG` also prints a line for every power pin driven or released, wherever it is —
+node, bus or device.
 
 ```
 SYSTEM_DISCOVERY_DEBUG

@@ -88,6 +88,8 @@ class Sensor_BMx280 : public Sensor {
     OUTfloat* humidity;   // nullptr on a BMP280 - the presence of the output is the flag
   protected:
     System_I2C interface; // I2C object - compare Sensor_ms5803
+    // powerPins() applies to the shared bus, not to this object - see system/interface.h
+    System_Interface* powerInterface() override { return interface.bus(); }
     TwoWire* wire;
     const uint8_t chipId; // What setup() insists on reading back from register 0xD0
     bool present = false;  // Set by the chip id check in setup()

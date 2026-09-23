@@ -6,6 +6,7 @@
 
 // Include the superclass
 #include "sensor/float.h"
+#include "system/i2c.h"
 
 // Include the library we are building on
 #include <BH1750.h>
@@ -34,6 +35,15 @@ class Sensor_BH1750 : public Sensor_Float {
     // Define some variables
     const uint8_t addr; // I2C address
     TwoWire* wire; // The I2C interface used
+    /* The shared bus, for begin() and for power - the library does the talking.
+     *
+     * This used to be a bare wire->begin() in setup(), which is why the note there said "potential
+     * conflict with I2C on SHT. TODO-115"; going through System_I2C de-duplicates the begin() per
+     * bus like every other I2C sensor, and is what gives powerPins() somewhere to land.
+     */
+    System_I2C interface;
+    // powerPins() applies to the shared bus, not to this object - see system/interface.h
+    System_Interface* powerInterface() override { return interface.bus(); }
     BH1750 lightmeter; // The data from the library
 
     // Define any functions we override

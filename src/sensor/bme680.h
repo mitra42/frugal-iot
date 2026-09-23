@@ -103,6 +103,8 @@ class Sensor_BME680 : public Sensor {
     OUTfloat* pressure;
     OUTfloat* gas;        // nullptr if the constructor was passed gas=false
     System_I2C interface; // I2C object - compare Sensor_BME280 and Sensor_ms5803
+    // powerPins() applies to the shared bus, not to this object - see system/interface.h
+    System_Interface* powerInterface() override { return interface.bus(); }
     TwoWire* wire;
     bool present = false;    // Set by the chip id check in setup()
     uint8_t variant = 0;     // 0x00 = BME680 (gas low), 0x01 = BME688 (gas high)

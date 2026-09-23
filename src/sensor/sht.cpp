@@ -64,8 +64,9 @@ Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, 
   temperature->unit = "C";
   humidity->unit = "%";
   // Bus setup deliberately NOT here - see setup(). Constructing a sensor happens before
-  // powerPins()/powerUp(), so beginning the bus here brings the pull-ups up on a part whose
-  // VDD is still floating, on any board where a GPIO supplies it.
+  // powerPins() has said which pin feeds the bus and before anything has driven it, so beginning
+  // the bus here brings the pull-ups up on a part whose VDD is still floating, on any board where
+  // a GPIO supplies it.
 }
 
 // CRC-8, polynomial 0x31, initialised to 0xFF, no final xor. Page 14 of the SHT3x datasheet;
@@ -162,8 +163,8 @@ void Sensor_SHT::setup() {
   Sensor::setup(); // powerUp() then readConfigFromFS - both before we touch the bus
   // De-duplicated per bus, so several I2C sensors can each call it. Under SYSTEM_I2C_DEBUG it
   // also scans the bus once, which is the quickest way to separate a wiring fault from a
-  // protocol one. Doing it here rather than in the constructor means the sensor is powered
-  // by the time the bus comes up.
+  // protocol one. Doing it here rather than in the constructor means the rails are up by the
+  // time the bus comes up - it also powers the bus itself if nothing else has.
   interface.initialize();
   interface.wire->setClock(100000); // Can probably go faster - as fast as 850k on SHT40
   delay(SHT_POWERUP_MS);

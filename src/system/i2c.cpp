@@ -5,36 +5,51 @@
  */
 #include "_settings.h"
 #include <Wire.h>
+#include <vector>
 #include "system/i2c.h"
 
-System_I2C::System_I2C(uint8_t addr, TwoWire* wire)
-:  addr(addr), wire(wire) {}
+// ==================== System_I2C_Bus - one object per physical bus ====================
 
-// A System_I2C is per *device*, but wire->begin() is per *bus*, and every device on a bus calls
-// initialize() from its own setup(). So remember which buses have been begun - see the
-// "unnecessary since already called" note in ens160aht21.cpp and TODO-115/TODO-16 in sht.cpp.
-static TwoWire* i2c_begun[SYSTEM_I2C_MAX_BUSES] = { nullptr };
-
-// True if this bus has been begun before. If not, records it (when there is room) and returns
-// false so the caller does the begin().
-bool System_I2C::busAlreadyBegun() {
-  bool found = false;
-  uint8_t slot = SYSTEM_I2C_MAX_BUSES; // First free slot, if any
-  for (uint8_t i = 0; i < SYSTEM_I2C_MAX_BUSES; i++) {
-    if (i2c_begun[i] == wire) {
-      found = true;
-    } else if ((i2c_begun[i] == nullptr) && (slot == SYSTEM_I2C_MAX_BUSES)) {
-      slot = i;
-    }
-  }
-  if (!found && (slot < SYSTEM_I2C_MAX_BUSES)) {
-    i2c_begun[slot] = wire;
-  }
-  return found;
+/* One bus per TwoWire, for the lifetime of the process. A std::vector rather than a map: a board
+ * has one or two I2C buses, so a linear scan is smaller and faster than anything cleverer. Same
+ * shape as System_OneWire::forPin().
+ *
+ * Function-local rather than a file static because a sensor holding a System_I2C by value can be
+ * constructed during static initialization, and this is reached from that constructor.
+ */
+static std::vector<System_I2C_Bus*>& i2c_buses() {
+  static std::vector<System_I2C_Bus*> buses;
+  return buses;
 }
 
-void System_I2C::initialize() {
-  if (!busAlreadyBegun()) {
+System_I2C_Bus* System_I2C_Bus::forWire(TwoWire* wire) {
+  for (System_I2C_Bus* b : i2c_buses()) {
+    if (b->wire == wire) {
+      return b;
+    }
+  }
+  System_I2C_Bus* b = new System_I2C_Bus(wire);
+  i2c_buses().push_back(b);
+  return b;
+}
+
+System_I2C_Bus::System_I2C_Bus(TwoWire* wire)
+: wire(wire) {
+  // The ordinary node has one switched rail and one bus - see the note in i2c.h for the board
+  // where that is not true.
+  powerPins(SYSTEM_I2C_POWER3v3_PIN, SYSTEM_I2C_POWER0_PIN);
+}
+
+/* begin() the bus - once, and again after it has been through a power cycle.
+ *
+ * powerUp() first, so that a bus reached outside the System_Power lifecycle (a sketch talking to
+ * a chip in its own setup(), say) still gets power rather than silently finding nothing. It is a
+ * no-op when the rail is already up, which is the usual case.
+ */
+void System_I2C_Bus::initialize() {
+  if (!initialized) {
+    initialized = true;
+    powerUp();
     wire->begin(I2C_SDA, I2C_SCL);  // typically SDA SCL unless board specific in _settings.h or overridden in platformio.ini
     #ifdef SYSTEM_I2C_DEBUG
       // Once per bus, from whichever device on it happens to call initialize() first - the
@@ -43,6 +58,40 @@ void System_I2C::initialize() {
       scan();
     #endif
   }
+}
+
+// Does `address` ACK on this bus? The primitive behind both System_I2C::isPresent() and scan().
+bool System_I2C_Bus::ack(uint8_t address) {
+  wire->beginTransmission(address);
+  return wire->endTransmission() == 0;
+}
+
+void System_I2C_Bus::scan() {
+  // Print the actual GPIO numbers Wire is using so wiring can be verified.
+  // If 5V power is used for the backpack, its pull-up resistors will drive
+  // SDA/SCL to 5V — ESP32 GPIOs are NOT 5V-tolerant. Use 3.3V instead.
+  Serial.print(F("Scanning I2C on SDA=")); Serial.print(I2C_SDA);
+  Serial.print(F(" SCL=")); Serial.println(I2C_SCL);
+  bool found = false;
+  delay(1000); // TOOD-XXX remove this once sure what needed
+  // Note this scans *this* bus - it used to scan the global I2C_WIRE regardless, so a
+  // device constructed on Wire1 had its scan report the wrong bus entirely.
+  for (uint8_t a = 1; a < 127; a++) {
+    if (ack(a)) {
+      Serial.print(F("  device at 0x")); Serial.println(a, HEX);
+      found = true;
+    }
+  }
+  if (!found) Serial.println(F("  nothing found - check wiring and that SDA/SCL are correct gpio numbers above"));
+}
+
+// ==================== System_I2C - one per device on a bus ====================
+
+System_I2C::System_I2C(uint8_t addr, TwoWire* wire)
+:  addr(addr), wire(wire), bus_(System_I2C_Bus::forWire(wire)) {}
+
+void System_I2C::initialize() {
+  bus_->initialize();
 }
 
 // The raw send and write. 
@@ -143,33 +192,12 @@ bool System_I2C::sendAndRead(uint8_t cmd, uint8_t* rcvBuffer,uint8_t rcvLength) 
   return read(rcvBuffer, rcvLength);
 }
 
-// Does `address` ACK on this bus? The primitive behind both isPresent() and scan().
-bool System_I2C::ack(uint8_t address) {
-  wire->beginTransmission(address);
-  return wire->endTransmission() == 0;
-}
-
 // Cheap check that something is wired at this device's address, before reading any
 // chip-specific id register.
 bool System_I2C::isPresent() {
-  return ack(addr);
+  return bus_->ack(addr);
 }
 
 void System_I2C::scan() {
-  // Print the actual GPIO numbers Wire is using so wiring can be verified.
-  // If 5V power is used for the backpack, its pull-up resistors will drive
-  // SDA/SCL to 5V — ESP32 GPIOs are NOT 5V-tolerant. Use 3.3V instead.
-  Serial.print(F("Scanning I2C on SDA=")); Serial.print(I2C_SDA);
-  Serial.print(F(" SCL=")); Serial.println(I2C_SCL);
-  bool found = false;
-  delay(1000); // TOOD-XXX remove this once sure what needed
-  // Note this scans *this object's* bus - it used to scan the global I2C_WIRE regardless, so a
-  // device constructed on Wire1 had its scan report the wrong bus entirely.
-  for (uint8_t a = 1; a < 127; a++) {
-    if (ack(a)) {
-      Serial.print(F("  device at 0x")); Serial.println(a, HEX);
-      found = true;
-    }
-  }
-  if (!found) Serial.println(F("  nothing found - check wiring and that SDA/SCL are correct gpio numbers above"));
+  bus_->scan();
 }

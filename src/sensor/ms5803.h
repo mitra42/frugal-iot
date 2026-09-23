@@ -24,6 +24,8 @@ class Sensor_ms5803 : public Sensor {
     OUTfloat* temperature;
     // System_SPI interface; // SPI object // Not currently working - needs revising to match system_i2c patterns
     System_I2C interface; // I2C object
+    // powerPins() applies to the shared bus, not to this object - see system/interface.h
+    System_Interface* powerInterface() override { return interface.bus(); }
     uint16_t sensorCoefficients[8];
     //float press = 0;  // Stores actual pressure in mbars
     //float temp = 0;   // Stores actual temp in degrees C.

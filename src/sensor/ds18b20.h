@@ -68,6 +68,12 @@ protected:
     const uint8_t* owAddress() const override { return addr; }
     void owBindTo(const uint8_t* a) override;
 
+    /* powerPins() applies to the shared bus, not to this object - see system/interface.h.
+     * On a 1-Wire node the switched rail usually feeds the 4.7k pull-up as well as the probes,
+     * so powering it per sensor would take the bus out from under the other probes on it.
+     */
+    System_Interface* powerInterface() override { return bus; }
+
 private:
     System_OneWire* bus;
     uint8_t addr[SYSTEM_ONEWIRE_ADDRLEN];

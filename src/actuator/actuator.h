@@ -6,7 +6,15 @@
 #include "system/base.h"
 #include "system/io.h"
 
-class Actuator : public System_Base {
+/* Note System_SensorActuator, not System_Base: an actuator is a piece of hardware and may sit on
+ * a switched rail, exactly as a sensor does. This is what makes powerPins() on an actuator do
+ * anything at all, and what makes Actuator_LCD::powerInterface() reachable so its I2C bus can be
+ * switched. See the note on System_SensorActuator in system/base.h.
+ *
+ * setup() powers the device up, as Sensor::setup() does. prepare()/recover() deliberately do NOT
+ * power it down and back up the way Sensor::prepare()/recover() do - see the note on those below.
+ */
+class Actuator : public System_SensorActuator {
   public:
     /* Should this output hold its state through a DEEP sleep?
      *
@@ -35,6 +43,18 @@ class Actuator : public System_Base {
     void statusLines(Print* out, bool full) override; // One block per input
     //Actuator();
     Actuator(const char * const id, const char * const name);
+    /* Deliberately NOT overridden to powerDown()/powerUp() the way Sensor's are.
+     *
+     * Cutting an actuator's supply for the sleep contradicts preserveDuringSleep, which defaults
+     * to true and is the whole reason Actuator_Digital holds its pin: the hold would freeze a GPIO
+     * whose load has no power behind it. Which of the two should win is a decision about the
+     * hardware rather than about the code - a valve that must stay open needs its supply, a relay
+     * board on a battery node wants the supply gone - so neither is assumed here. An actuator that
+     * wants the sleep half overrides prepare()/recover() itself and calls powerDown()/powerUp().
+     *
+     * void prepare() override;
+     * void recover() override;
+     */
     void discover() override;
     void dispatch(System_Message &msg) override;
     void setup();
