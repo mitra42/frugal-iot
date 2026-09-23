@@ -58,6 +58,8 @@ class Sensor_Ultrasonic : public Sensor_Float {
       uint8_t slave_id = SENSOR_ULTRASONIC_SLAVE_ID, uint16_t reg = SENSOR_ULTRASONIC_REGISTER);
   protected:
     System_Modbus modbus; // This module as an addressed slave on the shared bus
+    // powerPins() applies to the shared RS485 bus, not to this slave - see system/interface.h
+    System_Interface* powerInterface() override { return modbus.bus(); }
     float offset;
     float scale;
     uint16_t reg;

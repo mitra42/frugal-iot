@@ -119,6 +119,8 @@ class Sensor_INA219 : public Sensor {
     OUTfloat* load;    // V
   protected:
     System_I2C interface;
+    // powerPins() applies to the shared bus, not to this object - see system/interface.h
+    System_Interface* powerInterface() override { return interface.bus(); }
     float shunt_ohms;
     float max_current;
     float current_lsb = 0.0; // Amps per bit, derived from max_current in setup()

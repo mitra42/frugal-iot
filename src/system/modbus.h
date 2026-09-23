@@ -65,6 +65,7 @@
 
 #include <Arduino.h>
 #include <ModbusMaster.h>  // https://registry.platformio.org/libraries/4-20ma/ModbusMaster
+#include "system/interface.h"
 
 #if !defined(SYSTEM_RS485_RX_PIN) || !defined(SYSTEM_RS485_TX_PIN)
   #error "Modbus is enabled but the RS485 UART pins are not set - define SYSTEM_RS485_RX_PIN and SYSTEM_RS485_TX_PIN in platformio.ini"
@@ -83,14 +84,26 @@
   #define SYSTEM_MODBUS_RETRY_CYCLES 10
 #endif
 
+/* The pins that switch power to the bus - the transceiver and, on most installations, the probes
+ * on it too. An RS485 probe is typically fed from the same pair of wires that carry the data, so
+ * there is one rail for the whole bus rather than one per slave; a board that really does switch
+ * each probe separately should leave these undefined and use each sensor's own powerPins().
+ */
+#ifndef SYSTEM_RS485_POWER3v3_PIN
+  #define SYSTEM_RS485_POWER3v3_PIN PIN_NONE
+#endif
+#ifndef SYSTEM_RS485_POWER0_PIN
+  #define SYSTEM_RS485_POWER0_PIN PIN_NONE
+#endif
+
 // One physical RS485 connection - UART plus transceiver. Share between devices on the bus.
-class System_RS485 {
+class System_RS485 : public System_Interface {
   public:
     System_RS485(HardwareSerial* serial,
       uint8_t rx_pin = SYSTEM_RS485_RX_PIN, uint8_t tx_pin = SYSTEM_RS485_TX_PIN,
       uint8_t de_pin = SYSTEM_RS485_DE_PIN, uint8_t re_pin = SYSTEM_RS485_RE_PIN,
       uint32_t baud = SYSTEM_RS485_BAUD);
-    void initialize();  // Idempotent - every device on the bus calls it from its own setup()
+    void initialize() override;  // Idempotent - every device on the bus calls it from its own setup()
     // Blocking. Returns true on success, after which responseBuffer() holds the values.
     bool readHoldingRegisters(uint8_t slave_id, uint16_t reg, uint16_t count);
     /* Modbus function 0x06, write one holding register. Blocking, true on success.
@@ -111,7 +124,6 @@ class System_RS485 {
     uint8_t de_pin;
     uint8_t re_pin;
     uint32_t baud;
-    bool initialized = false;
     uint8_t last_result = 0;
     void txEnable(bool on);
     // ModbusMaster's callbacks are plain void(*)() with nowhere to pass an instance, so the

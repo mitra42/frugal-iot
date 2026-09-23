@@ -45,6 +45,7 @@
 #endif
 #include "_settings.h"
 #include "system/power.h"
+#include "system/interface.h"
 #ifdef ESP32
   #include "driver/gpio.h" // gpio_deep_sleep_hold_en
 #endif
@@ -63,10 +64,6 @@
 //#define SYSTEM_POWER_LOW_MS 10000
 #ifndef SYSTEM_POWER_LOW_MS
   #define SYSTEM_POWER_LOW_MS (60 * 60 * 1000) // Presume solar - lets go for 1 hour intervals - TODO-194 try longer or shorter levels
-#endif
-#ifndef SYSTEM_POWER_ON_DELAY
-  #define SYSTEM_POWER_ON_DELAY 100 // Sufficient for most sensors or actuator power to stabilize
-  // Intention is to extend this if needed e.g. based on a certain sensor leave it longer
 #endif
 
 /* Not using - without a better indicator it could just leave the chip in a deep-sleep state
@@ -207,7 +204,8 @@ void System_Power::timers_clampFuture(const uint32_t max_secs) {
 
 
 // ================== setup =========== called from main.cpp::setup ========
-// This section can contain ifdef-ed parts that manage things like power at the board level such as on LILYGOHIGROW
+// Board level power - a board with one pin gating its peripherals sets SYSTEM_POWER3v3_PIN (see
+// power.h); the LilyGo HiGrow's POWER_CTRL is wired to it there and no longer #ifdef-ed here.
 
 // Check level on the battery if possible, take actions to handle low battery to avoid brown out (see notes at top of file)
 /* Re-check the battery once per wake cycle - see the note on checkLevel() in power.h.
@@ -255,12 +253,19 @@ void System_Power::checkLevel() {
   }
 }
 
-// Turn on board level power to peripherals
+/* Turn on board level power to peripherals - the outermost of the three power levels.
+ *
+ * Called from System_Frugal::pre_setup() BEFORE checkLevel() reads the battery, because on a board
+ * where one pin gates everything that pin may gate the battery divider too, and a reading taken
+ * with it off would be a reading of nothing.
+ *
+ * The buses inside it are brought up in System_Frugal::setup(), and each sensor's own pin by its
+ * setup(). See SYSTEM_POWER3v3_PIN in power.h.
+ */
 void System_Power::pre_setup() {
-  #ifdef LILYGOHIGROW
-    pinMode(POWER_CTRL, OUTPUT);
-    digitalWrite(POWER_CTRL, HIGH); // TODO-115 this is for power control - may need other board specific stuff somewhere
-  #endif
+  if (powerUp(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN)) {
+    delay(SYSTEM_POWER_ON_DELAY); // Nothing may be read until this rail is up
+  }
 }
 void System_Power::setup() {
 #ifdef ESP32 // Specific to ESP32s
@@ -319,16 +324,17 @@ void System_Power::prepare() {
     #ifdef SYSTEM_POWER_DEBUG
       Serial.println(F("Power Management: preparing"));
     #endif
-    // Power down sensors before sleep
+    /* Power down inside out: each device's own pin, then the buses they sit on, then the whole
+     * node's rail. The reverse of recover() below, and the reason the bus pass is separate from
+     * the sensor pass at all - see system/interface.h.
+     */
     frugal_iot.sensors->prepare();
     /* And tell the actuators, which until now were never in the sleep lifecycle at all - which is
      * why deep sleep releasing their pins had gone unnoticed. See actuator/digital.h.
      */
     frugal_iot.actuators->prepare();
-    // Some things wont be done if just looping
-    #ifdef LILYGOHIGROW
-      digitalWrite(POWER_CTRL, LOW);
-    #endif
+    System_Interface::powerDownAll(); // Every I2C, 1-Wire and RS485 bus - after the devices on them
+    powerDown(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN); // And the whole-node rail, outside those
     #ifdef ESP32 // ESP8266 does not define UART_NUM_0 may be different way to shut down if relevant
       if (mode & PauseUARTBit) {
         // Need to turn anything off that could keep it awake
@@ -421,9 +427,12 @@ void System_Power::recover() {
     if (mode & PauseUARTBit) { // TODO not sure this works yet
       frugal_iot.startSerial(); // Note turned UART off in prepare or sleep
     }
-    #ifdef LILYGOHIGROW
-      digitalWrite(POWER_CTRL, HIGH);
-    #endif
+    /* Power up outside in - the mirror of prepare(). The whole-node rail first, because it feeds
+     * the buses; then the buses, because they feed the devices; then each device's own pin below.
+     * Nothing is talked to until the settle delay at the end.
+     */
+    powerUp(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN);
+    System_Interface::powerUpAll();
     #ifdef SYSTEM_POWER_DEBUG
       Serial.print(F("Waking for")); Serial.println(wake_ms);
       #ifdef ACTUATOR_OLED_WANT // Maybe comment out once working
@@ -457,6 +466,15 @@ void System_Power::recover() {
     frugal_iot.sensors->recover();
     frugal_iot.actuators->recover(); // Release the pin holds and re-assert - see prepare()
     delay(SYSTEM_POWER_ON_DELAY); // Allow power to sensors and actuators to stabilize
+    /* Now the rails are up and settled, begin() any bus that lost power - its pins, its UART, its
+     * enumeration of what is on it all went away with it. A no-op on a bus that is not switched,
+     * since initialize() is idempotent and only powerDown() clears the flag it tests.
+     *
+     * After the delay, deliberately: a 1-Wire scan and an RS485 begin() both talk to hardware that
+     * has to be awake to answer, which is the same reason Sensor_INA219::powerUp() defers its
+     * register writes rather than doing them here.
+     */
+    System_Interface::initializeAll();
   }
 }
 

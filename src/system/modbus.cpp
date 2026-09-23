@@ -22,7 +22,9 @@ System_RS485::System_RS485(HardwareSerial* serial,
     de_pin(de_pin),
     re_pin(re_pin == PIN_NONE ? de_pin : re_pin), // PIN_NONE means the breakout ties RE to DE
     baud(baud)
-  { }
+  {
+    powerPins(SYSTEM_RS485_POWER3v3_PIN, SYSTEM_RS485_POWER0_PIN);
+  }
 
 // Drive the transceiver into transmit (on) or receive (off).
 // DE is active HIGH, RE is active LOW, so both follow the same level - and when the
@@ -45,10 +47,17 @@ void System_RS485::postTransmission() {
   }
 }
 
-// Called from the setup() of every device on this bus, so it has to be idempotent
+/* Called from the setup() of every device on this bus, so it has to be idempotent - and called
+ * AGAIN, through System_Interface::initializeAll(), after the bus has been through a power cycle:
+ * the transceiver comes back with its direction pins released and the slaves with their UARTs
+ * re-started, so both ends have to be set up from scratch.
+ *
+ * powerUp() first for the same reason as System_I2C_Bus::initialize().
+ */
 void System_RS485::initialize() {
   if (!initialized) {
     initialized = true;
+    powerUp();
     if (de_pin != PIN_NONE) { // PIN_NONE - transceiver switches direction on its own, leave its pins alone
       pinMode(de_pin, OUTPUT);
       pinMode(re_pin, OUTPUT);

@@ -18,6 +18,27 @@ void heap_print(const __FlashStringHelper *msg);
 
 void shouldBeDefined();
 
+/* Drive, or release, a pair of "power this thing" pins. Either may be PIN_NONE.
+ *
+ * The 3v3 pin sources the supply and is driven HIGH to turn the thing on; the 0v pin sinks the
+ * return and is driven LOW. Powering down puts BOTH back to high-impedance INPUT rather than
+ * driving them to the off level, so nothing is back-fed through a chip's protection diodes while
+ * its supply is gone.
+ *
+ * Free functions rather than methods because both halves of the library need them and they have
+ * no state: System_Base::powerUp()/powerDown() for a sensor's or actuator's own pins, and
+ * System_Interface for the pins that feed a whole bus (system/interface.h).
+ *
+ * pinMode(OUTPUT) is set on every power up, not once when the pins are declared, because
+ * powering down leaves them as INPUTs - and digitalWrite() on an INPUT pin only switches the
+ * internal pull-up, which is a few tens of microamps and nowhere near enough to run a sensor.
+ *
+ * Both return true if either pin was a real GPIO, i.e. if anything actually happened - which is
+ * what tells a caller whether it needs to wait SYSTEM_POWER_ON_DELAY for the rail to come up.
+ */
+bool pinsPowerUp(uint8_t pin3v3, uint8_t pin0v);
+bool pinsPowerDown(uint8_t pin3v3, uint8_t pin0v);
+
 /* The on-the-wire form of "this sensor currently has no reading".
  *
  * A sensor whose validate() fails publishes this instead of publishing nothing, so that the

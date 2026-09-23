@@ -53,6 +53,7 @@
 #include "system/frugal.h"
 #include "misc.h"
 #include "system/group.h"
+#include "system/interface.h"
 
 void System_Frugal::dispatch(System_Message &msg) {
   // Handle messages at top level - check for own, and if not loop through all other modules
@@ -237,19 +238,25 @@ void System_Frugal::configure_battery(const uint8_t pin, float_t voltage_divider
 
 void System_Frugal::pre_setup() {
   // Early initial stuff - happens BEFORE do System_Message::setup which uses config 
+  /* Note powercontroller->pre_setup() BEFORE checkLevel() in both branches: it turns on the
+   * board-level rail, and on a board where one pin gates everything that pin may gate the battery
+   * divider too, so a reading taken ahead of it would be a reading of nothing. It used to come
+   * after both, down beside fs_LittleFS->pre_setup().
+   */
   #ifdef SYSTEM_POWER_DEBUG
     // Need serial for debugging
     startSerial(); // Encapsulate setting up and starting serial
 
     Serial.println("Serial started");
+    powercontroller->pre_setup();
     powercontroller->checkLevel(); // Check voltage level
   #else
     // Shut down before enable startSerial to keep power draw minimal
+    powercontroller->pre_setup();
     powercontroller->checkLevel();
     startSerial(); // Encapsulate setting up and starting serial
   #endif
   fs_LittleFS->pre_setup();
-  powercontroller->pre_setup(); // Turns on power pin on Lilygo, maybe others
   // Project BEFORE it builds the prefix for topics, which will happen when reads first entry in readConfigFromFS()
   String newProject = fs_LittleFS->slurp(fs_LittleFS->configPath(id, "project"), true); // ignores if not found
   if (newProject.length()) {
@@ -274,6 +281,16 @@ void System_Frugal::setup() {
         (unsigned)ESP.getMaxAllocHeap());
       #endif
   #endif
+  /* Power up every bus before the devices on them are set up.
+   *
+   * The sketch has constructed its sensors by now, so the buses exist; each device's own pin is
+   * driven by its own setup(), inside System_Group::setup() below. Same ordering as
+   * System_Power::recover(), which is the other end of the same lifecycle - see
+   * system/interface.h.
+   */
+  if (System_Interface::powerUpAll()) {
+    delay(SYSTEM_POWER_ON_DELAY); // Only paid on a board that actually switches a bus rail
+  }
   System_Group::setup(); // includes WiFi
   #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
     ota->setup_after_mqtt_setup(); // just initializes - and not totally sure why do here and not in setup_after_wifi

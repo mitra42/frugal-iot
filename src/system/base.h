@@ -10,6 +10,7 @@
 #include "ESPAsyncWebServer.h" // for AsyncResponseStream"
 
 class System_Message; // Forward declaration to avoid circular include with system_message.h
+class System_Interface; // system/interface.h - a shared bus, and the power feeding it
 
 class System_Base {
   public:
@@ -47,13 +48,25 @@ class System_Base {
      */
     virtual void statusLines(Print* out, bool full);
     virtual void infrequently();
-    void powerUp(uint8_t pin3v3, uint8_t pin0v);
+    // Both return true if a pin was actually driven, i.e. power really was switched
+    bool powerUp(uint8_t pin3v3, uint8_t pin0v);
     virtual void powerUp();
-    void powerDown(uint8_t pin3v3, uint8_t pin0v);
+    bool powerDown(uint8_t pin3v3, uint8_t pin0v);
     virtual void powerDown();
     virtual void prepare() { }   // Optional - prepare before sleep (overridden in subclasses)
     virtual void recover() { }   // Optional - recover after sleep (overridden in subclasses)
     virtual System_Base* powerPins(const uint8_t power3v3, const uint8_t power0v); // Just here to allow chaining in Group
+    /* The shared bus this module talks over, when it has one - null otherwise.
+     *
+     * Overridden as a one-liner by everything with a `System_I2C interface`, a System_OneWire or
+     * a System_Modbus, returning that bus. Null here because a device on a pin of its own - an
+     * analog probe, a DHT, a GPS on its own UART - owns its power outright, and because most
+     * System_Base subclasses are not hardware at all.
+     *
+     * Here rather than on System_SensorActuator so that Actuator, which extends System_Base
+     * directly, can answer it too - Actuator_LCD is on the I2C bus like any sensor.
+     */
+    virtual System_Interface* powerInterface() { return nullptr; }
     /* Should this output keep its state through a deep sleep? See Actuator::preserveDuringSleep.
      *
      * Here for the same reason powerPins is - so it can be chained onto a System_Group::add(),
@@ -75,6 +88,12 @@ class System_Base {
 class System_SensorActuator : public System_Base {
   public:
     System_SensorActuator(const char * const id, const String name);
+    /* Claim the pins that switch power to this device.
+     *
+     * On a device that talks over a SHARED bus the pins are handed to that bus instead of being
+     * kept here - see System_Base::powerInterface(), and system/interface.h for why. The sketch writes
+     * the same line either way.
+     */
     System_SensorActuator* powerPins(const uint8_t power3v3, const uint8_t power0v) override;
   protected:
     uint8_t power3v3_ = PIN_NONE;

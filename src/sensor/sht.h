@@ -98,6 +98,8 @@ class Sensor_SHT : public Sensor {
     OUTfloat* humidity;
   protected:
     System_I2C interface;
+    // powerPins() applies to the shared bus, not to this object - see system/interface.h
+    System_Interface* powerInterface() override { return interface.bus(); }
     Sensor_SHT_Family family = SHT_FAMILY_NONE;
 
     void setup() override;

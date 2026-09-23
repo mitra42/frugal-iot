@@ -1,4 +1,4 @@
-// Deep Sleep issues: auto-binding re-runs on every wake by design (see resolveUnbound); bindings made by hand are persisted and survive.
+// Deep Sleep issues: auto-binding re-runs on every wake by design (see resolveUnbound); bindings made by hand are persisted and survive. A bus on a switched rail is re-scanned after a light sleep too, since powerDown() drops its enumeration - see powerDown().
 /* Frugal-IoT - shared OneWire bus for DS18B20 (and any future 1-Wire device)
  *
  * Split the same way System_RS485 is split from System_Modbus, and System_I2C from the TwoWire
@@ -24,6 +24,19 @@
 #include <vector>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include "system/interface.h"
+
+/* The pins that switch power to the 1-Wire bus - the 4.7k pull-up as well as the probes.
+ *
+ * Applied to every bus as it is created. A board with two 1-Wire pins on different rails should
+ * call powerPins() on whichever is the exception - System_OneWire::forPin(n)->powerPins(...).
+ */
+#ifndef SYSTEM_ONEWIRE_POWER3v3_PIN
+  #define SYSTEM_ONEWIRE_POWER3v3_PIN PIN_NONE
+#endif
+#ifndef SYSTEM_ONEWIRE_POWER0_PIN
+  #define SYSTEM_ONEWIRE_POWER0_PIN PIN_NONE
+#endif
 
 #ifndef SYSTEM_ONEWIRE_RESOLUTION
   #define SYSTEM_ONEWIRE_RESOLUTION 12 // bits - 12 gives 0.0625C and a 750ms conversion
@@ -52,7 +65,7 @@ class OneWireDevice {
     virtual void owBindTo(const uint8_t* addr) = 0;
 };
 
-class System_OneWire {
+class System_OneWire : public System_Interface {
   public:
     // Returns the shared bus for this pin, creating it on first use. This is what lets a sketch
     // add two sensors on the same pin and have them share a bus without knowing buses exist.
@@ -75,7 +88,14 @@ class System_OneWire {
     bool isClaimed(const uint8_t* addr);
 
     System_OneWire(uint8_t pin);
-    void initialize();                  // begin() + scan; idempotent, call from each device's setup()
+    void initialize() override;         // begin() + scan; idempotent, call from each device's setup()
+    /* Forget what is on the bus as well as releasing the pins.
+     *
+     * The probes lose their scratchpads and their resolution setting along with their power, and
+     * a ROM id read before the power cycle says nothing about what is on the bus after it - so
+     * the next initialize() has to walk the bus again rather than trust the old enumeration.
+     */
+    bool powerDown() override;
     void rescanIfEmpty();               // Re-walk the bus only while nothing has ever been found
     uint8_t count();                    // Devices found by the last scan()
     bool addressAt(uint8_t index, uint8_t* addr); // Enumerate, for listing choices in the UX
@@ -93,7 +113,6 @@ class System_OneWire {
     std::vector<OneWireDevice*> users; // Sensors on this bus, for resolveUnbound()
     OneWire wire;
     DallasTemperature dallas;
-    bool initialized = false;
     bool converted = false;             // False after any restart, so the first read always converts
     unsigned long lastConvertMs = 0;    // millis() not sleepSafeMillis - sub-cycle timing, and
                                         // `converted` covers the deep sleep restart

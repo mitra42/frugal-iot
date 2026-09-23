@@ -8,6 +8,8 @@
 #include <vector>
 #include "system/base.h"
 #include "system/frugal.h"
+#include "system/interface.h"
+#include "misc.h" // pinsPowerUp / pinsPowerDown
 
 System_Base::System_Base(const char * const id, const String name)
 : id(id), name(name) { };
@@ -108,28 +110,15 @@ String System_Base::leaf2path(const String& leaf) {
 // This is here so can do an "add" on a Group that contains System_Base, does nothing on Control or System subclasses, overridden in Sensor and Actuator (via System_SensorActuator)
 System_Base* System_Base::powerPins(const uint8_t power3v3, const uint8_t power0v) { return this; }
 
-void System_Base::powerUp(uint8_t pin3v3, uint8_t pin0v) {
-  Serial.printf("XXX powering up %d\n",pin3v3);
-  if (pin0v != PIN_NONE) {
-    digitalWrite(pin0v, LOW);
-  }
-  if (pin3v3 != PIN_NONE) {
-    digitalWrite(pin3v3, HIGH);
-  }
+bool System_Base::powerUp(uint8_t pin3v3, uint8_t pin0v) {
+  return pinsPowerUp(pin3v3, pin0v);
 }
 void System_Base::powerUp() {
   // By default do nothing but see System_SensorActuator::powerUp()
 }
 
-void System_Base::powerDown(uint8_t pin3v3, uint8_t pin0v) {
-  // To power down, go to high impedance input
-  Serial.printf("XXX powering down %d\n",pin3v3);
-  if (pin3v3 != PIN_NONE) {
-    pinMode(pin3v3, INPUT); 
-  }
-  if (pin0v != PIN_NONE) {
-    pinMode(pin0v, INPUT);
-  }
+bool System_Base::powerDown(uint8_t pin3v3, uint8_t pin0v) {
+  return pinsPowerDown(pin3v3, pin0v); // To power down, go to high impedance input
 }
 void System_Base::powerDown() {
   // By default do nothing
@@ -138,30 +127,36 @@ void System_Base::powerDown() {
 System_SensorActuator::System_SensorActuator(const char * const id, const String name) 
 : System_Base(id, name) {}
 
+/* On a device with a shared bus, the pins go to the BUS - see the note in base.h.
+ *
+ * The rail feeding an I2C sensor feeds that bus's pull-ups too, so cycling it per sensor would
+ * take the bus out from under every other device on it and leave nothing to re-begin() it
+ * afterwards. Handing them over means power3v3_/power0v_ stay PIN_NONE here, so this object's
+ * own powerUp()/powerDown() become no-ops and the bus does the work at the right moment in
+ * System_Power's ordering.
+ */
 System_SensorActuator* System_SensorActuator::powerPins(const uint8_t power3v3, const uint8_t power0v) {
-  power3v3_ = power3v3;
-  power0v_ = power0v;
-  if (power3v3_ != PIN_NONE) { 
-        pinMode(power3v3_, OUTPUT);
-  }
-  if (power0v_ != PIN_NONE) { 
-        pinMode(power0v_, OUTPUT);
+  System_Interface* bus = powerInterface();
+  if (bus) {
+    bus->powerPins(power3v3, power0v);
+  } else {
+    power3v3_ = power3v3;
+    power0v_ = power0v;
+    if (power3v3_ != PIN_NONE) {
+      pinMode(power3v3_, OUTPUT);
+    }
+    if (power0v_ != PIN_NONE) {
+      pinMode(power0v_, OUTPUT);
+    }
   }
   return this; // For chaining
 }
-// Power management methods
+// Power management methods - no-ops when powerPins() handed the pins to a bus instead
 void System_SensorActuator::powerUp() {
-  // Default implementation: call System_Base method with stored pins if valid
-  if (power3v3_ != PIN_NONE || power0v_ != PIN_NONE) {
-    System_Base::powerUp(power3v3_, power0v_);
-  }
+  System_Base::powerUp(power3v3_, power0v_);
 }
 
 void System_SensorActuator::powerDown() {
-  // Default implementation: call System_Base method with stored pins if valid
-  if (power3v3_ != PIN_NONE || power0v_ != PIN_NONE) {
-    Serial.printf("XXX powering down %d\n",power3v3_);
-    System_Base::powerDown(power3v3_, power0v_);
-  }
+  System_Base::powerDown(power3v3_, power0v_);
 }
 

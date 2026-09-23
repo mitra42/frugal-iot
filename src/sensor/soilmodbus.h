@@ -97,6 +97,8 @@ class Sensor_SoilModbus : public Sensor {
     bool provision();
   protected:
     System_Modbus modbus; // This probe as an addressed slave on the shared bus
+    // powerPins() applies to the shared RS485 bus, not to this slave - see system/interface.h
+    System_Interface* powerInterface() override { return modbus.bus(); }
     uint8_t slave_id;     // Kept here too - provision() needs it, and it is what gets written
     uint16_t reg;
     /* Every probe constructed, in construction order - which is the order sectors were added, and
