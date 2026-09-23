@@ -19,11 +19,14 @@ Sensor_DS18B20::Sensor_DS18B20(const char* id, const char* name, uint8_t pin, bo
   : Sensor_DS18B20(id, name, System_OneWire::forPin(pin), retain) { }
 
 void Sensor_DS18B20::setup() {
-    /* Sensor_Float::setup() FIRST, as in every other sensor, because it is what calls powerUp().
-     * On a node whose probe - or whose 4.7k pull-up - hangs off a switched pin (powerPins()),
-     * that pin is still an OUTPUT sitting LOW until powerUp() drives it, so a bus scan before
-     * this point searches an unpowered bus and finds nothing. It reads config from the
-     * filesystem too, which may dispatch a stored id, so the binding is known before the scan.
+    /* Sensor_Float::setup() FIRST, as in every other sensor, because it is what calls powerUp()
+     * and what reads config from the filesystem - which may dispatch a stored id, so the binding
+     * is known before the scan below.
+     *
+     * The bus's own rail is up by now whatever the order because powerPins() on a 1-Wire sensor goes to
+     * the BUS (see system/interface.h) and System_Frugal::setup() powers every bus before any
+     * module's setup() runs, and bus->initialize() powers it again for anything reached outside
+     * that lifecycle. 
      */
     Sensor_Float::setup();
     bus->initialize();     // Idempotent - every probe on this bus calls it

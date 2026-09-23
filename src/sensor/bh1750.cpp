@@ -6,6 +6,7 @@
 
 #include "_settings.h" // Defines I2C_WIRE as either Wire or Wire1
 #include "sensor/bh1750.h"
+// TODO consider rewriting to talk direct to the bh1750
 #include <BH1750.h>             //https://github.com/claws/BH1750
 #ifdef SENSOR_BH1750_DEBUG
   #include "system/i2c.h"

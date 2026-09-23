@@ -23,8 +23,10 @@ void Actuator_LCD::setup() {
   Actuator::setup();
   // Note: hd44780_I2Cexp hardcodes Wire throughout its implementation; it calls
   // Wire.begin() itself inside begin(). Our call here ensures the correct SDA/SCL
-  // pins are set first on boards where they differ from the Arduino defaults.
-  I2C_WIRE.begin(I2C_SDA, I2C_SCL);
+  // pins are set first on boards where they differ from the Arduino defaults - and, going
+  // through System_I2C rather than begin()ing directly, that the bus is powered.
+  // TODO maybe rewrite to work directly rather than through hd44780_I2Cexp so can pass wire as parameter.
+  interface.initialize();
 
   #ifdef ACTUATOR_LCD_DEBUG
     System_I2C i2c(static_cast<std::uint8_t>(0), &I2C_WIRE); // Allow scanning

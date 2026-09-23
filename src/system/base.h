@@ -72,6 +72,14 @@ class System_Base {
     void readConfigFromFS();
 }; // Class System_Base
 
+/* A module that IS a piece of hardware - a Sensor or an Actuator - and so may have a pin that
+ * switches its power.
+ *
+ * Not everything in sensor/ or actuator/ is under here even now: Actuator_OLED and Sensor_Button
+ * both extend System_Base directly, so neither can take power pins. The OLED is the one of those
+ * two worth fixing - blanking a display is exactly what a battery node wants - but it is a
+ * bigger change than this, since Actuator_OLED is not an Actuator either.
+ */
 class System_SensorActuator : public System_Base {
   public:
     System_SensorActuator(const char * const id, const String name);
