@@ -110,6 +110,30 @@
 #ifndef SYSTEM_FRUGAL_PROJECT
   #define SYSTEM_FRUGAL_PROJECT "developers"
 #endif
+#ifndef SYSTEM_MQTT_HOST
+  #define SYSTEM_MQTT_HOST "frugaliot.naturalinnovation.org"
+#endif
+/*
+ * The enrolment secret, which a node presents once to be issued its own broker credential. Set it
+ * in platformio.ini, not in the sketch - the dashboard's Nodes card prints the line to paste - so
+ * that a secret does not end up committed in source shared between builds.
+ *
+ * Empty by default rather than a compile error, because a node flashed with no secret is a case the
+ * server handles: it is refused, appears on that same Nodes card as "Failed" with the address it
+ * asked from, and an administrator can approve it from there. A build error would be clearer but
+ * would also remove the only way to admit a node whose secret has been withdrawn.
+ */
+#ifndef SYSTEM_MQTT_ENROL_SECRET
+  #define SYSTEM_MQTT_ENROL_SECRET ""
+#endif
+
+// The old way of defining userid and password, deprecated with 2.0.0
+#ifndef SYSTEM_MQTT_PASSWORD
+  #define SYSTEM_MQTT_PASSWORD "public"
+#endif    
+#ifndef SYSTEM_MQTT_USER
+  #define SYSTEM_MQTT_USER SYSTEM_FRUGAL_ORG
+#endif    
 
 
 // TO_ADD_SENSOR - a sensor that talks Modbus over RS485 pulls in the bus classes by

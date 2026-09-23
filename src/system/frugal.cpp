@@ -19,13 +19,6 @@
 #ifndef SYSTEM_FRUGAL_PROJECT
   #define SYSTEM_FRUGAL_PROJECT "developers"
 #endif
-#ifndef SYSTEM_MQTT_HOST
-  #define SYSTEM_MQTT_HOST "frugaliot.naturalinnovation.org"
-#endif
-#ifndef SYSTEM_MQTT_PASSWORD
-  #define SYSTEM_MQTT_PASSWORD "public"
-#endif    
-
 
 #include "_settings.h" // Note - ideally shouldnt be dependent on anything here
 
