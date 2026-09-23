@@ -30,7 +30,13 @@ void setup() {
   // Power_Loop: always awake, 1-second cycle (matches GPS 1 Hz update rate).
   frugal_iot.configure_power(Power_Loop, 1000, 1000);
   frugal_iot.pre_setup();
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
+  // The node fetches its OWN broker credential rather than sharing the organization's password.
+  // Host and secret both come from platformio.ini; the secret belongs in the uncommitted
+  // <name>-local.ini, never in a sketch. Built with no secret, the node is refused and listed on
+  // the dashboard's Nodes card for an administrator to approve - that is by design.
+  // The shared-password form still works - comment the last line and uncomment this to go back:
+  //frugal_iot.configure_mqtt(SYSTEM_MQTT_HOST, SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD);
+  frugal_iot.configure_mqtt_enrolled(SYSTEM_MQTT_HOST, SYSTEM_MQTT_ENROL_SECRET);
 
   // Heltec V4 GNSS connector: RX=GPIO39, TX=GPIO38, power=GPIO34 (active LOW).
   // All pin and baud defaults come from SENSOR_GPS_* defines in platformio.ini.

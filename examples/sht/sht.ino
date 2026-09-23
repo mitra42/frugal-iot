@@ -12,7 +12,7 @@
 #endif
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "TEMP", "Temporary testing");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "sht30", "SHT30 Sensor");
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after
@@ -33,25 +33,13 @@ void setup() {
   // Encapsulate setting up and starting serial and read main config also checks power ok.
   // This has to happen AFTER battery and power are setup, and before mqtt and adding sensors actuators etc.
   frugal_iot.pre_setup();
-  // ---- Testing per-node enrolment against the Pi (security branch) -------------------------
-  // The node has NO broker password compiled in. On its first boot it POSTs to the server's /enrol
-  // with the secret below, is issued its own broker credential, and keeps that in LittleFS. The
-  // secret grants only enrolment - no read, no write.
-  //
-  // Three things have to agree for this to work, and a mismatch shows as HTTP 403:
-  //   1. the organization and project, which come from SYSTEM_FRUGAL_ORG/PROJECT in platformio.ini
-  //      (set there to myfarm/lotus - the Pi knows no organization called "dev")
-  //   2. the secret below, which is config.d/secrets.yaml's enrolment_myfarm on the Pi
-  //   3. SYSTEM_MQTT_ENROL_URL in platformio.ini, pointing at the Pi's HTTP server on :8080
-  //
-  // First argument is the MQTT BROKER host; the enrolment URL is separate (see 3 above) because on
-  // the Pi they are different ports and different schemes.
-  // TODO move this to platformio.ini
-  //frugal_iot.configure_mqtt_enrolled("frugaliot.local", "sg8m_6DPs1AQi9tjYsx-eFOAJymK7JApdHSRePluAzc");
-
-  // To go back to the old shared-password behaviour, comment the line above and uncomment this -
-  // it still works, and is what every published example still uses:
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
+  // The node fetches its OWN broker credential rather than sharing the organization's password.
+  // Host and secret both come from platformio.ini; the secret belongs in the uncommitted
+  // <name>-local.ini, never in a sketch. Built with no secret, the node is refused and listed on
+  // the dashboard's Nodes card for an administrator to approve - that is by design.
+  // The shared-password form still works - comment the last line and uncomment this to go back:
+  //frugal_iot.configure_mqtt(SYSTEM_MQTT_HOST, SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD);
+  frugal_iot.configure_mqtt_enrolled(SYSTEM_MQTT_HOST, SYSTEM_MQTT_ENROL_SECRET);
 
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.

@@ -30,6 +30,11 @@
 // custom common options
 
 // [platformio]
+// Anything matching *-local.ini is loaded on top of this file, and is not committed: that is where
+// the enrolment secret goes, and which server this build is for. A GLOB rather than a name, so a
+// checkout with no such file builds unchanged instead of erroring.
+// extra_configs = *-local.ini
+
 // name: Frugal-IoT SHT30
 // description: Frugal IoT - Temperature and Humidity Sensor with SHT30
 // src_dir = .
@@ -122,8 +127,14 @@
 // #define SYSTEM_TIME_DEBUG
 // #define SYSTEM_WIFI_DEBUG
 
+// Filled in by <name>-local.ini - the enrolment secret, and which server to build against.
+// Empty here, so this file can be committed and a checkout without a local one still builds.
+// build_flags_local =
+
 // flags that apply only in main (the library can see them, but doesnt need them)
 // build_flags_main = 
+    // The enrolment secret, and which server this build is for - see <name>-local.ini
+//     ${common.build_flags_local}
 
 // project specific flags that are needed by the library 
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
