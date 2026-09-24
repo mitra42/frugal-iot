@@ -36,7 +36,7 @@
 // extra_configs = *-local.ini
 
 // name: Frugal-IoT Soil
-// description: Frugal IoT - Soil Moisture Sensor with SHT30 and Control
+// description: Frugal IoT - Soil Moisture Sensor with SHT and Control
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 

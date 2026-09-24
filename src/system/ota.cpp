@@ -5,7 +5,7 @@
 *
 * Configuration
 
-* Required: SYSTEM_OTA_PREFIX short string for different apps e.g. sht30
+* Required: SYSTEM_OTA_PREFIX short string for different apps e.g. sht
 * Required: SYSTEM_OTA_SUFFIX short string for boards e.g. d1_mini
 * Optional: SYSTEM_OTA_DEBUG SYSTEM_OTA_S SYSTEM_OTA_SERVERPORTPATH
 * 

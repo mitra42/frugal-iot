@@ -10,7 +10,7 @@
  *  The ENS160 needs an ambient temperature and humidity to compensate its gas plate, and takes
  *  them as *inputs* rather than reading a sensor of its own. That is the wiring this example
  *  makes below - and since those are ordinary wireable inputs, on a node that already has (say)
- *  an SHT30, the ENS160 can be wired to that instead and the AHT21 left out altogether.
+ *  an SHT, the ENS160 can be wired to that instead and the AHT21 left out altogether.
  */
 
 #include "Frugal-IoT.h"

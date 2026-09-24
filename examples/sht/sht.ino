@@ -1,5 +1,5 @@
 /*
- *  Frugal IoT example - SHT30 or SHT40 temperature and humidity sensor
+ *  Frugal IoT example - SHT or SHT40 temperature and humidity sensor
  *
  * Optional: SENSOR_SHT_ADDRESS - defaults to auto-select
  */
@@ -12,7 +12,7 @@
 #endif
 // Change the parameters here to match your ... 
 // organization, project, id, description
-System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "sht30", "SHT30 Sensor");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "sht", "SHT Sensor");
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after

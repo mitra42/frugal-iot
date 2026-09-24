@@ -111,7 +111,7 @@ void setup() {
   Sensor_DissolvedOxygen* dox = new Sensor_DissolvedOxygen("do", "Dissolved Oxygen", 36);
   frugal_iot.sensors->add(dox);
 
-  // Temperature and Humidity sensor (SHT30)
+  // Temperature and Humidity sensor (SHT)
   Sensor_SHT* sht;
   frugal_iot.sensors->add(sht = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   

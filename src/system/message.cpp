@@ -61,17 +61,17 @@ void System_Messages::loop() {
 }
 
 // =========== Helpers =====================
-// Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht30/temperature
+// Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht/temperature
 String System_Messages::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
     setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + topicTwig;
 }
-// Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht30/temperature
+// Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht/temperature
 String System_Messages::setPath(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
     setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + "set/" + topicTwig;
 }
-// Convert a twig e.g. sht30/temperature to path e.g. dev/developers/esp123/sht30/temperature
+// Convert a twig e.g. sht/temperature to path e.g. dev/developers/esp123/sht/temperature
 String System_Messages::path(const String topicTwig) { // TODO find other places do this and replace with call to TopicPath
   setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + topicTwig; // e.g. dev/lotus/esp1234/sht/temperature or .../temperature/max

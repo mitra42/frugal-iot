@@ -1,4 +1,4 @@
-# Frugal-IoT SHT30
+# Frugal-IoT SHT
 
 Frugal IoT - Temperature and Humidity Sensor with SHT3x or SHT4x
 

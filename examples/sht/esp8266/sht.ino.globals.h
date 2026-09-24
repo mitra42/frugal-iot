@@ -35,7 +35,7 @@
 // checkout with no such file builds unchanged instead of erroring.
 // extra_configs = *-local.ini
 
-// name: Frugal-IoT SHT30
+// name: Frugal-IoT SHT
 // description: Frugal IoT - Temperature and Humidity Sensor with SHT3x or SHT4x
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
@@ -142,7 +142,7 @@
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
     // Specific to SHT 
-#define SYSTEM_OTA_PREFIX "sht30"
+#define SYSTEM_OTA_PREFIX "sht"
 
 // LoRaMesher throws, so the boards that use it need C++ exceptions back on. build_unflags REMOVES
 // -fno-exceptions rather than countering it with -fexceptions - measured as byte-identical to a

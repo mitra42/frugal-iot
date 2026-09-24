@@ -35,8 +35,8 @@
 // checkout with no such file builds unchanged instead of erroring.
 // extra_configs = *-local.ini
 
-// name: Frugal-IoT SHT30
-// description: Frugal IoT - Temperature and Humidity Sensor with SHT30
+// name: Frugal-IoT SHT
+// description: Frugal IoT - Temperature and Humidity Sensor with SHT
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 

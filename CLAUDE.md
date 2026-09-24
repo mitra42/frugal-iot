@@ -297,7 +297,7 @@ Frugal-IoT/
 │   └── control/           # Logic blocks (hysteresis, logger, logger_fs, blinken, carousel,
 │                           #   oled, oled_loramesher, gsheets, control.h [base class]…)
 ├── examples/              # One subdirectory per example application
-│   ├── sht30/             # Temperature + humidity with optional OLED
+│   ├── sht/             # Temperature + humidity with optional OLED
 │   ├── loadcell/          # HX711 weight scale
 │   ├── soil/              # Soil moisture
 │   ├── loramesher/        # LoRa mesh gateway + node
@@ -617,7 +617,7 @@ without markup, and renders monospace so the values line up.
 
 ```
 esp32-a41f3c dev/lotus
-SHT30 Sensor - Temperature and humidity
+SHT Sensor - Temperature and humidity
 awake 412s
 time 12/09/26 14:07:33 GMT
 
@@ -1156,7 +1156,7 @@ ENS161. Was half of `sensor/ens160aht21.cpp`, which drove both chips of the comm
 "ENS160+AHT21" breakout from a single class.
 
 **The split.** The ENS160 needs an ambient temperature and humidity to compensate its gas
-plate, but it does not care where they come from — the AHT21 sharing the breakout, an SHT30
+plate, but it does not care where they come from — the AHT21 sharing the breakout, an SHT
 elsewhere on the node, or a reading published by another node entirely. Welding the two chips
 together made the AHT21 unusable on its own, made the ENS160 unusable without one, and hid the
 dependency from the UX. So the compensation values are now `IN`s (the `Sensor_DissolvedOxygen`
@@ -1888,12 +1888,12 @@ SENSOR_SHT_DEBUG
 SENSOR_SOIL_DEBUG
 ```
 
-## Example: Minimal Application (sht30)
+## Example: Minimal Application (sht)
 
 ```cpp
 #include "Frugal-IoT.h"
 
-System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "sht30", "SHT30 Sensor");
+System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "sht", "SHT Sensor");
 
 void setup() {
   frugal_iot.configure_power(Power_Deep, 600000, 30000); // 10-min cycle, 30 s awake

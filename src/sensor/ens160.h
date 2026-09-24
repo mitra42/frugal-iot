@@ -14,7 +14,7 @@
  *
  * Why the split. The ENS160 needs an ambient temperature and humidity to compensate its gas
  * plate, but it does not care where they come from - the AHT21 that happens to share the
- * breakout, an SHT30 elsewhere on the node, or a reading published by a different node
+ * breakout, an SHT elsewhere on the node, or a reading published by a different node
  * entirely. Welding the two chips into one class made the AHT21 unusable on its own, made the
  * ENS160 unusable without one, and hid the temperature/humidity dependency from the UX. So the
  * compensation values arrive as `IN`s, wired like any other signal - the same shape as

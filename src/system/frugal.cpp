@@ -50,7 +50,7 @@
 
 void System_Frugal::dispatch(System_Message &msg) {
   // Handle messages at top level - check for own, and if not loop through all other modules
-// e.g. topicSensorId: "sht30"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
+// e.g. topicSensorId: "sht"  topicTwig: "temperature" or "temperature/max"  payload="23.0" 
   if (msg.isSet() && (msg.module() == id)) {
     bool dispatched = false;
     bool needrestart = false;

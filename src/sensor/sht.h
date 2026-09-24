@@ -11,7 +11,7 @@
  * https://github.com/mitra42/frugal-iot/wiki/Building-a-temperature---humidity-sensor/
  *
  * Tested on:
- * Sensors: Lolin SHT30; a nice one on a cord, including some really cheap ones - no known
+ * Sensors: Lolin SHT; a nice one on a cord, including some really cheap ones - no known
  *          compatability issues. SHT40 on the supermini boards.
  * Dev boards: ESP8266 & ESP32 on multiple boards - no known compatability issues
  *
