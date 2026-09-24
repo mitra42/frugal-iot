@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - its timer slot is in RTC_DATA_ATTR.
 #ifndef SYSTEM_OTA_H
 #define SYSTEM_OTA_H
 

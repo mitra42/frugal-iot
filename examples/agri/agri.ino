@@ -29,8 +29,13 @@ void setup() {
   // This has to happen AFTER battery and power are setup, and before mqtt and adding sensors actuators etc. 
   frugal_iot.pre_setup();
 
-  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
+  // The node fetches its OWN broker credential rather than sharing the organization's password.
+  // Host and secret both come from platformio.ini; the secret belongs in the uncommitted
+  // <name>-local.ini, never in a sketch. Built with no secret, the node is refused and listed on
+  // the dashboard's Nodes card for an administrator to approve - that is by design.
+  // The shared-password form still works - comment the last line and uncomment this to go back:
+  //frugal_iot.configure_mqtt(SYSTEM_MQTT_HOST, SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD);
+  frugal_iot.configure_mqtt_enrolled(SYSTEM_MQTT_HOST, SYSTEM_MQTT_ENROL_SECRET);
 
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
@@ -41,7 +46,7 @@ void setup() {
   // Add sensors, actuators and controls
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true))->powerPins(SENSOR_SHT_POWER3v3_PIN, SENSOR_SHT_POWER0_PIN);
   #ifdef SENSOR_DS18B20_PIN
-    frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", SENSOR_DS18B20_PIN, 0, true))->powerPins(SENSOR_DS18B20_POWER3v3_PIN, SENSOR_DS18B20_POWER0_PIN);
+    frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", SENSOR_DS18B20_PIN, true))->powerPins(SENSOR_DS18B20_POWER3v3_PIN, SENSOR_DS18B20_POWER0_PIN);
   #endif
   #ifdef SENSOR_SOIL_PIN
     frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil",SENSOR_SOIL_PIN, 4095, -100.0/4095, "brown", true))->powerPins(SENSOR_SOIL_POWER3v3_PIN, SENSOR_SOIL_POWER0_PIN);

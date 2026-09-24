@@ -36,8 +36,13 @@ void setup() {
   // This has to happen AFTER battery and power are setup, and before mqtt and adding sensors actuators etc. 
   frugal_iot.pre_setup();
 
-  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
+  // The node fetches its OWN broker credential rather than sharing the organization's password.
+  // Host and secret both come from platformio.ini; the secret belongs in the uncommitted
+  // <name>-local.ini, never in a sketch. Built with no secret, the node is refused and listed on
+  // the dashboard's Nodes card for an administrator to approve - that is by design.
+  // The shared-password form still works - comment the last line and uncomment this to go back:
+  //frugal_iot.configure_mqtt(SYSTEM_MQTT_HOST, SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD);
+  frugal_iot.configure_mqtt_enrolled(SYSTEM_MQTT_HOST, SYSTEM_MQTT_ENROL_SECRET);
 
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
@@ -51,11 +56,17 @@ void setup() {
     ->powerPins(SENSOR_DHT_POWER3v3_PIN, SENSOR_DHT_POWER0_PIN);
   #endif
   #ifdef SENSOR_DS18B20_PIN
-    frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Water Temperature", SENSOR_DS18B20_PIN, 0, true))
+    frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Water Temperature", SENSOR_DS18B20_PIN, true))
     ->powerPins(SENSOR_DS18B20_POWER3v3_PIN, SENSOR_DS18B20_POWER0_PIN);
   #endif
   #ifdef SENSOR_TDS_PIN
-    frugal_iot.sensors->add(new Sensor_Analog("tds", "TDS", SENSOR_TDS_PIN, 2, 0, 100, SENSOR_TDS_OFFSET, SENSOR_TDS_SCALE, "purple", true))
+    // Electrical conductivity / salinity, from a DFRobot analog EC meter (K=10) - so this
+    // publishes mS/cm, not the ppm a true TDS meter would give. The id and the SENSOR_TDS_*
+    // flags are spelled "tds" because DFRobot's sample code heads this section "TDS Sensor";
+    // they stay that way so the MQTT topic (tds/tds) and its retained history keep working.
+    // Raw ADC -> mS/cm as (raw - offset) * scale, both from platformio.ini.
+    // See https://wiki.colabs.commonroom.info/Sensor_Laut
+    frugal_iot.sensors->add(new Sensor_Analog("tds", "EC / Salinity (mS/cm)", SENSOR_TDS_PIN, 2, 0, 100, SENSOR_TDS_OFFSET, SENSOR_TDS_SCALE, "purple", true))
       ->powerPins(SENSOR_TDS_POWER3v3_PIN, PIN_NONE);
   #endif 
   #ifdef SENSOR_DO_PIN

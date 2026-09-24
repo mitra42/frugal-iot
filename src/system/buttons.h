@@ -1,3 +1,4 @@
+// Deep Sleep issues: a press during sleep is missed; nothing here wakes the chip on a button.
 #ifndef SYSTEM_BUTTONS_H
 #define SYSTEM_BUTTONS_H
 
@@ -12,6 +13,8 @@ class System_Buttons : public System_Group {
   protected:
     void setup();
     void dispatch(System_Message &msg) override;
+    // A System_Group that also owns outputs, so it needs its own rather than only recursing
+    void statusLines(Print* out, bool full) override;
     void discover();
 };
 

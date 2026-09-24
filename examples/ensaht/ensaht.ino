@@ -10,7 +10,7 @@
  *  The ENS160 needs an ambient temperature and humidity to compensate its gas plate, and takes
  *  them as *inputs* rather than reading a sensor of its own. That is the wiring this example
  *  makes below - and since those are ordinary wireable inputs, on a node that already has (say)
- *  an SHT30, the ENS160 can be wired to that instead and the AHT21 left out altogether.
+ *  an SHT, the ENS160 can be wired to that instead and the AHT21 left out altogether.
  */
 
 #include "Frugal-IoT.h"
@@ -35,8 +35,13 @@ void setup() {
   frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
 
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
-  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
+  // The node fetches its OWN broker credential rather than sharing the organization's password.
+  // Host and secret both come from platformio.ini; the secret belongs in the uncommitted
+  // <name>-local.ini, never in a sketch. Built with no secret, the node is refused and listed on
+  // the dashboard's Nodes card for an administrator to approve - that is by design.
+  // The shared-password form still works - comment the last line and uncomment this to go back:
+  //frugal_iot.configure_mqtt(SYSTEM_MQTT_HOST, SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD);
+  frugal_iot.configure_mqtt_enrolled(SYSTEM_MQTT_HOST, SYSTEM_MQTT_ENROL_SECRET);
 
   // Add local wifis here, or see instructions in the wiki for adding via the /data
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));

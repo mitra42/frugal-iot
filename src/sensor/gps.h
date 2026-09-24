@@ -1,3 +1,4 @@
+// Deep Sleep issues: a fix must be re-acquired on every wake - seconds when warm, minutes from cold. See the note at the top of this file.
 /*
  * GPS sensor reading NMEA 0183 sentences via UART (e.g. Quectel L76K).
  *

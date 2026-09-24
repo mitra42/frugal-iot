@@ -217,7 +217,10 @@ bool Sensor_BMx280::validate(float temp, float press, float humy) {
 }
 
 void Sensor_BMx280::readValidateConvertSet() {
-  if (present) {
+  if (!present) {
+    // Absent at setup() and not retried - say so rather than publishing nothing at all
+    setOutputsInvalid();
+  } else {
     // Trigger one measurement; the chip returns to sleep on its own afterwards
     interface.sendRegister(BMX280_REG_CTRL_MEAS, BMX280_CTRL_MEAS_FORCED_X1);
     uint32_t start = millis(); // Not sleepSafeMillis as this is a sub-second wait
@@ -237,6 +240,7 @@ void Sensor_BMx280::readValidateConvertSet() {
       }
       if (allff) {
         connected = false;
+        setOutputsInvalid();
         #ifdef SENSOR_BMX280_DEBUG
           Serial.print(id); Serial.println(F(": all 0xFF - device not responding"));
         #endif
@@ -261,12 +265,16 @@ void Sensor_BMx280::readValidateConvertSet() {
           if (humidity) {
             humidity->set(humy);
           }
-        #ifdef SENSOR_BMX280_DEBUG
         } else {
-          Serial.print(id); Serial.println(F(": reading failed validation"));
-        #endif
+          setOutputsInvalid();
+          #ifdef SENSOR_BMX280_DEBUG
+            Serial.print(id); Serial.println(F(": reading failed validation"));
+          #endif
         }
       }
+    } else {
+      connected = false;
+      setOutputsInvalid(); // The read itself failed - previously fell through silently
     }
   }
 }

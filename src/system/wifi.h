@@ -1,3 +1,4 @@
+// Deep Sleep issues: reconnects on every wake, typically a few seconds - usually the largest single cost of a short deep-sleep cycle.
 #ifndef SYSTEM_WIFI_H
 #define SYSTEM_WIFI_H
 
@@ -42,6 +43,7 @@ class System_WiFi : public System_Base {
     #endif
     void setup() override;
     void addWiFi(String ssid, String password);
+    void statusLines(Print* out, bool full) override;
     void dispatch(System_Message &msg) override;
 };
 

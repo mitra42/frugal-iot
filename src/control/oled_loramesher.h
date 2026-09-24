@@ -1,3 +1,4 @@
+// Deep Sleep issues: mesh status reads as unknown until the mesh has re-joined, which takes longer than a short wake.
 #ifndef CONTROL_OLED_LORAMESHER_H
 #define CONTROL_OLED_LORAMESHER_H
 

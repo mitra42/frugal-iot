@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - read fresh on each wake.
 /* Frugal IoT - AHT20 / AHT21 temperature and humidity sensor
  *
  * NOTE - the AHT21 path is the code that used to live inside sensor/ens160aht21.cpp and has run
@@ -65,6 +66,8 @@ class Sensor_AHT : public Sensor {
     OUTfloat* humidity;
   protected:
     System_I2C interface;
+    // powerPins() applies to the shared bus, not to this object - see system/interface.h
+    System_Interface* powerInterface() override { return interface.bus(); }
     bool present = false; // Set in setup() by the first status read
 
     void setup() override;

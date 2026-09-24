@@ -33,7 +33,12 @@ void System_Captive::setupLanguages() {
     F("Soil Moisture Tare"),
     F("Cycle Time (ms)"),
     F("Wake Time (ms)"),
-    F("Offset")
+    F("Offset"),
+    F("Device Time"),
+    F("Set time from this device"),
+    F("not set"),
+    F("Probe"),
+    F("not selected")
   };
 
   T = TT[Language_EN];
@@ -64,7 +69,12 @@ void System_Captive::setupLanguages() {
       F("Humidité du Sol Tare"),
       F("Temps de Cycle (ms)"),
       F("Temps d'Éveil (ms)"),
-      F("Décalage")
+      F("Décalage"),
+      F("Heure de l'appareil"),
+      F("Regler depuis cet appareil"),
+      F("non reglee"),
+      F("Sonde"),
+      F("non selectionnee")
       };
   #endif //LANGUAGE_FR
 
@@ -94,7 +104,12 @@ void System_Captive::setupLanguages() {
       F("Tara de Humedad del Suelo"),
       F("Tiempo de Ciclo (ms)"),
       F("Tiempo de Activación (ms)"),
-      F("Desplazamiento")
+      F("Desplazamiento"),
+      F("Hora del dispositivo"),
+      F("Ajustar desde este dispositivo"),
+      F("sin ajustar"),
+      F("Sonda"),
+      F("sin seleccionar")
  };
   #endif //LANGUAGE_SP
 
@@ -124,7 +139,12 @@ void System_Captive::setupLanguages() {
       F("Bodenfeuchtigkeit Tara"),
       F("Zykluszeit (ms)"),
       F("Aufwachzeit (ms)"),
-      F("Versatz")
+      F("Versatz"),
+      F("Geraetezeit"),
+      F("Zeit von diesem Geraet setzen"),
+      F("nicht gesetzt"),
+      F("Fuehler"),
+      F("nicht gewaehlt")
       };
   #endif //LANGUAGE_DE
 
@@ -154,7 +174,12 @@ void System_Captive::setupLanguages() {
       F("Bodemvocht Tarra"),
       F("Cyclustijd (ms)"),
       F("Wektijd (ms)"),
-      F("Correctie")
+      F("Correctie"),
+      F("Apparaattijd"),
+      F("Tijd instellen vanaf dit apparaat"),
+      F("niet ingesteld"),
+      F("Sensor"),
+      F("niet gekozen")
       };
   #endif //LANGUAGE_NL
 
@@ -184,7 +209,12 @@ void System_Captive::setupLanguages() {
       F("Tara Kelembaban Tanah"),
       F("Waktu Siklus (ms)"),
       F("Waktu Aktif (ms)"),
-      F("Offset")
+      F("Offset"),
+      F("Waktu Perangkat"),
+      F("Atur waktu dari perangkat ini"),
+      F("belum diatur"),
+      F("Probe"),
+      F("belum dipilih")
       };
   #endif //LANGUAGE_ID
 
@@ -214,7 +244,12 @@ void System_Captive::setupLanguages() {
       F("मृदा नमी टेर"),
       F("चक्र समय (ms)"),
       F("जागरण समय (ms)"),
-      F("ऑफसेट")
+      F("ऑफसेट"),
+      F("डिवाइस का समय"),
+      F("इस डिवाइस से समय सेट करें"),
+      F("सेट नहीं है"),
+      F("प्रोब"),
+      F("चयनित नहीं")
       };
   #endif //LANGUAGE_HI
 }

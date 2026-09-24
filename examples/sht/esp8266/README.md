@@ -1,15 +1,15 @@
 # ESP8266 in the Arduino IDE - one manual step
 
-`sht30.ino.globals.h` in this folder holds the settings (pins, addresses, debug flags) that
+`sht.ino.globals.h` in this folder holds the settings (pins, addresses, debug flags) that
 PlatformIO takes from `platformio.ini`, for the ESP8266 boards this example supports.
 
 **Using PlatformIO, or an ESP32 board? Ignore this folder entirely** - `platformio.ini` and
 `platform.h` already cover you.
 
 **Building for an ESP8266 in the Arduino IDE?** Move the file up one level, so it sits next to
-`sht30.ino`:
+`sht.ino`:
 
-    Sketch > Show Sketch Folder, then drag esp8266/sht30.ino.globals.h into the folder above.
+    Sketch > Show Sketch Folder, then drag esp8266/sht.ino.globals.h into the folder above.
 
 Then compile. Skip the step and the build stops with a message pointing back here - deliberately,
 because the alternative was a build that succeeded on the library's built-in defaults rather than

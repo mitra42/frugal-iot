@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - each reading is written to LittleFS as it arrives rather than buffered in RAM.
 #ifndef CONTROL_LOGGER_FS_H
 #define CONTROL_LOGGER_FS_H
 

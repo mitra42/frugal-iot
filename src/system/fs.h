@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - LittleFS is on flash, so config and logs survive.
 #ifndef SYSTEM_FS_H
 #define SYSTEM_FS_H
 
@@ -37,7 +38,30 @@
 class System_FS : public System_Base {
   public:
     System_FS(const char* const id, const char* const name);
+    /* Did the filesystem actually come up? Defaults true so System_SD, which has no equivalent
+     * check, behaves as before. System_LittleFS::pre_setup() sets it for real.
+     *
+     * Worth having as a flag rather than re-deriving it: when the filesystem is down EVERY write
+     * fails, and the per-file error is then noise pointing at the wrong thing.
+     */
+    bool mounted = true;
     bool spurt(const String& fn, const String& content);
+    /* Config lives in FLAT files at the top level: /<id>.<leaf>, e.g.
+     *     /sht.temperature.max     module sht,  leaf "temperature/max"
+     *     /wifi.MyNetwork          module wifi, leaf "MyNetwork" (the SSID), content = password
+     *
+     * It used to be a directory per module. A LittleFS directory is a metadata PAIR - two erase
+     * blocks, 8KB here - however empty, so the 128KB partition held the root plus only fifteen of
+     * them, and a node with more modules than that could not save anything at all.
+     *
+     * The leaf's own '/' separators become '.', so a literal '.' in a leaf has to be escaped or
+     * it would read back as a separator. That is not hypothetical: the wifi module's leaf IS the
+     * SSID, and an SSID may contain '.', '/' or '%'. Escaping '/' as well means an SSID with a
+     * slash now round-trips, which it never did under the old layout - it made a nested path.
+     */
+    String configEncode(const String& leaf);   // "temperature/max" -> "temperature.max"
+    String configDecode(const String& encoded); // "temperature.max" -> "temperature/max"
+    String configPath(const String& id, const String& leaf); // -> "/sht.temperature.max"
     String slurp(const String& fn, const bool quietfail=false);
     // --- these are just the underlying FS methods exposed
     virtual fs::File open(const char *filename, const char *mode = "r");
@@ -65,6 +89,12 @@ class System_LittleFS : public System_FS {
     boolean exists(const String &filename) override;
     boolean remove(const String &filename);
     bool mkdir(const String &path);
+    bool rmdir(const String &path);
+    #ifdef SYSTEM_LITTLEFS_SUPPORTDEPRECATED
+      // One-shot migration from the directory-per-module layout. Delete this, its #define, and
+      // the call in pre_setup() once no board in the field still has the old layout.
+      void convertDeprecatedLayout();
+    #endif
 };
 class System_SD : public System_FS {
   public:

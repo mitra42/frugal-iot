@@ -9,7 +9,19 @@
 //#include <stdarg.h> // Doesnt appear to be needed - was in sample code from Jonathan Semple
 //#include "WString.h" // Doesnt appear to be needed - was in sample code from Jonathan Semple
 
+#include <cmath> // for std::isnan in changed()
+
 #define PRINTF_BUFFER_SIZE 256 // Size of buffer used by printf functions
+
+// See misc.h for why these exist. Changed unless the two are equal, or both are NaN - note
+// (a == b) is already false when either is NaN, so the second test is what makes an invalid
+// reading compare equal to itself.
+bool changed(float a, float b) {
+  return !((a == b) || (std::isnan(a) && std::isnan(b)));
+}
+bool changed(double a, double b) {
+  return !((a == b) || (std::isnan(a) && std::isnan(b)));
+}
 
 const String StringF(const char* format, ...) {
     char buffer[PRINTF_BUFFER_SIZE]; // out of scope at end of this
@@ -133,3 +145,36 @@ void heap_print(const __FlashStringHelper *msg) {
 }
 
 void shouldBeDefined() { Serial.println(F("something should be defined but is not")); }
+
+// See misc.h. Note pinMode(OUTPUT) here rather than only where the pins are declared - a
+// powered-down pin is an INPUT, and digitalWrite() on one of those only sets the pull-up.
+bool pinsPowerUp(const uint8_t pin3v3, const uint8_t pin0v) {
+  const bool any = (pin3v3 != PIN_NONE) || (pin0v != PIN_NONE);
+  if (pin0v != PIN_NONE) {
+    pinMode(pin0v, OUTPUT);
+    digitalWrite(pin0v, LOW);
+  }
+  if (pin3v3 != PIN_NONE) {
+    pinMode(pin3v3, OUTPUT);
+    digitalWrite(pin3v3, HIGH);
+  }
+  #ifdef SYSTEM_POWER_DEBUG
+    if (any) { Serial.printf("power up 3v3=%d 0v=%d\n", pin3v3, pin0v); }
+  #endif
+  return any;
+}
+
+// High impedance rather than driven to the off level - see misc.h
+bool pinsPowerDown(const uint8_t pin3v3, const uint8_t pin0v) {
+  const bool any = (pin3v3 != PIN_NONE) || (pin0v != PIN_NONE);
+  if (pin3v3 != PIN_NONE) {
+    pinMode(pin3v3, INPUT);
+  }
+  if (pin0v != PIN_NONE) {
+    pinMode(pin0v, INPUT);
+  }
+  #ifdef SYSTEM_POWER_DEBUG
+    if (any) { Serial.printf("power down 3v3=%d 0v=%d\n", pin3v3, pin0v); }
+  #endif
+  return any;
+}

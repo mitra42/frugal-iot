@@ -1,3 +1,4 @@
+// Deep Sleep issues: `connected` and `retry_countdown` are lost, so a silent slave costs a full 2s timeout again on the first read after each wake.
 /* Frugal IoT - Modbus RTU over RS485
  * 
  * NOTE - AS OF 2026-08-03 THIS IS UNTESTED CODE
@@ -64,6 +65,7 @@
 
 #include <Arduino.h>
 #include <ModbusMaster.h>  // https://registry.platformio.org/libraries/4-20ma/ModbusMaster
+#include "system/interface.h"
 
 #if !defined(SYSTEM_RS485_RX_PIN) || !defined(SYSTEM_RS485_TX_PIN)
   #error "Modbus is enabled but the RS485 UART pins are not set - define SYSTEM_RS485_RX_PIN and SYSTEM_RS485_TX_PIN in platformio.ini"
@@ -82,16 +84,36 @@
   #define SYSTEM_MODBUS_RETRY_CYCLES 10
 #endif
 
+/* The pins that switch power to the bus - the transceiver and, on most installations, the probes
+ * on it too. An RS485 probe is typically fed from the same pair of wires that carry the data, so
+ * there is one rail for the whole bus rather than one per slave; a board that really does switch
+ * each probe separately should leave these undefined and use each sensor's own powerPins().
+ */
+#ifndef SYSTEM_RS485_POWER3v3_PIN
+  #define SYSTEM_RS485_POWER3v3_PIN PIN_NONE
+#endif
+#ifndef SYSTEM_RS485_POWER0_PIN
+  #define SYSTEM_RS485_POWER0_PIN PIN_NONE
+#endif
+
 // One physical RS485 connection - UART plus transceiver. Share between devices on the bus.
-class System_RS485 {
+class System_RS485 : public System_Interface {
   public:
     System_RS485(HardwareSerial* serial,
       uint8_t rx_pin = SYSTEM_RS485_RX_PIN, uint8_t tx_pin = SYSTEM_RS485_TX_PIN,
       uint8_t de_pin = SYSTEM_RS485_DE_PIN, uint8_t re_pin = SYSTEM_RS485_RE_PIN,
       uint32_t baud = SYSTEM_RS485_BAUD);
-    void initialize();  // Idempotent - every device on the bus calls it from its own setup()
+    void initialize() override;  // Idempotent - every device on the bus calls it from its own setup()
     // Blocking. Returns true on success, after which responseBuffer() holds the values.
     bool readHoldingRegisters(uint8_t slave_id, uint16_t reg, uint16_t count);
+    /* Modbus function 0x06, write one holding register. Blocking, true on success.
+     *
+     * Deliberately on the BUS rather than on System_Modbus: the one thing anybody writes to a
+     * probe of this kind is its own slave address, and that transaction is addressed to whatever
+     * the probe answers to now, not to the id it is about to have. See
+     * Sensor_SoilModbus::provision().
+     */
+    bool writeSingleRegister(uint8_t slave_id, uint16_t reg, uint16_t value);
     uint16_t responseBuffer(uint8_t i);
     uint8_t lastResult() { return last_result; }
   protected:
@@ -102,7 +124,6 @@ class System_RS485 {
     uint8_t de_pin;
     uint8_t re_pin;
     uint32_t baud;
-    bool initialized = false;
     uint8_t last_result = 0;
     void txEnable(bool on);
     // ModbusMaster's callbacks are plain void(*)() with nowhere to pass an instance, so the
@@ -123,9 +144,24 @@ class System_Modbus {
     bool connected = false;
     // Read one holding register into *value. False if the read failed or was skipped.
     bool readRegister(uint16_t reg, uint16_t* value);
+    /* Read `count` consecutive holding registers into out[0..count-1].
+     *
+     * One transaction, not `count` of them - which matters beyond speed when the registers are
+     * related: reading a probe's humidity and temperature separately can pair a value from one
+     * moment with a value from another, and doubles the bus time on a multi-drop line.
+     * `count` is bounded by ModbusMaster's 64-register response buffer.
+     */
+    bool readRegisters(uint16_t reg, uint16_t count, uint16_t* out);
+    /* The shared bus this slave sits on.
+     *
+     * Exposed because a transaction addressed to something OTHER than this slave id is
+     * occasionally the point - Sensor_SoilModbus::provision() talks to whatever answers at the
+     * factory address in order to turn it into this slave.
+     */
+    System_RS485* bus() { return _bus; }
   protected:
     uint8_t slave_id;
-    System_RS485* bus;
+    System_RS485* _bus;
     uint8_t retry_countdown = 0; // Cycles still to skip before retrying a silent slave
 };
 

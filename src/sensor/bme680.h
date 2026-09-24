@@ -1,3 +1,4 @@
+// Deep Sleep issues: the gas heater needs several readings to settle and deep sleep restarts that every wake, so gas resistance is unreliable on short cycles. Temperature, humidity and pressure are fine.
 /* Frugal IoT - BME680 temperature, humidity, pressure and gas sensor
  *
  * NOTE - AS OF 2026-08-11 THIS IS UNTESTED CODE
@@ -71,7 +72,7 @@
 #include "sensor/sensor.h"
 
 #ifndef SENSOR_BME680_ADDRESS
-  #define SENSOR_BME680_ADDRESS 0x76
+  #define SENSOR_BME680_ADDRESS 0x77
 #endif
 #ifndef SENSOR_BME680_HEATER_TEMP_C
   #define SENSOR_BME680_HEATER_TEMP_C 320 // Bosch's own default profile is 320C for 150ms
@@ -82,6 +83,15 @@
 #ifndef SENSOR_BME680_MEASURE_TIMEOUT_MS
   #define SENSOR_BME680_MEASURE_TIMEOUT_MS 500
 #endif
+// Default power control pins - can be overridden via constructor parameters
+#ifndef SENSOR_BME680_POWER0_PIN
+  #define SENSOR_BME680_POWER0_PIN 0xff
+#endif
+#ifndef SENSOR_BME680_POWER3v3_PIN
+  #define SENSOR_BME680_POWER3v3_PIN 0xff
+#endif
+
+
 
 class Sensor_BME680 : public Sensor {
   public:
@@ -93,6 +103,8 @@ class Sensor_BME680 : public Sensor {
     OUTfloat* pressure;
     OUTfloat* gas;        // nullptr if the constructor was passed gas=false
     System_I2C interface; // I2C object - compare Sensor_BME280 and Sensor_ms5803
+    // powerPins() applies to the shared bus, not to this object - see system/interface.h
+    System_Interface* powerInterface() override { return interface.bus(); }
     TwoWire* wire;
     bool present = false;    // Set by the chip id check in setup()
     uint8_t variant = 0;     // 0x00 = BME680 (gas low), 0x01 = BME688 (gas high)

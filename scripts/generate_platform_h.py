@@ -285,6 +285,107 @@ class PlatformIOConverter:
             return self.board_names[board_name]
         return board_name
 
+    def get_env_selector(self, env_name: str) -> str:
+        """The macro that selects this env's settings by hand.
+
+        Several envs can share one board, and the Arduino IDE has no concept of an environment,
+        so the only way to ask for a non-default one is to name it. The name is the env name
+        uppercased - define it at the TOP of this generated file (above the first block) and
+        that env's settings apply instead of the board's default.
+
+        It has to be at the top of the generated file rather than in the sketch: this file is
+        pulled in by _settings.h for EVERY translation unit, the library's own .cpp files
+        included, and a #define in the .ino would only reach the sketch's one - leaving the rest
+        of the library built against different settings.
+        """
+        return re.sub(r'[^A-Za-z0-9_]', '_', env_name).upper()
+
+    def how_to_define(self, selector: str, family: Optional[str]) -> List[str]:
+        """The ways an Arduino IDE user can get one -D in front of every translation unit.
+
+        Both cores have a mechanism for it and they are not the same one, so say only the one
+        that applies to the file being written - the other is noise to whoever is reading it.
+
+        The last option works on either and is listed last because regenerating this file throws
+        it away; it is the quick try, not the way to keep a board configured.
+        """
+        lines = []
+        if family != "espressif8266":
+            # esp32 platform.txt: recipe.hooks.prebuild.5 copies build_opt.h from the sketch
+            # folder into the build, and every compile recipe passes it as "@{build.opt.path}".
+            # It is a gcc response file despite the .h - COMPILER FLAGS, not C. A #define in it
+            # is taken as two filenames and the build stops with "no such file or directory".
+            # Being a separate file, it is the only one of these that regenerating does not undo.
+            lines.append(f'put the flag -D{selector} (not a #define) in a file called build_opt.h')
+            lines.append(f'  beside the .ino - it survives this file being regenerated - or')
+        lines.append(f'#define {selector} at the TOP of this file, which regenerating discards.')
+        return lines
+
+    def group_envs(self, env_sections, family: Optional[str] = None):
+        """Group [env:] sections by the board macro they will be guarded with.
+
+        Returns [(board_define, active, others)], where each member is
+        (env_name, converted_lines, board_name) and `active` is the env that gets the board to
+        itself - the one marked custom_arduino_default, or the first in the file.
+
+        Both platform.h and the example README are built from this, so that the README cannot
+        end up naming a different env as the default than the header actually compiles.
+        """
+        groups = []
+        index_of = {}
+        for env_name, section_lines in env_sections:
+            if family and self.env_platforms.get(env_name, 'espressif32') != family:
+                continue
+            board_name = None
+            for line in section_lines:
+                stripped = line.strip()
+                if stripped.startswith('board') and '=' in stripped:
+                    match = re.search(r'board\s*=\s*(.+?)(?:\s*;|$)', stripped)
+                    if match:
+                        board_name = match.group(1).strip()
+            if not board_name:
+                continue
+            board_define = self.get_board_define(board_name, env_name)
+            converted_lines = [self.process_single_line(l) for l in section_lines]
+            if board_define not in index_of:
+                index_of[board_define] = len(groups)
+                groups.append((board_define, []))
+            groups[index_of[board_define]][1].append((env_name, converted_lines, board_name))
+
+        out = []
+        for board_define, members in groups:
+            marked = [m for m in members if m[0] in self.env_arduino_default]
+            if len(marked) > 1:
+                names = ", ".join(m[0] for m in marked)
+                print(f"! {board_define}: several envs set custom_arduino_default ({names}) - using the first")
+            active = marked[0] if marked else members[0]
+            others = [m for m in members if m[0] != active[0]]
+            out.append((board_define, active, others))
+        return out
+
+    def project_meta(self) -> Tuple[str, str]:
+        """The [platformio] name/description, which every example's ini carries.
+
+        Written with a colon rather than an = in these files; PlatformIO accepts both, so read
+        both rather than silently returning nothing for one of them.
+        """
+        name = description = ""
+        in_section = False
+        for line in self.lines:
+            stripped = line.strip()
+            if stripped.startswith('['):
+                in_section = stripped == '[platformio]'
+                continue
+            if in_section:
+                m = re.match(r'(name|description)\s*[:=]\s*(.+?)\s*$', stripped)
+                if m:
+                    value = self.strip_trailing_comment(m.group(2)).strip()
+                    if m.group(1) == 'name':
+                        name = value
+                    else:
+                        description = value
+        return name, description
+
     def process_nonenv_content(self) -> List[str]:
         """Extract and process non-[env:xxx] content"""
         output = []
@@ -375,6 +476,7 @@ class PlatformIOConverter:
         self.env_blocks_emitted = 0
         self.guards_used = []
         self.names_used = []
+        self.selectors_used = {}   # selector macro -> env that owns it, to catch collisions
         output = []
 
         # Header
@@ -401,40 +503,49 @@ class PlatformIOConverter:
         env_sections = self.process_env_sections()
         
         # The Arduino IDE has no concept of an environment, so only ONE env per board can be
-        # active. Group by the guard macro, emit the env marked custom_arduino_default (or the
-        # first one if none is marked), and keep the others visible but disabled behind #if 0.
-        groups = []          # [(board_define, [(env_name, converted_lines), ...])]
-        index_of = {}
-        for env_name, section_lines in env_sections:
-            if family and self.env_platforms.get(env_name, 'espressif32') != family:
-                continue
-            board_name = None
-            for line in section_lines:
-                stripped = line.strip()
-                if stripped.startswith('board') and '=' in stripped:
-                    match = re.search(r'board\s*=\s*(.+?)(?:\s*;|$)', stripped)
-                    if match:
-                        board_name = match.group(1).strip()
-            if not board_name:
-                continue
-            board_define = self.get_board_define(board_name, env_name)
-            converted_lines = [self.process_single_line(l) for l in section_lines]
-            if board_define not in index_of:
-                index_of[board_define] = len(groups)
-                groups.append((board_define, []))
-            groups[index_of[board_define]][1].append((env_name, converted_lines, board_name))
+        # active. Group by the guard macro; the env marked custom_arduino_default (or the first
+        # one if none is marked) is the board's default, and every env in the group also gets a
+        # selector macro named after it so a non-default one can be chosen with a single #define.
+        for board_define, active, others in self.group_envs(env_sections, family):
+            members = [active] + others
 
-        for board_define, members in groups:
-            # Which env wins for this board
-            marked = [m for m in members if m[0] in self.env_arduino_default]
-            if len(marked) > 1:
-                names = ", ".join(m[0] for m in marked)
-                print(f"! {board_define}: several envs set custom_arduino_default ({names}) - using the first")
-            active = marked[0] if marked else members[0]
-            others = [m for m in members if m[0] != active[0]]
+            # One selector macro per env, so a non-default env is one #define away rather than an
+            # edit to the #if of two separate blocks. EVERY env gets one, including a board with
+            # only one - otherwise the name a user had defined would stop working the day a
+            # second env for that board is added or removed, which is a silent change of
+            # behaviour rather than a build error.
+            #
+            # Where there are siblings, the default's guard also has to stand down for each of
+            # them: the board macro comes from Tools > Board and stays defined whichever env is
+            # wanted, so without the !defined()s both blocks would fire and redefine everything
+            # the two envs have in common.
+            selector_of = {m[0]: self.get_env_selector(m[0]) for m in members}
+            for env_name, selector in selector_of.items():
+                if selector in self.selectors_used and self.selectors_used[selector] != env_name:
+                    print(f"! selector {selector} is shared by [env:{self.selectors_used[selector]}] "
+                          f"and [env:{env_name}] - rename one of the envs")
+                self.selectors_used[selector] = env_name
 
-            output.append(f"// ===== [env:{active[0]}] -> {board_define}\n")
-            output.append(f"#ifdef {board_define}\n")
+            if others:
+                # Defining two of a board's selectors would fire two blocks at once. Where the
+                # envs share a setting that is a macro-redefinition WARNING, and where they do
+                # not it is silent - so say it outright. defined() is 1 or 0 in an #if
+                # expression, so summing them counts how many were asked for.
+                all_selectors = [selector_of[m[0]] for m in members]
+                joined = ", ".join(all_selectors)
+                total = " + ".join(f"defined({sel})" for sel in all_selectors)
+                output.append(f"// {joined} are alternative [env:] settings for one board - at most one.\n")
+                output.append(f"#if ({total}) > 1\n")
+                output.append(f'  #error "Define at most one of {joined} - they are alternative '
+                              f'settings for the same board, and defining two applies both."\n')
+                output.append("#endif\n")
+
+                output.append(f"// ===== [env:{active[0]}] -> {board_define}, the DEFAULT for this board\n")
+                stand_down = "".join(f" && !defined({selector_of[m[0]]})" for m in others)
+                output.append(f"#if (defined({board_define}){stand_down}) || defined({selector_of[active[0]]})\n")
+            else:
+                output.append(f"// ===== [env:{active[0]}] -> {board_define}\n")
+                output.append(f"#if defined({board_define}) || defined({selector_of[active[0]]})\n")
             # Marker for the catch-all at the end of the file. Namespaced because on ESP8266
             # this file is force-included into EVERY translation unit, the core's own
             # sources included, so a name like BOARD_FOUND could collide.
@@ -448,17 +559,24 @@ class PlatformIOConverter:
                 self.names_used.append(self.get_board_name(active[2], active[0]))
 
             for env_name, converted_lines, _board_name in others:
-                output.append(f"// ----- [env:{env_name}] also targets {board_define}, DISABLED\n")
-                output.append(f"// Only one env per board can be active in the Arduino IDE, and\n")
-                output.append(f"// [env:{active[0]}] is the one in effect. To use this one instead, set\n")
+                selector = selector_of[env_name]
+                output.append(f"// ----- [env:{env_name}] also targets {board_define}\n")
+                output.append(f"// Only one env per board can be active in the Arduino IDE, and [env:{active[0]}]\n")
+                output.append(f"// is the default. To use this one instead, define {selector} for the WHOLE\n")
+                output.append(f"// build - it has to reach the library's sources too, so a #define in the .ino\n")
+                how = self.how_to_define(selector, family)
+                # "Either:" reads as a broken sentence when the core offers only the one route
+                output.append(f"// is not enough. Either:\n" if len(how) > 1 else f"// is not enough:\n")
+                for line in how:
+                    output.append(f"//   {line}\n")
+                output.append(f"// To make it the default instead, and so need no define at all, set\n")
                 output.append(f"//   custom_arduino_default = yes\n")
                 output.append(f"// on [env:{env_name}] in platformio.ini (and remove it from any other env for\n")
                 output.append(f"// this board), then re-run scripts/generate_platform_h.py.\n")
-                output.append("#if 0\n")
-                output.append(f"#ifdef {board_define}\n")
+                output.append(f"#if defined({selector})\n")
+                output.append("#define FRUGAL_IOT_BOARD_CONFIGURED\n")
                 output.extend(converted_lines)
-                output.append(f"#endif // {board_define}\n")
-                output.append("#endif // 0\n")
+                output.append(f"#endif // {selector}\n")
                 output.append("\n")
 
         # Catch-all: if none of the blocks above matched, the selected board has no settings in
@@ -539,6 +657,124 @@ listed with `foo.globals.h` or `bar.ino.globals.h` in it, and not listed with `f
 So the required name and a listed example are mutually exclusive, and the file is parked here.
 """
 
+README_BEGIN = "<!-- BEGIN generated by scripts/generate_platform_h.py - do not edit inside -->"
+README_END = "<!-- END generated -->"
+
+
+def example_readme_block(conv: "PlatformIOConverter", sketch: str, has_globals: bool,
+                         has_min_spiffs: bool) -> str:
+    """The generated part of an example's README.md - what an Arduino IDE user needs to compile it.
+
+    Built from the same group_envs() the header is built from, so the board it calls the default
+    is the board platform.h actually gives the settings to.
+    """
+    groups = conv.group_envs(conv.process_env_sections())
+    multi = [g for g in groups if g[2]]
+    default_env = groups[0][1][0] if groups else ""
+    families = {conv.env_platforms.get(m[0], "espressif32")
+                for _bd, a, o in groups for m in [a] + o}
+
+    out = [README_BEGIN, ""]
+
+    out += ["## PlatformIO", "",
+            "    pio run -e <env>              # build",
+            "    pio run -e <env> -t upload    # build and flash",
+            "    pio run -e <env> -t uploadfs  # write data/ (wifi credentials, config)", ""]
+    if default_env:
+        out += [f"`<env>` is a name from the table below, for example `{default_env}`.", ""]
+
+    out += ["## Arduino IDE", "",
+            f"Open `{sketch}.ino`, then **Tools > Board** and pick the row for your hardware.", ""]
+    out += ["| Tools > Board | configuration | also define |",
+            "| --- | --- | --- |"]
+    for _board_define, active, others in groups:
+        for member in [active] + others:
+            env_name, _lines, board_name = member
+            label = conv.get_board_name(board_name, env_name)
+            selector = "" if member is active else f"`{conv.get_env_selector(env_name)}`"
+            out.append(f"| {label} | `{env_name}` | {selector} |")
+    out.append("")
+
+    if multi:
+        # Only worth explaining on an example that actually has one; most do not. The example
+        # macro has to come from a board of the family the bullet is about - quoting an ESP32
+        # board's selector in the ESP8266 instruction is exactly the sort of thing someone
+        # copies verbatim.
+        def sample_selector(want_family):
+            for _bd, _active, siblings in multi:
+                env_name = siblings[0][0]
+                if conv.env_platforms.get(env_name, "espressif32") == want_family:
+                    return conv.get_env_selector(env_name)
+            return None
+
+        esp32_sel = sample_selector("espressif32")
+        esp8266_sel = sample_selector("espressif8266")
+        out += [
+            "A board listed **twice** has two sets of settings in this example, and the Arduino IDE",
+            "has no way to ask for one - it only knows boards. So you get the row with an empty last",
+            "column unless you define that macro. It has to reach the whole build rather than just the",
+            "sketch, because the library's own sources read these settings too:", ""]
+        if esp32_sel:
+            out += [f"* **ESP32** - put the line `-D{esp32_sel}` in a file called `build_opt.h`,",
+                    f"  beside `{sketch}.ino`. Despite the `.h`, that file holds **compiler flags, not",
+                    f"  C**: a `#define` in it stops the build with *no such file or directory*. The",
+                    f"  core copies it into the build and passes it to every source file."]
+        if esp8266_sel:
+            out += [f"* **ESP8266** - add `#define {esp8266_sel}` at the top of",
+                    f"  `{sketch}.ino.globals.h`, which the core force-includes into every source file."]
+        out += [""]
+
+    out += ["Pick a board that is not in the table and the build stops with a message listing the ones",
+            "that are - rather than quietly compiling on the library's defaults, which for most boards",
+            "means the wrong pins.", ""]
+
+    if has_globals:
+        out += ["## ESP8266: one extra step", "",
+                f"The ESP8266 settings live in `esp8266/{sketch}.ino.globals.h`, and that file has to be",
+                f"moved up beside `{sketch}.ino` before it is read. See `esp8266/README.md` - it is one",
+                "drag and no rename. ESP32 and PlatformIO users can ignore the folder.", ""]
+
+    if has_min_spiffs:
+        out += ["## If it does not fit", "",
+                "*\"text section exceeds available space in board\"* means this board's default flash",
+                "layout has less app space than the sketch needs. **Tools > Partition Scheme** and pick",
+                "**Minimal SPIFFS (1.9MB APP with OTA/128KB SPIFFS)** if your board offers it. Most of",
+                "these boards do not, and then:", "",
+                "1. **Sketch > Show Sketch Folder**, and rename `min_spiffs.csv` to `partitions.csv`.",
+                "2. **Tools > Partition Scheme >** choose **No OTA (2MB APP/2MB SPIFFS)**.", "",
+                "Over-the-air updates still work despite that menu label: step 1 is what sets the real",
+                "layout and it keeps both OTA slots. The menu choice only raises the size limit the IDE",
+                "checks against.", ""]
+
+    out += [README_END]
+    return "\n".join(out) + "\n"
+
+
+def write_example_readme(path: str, title: str, description: str, block: str):
+    """Write the block into README.md, leaving anything a human wrote around it alone.
+
+    Replaces an existing marked block in place, appends one to a README that has none (which is
+    how the hand-written loramesher README keeps its content), and otherwise starts a new file
+    with a title and description above the markers - outside them, so they stay editable.
+    """
+    target = Path(path)
+    if target.exists():
+        old = target.read_text()
+        if README_BEGIN in old and README_END in old:
+            head, rest = old.split(README_BEGIN, 1)
+            _stale, tail = rest.split(README_END, 1)
+            content = head + block.rstrip("\n") + tail
+        else:
+            content = old.rstrip("\n") + "\n\n" + block
+    else:
+        content = f"# {title}\n\n{description}\n\n{block}"
+    if target.exists() and target.read_text() == content:
+        print(f"= {path} unchanged")
+        return
+    target.write_text(content)
+    print(f"✓ Wrote {path}")
+
+
 def main():
     """Emit the files an Arduino IDE build can pick up.
 
@@ -598,6 +834,20 @@ def main():
                 print(f"✓ Wrote {readme}")
     else:
         print("- no .ino found, skipping <sketch>.ino.globals.h")
+
+    # README.md for whoever opens the example - which board to select, and how to ask for a
+    # configuration the board menu cannot express. Written last, because whether the ESP8266
+    # section applies depends on the globals file having been emitted above.
+    if sketches:
+        sketch = sketches[0].stem
+        conv = PlatformIOConverter(input_file)
+        conv.read_file()
+        name, description = conv.project_meta()
+        block = example_readme_block(
+            conv, sketch,
+            has_globals=Path(f"{ESP8266_DIR}/{sketch}.ino.globals.h").exists(),
+            has_min_spiffs=Path("min_spiffs.csv").exists())
+        write_example_readme("README.md", name or sketch, description, block)
 
 if __name__ == "__main__":
     main()

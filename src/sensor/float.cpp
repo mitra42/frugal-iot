@@ -61,10 +61,12 @@ float Sensor_Float::readValidateConvert() {
   return NAN;
 }
 void Sensor_Float::readValidateConvertSet() {
-  float vv = readValidateConvert();
-  if (!isnan(vv)) {
-    set(vv);                  // set - and send message
-  }
+  // NAN is deliberately passed straight through to set(), not dropped: readValidateConvert()
+  // returns NAN when validate() failed, and OUTfloat publishes that as IO_PAYLOAD_INVALID so
+  // "there is no reading" reaches wired controls and the UX instead of looking identical to
+  // "the value has not changed". OUTfloat::set() compares with changed(), so this publishes
+  // once on the transition into (and out of) invalid, not on every read.
+  set(readValidateConvert());
 }
 
 void Sensor_Float::captiveLines(AsyncResponseStream* response) {

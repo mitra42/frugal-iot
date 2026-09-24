@@ -19,7 +19,7 @@ Control_Oled_HT::Control_Oled_HT(const char* name)
   void Control_Oled_HT::act() {
     if (!enabled) return;
     // Called when any of the inputs change
-    Adafruit_SSD1306* display  = &frugal_iot.oled->display;
+    auto* display = &frugal_iot.oled->display; // auto: the concrete driver is chosen at compile time, see actuator/oled.h
     #ifdef ACTUATOR_OLED_DEBUG
       Serial.println(F("Writing fresh to oLED"));
     #endif

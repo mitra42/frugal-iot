@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - read fresh on each wake.
 /* Frugal IoT - DHT temperature and humidity sensor
  * 
  * Mitra Ardron: Nov 2024

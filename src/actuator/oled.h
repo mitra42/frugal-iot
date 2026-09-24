@@ -1,3 +1,4 @@
+// Deep Sleep issues: the panel is re-initialised in setup() and blank during the sleep.
 /* Frugal IoT - OLED Display hanler
  * This is a port of code from demo for TTGO Lora board - expand as needed
  * 
@@ -81,11 +82,24 @@
   #define ACTUATOR_OLED_OFFSET_Y 0
   //#define ACTUATOR_OLED_IS_SSD1306 
   #define OLED_IS_HW675
+#elif defined(ACTUATOR_OLED_IS_SSD1327)
+  // No board has an SSD1327 built in, so there is nothing to key a board #elif on: it is always
+  // an externally wired panel, and its chip, interface and pins all come from build_flags set by
+  // a board env in platformio.ini. See "SSD1327" in CLAUDE.md.
 #elif !defined(OLED_WIRE) || !defined(OLED_SDA) || !defined(OLED_SCL)
   #error Undefined board for OLED
 #endif
 
+// Note there is deliberately no default chip. A board either names one in its #elif above or the
+// sketch names one in build_flags; anything else stops at the #error further down. An OLED added
+// to a board that has none built in is not necessarily the chip those boards usually carry, and
+// guessing wrong compiles cleanly and then draws nothing.
+
 // Note ARDUINO_LILYGO_T3_S3_V1_X not tested yet, but probably same as ARDUINO_TTGO_LoRa32
+#if defined(ACTUATOR_OLED_IS_SSD1327) && !defined(ACTUATOR_OLED_HEIGHT)
+  #define ACTUATOR_OLED_WIDTH 128
+  #define ACTUATOR_OLED_HEIGHT 128
+#endif
 #ifndef ACTUATOR_OLED_HEIGHT // defined on ARDUINO_heltec_wifi_lora_32_V3
   #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_T_Beam) || defined( ARDUINO_heltec_wifi_lora_32_V4) // V1 or v2
     #define ACTUATOR_OLED_WIDTH 128 // OLED display width, in pixels
@@ -101,8 +115,27 @@
 // What chip is driving the OLED
 #if defined(ACTUATOR_OLED_IS_SSD1306) || defined(OLED_IS_HW675)
   #include <Adafruit_SSD1306.h> // HW675 uses same SSD1306 driver, just with different init
+#elif defined(ACTUATOR_OLED_IS_SSD1327)
+  #include <Adafruit_SSD1327.h>
 #else
   #error have not defined OLED chip driver
+#endif
+
+/* Portable foreground/background, because the two chips do not agree on what "white" is.
+ *
+ * The SSD1306 is one bit per pixel and SSD1306_WHITE is 1; the SSD1327 is four bits of greyscale
+ * and SSD1327_WHITE is 0xF. Controls must use these rather than either chip's own constant - a
+ * control written with SSD1306_WHITE compiles perfectly against an SSD1327 and draws in the
+ * darkest grey available, i.e. invisibly.
+ */
+#if defined(ACTUATOR_OLED_IS_SSD1306) || defined(OLED_IS_HW675)
+  #define OLED_FG SSD1306_WHITE
+  #define OLED_BG SSD1306_BLACK
+#elif defined(ACTUATOR_OLED_IS_SSD1327)
+  #define OLED_FG SSD1327_WHITE
+  #define OLED_BG SSD1327_BLACK
+#else
+  #error have not defined OLED colours for this chip
 #endif
 
 // Default offsets to 0 for boards without a pixel offset; adding 0 compiles away.
@@ -113,13 +146,25 @@
   #define ACTUATOR_OLED_OFFSET_Y 0
 #endif
 
-// Wraps Adafruit_SSD1306 so that (0,0) always means the first visible pixel.
-// Adafruit_SSD1306 bypasses drawPixel in its fast-path implementations of
-// drawFastHLine, drawFastVLine, and fillRect, so all four need the offset.
-// drawLine and print/drawChar route through drawPixel, so they are covered too.
-class SSD1306_Offset : public Adafruit_SSD1306 {
+/* Wrapping the driver so that (0,0) always means the first visible pixel.
+ *
+ * There is one wrapper per chip rather than a template, because which methods need the offset
+ * depends on what the driver overrides, and getting that wrong double-offsets silently:
+ *
+ *  - Adafruit_SSD1306 bypasses drawPixel in its own fast-path drawFastHLine, drawFastVLine and
+ *    fillRect, so all four need offsetting here.
+ *  - Adafruit_SSD1327 goes through Adafruit_GrayOLED, which overrides NOTHING but drawPixel -
+ *    the other three fall through to Adafruit_GFX's generic versions, which themselves call
+ *    drawPixel. Offsetting them here as well would apply the offset twice.
+ *
+ * drawLine and print/drawChar route through drawPixel on both, so they are covered either way.
+ *
+ * width()/height() return the buffer size, not the visible area - use visibleWidth()/Height().
+ */
+#if defined(ACTUATOR_OLED_IS_SSD1306) || defined(OLED_IS_HW675)
+class OLED_Offset : public Adafruit_SSD1306 {
   public:
-    SSD1306_Offset(uint16_t w, uint16_t h, TwoWire* twi, int8_t rst_pin)
+    OLED_Offset(uint16_t w, uint16_t h, TwoWire* twi, int8_t rst_pin)
       : Adafruit_SSD1306(w, h, twi, rst_pin) {}
     void drawPixel(int16_t x, int16_t y, uint16_t color) override {
         Adafruit_SSD1306::drawPixel(x + ACTUATOR_OLED_OFFSET_X, y + ACTUATOR_OLED_OFFSET_Y, color);
@@ -133,15 +178,34 @@ class SSD1306_Offset : public Adafruit_SSD1306 {
     void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override {
         Adafruit_SSD1306::fillRect(x + ACTUATOR_OLED_OFFSET_X, y + ACTUATOR_OLED_OFFSET_Y, w, h, color);
     }
-    // width()/height() return the buffer size, not the visible area.
-    // Use these instead; controls should hold SSD1306_Offset* to call them.
     int16_t visibleWidth()  const { return ACTUATOR_OLED_WIDTH  - ACTUATOR_OLED_OFFSET_X; }
     int16_t visibleHeight() const { return ACTUATOR_OLED_HEIGHT - ACTUATOR_OLED_OFFSET_Y; }
 };
+#elif defined(ACTUATOR_OLED_IS_SSD1327)
+class OLED_Offset : public Adafruit_SSD1327 {
+  public:
+    using Adafruit_SSD1327::Adafruit_SSD1327; // I2C, software SPI and hardware SPI forms
+    void drawPixel(int16_t x, int16_t y, uint16_t color) override {
+        Adafruit_SSD1327::drawPixel(x + ACTUATOR_OLED_OFFSET_X, y + ACTUATOR_OLED_OFFSET_Y, color);
+    }
+    // Deliberately NOT overriding drawFastHLine/drawFastVLine/fillRect - see above
+    int16_t visibleWidth()  const { return ACTUATOR_OLED_WIDTH  - ACTUATOR_OLED_OFFSET_X; }
+    int16_t visibleHeight() const { return ACTUATOR_OLED_HEIGHT - ACTUATOR_OLED_OFFSET_Y; }
+};
+#else
+  #error have not defined an OLED wrapper for this chip
+#endif
 
 class Actuator_OLED : public System_Base {
   public:
-    SSD1306_Offset display;
+    /* The driver, as the concrete type this build selected.
+     *
+     * Compile-time rather than a virtual base: a board has exactly one display, so the choice is
+     * known when the firmware is built, and there is no reason to pay a vtable and an indirection
+     * per call on a device where the redraw is already the expensive part. Controls should hold it
+     * as `auto*` and draw in OLED_FG/OLED_BG, which keeps them source-compatible across both chips.
+     */
+    OLED_Offset display;
     Actuator_OLED(TwoWire* wire = &Wire); // Constructor
     void setup() override; // Setup function to initialize the display
     //void infrequently() override; // Infrequent tasks, e.g., every 10 seconds

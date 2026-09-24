@@ -1,3 +1,4 @@
+// Deep Sleep issues: none.
 #ifndef SENSOR_FLOAT_H
 #define SENSOR_FLOAT_H
 

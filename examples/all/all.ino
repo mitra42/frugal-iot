@@ -20,8 +20,13 @@ void setup() {
 
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
 
-  // Override MQTT host, username and password if you have an "organization" other than "dev" (developers)
-  frugal_iot.configure_mqtt("frugaliot.naturalinnovation.org", "dev", "public");
+  // The node fetches its OWN broker credential rather than sharing the organization's password.
+  // Host and secret both come from platformio.ini; the secret belongs in the uncommitted
+  // <name>-local.ini, never in a sketch. Built with no secret, the node is refused and listed on
+  // the dashboard's Nodes card for an administrator to approve - that is by design.
+  // The shared-password form still works - comment the last line and uncomment this to go back:
+  //frugal_iot.configure_mqtt(SYSTEM_MQTT_HOST, SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD);
+  frugal_iot.configure_mqtt_enrolled(SYSTEM_MQTT_HOST, SYSTEM_MQTT_ENROL_SECRET);
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
@@ -54,7 +59,12 @@ void setup() {
   #endif
   frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, true));
   
-  frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", 5, 0, true));
+  // 1-Wire temperature probe. The pin form looks the bus up via System_OneWire::forPin, so
+  // several probes given the same pin share one bus - see ds18b20.h for the explicit-bus form.
+  #ifndef SENSOR_DS18B20_PIN
+    #define SENSOR_DS18B20_PIN 6
+  #endif
+  frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temperature", SENSOR_DS18B20_PIN, true));
 
   // The ENS160+AHT21 board is two chips, and so two sensors. The ENS160 needs an ambient
   // temperature and humidity for its compensation, and wires itself to the AHT21's outputs
@@ -101,7 +111,7 @@ void setup() {
   Sensor_DissolvedOxygen* dox = new Sensor_DissolvedOxygen("do", "Dissolved Oxygen", 36);
   frugal_iot.sensors->add(dox);
 
-  // Temperature and Humidity sensor (SHT30)
+  // Temperature and Humidity sensor (SHT)
   Sensor_SHT* sht;
   frugal_iot.sensors->add(sht = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
@@ -140,6 +150,18 @@ void setup() {
       DEFAULT_ultrasonic_ultrasonic_max, DEFAULT_ultrasonic_ultrasonic_color, true, rs485));
   #endif
 
+  // Soil probes over the same kind of bus. Two of them, because the point of RS485 being
+  // multi-drop is that one transceiver serves several probes - one per irrigation sector - each
+  // addressed by its own slave id. A probe that does not answer publishes "nan" rather than
+  // leaving a stale reading standing.
+  #ifdef SENSOR_SOILMODBUS_WANT
+    #ifndef SENSOR_ULTRASONIC_SLAVE_ID // Otherwise share the bus built just above
+      System_RS485* rs485 = new System_RS485(&Serial1);
+    #endif
+    frugal_iot.sensors->add(new Sensor_SoilModbus("soil1", "Sector 1", 1, rs485, true));
+    frugal_iot.sensors->add(new Sensor_SoilModbus("soil2", "Sector 2", 2, rs485, true));
+  #endif
+
   // ========= Actuators  ==============
   // Note Actuator_LedBuiltin added automatically if a pin is defined
 
@@ -167,6 +189,12 @@ void setup() {
   Control_Hysteresis* ch = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(ch);
   ch->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+
+  // A voltage out. Guarded by the pin, since it needs one wired to something that wants a control
+  // voltage - and on a C3 or S3, where this becomes PWM, an RC filter as well (see analog.h).
+  #ifdef ACTUATOR_ANALOG_PIN
+    frugal_iot.actuators->add(new Actuator_Analog("analog", "Analog Out", ACTUATOR_ANALOG_PIN));
+  #endif
 
   // Carousel cycles between Control_Oled displays, so it only makes sense on a board with one.
   #ifdef ACTUATOR_OLED_WANT

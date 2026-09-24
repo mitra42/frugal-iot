@@ -9,6 +9,11 @@
 #   $2  environment  - an [env:NAME] in that example's platformio.ini (e.g. nodemcu_tambak)
 #
 # Options
+#   -D NAME[=VAL]    an extra define, as you would pass it to the compiler. Repeatable, and
+#   -DNAME[=VAL]     the attached spelling works too. This is the IDE's build_opt.h (ESP32) /
+#                    the build.opt block in <sketch>.ino.globals.h (ESP8266), which both put
+#                    flags in front of EVERY translation unit, library sources included - so a
+#                    define landing here reaches the same places it would for an IDE user.
 #   --install-deps   install the Arduino core and the libraries from library.properties first.
 #                    The ESP32 core is a large download (>1GB), so this is opt-in.
 #   --update         refresh the package indexes then upgrade only what has a newer version
@@ -55,19 +60,26 @@ CLEAN_BUILD=0
 DO_LIST=0
 EXAMPLE=""
 ENVNAME=""
+EXTRA_DEFINES=()
 
-for arg in "$@"; do
-  case "$arg" in
+# A while loop rather than "for arg in", so that -D can take its macro as the next word
+while [ $# -gt 0 ]; do
+  case "$1" in
     --install-deps) INSTALL_DEPS=1 ;;
     --update)       UPDATE_DEPS=1 ;;
     --keep)         KEEP_BUILD=1 ;;   # kept anyway now, accepted for compatibility
     --clean)        CLEAN_BUILD=1 ;;
     --list)         DO_LIST=1 ;;
+    -D)             shift
+                    if [ $# -eq 0 ]; then echo "-D needs a macro name" >&2; exit 2; fi
+                    EXTRA_DEFINES+=("-D$1") ;;
+    -D?*)           EXTRA_DEFINES+=("$1") ;;
     -h|--help)      awk 'NR>1 && /^#/ {sub(/^# ?/,""); print; next} NR>1 {exit}' "$SELF"; exit 0 ;;
-    -*)             echo "Unknown option: $arg" >&2; exit 2 ;;
-    *)  if [ -z "$EXAMPLE" ]; then EXAMPLE="$arg"; elif [ -z "$ENVNAME" ]; then ENVNAME="$arg";
-        else echo "Unexpected argument: $arg" >&2; exit 2; fi ;;
+    -*)             echo "Unknown option: $1" >&2; exit 2 ;;
+    *)  if [ -z "$EXAMPLE" ]; then EXAMPLE="$1"; elif [ -z "$ENVNAME" ]; then ENVNAME="$1";
+        else echo "Unexpected argument: $1" >&2; exit 2; fi ;;
   esac
+  shift
 done
 
 # ── Which Arduino board to compile for ──────────────────────────────────────────────────────
@@ -120,6 +132,19 @@ import sys
 sys.path.insert(0, sys.argv[1])
 from generate_platform_h import PlatformIOConverter
 print(PlatformIOConverter("").get_board_define(sys.argv[2], sys.argv[3]))
+PYEOF
+}
+
+# The macro that names this env in platform.h. Several envs can share one board, and the FQBN
+# cannot tell those apart - so without this the DEFAULT env's block fires whichever env was asked
+# for, and the script reports success under a name whose settings it never compiled. Asked of
+# generate_platform_h.py rather than derived here, for the same no-drift reason as above.
+selector_for_env() { # $1 = env
+  python3 - "$SCRIPTS_DIR" "$1" <<'PYEOF'
+import sys
+sys.path.insert(0, sys.argv[1])
+from generate_platform_h import PlatformIOConverter
+print(PlatformIOConverter("").get_env_selector(sys.argv[2]))
 PYEOF
 }
 
@@ -356,10 +381,30 @@ elif [ -n "$PARTITIONS" ]; then
   fi
 fi
 
+# ── extra defines ───────────────────────────────────────────────────────────────────────────
+# The env's own selector always goes in. On a board with one env it changes nothing (the guard
+# already ORs it in beside the board macro); on a board with several it is the only thing that
+# picks the env the caller actually named, instead of silently compiling the default one.
+SELECTOR="$(selector_for_env "$ENVNAME")"
+[ -n "$SELECTOR" ] && EXTRA_DEFINES=("-D$SELECTOR" "${EXTRA_DEFINES[@]}")
+
+# compiler.{c,cpp,S}.extra_flags, NOT build.extra_flags. All three are empty in both cores
+# (checked in esp32 3.3.x and esp8266 3.1.x platform.txt) and appear in every compile recipe, so
+# overriding them adds flags to every translation unit and discards nothing. build.extra_flags
+# looks like the obvious slot and is the trap: on ESP32 it carries -DESP32, -DCORE_DEBUG_LEVEL
+# and the per-MCU USB defines, and replacing it would take those out of the build.
+if [ ${#EXTRA_DEFINES[@]} -gt 0 ]; then
+  EXTRA_FLAGS="${EXTRA_DEFINES[*]}"
+  BUILD_PROPS+=(--build-property "compiler.c.extra_flags=$EXTRA_FLAGS")
+  BUILD_PROPS+=(--build-property "compiler.cpp.extra_flags=$EXTRA_FLAGS")
+  BUILD_PROPS+=(--build-property "compiler.S.extra_flags=$EXTRA_FLAGS")
+fi
+
 echo "example : $EXAMPLE  ($SKETCH_DIR)"
 echo "env     : $ENVNAME"
 echo "board   : $BOARD  ->  $FQBN"
 echo "library : $LIB_ROOT  (the working tree, not ~/Documents/Arduino/libraries)"
+[ ${#EXTRA_DEFINES[@]} -gt 0 ] && echo "defines : ${EXTRA_DEFINES[*]}"
 [ -n "$PART_NOTE" ] && echo "parts   : $PART_NOTE"
 echo
 

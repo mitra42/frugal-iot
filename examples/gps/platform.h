@@ -25,6 +25,11 @@
 // custom common options
 
 // [platformio]
+// Anything matching *-local.ini is loaded on top of this file, and is not committed: that is where
+// the enrolment secret goes, and which server this build is for. A GLOB rather than a name, so a
+// checkout with no such file builds unchanged instead of erroring.
+// extra_configs = *-local.ini
+
 // name: Frugal-IoT GPS
 // description: Frugal IoT - GPS sensor node (Heltec WiFi LoRa 32 V4 + Quectel L76K)
 // src_dir = .
@@ -32,7 +37,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^0.1.5
+//     Frugal-IoT@^2.0.0
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
 
@@ -40,7 +45,9 @@
 //     ${common.lib_deps}
     //Comment/Uncomment below two lines to switch between live and "new" version
     //jaimi5/LoRaMesher
-//     https://github.com/loramesher/LoRaMesher.git
+    //Comment/Uncomment below to switch between upstream and our fork.
+//         https://github.com/loramesher/LoRaMesher.git
+    //https://github.com/mitra42/LoRaMesher.git#perf/avoid-iostreams
     //https://github.com/mitra42/LoRaMesher.git#new_loramesher
 
 // lib_deps_lora_oled =
@@ -62,14 +69,30 @@
 // #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
 // #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
 // #define SENSOR_DS18B20_PIN 6
-// #define SENSOR_SHT_ADDRESS 0x45 // 0x44 (default) or 0x45 for D1 shields (SHT4x default is also 0x44)
-// #define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 // #define SENSOR_SOIL_PIN 4
+    // The ultrasonic sensor talks Modbus over RS485. Its slave id switches on SYSTEM_MODBUS_WANT,
+    // which then needs the UART pins as well - all three, or system/modbus.h stops the build with
+    // an #error. Costs ~20k of flash (ModbusMaster + the RS485/Modbus classes).
+// #define SENSOR_ULTRASONIC_SLAVE_ID 1
+// #define SYSTEM_RS485_RX_PIN 20
+// #define SYSTEM_RS485_TX_PIN 21
 // #define SYSTEM_SD_WANT // Uses LittleFS by default
 // #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
     // Flags from other libraries
 #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
 // #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
+    // Turn off C++ exceptions. Worth 75,166 bytes on c3_pico (73.3% of the app partition down to
+    // ~69.1%): ~53k of that is .eh_frame unwind tables and ~22k is the exception-handling code
+    // itself. Nothing in Frugal-IoT catches anything except the LoRaMesher glue in
+    // system/loramesher.cpp, so on a non-LoRa board this changes no behaviour.
+    // LoRaMesher DOES throw, in ten-odd files, so the LoRa boards take this flag back off again
+    // with build_unflags below - see common.build_unflags_loramesher. Removing it that way is
+    // free; countering it with -fexceptions instead would cost those boards 6,232 bytes, because
+    // -fexceptions also adds unwind tables to C sources that the default leaves out.
+    // Note PlatformIO's "Flash: nn%" line does not count .eh_frame, so on the RISC-V boards the
+    // real firmware.bin is bigger than reported (c3_pico was 73.3% real vs 70.0% reported). The
+    // Xtensa boards fold .eh_frame into .flash.rodata, so their reported figure is about right.
+    //-fno-exceptions
     // Uncomment debug lines before as needed
 // #define ACTUATOR_LCD_DEBUG
 // #define CONTROL_BLINKEN_DEBUG
@@ -87,6 +110,12 @@
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
+#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration of saved config from /<id>/<leaf>
+                                         // directories to flat /<id>.<leaf> files. A LittleFS
+                                         // directory costs a 2-block metadata pair (8KB), so the
+                                         // old layout filled a 128KB partition after 15 modules.
+                                         // Remove once no board in the field has the old layout.
+// #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG
 // #define SYSTEM_MQTT_DEBUG
@@ -95,14 +124,26 @@
 // #define SYSTEM_TIME_DEBUG
 // #define SYSTEM_WIFI_DEBUG
 
+// Filled in by <name>-local.ini - the enrolment secret, and which server to build against.
+// Empty here, so this file can be committed and a checkout without a local one still builds.
+// build_flags_local =
+
 // flags that apply only in main (the library can see them, but doesnt need them)
 // build_flags_main = 
+    // The enrolment secret, and which server this build is for - see <name>-local.ini
+//     ${common.build_flags_local}
 
 // project specific flags that are needed by the library 
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
 #define SYSTEM_OTA_PREFIX "gps"
+
+// LoRaMesher throws, so the boards that use it need C++ exceptions back on. build_unflags REMOVES
+// -fno-exceptions rather than countering it with -fexceptions - measured as byte-identical to a
+// build that never had the flag, where -fexceptions would have cost 6,232 bytes.
+// build_unflags_loramesher =
+//     -fno-exceptions
 
 // build flags that only relate to boards with LoRaMesher
 // build_flags_loramesher = 
@@ -114,11 +155,18 @@
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 
+// Ask the linker for a map file. scripts/size_report.py reads it to say which archive members
+// were linked in and which symbol pulled each one - the definitive answer to "is code from a
+// sensor I am not using taking up flash". Build-time only, nothing reaches the device.
+// build_flags_map =
+//     -Wl,-Map=$BUILD_DIR/firmware.map
+
 // Flags specific to project, but vary across dev-boards or variants
 // build_flags = 
 //     ${common.build_flags_frugaliot}
 //     ${common.build_flags_main}
 //     ${common.build_flags_library}
+//     ${common.build_flags_map}
    
 // selecting a platform for board descriotions
 // platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
@@ -140,7 +188,7 @@
 
 
 // ===== [env:c3_pico] -> ARDUINO_LOLIN_C3_PICO
-#ifdef ARDUINO_LOLIN_C3_PICO
+#if defined(ARDUINO_LOLIN_C3_PICO) || defined(C3_PICO)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lolin_c3_mini ; use c3_mini board defs - but note define below which is special cased
@@ -158,8 +206,12 @@
 
 #endif // ARDUINO_LOLIN_C3_PICO
 
-// ===== [env:s2_mini] -> ARDUINO_LOLIN_S2_MINI
-#ifdef ARDUINO_LOLIN_S2_MINI
+// S2_MINI, S2_MINI_4X are alternative [env:] settings for one board - at most one.
+#if (defined(S2_MINI) + defined(S2_MINI_4X)) > 1
+  #error "Define at most one of S2_MINI, S2_MINI_4X - they are alternative settings for the same board, and defining two applies both."
+#endif
+// ===== [env:s2_mini] -> ARDUINO_LOLIN_S2_MINI, the DEFAULT for this board
+#if (defined(ARDUINO_LOLIN_S2_MINI) && !defined(S2_MINI_4X)) || defined(S2_MINI)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI
@@ -169,26 +221,30 @@
 
 #endif // ARDUINO_LOLIN_S2_MINI
 
-// ----- [env:s2_mini_4x] also targets ARDUINO_LOLIN_S2_MINI, DISABLED
-// Only one env per board can be active in the Arduino IDE, and
-// [env:s2_mini] is the one in effect. To use this one instead, set
+// ----- [env:s2_mini_4x] also targets ARDUINO_LOLIN_S2_MINI
+// Only one env per board can be active in the Arduino IDE, and [env:s2_mini]
+// is the default. To use this one instead, define S2_MINI_4X for the WHOLE
+// build - it has to reach the library's sources too, so a #define in the .ino
+// is not enough. Either:
+//   put the flag -DS2_MINI_4X (not a #define) in a file called build_opt.h
+//     beside the .ino - it survives this file being regenerated - or
+//   #define S2_MINI_4X at the TOP of this file, which regenerating discards.
+// To make it the default instead, and so need no define at all, set
 //   custom_arduino_default = yes
 // on [env:s2_mini_4x] in platformio.ini (and remove it from any other env for
 // this board), then re-run scripts/generate_platform_h.py.
-#if 0
-#ifdef ARDUINO_LOLIN_S2_MINI
+#if defined(S2_MINI_4X)
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lolin_s2_mini ; defines ARDUINO_LOLIN_S2_MINI
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "s2_mini_4x"
-#define SENSOR_SHT_SHT4x // Uncomment if using SHT4x series sensors (default is SHT3x)
 
-#endif // ARDUINO_LOLIN_S2_MINI
-#endif // 0
+#endif // S2_MINI_4X
 
 // ===== [env:nodemcu-32s] -> ARDUINO_NodeMCU_32S
-#ifdef ARDUINO_NodeMCU_32S
+#if defined(ARDUINO_NodeMCU_32S) || defined(NODEMCU_32S)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = nodemcu-32s
@@ -202,7 +258,7 @@
 #endif // ARDUINO_NodeMCU_32S
 
 // ===== [env:ttgo-lora32-v21] -> ARDUINO_TTGO_LoRa32_v21new
-#ifdef ARDUINO_TTGO_LoRa32_v21new
+#if defined(ARDUINO_TTGO_LoRa32_v21new) || defined(TTGO_LORA32_V21)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = ttgo-lora32-v21 ; defines ARDUINO_TTGO_LoRa32_v21new
@@ -210,14 +266,19 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "ttgo-lora32-v21"
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
 
 #endif // ARDUINO_TTGO_LoRa32_v21new
 
-// ===== [env:lilygo_t3_s3_sx127x] -> ARDUINO_LILYGO_T3_S3_V1_X
-#ifdef ARDUINO_LILYGO_T3_S3_V1_X
+// LILYGO_T3_S3_SX127X, LILYGO_T3_S3_SX127X_SHT are alternative [env:] settings for one board - at most one.
+#if (defined(LILYGO_T3_S3_SX127X) + defined(LILYGO_T3_S3_SX127X_SHT)) > 1
+  #error "Define at most one of LILYGO_T3_S3_SX127X, LILYGO_T3_S3_SX127X_SHT - they are alternative settings for the same board, and defining two applies both."
+#endif
+// ===== [env:lilygo_t3_s3_sx127x] -> ARDUINO_LILYGO_T3_S3_V1_X, the DEFAULT for this board
+#if (defined(ARDUINO_LILYGO_T3_S3_V1_X) && !defined(LILYGO_T3_S3_SX127X_SHT)) || defined(LILYGO_T3_S3_SX127X)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
@@ -226,20 +287,27 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x"
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
 
 #endif // ARDUINO_LILYGO_T3_S3_V1_X
 
-// ----- [env:lilygo_t3_s3_sx127x_sht] also targets ARDUINO_LILYGO_T3_S3_V1_X, DISABLED
-// Only one env per board can be active in the Arduino IDE, and
-// [env:lilygo_t3_s3_sx127x] is the one in effect. To use this one instead, set
+// ----- [env:lilygo_t3_s3_sx127x_sht] also targets ARDUINO_LILYGO_T3_S3_V1_X
+// Only one env per board can be active in the Arduino IDE, and [env:lilygo_t3_s3_sx127x]
+// is the default. To use this one instead, define LILYGO_T3_S3_SX127X_SHT for the WHOLE
+// build - it has to reach the library's sources too, so a #define in the .ino
+// is not enough. Either:
+//   put the flag -DLILYGO_T3_S3_SX127X_SHT (not a #define) in a file called build_opt.h
+//     beside the .ino - it survives this file being regenerated - or
+//   #define LILYGO_T3_S3_SX127X_SHT at the TOP of this file, which regenerating discards.
+// To make it the default instead, and so need no define at all, set
 //   custom_arduino_default = yes
 // on [env:lilygo_t3_s3_sx127x_sht] in platformio.ini (and remove it from any other env for
 // this board), then re-run scripts/generate_platform_h.py.
-#if 0
-#ifdef ARDUINO_LILYGO_T3_S3_V1_X
+#if defined(LILYGO_T3_S3_SX127X_SHT)
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lilygo-t3-s3 ; defines ARDUINO_LILYGO_T3_S3_V1_X
 // board_build.variant = lilygo_t3_s3_sx127x
@@ -248,15 +316,19 @@
 #define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x_sht"
 #define SENSOR_SHT_WANT // I2C Sensor
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
 
-#endif // ARDUINO_LILYGO_T3_S3_V1_X
-#endif // 0
+#endif // LILYGO_T3_S3_SX127X_SHT
 
-// ===== [env:heltec_wifi_lora_32_V3] -> ARDUINO_heltec_wifi_lora_32_V3
-#ifdef ARDUINO_heltec_wifi_lora_32_V3
+// HELTEC_WIFI_LORA_32_V3, HELTEC_WIFI_LORA_32_V32 are alternative [env:] settings for one board - at most one.
+#if (defined(HELTEC_WIFI_LORA_32_V3) + defined(HELTEC_WIFI_LORA_32_V32)) > 1
+  #error "Define at most one of HELTEC_WIFI_LORA_32_V3, HELTEC_WIFI_LORA_32_V32 - they are alternative settings for the same board, and defining two applies both."
+#endif
+// ===== [env:heltec_wifi_lora_32_V3] -> ARDUINO_heltec_wifi_lora_32_V3, the DEFAULT for this board
+#if (defined(ARDUINO_heltec_wifi_lora_32_V3) && !defined(HELTEC_WIFI_LORA_32_V32)) || defined(HELTEC_WIFI_LORA_32_V3)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = heltec_wifi_lora_32_V3  ; there are not yet separate board and variant files for V3
@@ -264,20 +336,27 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v3"
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
 
 #endif // ARDUINO_heltec_wifi_lora_32_V3
 
-// ----- [env:heltec_wifi_lora_32_V32] also targets ARDUINO_heltec_wifi_lora_32_V3, DISABLED
-// Only one env per board can be active in the Arduino IDE, and
-// [env:heltec_wifi_lora_32_V3] is the one in effect. To use this one instead, set
+// ----- [env:heltec_wifi_lora_32_V32] also targets ARDUINO_heltec_wifi_lora_32_V3
+// Only one env per board can be active in the Arduino IDE, and [env:heltec_wifi_lora_32_V3]
+// is the default. To use this one instead, define HELTEC_WIFI_LORA_32_V32 for the WHOLE
+// build - it has to reach the library's sources too, so a #define in the .ino
+// is not enough. Either:
+//   put the flag -DHELTEC_WIFI_LORA_32_V32 (not a #define) in a file called build_opt.h
+//     beside the .ino - it survives this file being regenerated - or
+//   #define HELTEC_WIFI_LORA_32_V32 at the TOP of this file, which regenerating discards.
+// To make it the default instead, and so need no define at all, set
 //   custom_arduino_default = yes
 // on [env:heltec_wifi_lora_32_V32] in platformio.ini (and remove it from any other env for
 // this board), then re-run scripts/generate_platform_h.py.
-#if 0
-#ifdef ARDUINO_heltec_wifi_lora_32_V3
+#if defined(HELTEC_WIFI_LORA_32_V32)
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = heltec_wifi_lora_32_V3  ; defines ARDUINO_heltec_wifi_lora_32_V3; default variant heltec_wifi_lora_32_V3
 // build_flags = 
@@ -285,15 +364,19 @@
 #define ARDUINO_heltec_wifi_lora_32_V32 // If using 3.2 board uncomment this
 #define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v32"
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
 
-#endif // ARDUINO_heltec_wifi_lora_32_V3
-#endif // 0
+#endif // HELTEC_WIFI_LORA_32_V32
 
-// ===== [env:tbeam] -> ARDUINO_T_Beam
-#ifdef ARDUINO_T_Beam
+// TBEAM, TBEAM_OLED are alternative [env:] settings for one board - at most one.
+#if (defined(TBEAM) + defined(TBEAM_OLED)) > 1
+  #error "Define at most one of TBEAM, TBEAM_OLED - they are alternative settings for the same board, and defining two applies both."
+#endif
+// ===== [env:tbeam] -> ARDUINO_T_Beam, the DEFAULT for this board
+#if (defined(ARDUINO_T_Beam) && !defined(TBEAM_OLED)) || defined(TBEAM)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = ttgo-t-beam ; defines ARDUINO_T_Beam
@@ -301,20 +384,27 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "ttgo-t-beam"
 //     ${common.build_flags_loramesher}
-//  oard_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
+// build_unflags = ${common.build_unflags_loramesher}
+// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps =
 //     ${common.lib_deps_lora}
 
 #endif // ARDUINO_T_Beam
 
-// ----- [env:tbeam_oled] also targets ARDUINO_T_Beam, DISABLED
-// Only one env per board can be active in the Arduino IDE, and
-// [env:tbeam] is the one in effect. To use this one instead, set
+// ----- [env:tbeam_oled] also targets ARDUINO_T_Beam
+// Only one env per board can be active in the Arduino IDE, and [env:tbeam]
+// is the default. To use this one instead, define TBEAM_OLED for the WHOLE
+// build - it has to reach the library's sources too, so a #define in the .ino
+// is not enough. Either:
+//   put the flag -DTBEAM_OLED (not a #define) in a file called build_opt.h
+//     beside the .ino - it survives this file being regenerated - or
+//   #define TBEAM_OLED at the TOP of this file, which regenerating discards.
+// To make it the default instead, and so need no define at all, set
 //   custom_arduino_default = yes
 // on [env:tbeam_oled] in platformio.ini (and remove it from any other env for
 // this board), then re-run scripts/generate_platform_h.py.
-#if 0
-#ifdef ARDUINO_T_Beam
+#if defined(TBEAM_OLED)
+#define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = ttgo-t-beam ; defines ARDUINO_T_Beam
 // build_flags =
@@ -324,6 +414,7 @@
 #define OLED_SCL 22
 #define SYSTEM_OTA_SUFFIX "ttgo-t-beam-oled"
 //     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
 // lib_deps =
 //     ${common.lib_deps_lora_oled}
@@ -335,11 +426,10 @@
 //   variants/heltec_V4/pins_arduino.h   — pin definitions
 // When an official definition ships, remove board_build.variants_dir/variant and
 // delete the boards/ and variants/ project directories.
-#endif // ARDUINO_T_Beam
-#endif // 0
+#endif // TBEAM_OLED
 
 // ===== [env:heltec_wifi_lora_32_V4] -> TODO_HELTEC_WIFI_LORA_32_V4
-#ifdef TODO_HELTEC_WIFI_LORA_32_V4
+#if defined(TODO_HELTEC_WIFI_LORA_32_V4) || defined(HELTEC_WIFI_LORA_32_V4)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = heltec_wifi_lora_32_V4    ; defined in boards/heltec_wifi_lora_32_V4.json
@@ -357,6 +447,7 @@
 #define SENSOR_GPS_WAKE_PIN 40 // drive HIGH continuously to prevent module sleep:
 #define SENSOR_GPS_RST_PIN 42 // ; GNSS_RST must be driven HIGH to release the module from hardware reset:
 #define SENSOR_GPS_DEBUG
+// build_unflags = ${common.build_unflags_loramesher}
 // lib_deps =
 //     ${common.lib_deps_lora_oled}
 

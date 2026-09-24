@@ -5,8 +5,10 @@
 #include "_settings.h"  // Settings for what to include etc
 #include <Arduino.h>
 #include <string>     // std::string, std::stoi
+#include <string.h> // for strcmp in statusLines
 #include "system/io.h"
-#include "misc.h" // For StringF
+#include "misc.h" // For StringF, changed(), IO_PAYLOAD_INVALID
+#include <cmath> // for std::isnan
 #include "system/frugal.h" // For frugal_iot
 
 // ========== IO - base class for IN and OUT ===== 
@@ -45,12 +47,66 @@ void IO::wireTo(IO* io) {
 void IO::send() {
   frugal_iot.messages->send(path(), StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
+/* See io.h. The filesystem test is the point of this: a value that is only in RAM looks exactly
+ * like one that will come back after a reboot, and on a node in a field that difference is most
+ * of what you want to know.
+ */
+// maybeWriteToFS() appends /value for the IO's own value, and uses the bare leaf for a parameter
+bool IO::persisted(const char* param) {
+  return frugal_iot.fs_LittleFS
+      && frugal_iot.fs_LittleFS->exists(String("/") + topicTwig + "/" + (param ? param : "value"));
+}
+
+void IO::statusLine(Print* out, const char* param, const String& value, bool isPersisted, const String& defaultValue) {
+  const String twig = param ? (topicTwig + "/" + param) : topicTwig;
+  out->print(twig);
+  out->print(' ');
+  out->print(value);
+  if (defaultValue.length()) {
+    out->print(" (");
+    out->print(defaultValue);
+    out->print(')');
+  }
+  if (isPersisted) {
+    out->print(" *");
+  }
+  out->print('\n');
+}
+
+/* Short form shows a parameter only when it differs from its default - the same test discover()
+ * makes. A parameter persisted at its default value is a no-op: it changes nothing at setup, so
+ * saying so is noise. The * still marks the ones that are shown and are held on the filesystem.
+ */
+void IO::statusLines(Print* out, bool full) {
+  statusLine(out, nullptr, StringValue(), persisted(nullptr));
+  // An unwired IO says enough by saying nothing, and most IOs on a node are unwired
+  if (full || wiredPath.length()) {
+    statusLine(out, "wired", wiredPath, persisted("wired"));
+  }
+  // Same test discover() makes - see the note there on why it is strcmp
+  if (full || (color && default_color && strcmp(color, default_color))) {
+    statusLine(out, "color", String(color), persisted("color"), full ? String(default_color) : String());
+  }
+}
+
 void IO::discover() {
   send();
   if (wireable) {
     frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "wired"), wiredPath, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   }
-  if (color != default_color) { //TODO-213 this is probably not a valid compare, will prob compare ptr not value
+  /* strcmp, not "color != default_color", which compared the two pointers.
+   *
+   * Both are initialised from the same constructor argument, so for almost every IO that was a
+   * pointer compared with itself: always equal, so the colour was never sent no matter how far
+   * the code had drifted from the schema. The exceptions were the sensors that call
+   * setDefaultColor() - Sensor_Soil, Sensor_LoadCell - where the two pointers differ and the
+   * colour was sent even when the strings were identical.
+   *
+   * setDefaultColor() is what shows the intent: those sensors take a colour from the sketch and
+   * record the schema's value as the default, so the question being asked is "did the sketch
+   * override it" - which is about the values, not about where they are stored.
+   */
+  if (color && default_color && strcmp(color, default_color)) {
     frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "color"), String(color), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   }
 }
@@ -63,6 +119,10 @@ float IN::floatValue() {
 bool IN::boolValue() {
   shouldBeDefined();
   return false; 
+}
+// Base: types with no NaN cannot express "no reading", so they are always valid. INfloat overrides.
+bool IN::isValid() {
+  return true;
 }
 float INuint16::floatValue() {
   return value;
@@ -80,13 +140,38 @@ float INfloat::floatValue() {
 bool INfloat::boolValue() {
   return value;
 }
+bool INfloat::isValid() {
+  return !std::isnan(value);
+}
 // TODO do we really need all these interconversions, it might be for something we never do 
 String INfloat::StringValue() {
-  return String(value, (int)width);
+  // Canonical, not String(NAN, width) - see IO_PAYLOAD_INVALID in misc.h for why that pads
+  return std::isnan(value) ? String(F(IO_PAYLOAD_INVALID)) : String(value, (int)width);
+}
+
+// See the note on IN::convertAndSet in io.h for when an IN has a setter at all
+void INfloat::set(const float newvalue) {
+  if (changed(newvalue, value)) {
+    value = newvalue;
+    send(); // No sendWired() - an IN subscribes to its wiredPath, it does not publish to it
+  }
+}
+
+void INuint16::set(const uint16_t newvalue) {
+  if (changed(newvalue, value)) {
+    value = newvalue;
+    send();
+  }
 }
 
 float INbool::floatValue() {
   return value;
+}
+void INbool::set(const bool newvalue) {
+  if (changed(newvalue, value)) {
+    value = newvalue;
+    send();
+  }
 }
 bool INbool::boolValue() {
   return value;
@@ -122,7 +207,9 @@ bool OUTfloat::boolValue() {
   return value;
 }
 String OUTfloat::StringValue() {
-  return String(value, (int)width);
+  // This is what goes on the wire, so the invalid form has to be exactly IO_PAYLOAD_INVALID and
+  // not whatever dtostrf pads it to - see misc.h.
+  return std::isnan(value) ? String(F(IO_PAYLOAD_INVALID)) : String(value, (int)width);
 }
 float OUTuint16::floatValue() {
   return value;
@@ -481,8 +568,10 @@ INtext::INtext(const INtext &other) :
 
 // TO_ADD_INxxx
 bool INfloat::convertAndSet(const String &p) {
-  float v = p.toFloat();
-  if (v != value) {
+  // Explicit rather than relying on toFloat()/atof() to parse "nan" - it does on newlib, but the
+  // wire contract should not depend on the C library's spelling of it.
+  const float v = (p == IO_PAYLOAD_INVALID) ? NAN : p.toFloat();
+  if (changed(v, value)) {
     value = v;
     return true; // Need to rerun calcs
   }
@@ -490,7 +579,7 @@ bool INfloat::convertAndSet(const String &p) {
 }
 bool INuint16::convertAndSet(const String &p) {
   uint16_t v = p.toInt();
-  if (v != value) {
+  if (changed(v, value)) {
     value = v;
     return true; // Need to rerun calcs
   }
@@ -499,7 +588,7 @@ bool INuint16::convertAndSet(const String &p) {
 bool INbool::convertAndSet(const String &payload) {
   const bool v = payload.toInt();
   //Serial.print("XXX "); Serial.print(id); Serial.print(F(" converted ")); Serial.print(payload); Serial.print(F(" to ")); Serial.println(v);
-  if (v != value) {
+  if (changed(v, value)) {
     value = v;
     return true; // Need to rerun calcs
   }
@@ -519,7 +608,7 @@ bool INcolor::convertAndSet(const char* p1) {
   uint8_t r = (rgb >> 16) & 0xFF;
   uint8_t g = (rgb >> 8) & 0xFF;
   uint8_t b = rgb & 0xFF;
-  if ((r != this->r) || (g != this->g) || (b != this->b)) {
+  if (changed(r, this->r) || changed(g, this->g) || changed(b, this->b)) {
     this->r = r;
     this->g = g;
     this->b = b;
@@ -528,7 +617,7 @@ bool INcolor::convertAndSet(const char* p1) {
   return false; // nothing changed
 }
 bool INtext::convertAndSet(const String &payload) {
-  if (!(payload == value)) {
+  if (changed(payload, value)) {
     value = payload; 
     return true; // Need to rerun calcs
   }
@@ -541,7 +630,7 @@ void INfloat::discover() {
   if (min != default_min) {
     frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   }
-  if (min != default_max) {
+  if (max != default_max) { // Was "min != default_max" - compared the wrong field
     frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   }
   IN::discover();
@@ -550,7 +639,7 @@ void INuint16::discover() {
   if (min != default_min) {
     frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   }
-  if (min != default_max) {
+  if (max != default_max) { // Was "min != default_max" - compared the wrong field
     frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "max"), String(max), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
   }
   IN::discover();
@@ -623,21 +712,23 @@ void OUT::sendWired(bool retain, uint8_t qos) { // defaults to MQTT_RETAIN MQTT_
 }
 // TO-ADD-OUTxxx
 void OUTfloat::set(const float newvalue) {
-  if (newvalue != value) {
+  // changed() not != : NAN != NAN is true, so a sensor stuck invalid would otherwise resend
+  // IO_PAYLOAD_INVALID every single read and re-run every wired control with it.
+  if (changed(newvalue, value)) {
     value = newvalue;
     send();
     sendWired();
   }
 }
 void OUTuint16::set(const uint16_t newvalue) {
-  if (newvalue != value) {
+  if (changed(newvalue, value)) {
     value = newvalue;
     send();
     sendWired();
   }
 }
 void OUTtext::set(const String newvalue) {
-  if (newvalue != value) {
+  if (changed(newvalue, value)) {
     value = newvalue;
     send();
     sendWired();
@@ -648,14 +739,58 @@ void OUTbool::send() {
   frugal_iot.messages->send(path(), String(value), MQTT_RETAIN, MQTT_QOS_ATLEAST1);
 }
 void OUTbool::set(const bool newvalue) {
-  if (newvalue != value) {
+  if (changed(newvalue, value)) {
     value = newvalue;
     send();
     sendWired();
   }
 }
+// Base is a no-op - see the declaration in io.h. A uint16, bool or text output has no value it
+// could publish that does not also look like a legitimate reading, so it stays as it was.
+void OUT::setInvalid() { }
+void OUTfloat::setInvalid() {
+  set(NAN); // changed() in set() means this publishes once on the transition, not every read
+}
 
-// TO-ADD-OUTxxx
+// TO-ADD-OUTxxx - min/max lines, on the four types that have them. Short form shows one only
+// when it differs from the default, matching what discover() bothers to send.
+void INfloat::statusLines(Print* out, bool full) {
+  IN::statusLines(out, full);
+  if (full || (min != default_min)) {
+    statusLine(out, "min", String(min, (int)width), persisted("min"), full ? String(default_min, (int)width) : String());
+  }
+  if (full || (max != default_max)) {
+    statusLine(out, "max", String(max, (int)width), persisted("max"), full ? String(default_max, (int)width) : String());
+  }
+}
+void INuint16::statusLines(Print* out, bool full) {
+  IN::statusLines(out, full);
+  if (full || (min != default_min)) {
+    statusLine(out, "min", String(min), persisted("min"), full ? String(default_min) : String());
+  }
+  if (full || (max != default_max)) {
+    statusLine(out, "max", String(max), persisted("max"), full ? String(default_max) : String());
+  }
+}
+void OUTfloat::statusLines(Print* out, bool full) {
+  OUT::statusLines(out, full);
+  if (full || (min != default_min)) {
+    statusLine(out, "min", String(min, (int)width), persisted("min"), full ? String(default_min, (int)width) : String());
+  }
+  if (full || (max != default_max)) {
+    statusLine(out, "max", String(max, (int)width), persisted("max"), full ? String(default_max, (int)width) : String());
+  }
+}
+void OUTuint16::statusLines(Print* out, bool full) {
+  OUT::statusLines(out, full);
+  if (full || (min != default_min)) {
+    statusLine(out, "min", String(min), persisted("min"), full ? String(default_min) : String());
+  }
+  if (full || (max != default_max)) {
+    statusLine(out, "max", String(max), persisted("max"), full ? String(default_max) : String());
+  }
+}
+
 void OUTfloat::discover() {
   if (min != default_min) {
     frugal_iot.messages->send(frugal_iot.messages->path(sensorId, id, "min"), String(min, (int)width), MQTT_RETAIN, MQTT_QOS_ATLEAST1);

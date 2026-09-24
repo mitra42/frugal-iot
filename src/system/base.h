@@ -1,3 +1,4 @@
+// Deep Sleep issues: none in itself. prepare()/recover() are the sleep hooks; recover() IS reached after a deep sleep, from System_Power::setup() when wake_count says it was one - but only AFTER the actuators and sensors have run their own setup().
 #ifndef SYSTEM_BASE_H
 #define SYSTEM_BASE_H
 
@@ -9,6 +10,7 @@
 #include "ESPAsyncWebServer.h" // for AsyncResponseStream"
 
 class System_Message; // Forward declaration to avoid circular include with system_message.h
+class System_Interface; // system/interface.h - a shared bus, and the power feeding it
 
 class System_Base {
   public:
@@ -17,39 +19,94 @@ class System_Base {
     void setupFailed(); // Called from overrides of setup() on failure.
     const char* id = nullptr; // Name of actuator, sensor or control 
     bool connected = false; 
+    /* Has this module finished describing itself to the server?
+     *
+     * This is discovery's resume position. It is per-INSTANCE rather than an index into a group
+     * because System_Group::discover() is recursive: a nested group can itself stop partway, and
+     * an index in the parent cannot express that. See the comment on System_Group::discover().
+     *
+     * A leaf module never sets this itself - its parent group marks it, because a leaf always
+     * finishes in one call. Only System_Group overrides that.
+     */
+    bool discovered = false;
     virtual void setup();
     virtual void dispatch(System_Message &msg);
     virtual void discover();
-    void readConfigFromFS(File dir, const String* leaf);
     void writeConfigToFS(const String& topicTwig, const String& payload);
     virtual void loop();
     virtual void periodically();
     virtual void captiveLines(AsyncResponseStream* response) { };
+    /* Plain-text lines for the status page, and for dumping to Serial.
+     *
+     * The default is nothing, because most System_Base subclasses have no IO to report. The
+     * classes that do - Sensor, Actuator, Control and System_Buttons - override it to walk their
+     * IOs, and System_Group to walk its members. Any class wanting to say something else about
+     * itself overrides it too.
+     *
+     * Print* rather than the web response, so the same dump can go to Serial when a node will not
+     * join WiFi and the portal cannot be reached at all.
+     */
+    virtual void statusLines(Print* out, bool full);
     virtual void infrequently();
-    void powerUp(uint8_t pin3v3, uint8_t pin0v);
-    virtual void powerUp();
-    void powerDown(uint8_t pin3v3, uint8_t pin0v);
-    virtual void powerDown();
     virtual void prepare() { }   // Optional - prepare before sleep (overridden in subclasses)
     virtual void recover() { }   // Optional - recover after sleep (overridden in subclasses)
-    virtual System_Base* powerPins(const uint8_t power3v3, const uint8_t power0v); // Just here to allow chaining in Group
+    /* Switched power belongs to System_SensorActuator, not here - a Control or a System_MQTT is
+     * not a piece of hardware and has no rail to switch. This is only the chaining stub, so that
+     * powerPins() can be written straight onto a System_Group::add(), which returns System_Base*.
+     * It does nothing on anything that is not a sensor or an actuator.
+     */
+    virtual System_Base* powerPins(const uint8_t power3v3, const uint8_t power0v);
+    /* Should this output keep its state through a deep sleep? See Actuator::preserveDuringSleep.
+     *
+     * Here for the same reason powerPins is - so it can be chained onto a System_Group::add(),
+     * which returns a System_Base*. Does nothing on anything that is not an actuator.
+     */
+    virtual System_Base* preserveDuringSleep(bool on = true) { (void)on; return this; }
   protected: 
+    /* One line "<id>/<leaf> <value>[ *]" for a module-level setting that is not an IO - the
+     * things a system module handles in dispatch() and keeps in a member, such as mqtt/hostname.
+     * The * means the filesystem holds it, tested against the path writeConfigToFS() uses.
+     */
+    void statusLine(Print* out, const char* leaf, const String& value);
     String name; // Name of actuator, sensor or control
     String leaf2path(const char* leaf);  // eg. sht/temperature or sht/temperature/max -> dev/lotus/esp123/sht/temperature ...
     String leaf2path(const String& leaf); 
     void readConfigFromFS();
 }; // Class System_Base
 
+/* A module that IS a piece of hardware - a Sensor or an Actuator - and so may have a pin that
+ * switches its power.
+ *
+ * Not everything in sensor/ or actuator/ is under here even now: Actuator_OLED and Sensor_Button
+ * both extend System_Base directly, so neither can take power pins. The OLED is the one of those
+ * two worth fixing - blanking a display is exactly what a battery node wants - but it is a
+ * bigger change than this, since Actuator_OLED is not an Actuator either.
+ */
 class System_SensorActuator : public System_Base {
   public:
     System_SensorActuator(const char * const id, const String name);
+    /* Claim the pins that switch power to this device.
+     *
+     * On a device that talks over a SHARED bus the pins are handed to that bus instead of being
+     * kept here - see powerInterface() below, and system/interface.h for why. The sketch writes
+     * the same line either way.
+     */
     System_SensorActuator* powerPins(const uint8_t power3v3, const uint8_t power0v) override;
+    /* The shared bus this device talks over, when it has one - null otherwise.
+     *
+     * Overridden as a one-liner by everything with a `System_I2C interface`, a System_OneWire or
+     * a System_Modbus, returning that bus. Null here because a device on a pin of its own - an
+     * analog probe, a DHT, a GPS on its own UART - owns its power outright.
+     */
+    virtual System_Interface* powerInterface() { return nullptr; }
   protected:
     uint8_t power3v3_ = PIN_NONE;
     uint8_t power0v_ = PIN_NONE;
-    virtual void powerUp();   // Optional power management - override in derived classes
-    virtual void powerDown(); // Optional power management - override in derived classes
-  private:
+    // Both no-ops unless powerPins() was called AND kept the pins - see powerPins() above.
+    // Override in a derived class that has something to do to the chip itself first; the pattern
+    // is Sensor_INA219, which writes its power-down register before the supply goes.
+    virtual void powerUp();
+    virtual void powerDown();
 }; // Class System_SensorActuator
 
 

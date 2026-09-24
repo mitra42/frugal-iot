@@ -8,9 +8,10 @@
 #include "misc.h" // for shouldBeDefined
 
 Actuator::Actuator(const char * const id, const char * const name) 
-: System_Base(id, name) { } 
+: System_SensorActuator(id, name) { } 
 
 void Actuator::setup() {
+  powerUp(); // Ensure the device is powered during setup, as Sensor::setup() does
   // There was a comment on Actuator_digial.cpp about reading config AFTER setting up inputs,
   // its not clear why the order matters especially since input->setup is currently null for all IN subclasses
   for (auto &input : inputs) {
@@ -35,8 +36,20 @@ void Actuator::dispatch(System_Message &msg) {
         act();
     }
 }
+void Actuator::statusLines(Print* out, bool full) {
+  System_Base::statusLines(out, full); // Module-level settings first, then the IOs
+  for (auto &input : inputs) {
+    input->statusLines(out, full);
+  }
+}
+
 void Actuator::discover() {
   for (auto &input : inputs) {
     input->discover();
   }
+}
+// See the note in actuator.h. Returns Actuator* so it can be chained onto a group add().
+Actuator* Actuator::preserveDuringSleep(bool on) {
+  preserve_during_sleep = on;
+  return this;
 }

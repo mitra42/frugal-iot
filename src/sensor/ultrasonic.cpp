@@ -1,7 +1,8 @@
 /*
  * Ultrasonic distance sensor over RS485 / Modbus RTU (e.g. A01ANY4B).
  *
- * NOTE - AS OF 2026-08-03 THIS IS UNTESTED CODE
+ * NOTE - AS OF 2026-09-19 THIS IS UNTESTED CODE AS WE DONT HAVE THE HARDWARE - 
+ * BUG REPORTS OR CONFIRMATION THAT IT WORKS VERY WELCOME
  *
  * See sensor/ultrasonic.h for build flags and the offset/scale convention,
  * and system/modbus.h for the bus itself.
@@ -28,8 +29,9 @@ void Sensor_Ultrasonic::setup() {
   modbus.initialize();
 }
 
-// Raw distance in mm, or NAN if the slave did not answer - Sensor_Float::validate rejects NAN
-// so a failed read leaves the last good value published rather than publishing a bogus one.
+// Raw distance in mm, or NAN if the slave did not answer. Sensor_Float::validate rejects NAN,
+// which now publishes "nan" rather than silently leaving the last reading standing - see
+// "Invalid readings" in CLAUDE.md. (This comment described the older behaviour.)
 float Sensor_Ultrasonic::readFloat() {
   uint16_t raw = 0;
   float v = NAN;

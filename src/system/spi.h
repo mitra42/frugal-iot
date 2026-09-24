@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - re-initialised in setup().
 #ifndef SYSTEM_SPI_H
 #define SYSTEM_SPI_H
 #include <Arduino.h>

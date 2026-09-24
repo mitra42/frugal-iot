@@ -1,3 +1,4 @@
+// Deep Sleep issues: the chip wants a warm-up before its air-quality figures mean anything, and deep sleep restarts that on every wake - AQI/TVOC/eCO2 are unreliable on short cycles.
 /* Frugal IoT - ENS160 air quality sensor (AQI, TVOC, eCO2)
  *
  * ScioSense ENS160 (and ENS161) over I2C, freestanding - no external library, just System_I2C.
@@ -13,7 +14,7 @@
  *
  * Why the split. The ENS160 needs an ambient temperature and humidity to compensate its gas
  * plate, but it does not care where they come from - the AHT21 that happens to share the
- * breakout, an SHT30 elsewhere on the node, or a reading published by a different node
+ * breakout, an SHT elsewhere on the node, or a reading published by a different node
  * entirely. Welding the two chips into one class made the AHT21 unusable on its own, made the
  * ENS160 unusable without one, and hid the temperature/humidity dependency from the UX. So the
  * compensation values arrive as `IN`s, wired like any other signal - the same shape as
@@ -96,6 +97,8 @@ class Sensor_ENS160 : public Sensor {
     OUTuint16* eco2;
     OUTuint16* aqi500;      // ENS161 only - deleted in setup() on an ENS160
     System_I2C interface;
+    // powerPins() applies to the shared bus, not to this object - see system/interface.h
+    System_Interface* powerInterface() override { return interface.bus(); }
     bool present = false;   // Set by the part id read in setup()
     bool isENS161 = false;  // aqi500 is only on the ENS161
 

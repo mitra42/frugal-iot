@@ -14,28 +14,19 @@
 
 #include "_settings.h"  // Settings for what to include etc
 #include <Arduino.h>
-#include "sensor/analog.h"
+#include "sensor/voltage.h"
 #include "sensor/battery.h"
 
 // Note voltage divider is board specific - known defaults in sensor_battery.h
 
-Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider)
-//(id, name, pin, width, min, max, offset, scale, color, retain)
-: Sensor_Analog("battery", "Battery", pin_init, 0, DEFAULT_battery_battery_min, DEFAULT_battery_battery_max, 0, voltage_divider, DEFAULT_battery_battery_color, true) //TODO-1
+Sensor_Battery::Sensor_Battery(const uint8_t pin_init, float voltage_divider, float min, float max)
+: Sensor_Voltage("battery", "Battery", pin_init, voltage_divider, min, max, 0,
+                 DEFAULT_battery_battery_color, true) //TODO-1
   {
-      pinMode(pin, INPUT); // Maybe not needed, but really need to be sure for power
-      // Battery power pins are defined in battery.h unlikely to be be overriden in platformio.ini
+      // Battery power pins are defined in battery.h, unlikely to be overridden in platformio.ini.
+      // Some boards gate the divider to stop it draining the battery between readings.
       powerPins(SENSOR_BATTERY_POWER3v3_PIN, SENSOR_BATTERY_POWER0_PIN);
   }
-
-// ESP32 readInt() override - must be outside conditional block to avoid vtable errors
-// when using the 2-parameter constructor on boards without default SENSOR_BATTERY_PIN/VOLTAGE_DIVIDER
-#ifdef ESP32
-int Sensor_Battery::readInt() {
-  powerUp();
-  return analogReadMilliVolts(pin);  // returns uint32 
-}
-#endif // ESP32
 
 #if defined(SENSOR_BATTERY_VOLTAGE_DIVIDER) && defined(SENSOR_BATTERY_PIN)
   #ifdef ESP8266 // analogReadMilliVolts not available

@@ -61,17 +61,17 @@ void System_Messages::loop() {
 }
 
 // =========== Helpers =====================
-// Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht30/temperature
+// Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht/temperature
 String System_Messages::path(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
     setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + topicTwig;
 }
-// Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht30/temperature
+// Convert a twig e.g. "set/#" to path e.g. dev/developers/esp123/sht/temperature
 String System_Messages::setPath(char const * const topicTwig) { // TODO find other places do this and replace with call to TopicPath
     setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + "set/" + topicTwig;
 }
-// Convert a twig e.g. sht30/temperature to path e.g. dev/developers/esp123/sht30/temperature
+// Convert a twig e.g. sht/temperature to path e.g. dev/developers/esp123/sht/temperature
 String System_Messages::path(const String topicTwig) { // TODO find other places do this and replace with call to TopicPath
   setup(); // Allow control wiring before setup by doing setup early
   return topicPrefix + topicTwig; // e.g. dev/lotus/esp1234/sht/temperature or .../temperature/max
@@ -271,10 +271,11 @@ void System_Message::dispatch() {
 
 void System_Message::maybeWriteToFS(bool appendValue) { // appendValue defaults to false
   if (!(flags_ & MsgFromFS)) {
-    String path = String("/") + module() + "/" + leaf(); // e.g. sht/temperature or sht/temperature/max
+    String twig = leaf(); // e.g. temperature or temperature/max
     if (appendValue) {
-      path = path + "/value";
+      twig += "/value";
     }
+    const String path = frugal_iot.fs_LittleFS->configPath(module(), twig);
     #if defined(SYSTEM_LITTLEFS_DEBUG) || defined(SYSTEM_MESSAGE_DEBUG)
       Serial.print(F("Writing config flags=")); Serial.print(flags_, HEX); Serial.print(F(" ")); Serial.print(path); Serial.print(F("=")); Serial.print(payload);
     #endif

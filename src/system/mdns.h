@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - re-announced in setup(), though anything browsing sees the node disappear and come back.
 /* Frugal-IoT - mDNS peer-to-peer messaging
  *
  * Discovers other Frugal-IoT devices on the same LAN via mDNS (_frugaliot._tcp)

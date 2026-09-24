@@ -1,3 +1,4 @@
+// Deep Sleep issues: none - calibration is persisted.
 #ifndef SENSOR_SOIL_H
 #define SENSOR_SOIL_H
 
