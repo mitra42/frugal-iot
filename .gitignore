@@ -37,3 +37,9 @@
 .vscode/launch.json
 .vscode/ipch
 examples/loramesher/logs
+
+# Settings for one checkout, loaded by "extra_configs = *-local.ini" in every example's
+# platformio.ini: the enrolment secret (platformio-secrets-local.ini, symlinked in by the OTA
+# build harness) and a developer's own debug flags. Never committed - this library ships to the
+# PlatformIO registry and the Arduino Library Manager, so a secret landing here is published.
+*-local.ini
