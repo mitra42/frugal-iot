@@ -482,15 +482,15 @@ void System_Power::recover() {
 // ================== maybeSleep =========== called from main::loop() = doesnt return if deep-sleep ===
 // Note that for Power_Loop this returns true when period is up and time for periodic again. 
 bool System_Power::maybeSleep() {       
-  if (nextSleepTime <= millis()) {
+  if (nextSleepTime <= millis()) { // nextSleepTime is adjusted by recover()
     if (mode && !(mode & ExternalSleepBit)) {
-      prepare();
+      prepare(); // Get sensors ready, turn off their individual power and/or buses (I2C etc) and/or global peripheral power.
       sleep();
       // For Power_Loop wake_ms = cycle_ms; so this is good for all modes
       recover(); // Never gets here in deep sleep - in that case recover is called from setup
     }
     nextSleepTime = (millis() + wake_ms); // not sleepSafeSecs() as by definition dont deep sleep before this
-    return true;
+    return true; // note this is an indicator that its time to run "periodic" its NOT am indicator that sleep occurred
   }
   return false;
 }
