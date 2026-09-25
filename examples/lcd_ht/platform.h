@@ -114,7 +114,7 @@
                                          // Remove once no board in the field has the old layout.
 // #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
-#define SYSTEM_MESSAGE_DEBUG
+// #define SYSTEM_MESSAGE_DEBUG
 // #define SYSTEM_MQTT_DEBUG
 // #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
@@ -134,9 +134,9 @@
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library =
-#define SYSTEM_OTA_PREFIX "lcd_sht"
+#define SYSTEM_OTA_PREFIX "lcd_ht"
 #define ACTUATOR_LCD_WANT
-#define ACTUATOR_LCD_DEBUG
+// #define ACTUATOR_LCD_DEBUG
 // #define ACTUATOR_LCD_COLS 20 // uncomment for 20x4 display (default is 16x2)
 // #define ACTUATOR_LCD_ROWS 4
 
@@ -152,7 +152,7 @@
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
+// #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 
@@ -247,7 +247,7 @@
     // SDA=8 SCL=9(grey) is the standard for this board but 8 is LED, so override with I2C_SDA and I2C_SCL
 #define I2C_SCL 5
 #define SYSTEM_MDNS_WANT // device should report directly to other local devices
-#define SYSTEM_MDNS_DEBUG
+// #define SYSTEM_MDNS_DEBUG
   
 // ==== ESP8266 boards ================================================
 
@@ -378,7 +378,7 @@
 // board = ttgo-t-beam ; defines ARDUINO_T_Beam
 // build_flags =
 //     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "ttgo-t-beam"
+#define SYSTEM_OTA_SUFFIX "tbeam"
 //     ${common.build_flags_loramesher}
 // build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
@@ -408,7 +408,7 @@
     // OLED is an add on for tbeams
 #define OLED_SDA 21
 #define OLED_SCL 22
-#define SYSTEM_OTA_SUFFIX "ttgo-t-beam-oled"
+#define SYSTEM_OTA_SUFFIX "tbeam_oled"
 //     ${common.build_flags_loramesher}
 // build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size

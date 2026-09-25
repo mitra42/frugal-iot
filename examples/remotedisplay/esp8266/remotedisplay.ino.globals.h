@@ -36,7 +36,7 @@
 // extra_configs = *-local.ini
 
 // name: Frugal-IoT SHT
-// description: Frugal IoT - Temperature and Humidity Sensor with SHT
+// description: Frugal IoT - Remote Dispay 
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
@@ -108,7 +108,7 @@
 // #define SENSOR_ENS160_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
-#define SENSOR_SHT_DEBUG
+// #define SENSOR_SHT_DEBUG
 // #define SENSOR_SOIL_DEBUG
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
@@ -155,7 +155,7 @@
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
+// #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 

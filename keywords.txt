@@ -68,6 +68,8 @@ System_FS	KEYWORD1
 System_Frugal	KEYWORD1
 System_Group	KEYWORD1
 System_I2C	KEYWORD1
+System_I2C_Bus	KEYWORD1
+System_Interface	KEYWORD1
 System_LittleFS	KEYWORD1
 System_LoraMesher	KEYWORD1
 System_MDNS	KEYWORD1
@@ -117,7 +119,6 @@ bars	KEYWORD2
 boolValue	KEYWORD2
 buildAndSend	KEYWORD2
 buildTopicPrefix	KEYWORD2
-busAlreadyBegun	KEYWORD2
 calcGasWait	KEYWORD2
 calcResHeat	KEYWORD2
 calibrate	KEYWORD2
@@ -222,7 +223,10 @@ path	KEYWORD2
 pauseWiFi	KEYWORD2
 periodically	KEYWORD2
 persisted	KEYWORD2
+pinsPowerDown	KEYWORD2
+pinsPowerUp	KEYWORD2
 powerDown	KEYWORD2
+powerPins	KEYWORD2
 powerUp	KEYWORD2
 pre_setup	KEYWORD2
 prepare	KEYWORD2

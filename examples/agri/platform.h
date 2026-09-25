@@ -148,7 +148,7 @@
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
+// #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 
@@ -184,8 +184,8 @@
 // monitor_filters = esp32_exception_decoder
 
 
-// ===== [env:c3_pico] -> ARDUINO_LOLIN_C3_PICO
-#if defined(ARDUINO_LOLIN_C3_PICO) || defined(C3_PICO)
+// ===== [env:c3_pico_2] -> ARDUINO_LOLIN_C3_MINI
+#if defined(ARDUINO_LOLIN_C3_MINI) || defined(C3_PICO_2)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
 // board = lolin_c3_mini ; use c3_mini board defs - but note define below which is special cased
@@ -207,7 +207,7 @@
 #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Power 1 & 2 are both 100k+100k
 
 // S2 Agri sensor including power control
-#endif // ARDUINO_LOLIN_C3_PICO
+#endif // ARDUINO_LOLIN_C3_MINI
 
 // S2_MINI, S2_MINI_5, S2_MINI_6 are alternative [env:] settings for one board - at most one.
 #if (defined(S2_MINI) + defined(S2_MINI_5) + defined(S2_MINI_6)) > 1
@@ -223,7 +223,7 @@
     // Default SDA=33 SCL=35 avoid TX=39 RX=37 SPI 7,9,11,12 boot=0 and flashing=9-14,esp 11, 15-16 iff uses 32Mhz xtal; 39,40 iff use jtag debugging
     // Soil power ~6mA 
 //     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "s2_mini_2"
+#define SYSTEM_OTA_SUFFIX "s2_mini"
 // #define SYSTEM_POWER_DEBUG
 #define SENSOR_SOIL_POWER0_PIN 1
 #define SENSOR_SOIL_POWER3v3_PIN 3
@@ -282,9 +282,9 @@
     // have that lead moved to pin 5.
 #define SENSOR_BATTERY_PIN 5
 #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Power 1 & 2 are both 100k+100k
-#define SENSOR_DS18B20_DEBUG
-#define SENSOR_SOIL_DEBUG
-#define SENSOR_SHT_DEBUG
+// #define SENSOR_DS18B20_DEBUG
+// #define SENSOR_SOIL_DEBUG
+// #define SENSOR_SHT_DEBUG
 
 // To add another board, copy example from another examples/*/platform.ini and edit in pins etc.
 
@@ -329,9 +329,9 @@
     // have that lead moved to pin 5.
 #define SENSOR_BATTERY_PIN 5
 #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Power 1 & 2 are both 100k+100k
-#define SENSOR_DS18B20_DEBUG
-#define SENSOR_SOIL_DEBUG
-#define SENSOR_SHT_DEBUG
+// #define SENSOR_DS18B20_DEBUG
+// #define SENSOR_SOIL_DEBUG
+// #define SENSOR_SHT_DEBUG
 
 // This is a test unit (for WeDoo), generic C3, 
 #endif // S2_MINI_6
@@ -345,7 +345,7 @@
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "c3_wedoo"
-#define SYSTEM_POWER_DEBUG
+// #define SYSTEM_POWER_DEBUG
 // #define SENSOR_SOIL_PIN 4
 #define ARDUINO_USB_MODE 1
 #define ARDUINO_USB_CDC_ON_BOOT 1
@@ -488,7 +488,7 @@
 // board = ttgo-t-beam ; defines ARDUINO_T_Beam
 // build_flags =
 //     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "ttgo-t-beam"
+#define SYSTEM_OTA_SUFFIX "tbeam"
 //     ${common.build_flags_loramesher}
 // build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
@@ -518,7 +518,7 @@
     // OLED is an add on for tbeams
 #define OLED_SDA 21
 #define OLED_SCL 22
-#define SYSTEM_OTA_SUFFIX "ttgo-t-beam-oled"
+#define SYSTEM_OTA_SUFFIX "tbeam_oled"
 //     ${common.build_flags_loramesher}
 // build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
@@ -528,7 +528,7 @@
 #endif // TBEAM_OLED
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / ESP32C3 Dev Module / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Mini / LOLIN S2 Mini / ESP32C3 Dev Module / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"
 #endif
 
 #endif // PLATFORM_H

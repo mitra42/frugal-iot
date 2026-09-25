@@ -151,7 +151,7 @@
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
+// #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 
@@ -382,7 +382,7 @@
 // board = ttgo-t-beam ; defines ARDUINO_T_Beam
 // build_flags =
 //     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "ttgo-t-beam"
+#define SYSTEM_OTA_SUFFIX "tbeam"
 //     ${common.build_flags_loramesher}
 // build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
@@ -412,7 +412,7 @@
     // OLED is an add on for tbeams
 #define OLED_SDA 21
 #define OLED_SCL 22
-#define SYSTEM_OTA_SUFFIX "ttgo-t-beam-oled"
+#define SYSTEM_OTA_SUFFIX "tbeam_oled"
 //     ${common.build_flags_loramesher}
 // build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
@@ -446,7 +446,7 @@
 #define SENSOR_GPS_0v_PIN 34 // VGNSS_CTRL Passed as power0v_pin so Sensor::powerUp() drives it LOW
 #define SENSOR_GPS_WAKE_PIN 40 // drive HIGH continuously to prevent module sleep:
 #define SENSOR_GPS_RST_PIN 42 // ; GNSS_RST must be driven HIGH to release the module from hardware reset:
-#define SENSOR_GPS_DEBUG
+// #define SENSOR_GPS_DEBUG
 // build_unflags = ${common.build_unflags_loramesher}
 // lib_deps =
 //     ${common.lib_deps_lora_oled}

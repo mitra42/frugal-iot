@@ -142,7 +142,7 @@
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia; Note there are country specific laws as to what this needs to be 
 
     // For lots of debugging uncomment these and the esp_log_level_set in main.cpp
-#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
+// #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 
@@ -238,8 +238,8 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x_sht"
 #define SENSOR_SHT_WANT // I2C Sensor
-#define SENSOR_SHT_DEBUG
-#define SYSTEM_MESSAGE_DEBUG
+// #define SENSOR_SHT_DEBUG
+// #define SYSTEM_MESSAGE_DEBUG
 //     ${common.build_flags_loramesher}
 // build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
@@ -261,7 +261,7 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v3"
 //     ${common.build_flags_loramesher}
-#define SYSTEM_MESSAGE_DEBUG
+// #define SYSTEM_MESSAGE_DEBUG
 // build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
 // lib_deps = 
@@ -289,7 +289,7 @@
 //     ${common.build_flags}
 #define ARDUINO_heltec_wifi_lora_32_V32 // If using 3.2 board uncomment this
 #define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v32"
-#define SYSTEM_MESSAGE_DEBUG
+// #define SYSTEM_MESSAGE_DEBUG
 //     ${common.build_flags_loramesher}
 // build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
@@ -309,7 +309,7 @@
 // board = ttgo-t-beam ; defines ARDUINO_T_Beam
 // build_flags =
 //     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "ttgo-t-beam"
+#define SYSTEM_OTA_SUFFIX "tbeam"
 //     ${common.build_flags_loramesher}
 // build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
@@ -339,7 +339,7 @@
     // OLED is an add on for tbeams
 #define OLED_SDA 21
 #define OLED_SCL 22
-#define SYSTEM_OTA_SUFFIX "ttgo-t-beam-oled"
+#define SYSTEM_OTA_SUFFIX "tbeam_oled"
 //     ${common.build_flags_loramesher}
 // build_unflags = ${common.build_unflags_loramesher}
 // board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size

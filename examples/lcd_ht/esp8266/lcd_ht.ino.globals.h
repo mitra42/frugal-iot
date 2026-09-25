@@ -119,7 +119,7 @@
                                          // Remove once no board in the field has the old layout.
 // #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
-#define SYSTEM_MESSAGE_DEBUG
+// #define SYSTEM_MESSAGE_DEBUG
 // #define SYSTEM_MQTT_DEBUG
 // #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
@@ -139,9 +139,9 @@
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library =
-#define SYSTEM_OTA_PREFIX "lcd_sht"
+#define SYSTEM_OTA_PREFIX "lcd_ht"
 #define ACTUATOR_LCD_WANT
-#define ACTUATOR_LCD_DEBUG
+// #define ACTUATOR_LCD_DEBUG
 // #define ACTUATOR_LCD_COLS 20 // uncomment for 20x4 display (default is 16x2)
 // #define ACTUATOR_LCD_ROWS 4
 
@@ -157,7 +157,7 @@
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
+// #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 

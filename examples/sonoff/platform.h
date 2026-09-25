@@ -133,7 +133,7 @@
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
+// #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 
@@ -188,7 +188,7 @@
 // build_flags = 
 //     ${common.build_flags}
 #define SERIAL_BAUD 115200
-#define SYSTEM_BUTTONS_DEBUG
+// #define SYSTEM_BUTTONS_DEBUG
 #define SYSTEM_OTA_SUFFIX "r4"
     // I2C and SPI aren't used, but will throw errors, at build, without these pins being set. TODO improve this
 #define PIN_WIRE_SDA -1
@@ -212,12 +212,12 @@
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "s2_mini"
-#define SYSTEM_BUTTONS_DEBUG
+// #define SYSTEM_BUTTONS_DEBUG
 #define RELAY_BUILTIN 34 // random place
 // #define SYSTEM_OTA_S 60 // Just for testing - check OTA every minute
-#define SYSTEM_MESSAGE_DEBUG
-#define SYSTEM_MQTT_DEBUG
-#define SYSTEM_WIFI_DEBUG
+// #define SYSTEM_MESSAGE_DEBUG
+// #define SYSTEM_MQTT_DEBUG
+// #define SYSTEM_WIFI_DEBUG
 
 #endif // ARDUINO_LOLIN_S2_MINI
 

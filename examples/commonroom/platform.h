@@ -30,8 +30,8 @@
 // checkout with no such file builds unchanged instead of erroring.
 // extra_configs = *-local.ini
 
-// name: Frugal-IoT Common Ground
-// description: Frugal IoT - Common Ground device
+// name: Frugal-IoT Common Room
+// description: Frugal IoT - Common Room device
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
@@ -148,7 +148,7 @@
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
+// #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 
@@ -195,7 +195,7 @@
     // Default SDA=33 SCL=35 avoid TX=39 RX=37 SPI 7,9,11,12 boot=0 and flashing=9-14,esp 11, 15-16 iff uses 32Mhz xtal; 39,40 iff use jtag debugging
     // Soil power ~6mA 
 //     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "s2_mini_2"
+#define SYSTEM_OTA_SUFFIX "s2_mini"
 // #define SYSTEM_POWER_DEBUG
 #define SENSOR_SOIL_POWER0_PIN 1
 #define SENSOR_SOIL_POWER3v3_PIN 3
