@@ -21,7 +21,7 @@ Open `bh1750.ino`, then **Tools > Board** and pick the row for your hardware.
 | LOLIN C3 Pico | `c3_pico` |  |
 | LOLIN S2 Mini | `s2_mini` |  |
 | NodeMCU-32S | `nodemcu-32s` |  |
-| Nologo ESP32C3 Super Mini | `supermini-4x` |  |
+| Nologo ESP32C3 Super Mini | `supermini` |  |
 | LOLIN(WEMOS) D1 mini Pro | `d1_mini_pro` |  |
 | LOLIN(WEMOS) D1 R2 & mini | `d1_mini` |  |
 | TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) | `ttgo-lora32-v21` |  |

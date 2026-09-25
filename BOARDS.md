@@ -25,7 +25,7 @@ Hand-edit freely — nothing regenerates this.
 | LOLIN(WEMOS) D1 mini Pro | `d1_mini_pro` | `d1_mini_pro` | `ARDUINO_ESP8266_WEMOS_D1MINIPRO †` | **LOLIN(WEMOS) D1 mini Pro** / `d1_mini` | `ARDUINO_ESP8266_WEMOS_D1MINIPRO` |
 | LOLIN(WEMOS) D1 R2 & mini | `d1_mini`, `d1_mini_4x` | `d1_mini` | `ARDUINO_ESP8266_WEMOS_D1MINI †` | **LOLIN(WEMOS) D1 R2 & mini** / `d1_mini` | `ARDUINO_ESP8266_WEMOS_D1MINI` |
 | Heltec WiFi LoRa 32(V4) | `heltec_wifi_lora_32_V4` | `heltec_wifi_lora_32_V4` / `heltec_V4` ‡ | — | **not usable from Arduino IDE** ‡ | — |
-| Nologo ESP32C3 Super Mini | `supermini`, `supermini-4x` | `nologo_esp32c3_super_mini` | `ARDUINO_ESP32C3_DEV` | **Nologo ESP32C3 Super Mini** / `nologo_esp32c3_super_mini` | `ARDUINO_NOLOGO_ESP32C3_SUPER_MINI` |
+| Nologo ESP32C3 Super Mini | `supermini`, `supermini` | `nologo_esp32c3_super_mini` | `ARDUINO_ESP32C3_DEV` | **Nologo ESP32C3 Super Mini** / `nologo_esp32c3_super_mini` | `ARDUINO_NOLOGO_ESP32C3_SUPER_MINI` |
 | ESP32 Dev Module | `lilygohigrow`, `esp32` | `esp32dev` / `esp32` | `ARDUINO_ESP32_DEV` | **ESP32 Dev Module** / `esp32` | `ARDUINO_ESP32_DEV` |
 | LOLIN C3 Mini + 72x40 OLED | `esp32c3_oled_72x40` | `lolin_c3_mini` / `lolin_c3_pico` | `ARDUINO_LOLIN_C3_MINI`<br>env adds `-D ARDUINO_C3_OLED_72x40` | **LOLIN C3 Mini** / `lolin_c3_mini` | `ARDUINO_LOLIN_C3_MINI` |
 | Sonoff Basic (R2) | `r2` | `sonoff_basic` | `ARDUINO_ESP8266_SONOFF_BASIC †` | **not usable from Arduino IDE** | — |

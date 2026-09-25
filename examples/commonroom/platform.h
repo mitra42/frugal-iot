@@ -134,7 +134,7 @@
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
-#define SYSTEM_OTA_PREFIX "commonground"
+#define SYSTEM_OTA_PREFIX "commonroom"
 
 // LoRaMesher throws, so the boards that use it need C++ exceptions back on. build_unflags REMOVES
 // -fno-exceptions rather than countering it with -fexceptions - measured as byte-identical to a

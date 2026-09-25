@@ -219,7 +219,7 @@
 // This is the tiny supermini board from Tencent (and clones)
 #endif // ARDUINO_NodeMCU_32S
 
-// ===== [env:supermini-4x] -> ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
+// ===== [env:supermini] -> ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
 #if defined(ARDUINO_NOLOGO_ESP32C3_SUPER_MINI) || defined(SUPERMINI_4X)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
@@ -229,7 +229,7 @@
 // board_build.partitions = min_spiffs.csv
 // build_flags =
 //     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "supermini-4x"
+#define SYSTEM_OTA_SUFFIX "supermini"
     // SDA=8 SCL=9(grey) is the standard for this board but 8 is LED, so override with I2C_SDA and I2C_SCL
 #define I2C_SDA 6
 #define I2C_SCL 5

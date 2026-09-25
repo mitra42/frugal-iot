@@ -256,7 +256,7 @@
 // An affordable C3 with a small HW675 OLED 
 #endif // ARDUINO_NodeMCU_32S
 
-// ===== [env:esp32c3_oled_72x40] -> ARDUINO_LOLIN_C3_MINI
+// ===== [env:c3_oled_72x40] -> ARDUINO_LOLIN_C3_MINI
 #if defined(ARDUINO_LOLIN_C3_MINI) || defined(ESP32C3_OLED_72X40)
 #define FRUGAL_IOT_BOARD_CONFIGURED
 // platform = ${common.platform_esp32}
