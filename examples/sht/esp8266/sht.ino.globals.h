@@ -44,7 +44,7 @@
 // lib_deps = 
     // Even if developing with a local copy in lib/Frugal-IoT keep this uncommented
     // Note that if local copy, that the version number won't be enforced.
-//     Frugal-IoT@^2.0.0
+//     Frugal-IoT@^2.0.1
     // Add any Libraries specific to this hardware - sensor, actuator, etc but not dependencies of Frugal-IoT
  
 // lib_deps_lora = 
