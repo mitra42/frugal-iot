@@ -65,6 +65,34 @@ LIBRARY_PARTS = ("src", "library.json", "library.properties", "keywords.txt")
 SECRETS_NAME = "platformio-secrets-local.ini"
 
 
+def library_fingerprint(root):
+    """A hash of the library's actual content, for the staged ini - see stage_project().
+
+    PlatformIO does NOT reliably notice a library source change reached through the staged
+    symlink: measured with the source three minutes NEWER than its object, containing an edit,
+    and only the .ino was recompiled. The stale object then linked, so a fix looked like it had
+    not worked - and in a fleet run, stale code would have shipped.
+
+    So the content hash goes into the staged ini, where it feeds project.checksum (T2 measured
+    that extra_configs contents do). Change the library and every staged build directory is
+    invalidated; leave it alone and builds stay warm.
+    """
+    digest = hashlib.sha256()
+    for part in LIBRARY_PARTS:
+        path = os.path.join(root, part)
+        if os.path.isfile(path):
+            digest.update(open(path, "rb").read())
+        elif os.path.isdir(path):
+            for base, dirs, files in os.walk(path):
+                dirs.sort()
+                for name in sorted(files):
+                    if not name.startswith("."):
+                        full = os.path.join(base, name)
+                        digest.update(os.path.relpath(full, root).encode())
+                        digest.update(open(full, "rb").read())
+    return digest.hexdigest()[:16]
+
+
 def library_root():
     return os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
 
@@ -166,6 +194,11 @@ def stage_project(stage, mode, example, secrets):
     content = ("; Written by ota_build.py - see stage_project(). Do not edit.\n"
                "[platformio]\n"
                f"lib_dir = {libdir}\n")
+    if mode == "local":
+        # Not read by anything - it is here purely so that changing the library changes
+        # project.checksum, which is what forces a rebuild. See library_fingerprint().
+        content += ("\n[env]\n"
+                    f"custom_frugal_lib_fingerprint = {library_fingerprint(root)}\n")
     if not (os.path.exists(stage_ini) and open(stage_ini).read() == content):
         with open(stage_ini, "w") as handle:
             handle.write(content)
@@ -182,7 +215,7 @@ def stage_project(stage, mode, example, secrets):
     return project
 
 
-def build_record(name, kind, entry, mode, sha, dirty, firmware):
+def build_record(name, kind, entry, mode, sha, dirty, firmware, secrets):
     data = open(firmware, "rb").read()
     return {
         # "key" publishes to <org>/<project|+>/<otakey>/; "node" to <org>/<project|+>/<nodeid>/,
@@ -195,6 +228,10 @@ def build_record(name, kind, entry, mode, sha, dirty, firmware):
         "ota_prefix": entry.prefix,
         "ota_suffix": entry.suffix,
         "lib_mode": mode,
+        # False means --secrets was omitted. Such a binary looks identical to a good one in the
+        # staging tree, and the node it reaches cannot re-enrol after a factory reset - so record
+        # it here where ota_upload.py can refuse to publish it by accident.
+        "enrol_secret": bool(secrets),
         "lib_git_sha": sha + ("-dirty" if dirty else ""),
         "md5": hashlib.md5(data).hexdigest(),
         "size": len(data),
@@ -209,7 +246,8 @@ def build_one(stage, mode, entry, targets, secrets, sha, dirty, verbose):
     """
     project = stage_project(stage, mode, entry.example, secrets)
     shown = ", ".join(n if k == "key" else f"node:{n}" for n, k in sorted(targets))
-    print(f"  building {entry.example}/{entry.env} -> {shown}", flush=True)
+    quiet = "" if verbose else "  [output suppressed until it finishes; --verbose to stream]"
+    print(f"  building {entry.example}/{entry.env} -> {shown}{quiet}", flush=True)
 
     command = [pio_binary(), "run", "-e", entry.env]
     if verbose:
@@ -225,13 +263,22 @@ def build_one(stage, mode, entry, targets, secrets, sha, dirty, verbose):
             print(output)
         print(f"FAILED {entry.example}/{entry.env}", file=sys.stderr)
     else:
+        # Belt and braces for the above: if a registry copy got installed, the local library was
+        # not used, whatever the mode says. Refusing here is the difference between shipping the
+        # wrong firmware and being told about it.
+        intruder = os.path.join(project, ".pio", "libdeps", entry.env, "Frugal-IoT")
         firmware = os.path.join(project, ".pio", "build", entry.env, "firmware.bin")
-        if not os.path.exists(firmware):
+        if mode == "local" and os.path.exists(intruder):
+            print(f"FAILED {entry.example}/{entry.env}: --lib local, but PlatformIO installed a "
+                  f"registry copy at\n  {intruder}\nso the working tree was NOT used. Delete "
+                  f"the staging tree and re-run.", file=sys.stderr)
+        elif not os.path.exists(firmware):
             print(f"FAILED {entry.example}/{entry.env}: no firmware.bin at {firmware}",
                   file=sys.stderr)
         else:
             for name, kind in sorted(targets):
-                record = build_record(name, kind, entry, mode, sha, dirty, firmware)
+                record = build_record(name, kind, entry, mode, sha, dirty, firmware,
+                                      secrets)
                 out = os.path.join(stage, "firmware", name)
                 os.makedirs(out, exist_ok=True)
                 shutil.copy2(firmware, os.path.join(out, "firmware.bin"))
@@ -284,6 +331,11 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="stream pio output as it builds")
     parser.add_argument("--list", action="store_true", help="resolve and list, but do not build")
     args = parser.parse_args()
+    # MUST be absolute. lib_dir goes into the staged ini, and PlatformIO resolves a relative one
+    # against the PROJECT directory - so "--stage ./ota-stage" pointed lib_dir at nothing, no
+    # local library was found, and lib_deps was quietly satisfied from the registry instead.
+    # "--lib local" then silently built the PUBLISHED library.
+    args.stage = os.path.abspath(args.stage)
 
     keymap, problems = scan(default_examples_dir())
     sha, dirty = git_state(library_root())

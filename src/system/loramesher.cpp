@@ -317,6 +317,20 @@ void System_LoraMesher::periodically() {
     if (printAppData) printAppData();
   #endif
 }
+
+// The state names the OLED shows. NOT inside SYSTEM_LORAMESHER_DEBUG: control/oled_loramesher.cpp
+// uses this for ordinary display, guarded only by ACTUATOR_OLED_WANT && SYSTEM_LORAMESHER_WANT.
+// See .pio/libdeps/heltec_wifi_lora_32_V3/LoRaMesher/src/protocols/lora_mesh/interfaces/i_network_service.hpp
+const __FlashStringHelper* LMstatus[] = {
+  F("Init"),
+  F("Disc"),
+  F("Join"),
+  F("Norm"),
+  F("NtMg"),
+  F("Fault"),
+  F("Elect")
+};
+
 #ifdef SYSTEM_LORAMESHER_DEBUG
   // Not currently used
   void System_LoraMesher::printRouteTable() {
@@ -335,17 +349,6 @@ void System_LoraMesher::periodically() {
       }
   }
   
-  // See .pio/libdeps/heltec_wifi_lora_32_V3/LoRaMesher/src/protocols/lora_mesh/interfaces/i_network_service.hpp
-
-  const __FlashStringHelper* LMstatus[] = {
-    F("Init"),
-    F("Disc"),
-    F("Join"),
-    F("Norm"),
-    F("NtMg"),
-    F("Fault"),
-    F("Elect")
-};
   void System_LoraMesher::printNetworkStatus() {
     auto status = mesher->GetNetworkStatus();
     Serial.print(F("Network status: State: ")); 
