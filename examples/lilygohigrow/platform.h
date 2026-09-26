@@ -180,7 +180,7 @@
 // monitor_port = /dev/cu.usbserial-58950030781  ; This may be specific to my HiGrow or generic across all ?
 // build_flags = 
 //     ${common.build_flags}
-#define SYSTEM_OTA_SUFFIX "prebuilt"
+#define SYSTEM_OTA_SUFFIX "lilygohigrow"
 // board_build.partitions = min_spiffs.csv
 
 // TODO there are several variations of the LilyGo, e.g. using a DHT instead of SHT,
