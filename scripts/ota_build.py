@@ -310,7 +310,31 @@ def main():
         example = (row.get("example") or "-").strip()
         env = (row.get("env") or "-").strip()
 
-        if otakey != "-":
+        # The manifest's example/env columns are AUTHORITATIVE where present, because ota_keys.py
+        # has already resolved any alias into them. An aliased row's otakey is deliberately the
+        # OLD key - the one the node still asks for - and looking that up here would fail, since
+        # by definition no example builds it any more. Alias knowledge lives in one place
+        # (ota_keys.py + ota_aliases.tsv), not in both scripts.
+        if example != "-" and env != "-":
+            entry = by_example_env.get((example, env))
+            if entry is None:
+                unresolved.append(f"{example}/{env}: no such example and env"
+                                  f"{f' (for key {otakey})' if otakey != '-' else ''}")
+            elif otakey != "-":
+                targets = {(otakey, "key")}
+                # Also publish under the key this build actually reports, so a node that takes
+                # the update - and therefore starts reporting the new key - is already served.
+                # Only for key-targeted rows: doing it for a node-pinned row would push that
+                # node's special firmware to every other node sharing its key.
+                targets.add((f"{entry.prefix}_{entry.suffix}", "key"))
+                groups.setdefault((entry.example, entry.env), (entry, set()))[1].update(targets)
+            elif target != "-":
+                groups.setdefault((entry.example, entry.env), (entry, set()))[1].add(
+                    (target, "node"))
+            else:
+                unresolved.append(f"row with neither otakey nor target_node: {row}")
+        elif otakey != "-":
+            # No example/env - a bare --key, so look it up.
             entry = keymap.get(otakey)
             if entry is None:
                 unresolved.append(f"{otakey} (no example builds this key)")
@@ -318,14 +342,9 @@ def main():
                 groups.setdefault((entry.example, entry.env), (entry, set()))[1].add(
                     (otakey, "key"))
         elif target != "-":
-            entry = by_example_env.get((example, env))
-            if entry is None:
-                unresolved.append(
-                    f"node {target}: needs a valid example and env to build from"
-                    f" (got {example!r}/{env!r})")
-            else:
-                groups.setdefault((entry.example, entry.env), (entry, set()))[1].add(
-                    (target, "node"))
+            unresolved.append(
+                f"node {target}: needs a valid example and env to build from"
+                f" (got {example!r}/{env!r})")
         else:
             unresolved.append(f"row with neither otakey nor target_node: {row}")
 
