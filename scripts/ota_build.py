@@ -65,6 +65,9 @@ LIBRARY_PARTS = ("src", "library.json", "library.properties", "keywords.txt")
 SECRETS_NAME = "platformio-secrets-local.ini"
 
 
+_FINGERPRINT = {}
+
+
 def library_fingerprint(root):
     """A hash of the library's actual content, for the staged ini - see stage_project().
 
@@ -77,6 +80,8 @@ def library_fingerprint(root):
     that extra_configs contents do). Change the library and every staged build directory is
     invalidated; leave it alone and builds stay warm.
     """
+    if root in _FINGERPRINT:
+        return _FINGERPRINT[root]
     digest = hashlib.sha256()
     for part in LIBRARY_PARTS:
         path = os.path.join(root, part)
@@ -90,7 +95,8 @@ def library_fingerprint(root):
                         full = os.path.join(base, name)
                         digest.update(os.path.relpath(full, root).encode())
                         digest.update(open(full, "rb").read())
-    return digest.hexdigest()[:16]
+    _FINGERPRINT[root] = digest.hexdigest()[:16]
+    return _FINGERPRINT[root]
 
 
 def library_root():
@@ -216,6 +222,7 @@ def stage_project(stage, mode, example, secrets):
 
 
 def build_record(name, kind, entry, mode, sha, dirty, firmware, secrets):
+    fingerprint = library_fingerprint(library_root()) if mode == "local" else "registry"
     data = open(firmware, "rb").read()
     return {
         # "key" publishes to <org>/<project|+>/<otakey>/; "node" to <org>/<project|+>/<nodeid>/,
@@ -233,6 +240,10 @@ def build_record(name, kind, entry, mode, sha, dirty, firmware, secrets):
         # it here where ota_upload.py can refuse to publish it by accident.
         "enrol_secret": bool(secrets),
         "lib_git_sha": sha + ("-dirty" if dirty else ""),
+        # Which library CONTENT this was built from. lib_git_sha is not enough during a fix-and-
+        # rerun cycle - it stays "<sha>-dirty" across every edit, so it cannot tell a binary built
+        # before a fix from one built after. This can. See --skip-built.
+        "lib_fingerprint": fingerprint,
         "md5": hashlib.md5(data).hexdigest(),
         "size": len(data),
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
@@ -312,6 +323,36 @@ def read_manifest(path):
     return wanted
 
 
+def report_stale(stage, mode):
+    """Name any staged binary built from a different library than the one on disk now.
+
+    The point of --skip-built is to not rebuild what already worked, which necessarily means some
+    binaries predate the fix that made the later ones build. That is fine while iterating and NOT
+    fine to upload, so it is reported every run rather than left to be remembered.
+    """
+    current = library_fingerprint(library_root()) if mode == "local" else "registry"
+    stale = []
+    firmware = os.path.join(stage, "firmware")
+    if os.path.isdir(firmware):
+        for name in sorted(os.listdir(firmware)):
+            record = os.path.join(firmware, name, "build.json")
+            if os.path.exists(record):
+                try:
+                    data = json.load(open(record))
+                except ValueError:
+                    continue
+                if data.get("lib_fingerprint", "unknown") != current:
+                    stale.append(name)
+    if stale:
+        print(f"\nWARNING: {len(stale)} staged binary/binaries were built from a DIFFERENT "
+              f"library than the\none on disk now. Re-run without --skip-built before uploading:")
+        for name in stale[:10]:
+            print(f"  {name}")
+        if len(stale) > 10:
+            print(f"  ... and {len(stale) - 10} more")
+    return stale
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Build firmware for OTA keys into a staging tree.",
@@ -330,6 +371,12 @@ def main():
                         help="build --lib local from a dirty working tree anyway")
     parser.add_argument("--verbose", action="store_true", help="stream pio output as it builds")
     parser.add_argument("--list", action="store_true", help="resolve and list, but do not build")
+    parser.add_argument("--skip-built", action="store_true",
+                        help="skip anything already in the staging tree. For the fix-and-rerun "
+                             "cycle: a library fix invalidates every build dir, so without this "
+                             "each failure costs a full rebuild of everything already done. The "
+                             "skipped binaries are then built against the OLD library, so finish "
+                             "with one plain run to reconcile - it reports what is stale.")
     args = parser.parse_args()
     # MUST be absolute. lib_dir goes into the staged ini, and PlatformIO resolves a relative one
     # against the PROJECT directory - so "--stage ./ota-stage" pointed lib_dir at nothing, no
@@ -423,8 +470,24 @@ def main():
                   "         A node that is already enrolled is fine; a factory-reset one cannot "
                   "re-enrol.", file=sys.stderr)
 
+    # Skip whole groups whose outputs are all present. Per group, not per target, because one
+    # build serves every key and node that maps to it.
+    skipped = []
+    if args.skip_built:
+        keep = {}
+        for slot, (entry, targets) in groups.items():
+            done = all(os.path.exists(os.path.join(args.stage, "firmware", n, "firmware.bin"))
+                       for n, _ in targets)
+            if done:
+                skipped.append(f"{entry.example}/{entry.env}")
+            else:
+                keep[slot] = (entry, targets)
+        groups = keep
+
     print(f"{len(groups)} build(s), --lib {args.lib}, library {sha}"
           f"{'-dirty' if dirty else ''}")
+    if skipped:
+        print(f"  skipping {len(skipped)} already built: {', '.join(sorted(skipped))}")
     if problems:
         keymap_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ota_keymap.py")
         print(f"({len(problems)} keymap lint problem(s) - to list them: "
@@ -447,6 +510,7 @@ def main():
                 sys.exit(1)
             done += 1
         print(f"\n{done} build(s) ok -> {os.path.join(args.stage, 'firmware')}")
+        report_stale(args.stage, args.lib)
 
 
 if __name__ == "__main__":
