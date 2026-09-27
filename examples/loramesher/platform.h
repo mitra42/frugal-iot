@@ -29,7 +29,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.1
+//     Frugal-IoT@^2.0.2
 
 // lib_deps_lora = 
 //     ${common.lib_deps}
@@ -152,6 +152,24 @@
 // build_flags_map =
 //     -Wl,-Map=$BUILD_DIR/firmware.map
 
+// AsyncTCP's service task stack, which is HEAP, not static - so it does not show up in the RAM
+// figure at the end of a build, and that is why it went unnoticed.
+//
+// The library defaults it to 8192*2, sixteen kilobytes, which is the same size as one of mbedTLS's
+// two TLS record buffers. The captive portal's handlers are a form POST, a status page and a couple
+// of redirects - nothing that needs half of that. On an S2, where TinyUSB has already taken 23KB
+// of internal RAM, those sixteen kilobytes are the difference between a TLS handshake that fits and
+// one that returns "SSL - Memory allocation failed".
+//
+// #define works
+// not an sdkconfig setting.
+//
+// 8192 moved an S2 from "cannot allocate the record buffers" to "failed during chain verification" -
+// further in, still short. 4096 is the next step and is still generous for handlers that parse a
+// small form and print a status page. Raise it again if a portal handler ever does real work.
+// build_flags_async =
+#define CONFIG_ASYNC_TCP_STACK_SIZE 4096
+
 // Flags specific to project, but vary across dev-boards or variants
 // build_flags = 
 //     ${common.build_flags_frugaliot}
@@ -159,6 +177,7 @@
 //     ${common.build_flags_library}
 //     ${common.build_flags_map}
 //     ${common.build_flags_loramesher}
+//     ${common.build_flags_async}
 
 // selecting a platform for board descriotions
 //platform_esp32 = espressif32 ; this is the default
