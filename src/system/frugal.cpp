@@ -253,8 +253,11 @@ void System_Frugal::pre_setup() {
   // Project BEFORE it builds the prefix for topics, which will happen when reads first entry in readConfigFromFS()
   String newProject = fs_LittleFS->slurp(fs_LittleFS->configPath(id, "project"), true); // ignores if not found
   if (newProject.length()) {
-    Serial.print(F("Project set to:")); Serial.println(project);
     project = newProject;
+    // After the assignment, not before it - this printed the value it was about to replace, so the
+    // one line saying which project the node is in reported the compiled-in default while the node
+    // used the one from the filesystem.
+    Serial.print(F("Project set to:")); Serial.println(project);
   }
   // Note this will read project again
   readConfigFromFS(); // Reads config (project, name) and passes to our dispatch - note this just reads frugal_iot/ not other directories which are read in actuator,sensor,control,system_xxx.setup

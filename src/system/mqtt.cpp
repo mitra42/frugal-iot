@@ -182,7 +182,13 @@ void System_MQTT::enrolIfNeeded() {
               ;
 
   HTTPClient http;
-  Serial.print(F("Enrolling at ")); Serial.println(url);
+  // The identity as well as the URL. Without it the one line serial prints cannot distinguish the
+  // two mistakes that look identical on the server - asking the right server as the wrong
+  // organization, and asking the wrong server - and the node id is otherwise only discoverable by
+  // being here with a cable.
+  Serial.print(F("Enrolling at ")); Serial.print(url);
+  Serial.print(F(" as ")); Serial.print(frugal_iot.org); Serial.print('/');
+  Serial.print(frugal_iot.project); Serial.print('/'); Serial.println(frugal_iot.nodeid);
   if (!http.begin(httpNet, url)) {
     Serial.println(F("Enrol: could not start the request"));
     return;
