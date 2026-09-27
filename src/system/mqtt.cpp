@@ -85,6 +85,13 @@ static String jsonField(const String& json, const char* field) {
   // may be waiting for days and there is nothing to be gained by asking often.
   #define SYSTEM_MQTT_ENROL_RETRY_MS 1800000
 #endif
+// How long to wait when enrolment could not even be attempted because the clock was not set yet.
+// Seconds, not the half hour above: nothing has to happen at the other end, SNTP just has to
+// answer, and a node that gives up for half an hour over that looks exactly like one that has been
+// refused.
+#ifndef SYSTEM_MQTT_ENROL_RETRY_NOTIME_MS
+  #define SYSTEM_MQTT_ENROL_RETRY_NOTIME_MS 5000
+#endif
 // mqtt client -> System_MQTT callback
 // Note intentionally outside class, passed as callback to Mqtt client
 void MqttMessageReceived(String &topicPath, String &payload) { // cant be constant as dispatch isnt
@@ -147,6 +154,27 @@ void System_MQTT::enrolIfNeeded() {
   const String url = String(SYSTEM_MQTT_ENROL_URL);
   const bool plainHttp = url.startsWith("http://");
 
+  /*
+   * An https enrolment cannot succeed before the clock is set, so do not spend an attempt on it.
+   *
+   * setCACert() below makes mbedTLS check the certificate's validity dates, and a node that has
+   * just booted is at 1970 until SNTP answers - so every certificate is "not yet valid" and the
+   * handshake fails. It surfaces as HTTPClient's -1, identical to a refused connection, a DNS
+   * failure or a server that is down, which is four quite different problems wearing one number.
+   *
+   * The race is real rather than theoretical: System_Frugal::setup_after_wifi() calls
+   * time->setup_after_wifi() and then mqtt->setup_after_wifi() immediately, and configTime() starts
+   * SNTP asynchronously - getLocalTime() waits a few seconds for it and gives up quietly.
+   *
+   * Retried on the SHORT timer, not the half-hour one: this is a node that is seconds away from
+   * being able to enrol, not one waiting for an administrator.
+   */
+  if (!plainHttp && frugal_iot.time && !frugal_iot.time->isTimeSet()) {
+    Serial.println(F("Enrol: waiting for the clock - an https certificate cannot be checked at 1970"));
+    nextEnrolTime = millis() + SYSTEM_MQTT_ENROL_RETRY_NOTIME_MS;
+    return;
+  }
+
   // One client or the other, chosen by the URL. Declared together rather than in branches because
   // HTTPClient::begin keeps a reference to whichever it is given, so it has to outlive the request.
   WiFiClient plain;
@@ -202,7 +230,25 @@ void System_MQTT::enrolIfNeeded() {
     // 409 means the server already has this node and wants proof we cannot give - which happens
     // when the filesystem has been erased. Say what to do about it rather than only the number.
     Serial.print(F("Enrol failed, HTTP ")); Serial.println(code);
-    if (code == 409) {
+    if (code < 0) {
+      /*
+       * A negative code is HTTPClient's own, not the server's: nothing was sent, so nothing will
+       * appear in the server's log or on its dashboard. Worth saying outright, because the natural
+       * next move is to go and look there, and looking there proves nothing.
+       *
+       * -1 is the ambiguous one. On an https URL it is almost always the TLS handshake, and the two
+       * causes are printed rather than guessed at: an unset clock (checked above, so it should not
+       * be this) and not enough heap for the handshake, which wants tens of kilobytes free and a
+       * node that has just woken from deep sleep with its sensors up may not have.
+       */
+      Serial.println(F("  Nothing reached the server - do not look for this attempt in its log"));
+      Serial.print(F("  time set: ")); Serial.print((frugal_iot.time && frugal_iot.time->isTimeSet()) ? F("yes") : F("NO"));
+      Serial.print(F(", free heap: ")); Serial.println(ESP.getFreeHeap());
+      if (!plainHttp) {
+        Serial.println(F("  https: check the clock above, the heap above, DNS, and that the"));
+        Serial.println(F("  server's certificate chain still verifies against the pinned root CA"));
+      }
+    } else if (code == 409) {
       Serial.print(F("  This node is already enrolled. On the server run: frugal-iot-resetnode "));
       Serial.print(frugal_iot.org); Serial.print(F(" ")); Serial.print(frugal_iot.project);
       Serial.print(F(" ")); Serial.println(frugal_iot.nodeid);
