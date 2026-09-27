@@ -22,6 +22,43 @@
 
 #include "_settings.h" // Note - ideally shouldnt be dependent on anything here
 
+#ifdef ESP32
+#include <mbedtls/platform.h>
+#include <esp_heap_caps.h>
+
+/*
+ * Give mbedTLS the PSRAM.
+ *
+ * A board with 2MB of PSRAM was failing a TLS handshake for want of 33KB, because mbedTLS never
+ * looks at PSRAM. Ordinary malloc does - CONFIG_SPIRAM_USE_MALLOC is set and anything over
+ * CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL (4096) goes external - but ESP-IDF deliberately opts mbedTLS
+ * out of that, in esp_config.h:
+ *
+ *   #define MBEDTLS_PLATFORM_MEMORY
+ *   #define MBEDTLS_PLATFORM_STD_CALLOC   esp_mbedtls_mem_calloc
+ *
+ * and with CONFIG_MBEDTLS_INTERNAL_MEM_ALLOC set, that function demands MALLOC_CAP_INTERNAL. So a
+ * node can have two megabytes free and still fail to allocate a 16KB record buffer.
+ *
+ * STD_CALLOC rather than CALLOC_MACRO is what makes this fixable here: it is the initial value of a
+ * function pointer, so replacing it at runtime works and needs no rebuilt framework. Changing it
+ * through sdkconfig would mean custom_sdkconfig, which recompiles the whole IDF.
+ *
+ * The fallback to internal matters. Hardware AES, GCM, SHA and MPI are all enabled and those
+ * peripherals use DMA; ESP-IDF bounces external-RAM buffers through internal memory for them, but
+ * that is the part of this least travelled, and an allocation that PSRAM cannot serve should get
+ * internal RAM rather than fail.
+ */
+static void* frugal_mbedtls_calloc(size_t n, size_t size) {
+  void* p = heap_caps_calloc(n, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  if (!p) p = heap_caps_calloc(n, size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+  return p;
+}
+// heap_caps_free takes either kind of pointer, so this is safe for anything the previous allocator
+// handed out before the swap below.
+static void frugal_mbedtls_free(void* p) { heap_caps_free(p); }
+#endif // ESP32
+
 // Did the sketch's settings actually reach this build?
 //
 // On ESP32 and under PlatformIO they always do - platform.h is on the include path, or the flags
@@ -248,6 +285,21 @@ void System_Frugal::pre_setup() {
     powercontroller->pre_setup();
     powercontroller->checkLevel();
     startSerial(); // Encapsulate setting up and starting serial
+  #endif
+  delay(5000);
+  /*
+   * Before anything can open a TLS connection - enrolment is the first, from setup_after_wifi.
+   * Only where there is PSRAM to give it: getPsramSize() is a RUNTIME check on purpose, because
+   * BOARD_HAS_PSRAM is set by board definitions for modules that are also sold without the die.
+   */
+  #ifdef ESP32
+    if (ESP.getPsramSize() > 0) {
+      if (mbedtls_platform_set_calloc_free(frugal_mbedtls_calloc, frugal_mbedtls_free) == 0) {
+        Serial.print(F("TLS allocating from PSRAM, free: ")); Serial.println(ESP.getFreePsram());
+      } else {
+        Serial.println(F("Could not point TLS at PSRAM - it will use internal RAM"));
+      }
+    }
   #endif
   fs_LittleFS->pre_setup();
   // Project BEFORE it builds the prefix for topics, which will happen when reads first entry in readConfigFromFS()

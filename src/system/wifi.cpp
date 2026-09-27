@@ -393,6 +393,20 @@ void System_WiFi::stateMachine() {
         }
         // stabilizeTill guard above already waited 2000ms — proceed directly
         setStatus(WIFI_CONNECTED);
+        /*
+         * Release the scan results before handing over, because setup_after_wifi() is where the
+         * node makes its one TLS connection of the boot - enrolment - and that is the tightest the
+         * heap ever gets: mbedTLS wants two 16KB record buffers plus the certificate chain, and it
+         * reports running out as a handshake failure rather than as a memory error.
+         *
+         * They were only freed at the START of the next scan, so a full session carried them for
+         * nothing: connectOneAndAllNext() needs them while it is still trying networks, but by here
+         * one has connected, and a later drop goes through WIFI_DISCONNECTED to WiFi.reconnect(),
+         * which does not read them. It is a wifi_ap_record_t (80 bytes) per access point IN RANGE,
+         * so what it costs depends on where the node is standing - which is the sort of difference
+         * that makes one node fail where an identical one a few metres away succeeds.
+         */
+        WiFi.scanDelete();
         frugal_iot.setup_after_wifi(); // Callback to MQTT, Time and OTA as first connected
         //drop thru
       case WIFI_CONNECTED: //3

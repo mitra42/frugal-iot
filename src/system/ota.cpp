@@ -132,10 +132,35 @@ void System_OTA::checkForUpdate() {
   t_httpUpdate_return ret = HTTPUPDATE.update(client, _otaServerAddress, _softwareVersion);
 
   switch (ret){
-    case HTTP_UPDATE_FAILED:
+    case HTTP_UPDATE_FAILED: {
   	  Serial.print(F("OTA error =")); Serial.print(HTTPUPDATE.getLastError()); Serial.print(F(",")); Serial.println(HTTPUPDATE.getLastErrorString());
+      /*
+       * The same report enrolment makes, for the same reason - and OTA is the harder case of the
+       * two. It runs AFTER MQTT has connected, so it meets a heap that enrolment has already
+       * churned: two 16KB TLS record buffers taken and given back, with MQTT's socket landing in
+       * the gap. A handshake needs those blocks CONTIGUOUS, so OTA can fail on fragmentation while
+       * the total still looks ample - which is why the largest block is printed beside it.
+       *
+       * -1 here is "connection refused" from HTTPClient, meaning nothing was sent. Do not go
+       * looking on the server for a request that was never made.
+       */
+      int err = HTTPUPDATE.getLastError();
+      if (err < 0) {
+        Serial.print(F("  free heap: ")); Serial.print(ESP.getFreeHeap());
+        #ifdef ESP32
+          Serial.print(F(", largest block: ")); Serial.print(ESP.getMaxAllocHeap());
+          Serial.print(F(", psram: ")); Serial.print(ESP.getPsramSize());
+          char tls[128] = "";
+          int tlsErr = client.lastError(tls, sizeof(tls));
+          if (tlsErr) { Serial.print(F(", TLS ")); Serial.print(tlsErr); Serial.print(' '); Serial.print(tls); }
+        #else
+          Serial.print(F(", largest block: ")); Serial.print(ESP.getMaxFreeBlockSize());
+        #endif
+        Serial.println();
+      }
       _isOK = false;
       break;
+    }
     
     case HTTP_UPDATE_NO_UPDATES:
 	    Serial.println(F("OTA up to date"));
