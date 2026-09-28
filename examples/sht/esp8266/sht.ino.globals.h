@@ -128,13 +128,18 @@
 // #define SYSTEM_TIME_DEBUG
 // #define SYSTEM_WIFI_DEBUG
 
-// Filled in by <name>-local.ini - the enrolment secret, and which server to build against.
-// Empty here, so this file can be committed and a checkout without a local one still builds.
+// Filled in by the *-local.ini files, which are never committed. Empty here, so this file can be
+// committed and a checkout without them still builds. Two keys rather than one because a value set
+// in a *-local.ini REPLACES the one here rather than adding to it, so each file needs its own:
+//   build_flags_secrets - platformio-secrets-local.ini: the enrolment secret, and which server
+//                         this build is for. ota_build.py --secrets links it into every example.
+//   build_flags_local   - platformio-local.ini: your own debug flags. Never reaches an OTA build.
+// build_flags_secrets =
 // build_flags_local =
 
 // flags that apply only in main (the library can see them, but doesnt need them)
-// build_flags_main = 
-    // The enrolment secret, and which server this build is for - see <name>-local.ini
+// build_flags_main =
+//     ${common.build_flags_secrets}
 //     ${common.build_flags_local}
 
 // project specific flags that are needed by the library 
