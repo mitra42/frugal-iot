@@ -287,7 +287,7 @@
 // #define SYSTEM_RS485_DE_PIN 26
 // #define SYSTEM_RS485_RE_PIN 25
 // #define SYSTEM_MODBUS_DEBUG
-    // Modbus slave id of the ultrasonic module - defining it is what enables Sensor_Ultrasonic
+    // Modbus slave id of the ultrasonic module - defining it is what enables Sensor_UltrasonicModbus
 #define SENSOR_ULTRASONIC_SLAVE_ID 1
 // #define SENSOR_ULTRASONIC_DEBUG
     // INA219 and BME280 on I2C

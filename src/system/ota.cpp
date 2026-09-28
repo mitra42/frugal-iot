@@ -198,7 +198,7 @@ void System_OTA::setup_after_mqtt_setup() {
 }
 
 void System_OTA::maybe_ota() {
-  #ifdef SYSTEM_OTA_PAUSE ; // can define this in your platformio-local.ini to stop OTA overwriting your tests
+  #ifdef SYSTEM_OTA_PAUSE  // can define this in your platformio-local.ini to stop OTA overwriting your tests
     return;
   #endif
   if (frugal_iot.canOTA() && frugal_iot.powercontroller->timer_expired(timer_index)) {

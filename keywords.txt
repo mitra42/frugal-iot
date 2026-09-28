@@ -50,6 +50,7 @@ Sensor_DissolvedOxygen	KEYWORD1
 Sensor_ENS160	KEYWORD1
 Sensor_Float	KEYWORD1
 Sensor_GPS	KEYWORD1
+Sensor_HCSR04	KEYWORD1
 Sensor_Health	KEYWORD1
 Sensor_INA219	KEYWORD1
 Sensor_LoadCell	KEYWORD1
@@ -58,6 +59,7 @@ Sensor_Soil	KEYWORD1
 Sensor_SoilModbus	KEYWORD1
 Sensor_Uint16	KEYWORD1
 Sensor_Ultrasonic	KEYWORD1
+Sensor_UltrasonicModbus	KEYWORD1
 Sensor_Voltage	KEYWORD1
 Sensor_ms5803	KEYWORD1
 System_Base	KEYWORD1
@@ -223,6 +225,7 @@ path	KEYWORD2
 pauseWiFi	KEYWORD2
 periodically	KEYWORD2
 persisted	KEYWORD2
+ping	KEYWORD2
 pinsPowerDown	KEYWORD2
 pinsPowerUp	KEYWORD2
 powerDown	KEYWORD2
@@ -307,6 +310,7 @@ shouldBeDefined	KEYWORD2
 sleep	KEYWORD2
 sleepSafeSecs	KEYWORD2
 slurp	KEYWORD2
+speedOfSound	KEYWORD2
 spinTillReady	KEYWORD2
 split	KEYWORD2
 spurt	KEYWORD2

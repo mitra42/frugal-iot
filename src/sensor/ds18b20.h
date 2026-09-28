@@ -48,7 +48,7 @@ public:
      * exist - which matters, because the conversion that a shared bus does once costs 750ms.
      */
     Sensor_DS18B20(const char* id, const char* name, uint8_t pin, bool retain);
-    // Explicit bus, matching how Sensor_Ultrasonic takes its System_RS485
+    // Explicit bus, matching how Sensor_UltrasonicModbus takes its System_RS485
     Sensor_DS18B20(const char* id, const char* name, System_OneWire* bus, bool retain);
 
 protected:

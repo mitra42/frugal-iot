@@ -95,7 +95,7 @@ void setup() {
     // defaults below publish plain distance in mm. For depth of water instead, pass
     // offset = height of the sensor above the floor in mm and scale = -1.0,
     // e.g. (..., rs485, 2000.0, -1.0) for a sensor 2m up.
-    frugal_iot.sensors->add(new Sensor_Ultrasonic("ultrasonic", "Water Level", 7500, "blue", true, rs485));
+    frugal_iot.sensors->add(new Sensor_UltrasonicModbus("ultrasonic", "Water Level", 7500, "blue", true, rs485));
   #endif
   #ifdef SENSOR_PH_PIN
     // Raw ADC -> pH as (raw - offset) * scale, both from platformio.ini
