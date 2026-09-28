@@ -304,6 +304,7 @@ Frugal-IoT/
 │   ├── agri/              # Agricultural multi-sensor
 │   ├── all/               # All sensors demo
 │   ├── blinken/           # LED blink patterns
+│   ├── bme680/            # BME680 temperature/humidity/pressure + gas resistance
 │   ├── bmpaht/            # BMP280 pressure + AHT20 temperature/humidity
 │   ├── datalogger/        # LittleFS data logging
 │   ├── ensaht/            # ENS160 air quality + AHT21
