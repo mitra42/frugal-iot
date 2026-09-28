@@ -69,6 +69,16 @@
   #if __has_include("platform.h")
     #include "platform.h"
   #endif
+  // The Arduino IDE counterpart of platformio-secrets-local.ini: the enrolment secret, and which
+  // server this build is for, as #defines - e.g.
+  //   #define SYSTEM_MQTT_ENROL_SECRET "..."   (the dashboard's Nodes card prints the value)
+  // Not generated and never committed (*-local.h is in .gitignore). platform.h cannot hold these:
+  // it is generated from the committed platformio.ini, so it only ever has the empty default.
+  // Must come before the #ifndef defaults below. Found the same way as platform.h, so ESP32
+  // only - on ESP8266 put the same #defines in your copy of <sketch>.ino.globals.h instead.
+  #if __has_include("platform-secrets-local.h")
+    #include "platform-secrets-local.h"
+  #endif
 #endif
 
 #include "defaults.h" // Auto generated file of parameter defaults

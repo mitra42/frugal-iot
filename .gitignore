@@ -42,4 +42,6 @@ examples/loramesher/logs
 # platformio.ini: the enrolment secret (platformio-secrets-local.ini, symlinked in by the OTA
 # build harness) and a developer's own debug flags. Never committed - this library ships to the
 # PlatformIO registry and the Arduino Library Manager, so a secret landing here is published.
+# platform-secrets-local.h is the Arduino IDE form of the same secret - see src/_settings.h.
 *-local.ini
+*-local.h
