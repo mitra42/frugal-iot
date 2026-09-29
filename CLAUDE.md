@@ -1552,6 +1552,13 @@ Speed of sound is `331.3 + 0.606 * T` m/s — 0.17 %/°C — from a wireable `te
 `SENSOR_HCSR04_DEFAULT_TEMPERATURE` (20) until wired, and falls back to it if the wired sensor
 publishes `nan`. `SENSOR_HCSR04_TEMPERATURE_PATH` sets a default wiring.
 
+**Also the AJ-SR04M** (waterproof, probe on a cable), in its as-shipped trigger/echo mode (R19
+empty - the serial modes would need a new subclass). It differs in having a ~20-25 cm blind zone
+(one transducer), ~4.5 m range and a 3.0-5.5 V supply, so wants `SENSOR_HCSR04_MIN_MM=200` and
+`_MAX_MM=4500`, and possibly `SENSOR_HCSR04_TRIGGER_US=20` (default 10) or `_INTERVAL_MS=100`.
+The comparison table and R19 modes are at the top of `sensor/hcsr04.h` - from vendor listings,
+not yet checked on hardware. The limits are build flags, so apply to every instance on a node.
+
 Pins are constructor arguments; `SENSOR_HCSR04_TRIGGER_PIN`/`_ECHO_PIN` are only what
 `examples/hcsr04` passes. **ECHO is 5 V on a standard HC-SR04** — a 1k/2k divider to the ESP pin.
 The HC-SR04P runs at 3.3 V and needs none.

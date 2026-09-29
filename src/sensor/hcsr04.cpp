@@ -3,8 +3,8 @@
  *
  * NOTE - AS OF 2026-09-28 THIS IS UNTESTED CODE
  *
- * See sensor/hcsr04.h for the wiring (ECHO is 5V - use a divider), the flags, and why this does
- * not use robtillaart/SRF05.
+ * See sensor/hcsr04.h for the wiring (ECHO is 5V - use a divider), the modules it supports and the
+ * settings for each (HC-SR04, AJ-SR04M), the flags, and why this does not use robtillaart/SRF05.
  */
 
 #include "sensor/hcsr04.h"
@@ -62,7 +62,7 @@ uint32_t Sensor_HCSR04::ping() {
   digitalWrite(trigger_pin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigger_pin, HIGH);
-  delayMicroseconds(10);
+  delayMicroseconds(SENSOR_HCSR04_TRIGGER_US);
   digitalWrite(trigger_pin, LOW);
   return pulseIn(echo_pin, HIGH, SENSOR_HCSR04_TIMEOUT_US);
 }
