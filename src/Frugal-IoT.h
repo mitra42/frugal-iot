@@ -37,6 +37,7 @@
 #include "control/gsheets.h"
 #include "control/hysteresis.h"
 #include "control/logger_fs.h"
+#include "control/oled_single.h" // Compiles to nothing unless ACTUATOR_OLED_WANT
 
 //TO-ADD-SYSTEM - note dont need to add here if adding in system_frugal.h
 #include "system/modbus.h" // Compiles to nothing unless SYSTEM_MODBUS_WANT
