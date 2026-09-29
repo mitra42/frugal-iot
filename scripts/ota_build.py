@@ -5,6 +5,14 @@ Build firmware for a set of OTA keys, into a staging tree ready to upload.
   ./ota_build.py --key sht_d1_mini --key loadcell_supermini
   ./ota_build.py --manifest ota_keys.tsv --stage ~/ota-stage
   ./ota_build.py --key sht_d1_mini --lib registry
+  ./ota_build.py --project ~/Documents/Arduino/frugal-iot-irrigation --all --lib registry
+
+--project builds an application that lives in its own repository instead of the library's
+examples/. It is the same harness, with three differences: the library is --library, or the
+project's own lib/Frugal-IoT (usually a symlink), rather than the one this script is in; the
+project's own git state is checked and recorded as well as the library's; and the project's
+*-local.ini files are never staged - only --secrets is, which is how a release build keeps the
+enrolment secret and drops a developer's debug flags and blanked lib_deps.
 
 Output, laid out so the upload step is a straight walk:
 
@@ -53,7 +61,7 @@ import subprocess
 import sys
 import time
 
-from ota_keymap import reexec_under_platformio, scan, default_examples_dir
+from ota_keymap import reexec_under_platformio, scan, scan_projects, default_examples_dir
 
 # What a Frugal-IoT library actually IS, for the pruned view described in (3) above. Deliberately
 # not "everything except examples": a denylist would silently start staging any new top-level
@@ -99,8 +107,40 @@ def library_fingerprint(root):
     return _FINGERPRINT[root]
 
 
+# Set by main() from --library / --project. None means "the library this script is in".
+LIBRARY_ROOT = None
+
+# example name -> its directory. Filled by main(); an example not in it is under examples/.
+EXAMPLE_DIRS = {}
+
+
 def library_root():
+    if LIBRARY_ROOT:
+        return LIBRARY_ROOT
     return os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+
+
+def example_dir_of(example):
+    return EXAMPLE_DIRS.get(example) or os.path.join(default_examples_dir(), example)
+
+
+def unstaged(name, path, stage):
+    """Is this entry of a project's directory to be left out of its staged copy?
+
+      .pio, .git and other dot-entries   another build's output, and the repository
+      lib                                lib_dir is pointed elsewhere by the staged ini, so a
+                                         lib/Frugal-IoT symlink here would only be walked as
+                                         project source
+      *-local.ini                        a developer's overrides - blanked lib_deps, debug flags.
+                                         The one that belongs in a release is --secrets, staged
+                                         separately under SECRETS_NAME.
+      the staging tree itself            ./ota-stage inside a --project checkout. Linking it would
+                                         put the staged project inside itself, and "src_dir = ."
+                                         would then compile it all again.
+    """
+    real = os.path.realpath(path)
+    return (name.startswith(".") or name == "lib" or name.endswith("-local.ini")
+            or real == stage or stage.startswith(real + os.sep))
 
 
 def pio_binary():
@@ -152,14 +192,16 @@ def link(target, linkname):
 def stage_project(stage, mode, example, secrets):
     """Create (or refresh) the staging project for one example, and return its path."""
     root = library_root()
-    example_dir = os.path.join(default_examples_dir(), example)
+    example_dir = example_dir_of(example)
     project = os.path.join(stage, "build", mode, example)
     os.makedirs(project, exist_ok=True)
 
     wanted = set()
+    real_stage = os.path.realpath(stage)
     for name in sorted(os.listdir(example_dir)):
-        if name != ".pio":  # never stage another build's output
-            link(os.path.join(example_dir, name), os.path.join(project, name))
+        source = os.path.join(example_dir, name)
+        if not unstaged(name, source, real_stage):
+            link(source, os.path.join(project, name))
             wanted.add(name)
 
     if secrets:
@@ -224,7 +266,7 @@ def stage_project(stage, mode, example, secrets):
 def build_record(name, kind, entry, mode, sha, dirty, firmware, secrets):
     fingerprint = library_fingerprint(library_root()) if mode == "local" else "registry"
     data = open(firmware, "rb").read()
-    return {
+    record = {
         # "key" publishes to <org>/<project|+>/<otakey>/; "node" to <org>/<project|+>/<nodeid>/,
         # which the server checks first. ota_upload.py reads this to know which it is.
         "target": kind,
@@ -248,6 +290,12 @@ def build_record(name, kind, entry, mode, sha, dirty, firmware, secrets):
         "size": len(data),
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
+    if entry.example in EXAMPLE_DIRS:
+        # A --project build: the application's own commit is what identifies it, and the library
+        # sha above says little when the library came from the registry.
+        project_sha, project_dirty = git_state(EXAMPLE_DIRS[entry.example])
+        record["project_git_sha"] = project_sha + ("-dirty" if project_dirty else "")
+    return record
 
 
 def build_one(stage, mode, entry, targets, secrets, sha, dirty, verbose):
@@ -361,6 +409,14 @@ def main():
                         help="an OTA key to build; repeatable")
     parser.add_argument("--manifest", metavar="TSV",
                         help="ota_keys.tsv from step 1; builds every row marked build=y")
+    parser.add_argument("--all", action="store_true",
+                        help="build every OTA key found - for --project, every env it has")
+    parser.add_argument("--project", action="append", default=[], metavar="DIR",
+                        help="build this standalone project instead of the library's examples; "
+                             "repeatable")
+    parser.add_argument("--library", metavar="DIR",
+                        help="the library for --lib local (default: the one this script is in, "
+                             "or else the first --project's lib/Frugal-IoT)")
     parser.add_argument("--stage", default=os.path.join(os.getcwd(), "ota-stage"),
                         help="staging tree (default: ./ota-stage)")
     parser.add_argument("--lib", choices=("local", "registry"), default="local",
@@ -384,14 +440,39 @@ def main():
     # "--lib local" then silently built the PUBLISHED library.
     args.stage = os.path.abspath(args.stage)
 
-    keymap, problems = scan(default_examples_dir())
-    sha, dirty = git_state(library_root())
+    global LIBRARY_ROOT
+    projects = [os.path.abspath(p) for p in args.project]
+    if args.library:
+        LIBRARY_ROOT = os.path.realpath(args.library)
+    elif projects and not os.path.exists(os.path.join(library_root(), "library.json")):
+        # This script is a copy inside an application, not in the library - so the library is
+        # the one the application builds against locally.
+        LIBRARY_ROOT = os.path.realpath(os.path.join(projects[0], "lib", "Frugal-IoT"))
+    if args.lib == "local" and not os.path.exists(os.path.join(library_root(), "library.json")):
+        sys.exit(f"--lib local, but there is no library at {library_root()}.\n"
+                 "Give --library, symlink one at lib/Frugal-IoT, or use --lib registry.")
+
+    if projects:
+        for p in projects:
+            EXAMPLE_DIRS[os.path.basename(p)] = p
+        keymap, problems = scan_projects(projects, lint_names=False)
+    else:
+        keymap, problems = scan(default_examples_dir())
+    if projects and args.lib == "registry":
+        # The library came from the registry, and the sources from the project - so whatever
+        # lib/Frugal-IoT happens to point at played no part, and recording its "-dirty" would
+        # have ota_upload.py refuse a build that did not use it. project_git_sha is the record.
+        sha, dirty = "registry", False
+    else:
+        sha, dirty = git_state(library_root())
 
     requested = [{"otakey": k} for k in args.key]
+    if args.all:
+        requested.extend({"otakey": k} for k in sorted(keymap))
     if args.manifest:
         requested.extend(read_manifest(args.manifest))
     if not requested:
-        parser.error("nothing to build - give --key and/or --manifest")
+        parser.error("nothing to build - give --key, --all and/or --manifest")
 
     # (example, env) -> Entry, so a row that names an example and env but no key can be resolved.
     # That is how a node gets firmware pinned to it: the server checks ['+', node] BEFORE
@@ -464,6 +545,12 @@ def main():
             sys.exit(f"Library working tree {library_root()} is dirty.\n"
                      "A binary built from uncommitted changes cannot be reproduced later.\n"
                      "Commit, stash, or pass --force (which records the sha as '-dirty').")
+        # Whatever --lib says: a project is always built from its working tree.
+        for p in projects:
+            if git_state(p)[1] and not args.force:
+                sys.exit(f"Project working tree {p} is dirty.\n"
+                         "A binary built from uncommitted changes cannot be reproduced later.\n"
+                         "Commit, stash, or pass --force (which records the sha as '-dirty').")
 
         if not args.secrets:
             print("WARNING: no --secrets given, so the firmware carries no enrolment secret.\n"

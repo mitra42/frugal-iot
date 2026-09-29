@@ -65,14 +65,29 @@ def scan(examples_dir):
     A problem is reported rather than raised: a single malformed example should not stop the
     other nineteen being buildable.
     """
+    examples_dir = os.path.abspath(examples_dir)
+    return scan_projects([os.path.join(examples_dir, name)
+                          for name in sorted(os.listdir(examples_dir))])
+
+
+def scan_projects(project_dirs, lint_names=True):
+    """scan(), for an explicit list of project directories rather than the library's examples/.
+
+    Each Entry's example is the directory's basename. That is how an application that lives in
+    its own repository - frugal-iot-irrigation - is built by the same harness as the examples.
+
+    lint_names=False drops the "prefix != directory name" check, which is a convention of the
+    library's examples: an application's repo is named for people ("frugal-iot-irrigation"),
+    while its OTA prefix is whatever nodes in the field already report ("ospit").
+    """
     from platformio.project.config import ProjectConfig
 
     keymap = {}
     problems = []
-    examples_dir = os.path.abspath(examples_dir)
 
-    for name in sorted(os.listdir(examples_dir)):
-        example_dir = os.path.join(examples_dir, name)
+    for example_dir in project_dirs:
+        example_dir = os.path.abspath(example_dir)
+        name = os.path.basename(example_dir)
         ini = os.path.join(example_dir, "platformio.ini")
         if os.path.isfile(ini):
             # chdir first. "extra_configs = *-local.ini" is a GLOB, and PlatformIO expands it
@@ -98,7 +113,7 @@ def scan(examples_dir):
                     problems.append(f"{name}/{env}: no SYSTEM_OTA_SUFFIX - cannot be OTA'd")
                 else:
                     prefix, suffix = prefix.group(1), suffix.group(1)
-                    if prefix != name:
+                    if lint_names and prefix != name:
                         problems.append(
                             f"{name}/{env}: prefix {prefix!r} != directory name {name!r}")
                     if suffix != env.lower():
