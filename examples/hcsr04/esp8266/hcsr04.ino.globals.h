@@ -42,7 +42,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.2
+//     Frugal-IoT@^2.0.3
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -75,6 +75,11 @@
 // #define SENSOR_DS18B20_PIN 6
 // #define SENSOR_SOIL_PIN 4
 // #define SENSOR_HCSR04_SAMPLES 5 // pings per reading, median taken
+    // For an AJ-SR04M (waterproof) instead of an HC-SR04 - see the table in sensor/hcsr04.h
+// #define SENSOR_HCSR04_MIN_MM 200 // its blind zone is ~20-25cm
+// #define SENSOR_HCSR04_MAX_MM 4500
+// #define SENSOR_HCSR04_TRIGGER_US 20 // only if it never returns an echo at the default 10us
+// #define SENSOR_HCSR04_INTERVAL_MS 100 // only if readings jump about
 // #define SENSOR_HCSR04_TEMPERATURE_PATH "sht/temperature" // wire the speed of sound to a temperature
     // The ultrasonic sensor talks Modbus over RS485. Its slave id switches on SYSTEM_MODBUS_WANT,
     // which then needs the UART pins as well - all three, or system/modbus.h stops the build with

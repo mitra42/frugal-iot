@@ -186,6 +186,12 @@
 #define DEFAULT_gps_hdop_max 50
 #define DEFAULT_gps_position_color "#000000"
 #define DEFAULT_gps_utc_time_color "#000000"
+#define DEFAULT_hcsr04_hcsr04_color "#0000ff"
+#define DEFAULT_hcsr04_hcsr04_min 0
+#define DEFAULT_hcsr04_hcsr04_max 4000
+#define DEFAULT_hcsr04_temperature_color "#ff0000"
+#define DEFAULT_hcsr04_temperature_min -20
+#define DEFAULT_hcsr04_temperature_max 50
 #define DEFAULT_health_wifibars_color "#0000ff"
 #define DEFAULT_health_wifibars_min 0
 #define DEFAULT_health_wifibars_max 4
