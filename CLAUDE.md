@@ -1788,6 +1788,7 @@ env for a board that already has one, check which of the two `platform.h` marks
 | `Control_Carousel` | control/carousel | Cycles through a list of child `Control*`s, selected via an `INuint16` |
 | `Control_OLED` | control/oled | Base class for custom OLED displays |
 | `Control_Oled_LoRaMesher` | control/oled_loramesher | `Control_OLED` subclass showing LoRa mesh status + battery |
+| `Control_Oled_Single` | control/oled_single | `Control_OLED` subclass showing one wired value large, with optional unit and label - `(name, unit, label, decimals)`. Only declared with `ACTUATOR_OLED_WANT`; sizes text from the visible height, so fits 128x64 and 72x40 |
 | `Control_LoggerFS` | control/logger_fs | LittleFS CSV data logger |
 | `Control_Logger` | control/logger | Serial logger |
 | `Control_GSheets` | control/gsheets | Push readings to Google Sheets |

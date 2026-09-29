@@ -21,8 +21,10 @@ Open `hcsr04.ino`, then **Tools > Board** and pick the row for your hardware.
 | LOLIN C3 Pico | `c3_pico` |  |
 | LOLIN S2 Mini | `s2_mini` |  |
 | NodeMCU-32S | `nodemcu-32s` |  |
+| LOLIN C3 Mini | `c3_oled_72x40` |  |
 | LOLIN(WEMOS) D1 mini Pro | `d1_mini_pro` |  |
 | LOLIN(WEMOS) D1 R2 & mini | `d1_mini` |  |
+| TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) | `ttgo-lora32-v21` |  |
 
 Pick a board that is not in the table and the build stops with a message listing the ones
 that are - rather than quietly compiling on the library's defaults, which for most boards

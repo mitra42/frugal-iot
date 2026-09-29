@@ -17,6 +17,7 @@ Control_Logger	KEYWORD1
 Control_LoggerFS	KEYWORD1
 Control_Oled	KEYWORD1
 Control_Oled_LoRaMesher	KEYWORD1
+Control_Oled_Single	KEYWORD1
 IN	KEYWORD1
 INbool	KEYWORD1
 INcolor	KEYWORD1

@@ -256,12 +256,52 @@
 #define SENSOR_HCSR04_ECHO_PIN 19 // via a divider - ECHO is 5V
 // board_build.partitions = min_spiffs.csv
 
-// ==== ESP8266 boards ================================================
-
+// An affordable C3 with a small HW675 OLED 
 #endif // ARDUINO_NodeMCU_32S
 
+// ===== [env:c3_oled_72x40] -> ARDUINO_LOLIN_C3_MINI
+#if defined(ARDUINO_LOLIN_C3_MINI) || defined(C3_OLED_72X40)
+#define FRUGAL_IOT_BOARD_CONFIGURED
+// platform = ${common.platform_esp32}
+// board = lolin_c3_mini ; enables native USB-CDC (ARDUINO_USB_CDC_ON_BOOT=1)
+// board_build.variant = lolin_c3_pico ; same SDA/SCL/USB as lolin_c3_mini variant; kept as known-working config
+// build_flags = 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "c3_oled_72x40"
+#define SENSOR_HCSR04_TRIGGER_PIN 3
+#define SENSOR_HCSR04_ECHO_PIN 4 // via a divider - ECHO is 5V
+#define ARDUINO_C3_OLED_72x40 // if using the C3/small OLED board define here
+#define ACTUATOR_OLED_WANT
+// #define ACTUATOR_OLED_DEBUG // Still debugging this one
+// lib_deps = 
+//     ${common.lib_deps}  
+//     adafruit/Adafruit SSD1306@^2.5.0
+//     adafruit/Adafruit GFX Library@^1.10.13
+// board_build.partitions = min_spiffs.csv
+
+// ==== ESP8266 boards ================================================
+
+#endif // ARDUINO_LOLIN_C3_MINI
+
+// ===== [env:ttgo-lora32-v21] -> ARDUINO_TTGO_LoRa32_v21new
+#if defined(ARDUINO_TTGO_LoRa32_v21new) || defined(TTGO_LORA32_V21)
+#define FRUGAL_IOT_BOARD_CONFIGURED
+// platform = ${common.platform_esp32}
+// board = ttgo-lora32-v21 ; defines ARDUINO_TTGO_LoRa32_v21new
+// build_flags = 
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "ttgo-lora32-v21"
+#define SENSOR_HCSR04_TRIGGER_PIN 13 // 12-15 are the SD card slot's, free if it is not used
+#define SENSOR_HCSR04_ECHO_PIN 14 // via a divider - ECHO is 5V
+//     ${common.build_flags_loramesher}
+// build_unflags = ${common.build_unflags_loramesher}
+// board_build.partitions = min_spiffs.csv ; Need min_spiffs.csv as SSD and GFX push it over the size
+// lib_deps = 
+//     ${common.lib_deps_lora_oled}
+#endif // ARDUINO_TTGO_LoRa32_v21new
+
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / NodeMCU-32S"
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / NodeMCU-32S / LOLIN C3 Mini / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1)"
 #endif
 
 #endif // PLATFORM_H

@@ -69,6 +69,13 @@ void setup() {
   //frugal_iot.sensors->add(sht);
   //hcsr04->temperature->wireTo(sht->temperature->path());
 
+  // On a board with an OLED, show the distance on it - large, with its unit and a label
+  #ifdef ACTUATOR_OLED_WANT
+    Control_Oled_Single* cos = new Control_Oled_Single("Control OLED", "mm", "Distance");
+    frugal_iot.controls->add(cos);
+    cos->value->wireTo(frugal_iot.messages->path("hcsr04/hcsr04")); // The HC-SR04's output
+  #endif
+
   Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
   cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));

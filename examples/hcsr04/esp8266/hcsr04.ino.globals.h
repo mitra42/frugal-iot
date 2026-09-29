@@ -240,8 +240,10 @@
 #define SENSOR_HCSR04_TRIGGER_PIN 14
 #define SENSOR_HCSR04_ECHO_PIN 12 // via a divider - ECHO is 5V
 
-// LoRa boards are left out of this example, as nobody has picked free pins on them yet - copy an
-// [env] from examples/ensaht and add the two SENSOR_HCSR04_*_PIN lines to try one.
+// ===== LORA BOARDS - ALL ESP32 ======================================
+// Only the TTGO, for a 128x64 OLED to try Control_Oled_Single on. For other LoRa boards copy an
+// [env] from examples/ensaht and add the two SENSOR_HCSR04_*_PIN lines after checking which pins are free.
+
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
