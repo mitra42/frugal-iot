@@ -430,10 +430,26 @@ void System_Frugal::startSerial() {
   #endif
 }
 
-// Called by OTA byt checking other modules
+// Called by OTA but checking other modules
 bool System_Frugal::canOTA() {
-  // Even though wifi->connected checks after supposed stability, another couple of seconds seems needed before OTA (MQTT works earlier for some reason)
-  return wifi->connected() && (millis() > (wifi->statusSince + 2000));
+  /* Connected is enough - there is deliberately no extra wait here.
+   *
+   * There used to be "&& (millis() > (wifi->statusSince + 2000))", from before WIFI_STABILIZING
+   * existed: OTA needed a moment after association that MQTT did not. The WiFi state machine now
+   * waits those 2000ms itself, in WIFI_STABILIZING, before it moves on to WIFI_CONNECTED.
+   *
+   * Keeping both was worse than redundant, it was unsatisfiable. setStatus(WIFI_CONNECTED) sets
+   * statusSince to the moment stabilizing ENDED, and setup_after_wifi() is called nine lines later
+   * in the same pass through the state machine - so the test read millis() > millis() + 2000, which
+   * is false on every node, every time. setup_after_wifi() latches after one call, so the boot-time
+   * OTA check never ran at all.
+   *
+   * What kept OTA working anywhere was infrequently(), which needs the node STILL AWAKE two seconds
+   * after connecting. A mains node always is. A deep sleeping one whose wake window has gone on
+   * discovery and MQTT may never be, and then it never checks for an update again, however long its
+   * timer has been expired - the timer itself is sleep-safe and was never the problem.
+   */
+  return wifi->connected();
 }
 bool System_Frugal::canMQTT() {
   return mqtt->connected();
