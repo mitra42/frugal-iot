@@ -20,6 +20,7 @@ Open `bme680.ino`, then **Tools > Board** and pick the row for your hardware.
 | --- | --- | --- |
 | LOLIN C3 Pico | `c3_pico` |  |
 | LOLIN S2 Mini | `s2_mini` |  |
+| Nologo ESP32C3 Super Mini | `supermini` |  |
 | NodeMCU-32S | `nodemcu-32s` |  |
 | LOLIN(WEMOS) D1 mini Pro | `d1_mini_pro` |  |
 | LOLIN(WEMOS) D1 R2 & mini | `d1_mini` |  |

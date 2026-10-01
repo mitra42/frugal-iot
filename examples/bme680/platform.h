@@ -37,7 +37,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.3
+//     Frugal-IoT@^2.0.4
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -72,10 +72,12 @@
 // #define SENSOR_BME680_ADDRESS 0x76 // default 0x77; 0x76 if SDO is tied low
 // #define SENSOR_BME680_HEATER_TEMP_C 320 // gas plate target, capped at 400 by the chip
 // #define SENSOR_BME680_HEATER_MS 150 // how long the plate is held there before sampling
+#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration old to new file format, remove when none left in field
     // The ultrasonic sensor talks Modbus over RS485. Its slave id switches on SYSTEM_MODBUS_WANT,
     // which then needs the UART pins as well - all three, or system/modbus.h stops the build with
     // an #error. Costs ~20k of flash (ModbusMaster + the RS485/Modbus classes).
 // #define SENSOR_ULTRASONIC_SLAVE_ID 1
+#define SYSTEM_MDNS_WANT // device should report directly to other local devices
 // #define SYSTEM_RS485_RX_PIN 20
 // #define SYSTEM_RS485_TX_PIN 21
 // #define SYSTEM_SD_WANT // Uses LittleFS by default
@@ -83,18 +85,7 @@
     // Flags from other libraries
 // #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
 // #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
-    // Turn off C++ exceptions. Worth 75,166 bytes on c3_pico (73.3% of the app partition down to
-    // ~69.1%): ~53k of that is .eh_frame unwind tables and ~22k is the exception-handling code
-    // itself. Nothing in Frugal-IoT catches anything except the LoRaMesher glue in
-    // system/loramesher.cpp, so on a non-LoRa board this changes no behaviour.
-    // LoRaMesher DOES throw, in ten-odd files, so the LoRa boards take this flag back off again
-    // with build_unflags below - see common.build_unflags_loramesher. Removing it that way is
-    // free; countering it with -fexceptions instead would cost those boards 6,232 bytes, because
-    // -fexceptions also adds unwind tables to C sources that the default leaves out.
-    // Note PlatformIO's "Flash: nn%" line does not count .eh_frame, so on the RISC-V boards the
-    // real firmware.bin is bigger than reported (c3_pico was 73.3% real vs 70.0% reported). The
-    // Xtensa boards fold .eh_frame into .flash.rodata, so their reported figure is about right.
-//     -fno-exceptions
+//    -fno-exceptions ; Turn off C++ exceptions (saves ~75k) Reenabled for LoRa boards as used there
     // Uncomment debug lines before as needed
 // #define ACTUATOR_LCD_DEBUG
 // #define CONTROL_BLINKEN_DEBUG
@@ -103,18 +94,15 @@
 // #define SENSOR_BH1750_DEBUG
 // #define SENSOR_BME680_DEBUG
 // #define SENSOR_DHT_DEBUG
+// #define SYSTEM_I2C_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
+// #define SYSTEM_MDNS_DEBUG
 // #define SENSOR_MS5803_DEBUG
 // #define SENSOR_SHT_DEBUG
 // #define SENSOR_SOIL_DEBUG
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
-#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration of saved config from /<id>/<leaf>
-                                         // directories to flat /<id>.<leaf> files. A LittleFS
-                                         // directory costs a 2-block metadata pair (8KB), so the
-                                         // old layout filled a 128KB partition after 15 modules.
-                                         // Remove once no board in the field has the old layout.
 // #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG // report messages received, sent, looped etc
@@ -239,7 +227,28 @@
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "s2_mini"
 
+// This is the tiny supermini board from Tencent (and clones)
 #endif // ARDUINO_LOLIN_S2_MINI
+
+// ===== [env:supermini] -> ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
+#if defined(ARDUINO_NOLOGO_ESP32C3_SUPER_MINI) || defined(SUPERMINI)
+#define FRUGAL_IOT_BOARD_CONFIGURED
+// platform = ${common.platform_esp32}
+// board = nologo_esp32c3_super_mini // defines -DARDUINO_ESP32C3_DEV (as does esp32-c3-devkitm-1)
+// monochrome LED on GPIO8, unlike esp32-c3-devkitm-1's RGB LED
+// variant defaults to nologo_esp32c3_super_mini
+// board_build.partitions = min_spiffs.csv
+// build_flags =
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "supermini"
+    // SDA=8 SCL=9(grey) is the standard for this board but 8 is LED, so override with I2C_SDA and I2C_SCL
+#define I2C_SDA 6
+#define I2C_SCL 5
+#define SENSOR_BME680_POWER3v3_PIN 7
+// #define SENSOR_BATTERY_PIN 4 // next to 3v3 for easy wiring
+// #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2
+
+#endif // ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
 
 // ===== [env:nodemcu-32s] -> ARDUINO_NodeMCU_32S
 #if defined(ARDUINO_NodeMCU_32S) || defined(NODEMCU_32S)
@@ -420,7 +429,7 @@
 #endif // TBEAM_OLED
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / NodeMCU-32S / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / Nologo ESP32C3 Super Mini / NodeMCU-32S / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"
 #endif
 
 #endif // PLATFORM_H

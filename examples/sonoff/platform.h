@@ -37,7 +37,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.3
+//     Frugal-IoT@^2.0.4
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -92,11 +92,7 @@
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
-#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration of saved config from /<id>/<leaf>
-                                         // directories to flat /<id>.<leaf> files. A LittleFS
-                                         // directory costs a 2-block metadata pair (8KB), so the
-                                         // old layout filled a 128KB partition after 15 modules.
-                                         // Remove once no board in the field has the old layout.
+#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration old to new file format, remove when none left in field
 // #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG

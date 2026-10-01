@@ -42,7 +42,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.3
+//     Frugal-IoT@^2.0.4
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -92,18 +92,7 @@
     // Flags from other libraries
 // #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
 // #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
-    // Turn off C++ exceptions. Worth 75,166 bytes on c3_pico (73.3% of the app partition down to
-    // ~69.1%): ~53k of that is .eh_frame unwind tables and ~22k is the exception-handling code
-    // itself. Nothing in Frugal-IoT catches anything except the LoRaMesher glue in
-    // system/loramesher.cpp, so on a non-LoRa board this changes no behaviour.
-    // LoRaMesher DOES throw, in ten-odd files, so the LoRa boards take this flag back off again
-    // with build_unflags below - see common.build_unflags_loramesher. Removing it that way is
-    // free; countering it with -fexceptions instead would cost those boards 6,232 bytes, because
-    // -fexceptions also adds unwind tables to C sources that the default leaves out.
-    // Note PlatformIO's "Flash: nn%" line does not count .eh_frame, so on the RISC-V boards the
-    // real firmware.bin is bigger than reported (c3_pico was 73.3% real vs 70.0% reported). The
-    // Xtensa boards fold .eh_frame into .flash.rodata, so their reported figure is about right.
-//     -fno-exceptions
+//     -fno-exceptions ; Turn off C++ exceptions (saves ~75k) Reenabled for LoRa boards as used there
     // Uncomment debug lines before as needed
 // #define ACTUATOR_LCD_DEBUG
 // #define CONTROL_BLINKEN_DEBUG
@@ -119,11 +108,7 @@
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
-#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration of saved config from /<id>/<leaf>
-                                         // directories to flat /<id>.<leaf> files. A LittleFS
-                                         // directory costs a 2-block metadata pair (8KB), so the
-                                         // old layout filled a 128KB partition after 15 modules.
-                                         // Remove once no board in the field has the old layout.
+#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration old to new file format, remove when none left in field
 // #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG // report messages received, sent, looped etc
