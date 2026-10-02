@@ -9,6 +9,7 @@
 #include "control/blinken.h"
 #include "control/control.h"
 #include "system/frugal.h"
+#include "misc.h" // millisReached
 
 Control_Blinken::Control_Blinken (const char* const id, const char * const name, float secsOn, float secsOff)
 : Control(id, name,
@@ -34,7 +35,7 @@ void Control_Blinken::timer_set(unsigned long secs) {
   //frugal_iot.powercontroller->timer_set(timer_index, secs); // Alternative if want sleep safe timer
 }
 bool Control_Blinken::timer_expired() {
- return millis() >= blink_next_ms;  // Non sleep safe
+ return millisReached(blink_next_ms);  // Non sleep safe, but rollover safe
  // return frugal_iot.powercontroller->timer_expired(timer_index); // Sleep safe 
 }
 

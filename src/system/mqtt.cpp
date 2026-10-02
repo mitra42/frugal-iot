@@ -22,6 +22,7 @@
 
 #include <MQTT.h>
 #include "system/frugal.h" // for frugal_iot
+#include "misc.h" // millisReached
 
 // Enrolment talks HTTPS to the server, the same way OTA does - and reuses OTA's pinned root
 // certificate, so there is one place that has to be right.
@@ -138,10 +139,9 @@ void System_MQTT::enrolIfNeeded() {
   if (!enrolmentSecret) return;                            // sketch uses the three-argument form
   if (storedUsername.length() && storedPassword.length()) return;   // already has one
   if (!frugal_iot.wifi->connected()) return;               // needs the network
-  // Not once per boot: see nextEnrolTime in the header for why that stranded nodes. Subtract and
-  // compare as signed, so the comparison still holds when millis() wraps at 49 days - a node
-  // waiting to be approved is exactly the one that would still be waiting by then.
-  if (nextEnrolTime && ((long)(millis() - nextEnrolTime) < 0)) return;
+  // Not once per boot: see nextEnrolTime in the header for why that stranded nodes. millisReached,
+  // because a node waiting to be approved is exactly the one still waiting when millis() wraps.
+  if (nextEnrolTime && !millisReached(nextEnrolTime)) return;
   nextEnrolTime = millis() + SYSTEM_MQTT_ENROL_RETRY_MS;
 
   const String url = String(SYSTEM_MQTT_ENROL_URL);
@@ -309,7 +309,7 @@ void System_MQTT::captiveLines(AsyncResponseStream* response) {
 }
 
 void System_MQTT::loop() {
-  if (nextLoopTime <= millis()) {
+  if (millisReached(nextLoopTime)) {
     // A node with no credential asks again from here, not only at boot: WiFi can be up while the
     // server is down, an administrator may approve it hours later, and nobody can reach it to
     // restart it. enrolIfNeeded returns at once unless it is both needed and due.

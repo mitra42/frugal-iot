@@ -67,6 +67,12 @@
   #define SYSTEM_POWER_LOW_MS (60 * 60 * 1000) // Presume solar - lets go for 1 hour intervals - TODO-194 try longer or shorter levels
 #endif
 
+#ifndef SYSTEM_POWER_MIN_SLEEP_MS
+  // A sleep shorter than this is skipped - prepare() and recover() cost more than it saves, at
+  // least SYSTEM_POWER_ON_DELAY plus a WiFi reconnect when PauseWiFiBit is set.
+  #define SYSTEM_POWER_MIN_SLEEP_MS 100
+#endif
+
 /* Not using - without a better indicator it could just leave the chip in a deep-sleep state
 #ifndef SYSTEM_POWER_PANIC_MV
   #define SYSTEM_POWER_PANIC_MV 3300.0 // Still droppong 
@@ -110,7 +116,7 @@ void printTaskList() {
 System_Power::System_Power()
 : System_Base("power", "Power Controller"),
   mode(Power_Loop),
-  nextSleepTime(0L), // not sleepSafeSecs() as by definition dont sleep before this
+  cycleStart(0L), // not sleepSafeSecs() as by definition dont sleep before this
   cycle_ms(10000),
   wake_ms(10000),
   timer_index(0)
@@ -139,7 +145,7 @@ void System_Power::dispatch(System_Message &msg) {
       dispatched = true;
     } else if (msg.leaf() == "mode") {
       // TODO-23x this will almost certainly fail, switching modes isnt this easy!
-      mode = (System_Power_Type)msg.payload.toInt();
+      setMode((System_Power_Type)msg.payload.toInt());
       dispatched = true;
     } else {
       System_Base::dispatch(msg);
@@ -273,8 +279,8 @@ void System_Power::setup() {
   if (wake_count) {
     // Only time wake_count is non-zero is if recovering from a deep sleep - its false at startup and its false when recovering from other modes but setup() isn't run in those cases.
     Serial.println(F("Power: Waking from deep"));
-    // For Deep, millis is ~0
-    nextSleepTime = (millis() + wake_ms); // not sleepSafeSecs() as by definition dont deep sleep before this
+    // For Deep, millis is ~0 - and the sleep lasted exactly the rest of the last cycle, so a new one starts now
+    cycleStart = millis(); // not sleepSafeSecs() as by definition dont deep sleep before this
 
     recover(); 
   } else if (mode & DelaySleepBit) { // We'll use conditions to auto enter sleep (doesnt work yet)
@@ -307,12 +313,29 @@ void System_Power::setup() {
   }
 #endif
 
+/* Every path that sets mode comes through here.
+ *
+ * Only ESP32 has sleep implemented - prepare(), sleep() and recover() are all ESP32 code - so
+ * anywhere else the node runs Power_Loop whatever was asked for, keeping cycle_ms as the period
+ * between readings. Forcing it here, rather than letting a sleeping mode run with a sleep() that
+ * does nothing, means prepare() and recover() are not power-cycling sensors for no saving.
+ */
+void System_Power::setMode(System_Power_Type m) {
+  #ifndef ESP32
+    if (m != Power_Loop) {
+      Serial.println(F("Power: sleep modes are ESP32 only - using Power_Loop")); // Lost if Serial not yet started
+    }
+    m = Power_Loop;
+  #endif
+  mode = m;
+}
+
 void System_Power::configure(const System_Power_Type mode_init, const unsigned long cycle_ms_init, const unsigned long wake_ms_init) {
   // Default configuration (from main.cpp) note that this should be superceeded by any settings in SPIFFS. 
-  mode = mode_init;
+  setMode(mode_init);
   cycle_ms = cycle_ms_init;
   wake_ms = wake_ms_init;
-  nextSleepTime = (millis() + wake_ms); // not sleepSafeSecs() as by definition dont sleep before this
+  cycleStart = millis(); // not sleepSafeSecs() as by definition dont sleep before this
   /* Serial not enabled yet
   #ifdef SYSTEM_POWER_DEBUG
     Serial.printf("%s: %lu of %lu\n", name.c_str(), wake_ms, cycle_ms); 
@@ -379,7 +402,7 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
       if (forceMode & LightSleepBit) {
         if (forceMode & WakeOnTimerBit) {
           #ifdef SYSTEM_POWER_DEBUG
-            Serial.print(F("Sleeping for ")); Serial.println(sleep_ms());
+            Serial.print(F("Sleeping for ")); Serial.println(sleep_millisecs);
           #endif
           esp_sleep_enable_timer_wakeup(sleep_millisecs * 1000UL); // Wake on clock
         }
@@ -480,19 +503,48 @@ void System_Power::recover() {
 }
 
 // ================== maybeSleep =========== called from main::loop() = doesnt return if deep-sleep ===
-// Note that for Power_Loop this returns true when period is up and time for periodic again. 
-bool System_Power::maybeSleep() {       
-  if (nextSleepTime <= millis()) { // nextSleepTime is adjusted by recover()
-    if (mode && !(mode & ExternalSleepBit)) {
+/* Returns true when it is time to run periodically() again - NOT an indicator that sleep occurred.
+ *
+ * Each cycle is awake for wake_ms from cycleStart, then asleep for whatever is left of cycle_ms.
+ * Before sleeping every module is asked frugal_iot.okToSleep() - see System_Base::okToSleep(). A
+ * refusal is asked again on the next loop(), and the sleep that finally happens is only for the
+ * time still remaining, so cycles keep to their schedule. If the cycle ends without any sleep -
+ * Power_Loop, an external sleeper, or every attempt refused - periodically() still runs on time.
+ *
+ * Times are compared as millis() - cycleStart, which is safe across the 49 day millis() rollover.
+ */
+bool System_Power::maybeSleep() {
+  bool periodicDue = false;
+  const unsigned long elapsed = millis() - cycleStart;
+  if (elapsed >= cycle_ms) {
+    periodicDue = true; // Cycle over without sleeping
+  } else if (mode && !(mode & ExternalSleepBit) && (elapsed >= wake_ms)) {
+    const unsigned long remaining = cycle_ms - elapsed;
+    if ((remaining >= SYSTEM_POWER_MIN_SLEEP_MS) && frugal_iot.okToSleep(remaining, mode)) {
       prepare(); // Get sensors ready, turn off their individual power and/or buses (I2C etc) and/or global peripheral power.
-      sleep();
-      // For Power_Loop wake_ms = cycle_ms; so this is good for all modes
+      sleep(mode, remaining);
       recover(); // Never gets here in deep sleep - in that case recover is called from setup
+      periodicDue = true;
     }
-    nextSleepTime = (millis() + wake_ms); // not sleepSafeSecs() as by definition dont deep sleep before this
-    return true; // note this is an indicator that its time to run "periodic" its NOT am indicator that sleep occurred
+    // else refused, or too short to be worth it - ask again next loop(), the cycle end does not move
   }
-  return false;
+  if (periodicDue) {
+    cycleStart += cycle_ms; // Anchored to the schedule, not to now - no drift
+    /* Resync if that is not now within the cycle: either more than a cycle behind (e.g. a long
+     * blocking periodically()), or in the future because a sleep returned early, e.g. on
+     * WakeOnWiFiBit.
+     */
+    const long late = (long)(millis() - cycleStart);
+    if ((late < 0) || ((unsigned long)late >= cycle_ms)) {
+      cycleStart = millis();
+    }
+  }
+  return periodicDue;
+}
+
+// Make the current cycle already over - see power.h. Unsigned arithmetic, so fine with millis() < cycle_ms.
+void System_Power::wakeNow() {
+  cycleStart = millis() - cycle_ms;
 }
 
 #ifdef ESP32
@@ -507,6 +559,8 @@ bool System_Power::maybeSleep() {
   }
   // sleepSafeMillis: same RTC-backed clock as sleepSafeSecs(), not millis() (which resets to 0
   // on deep sleep and is on a different epoch than gettimeofday() anyway).
+  // Note tv_sec * 1000 does not fit in 32 bits, so this wraps every 49 days just as millis() does -
+  // compare two readings by subtracting them, never with < or >.
   unsigned long System_Power::sleepSafeMillis() {
     struct timeval tv;
     gettimeofday(&tv, NULL);

@@ -67,4 +67,14 @@ bool changed(double a, double b);
 // Types with no NaN - uint16_t, bool, String - just compare.
 template<typename T> bool changed(const T& a, const T& b) { return !(a == b); }
 
+/* Has millis() reached a deadline set as millis() + interval? Safe across the 49 day rollover.
+ *
+ * `millis() >= deadline` is not: a deadline set just before the wrap is near ULONG_MAX, millis()
+ * restarts at 0, and the test then waits 49 days - an MQTT or WiFi loop silently stops. Subtracting
+ * and comparing as signed is right for any interval under ~24 days.
+ *
+ * For "has X elapsed since start" use (millis() - start) >= X, which is safe as it stands.
+ */
+inline bool millisReached(unsigned long deadline) { return (long)(millis() - deadline) >= 0; }
+
 #endif //MISC_H

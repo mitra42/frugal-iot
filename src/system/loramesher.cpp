@@ -656,7 +656,7 @@ LoraMesherMode System_LoraMesher::checkRole() {
     } else { // Not connected to MQTT
       // Wait a little while before removing gateway role
       if (!lostMQTTat) { lostMQTTat = millis(); } ; // If just lost gateway then flag when
-      if (isGateway() && (millis() > (lostMQTTat + SYSTEM_LORAMESHER_MQTTWAIT))) {
+      if (isGateway() && ((millis() - lostMQTTat) > SYSTEM_LORAMESHER_MQTTWAIT)) {
         #ifdef SYSTEM_LORAMESHER_DEBUG
           Serial.println(F("LoRaMesher removing gateway role as lost MQTT"));
         #endif

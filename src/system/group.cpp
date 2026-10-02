@@ -122,6 +122,17 @@ void System_Group::discover() {
 }
 void System_Group::prepare()      { forEach("prepare", &System_Base::prepare); }
 void System_Group::recover()      { forEach("recover", &System_Base::recover); }
+// An AND over the members - see System_Base::okToSleep(). Stops at the first veto.
+bool System_Group::okToSleep(unsigned long ms, uint16_t how) {
+  bool ok = true;
+  for (auto it = group.begin(); ok && (it != group.end()); ++it) {
+    ok = (*it)->okToSleep(ms, how);
+    #ifdef SYSTEM_POWER_DEBUG
+      if (!ok) { Serial.print(F("Power: sleep refused by ")); Serial.println((*it)->id); }
+    #endif
+  }
+  return ok;
+}
 void System_Group::loop()         { forEach("loop", &System_Base::loop); }
 void System_Group::periodically() { forEach("periodically", &System_Base::periodically); }
 void System_Group::infrequently() { forEach("infrequently", &System_Base::infrequently); }

@@ -50,6 +50,18 @@ class System_Base {
     virtual void infrequently();
     virtual void prepare() { }   // Optional - prepare before sleep (overridden in subclasses)
     virtual void recover() { }   // Optional - recover after sleep (overridden in subclasses)
+    /* May the node sleep? Return false to veto - e.g. MQTT with an outgoing queue still to send.
+     *
+     * ms is how long the sleep would last. how is the System_Power_Type bits that would actually be
+     * applied, so a module can tell "WiFi is going away" (PauseWiFiBit) from "the CPU will freeze"
+     * (LightSleepBit, DeepSleepBit) and only object to what affects it.
+     *
+     * Asked through frugal_iot.okToSleep(), which is System_Group's AND over every module and stops
+     * at the first false. So this MUST be a pure question with no side effects - a module later in
+     * the tree may never be asked. A veto just means "not this time": System_Power asks again on
+     * the next loop(), and periodically() still runs every cycle while sleep is being refused.
+     */
+    virtual bool okToSleep(unsigned long ms, uint16_t how) { return true; }
     /* Switched power belongs to System_SensorActuator, not here - a Control or a System_MQTT is
      * not a piece of hardware and has no rail to switch. This is only the chaining stub, so that
      * powerPins() can be written straight onto a System_Group::add(), which returns System_Base*.

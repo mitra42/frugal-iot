@@ -25,6 +25,7 @@ class System_Group : public System_Base {
     void discover() override;
     void prepare() override;
     void recover() override;
+    bool okToSleep(unsigned long ms, uint16_t how) override;
     void loop() override;
     void periodically() override;
     void infrequently() override;

@@ -103,6 +103,11 @@ class System_Power : public System_Base {
     void timers_shift(int64_t delta_secs);
     void timers_clampFuture(uint32_t max_secs);
     bool maybeSleep();
+    /* End the current cycle now - the next loop() runs periodically() and starts a fresh cycle.
+     * For a module that needs the node fully awake earlier than the cycle would allow. Nothing uses
+     * it yet.
+     */
+    void wakeNow();
     void pre_setup();
     #ifdef ESP32
       // Use the RTC to track time, so safe over deep and light sleeps
@@ -135,11 +140,16 @@ class System_Power : public System_Base {
   protected: // Move any of these needed to public above
   private:
     uint32_t timer(uint8_t i); // Return value of timer (seconds)
-    unsigned long nextSleepTime = 0; // Next time to sleep in millis() (NOT offseted) - set in constructor, updated in maybeSleep()
+    /* millis() at which the current cycle began - awake for wake_ms from here, then asleep until
+     * cycleStart + cycle_ms. Advanced by exactly cycle_ms each cycle rather than reset to "now", so
+     * a sleep that was refused for a while does not push every later cycle back. See maybeSleep().
+     */
+    unsigned long cycleStart = 0;
     unsigned long cycle_ms; // Time for each cycle (wake + sleep)
     unsigned long wake_ms; // Time to stay awake during each cycle
     void setup() override;
     void LightWifi_setup();
+    void setMode(System_Power_Type m); // Forces Power_Loop where sleep is not implemented (not ESP32)
     unsigned long sleep_ms() { return cycle_ms - wake_ms; }
     uint8_t timer_index;
     //virtual void configure(); // Typically called from setup() but might also be called if switch modes

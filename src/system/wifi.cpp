@@ -242,7 +242,7 @@ bool System_WiFi::recoverWiFi() {
 void System_WiFi::stateMachine() {
   // State machine — stabilizeTill blocks all transitions while waiting for WiFi stack to settle
   //Serial.print(F(" XXX Wifi=")); Serial.print(status); Serial.print(F(" ")); Serial.println(WiFi.status());
-  if (millis() >= stabilizeTill) {
+  if (millisReached(stabilizeTill)) {
     switch (status)
     {
       case WIFI_STARTING: //0
@@ -277,7 +277,7 @@ void System_WiFi::stateMachine() {
             setStatus(WIFI_CONNECTED);
             break; // Success
           }
-          if (millis() < (statusSince + 3000)) { // Failed to reconnect
+          if ((millis() - statusSince) < 3000) { // Failed to reconnect
             break; // Leave at WIFI_RECONNECTING
           }
           Serial.println(F("WiFi failed to reconnect"));
@@ -314,7 +314,7 @@ void System_WiFi::stateMachine() {
       case WIFI_SCANNED: //6 Each time it hits this, it will try and connect to one more node if possible
         if (!connectOneAndAllNext()) { // returns either true if started connecting, or false if nothing to try
           // Came to end but none found
-          if (millis() > (statusSince + SYSTEM_WIFI_SCANPERIOD)) { // Leave space between scans or portal wont work
+          if ((millis() - statusSince) > SYSTEM_WIFI_SCANPERIOD) { // Leave space between scans or portal wont work
             setStatus(WIFI_NEEDSCAN);
           }
           break; // Either still in WIFI_SCANNED at end of tries, OR with WIFI_NEEDSCAN
@@ -340,7 +340,7 @@ void System_WiFi::stateMachine() {
           #endif
           stabilizeTill = millis() + 5000;
           setStatus(WIFI_SCANNED);
-        } else if (_disconnectReason != 0 && millis() > (_disconnectAt + 1500)) {
+        } else if (_disconnectReason != 0 && (millis() - _disconnectAt) > 1500) {
           // IDF fired a disconnect event — auth expired, AP rejected, etc.
           // Wait 1.5s from first event to allow one IDF internal retry before giving up.
           Serial.print(F("WiFi connect rejected reason=")); Serial.println(_disconnectReason);
@@ -370,7 +370,7 @@ void System_WiFi::stateMachine() {
           #endif
           stabilizeTill = millis() + 2000; // Clean failure — shorter wait than state error
           setStatus(WIFI_SCANNED);
-        } else if (millis() > (statusSince + 30000)) { // Give it 30 seconds to try
+        } else if ((millis() - statusSince) > 30000) { // Give it 30 seconds to try
           Serial.print(F("WiFi connect timeout status=")); Serial.println(WiFi.status());
           #ifdef ESP32
             // WiFi.disconnect(true,true) fails on IDF 5.x while connecting (ESP_ERR_WIFI_STATE).
@@ -453,7 +453,7 @@ bool System_WiFi::connected() {
 unsigned long lasttime = 0L;
 
 void System_WiFi::loop() {
-  if (millis() > (lasttime + 100)) { // Unclear what right time delay is here - 2000 works - so does 100
+  if ((millis() - lasttime) > 100) { // Unclear what right time delay is here - 2000 works - so does 100
     lasttime = millis();
     stateMachine();
   }
