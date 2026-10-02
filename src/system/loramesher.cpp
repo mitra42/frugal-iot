@@ -160,18 +160,22 @@ void ReceiveTask(void* /*pvParameters*/) {
   }
 }
 
-// TODO-232
-loramesher::power::SleepResult OnSleep(const loramesher::power::SleepContext& sc) { 
-  Serial.printf("LoraMesher sleep rq: type %d ms %d slot %d messages %d \n",
-    sc.requested_state, sc.sleep_duration_ms, sc.current_slot, sc.has_pending_messages);
-    frugal_iot.powercontroller->prepare(); //TODO-232 pass some info to prepare
-    return loramesher::power::SleepResult{.allow_sleep = true, .max_sleep_duration_ms = sc.sleep_duration_ms};
+/* LoRaMesher asks before light-sleeping the CPU between its slots, from its protocol task.
+ * System_Power decides, and peripherals are not touched here - see "External sleep" in power.cpp.
+ */
+loramesher::power::SleepResult OnSleep(const loramesher::power::SleepContext& sc) {
+  const bool allow = frugal_iot.powercontroller->externalSleepRequest(sc.sleep_duration_ms);
+  #ifdef SYSTEM_POWER_DEBUG
+    Serial.printf("LoraMesher sleep rq: ms %d slot %d messages %d - %s\n",
+      sc.sleep_duration_ms, sc.current_slot, sc.has_pending_messages, allow ? "allowed" : "refused");
+  #endif
+  return loramesher::power::SleepResult{.allow_sleep = allow, .max_sleep_duration_ms = sc.sleep_duration_ms};
 }
-// TODO-232
 void OnWakeUp(loramesher::power::PowerState previous_state) {
-  Serial.printf("LoraMesher wakeUp type %d \n", previous_state);  
-  frugal_iot.powercontroller->recover(); //TODO-232 pass some info to prepare
-
+  #ifdef SYSTEM_POWER_DEBUG
+    Serial.printf("LoraMesher wakeUp type %d\n", previous_state);
+  #endif
+  frugal_iot.powercontroller->externalWake();
 }
 // ============ HELPERS =====================
 bool System_LoraMesher::initialize() {

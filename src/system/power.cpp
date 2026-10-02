@@ -20,10 +20,13 @@
  * System_Frugal::loop calls maybeSleep which if its the right time calls prepare sleep recover 
  * Except ... Deep sleep starts from scratch, like a reboot - and calls recover from setup
  * 
- * For LoRaMesher ....
- *   maybeSleep should not sleep 
- *   ping from LoraMesher should .... prepare,light_sleep,recover
- * OR ... maybeSleep should be modified, so never if mode is Power_Lora, it never sleeps when called from loop and only when called from OnSleep
+ * Before any sleep every module is asked okToSleep() (System_Base), and any one can refuse.
+ *
+ * Power_Lora (ExternalSleepBit) works in two layers - see maybeSleep() and "External sleep" below:
+ *   Peripherals - maybeSleep() runs prepare() at the end of wake_ms and recover() at the end of the
+ *     cycle, but does not sleep: the node is "dormant" between them, with the CPU still running.
+ *   CPU - LoRaMesher light-sleeps it between its own slots, asking first through
+ *     externalSleepRequest(); allowed only while dormant, and only if it will wake before the cycle ends.
  * 
  * Required: None
  *
@@ -67,6 +70,16 @@
   #define SYSTEM_POWER_LOW_MS (60 * 60 * 1000) // Presume solar - lets go for 1 hour intervals - TODO-194 try longer or shorter levels
 #endif
 
+#ifndef SYSTEM_POWER_LOCK_WAIT_MS
+  // How long an external sleep request waits for loop() to finish its pass. Comes out of
+  // LoRaMesher's wake guard (100ms by default), so keep it well under that.
+  #define SYSTEM_POWER_LOCK_WAIT_MS 20
+#endif
+#ifndef SYSTEM_POWER_EXTERNAL_MARGIN_MS
+  // An external sleep must end at least this long before the cycle does - the sleep starts a little
+  // after it is allowed, and maybeSleep() must find the cycle over only once the CPU is awake again.
+  #define SYSTEM_POWER_EXTERNAL_MARGIN_MS 100
+#endif
 #ifndef SYSTEM_POWER_MIN_SLEEP_MS
   // A sleep shorter than this is skipped - prepare() and recover() cost more than it saves, at
   // least SYSTEM_POWER_ON_DELAY plus a WiFi reconnect when PauseWiFiBit is set.
@@ -273,6 +286,13 @@ void System_Power::pre_setup() {
   if (pinsPowerUp(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN)) {
     delay(SYSTEM_POWER_ON_DELAY); // Nothing may be read until this rail is up
   }
+  #ifdef ESP32
+    // Whatever the mode, since the mode can be changed later. A take and give per loop() pass is
+    // all it costs when nothing else ever asks for it.
+    if (!loopLock) {
+      loopLock = xSemaphoreCreateMutex();
+    }
+  #endif
 }
 void System_Power::setup() {
 #ifdef ESP32 // Specific to ESP32s
@@ -321,6 +341,10 @@ void System_Power::setup() {
  * does nothing, means prepare() and recover() are not power-cycling sensors for no saving.
  */
 void System_Power::setMode(System_Power_Type m) {
+  if (dormant) { // recover() under the mode that was prepared, before that mode is forgotten
+    recover();
+    dormant = false;
+  }
   #ifndef ESP32
     if (m != Power_Loop) {
       Serial.println(F("Power: sleep modes are ESP32 only - using Power_Loop")); // Lost if Serial not yet started
@@ -509,22 +533,37 @@ void System_Power::recover() {
  * Before sleeping every module is asked frugal_iot.okToSleep() - see System_Base::okToSleep(). A
  * refusal is asked again on the next loop(), and the sleep that finally happens is only for the
  * time still remaining, so cycles keep to their schedule. If the cycle ends without any sleep -
- * Power_Loop, an external sleeper, or every attempt refused - periodically() still runs on time.
+ * Power_Loop, or every attempt refused - periodically() still runs on time.
+ *
+ * With ExternalSleepBit (Power_Lora) there is no sleep() here: prepare() runs and the node goes
+ * dormant - sensors off, WiFi paused, CPU running - until the cycle ends, when recover() runs here
+ * rather than straight after. Whether the CPU sleeps meanwhile is up to LoRaMesher.
  *
  * Times are compared as millis() - cycleStart, which is safe across the 49 day millis() rollover.
  */
 bool System_Power::maybeSleep() {
   bool periodicDue = false;
   const unsigned long elapsed = millis() - cycleStart;
-  if (elapsed >= cycle_ms) {
-    periodicDue = true; // Cycle over without sleeping
-  } else if (mode && !(mode & ExternalSleepBit) && (elapsed >= wake_ms)) {
-    const unsigned long remaining = cycle_ms - elapsed;
-    if ((remaining >= SYSTEM_POWER_MIN_SLEEP_MS) && frugal_iot.okToSleep(remaining, mode)) {
-      prepare(); // Get sensors ready, turn off their individual power and/or buses (I2C etc) and/or global peripheral power.
-      sleep(mode, remaining);
-      recover(); // Never gets here in deep sleep - in that case recover is called from setup
+  if (dormant) {
+    if (elapsed >= cycle_ms) { // End of the dormant part of a Power_Lora cycle
+      recover();
+      dormant = false;
       periodicDue = true;
+    }
+  } else if (elapsed >= cycle_ms) {
+    periodicDue = true; // Cycle over without sleeping
+  } else if (mode && (elapsed >= wake_ms)) {
+    const unsigned long remaining = cycle_ms - elapsed;
+    // ExternalSleepBit is not ours to apply - the CPU keeps running - so do not ask about it
+    if ((remaining >= SYSTEM_POWER_MIN_SLEEP_MS) && frugal_iot.okToSleep(remaining, mode & ~ExternalSleepBit)) {
+      prepare(); // Get sensors ready, turn off their individual power and/or buses (I2C etc) and/or global peripheral power.
+      if (mode & ExternalSleepBit) {
+        dormant = true; // recover() when the cycle ends - top of this function
+      } else {
+        sleep(mode, remaining);
+        recover(); // Never gets here in deep sleep - in that case recover is called from setup
+        periodicDue = true;
+      }
     }
     // else refused, or too short to be worth it - ask again next loop(), the cycle end does not move
   }
@@ -540,6 +579,81 @@ bool System_Power::maybeSleep() {
     }
   }
   return periodicDue;
+}
+
+/* ================== External sleep ========== LoRaMesher's OnSleep / OnWakeUp ==================
+ *
+ * LoRaMesher light-sleeps the CPU itself, from its own task, between the slots of its superframe:
+ * OnSleep is called once per SLEEP slot, and if allowed it then calls esp_light_sleep_start(),
+ * which stops BOTH cores - loop() freezes wherever it is. OnWakeUp follows the first non-SLEEP slot
+ * after a run of them, and only if at least one OnSleep in that run allowed it.
+ *
+ * Two things make that safe:
+ *  - okToSleep() below allows it only while dormant (peripherals already off - so no prepare() or
+ *    recover() is needed here, which LoRaMesher wants fast) and only if it will wake before the
+ *    cycle ends, so the last slot or so of each dormant period is refused and loop() is free to
+ *    recover() on time.
+ *  - loopLock. loop() holds it for its whole body and lets go only around its delay(10), so an
+ *    allowed sleep can never land part way through anything - a sensor read, a bus transaction,
+ *    maybeSleep() recovering. The request takes it, waiting up to SYSTEM_POWER_LOCK_WAIT_MS for the
+ *    current pass to finish (LoRaMesher's task outranks loopTask, so it gets it as soon as it is
+ *    given), and keeps it across the whole run of sleep slots, so loop() waits in lockLoop() until
+ *    OnWakeUp or a refusal. A FreeRTOS mutex must be given by the task that took it - which holds,
+ *    as LoRaMesher calls both callbacks from its protocol task.
+ *
+ * Holding the lock also makes it safe for every module's okToSleep() to read its own state from
+ * this other task: loop(), the only thing that changes that state, is held off meanwhile.
+ */
+bool System_Power::externalSleepRequest(const unsigned long ms) {
+  bool allow = false;
+  #ifdef ESP32
+    if (!externalHold && loopLock) { // Already held if an earlier slot in this run was allowed
+      externalHold = (xSemaphoreTake(loopLock, pdMS_TO_TICKS(SYSTEM_POWER_LOCK_WAIT_MS)) == pdTRUE);
+    }
+    if (externalHold) {
+      allow = frugal_iot.okToSleep(ms, ExternalSleepBit | LightSleepBit | WakeOnTimerBit);
+      if (!allow) { // Let loop() go now - OnWakeUp may never come, and if it does externalWake() copes
+        externalHold = false;
+        xSemaphoreGive(loopLock);
+      }
+    }
+    // else loop() is in a long pass, e.g. periodically() - refuse, the next slot will ask again
+  #endif
+  return allow;
+}
+void System_Power::externalWake() {
+  #ifdef ESP32
+    if (externalHold) {
+      externalHold = false;
+      xSemaphoreGive(loopLock);
+    }
+  #endif
+}
+void System_Power::lockLoop() {
+  #ifdef ESP32
+    if (loopLock) {
+      xSemaphoreTake(loopLock, portMAX_DELAY);
+    }
+  #endif
+}
+void System_Power::unlockLoop() {
+  #ifdef ESP32
+    if (loopLock) {
+      xSemaphoreGive(loopLock);
+    }
+  #endif
+}
+/* Power's own say in okToSleep(). ExternalSleepBit in `how` means the request is from an external
+ * sleeper - see above. Refused outright unless this is a mode that expects one: on a node in
+ * Power_Loop - a gateway, typically - LoRaMesher would otherwise light-sleep the CPU and drop WiFi.
+ */
+bool System_Power::okToSleep(const unsigned long ms, const uint16_t how) {
+  bool ok = true;
+  if (how & ExternalSleepBit) {
+    ok = (mode & ExternalSleepBit) && dormant
+      && (((millis() - cycleStart) + ms + SYSTEM_POWER_EXTERNAL_MARGIN_MS) <= cycle_ms);
+  }
+  return ok;
 }
 
 // Make the current cycle already over - see power.h. Unsigned arithmetic, so fine with millis() < cycle_ms.

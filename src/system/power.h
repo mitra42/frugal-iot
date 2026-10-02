@@ -8,6 +8,10 @@
 #include "_settings.h"
 #include "system/base.h"
 #include "system/io.h"
+#ifdef ESP32
+  #include "freertos/FreeRTOS.h"
+  #include "freertos/semphr.h" // loopLock
+#endif
 
 /* The pins that switch power to the WHOLE node's peripherals - the outermost of the three levels.
  *
@@ -62,7 +66,7 @@ enum System_Power_Type {
   Power_LightWiFi = DelaySleepBit | PauseMQTTBit,     // Like Light, but wakes on WiFi, which menas it SHOULD keep WiFi alive. (poor power savings currently - possibly because of Uart=Serial)
   Power_Modem = LightSleepBit | WakeOnTimerBit | WakeOnWiFiBit,       // ESP32 Modem sleep mode - need to check what this means
   Power_Panic = DeepSleepBit,
-  Power_Lora = ExternalSleepBit | PauseWiFiBit | PauseMQTTBit // Lora library will do the sleep
+  Power_Lora = ExternalSleepBit | PauseWiFiBit | PauseMQTTBit // Sensors and WiFi off between readings; LoRaMesher light-sleeps the CPU
 };
 
 class System_Power : public System_Base {
@@ -108,6 +112,15 @@ class System_Power : public System_Base {
      * it yet.
      */
     void wakeNow();
+    bool okToSleep(unsigned long ms, uint16_t how) override;
+    /* For a library that sleeps the CPU itself, from its own task - LoRaMesher's OnSleep/OnWakeUp.
+     * See "External sleep" in power.cpp. Both must be called from that same task.
+     */
+    bool externalSleepRequest(unsigned long ms);
+    void externalWake();
+    // Around the body of System_Frugal::loop(), so an external sleep cannot freeze it part way.
+    void lockLoop();
+    void unlockLoop();
     void pre_setup();
     #ifdef ESP32
       // Use the RTC to track time, so safe over deep and light sleeps
@@ -145,6 +158,15 @@ class System_Power : public System_Base {
      * a sleep that was refused for a while does not push every later cycle back. See maybeSleep().
      */
     unsigned long cycleStart = 0;
+    /* Only with ExternalSleepBit (Power_Lora): prepare() has run and recover() has not - sensors off,
+     * WiFi paused - but the CPU is still running, so the mesh keeps working. Lasts until the cycle
+     * ends, when maybeSleep() recovers. Something else (LoRaMesher) decides when the CPU sleeps.
+     */
+    bool dormant = false;
+    #ifdef ESP32
+      SemaphoreHandle_t loopLock = nullptr; // Created in pre_setup() - see "External sleep" in power.cpp
+    #endif
+    bool externalHold = false; // The external sleeper's task holds loopLock - only that task touches this
     unsigned long cycle_ms; // Time for each cycle (wake + sleep)
     unsigned long wake_ms; // Time to stay awake during each cycle
     void setup() override;

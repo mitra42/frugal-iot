@@ -38,9 +38,10 @@ static const char _wsn5[] PROGMEM = "Scanning";
 static const char _wsn6[] PROGMEM = "Scanned";
 static const char _wsn7[] PROGMEM = "Connecting";
 static const char _wsn8[] PROGMEM = "Stabilizing";
+static const char _wsn9[] PROGMEM = "Paused";
 const __FlashStringHelper* wifiStatusNames[] = {
   FPSTR(_wsn0), FPSTR(_wsn1), FPSTR(_wsn2), FPSTR(_wsn3), FPSTR(_wsn4),
-  FPSTR(_wsn5), FPSTR(_wsn6), FPSTR(_wsn7), FPSTR(_wsn8)
+  FPSTR(_wsn5), FPSTR(_wsn6), FPSTR(_wsn7), FPSTR(_wsn8), FPSTR(_wsn9)
 };
 #else
 const __FlashStringHelper* wifiStatusNames[] = {
@@ -52,7 +53,8 @@ const __FlashStringHelper* wifiStatusNames[] = {
   F("Scanning"),
   F("Scanned"),
   F("Connecting"),
-  F("Stabilizing")
+  F("Stabilizing"),
+  F("Paused")
 };
 #endif
 
@@ -212,25 +214,42 @@ void System_WiFi::addWiFi(String ssid, String password) {
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 // see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/power_management.html for how to keep WiFi alive during sleep
+/* Stop the radio until recoverWiFi(), and say so in status.
+ *
+ * It used to be enough just to stop it, because a sleep always followed at once. With Power_Lora
+ * the node stays awake for minutes with the radio stopped (System_Power's dormant state), and loop()
+ * keeps running throughout - so left in WIFI_CONNECTED the state machine would see the link gone,
+ * reconnect and rescan, turning the radio back on; and connected() would still be true, sending
+ * MQTT into a blocking connect over a radio that is off. WIFI_PAUSED does nothing until recovered.
+ */
 bool System_WiFi::pauseWiFi() {
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
-   return (esp_wifi_stop() == ESP_OK); // Suggested to reduce dropping WiFi connection
+  const bool ok = (esp_wifi_stop() == ESP_OK); // Suggested to reduce dropping WiFi connection
+  if (ok) {
+    setStatus(WIFI_PAUSED);
+  }
+  return ok;
 }
 #endif
 
 #ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
 bool System_WiFi::recoverWiFi() {
-  if (esp_wifi_start() != ESP_OK) {
+  /* Out of WIFI_PAUSED whether or not the restart works - left there, nothing would ever try again.
+   * The link did not survive the stop, so the state machine reconnects from here; and
+   * System_MQTT::recover() straight after sees not-connected rather than trying a blocking connect.
+   */
+  setStatus(WIFI_DISCONNECTED);
+  const bool ok = (esp_wifi_start() == ESP_OK);
+  if (ok) {
+    // Spin till its started
+    while (WiFi.status() == WL_NO_SHIELD) {
+      /*Serial.print(F("w"));*/ 
+      delay(100); 
+    }
+  } else {
     Serial.println(F("Failed to restart esp_wifi"));
-    return false;
   }
-   // Spin till its started
-  while (WiFi.status() == WL_NO_SHIELD) {
-     /*Serial.print(F("w"));*/ 
-     delay(100); 
-  }
-  return true;
-  // Recover WiFi in stateMachine 
+  return ok; // Recover WiFi in stateMachine
 }
 #endif // ESP32
 
@@ -409,6 +428,8 @@ void System_WiFi::stateMachine() {
           Serial.print(F("WiFi connection lost, WiFi.status=")); Serial.println(WiFi.status());
         }
         break;
+      case WIFI_PAUSED: //9
+        break; // Nothing to do until recoverWiFi()
       default:
           Serial.println(F("WiFi: unhandled status"));
         break;

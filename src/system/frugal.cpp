@@ -381,6 +381,10 @@ void System_Frugal::periodically() {
 // Main loop() - call this from main.cpp
 void System_Frugal::loop() {
   //Serial.print(F("⏳1"));
+  // Held for the whole pass so an external sleep (LoRaMesher) cannot freeze it part way - see
+  // "External sleep" in power.cpp. Keep the delay() below OUTSIDE it: that is the only time an
+  // external sleeper can get in, and without it every request would be refused.
+  powercontroller->lockLoop();
   if (timeForPeriodic) { // Note it is true at first time thru this loop
     //heap_print(F("loop periodic"));
     periodically();  // Do things run once per cycle
@@ -392,6 +396,7 @@ void System_Frugal::loop() {
   if (powercontroller->maybeSleep()) { // Note this returns true if sleep, OR if period for POWER_MODE_LOOP
     timeForPeriodic = true; // reset after sleep (note deep sleep comes in at top again)
   }
+  powercontroller->unlockLoop();
   delay(10); // Slow down and let other things run
 }
 #ifdef ESP32 // Its in the RTC, no meaning in ESP8266
