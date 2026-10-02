@@ -146,7 +146,7 @@ void setup() {
     // System_Base, so it is not added to frugal_iot.system - the sensor holds the pointer and
     // calls initialize() from its own setup(). Pins default from the SYSTEM_RS485_* defines.
     System_RS485* rs485 = new System_RS485(&Serial1);
-    frugal_iot.sensors->add(new Sensor_Ultrasonic("ultrasonic", "Depth",
+    frugal_iot.sensors->add(new Sensor_UltrasonicModbus("ultrasonic", "Depth",
       DEFAULT_ultrasonic_ultrasonic_max, DEFAULT_ultrasonic_ultrasonic_color, true, rs485));
   #endif
 

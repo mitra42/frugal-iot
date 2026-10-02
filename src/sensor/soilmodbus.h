@@ -9,7 +9,7 @@
  * sign-corrected `t_raw/10`), and this class is a direct port of that reading.
  *
  * One instance per probe, each with its own slave id, all sharing one System_RS485 - which is the
- * point of RS485 being multi-drop. That differs from Sensor_Ultrasonic, which is enabled by
+ * point of RS485 being multi-drop. That differs from Sensor_UltrasonicModbus, which is enabled by
  * SENSOR_ULTRASONIC_SLAVE_ID because a node has one of those; here a node has one per irrigation
  * sector, so the ids are constructor arguments and SENSOR_SOILMODBUS_WANT turns the class on.
  *

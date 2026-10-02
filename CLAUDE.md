@@ -292,7 +292,8 @@ Frugal-IoT/
 │   │                       #   group, io, message, discovery…
 │   ├── sensor/            # One file pair per sensor type (sht, dht, soil, battery, bh1750,
 │   │                       #   loadcell, ds18b20, ms5803, aht, ens160, bmx280, bme680, button,
-│   │                       #   analog, float, uint16, health, gps, sensor [base class]…)
+│   │                       #   analog, float, uint16, health, gps, ultrasonic, ultrasonicmodbus,
+│   │                       #   hcsr04, sensor [base class]…)
 │   ├── actuator/          # LED, digital output, OLED, LCD (actuator.h is the base class)
 │   └── control/           # Logic blocks (hysteresis, logger, logger_fs, blinken, carousel,
 │                           #   oled, oled_loramesher, gsheets, control.h [base class]…)
@@ -304,10 +305,13 @@ Frugal-IoT/
 │   ├── agri/              # Agricultural multi-sensor
 │   ├── all/               # All sensors demo
 │   ├── blinken/           # LED blink patterns
+│   ├── bme680/            # BME680 temperature/humidity/pressure + gas resistance
+│   ├── bmpaht/            # BMP280 pressure + AHT20 temperature/humidity
 │   ├── datalogger/        # LittleFS data logging
 │   ├── ensaht/            # ENS160 air quality + AHT21
 │   ├── gps/               # GPS location via NMEA serial module + OLED
 │   ├── gsheets/           # Google Sheets integration
+│   ├── hcsr04/            # HC-SR04 ultrasonic distance (trigger/echo)
 │   ├── lcd_ht/           # HD44780 LCD showing a remote HT (e.g. SHT) node's readings over MQTT
 │   ├── lilygohigrow/      # Plant watering (LilyGo HiGrow)
 │   ├── ms5803/            # MS5803 pressure sensor
@@ -847,7 +851,9 @@ needs nothing — `lib/data-loader.js` already filters `isNaN` out of the graph 
 | `Sensor_UInt16` | sensor/uint16 | Arbitrary uint16 value |
 | `Sensor_Health` | sensor/health | Device health metrics |
 | `Sensor_GPS` | sensor/gps | GPS location (lat/lon/altitude/speed/course/hdop/satellites/UTC time) via NMEA serial module |
-| `Sensor_Ultrasonic` | sensor/ultrasonic | Distance (mm) from an RS485/Modbus ultrasonic module (A01ANY4B); needs `SENSOR_ULTRASONIC_SLAVE_ID` |
+| `Sensor_Ultrasonic` | sensor/ultrasonic | Base class for the two below — distance (mm) with persisted offset/scale. Not instantiated directly |
+| `Sensor_UltrasonicModbus` | sensor/ultrasonicmodbus | Distance (mm) from an RS485/Modbus ultrasonic module (A01ANY4B); needs `SENSOR_ULTRASONIC_SLAVE_ID` |
+| `Sensor_HCSR04` | sensor/hcsr04 | Distance (mm) from an HC-SR04 trigger/echo module, temperature compensated. Has an `IN`. Freestanding, no external library |
 | `Sensor_SoilModbus` | sensor/soilmodbus | Soil moisture (%) + temperature from an RS485/Modbus probe (DFRobot SEN0600 and similar); needs `SENSOR_SOILMODBUS_WANT` |
 
 ### There is no `Sensor_HT` — and `captiveLines()` is on `Sensor`
@@ -897,7 +903,7 @@ Sensor_AHT21::Sensor_AHT21(...)
 
 Sensors with a fixed id (`Sensor_BME680`, `Sensor_ENS160`) just name their macros directly.
 Sensors whose id comes from the sketch and whose ranges are computed at runtime — `Sensor_INA219`
-scales `current`/`power` from `MAX_CURRENT`, `Sensor_Ultrasonic` takes a max — deliberately keep
+scales `current`/`power` from `MAX_CURRENT`, `Sensor_UltrasonicModbus` takes a max — deliberately keep
 those runtime values, which are more accurate than a schema constant.
 
 **Colours come from the macros, not from literals.** `DEFAULT_<module>_<leaf>_color` is the one
@@ -1480,7 +1486,16 @@ it skips the next `SYSTEM_MODBUS_RETRY_CYCLES` read attempts outright, then trie
 A device powered up later is picked up automatically, at one 2 s stall per 10 cycles rather
 than one per cycle.
 
-### Sensor_Ultrasonic
+### Sensor_Ultrasonic, Sensor_UltrasonicModbus and Sensor_HCSR04
+
+`Sensor_Ultrasonic` (`sensor/ultrasonic.h`) is the shared base: one `Sensor_Float` output in whole
+mm, published as `offset + raw * scale`, with `offset`/`scale` persisted and settable over MQTT.
+The two subclasses only supply `readFloat()` — the raw distance in mm, or `NAN`. Until 2026-09-28
+the Modbus class was itself called `Sensor_Ultrasonic`; its build flags kept their
+`SENSOR_ULTRASONIC_` names. `SENSOR_ULTRASONIC_DEBUG` covers the base (and the Modbus class);
+`SENSOR_HCSR04_DEBUG` turns it on as well.
+
+#### Sensor_UltrasonicModbus
 
 Reads one Modbus holding register from an ultrasonic distance module over RS485. Enabled by
 defining `SENSOR_ULTRASONIC_SLAVE_ID` (the module's Modbus address, usually 1) — that also
@@ -1503,10 +1518,10 @@ build_flags =
 System_RS485* rs485 = new System_RS485(&Serial2);
 
 // Raw distance to the surface, in mm:
-frugal_iot.sensors->add(new Sensor_Ultrasonic("ultrasonic", "Distance", 7500, "blue", true, rs485));
+frugal_iot.sensors->add(new Sensor_UltrasonicModbus("ultrasonic", "Distance", 7500, "blue", true, rs485));
 
 // Depth of water instead, for a sensor mounted 2000mm above the tank floor:
-frugal_iot.sensors->add(new Sensor_Ultrasonic("depth", "Depth", 2000, "blue", true, rs485, 2000.0, -1.0));
+frugal_iot.sensors->add(new Sensor_UltrasonicModbus("depth", "Depth", 2000, "blue", true, rs485, 2000.0, -1.0));
 ```
 
 The published value is `offset + raw * scale`, where `raw` is the register value in mm.
@@ -1517,6 +1532,45 @@ fractional scale cannot be typed in). A failed read returns `NAN`, which
 
 The `HardwareSerial*` is a constructor argument rather than a `#define` because it is a
 C++ object, not a number — and note that ESP32-C3/S2 have no `Serial2`.
+
+#### Sensor_HCSR04
+
+The common HC-SR04 module: a 10 µs pulse on TRIG, then the time ECHO is held high is the round
+trip, so `mm = µs * speed_of_sound / 2000`. Freestanding — `robtillaart/SRF05` supports the part
+but was rejected: a timed-out ping returns 0 and its average/median modes fold those zeros in, its
+`pulseIn` timeout is fixed at 200 ms, its default 1 ms sample interval is far under the module's
+60 ms, and an echo pin of 0 means "single-pin mode", so GPIO0 cannot be ECHO.
+
+Each read takes `SENSOR_HCSR04_SAMPLES` (5) pings `SENSOR_HCSR04_INTERVAL_MS` (60) apart, each
+waiting at most `SENSOR_HCSR04_TIMEOUT_US` (30000, about 5 m), drops the timeouts, and takes the
+median of the rest. None back → `NAN`; outside `SENSOR_HCSR04_MIN_MM`..`_MAX_MM` (20..4000) is
+rejected by `validate()`. About 0.3 s of blocking per read.
+
+Speed of sound is `331.3 + 0.606 * T` m/s — 0.17 %/°C — from a wireable `temperature` `IN`
+(`<id>/temperature`), handled the same way as `Sensor_DissolvedOxygen`'s: set up before
+`readConfigFromFS`, dispatched outside the `module() == id` test. It holds
+`SENSOR_HCSR04_DEFAULT_TEMPERATURE` (20) until wired, and falls back to it if the wired sensor
+publishes `nan`. `SENSOR_HCSR04_TEMPERATURE_PATH` sets a default wiring.
+
+**Also the AJ-SR04M** (waterproof, probe on a cable), in its as-shipped trigger/echo mode (R19
+empty - the serial modes would need a new subclass). It differs in having a ~20-25 cm blind zone
+(one transducer), ~4.5 m range and a 3.0-5.5 V supply, so wants `SENSOR_HCSR04_MIN_MM=200` and
+`_MAX_MM=4500`, and possibly `SENSOR_HCSR04_TRIGGER_US=20` (default 10) or `_INTERVAL_MS=100`.
+The comparison table and R19 modes are at the top of `sensor/hcsr04.h` - from vendor listings,
+not yet checked on hardware. The limits are build flags, so apply to every instance on a node.
+
+Pins are constructor arguments; `SENSOR_HCSR04_TRIGGER_PIN`/`_ECHO_PIN` are only what
+`examples/hcsr04` passes. **ECHO is 5 V on a standard HC-SR04** — a 1k/2k divider to the ESP pin.
+The HC-SR04P runs at 3.3 V and needs none.
+
+```cpp
+Sensor_HCSR04* us = new Sensor_HCSR04("hcsr04", "Distance", SENSOR_HCSR04_TRIGGER_PIN, SENSOR_HCSR04_ECHO_PIN);
+frugal_iot.sensors->add(us);
+us->temperature->wireTo(sht->temperature->path()); // optional
+```
+
+`hcsr04` is not in the server's `modules.yaml` yet, so `sensor/hcsr04.h` defines fallback
+`DEFAULT_hcsr04_hcsr04_color`/`_max` under `#ifndef` until `defaults.h` has them.
 
 **To add another Modbus sensor**: subclass `Sensor_Float` (or whichever base fits), give it a
 `System_Modbus` member built from `(slave_id, bus)`, call `modbus.initialize()` in `setup()`,
@@ -1538,7 +1592,7 @@ frugal_iot.sensors->add(new Sensor_SoilModbus("soil1", "Sector 1", 1, rs485, tru
 frugal_iot.sensors->add(new Sensor_SoilModbus("soil2", "Sector 2", 2, rs485, true));
 ```
 
-**Slave ids are constructor arguments, not a build flag.** `Sensor_Ultrasonic` is enabled by
+**Slave ids are constructor arguments, not a build flag.** `Sensor_UltrasonicModbus` is enabled by
 `SENSOR_ULTRASONIC_SLAVE_ID` because a node has one of those; an irrigation node has one probe per
 sector on the same multi-drop bus, so `SENSOR_SOILMODBUS_WANT` turns the class on and each
 instance carries its own id.
@@ -1741,6 +1795,7 @@ env for a board that already has one, check which of the two `platform.h` marks
 | `Control_Carousel` | control/carousel | Cycles through a list of child `Control*`s, selected via an `INuint16` |
 | `Control_OLED` | control/oled | Base class for custom OLED displays |
 | `Control_Oled_LoRaMesher` | control/oled_loramesher | `Control_OLED` subclass showing LoRa mesh status + battery |
+| `Control_Oled_Single` | control/oled_single | `Control_OLED` subclass showing one wired value large, with optional unit and label - `(name, unit, label, decimals)`. Only declared with `ACTUATOR_OLED_WANT`; sizes text from the visible height, so fits 128x64 and 72x40 |
 | `Control_LoggerFS` | control/logger_fs | LittleFS CSV data logger |
 | `Control_Logger` | control/logger | Serial logger |
 | `Control_GSheets` | control/gsheets | Push readings to Google Sheets |

@@ -10,7 +10,7 @@ Frugal IoT - Agriculture Sensor with SHT (temp and humidity) DS18B30 (soil temp)
     pio run -e <env> -t upload    # build and flash
     pio run -e <env> -t uploadfs  # write data/ (wifi credentials, config)
 
-`<env>` is a name from the table below, for example `c3_pico`.
+`<env>` is a name from the table below, for example `c3_pico_2`.
 
 ## Arduino IDE
 
@@ -18,7 +18,7 @@ Open `agri.ino`, then **Tools > Board** and pick the row for your hardware.
 
 | Tools > Board | configuration | also define |
 | --- | --- | --- |
-| LOLIN C3 Pico | `c3_pico` |  |
+| LOLIN C3 Mini | `c3_pico_2` |  |
 | LOLIN S2 Mini | `s2_mini` |  |
 | LOLIN S2 Mini | `s2_mini_5` | `S2_MINI_5` |
 | LOLIN S2 Mini | `s2_mini_6` | `S2_MINI_6` |

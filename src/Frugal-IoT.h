@@ -26,7 +26,9 @@
 #include "sensor/ina219.h" // Freestanding over System_I2C, no external library
 #include "sensor/loadcell.h"
 #include "sensor/ms5803.h"
-#include "sensor/ultrasonic.h" // Compiles to nothing unless SENSOR_ULTRASONIC_SLAVE_ID is defined
+#include "sensor/ultrasonic.h" // Base class for the two below
+#include "sensor/ultrasonicmodbus.h" // Compiles to nothing unless SENSOR_ULTRASONIC_SLAVE_ID is defined
+#include "sensor/hcsr04.h"
 
 //TO-ADD-CONTROL
 #include "control/control.h"
@@ -35,6 +37,7 @@
 #include "control/gsheets.h"
 #include "control/hysteresis.h"
 #include "control/logger_fs.h"
+#include "control/oled_single.h" // Compiles to nothing unless ACTUATOR_OLED_WANT
 
 //TO-ADD-SYSTEM - note dont need to add here if adding in system_frugal.h
 #include "system/modbus.h" // Compiles to nothing unless SYSTEM_MODBUS_WANT

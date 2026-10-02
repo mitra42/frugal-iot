@@ -44,7 +44,7 @@
 // lib_deps = 
     // Even if developing with a local copy in lib/Frugal-IoT keep this uncommented
     // Note that if local copy, that the version number won't be enforced.
-//     Frugal-IoT@^2.0.0
+//     Frugal-IoT@^2.0.4
     // Add any Libraries specific to this hardware - sensor, actuator, etc but not dependencies of Frugal-IoT
  
 // lib_deps_lora = 
@@ -84,18 +84,7 @@
     // Flags from other libraries
 // #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
 // #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
-    // Turn off C++ exceptions. Worth 75,166 bytes on c3_pico (73.3% of the app partition down to
-    // ~69.1%): ~53k of that is .eh_frame unwind tables and ~22k is the exception-handling code
-    // itself. Nothing in Frugal-IoT catches anything except the LoRaMesher glue in
-    // system/loramesher.cpp, so on a non-LoRa board this changes no behaviour.
-    // LoRaMesher DOES throw, in ten-odd files, so the LoRa boards take this flag back off again
-    // with build_unflags below - see common.build_unflags_loramesher. Removing it that way is
-    // free; countering it with -fexceptions instead would cost those boards 6,232 bytes, because
-    // -fexceptions also adds unwind tables to C sources that the default leaves out.
-    // Note PlatformIO's "Flash: nn%" line does not count .eh_frame, so on the RISC-V boards the
-    // real firmware.bin is bigger than reported (c3_pico was 73.3% real vs 70.0% reported). The
-    // Xtensa boards fold .eh_frame into .flash.rodata, so their reported figure is about right.
-//     -fno-exceptions
+//     -fno-exceptions ; Turn off C++ exceptions (saves ~75k) Reenabled for LoRa boards as used there
     // Uncomment debug lines before as needed
 // #define ACTUATOR_LEDBUILTIN_DEBUG
 // #define ACTUATOR_LCD_DEBUG
@@ -109,32 +98,33 @@
 // #define SENSOR_ENS160_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
-#define SENSOR_SHT_DEBUG
+// #define SENSOR_SHT_DEBUG
 // #define SENSOR_SOIL_DEBUG
 // #define SYSTEM_DISCOVERY_DEBUG
 // #define SYSTEM_FRUGAL_DEBUG
 // #define SYSTEM_LITTLEFS_DEBUG
-#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration of saved config from /<id>/<leaf>
-                                         // directories to flat /<id>.<leaf> files. A LittleFS
-                                         // directory costs a 2-block metadata pair (8KB), so the
-                                         // old layout filled a 128KB partition after 15 modules.
-                                         // Remove once no board in the field has the old layout.
+#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration old to new file format, remove when none left in field
 // #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
-#define SYSTEM_MESSAGE_DEBUG // report messages received, sent, looped etc
+// #define SYSTEM_MESSAGE_DEBUG // report messages received, sent, looped etc
 // #define SYSTEM_MQTT_DEBUG
 // #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
 // #define SYSTEM_TIME_DEBUG
-#define SYSTEM_WIFI_DEBUG
+// #define SYSTEM_WIFI_DEBUG
 
-// Filled in by <name>-local.ini - the enrolment secret, and which server to build against.
-// Empty here, so this file can be committed and a checkout without a local one still builds.
+// Filled in by the *-local.ini files, which are never committed. Empty here, so this file can be
+// committed and a checkout without them still builds. Two keys rather than one because a value set
+// in a *-local.ini REPLACES the one here rather than adding to it, so each file needs its own:
+//   build_flags_secrets - platformio-secrets-local.ini: the enrolment secret, and which server
+//                         this build is for. ota_build.py --secrets links it into every example.
+//   build_flags_local   - platformio-local.ini: your own debug flags. Never reaches an OTA build.
+// build_flags_secrets =
 // build_flags_local =
 
 // flags that apply only in main (the library can see them, but doesnt need them)
-// build_flags_main = 
-    // The enrolment secret, and which server this build is for - see <name>-local.ini
+// build_flags_main =
+//     ${common.build_flags_secrets}
 //     ${common.build_flags_local}
 
 // project specific flags that are needed by the library 
@@ -156,7 +146,7 @@
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-#define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
+// #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
 
@@ -166,12 +156,31 @@
 // build_flags_map =
 //     -Wl,-Map=$BUILD_DIR/firmware.map
 
+// AsyncTCP's service task stack, which is HEAP, not static - so it does not show up in the RAM
+// figure at the end of a build, and that is why it went unnoticed.
+//
+// The library defaults it to 8192*2, sixteen kilobytes, which is the same size as one of mbedTLS's
+// two TLS record buffers. The captive portal's handlers are a form POST, a status page and a couple
+// of redirects - nothing that needs half of that. On an S2, where TinyUSB has already taken 23KB
+// of internal RAM, those sixteen kilobytes are the difference between a TLS handshake that fits and
+// one that returns "SSL - Memory allocation failed".
+//
+// #define works
+// not an sdkconfig setting.
+//
+// 8192 moved an S2 from "cannot allocate the record buffers" to "failed during chain verification" -
+// further in, still short. 4096 is the next step and is still generous for handlers that parse a
+// small form and print a status page. Raise it again if a portal handler ever does real work.
+// build_flags_async =
+#define CONFIG_ASYNC_TCP_STACK_SIZE 4096
+
 // Flags specific to project, but vary across dev-boards or variants
 // build_flags = 
 //     ${common.build_flags_frugaliot}
 //     ${common.build_flags_main}
 //     ${common.build_flags_library}
 //     ${common.build_flags_map}
+//     ${common.build_flags_async}
    
 // selecting a platform for board descriotions
 // platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions

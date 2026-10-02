@@ -793,16 +793,33 @@ def main():
 
     None of these are hand-edited - re-run this (or scripts/prerelease.bash) after changing
     platformio.ini.
+
+    Two options, for a project that is not one of the library's examples - frugal-iot-irrigation
+    is the case they were added for:
+      --esp32      platform.h only. The ESP8266 file and its README are neither written nor, if an
+                   older run left them, removed - an ESP32-only application has no use for them.
+      --no-readme  leave README.md alone. An example's README is mostly this generated block; an
+                   application's is written by hand and already says how to build it.
     """
-    input_file = sys.argv[1] if len(sys.argv) > 1 else "platformio.ini"
+    import argparse
+    parser = argparse.ArgumentParser(description="Convert platformio.ini to platform.h")
+    parser.add_argument("input", nargs="?", default="platformio.ini")
+    parser.add_argument("output", nargs="?",
+                        help="write just this one file, with every env in it, and nothing else")
+    parser.add_argument("--esp32", action="store_true",
+                        help="ESP32 only: write platform.h, skip the ESP8266 globals file")
+    parser.add_argument("--no-readme", action="store_true",
+                        help="do not write the generated block into README.md")
+    args = parser.parse_args()
+    input_file = args.input
 
     if not Path(input_file).exists():
         print(f"Error: {input_file} not found")
         sys.exit(1)
 
     # Explicit output overrides everything and emits just that one file, as before
-    if len(sys.argv) > 2:
-        PlatformIOConverter(input_file).write_output(sys.argv[2])
+    if args.output:
+        PlatformIOConverter(input_file).write_output(args.output)
         return
 
     PlatformIOConverter(input_file).write_output(
@@ -810,7 +827,9 @@ def main():
 
     # The ESP8266 core requires the name to match the sketch
     sketches = sorted(Path(".").glob("*.ino"))
-    if sketches:
+    if args.esp32:
+        pass
+    elif sketches:
         sketch = sketches[0].stem
         # A copy left in the sketch root by an older version of this script would hide the whole
         # example from the IDE's File > Examples, so clear it out rather than leave it shadowing
@@ -838,7 +857,7 @@ def main():
     # README.md for whoever opens the example - which board to select, and how to ask for a
     # configuration the board menu cannot express. Written last, because whether the ESP8266
     # section applies depends on the globals file having been emitted above.
-    if sketches:
+    if sketches and not args.no_readme:
         sketch = sketches[0].stem
         conv = PlatformIOConverter(input_file)
         conv.read_file()

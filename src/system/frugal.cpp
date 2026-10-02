@@ -22,6 +22,43 @@
 
 #include "_settings.h" // Note - ideally shouldnt be dependent on anything here
 
+#ifdef ESP32
+#include <mbedtls/platform.h>
+#include <esp_heap_caps.h>
+
+/*
+ * Give mbedTLS the PSRAM.
+ *
+ * A board with 2MB of PSRAM was failing a TLS handshake for want of 33KB, because mbedTLS never
+ * looks at PSRAM. Ordinary malloc does - CONFIG_SPIRAM_USE_MALLOC is set and anything over
+ * CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL (4096) goes external - but ESP-IDF deliberately opts mbedTLS
+ * out of that, in esp_config.h:
+ *
+ *   #define MBEDTLS_PLATFORM_MEMORY
+ *   #define MBEDTLS_PLATFORM_STD_CALLOC   esp_mbedtls_mem_calloc
+ *
+ * and with CONFIG_MBEDTLS_INTERNAL_MEM_ALLOC set, that function demands MALLOC_CAP_INTERNAL. So a
+ * node can have two megabytes free and still fail to allocate a 16KB record buffer.
+ *
+ * STD_CALLOC rather than CALLOC_MACRO is what makes this fixable here: it is the initial value of a
+ * function pointer, so replacing it at runtime works and needs no rebuilt framework. Changing it
+ * through sdkconfig would mean custom_sdkconfig, which recompiles the whole IDF.
+ *
+ * The fallback to internal matters. Hardware AES, GCM, SHA and MPI are all enabled and those
+ * peripherals use DMA; ESP-IDF bounces external-RAM buffers through internal memory for them, but
+ * that is the part of this least travelled, and an allocation that PSRAM cannot serve should get
+ * internal RAM rather than fail.
+ */
+static void* frugal_mbedtls_calloc(size_t n, size_t size) {
+  void* p = heap_caps_calloc(n, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  if (!p) p = heap_caps_calloc(n, size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+  return p;
+}
+// heap_caps_free takes either kind of pointer, so this is safe for anything the previous allocator
+// handed out before the swap below.
+static void frugal_mbedtls_free(void* p) { heap_caps_free(p); }
+#endif // ESP32
+
 // Did the sketch's settings actually reach this build?
 //
 // On ESP32 and under PlatformIO they always do - platform.h is on the include path, or the flags
@@ -249,12 +286,30 @@ void System_Frugal::pre_setup() {
     powercontroller->checkLevel();
     startSerial(); // Encapsulate setting up and starting serial
   #endif
+  delay(5000);
+  /*
+   * Before anything can open a TLS connection - enrolment is the first, from setup_after_wifi.
+   * Only where there is PSRAM to give it: getPsramSize() is a RUNTIME check on purpose, because
+   * BOARD_HAS_PSRAM is set by board definitions for modules that are also sold without the die.
+   */
+  #ifdef ESP32
+    if (ESP.getPsramSize() > 0) {
+      if (mbedtls_platform_set_calloc_free(frugal_mbedtls_calloc, frugal_mbedtls_free) == 0) {
+        Serial.print(F("TLS allocating from PSRAM, free: ")); Serial.println(ESP.getFreePsram());
+      } else {
+        Serial.println(F("Could not point TLS at PSRAM - it will use internal RAM"));
+      }
+    }
+  #endif
   fs_LittleFS->pre_setup();
   // Project BEFORE it builds the prefix for topics, which will happen when reads first entry in readConfigFromFS()
   String newProject = fs_LittleFS->slurp(fs_LittleFS->configPath(id, "project"), true); // ignores if not found
   if (newProject.length()) {
-    Serial.print(F("Project set to:")); Serial.println(project);
     project = newProject;
+    // After the assignment, not before it - this printed the value it was about to replace, so the
+    // one line saying which project the node is in reported the compiled-in default while the node
+    // used the one from the filesystem.
+    Serial.print(F("Project set to:")); Serial.println(project);
   }
   // Note this will read project again
   readConfigFromFS(); // Reads config (project, name) and passes to our dispatch - note this just reads frugal_iot/ not other directories which are read in actuator,sensor,control,system_xxx.setup
@@ -375,10 +430,26 @@ void System_Frugal::startSerial() {
   #endif
 }
 
-// Called by OTA byt checking other modules
+// Called by OTA but checking other modules
 bool System_Frugal::canOTA() {
-  // Even though wifi->connected checks after supposed stability, another couple of seconds seems needed before OTA (MQTT works earlier for some reason)
-  return wifi->connected() && (millis() > (wifi->statusSince + 2000));
+  /* Connected is enough - there is deliberately no extra wait here.
+   *
+   * There used to be "&& (millis() > (wifi->statusSince + 2000))", from before WIFI_STABILIZING
+   * existed: OTA needed a moment after association that MQTT did not. The WiFi state machine now
+   * waits those 2000ms itself, in WIFI_STABILIZING, before it moves on to WIFI_CONNECTED.
+   *
+   * Keeping both was worse than redundant, it was unsatisfiable. setStatus(WIFI_CONNECTED) sets
+   * statusSince to the moment stabilizing ENDED, and setup_after_wifi() is called nine lines later
+   * in the same pass through the state machine - so the test read millis() > millis() + 2000, which
+   * is false on every node, every time. setup_after_wifi() latches after one call, so the boot-time
+   * OTA check never ran at all.
+   *
+   * What kept OTA working anywhere was infrequently(), which needs the node STILL AWAKE two seconds
+   * after connecting. A mains node always is. A deep sleeping one whose wake window has gone on
+   * discovery and MQTT may never be, and then it never checks for an update again, however long its
+   * timer has been expired - the timer itself is sleep-safe and was never the problem.
+   */
+  return wifi->connected();
 }
 bool System_Frugal::canMQTT() {
   return mqtt->connected();

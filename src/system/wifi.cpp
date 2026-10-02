@@ -393,6 +393,14 @@ void System_WiFi::stateMachine() {
         }
         // stabilizeTill guard above already waited 2000ms — proceed directly
         setStatus(WIFI_CONNECTED);
+        /*
+         * If heap is very tight, delete the scan details here. 
+         * But note this stops them being available for captive portal
+         * and captive portal can't do a scan without dropping the user. 
+         * It uses 80 bytes per WiFi node, so in busy area could be substantive and 
+         * hard to predict as would make one node fail while another succeeds.
+         */
+        //WiFi.scanDelete();
         frugal_iot.setup_after_wifi(); // Callback to MQTT, Time and OTA as first connected
         //drop thru
       case WIFI_CONNECTED: //3

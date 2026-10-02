@@ -72,3 +72,4 @@ void loop() {
   frugal_iot.loop(); // Should be running watchdog.loop which will call esp_task_wdt_reset()
 }
 
+ 

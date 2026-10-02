@@ -1,13 +1,24 @@
-#!/opt/homebrew/bin/python3
-# Save this as generate_keywords.py in your library root
+#!/usr/bin/env python3
+# Generate keywords.txt, for the Arduino IDE's syntax highlighting, from the headers under a source
+# directory. Run from the directory keywords.txt should be written to.
+#
+#   scripts/generate_keywords.py          the library: headers under src/
+#   scripts/generate_keywords.py .        an application whose sketch is at the top of the repo
+#
+# Hidden directories, lib/ and build/ are skipped, which only matters for "." - there they hold
+# PlatformIO's downloaded libraries, the library symlink and Arduino's build output, whose classes
+# are not this project's.
 import os
 import re
+import sys
 
-src_dir = "src"
+src_dir = sys.argv[1] if len(sys.argv) > 1 else "src"
+SKIP = {"lib", "build"}
 keywords = set()
 methods = set()
 
-for root, _, files in os.walk(src_dir):
+for root, dirs, files in os.walk(src_dir):
+    dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d not in SKIP)
     for file in files:
         if file.endswith(".h"):
             with open(os.path.join(root, file), "r") as f:

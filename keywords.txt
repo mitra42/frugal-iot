@@ -17,6 +17,7 @@ Control_Logger	KEYWORD1
 Control_LoggerFS	KEYWORD1
 Control_Oled	KEYWORD1
 Control_Oled_LoRaMesher	KEYWORD1
+Control_Oled_Single	KEYWORD1
 IN	KEYWORD1
 INbool	KEYWORD1
 INcolor	KEYWORD1
@@ -50,6 +51,7 @@ Sensor_DissolvedOxygen	KEYWORD1
 Sensor_ENS160	KEYWORD1
 Sensor_Float	KEYWORD1
 Sensor_GPS	KEYWORD1
+Sensor_HCSR04	KEYWORD1
 Sensor_Health	KEYWORD1
 Sensor_INA219	KEYWORD1
 Sensor_LoadCell	KEYWORD1
@@ -58,6 +60,7 @@ Sensor_Soil	KEYWORD1
 Sensor_SoilModbus	KEYWORD1
 Sensor_Uint16	KEYWORD1
 Sensor_Ultrasonic	KEYWORD1
+Sensor_UltrasonicModbus	KEYWORD1
 Sensor_Voltage	KEYWORD1
 Sensor_ms5803	KEYWORD1
 System_Base	KEYWORD1
@@ -68,6 +71,8 @@ System_FS	KEYWORD1
 System_Frugal	KEYWORD1
 System_Group	KEYWORD1
 System_I2C	KEYWORD1
+System_I2C_Bus	KEYWORD1
+System_Interface	KEYWORD1
 System_LittleFS	KEYWORD1
 System_LoraMesher	KEYWORD1
 System_MDNS	KEYWORD1
@@ -117,7 +122,6 @@ bars	KEYWORD2
 boolValue	KEYWORD2
 buildAndSend	KEYWORD2
 buildTopicPrefix	KEYWORD2
-busAlreadyBegun	KEYWORD2
 calcGasWait	KEYWORD2
 calcResHeat	KEYWORD2
 calibrate	KEYWORD2
@@ -222,7 +226,11 @@ path	KEYWORD2
 pauseWiFi	KEYWORD2
 periodically	KEYWORD2
 persisted	KEYWORD2
+ping	KEYWORD2
+pinsPowerDown	KEYWORD2
+pinsPowerUp	KEYWORD2
 powerDown	KEYWORD2
+powerPins	KEYWORD2
 powerUp	KEYWORD2
 pre_setup	KEYWORD2
 prepare	KEYWORD2
@@ -303,6 +311,7 @@ shouldBeDefined	KEYWORD2
 sleep	KEYWORD2
 sleepSafeSecs	KEYWORD2
 slurp	KEYWORD2
+speedOfSound	KEYWORD2
 spinTillReady	KEYWORD2
 split	KEYWORD2
 spurt	KEYWORD2

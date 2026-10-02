@@ -69,6 +69,16 @@
   #if __has_include("platform.h")
     #include "platform.h"
   #endif
+  // The Arduino IDE counterpart of platformio-secrets-local.ini: the enrolment secret, and which
+  // server this build is for, as #defines - e.g.
+  //   #define SYSTEM_MQTT_ENROL_SECRET "..."   (the dashboard's Nodes card prints the value)
+  // Not generated and never committed (*-local.h is in .gitignore). platform.h cannot hold these:
+  // it is generated from the committed platformio.ini, so it only ever has the empty default.
+  // Must come before the #ifndef defaults below. Found the same way as platform.h, so ESP32
+  // only - on ESP8266 put the same #defines in your copy of <sketch>.ino.globals.h instead.
+  #if __has_include("platform-secrets-local.h")
+    #include "platform-secrets-local.h"
+  #endif
 #endif
 
 #include "defaults.h" // Auto generated file of parameter defaults
@@ -138,7 +148,7 @@
 
 // TO_ADD_SENSOR - a sensor that talks Modbus over RS485 pulls in the bus classes by
 // defining its slave id; see system/modbus.h
-// Sensor_Ultrasonic is enabled by its slave id because there is one of them; Sensor_SoilModbus
+// Sensor_UltrasonicModbus is enabled by its slave id because there is one of them; Sensor_SoilModbus
 // has one instance per irrigation sector on the same bus, so its ids are constructor arguments
 // and a plain WANT flag turns the class on.
 #if defined(SENSOR_ULTRASONIC_SLAVE_ID) || defined(SENSOR_SOILMODBUS_WANT)
@@ -148,6 +158,9 @@
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
 // (there is no SENSOR_HT_DEBUG any more - Sensor_HT is gone, and the temperature/humidity
 // sensors that used to share it now extend Sensor directly, so each lists itself below)
+#if defined(SENSOR_HCSR04_DEBUG)
+  #define SENSOR_ULTRASONIC_DEBUG // The shared base class's own debug output
+#endif
 #if defined(SENSOR_BME280_DEBUG) || defined(SENSOR_BMP280_DEBUG)
   #define SENSOR_BMX280_DEBUG // One implementation for both chips - either flag turns it on
 #endif
@@ -157,7 +170,7 @@
 #if defined(SENSOR_ANALOG_DEBUG) 
   #define SENSOR_UINT16_DEBUG
 #endif
-#if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG) || defined(SENSOR_ULTRASONIC_DEBUG)
+#if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG) || defined(SENSOR_ULTRASONIC_DEBUG) || defined(SENSOR_HCSR04_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
 #if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG) || defined(SENSOR_BMX280_DEBUG) || defined(SENSOR_BME680_DEBUG) || defined(SENSOR_AHT_DEBUG) || defined(SENSOR_ENS160_DEBUG) || defined(SENSOR_GPS_DEBUG) || defined(SENSOR_INA219_DEBUG) || defined(SENSOR_SOILMODBUS_DEBUG)

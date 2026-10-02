@@ -22,7 +22,7 @@ Open `sht.ino`, then **Tools > Board** and pick the row for your hardware.
 | LOLIN S2 Mini | `s2_mini` |  |
 | LOLIN S2 Mini | `s2_mini_4x` | `S2_MINI_4X` |
 | NodeMCU-32S | `nodemcu-32s` |  |
-| LOLIN C3 Mini | `esp32c3_oled_72x40` |  |
+| LOLIN C3 Mini | `c3_oled_72x40` |  |
 | Nologo ESP32C3 Super Mini | `supermini` |  |
 | LOLIN(WEMOS) D1 mini Pro | `d1_mini_pro` |  |
 | LOLIN(WEMOS) D1 R2 & mini | `d1_mini` |  |

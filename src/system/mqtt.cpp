@@ -182,7 +182,13 @@ void System_MQTT::enrolIfNeeded() {
               ;
 
   HTTPClient http;
-  Serial.print(F("Enrolling at ")); Serial.println(url);
+  // The identity as well as the URL. Without it the one line serial prints cannot distinguish the
+  // two mistakes that look identical on the server - asking the right server as the wrong
+  // organization, and asking the wrong server - and the node id is otherwise only discoverable by
+  // being here with a cable.
+  Serial.print(F("Enrolling at ")); Serial.print(url);
+  Serial.print(F(" as ")); Serial.print(frugal_iot.org); Serial.print('/');
+  Serial.print(frugal_iot.project); Serial.print('/'); Serial.println(frugal_iot.nodeid);
   if (!http.begin(httpNet, url)) {
     Serial.println(F("Enrol: could not start the request"));
     return;
@@ -196,7 +202,57 @@ void System_MQTT::enrolIfNeeded() {
     // 409 means the server already has this node and wants proof we cannot give - which happens
     // when the filesystem has been erased. Say what to do about it rather than only the number.
     Serial.print(F("Enrol failed, HTTP ")); Serial.println(code);
-    if (code == 409) {
+    if (code < 0) {
+      /*
+       * A negative code is HTTPClient's own, not the server's: nothing was sent, so nothing will
+       * appear in the server's log or on its dashboard. Worth saying outright, because the obvious
+       * next move is to go and look there, and looking there proves nothing either way.
+       *
+       * -1 covers DNS, a refused connection, and every way a TLS handshake can fail, which are
+       * quite different problems wearing one number. So ASK, rather than guess: on ESP32
+       * WiFiClientSecure keeps the underlying mbedTLS error, and that names which one it was.
+       * Free heap too, since a handshake wants tens of kilobytes and a node that has just woken
+       * from deep sleep with its sensors up may not have them.
+       */
+      Serial.println(F("  Nothing reached the server - do not look for this attempt in its log"));
+      /*
+       * Largest block as well as the total. A handshake allocates two 16KB record buffers
+       * (CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN, with no asymmetric setting) plus the peer chain, and
+       * it needs them CONTIGUOUS - so a node with plenty of free heap in small pieces fails exactly
+       * like one with none. And an allocation that fails inside the chain walk is reported as
+       * verification failure, not as a memory error, so -9984 does not by itself mean the
+       * certificate is at fault.
+       */
+      Serial.print(F("  free heap: ")); Serial.print(ESP.getFreeHeap());
+      #ifdef ESP32
+        Serial.print(F(", largest block: ")); Serial.print(ESP.getMaxAllocHeap());
+        /*
+         * PSRAM too, because on a board that has it this failure should be impossible: the
+         * framework is built with CONFIG_SPIRAM_USE_MALLOC and MALLOC_ALWAYSINTERNAL=4096, so the
+         * two 16KB record buffers would be served from PSRAM and never touch the internal heap.
+         * Nought here on a board that is supposed to have some means PSRAM did not initialise,
+         * which is a different problem from the node being short of memory - and the numbers above
+         * look identical in both cases.
+         */
+        Serial.print(F(", psram: ")); Serial.println(ESP.getPsramSize());
+      #else
+        Serial.print(F(", largest block: ")); Serial.println(ESP.getMaxFreeBlockSize());
+      #endif
+      #ifdef ESP32
+        if (!plainHttp) {
+          char err[128] = "";
+          int tlsErr = secure.lastError(err, sizeof(err));
+          if (tlsErr) {
+            Serial.print(F("  TLS error ")); Serial.print(tlsErr);
+            Serial.print(F(": ")); Serial.println(err);
+          } else {
+            // Nothing from mbedTLS means the failure was before the handshake - name resolution or
+            // the TCP connection itself.
+            Serial.println(F("  no TLS error recorded - so DNS or the TCP connection, not the certificate"));
+          }
+        }
+      #endif
+    } else if (code == 409) {
       Serial.print(F("  This node is already enrolled. On the server run: frugal-iot-resetnode "));
       Serial.print(frugal_iot.org); Serial.print(F(" ")); Serial.print(frugal_iot.project);
       Serial.print(F(" ")); Serial.println(frugal_iot.nodeid);
