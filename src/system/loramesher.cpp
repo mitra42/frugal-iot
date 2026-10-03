@@ -632,6 +632,14 @@ bool System_LoraMesher::publish(const String &topic, const String &payload, bool
   }
 }
 
+/* A gateway is the mesh's route to MQTT, so it must keep WiFi up and stay awake - whatever power
+ * mode it was built with, since whether a node is a gateway is only found out at runtime (it has
+ * MQTT, see checkRole()). It should be on external power. A gateway in Power_Lora therefore just
+ * runs as if in Power_Loop, and drops back to sleeping if it loses the role.
+ */
+bool System_LoraMesher::okToSleep(const unsigned long ms, const uint16_t how) {
+  return !((how & (PauseWiFiBit | LightSleepBit | DeepSleepBit)) && isGateway());
+}
 bool System_LoraMesher::isGateway() {
   if (mesher) {
     return (mesher->GetNodeCapabilities() & loramesher::NodeCapabilities::GATEWAY);

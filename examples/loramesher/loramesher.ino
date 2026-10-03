@@ -34,8 +34,10 @@ void setup() {
   // LightWiFi=Light + WiFi on (not working);
   // Modem=Modem sleep - works but negligable power saving
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles.
+  // Lora - sensors and WiFi off between readings, while LoRaMesher light-sleeps the CPU between its slots.
+  //   A node that turns out to be the gateway (it has MQTT) stays awake regardless.
   #ifdef SYSTEM_LORAMESHER_SLEEP
-    frugal_iot.configure_power(Power_Lora, 30000, 30000); // Take a reading every 30 seconds - put to sleep by loRaMesher
+    frugal_iot.configure_power(Power_Lora, 600000, 30000); // A reading every 10 minutes, awake 30 seconds of it
   #else
     frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
   #endif

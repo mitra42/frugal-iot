@@ -71,6 +71,7 @@ class System_LoraMesher : public System_Base {
     void setup() override;
     void periodically() override;
     bool isGateway(); 
+    bool okToSleep(unsigned long ms, uint16_t how) override;
     void createReceiveMessages();
     void PromoteToNetworkManager();
     bool in_network();

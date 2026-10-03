@@ -398,6 +398,50 @@ frugal_iot.configure_power(type, cycle_ms, wake_ms);
 | `Power_Light` | ESP32 light sleep |
 | `Power_Modem` | Modem sleep (minimal saving) |
 | `Power_Deep` | Deep sleep — slow to reconnect; use cycle_ms ≥ 60 000 |
+| `Power_Lora` | LoRaMesher nodes: sensors and WiFi off between readings, LoRaMesher light-sleeps the CPU between its slots |
+
+Sleep is ESP32 only: on anything else `System_Power::setMode()` forces `Power_Loop`, keeping
+`cycle_ms` as the time between readings.
+
+### The cycle, and refusing sleep
+
+Each cycle starts at `cycleStart`, is awake for `wake_ms`, then sleeps for **whatever is left** of
+`cycle_ms`. `cycleStart` advances by exactly `cycle_ms`, so a late sleep does not push later
+cycles back, and `periodically()` runs every cycle even if sleep never happens. All of it is
+`millis() - cycleStart`, which is rollover safe - see `millisReached()` in `misc.h` for the deadline
+form, and never write `millis() >= deadline`, which waits 49 days if the deadline was set just
+before the wrap.
+
+Before any sleep, `frugal_iot.okToSleep(ms, how)` asks every module. It is an AND that stops at the
+first `false`, so an override **must have no side effects**. `how` is the `System_Power_Type`
+bits that will actually be applied, so a module objects only to what affects it:
+
+| Module | Refuses when |
+|---|---|
+| `System_MQTT` | connected, the last publish/subscribe got through, and either messages are still queued or something arrived in the last `SYSTEM_MQTT_QUIET_MS` (2s) - MQTT has no "end of retained messages" marker, so a quiet period is the test. A connection that cannot deliver does not hold the node awake |
+| `System_Captive` | a client is on the AP **and** made a request in the last `SYSTEM_CAPTIVE_ACTIVE_MS` (2 min) |
+| `System_LoraMesher` | it is the gateway - found out at runtime, so a gateway built with `Power_Lora` just stays awake |
+| `System_Power` | a LoRaMesher request (`ExternalSleepBit` in `how`) outside `Power_Lora`'s dormant period, or one that would end within `SYSTEM_POWER_EXTERNAL_MARGIN_MS` of the cycle's end |
+
+A refusal just means "ask again next `loop()`". There is deliberately no cap on how long a module
+may refuse - a gateway on external power should never sleep. OTA needs no veto: its update blocks
+inside `loop()`, so nothing can sleep during it.
+
+### Power_Lora: two layers
+
+- **Peripherals**: `maybeSleep()` runs `prepare()` when `wake_ms` is up and `recover()` when the
+  cycle ends, but does not sleep - the node is `dormant` in between, CPU running, sensors off,
+  WiFi in `WIFI_PAUSED` (the WiFi state machine does nothing there, and `connected()` is false).
+- **CPU**: LoRaMesher light-sleeps it between its own slots, from its own task, after asking
+  `OnSleep` -> `System_Power::externalSleepRequest()`. `OnSleep`/`OnWakeUp` do **not** call
+  `prepare()`/`recover()` - the peripherals are already off, and LoRaMesher wants them fast.
+
+`esp_light_sleep_start()` stops both cores, so `System_Frugal::loop()` holds `loopLock` (a FreeRTOS
+mutex) for its whole body and lets go only around its `delay(10)` - keep that delay outside the
+lock, or every request is refused. A request waits up to `SYSTEM_POWER_LOCK_WAIT_MS` (20 - it
+comes out of LoRaMesher's 100ms wake guard) and then holds the lock across the whole run of sleep
+slots until `OnWakeUp` or a refusal. Both callbacks run in LoRaMesher's protocol task, which is what
+lets that task give back the mutex it took. See "External sleep" in `power.cpp`.
 
 ### Switching power to peripherals — three nested levels
 

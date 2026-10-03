@@ -77,6 +77,10 @@ static String jsonField(const String& json, const char* field) {
   #define SYSTEM_MQTT_ENROL_RETRY_AFTER 5
 #endif
 
+#ifndef SYSTEM_MQTT_QUIET_MS
+  // Hold off sleep until nothing has arrived for this long - see System_MQTT::okToSleep()
+  #define SYSTEM_MQTT_QUIET_MS 2000
+#endif
 #ifndef SYSTEM_MQTT_BACKOFF
   #define SYSTEM_MQTT_BACKOFF 5000 // Reasonable backoff on MQTT conncetion failure - 5 seconds (was 10ms ! )
 #endif
@@ -370,6 +374,8 @@ bool System_MQTT::connect() {
       /* Fresh connection */
       Serial.println(F("MQTT: Connected "));
       authFailures = 0;   // the credential works; earlier refusals were not about it
+      lastSendOk = true;  // A new connection deserves a chance to deliver the queue
+      lastInboundMs = millis(); // and the broker a chance to send what it holds for us
       if (!client.sessionPresent()) {
         subscriptionsDone = false; // No session so will need to redo subscriptions 
       } else {
@@ -455,6 +461,29 @@ void System_MQTT::prepare() {
 void System_MQTT::recover() {
   connect(); // TODO-23 Note this is blocking if WiFi is connected, which it typically won't be. 
 }
+/* Not while traffic with the broker is still flowing - only matters if the sleep takes the network
+ * or the CPU away. Two directions:
+ *  - Outgoing: messages still queued would wait out the sleep, or with Power_Deep be lost.
+ *  - Incoming: the broker sends retained messages, and any it held while we slept, when we
+ *    (re)subscribe - but MQTT has no marker for "that was all of them", and they arrive whenever
+ *    the client next reads the socket: during a subscribe, during a QoS 1 publish, or in loop().
+ *    So wait until nothing has arrived for SYSTEM_MQTT_QUIET_MS since the last message, subscribe
+ *    or connection.
+ *
+ * Only while the link is actually working: connected AND the last send got through. A node that
+ * cannot connect (bad credentials, broker down) is not connected; one whose connection has gone bad
+ * underneath it - client.connected() can be true on a dead socket - fails its sends. Either way
+ * waiting would not help, and the queue survives a light sleep, or LoRaMesher carries it.
+ */
+bool System_MQTT::okToSleep(const unsigned long ms, const uint16_t how) {
+  bool ok = true;
+  if ((how & (PauseWiFiBit | PauseMQTTBit | LightSleepBit | DeepSleepBit)) && connected() && lastSendOk) {
+    const bool sending = (frugal_iot.messages->outgoingCount() > 0);
+    const bool receiving = ((millis() - lastInboundMs) < SYSTEM_MQTT_QUIET_MS);
+    ok = !(sending || receiving);
+  }
+  return ok;
+}
 
 // UPSTREAM module -> queue -> (loRaMesher -> queue ) -> MQTT -> Broker
 
@@ -464,7 +493,9 @@ bool System_MQTT::subscribe(const String& topicPath) {
         Serial.print(F("MQTT Subscribe ")); Serial.print(topicPath);
       #endif
     // Uses QOS=1 as usually incoming volume is low (except for controls), lets see if causes problem, symptom probably memory use at server or long list of incoming after sleep
-    if (client.subscribe(topicPath, 1)) { 
+    lastSendOk = client.subscribe(topicPath, 1);
+    if (lastSendOk) { 
+      lastInboundMs = millis(); // Its retained message, if any, is on its way
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.println();
       #endif
@@ -492,6 +523,7 @@ bool System_MQTT::send(const String &topicPath, const String &payload, const boo
       // Serial.print(F(" qos=")); Serial.print(qos);
     #endif
     if (client.publish(topicPath, payload, retain, qos)) {
+      lastSendOk = true;
       #ifdef SYSTEM_MQTT_DEBUG
         Serial.println();
       #endif
@@ -513,11 +545,13 @@ bool System_MQTT::send(const String &topicPath, const String &payload, const boo
           #ifdef SYSTEM_MQTT_DEBUG
             Serial.println(F(" Missing or Wrong packet"));
           #endif
+          lastSendOk = false;
           break;
         default: 
           #ifdef SYSTEM_MQTT_DEBUG
             Serial.print(F(" err=")); Serial.println(client.lastError());
           #endif
+          lastSendOk = false;
           ;
         }
       return false;
@@ -535,6 +569,7 @@ void System_MQTT::messageReceived(const String &topicPath, const String &payload
     Serial.print(F("MQTT incoming: ")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
   #endif
   inReceived = true;
+  lastInboundMs = millis();
   // Note: Do not use the client in the callback to publish, subscribe or
   // unsubscribe as it may cause deadlocks when other things arrive while
   // sending and receiving acknowledgments. Instead, change a global variable,

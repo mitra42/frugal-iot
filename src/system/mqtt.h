@@ -38,6 +38,7 @@ class System_MQTT : public System_Base {
     void statusLines(Print* out, bool full) override;
     void prepare() override;
     void recover() override;
+    bool okToSleep(unsigned long ms, uint16_t how) override;
     // Downstream
     void messageReceived(const String &topicPath, const String &payload); // Used in MqttMessageReceived callbacks 
         // Upstream
@@ -80,6 +81,13 @@ class System_MQTT : public System_Base {
     // one. So a credential the broker keeps rejecting is discarded and a new one asked for.
     uint8_t authFailures = 0;
     bool inReceived = false;
+    /* Did the last publish or subscribe to the broker get through? False after one failed, true
+     * again after one succeeds or on a fresh connection. See okToSleep() - a broker connection that
+     * cannot deliver must not keep the node awake.
+     */
+    bool lastSendOk = true;
+    // millis() of the last sign of incoming traffic - a message, a subscribe, a fresh connection. See okToSleep()
+    unsigned long lastInboundMs = 0;
     unsigned long ms;
     unsigned long nextLoopTime; // Not sleepSafeSecs as frequent.
     bool subscriptionsDone = false; // True when server has reported a session - so dont need to subscribe OR have resubscribed. Also true at start before did subscriptions.

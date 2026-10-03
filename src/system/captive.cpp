@@ -48,6 +48,10 @@ static AsyncWebServer server(80);
 // alive at once. On a heap fragmented by WiFi, MQTT and LittleFS that can fail - and when it
 // does, write() silently returns short and the client gets a truncated page, or an empty one if
 // even the first allocation failed. Ask for a realistic size once instead.
+#ifndef SYSTEM_CAPTIVE_ACTIVE_MS
+  // How long after a portal user's last request sleep is held off - long enough to fill in a form
+  #define SYSTEM_CAPTIVE_ACTIVE_MS 120000
+#endif
 #ifndef SYSTEM_CAPTIVE_PAGE_BUFFER
   #define SYSTEM_CAPTIVE_PAGE_BUFFER 4096
 #endif
@@ -278,6 +282,13 @@ void System_Captive::setup() {
   String ip = WiFi.softAPIP().toString(); // Note how this is used by redirect 
   Serial.printf("Access point on: %s at %s\n", frugal_iot.nodeid.c_str(), ip.c_str());
 
+  // Note any request from the AP side, whichever handler takes it - see okToSleep()
+  server.addMiddleware([](AsyncWebServerRequest *request, ArMiddlewareNext next) {
+    if (ON_AP_FILTER(request)) {
+      frugal_iot.captive->lastActivityMs = millis();
+    }
+    next();
+  });
   // Order is important - this has to come BEFORE the catch-all default portal.
   // ON_AP_FILTER restricts this handler to clients on the device's own AP;
   // station-interface POSTs (from mDNS peers) are handled by System_MDNS::setup().
@@ -442,6 +453,17 @@ void System_Captive::captiveLines(AsyncResponseStream* response) {
     + t->LanguageName + "</option>");  // name in its own language
   }
   response->print(String(F("</select></label></p></form>")));
+}
+
+/* Not while someone is using the portal - sleep would take the AP away mid-form. "Using" is both
+ * still associated AND a request within SYSTEM_CAPTIVE_ACTIVE_MS: a phone can stay associated long
+ * after its owner has wandered off, and that alone should not keep a battery node awake.
+ */
+bool System_Captive::okToSleep(const unsigned long ms, const uint16_t how) {
+  const unsigned long last = lastActivityMs; // Read once - the async_tcp task may write it
+  return !((how & (PauseWiFiBit | LightSleepBit | DeepSleepBit))
+    && (WiFi.softAPgetStationNum() > 0)
+    && last && ((millis() - last) < SYSTEM_CAPTIVE_ACTIVE_MS));
 }
 
 void System_Captive::loop() {

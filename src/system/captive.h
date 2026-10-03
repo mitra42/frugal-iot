@@ -39,6 +39,9 @@ class System_Captive : public System_Base {
     void captiveLines(AsyncResponseStream* response);
     // Register a POST handler on the station WiFi interface (used by System_MDNS)
     void addSTARoute(const char* uri, ArRequestHandlerFunction handler);
+    bool okToSleep(unsigned long ms, uint16_t how) override;
+    // millis() of the last request from a client on our AP, 0 if none - set from the async_tcp task
+    volatile unsigned long lastActivityMs = 0;
   protected:
   };
 
