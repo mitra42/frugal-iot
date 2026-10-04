@@ -920,9 +920,11 @@ Three kinds of colour literal are deliberately still there, and are not the same
   no module or leaf, so no macro applies.
 - **Leaves the schema does not describe.** `Sensor_Button` publishes `click`/`long`/`double`/
   `triple` against a schema with only `button`; `Sensor_DissolvedOxygen`'s water-temperature input
-  and `Control_Gsheets` are not described at all; and `Control_Oled_LoRaMesher` defines its own
-  `DEFAULT_*` macros in its header, with a comment saying it is "not in schema yet - and may never
-  be". Those are schema decisions, not conversions.
+  and `Control_Gsheets` are not described at all. Those are schema decisions, not conversions.
+  (The display controls - `control_oled_ht`, `control_oled_gps`, `control_oled_loramesher`,
+  `control_oled_single`, `control_lcd_ht` - are in the schema, so the UX can offer their inputs
+  for wiring. The examples' copies of `control_oled_ht`/`control_oled_gps`/`control_lcd_ht` still
+  carry literals, as code outside the library cannot assume `defaults.h` is current.)
 
 **Adding a sensor means adding to `modules.yaml` too.** A module id with no entry there gets no
 UX labels, and `generate-defaults.js` emits no `DEFAULT_<module>_*` macros for it. Every module

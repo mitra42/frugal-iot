@@ -3,10 +3,7 @@
 #define CONTROL_OLED_LORAMESHER_H
 
 #include "control/oled.h"
-
-// Defaults here, since not in schema yet - and may never be
-#define DEFAULT_control_oled_loramesher_battery_max 5000
-#define DEFAULT_control_oled_loramesher_battery_min 0
+// DEFAULT_control_oled_loramesher_* come from defaults.h, generated from the server's modules.yaml
 
 class Control_Oled_LoRaMesher : public Control_Oled {
   public:

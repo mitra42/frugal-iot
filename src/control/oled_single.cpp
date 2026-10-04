@@ -6,8 +6,7 @@
 
 Control_Oled_Single::Control_Oled_Single(const char* name, const char* unit, const char* label, uint8_t decimals)
   : Control_Oled("control_oled_single", name, std::vector<IN*> { }),
-  // Not in the schema, like control_oled_ht - hence the literal range and colour
-  value(new INfloat("control_oled_single", "value", "Value", 0, decimals, 0, 10000, "#000000", true)),
+  value(new INfloat("control_oled_single", "value", "Value", 0, decimals, DEFAULT_control_oled_single_value_min, DEFAULT_control_oled_single_value_max, DEFAULT_control_oled_single_value_color, true)),
   unit(unit),
   label(label)
   {
