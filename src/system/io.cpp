@@ -695,7 +695,12 @@ OUTuint16::OUTuint16(const OUTuint16 &other)
 
 // TO_ADD_OUTxxx
 // Called when either value, or wiredPath changes
-void OUT::sendWired(bool retain, uint8_t qos) { // defaults to MQTT_RETAIN MQTT_QOS_ATLEAST1
+/* wiredPath is normally a set/ path on another node (or this one), so this is a command: QoS 1, so the
+ * broker holds it for a node that is asleep, and not retained, since the receiving IN writes the value
+ * to its own flash and a retained command would be replayed at its every fresh subscribe. The same
+ * rule the client follows for set/ - see MqttTopic's constructor in frugal-iot-client.
+ */
+void OUT::sendWired(bool retain, uint8_t qos) { // defaults to not retained, MQTT_QOS_ATLEAST1
   if (wiredPath.length()) {
     // Three possibilities = normal = send+loop qos=2 & local = loopback; qos=2 & remote = sendRemote
     if (qos == MQTT_QOS_EXACTLY1) {
@@ -706,7 +711,7 @@ void OUT::sendWired(bool retain, uint8_t qos) { // defaults to MQTT_RETAIN MQTT_
         frugal_iot.messages->sendRemote(wiredPath, StringValue(), retain, qos, 0x00);
       }
     } else {
-      frugal_iot.messages->send(wiredPath, StringValue(), MQTT_RETAIN, MQTT_QOS_ATLEAST1); // TODO note defaulting to 1DP which may or may not be appropriate, retain and qos=1 
+      frugal_iot.messages->send(wiredPath, StringValue(), retain, qos); // TODO note defaulting to 1DP which may or may not be appropriate
     }
   }
 }

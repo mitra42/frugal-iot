@@ -113,6 +113,7 @@ class System_Power : public System_Base {
      */
     void wakeNow();
     bool okToSleep(unsigned long ms, uint16_t how) override;
+    bool sleepPermitted(unsigned long ms, uint16_t how); // Asks every module - frugal_iot.okToSleep()
     /* For a library that sleeps the CPU itself, from its own task - LoRaMesher's OnSleep/OnWakeUp.
      * See "External sleep" in power.cpp. Both must be called from that same task.
      */

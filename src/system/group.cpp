@@ -122,13 +122,18 @@ void System_Group::discover() {
 }
 void System_Group::prepare()      { forEach("prepare", &System_Base::prepare); }
 void System_Group::recover()      { forEach("recover", &System_Base::recover); }
+#ifdef SYSTEM_POWER_DEBUG
+  const char* System_Group::refusedBy = nullptr;
+#endif
 // An AND over the members - see System_Base::okToSleep(). Stops at the first veto.
 bool System_Group::okToSleep(unsigned long ms, uint16_t how) {
   bool ok = true;
   for (auto it = group.begin(); ok && (it != group.end()); ++it) {
     ok = (*it)->okToSleep(ms, how);
     #ifdef SYSTEM_POWER_DEBUG
-      if (!ok) { Serial.print(F("Power: sleep refused by ")); Serial.println((*it)->id); }
+      // Groups nest, and an inner group returns first - so only the first to set this names the
+      // module that actually refused, rather than the group around it
+      if (!ok && !refusedBy) { refusedBy = (*it)->id; }
     #endif
   }
   return ok;

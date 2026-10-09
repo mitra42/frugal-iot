@@ -23,7 +23,7 @@ Serial messages you will be watching for:
 
 | Message | Meaning |
 |---|---|
-| `Power: sleep refused by <id>` | module `<id>` refused sleep, and it will be asked again next `loop()` |
+| `Power: sleep refused by <id>` | module `<id>` refused sleep. Printed once when the refusing module changes, not on every retry; one line, naming the module itself, not the group containing it |
 | `Power Management: preparing` | `prepare()` ran: sensors off, WiFi paused if the mode does that |
 | `Sleeping for <ms>` | light sleep for the rest of the cycle (less than `cycle - wake` if the sleep was delayed) |
 | `Waking for<ms>` | `recover()` ran |
@@ -34,7 +34,7 @@ Serial messages you will be watching for:
 Throughout, time the readings: on the dashboard, or with the serial monitor's timestamps.
 
 **After any reset or flash, nothing sleeps for the first 3 minutes:** captive holds it off so the
-AP can be found, and you will see `sleep refused by captive` for that time. All the timings below
+AP can be found, and you will see one `sleep refused by captive` line at the first attempt. All the timings below
 start after that window. A deep-sleep wake is not a reset, so it does not reopen the window.
 
 ## Part A: C3 Pico (sht example, env `c3_pico`)
@@ -43,9 +43,10 @@ Change only the `configure_power(...)` line in `src/main.cpp` for each step.
 
 | # | `configure_power` | Do | Expect | If it fails |
 |---|---|---|---|---|
-| A0 | `Power_Light, 60000, 20000` | Reset, and watch the first 4 min | `sleep refused by captive` until ~3 min after the reset, readings every 60 s throughout, then the first `preparing`. | phase 4 |
+| A0 | `Power_Light, 60000, 20000` | Reset, and watch the first 4 min | One `sleep refused by captive` line (not `system`, and not repeated) at ~20 s, nothing more from power until ~3 min after the reset, readings every 60 s throughout, then the first `preparing`. | phase 4 |
 | A1 | `Power_Loop, 30000, 30000` | Run 2 min | Readings every 30 s. No `preparing`. | phase 1 |
-| A2 | `Power_Light, 60000, 20000` | Run 5 min | After ~20 s: `preparing`, then `Sleeping for ~40000`. Readings **exactly** 60 s apart, with no drift over 5 cycles. After each wake: `WIFI Paused` → `WIFI Disconnected` → reconnect, with MQTT connecting on its own pass rather than stalling inside `recover()`. | phase 1 (timing), phase 2 (WiFi) |
+| A2 | `Power_Light, 60000, 20000` | Run 5 min after the 3-min startup window | ~20 s into each cycle: `preparing`, then `Sleeping for ~40000`. Readings **exactly** 60 s apart, with no drift over 5 cycles. After each wake: `WIFI Paused` → `WIFI Disconnected` → reconnect, with MQTT connecting on its own pass rather than stalling inside `recover()`. | phase 1 (timing), phase 2 (WiFi) |
+| >> | TESTING HERE | | | |
 | A3 | as A2 | While it is asleep, change a setting from the dashboard (e.g. a min/max) | At the next wake the change arrives (`MQTT incoming`) **before** `preparing`. You may see `sleep refused by mqtt` for up to ~2 s after the last incoming message. | phase 4 |
 | A4 | as A2 | Join the node's AP from a phone and load the portal during a wake | `sleep refused by captive` while you keep clicking. Readings still come every 60 s, so periodic work still runs while sleep is refused. Leave the phone idle but connected: it sleeps again ~2 min after your last request. | phase 4 |
 | A5 | as A2 | In the portal, set the MQTT hostname to something that does not resolve | MQTT never connects and **does not** refuse sleep: it sleeps at ~20 s each cycle. Put the hostname back afterwards. | phase 4 |

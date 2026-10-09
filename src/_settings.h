@@ -205,7 +205,7 @@
   #define CONTROL_DEBUG
 #endif
 // TO_ADD_SYSTEM - there is no class hierarchy
-#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG) || defined(SYSTEM_MODBUS_DEBUG)
+#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG) || defined(SYSTEM_MODBUS_DEBUG) || defined(SYSTEM_POWER_DEBUG)
   #define SYSTEM_DEBUG
 #endif
 

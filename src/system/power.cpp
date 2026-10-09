@@ -428,16 +428,37 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
           #ifdef SYSTEM_POWER_DEBUG
             Serial.print(F("Sleeping for ")); Serial.println(sleep_millisecs);
           #endif
-          esp_sleep_enable_timer_wakeup(sleep_millisecs * 1000UL); // Wake on clock
+          // 64 bit: in 32, microseconds overflow for any sleep over ~71 minutes
+          esp_sleep_enable_timer_wakeup((uint64_t)sleep_millisecs * 1000ULL); // Wake on clock
         }
         if (forceMode & WakeOnWiFiBit) { // I don't think this is working yet
           esp_sleep_enable_wifi_wakeup();
         }
+        /* The sleep itself. This call went missing in January 2026 (45afe69) - the wakeups were still
+         * armed but nothing slept, so Power_Light ran prepare() and recover() back to back.
+         * Flush first: the UART stops with the clocks, cutting off whatever is still in its buffer.
+         */
+        Serial.flush();
+        /* Serial on the chip's own USB (USB Serial/JTAG - e.g. C3 Pico), not a USB-UART chip, stops
+         * answering the host while asleep and does not recover on its own: the port stays open on
+         * the computer but nothing more arrives. So unplug it cleanly first - end() drives D+/D-
+         * low, which the host sees as a disconnect - and re-attach after, so the host re-enumerates
+         * and a monitor that reconnects (PlatformIO's does by default) picks it up again. The sleep
+         * itself is the gap the host needs to notice, and the D+ pull-up is off meanwhile.
+         * Note HWCDC::begin() has a re-enumeration of its own commented out, as it hung a terminal.
+         */
+        #if defined(ANY_DEBUG) && ARDUINO_USB_CDC_ON_BOOT && ARDUINO_USB_MODE
+          Serial.end();
+        #endif
+        // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html#_CPPv421esp_light_sleep_startv
+        esp_light_sleep_start();
+        #if defined(ANY_DEBUG) && ARDUINO_USB_CDC_ON_BOOT && ARDUINO_USB_MODE
+          Serial.begin();
+        #endif
       }
     #endif
     #ifdef ESP32
       // TODO I don't think this works yet 
-      // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html#_CPPv421esp_light_sleep_startv
       if (forceMode & DelaySleepBit) {
         delay(sleep_millisecs); // Light sleep will be automatic
       }
@@ -454,7 +475,7 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
         gpio_deep_sleep_hold_en();
         if (forceMode & WakeOnTimerBit) {
           // millis() and esp_timer_get_time() both reset to 0 after deep sleep - see sleepSafeSecs().
-          esp_deep_sleep(sleep_millisecs * 1000UL);
+          esp_deep_sleep((uint64_t)sleep_millisecs * 1000ULL); // 64 bit - see the light sleep above
           Serial.println(F("Power Management: failed to go into Deep Sleep - this should not happen!"));
         } else {  // Power_Panic
           // Currently this is just to avoid brownout - deep_sleep with no wakeup and is not used due to worries it will never come back from deep_sleep unless power drops to 0
@@ -555,7 +576,7 @@ bool System_Power::maybeSleep() {
   } else if (mode && (elapsed >= wake_ms)) {
     const unsigned long remaining = cycle_ms - elapsed;
     // ExternalSleepBit is not ours to apply - the CPU keeps running - so do not ask about it
-    if ((remaining >= SYSTEM_POWER_MIN_SLEEP_MS) && frugal_iot.okToSleep(remaining, mode & ~ExternalSleepBit)) {
+    if ((remaining >= SYSTEM_POWER_MIN_SLEEP_MS) && sleepPermitted(remaining, mode & ~ExternalSleepBit)) {
       prepare(); // Get sensors ready, turn off their individual power and/or buses (I2C etc) and/or global peripheral power.
       if (mode & ExternalSleepBit) {
         dormant = true; // recover() when the cycle ends - top of this function
@@ -611,7 +632,7 @@ bool System_Power::externalSleepRequest(const unsigned long ms) {
       externalHold = (xSemaphoreTake(loopLock, pdMS_TO_TICKS(SYSTEM_POWER_LOCK_WAIT_MS)) == pdTRUE);
     }
     if (externalHold) {
-      allow = frugal_iot.okToSleep(ms, ExternalSleepBit | LightSleepBit | WakeOnTimerBit);
+      allow = sleepPermitted(ms, ExternalSleepBit | LightSleepBit | WakeOnTimerBit);
       if (!allow) { // Let loop() go now - OnWakeUp may never come, and if it does externalWake() copes
         externalHold = false;
         xSemaphoreGive(loopLock);
@@ -653,6 +674,28 @@ bool System_Power::okToSleep(const unsigned long ms, const uint16_t how) {
     ok = (mode & ExternalSleepBit) && dormant
       && (((millis() - cycleStart) + ms + SYSTEM_POWER_EXTERNAL_MARGIN_MS) <= cycle_ms);
   }
+  return ok;
+}
+
+/* frugal_iot.okToSleep(), plus - with SYSTEM_POWER_DEBUG - saying who refused. Only when that
+ * changes: a refusal is asked again every loop() pass, so printing each one would be a line every
+ * 10ms for as long as it lasts. Called from loop() and from the external sleeper's task, but never
+ * both at once - see "External sleep" above.
+ */
+bool System_Power::sleepPermitted(const unsigned long ms, const uint16_t how) {
+  #ifdef SYSTEM_POWER_DEBUG
+    System_Group::refusedBy = nullptr;
+  #endif
+  const bool ok = frugal_iot.okToSleep(ms, how);
+  #ifdef SYSTEM_POWER_DEBUG
+    static const char* lastRefusedBy = nullptr;
+    if (System_Group::refusedBy != lastRefusedBy) {
+      if (System_Group::refusedBy) {
+        Serial.print(F("Power: sleep refused by ")); Serial.println(System_Group::refusedBy);
+      }
+      lastRefusedBy = System_Group::refusedBy;
+    }
+  #endif
   return ok;
 }
 

@@ -110,7 +110,8 @@ class OUT : public IO {
     // TO-ADD-OUTxxx
     virtual float floatValue();
     virtual bool boolValue();
-    virtual void sendWired(bool retain = MQTT_RETAIN, uint8_t qos = MQTT_QOS_ATLEAST1);
+    // Not retained by default: wiredPath is normally another node's set/ path - see sendWired()
+    virtual void sendWired(bool retain = MQTT_DONT_RETAIN, uint8_t qos = MQTT_QOS_ATLEAST1);
     /* Publish "there is no reading" on this output.
      *
      * Called by a sensor when it could not get a reading - a failed read, an absent device, a

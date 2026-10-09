@@ -77,6 +77,9 @@ static String jsonField(const String& json, const char* field) {
   #define SYSTEM_MQTT_ENROL_RETRY_AFTER 5
 #endif
 
+#ifdef ESP32
+  extern unsigned long wake_count; // system/power.cpp - zero unless this boot is a deep-sleep wake
+#endif
 #ifndef SYSTEM_MQTT_QUIET_MS
   // Hold off sleep until nothing has arrived for this long - see System_MQTT::okToSleep()
   #define SYSTEM_MQTT_QUIET_MS 2000
@@ -303,7 +306,18 @@ void System_MQTT::setup_after_wifi() {
   // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
   // by Arduino. You need to set the IP address directly.
   client.begin(hostname.c_str(), net);
-  client.setCleanSession(true); // on power up should refresh subscriptions
+  /* A clean session only after a real reset - a new firmware may subscribe to different things,
+   * and the broker would otherwise keep the old subscriptions. After a deep-sleep wake (wake_count
+   * non-zero) keep the session, so the broker hands over the QoS 1 messages it held while we slept -
+   * set/ commands from the dashboard or another node. If the broker has no session anyway (expired,
+   * or restarted without persistence) connect() sees sessionPresent() false and resubscribes; and
+   * every boot queues its subscriptions in setup() regardless, which also brings each retained value.
+   */
+  #ifdef ESP32
+    client.setCleanSession(wake_count == 0);
+  #else
+    client.setCleanSession(true); // No deep sleep - every boot is a reset
+  #endif
   // client.setClockSource(XXX); // TODO-23 See https://github.com/256dpi/arduino-mqtt will need for power management
   client.onMessage(MqttMessageReceived);  // Called back from client.loop - this is a naked function that just calls into the instance
   connect(); // Note if WiFi is connected, this will block till MQTT times out 

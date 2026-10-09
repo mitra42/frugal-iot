@@ -26,6 +26,10 @@ class System_Group : public System_Base {
     void prepare() override;
     void recover() override;
     bool okToSleep(unsigned long ms, uint16_t how) override;
+    #ifdef SYSTEM_POWER_DEBUG
+      // id of the innermost module that refused, or nullptr - System_Power clears it, asks, reports
+      static const char* refusedBy;
+    #endif
     void loop() override;
     void periodically() override;
     void infrequently() override;
