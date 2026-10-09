@@ -50,6 +50,23 @@
 // inconsistent pins_arduino.h
 
 // Define maximum size of a message packet - this is topic + message + 2, (wired routes are usually the longest messages)
+/* How full LoRaMesher's own TX queue may get before buildAndSend refuses. Its queue (10, set by
+ * LoRaMesher's message_queue_size) drains only one message per TX slot, so it fills far faster than
+ * it empties. Refusing first leaves the message in System_Messages::outgoing, where outgoingCount()
+ * sees it and discovery backs off (SYSTEM_DISCOVERY_QUEUE_MAX) - instead of the message leaving that
+ * queue as soon as LoRaMesher takes it, and every later one failing inside LoRaMesher. Below 10 to
+ * leave room for the gateway's downstream queue, which also feeds this one.
+ */
+#ifndef SYSTEM_LORAMESHER_TXQUEUE_MAX
+  #define SYSTEM_LORAMESHER_TXQUEUE_MAX 8
+#endif
+
+// Most messages a gateway holds for nodes it cannot reach yet. Bounded because a node that has gone
+// for good (or come back with a new address, see TODO-152A) would otherwise collect them forever.
+#ifndef SYSTEM_LORAMESHER_DOWNSTREAM_MAX
+  #define SYSTEM_LORAMESHER_DOWNSTREAM_MAX 16
+#endif
+
 #ifndef SYSTEM_LORAMESHER_MAXMESSAGESIZE
   #define SYSTEM_LORAMESHER_MAXMESSAGESIZE 128
 #endif
@@ -122,7 +139,7 @@ loramesher::os::TaskHandle_t receive_task_handle = nullptr;
 // =========== MeshSubscription class - only used by LoRaMesher to track subs ====
 
 // TODO-152A Consider timeout of LM subscriptions - since a node may get a different id each time it power cycles, and thus have multiple entries in the gateway's meshsubscription table.
-// TODO-152A OR (better) look for a change in gateway node, and if so resend,
+// Resending when the gateway changes or loses them is done - see resubscribeRequested in loramesher.h
 MeshSubscription::MeshSubscription(const String topicPath, const uint16_t src) 
 : topicPath(topicPath), src(src) {}
 
@@ -147,7 +164,7 @@ MeshSubscription::MeshSubscription(const String topicPath, const uint16_t src)
  * Blocks on the queue until a message arrives, then processes it on
  * this task's own stack — decoupled from the mesher's internal tasks.
  */
-void ReceiveTask(void* /*pvParameters*/) {
+void ReceiveTask(void* /*pvParameters*/) { // Runs on App_LoRa_Recv
   AppMessage* msg = nullptr;
   for (;;) {
       auto result = loramesher::os::RTOS::instance().ReceiveFromQueue(receive_queue, &msg, MAX_DELAY);
@@ -224,7 +241,7 @@ bool System_LoraMesher::initialize() {
               .Build();
       //Set up data callback
       mesher->SetDataCallback( // TODO-189 move to own function instead of inline
-        [](loramesher::AddressType source, const std::vector<uint8_t>& data) {
+        [](loramesher::AddressType source, const std::vector<uint8_t>& data) { // Runs on LoRaMesher's own task - only hands off to App_LoRa_Recv
             auto* msg = new AppMessage{source, data};
             auto result = loramesher::os::RTOS::instance().SendToQueue(
               receive_queue, &msg, 0 /* non-blocking */);
@@ -336,7 +353,18 @@ void System_LoraMesher::setup() {
 #endif
 
 void System_LoraMesher::periodically() {
-  checkRole(); // Adjust routing tables to reflect if we have a MQTT connection or not
+  const LoraMesherMode role = checkRole(); // Adjust routing tables to reflect if we have a MQTT connection or not
+  // Just became a node, or our gateway changed. Either way the gateway may not hold our
+  // subscriptions - it is new, or back after going away, or until now we were the gateway ourselves
+  // and our subscriptions went straight to MQTT. On first joining after boot this finds none yet
+  // sent, as they are still queued, so it does nothing.
+  if ((role == LORAMESHER_NODE)
+      && ((lastRole != LORAMESHER_NODE) || (gatewayNodeAddress != lastGatewayNodeAddress))) {
+    Serial.print(F("LoRaMesher resending subscriptions to gateway ")); Serial.println(gatewayNodeAddress, HEX);
+    frugal_iot.messages->reQueueSubscriptions();
+  }
+  lastRole = role;
+  lastGatewayNodeAddress = gatewayNodeAddress;
   #ifdef SYSTEM_LORAMESHER_DEBUG
     if (printAppData) printAppData();
   #endif
@@ -418,26 +446,34 @@ void System_LoraMesher::createReceiveMessages() {
  * Deliberately NOT checked: that the sender is a node we have heard of. A node's first packet is
  * how we learn it exists, and refusing unknown nodes would mean no node could ever join.
  */
-bool System_LoraMesher::relayPermitted(loramesher::AddressType source, const String& topicPath) {
-  const String prefix = frugal_iot.org + "/" + frugal_iot.project + "/";
-  if (!topicPath.startsWith(prefix)) {
+bool System_LoraMesher::relayPermitted(loramesher::AddressType source, const String& topicPath, const String& payload) { // Runs on App_LoRa_Recv
+  const String projectTopic = frugal_iot.org + "/" + frugal_iot.project;
+  const String prefix = projectTopic + "/";
+  String nodeid;
+  // The discovery announcement (System_Discovery) is the one topic that is not in a node's subtree:
+  // it is org/project itself, with the node id as the payload. It is the same claim as a topic in
+  // the subtree, so it goes through the same binding below - with the node id taken from the payload.
+  if (topicPath == projectTopic) {
+    nodeid = payload;
+  } else if (topicPath.startsWith(prefix)) {
+    // org/project/nodeid/... - the segment after the prefix
+    const String rest = topicPath.substring(prefix.length());
+    const int slash = rest.indexOf('/');
+    nodeid = (slash < 0) ? rest : rest.substring(0, slash);
+    // Commanding another node stays open, as it is over MQTT. Note it does not establish a binding
+    // either: a node whose first packet is a "set/" for somebody else must not thereby become them.
+    const String afterNode = (slash < 0) ? String() : rest.substring(slash + 1);
+    if (afterNode.startsWith("set/")) {
+      return true;
+    }
+  } else {
     Serial.print(F("LoRaMesher refusing to relay outside ")); Serial.print(prefix);
     Serial.print(F(" : ")); Serial.println(topicPath);
     return false;
   }
-  // org/project/nodeid/... - the segment after the prefix
-  const String rest = topicPath.substring(prefix.length());
-  const int slash = rest.indexOf('/');
-  const String nodeid = (slash < 0) ? rest : rest.substring(0, slash);
   if (!nodeid.length()) {
     Serial.print(F("LoRaMesher refusing a topic with no node in it: ")); Serial.println(topicPath);
     return false;
-  }
-  // Commanding another node stays open, as it is over MQTT. Note it does not establish a binding
-  // either: a node whose first packet is a "set/" for somebody else must not thereby become them.
-  const String afterNode = (slash < 0) ? String() : rest.substring(slash + 1);
-  if (afterNode.startsWith("set/")) {
-    return true;
   }
   for (auto &known : meshIdentities) {
     if (known.address == source) {
@@ -462,7 +498,7 @@ bool System_LoraMesher::relayPermitted(loramesher::AddressType source, const Str
 
 // Note that received Packet could be Downstream (from MQTT broker via gateway) 
 // or Upstream (from another node)
-void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, const std::vector<uint8_t>& data) {
+void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, const std::vector<uint8_t>& data) { // Runs on App_LoRa_Recv
   rcvdPacketCounter++;
   // Three bytes is the shortest packet that can be read at all: qos, retain, and one byte of topic.
   // The old test was (data.size() <= 0), which for an unsigned size only rejects an empty vector -
@@ -500,7 +536,7 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
     #ifdef SYSTEM_LORAMESHER_DEBUG
       lastTopicPath = topicPath;
       lastPayload = payload; 
-      if (printAppData) printAppData(); // See note above about this being an extern
+      if (printAppData) printAppData(); // See note above about this being an extern. On App_LoRa_Recv, so draws the OLED off the main task, unlocked
     #endif
     Serial.print(F("LoRaMesher received ")); Serial.print(topicPath); Serial.print(F("=")); Serial.println(payload);
 
@@ -520,25 +556,80 @@ void System_LoraMesher::processReceivedPacket(loramesher::AddressType source, co
       }
       Serial.print(F("LoRaMesher forwarding subscription to MQTT ")); Serial.println(payload);
       // Need to remember the subscription before calling subscribe, because there may be retained data returned immediately
-      meshSubscriptions.emplace_front(payload, source);
+      // Nodes resend subscriptions (see resubscribeRequested in loramesher.h), so a repeat is normal,
+      // and a second entry would relay every matching message to the node twice.
+      {
+        std::lock_guard<std::mutex> guard(meshLock); // Released before messages->subscribe, see meshLock
+        bool known = false;
+        for (auto &sub : meshSubscriptions) {
+          if ((sub.src == source) && (sub.topicPath == payload)) {
+            known = true;
+          }
+        }
+        if (!known) {
+          meshSubscriptions.emplace_front(payload, source);
+        }
+      }
       frugal_iot.messages->subscribe(payload);  // Should queue for MQTT since we are the gateway
-    }
-    if (downstream) {
+    } else if (downstream) {
       Serial.printf("LoRaMesher downstream received: %s=%s\n", topicPath.c_str(), payload.c_str());
-      //Serial.print(F("XXX " __FILE__)); Serial.print(F("downstream ")); Serial.println(topicPath);
-      frugal_iot.messages->queueIncoming(topicPath, payload, MsgFromLoRaMesher);
+      if (topicPath == "resubscribe") {
+        // Only from our own gateway: resending to a different one would not help the one asking
+        if (source == gatewayNodeAddress) {
+          resubscribeRequested = true; // Acted on in loop(), on the main task
+        }
+      } else {
+        //Serial.print(F("XXX " __FILE__)); Serial.print(F("downstream ")); Serial.println(topicPath);
+        frugal_iot.messages->queueIncoming(topicPath, payload, MsgFromLoRaMesher);
+      }
     } else { // upstream (not subscribe)
       // This is the one that mattered: without it, anything in radio range could have any topic in
       // the organization republished under the gateway's account - forged readings for any node,
       // commands to any actuator, retained values overwritten.
-      if (!relayPermitted(source, topicPath)) {
+      if (!relayPermitted(source, topicPath, payload)) {
         return;   // reported by relayPermitted
       }
       Serial.printf("LoRaMesher forwarding to MQTT: %s=%s\n",topicPath.c_str(), payload.c_str());
       frugal_iot.messages->send(topicPath, payload, retain, qos); // Should queue for MQTT since we are the gateway
+      // A discovery packet from a node we hold no subscriptions for - so we have lost them, most
+      // likely by restarting too briefly for the node to notice. Ask it for them, from loop().
+      if (topicPath == frugal_iot.org + "/" + frugal_iot.project) {
+        std::lock_guard<std::mutex> guard(meshLock);
+        if (!hasMeshSubscription(source)) {
+          resubscribePending.push_front(source);
+        }
+      }
     }
   }
   // Note packet is deleted by the callback that calls this
+}
+
+bool System_LoraMesher::hasMeshSubscription(const uint16_t src) { // Runs on App_LoRa_Recv, caller holds meshLock
+  bool found = false;
+  for (auto &sub : meshSubscriptions) {
+    if (sub.src == src) {
+      found = true;
+    }
+  }
+  return found;
+}
+
+// Act on what the receive task asked for - see resubscribeRequested in loramesher.h
+void System_LoraMesher::loop() {
+  if (resubscribeRequested.exchange(false)) {
+    Serial.println(F("LoRaMesher gateway asked for subscriptions, resending"));
+    frugal_iot.messages->reQueueSubscriptions();
+  }
+  std::forward_list<uint16_t> toAsk;
+  {
+    std::lock_guard<std::mutex> guard(meshLock);
+    toAsk.swap(resubscribePending);
+  }
+  for (const uint16_t address : toAsk) {
+    Serial.print(F("LoRaMesher asking node for subscriptions ")); Serial.println(address, HEX);
+    queueDownstream(address, "resubscribe", String());
+  }
+  sendDownstreamQueued();
 }
 
 // ========= OUTGOING - UP OR DOWNSTEAM =========
@@ -581,17 +672,30 @@ bool System_LoraMesher::connected() {
 // Common part to both relayDownstream and publish (which is upstream)
 bool System_LoraMesher::buildAndSend(uint16_t destn, const String &topic, const String &payload, bool retain, int qos) {
   loramesher::Result ready = mesher->IsReadyToSend(destn);
-  if (!ready) {
+  const bool queueFull = ready && (mesher->GetTxQueueSize() >= SYSTEM_LORAMESHER_TXQUEUE_MAX); // See SYSTEM_LORAMESHER_TXQUEUE_MAX
+  #ifdef SYSTEM_LORAMESHER_DEBUG
+    static bool lastQueueFull = false; // Report only when it fills, not on every refused message
+  #endif
+  if (!ready || queueFull) {
     #ifdef SYSTEM_LORAMESHER_DEBUG
       static loramesher::LoraMesherErrorCode lasterrcode = loramesher::LoraMesherErrorCode::kSuccess;
       auto errcode = ready.getErrorCode();
       if (errcode != lasterrcode) {
         lasterrcode = errcode;
-        Serial.print("Loramesher Not ready to send to "); Serial.print(destn, HEX); Serial.print(F(" ")); Serial.println(ready.GetErrorMessage().c_str());
+        if (!ready) {
+          Serial.print("Loramesher Not ready to send to "); Serial.print(destn, HEX); Serial.print(F(" ")); Serial.println(ready.GetErrorMessage().c_str());
+        }
       }
+      if (queueFull && !lastQueueFull) {
+        Serial.println(F("LoRaMesher TX queue full, holding messages in outgoing"));
+      }
+      lastQueueFull = queueFull;
     #endif
     return false;
   }
+  #ifdef SYSTEM_LORAMESHER_DEBUG
+    lastQueueFull = false;
+  #endif
   // TODO it would be nice to use a structure, but LoraMesher doesnt support a structure with two unknown string lengths
   char qos_char = '0' + qos; // 0 1 2 as for MQTT incoming=12
   char retain_char = '0' + retain;
@@ -699,13 +803,42 @@ bool System_LoraMesher::relayDownstream(uint16_t destn, const String &topic, con
 // Note - this (I think) will catch outgoing messages that also match a subscription. 
 void System_LoraMesher::dispatch(System_Message &msg) {
   System_Base::dispatch(msg);
+  std::lock_guard<std::mutex> guard(meshLock); // Inside messages' lock - see meshLock for the order
   for (auto &sub : meshSubscriptions) {
     // Find matching subscriptions
     if (match_topic(msg.topicPath, sub.topicPath)) { // Allows for + and # wildcards
-      // send over LoRaWan to subscriber
-      if (!relayDownstream(sub.src, msg.topicPath, msg.payload)) {
-        Serial.printf("XXX TODO-189 failed to send Lora downstream, think about requeueing %s=%s\n", msg.topicPath.c_str(), msg.payload);
-      }
+      queueDownstream(sub.src, msg.topicPath, msg.payload); // Sent from loop()
+    }
+  }
+}
+
+// Downstream: module => queued. A newer value for a topic still waiting replaces it, as
+// System_Messages::sendRemote does upstream, so a slow node gets the latest rather than a backlog.
+void System_LoraMesher::queueDownstream(const uint16_t destn, const String &topicPath, const String &payload) {
+  bool updated = false;
+  for (auto &m : downstream) {
+    if ((m.destn == destn) && (m.topicPath == topicPath)) {
+      m.payload = payload;
+      updated = true;
+    }
+  }
+  if (!updated) {
+    if (downstream.size() >= SYSTEM_LORAMESHER_DOWNSTREAM_MAX) {
+      Serial.print(F("LoRaMesher downstream queue full, dropping ")); Serial.print(downstream.front().destn, HEX);
+      Serial.print(F(" ")); Serial.println(downstream.front().topicPath);
+      downstream.pop_front();
+    }
+    downstream.push_back({destn, topicPath, payload});
+  }
+}
+
+// Downstream: queued => LoRaMesher. Each gets a turn, so one unreachable node does not hold up the rest.
+void System_LoraMesher::sendDownstreamQueued() {
+  for (auto it = downstream.begin(); it != downstream.end(); ) {
+    if (relayDownstream(it->destn, it->topicPath, it->payload)) {
+      it = downstream.erase(it);
+    } else {
+      ++it;
     }
   }
 }

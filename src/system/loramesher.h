@@ -16,7 +16,10 @@
 // defined in _settings.h if board has LoRa, can also define in platformio.ini if e.g. have a LoRa shield
 #ifdef SYSTEM_LORAMESHER_WANT  // defined in platformio.ini
 
+#include <atomic>
 #include <forward_list>
+#include <list>
+#include <mutex>
 #include "loramesher.hpp" // defines namespace loramesher 
 #include "system/base.h"
 #include "system/io.h"
@@ -49,13 +52,13 @@ class System_LoraMesher : public System_Base {
     // == INCOMING (up or downstream)
     // public only because called from the callback - do not use externally
     #ifdef SYSTEM_LORAMESHER_DEBUG
-      String lastTopicPath = String(); // Used by printAppData
-      String lastPayload = String(); // Used by printAppData
+      String lastTopicPath = String(); // Used by printAppData - written on App_LoRa_Recv, unlocked
+      String lastPayload = String(); // Used by printAppData - written on App_LoRa_Recv, unlocked
     #endif
     void processReceivedPacket(loramesher::AddressType source, const std::vector<uint8_t>& data);
     // May this address speak for this topic? Checks the organization/project prefix, and binds the
     // node id to the address that first claimed it. Reports and returns false when it may not.
-    bool relayPermitted(loramesher::AddressType source, const String& topicPath); 
+    bool relayPermitted(loramesher::AddressType source, const String& topicPath, const String& payload = String()); 
     // == OUTGOING (up or downstream)
     bool connected();
     // Match mqtt.client profile
@@ -69,6 +72,7 @@ class System_LoraMesher : public System_Base {
     unsigned long lostMQTTat;
     bool initialize(); // Try and create the LoraMesher instance
     void setup() override;
+    void loop() override;
     void periodically() override;
     bool isGateway(); 
     bool okToSleep(unsigned long ms, uint16_t how) override;
@@ -77,6 +81,9 @@ class System_LoraMesher : public System_Base {
     bool in_network();
     // == INCOMING (up or downstream)
     uint16_t rcvdPacketCounter = 0;
+    // Guards meshSubscriptions and resubscribePending, which App_LoRa_Recv writes and the main task reads.
+    // Never held while calling into frugal_iot.messages, which has its own lock taken in the other order by dispatch().
+    std::mutex meshLock;
     std::forward_list<MeshSubscription> meshSubscriptions;
     /*
      * Which node id each LoRaMesher address has claimed, remembered from the first topic it sent.
@@ -91,7 +98,25 @@ class System_LoraMesher : public System_Base {
      * accepted residual risk - a rogue node inside the organization is not the threat this is for.
      */
     struct MeshIdentity { uint16_t address; String nodeid; };
-    std::forward_list<MeshIdentity> meshIdentities;
+    std::forward_list<MeshIdentity> meshIdentities; // Only touched on App_LoRa_Recv, so not locked
+    bool hasMeshSubscription(uint16_t src);
+    /*
+     * Getting subscriptions back to a gateway that has lost them.
+     *
+     * A gateway holds its nodes' subscriptions only in RAM (meshSubscriptions), so they are gone
+     * when it restarts. Two triggers, for the two ways that can go:
+     * - The node notices: it goes from not being a node to being one, or its gateway changes (see
+     *   periodically). It resends its subscriptions.
+     * - The node does not notice, because the gateway was back before its route timed out. The
+     *   gateway notices instead: a discovery packet arrives from a node it holds no subscriptions
+     *   for (every node subscribes to at least its own set/#), and it sends that node "resubscribe".
+     * Both packet handlers run on the App_LoRa_Recv task, so they only record what is wanted here,
+     * and loop() acts on it on the main task.
+     */
+    LoraMesherMode lastRole = LORAMESHER_UNCONNECTED;
+    uint16_t lastGatewayNodeAddress = loramesher::kBroadcastAddress;
+    std::atomic<bool> resubscribeRequested{false}; // Node: our gateway has asked
+    std::forward_list<uint16_t> resubscribePending; // Gateway: nodes to ask - guarded by meshLock
     // == OUTGOING (up or downstream)
     uint16_t sentPacketCounter = 0; 
     bool findGatewayNode();
@@ -100,6 +125,12 @@ class System_LoraMesher : public System_Base {
     uint16_t gatewayNodeAddress = loramesher::kBroadcastAddress;
     // == DOWNSTREAM 
     bool relayDownstream(uint16_t destn, const String &topic, const String &payload);
+    // Waiting to go down to nodes, so a send LoRaMesher refuses (TX queue full, no route yet) is
+    // retried from loop() rather than lost. Main task only, so not locked.
+    struct DownstreamMessage { uint16_t destn; String topicPath; String payload; };
+    std::list<DownstreamMessage> downstream;
+    void queueDownstream(uint16_t destn, const String &topicPath, const String &payload);
+    void sendDownstreamQueued();
     void dispatch(System_Message &msg) override;
  
     #ifdef TODO_189_NOT_NEEDED

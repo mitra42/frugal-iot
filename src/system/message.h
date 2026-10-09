@@ -13,6 +13,9 @@
 //#endif
 #include "system/base.h"
 #include "system/io.h"
+#ifdef ESP32
+  #include <mutex>
+#endif
 
 #define MsgIsSubscription 0x01
 #define MsgFromFS 0x02
@@ -97,6 +100,7 @@ class System_Messages : public System_Base {
     String path(const String topicTwig); 
     //String twig(const String &topicPath); // unused
     bool reSubscribeAll(); // Called by MQTT after reconnection
+    void reQueueSubscriptions(); // Called by LoRaMesher when its gateway may have lost our subscriptions
     // How many messages are waiting to go upstream. Discovery uses this as backpressure - see
     // System_Group::discover(). std::list::size() is O(1), so this is cheap enough to call in a loop.
     size_t outgoingCount() const { return outgoing.size(); }
@@ -114,6 +118,11 @@ class System_Messages : public System_Base {
     std::list<System_Message> outgoing;
     std::list<System_Message> incoming;
     std::forward_list<System_Message> subscriptions;
+    #ifdef ESP32
+      // Guards outgoing, incoming and subscriptions: LoRaMesher's App_LoRa_Recv task calls in here too.
+      // Recursive because loop() dispatches to modules that send() again. ESP8266 has only one task.
+      std::recursive_mutex listsLock;
+    #endif
     void sendOutgoingQueued();
     void dispatchIncomingQueued();
     void setup();

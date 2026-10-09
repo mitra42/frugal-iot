@@ -37,6 +37,12 @@ System_Message::System_Message(const String& topicPath, const String& payload, c
 System_Message::System_Message(const String& topicPath) // For subscriptions only
 : System_Message(topicPath, String(), false, 0, MsgIsSubscription) {}
 
+#ifdef ESP32
+  #define LOCK_LISTS std::lock_guard<std::recursive_mutex> listsGuard(listsLock)
+#else
+  #define LOCK_LISTS // ESP8266 has only one task
+#endif
+
 System_Messages::System_Messages() 
 : System_Base("messages", "Messages"),
 topicPrefix()
@@ -56,6 +62,7 @@ void System_Messages::setup() {
 }
 
 void System_Messages::loop() {
+  LOCK_LISTS;
   sendOutgoingQueued(); // Upstream
   dispatchIncomingQueued();
 }
@@ -93,6 +100,7 @@ String System_Messages::path(const char* id,  const char* const leaf, const char
 
 // Upstream: module => queued
 void System_Messages::subscribe(const String topicPath) {
+  LOCK_LISTS;
   for(System_Message& sub: subscriptions) {
     if (sub.topicPath == topicPath) {
       return; // Dont resubscribe
@@ -108,6 +116,7 @@ void System_Messages::subscribe(const String topicPath) {
 
 // Upstream: module => queue outgoing (no reflection)
 void System_Messages::sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos, uint16_t flags) {
+  LOCK_LISTS;
   // Instead of pushing a new message, update the payload
   for(System_Message& sm: outgoing) {
     if (sm.topicPath == topicPath) {
@@ -219,8 +228,21 @@ bool System_Message::queuedSubscribe() {
   return false; // Not connected, or failed to send over connection
 }
 
+// Send every subscription upstream again. LoRaMesher calls this when its gateway may not hold them:
+// this node has just joined a gateway (new, or back after going away), or the gateway has asked.
+// They go back on the outgoing queue rather than straight to the radio, so a send that fails is
+// retried like any other, and sendOutgoingQueued() puts each back in subscriptions once it is sent.
+void System_Messages::reQueueSubscriptions() {
+  LOCK_LISTS;
+  for (System_Message& sub : subscriptions) {
+    outgoing.push_back(sub);
+  }
+  subscriptions.clear();
+}
+
 // MQTT calls this when it has re-established a connection and no session is found. 
 bool System_Messages::reSubscribeAll() {
+  LOCK_LISTS;
   // TODO-125 may put a flag on subscriptions then only resubscribe those not done
   // TODO-125 should probably check connected each time go around loop and only flag if sendInner succeeds
   Serial.print(F("Resubscribing: ")); 
@@ -307,6 +329,7 @@ void System_Messages::dispatchIncomingQueued() {
 // This is called by either the MQTT or LoRaMesher module on receiving a message
 // also by send to implement a loopBack, and by captive
 void System_Messages::queueIncoming(const String &topicPath, const String &payload, uint16_t flags) {
+  LOCK_LISTS;
   incoming.emplace_back(topicPath, payload, false, 0, flags);  // Implicit new Message (freed in dispatch)
 }
 void System_Messages::queueFromCaptive(const String &twig, const String &payload) {
@@ -321,6 +344,7 @@ void System_Messages::queueLoopback(const String &topicPath, const String &paylo
 // Iterates the local subscription list and sends an HTTP subscribe POST to the
 // peer for every topic whose path starts with that peer's org/project/nodeId/ prefix.
 void System_Messages::subscribeViaMdns(const String& peerNodeId, IPAddress ip, uint16_t port) {
+  LOCK_LISTS;
   String peerPrefix = frugal_iot.org + "/" + frugal_iot.project + "/" + peerNodeId + "/";
   bool anySent = false;
   for (const System_Message& sub : subscriptions) {
