@@ -177,12 +177,15 @@ drawPixel	KEYWORD2
 drawXbox	KEYWORD2
 enrolIfNeeded	KEYWORD2
 exists	KEYWORD2
+externalSleepRequest	KEYWORD2
+externalWake	KEYWORD2
 fillRect	KEYWORD2
 findGatewayNode	KEYWORD2
 floatValue	KEYWORD2
 forEach	KEYWORD2
 formatBytes	KEYWORD2
 fullAdvertise	KEYWORD2
+hasMeshSubscription	KEYWORD2
 heap_print	KEYWORD2
 httpPost	KEYWORD2
 in_network	KEYWORD2
@@ -190,6 +193,7 @@ infrequently	KEYWORD2
 init	KEYWORD2
 initialize	KEYWORD2
 isClaimed	KEYWORD2
+isFromCaptive	KEYWORD2
 isGateway	KEYWORD2
 isOK	KEYWORD2
 isPresent	KEYWORD2
@@ -198,9 +202,11 @@ isSubscription	KEYWORD2
 isThisNode	KEYWORD2
 isTimeSet	KEYWORD2
 isValid	KEYWORD2
+joined	KEYWORD2
 lastResult	KEYWORD2
 leaf	KEYWORD2
 leaf2path	KEYWORD2
+lockLoop	KEYWORD2
 loop	KEYWORD2
 match_topic	KEYWORD2
 maybeEcho	KEYWORD2
@@ -215,6 +221,7 @@ ms5803CRC4	KEYWORD2
 noteAuthFailure	KEYWORD2
 notifyPeersOfSubscription	KEYWORD2
 now	KEYWORD2
+okToSleep	KEYWORD2
 onNewPeer	KEYWORD2
 onPeerLost	KEYWORD2
 open	KEYWORD2
@@ -234,7 +241,6 @@ powerPins	KEYWORD2
 powerUp	KEYWORD2
 pre_setup	KEYWORD2
 prepare	KEYWORD2
-prepareForLightSleep	KEYWORD2
 printDirectory	KEYWORD2
 printNetworkStatus	KEYWORD2
 printRouteTable	KEYWORD2
@@ -245,12 +251,14 @@ provision	KEYWORD2
 publish	KEYWORD2
 publishToPeer	KEYWORD2
 publishToSubscribers	KEYWORD2
+queueDownstream	KEYWORD2
 queueFromCaptive	KEYWORD2
 queueIncoming	KEYWORD2
 queueLoopback	KEYWORD2
 queuedMessage	KEYWORD2
 queuedSubscribe	KEYWORD2
 quickAdvertise	KEYWORD2
+reQueueSubscriptions	KEYWORD2
 reSubscribeAll	KEYWORD2
 read	KEYWORD2
 read16	KEYWORD2
@@ -284,6 +292,7 @@ send1read1	KEYWORD2
 send3x	KEYWORD2
 sendAndRead	KEYWORD2
 sendAndWait	KEYWORD2
+sendDownstreamQueued	KEYWORD2
 sendGoogle	KEYWORD2
 sendOutgoingQueued	KEYWORD2
 sendRegister	KEYWORD2
@@ -309,6 +318,7 @@ setup_after_mqtt_setup	KEYWORD2
 setup_after_wifi	KEYWORD2
 shouldBeDefined	KEYWORD2
 sleep	KEYWORD2
+sleepPermitted	KEYWORD2
 sleepSafeSecs	KEYWORD2
 slurp	KEYWORD2
 speedOfSound	KEYWORD2
@@ -337,10 +347,12 @@ timers_shift	KEYWORD2
 topicTwig	KEYWORD2
 track	KEYWORD2
 txEnable	KEYWORD2
+unlockLoop	KEYWORD2
 validate	KEYWORD2
 validateGas	KEYWORD2
 visibleHeight	KEYWORD2
 visibleWidth	KEYWORD2
+wakeNow	KEYWORD2
 wireTo	KEYWORD2
 writeConfig	KEYWORD2
 writeConfigToFS	KEYWORD2

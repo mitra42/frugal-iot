@@ -42,7 +42,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.4
+//     Frugal-IoT@^2.0.5
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -155,6 +155,7 @@
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
+// #define LORA_DUTY_CYCLE 0.01f // Uncomment for 868.0F (Europe), legally limited to 1% of airtime. Default 5% - see loramesher.cpp
 // #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 

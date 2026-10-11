@@ -39,7 +39,7 @@
 // lib_deps = 
     // Even if developing with a local copy in lib/Frugal-IoT keep this uncommented
     // Note that if local copy, that the version number won't be enforced.
-//     Frugal-IoT@^2.0.4
+//     Frugal-IoT@^2.0.5
     // Add any Libraries specific to this hardware - sensor, actuator, etc but not dependencies of Frugal-IoT
  
 // lib_deps_lora = 
@@ -65,6 +65,7 @@
 // #define ACTUATOR_LCD_COLS 20 // uncomment for 20x4 display (default is 16x2)
 // #define ACTUATOR_LCD_ROWS 4
 // #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
+// #define SENSOR_BATTERY_NONE // No battery sensor, even where the board has a default pin
 // #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
 // #define SENSOR_DS18B20_PIN 6
 // #define SENSOR_SOIL_PIN 4
@@ -141,6 +142,7 @@
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
+// #define LORA_DUTY_CYCLE 0.01f // Uncomment for 868.0F (Europe), legally limited to 1% of airtime. Default 5% - see loramesher.cpp
 // #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
 // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
 // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib 
@@ -213,6 +215,7 @@
     // See Home(bottom left)/Platforms/espresif32/updates (none as of 2025sep23 even though PR merged)
 // #define RGB_BUILTIN_LED_COLOR_ORDER LED_COLOR_ORDER_RGB
 
+// C3 Pico with no battery (otherwise senses floating pin and panic-sleeps)
 #endif // ARDUINO_LOLIN_C3_PICO
 
 // S2_MINI, S2_MINI_4X are alternative [env:] settings for one board - at most one.

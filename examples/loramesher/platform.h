@@ -29,7 +29,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.4
+//     Frugal-IoT@^2.0.5
 
 // lib_deps_lora = 
 //     ${common.lib_deps}
@@ -100,7 +100,6 @@
 #define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration old to new file format, remove when none left in field
 // #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
 // #define SYSTEM_GROUP_DEBUG // debug the process of passing messages through modules - useful to find in which module a crash occurs
-// #define SYSTEM_LORAMESHER_SLEEP // define to use LoRaMesher's experimental sleep mode
 // #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG // debug the message passing process and messages in/out
 // #define SYSTEM_MQTT_DEBUG
@@ -141,6 +140,7 @@
     // Both the t3_s3 and the ttgo boards we are testing use the same module
     // feel free to move into per-board [env] (and submit a PR) if your own setup differs
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia; Note there are country specific laws as to what this needs to be 
+// #define LORA_DUTY_CYCLE 0.01f // Uncomment for 868.0F (Europe), legally limited to 1% of airtime. Default 5% - see loramesher.cpp
 
     // For lots of debugging uncomment these and the esp_log_level_set in main.cpp
 // #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
