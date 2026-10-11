@@ -306,6 +306,7 @@ void System_MQTT::setup_after_wifi() {
   // Note: Local domain names (e.g. "Computer.local" on OSX) are not supported
   // by Arduino. You need to set the IP address directly.
   client.begin(hostname.c_str(), net);
+  clientBegun = true;
   /* A clean session only after a real reset - a new firmware may subscribe to different things,
    * and the broker would otherwise keep the old subscriptions. After a deep-sleep wake (wake_count
    * non-zero) keep the session, so the broker hands over the QoS 1 messages it held while we slept -
@@ -449,6 +450,16 @@ void System_MQTT::dispatch(System_Message &msg) {
   // TODO-206 no need to resend, but *do* need to test changing via SPIFFS
   if (msg.isSet() && (msg.module() == id)) {
     if (msg.leaf() == "hostname") {
+      /* The client keeps its own copy, taken by client.begin(), so changing ours alone did nothing
+       * until a reboot - while the "connecting to" message already showed the new name. Hand it over
+       * and drop the connection, so the next connect() goes to the new broker; that is a new session
+       * there, so connect() resubscribes. Before begin() - reading it from LittleFS at startup -
+       * begin() picks it up itself.
+       */
+      if (clientBegun && !(msg.payload == hostname)) {
+        client.setHost(msg.payload.c_str());
+        client.disconnect();
+      }
       hostname = msg.payload;
       writeConfigToFS(msg.leaf(), msg.payload);
       // Could echo here but dont need to

@@ -88,6 +88,7 @@ class System_MQTT : public System_Base {
     bool lastSendOk = true;
     // millis() of the last sign of incoming traffic - a message, a subscribe, a fresh connection. See okToSleep()
     unsigned long lastInboundMs = 0;
+    bool clientBegun = false; // client.begin() has run, so it holds its own copy of hostname - see dispatch()
     unsigned long ms;
     unsigned long nextLoopTime; // Not sleepSafeSecs as frequent.
     bool subscriptionsDone = false; // True when server has reported a session - so dont need to subscribe OR have resubscribed. Also true at start before did subscriptions.

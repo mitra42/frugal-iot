@@ -145,7 +145,6 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       response->print(F("<!DOCTYPE html><html><head><title>"));
       response->print(T->CaptivePortal);
       response->print(F("</title></head><body>"));
-      Serial.print("XXX "); Serial.println(__LINE__);
       response->print(F(
             "<meta name=viewport content='width=device-width,initial-scale=1'>"
             "<style>"
@@ -166,7 +165,6 @@ class CaptiveRequestHandler : public AsyncWebHandler {
             ".w,.i{background:#aaa;min-height:3em}"
             "</style>"
       ));
-      Serial.print("XXX "); Serial.println(__LINE__);
       response->print(F("<script>function s(name,value){let fd=new FormData();fd.set(name,value);fetch('/',{method:'POST',body:fd,credentials:'same-origin'}).catch(e=>console.error(e));};</script>"));
       if (message.length()) { // Not "if (message)" - that is true for an emptied String
         response->print(F("<h4>"));
@@ -211,7 +209,6 @@ class CaptiveRequestHandler : public AsyncWebHandler {
         "<option hidden>"));
       response->print(T->SelectOne);
       response->print(F("</option>"));
-      Serial.print("XXX "); Serial.println(__LINE__);
 
       // NEVER block in here. handleRequest() runs on the AsyncTCP task, which is also the only
       // thing that can transmit the response we are building - so spinning on the scan starves the
@@ -256,14 +253,11 @@ class CaptiveRequestHandler : public AsyncWebHandler {
         "<input type=submit value=\""));
       response->print(T->SETWIFI);
       response->print(F("\" style='font-size:100%'></form><hr>"));
-      Serial.print("XXX "); Serial.println(__LINE__);
 
       // Each captive line should be of form from addString etc below 
       // <p><label>...:<br><input...></label></p>  
-      Serial.print("XXX "); Serial.println(__LINE__);
       frugal_iot.captiveLines(response); // Calls back to captive.string etc 
       response->print(F("</body></html>"));
-      Serial.print("XXX "); Serial.println(__LINE__);
       #ifdef SYSTEM_CAPTIVE_DEBUG
         // available() is the whole page, buffered in RAM. AsyncResponseStream grows its cbuf by
         // realloc on nearly every print() above, so a page of a few KB is dozens of reallocations
@@ -273,7 +267,6 @@ class CaptiveRequestHandler : public AsyncWebHandler {
           (unsigned)response->available(), (unsigned)ESP.getFreeHeap(), (unsigned)CAPTIVE_LARGEST_BLOCK());
       #endif
       request->send(response);
-      Serial.print("XXX "); Serial.println(__LINE__);
     #endif // SYSTEM_CAPTIVE_MINIMAL
     }
   }

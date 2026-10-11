@@ -46,11 +46,11 @@ Change only the `configure_power(...)` line in `src/main.cpp` for each step.
 | A0 | `Power_Light, 60000, 20000` | Reset, and watch the first 4 min | One `sleep refused by captive` line (not `system`, and not repeated) at ~20 s, nothing more from power until ~3 min after the reset, readings every 60 s throughout, then the first `preparing`. | phase 4 |
 | A1 | `Power_Loop, 30000, 30000` | Run 2 min | Readings every 30 s. No `preparing`. | phase 1 |
 | A2 | `Power_Light, 60000, 20000` | Run 5 min after the 3-min startup window | ~20 s into each cycle: `preparing`, then `Sleeping for ~40000`. Readings **exactly** 60 s apart, with no drift over 5 cycles. After each wake: `WIFI Paused` → `WIFI Disconnected` → reconnect, with MQTT connecting on its own pass rather than stalling inside `recover()`. | phase 1 (timing), phase 2 (WiFi) |
-| >> | TESTING HERE | | | |
 | A3 | as A2 | While it is asleep, change a setting from the dashboard (e.g. a min/max) | At the next wake the change arrives (`MQTT incoming`) **before** `preparing`. You may see `sleep refused by mqtt` for up to ~2 s after the last incoming message. | phase 4 |
 | A4 | as A2 | Join the node's AP from a phone and load the portal during a wake | `sleep refused by captive` while you keep clicking. Readings still come every 60 s, so periodic work still runs while sleep is refused. Leave the phone idle but connected: it sleeps again ~2 min after your last request. | phase 4 |
 | A5 | as A2 | In the portal, set the MQTT hostname to something that does not resolve | MQTT never connects and **does not** refuse sleep: it sleeps at ~20 s each cycle. Put the hostname back afterwards. | phase 4 |
 | A6 | `Power_Deep, 120000, 30000` | Run 3 cycles | `Power: Waking from deep` at each boot. Readings every 2 min, and **no** 3-minute captive hold after a deep-sleep wake. | phase 1 (timing), phase 4 (captive hold) |
+| >> | TESTING HERE | | | |
 | A7 | `Power_Lora, 120000, 30000` | Run 3 cycles | At ~30 s: `preparing`, `WIFI Paused`, then **no WiFi messages at all** for ~90 s (no reconnect, no scan); the node stays awake. At 2 min: `Waking for`, WiFi reconnects, MQTT, readings, still on a 2-min schedule. No LoRaMesher on this board, so there are no `sleep rq` lines. | phase 2 |
 
 Optional ESP8266 check (env `d1_mini`, `Power_Deep, 60000, 20000`): it prints `Power: sleep modes
