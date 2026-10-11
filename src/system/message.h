@@ -55,6 +55,7 @@ class System_Message { // Only used for outgoing queued messages
     String leaf();
     bool isSet();
     bool isSubscription();
+    bool isFromCaptive();
     void maybeWriteToFS(bool appendValue = false);
     void maybeEcho();
     void maybeWriteToFSandEcho(bool appendValue = false);

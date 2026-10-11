@@ -74,6 +74,7 @@ static AsyncWebServer server(80);
   #endif
 #endif
 String message; // Not in class, as accessed from Lambda functions
+String pendingSSID; // Last SSID set from the portal - selected in the dropdown until we connect to something
 
 String html_entities(const String& raw) {
     String r;
@@ -167,7 +168,7 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       ));
       Serial.print("XXX "); Serial.println(__LINE__);
       response->print(F("<script>function s(name,value){let fd=new FormData();fd.set(name,value);fetch('/',{method:'POST',body:fd,credentials:'same-origin'}).catch(e=>console.error(e));};</script>"));
-      if (message) {
+      if (message.length()) { // Not "if (message)" - that is true for an emptied String
         response->print(F("<h4>"));
         response->print(message);
         response->print(F("</h4>"));
@@ -183,6 +184,26 @@ class CaptiveRequestHandler : public AsyncWebHandler {
        */
       response->print(String(F("<p><a href=\"http://")) + ip + F("/status\">Status</a> &middot; <a href=\"http://") + ip + F("/status?full\">Status (full)</a></p><hr>"));
 
+      // Where the WiFi has got to - the only feedback for "Set WiFi", whose effect comes seconds
+      // later on the main task, after this page has been sent. Reload to see it progress.
+      {
+        String current = WiFi.SSID();
+        response->print(F("<p class=i>"));
+        response->print(T->WiFiNetwork);
+        response->print(F(": "));
+        if (frugal_iot.wifi->connected()) {
+          response->print(html_entities(current));
+          response->print(F(" &#x2714;"));
+        } else if (pendingSSID.length()) {
+          response->print(html_entities(pendingSSID));
+          response->print(F(" &hellip;"));
+        } else {
+          response->print(T->LoraMesher_Unconnected); // Just "Unconnected" - not LoRa specific
+        }
+        response->print(F("</p>"));
+        if (frugal_iot.wifi->connected() && (current == pendingSSID)) { pendingSSID = ""; } // Done
+      }
+      String selectSSID = pendingSSID.length() ? pendingSSID : WiFi.SSID();
       //Dropdown of SSIDs (see WiFiSettings.cpp ~L310)
       response->print(F("<form method=post action=\"/\"><label>"));
       response->print(T->WiFiNetwork);
@@ -211,7 +232,7 @@ class CaptiveRequestHandler : public AsyncWebHandler {
         response->print(F("<option value='"));
         response->print(html_entities(WiFi.SSID(i)));
         response->print(F("'"));
-        if (s == WiFi.SSID()) { response->print(F(" selected")); }
+        if (s == selectSSID) { response->print(F(" selected")); }
         response->print(F(">"));
         response->print(WiFi.SSID(i));
         #ifndef ESP8266
@@ -301,6 +322,7 @@ void System_Captive::setup() {
   // station-interface POSTs (from mDNS peers) are handled by System_MDNS::setup().
   server.on("/", HTTP_POST, [](AsyncWebServerRequest *request){
     Serial.println(F("POST /"));
+    bool ssidSet = false;
     int params = request->params();
     for(int i=0;i<params;i++){
       const AsyncWebParameter* p = request->getParam(i);
@@ -313,14 +335,12 @@ void System_Captive::setup() {
           Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
           if (p->name() == "ssid") {
             const AsyncWebParameter* password = request->getParam("password", true);
-            if (password && password->value().length()) {
-              frugal_iot.messages->queueFromCaptive("set/wifi/" + p->value(), password->value());
-              // TODO-153 may wish to force it to try this new one
-            } else {
-              Serial.println(F("SSID But No password"));
-            }
-            // Even if no password - can try switching WiFi
-            frugal_iot.wifi->switchSSID(p->value());
+            // Queue even with no password - System_WiFi::dispatch() saves the password (if any) and
+            // THEN switches, on the main task. Switching here raced the save: connectOne() reads the
+            // password from disk, found none for a new network, and gave up having already disconnected.
+            frugal_iot.messages->queueFromCaptive("set/wifi/" + p->value(), password ? password->value() : String());
+            pendingSSID = p->value();
+            ssidSet = true;
           } else if (p->name() == "password") {
             // Ignore - will be read by "ssid" above
           } else {
@@ -344,8 +364,10 @@ void System_Captive::setup() {
     response->addHeader("Location", "http://" + ip + "/");
     // TODO rebuilding new screen before process queued incoming 
 
-    request->send(response);
+    // Before send() - the redirected GET must not be able to render before this is set
     message = T->SettingsUpdated;
+    if (ssidSet) { message += ": " + html_entities(pendingSSID); }
+    request->send(response);
   }).setFilter(ON_AP_FILTER);
 
   /* Plain text so it selects and pastes cleanly - the point of this page is to be copied into a

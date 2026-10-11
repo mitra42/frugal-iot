@@ -282,6 +282,7 @@ String System_Message::module() { return module_; } // sht
 String System_Message::leaf() { return leaf_; } // temperature or temperature/max
 bool System_Message::isSet() { return flags_ & MsgIsSet; } 
 bool System_Message::isSubscription() { return flags_ & MsgIsSubscription; } 
+bool System_Message::isFromCaptive() { return flags_ & MsgFromCaptive; } 
 
 
 // Downstream MQTT -> modules (note that LoRaMesher is a module that forwards based on subscriptions)

@@ -437,9 +437,9 @@ void System_WiFi::stateMachine() {
   }
   //WiFi.softAPgetStationNum() maybe relevant - but prob not - its number connected to captive portal
 }
-// This should not "yield" or "delay" as called from inside Captive, if that is a problem queue it as a message
+// Called from dispatch() on the main task, after the password (if any) has been saved
 void System_WiFi::switchSSID(const String ssid) {
-  if (ssid != WiFi.SSID()) {
+  if ((ssid != WiFi.SSID()) || !connected()) { // Not connected - e.g. retrying the same SSID with a corrected password
     WiFi.disconnect(); // Disconnect if connected.
     if (connectOne(ssid)) { // Will be false if no password
       setStatus(WIFI_CONNECTING); 
@@ -500,6 +500,11 @@ void System_WiFi::dispatch(System_Message &msg) {
     // msg.leaf() is ssid, msg.payload is password
     if (msg.payload.length()) {  // Only save if have a password
       addWiFi(msg.leaf(), msg.payload);
+    }
+    // From the portal's "Set WiFi" - switch only now the password is on disk, as connectOne()
+    // reads it from there. Not from the FS - that is just startup reading every known network.
+    if (msg.isFromCaptive()) {
+      switchSSID(msg.leaf());
     }
     // Intentionally not calling System_Base::dispatch(msg)
   }
