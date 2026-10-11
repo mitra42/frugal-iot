@@ -13,6 +13,9 @@
  * Note that BAT_VOLT is defined in /Users/mitra/.platformio/packages/framework-arduinoespressif32/variants/lilygo_t3_s3_sx1262/pins_arduino.h and maybe useful as a semi-standard
  * grep BAT_VOLT /Users/mitra/.platformio/packages/framework-arduinoespressif32/variants/\*./pins_arduino.h shows VBAT_VOLTAGE BAT_VOLTS or BAT_VOLT BAT_MEASURE VBAT_SENSE BATT_ADC_PIN BAT_ADC_PIN BAT_ADC BATT_MONITOR BAT_MEASURE BAT_LV on different boards
  *
+ * Define SENSOR_BATTERY_NONE to suppress the board default pin, e.g. a C3 Pico with no battery
+ * attached, where the floating pin reads as a flat battery and sends the node into deep sleep.
+ *
  * Note its often not this simple e.g. on Heltecs it needs enabling and is different
  * on per revision (even minor revision). The docs at 
  * https://digitalconcepts.net.au/arduino/index.php?op=Battery#wifilora3 are really good
@@ -41,7 +44,7 @@
   #endif 
 #endif
 
-#ifndef SENSOR_BATTERY_PIN
+#if !defined(SENSOR_BATTERY_PIN) && !defined(SENSOR_BATTERY_NONE)
   #if defined BAT_VOLT_PIN  && !defined(ARDUINO_C3_OLED_72x40) // Have submitted a PR that has not gone live yet that defines this for all boards that support it
     #define SENSOR_BATTERY_PIN BAT_VOLT_PIN
   #elif defined(ARDUINO_LOLIN_C3_PICO) && !defined(ARDUINO_C3_OLED_72x40)

@@ -241,7 +241,7 @@ void System_Power::checkLevel() {
   if (frugal_iot.battery) {
     const float vv = frugal_iot.battery->readValidateConvert(); // Millivolts
     #ifdef SYSTEM_POWER_DEBUG
-      Serial.print("Checking power at startup"); Serial.print(vv);
+      Serial.print(F("Checking power at startup ")); Serial.println(vv);
     #endif
     #ifdef SYSTEM_POWER_PANIC_MV // Not currently using
       if ( (vv > 1.0) && (vv < SYSTEM_POWER_PANIC_MV)) { // If its less than 1 (typically 0) then its a bad reading, ignore it
