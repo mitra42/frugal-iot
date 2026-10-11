@@ -56,9 +56,15 @@
  * sees it and discovery backs off (SYSTEM_DISCOVERY_QUEUE_MAX) - instead of the message leaving that
  * queue as soon as LoRaMesher takes it, and every later one failing inside LoRaMesher. Below 10 to
  * leave room for the gateway's downstream queue, which also feeds this one.
+ *
+ * Small, because outgoing de-duplicates and LoRaMesher does not: a newer value for a topic replaces
+ * the queued one in outgoing (System_Messages::sendRemote), but once handed to LoRaMesher it is sent
+ * however stale. With few TX slots - one per superframe at LoRaMesher's default 1% duty cycle - a
+ * queue of 8 filled with old readings and stayed full; at 2 most of a backlog waits in outgoing and
+ * shrinks itself to one message per topic. Was 8 until 2026-10.
  */
 #ifndef SYSTEM_LORAMESHER_TXQUEUE_MAX
-  #define SYSTEM_LORAMESHER_TXQUEUE_MAX 8
+  #define SYSTEM_LORAMESHER_TXQUEUE_MAX 2
 #endif
 
 // Most messages a gateway holds for nodes it cannot reach yet. Bounded because a node that has gone
@@ -73,11 +79,15 @@
 #ifndef LORAMESHER_LOG_LEVEL
   #define LORAMESHER_LOG_LEVEL 2 // Warning - set to 1 for Info and 0 for debug
 #endif
-
-#ifndef SYSTEM_LORAMESHER_SLEEP
-  // Define these two settings to speed things up when testing, undo later. Probably best not to use when doing Power_Lora
-  #define LORA_DUTY_CYCLE 1.0f
-  #define LORA_MIN_SLEEP_FRACTION 0
+/* Share of airtime a node may transmit. LoRaMesher's own default is 1%, which with a 100-slot
+ * superframe gives a node one TX slot a superframe (~1 minute) - too few for a node's readings. 5% is
+ * fine at 915MHz and 433MHz; at 868MHz (Europe) 1% is the legal limit, so the examples' platformio.ini
+ * carry a commented-out -D LORA_DUTY_CYCLE=0.01f to uncomment there. It appears to be the network
+ * manager's (normally the gateway's) value that shapes the superframe for the whole mesh: raising it
+ * on the gateway alone gave the nodes more TX slots.
+ */
+#ifndef LORA_DUTY_CYCLE
+  #define LORA_DUTY_CYCLE 0.05f
 #endif
 
 #if defined(ARDUINO_TTGO_LoRa32_v21new) // V2 and V1 dont define LORA_D1 so unsure what they need
@@ -298,6 +308,15 @@ bool System_LoraMesher::in_network() {
     return (status.current_state == ProtocolState::NORMAL_OPERATION ||
                        status.current_state == ProtocolState::NETWORK_MANAGER ||
                        status.current_state == ProtocolState::JOINING);
+  }
+  return false;
+}
+bool System_LoraMesher::joined() {
+  if (mesher) {
+    auto status = mesher->GetNetworkStatus();
+    using ProtocolState = loramesher::protocols::lora_mesh::INetworkService::ProtocolState;
+    return (status.current_state == ProtocolState::NORMAL_OPERATION ||
+            status.current_state == ProtocolState::NETWORK_MANAGER);
   }
   return false;
 }
@@ -666,7 +685,35 @@ bool System_LoraMesher::findGatewayNode() {
 // This is used by System_Messages to decide whether to use LoRaMesher (or MQTT)
 // Side effect of setting/clearing the gateway
 bool System_LoraMesher::connected() {
-  return (findGatewayNode() && in_network()); // Note gateway node appears before we LoRa is fully live
+  #ifdef SYSTEM_LORAMESHER_DEBUG
+    /* The outgoing queue only offers a message to LoRaMesher while this is true, and otherwise holds
+     * it with no report - so say which half is missing, once each time that changes. Both halves are
+     * evaluated here (no short-circuit) so the report is complete; the result is the same.
+     */
+    const bool gw = findGatewayNode();
+    const bool net = in_network();
+    static int8_t lastReport = -1;
+    const int8_t report = (gw ? 1 : 0) + (net ? 2 : 0);
+    if (report != lastReport) {
+      lastReport = report;
+      Serial.print(F("LoRaMesher upstream: "));
+      if (gw && net) {
+        Serial.print(F("ready via gateway 0x")); Serial.println(gatewayNodeAddress, HEX);
+      } else {
+        if (!gw) { Serial.print(F("no gateway in routing table ")); }
+        if (!net) {
+          Serial.print(F("not in network"));
+          if (mesher) {
+            Serial.print(F(", state ")); Serial.print(LMstatus[static_cast<int>(mesher->GetNetworkStatus().current_state)]);
+          }
+        }
+        Serial.println(F(" - holding messages in outgoing"));
+      }
+    }
+    return (gw && net);
+  #else
+    return (findGatewayNode() && in_network()); // Note gateway node appears before we LoRa is fully live
+  #endif
 }
 
 // Common part to both relayDownstream and publish (which is upstream)
@@ -736,13 +783,19 @@ bool System_LoraMesher::publish(const String &topic, const String &payload, bool
   }
 }
 
-/* A gateway is the mesh's route to MQTT, so it must keep WiFi up and stay awake - whatever power
- * mode it was built with, since whether a node is a gateway is only found out at runtime (it has
- * MQTT, see checkRole()). It should be on external power. A gateway in Power_Lora therefore just
- * runs as if in Power_Loop, and drops back to sleeping if it loses the role.
+/* Two refusals:
+ *  - A gateway is the mesh's route to MQTT, so it must keep WiFi up and stay awake - whatever power
+ *    mode it was built with, since whether a node is a gateway is only found out at runtime (it has
+ *    MQTT, see checkRole()). It should be on external power. A gateway in Power_Lora therefore just
+ *    runs as if in Power_Loop, and drops back to sleeping if it loses the role.
+ *  - LoRaMesher's own light sleep (ExternalSleepBit) only once fully joined. While JOINING the node
+ *    does not yet share the network's slot timing, so a slot it takes for a SLEEP slot can be one in
+ *    which the network is answering its join - and it was seen to stay in "Join" indefinitely.
  */
 bool System_LoraMesher::okToSleep(const unsigned long ms, const uint16_t how) {
-  return !((how & (PauseWiFiBit | LightSleepBit | DeepSleepBit)) && isGateway());
+  const bool gatewayRefuses = (how & (PauseWiFiBit | LightSleepBit | DeepSleepBit)) && isGateway();
+  const bool joiningRefuses = (how & ExternalSleepBit) && !joined();
+  return !(gatewayRefuses || joiningRefuses);
 }
 bool System_LoraMesher::isGateway() {
   if (mesher) {

@@ -50,7 +50,6 @@ Change only the `configure_power(...)` line in `src/main.cpp` for each step.
 | A4 | as A2 | Join the node's AP from a phone and load the portal during a wake | `sleep refused by captive` while you keep clicking. Readings still come every 60 s, so periodic work still runs while sleep is refused. Leave the phone idle but connected: it sleeps again ~2 min after your last request. | phase 4 |
 | A5 | as A2 | In the portal, set the MQTT hostname to something that does not resolve | MQTT never connects and **does not** refuse sleep: it sleeps at ~20 s each cycle. Put the hostname back afterwards. | phase 4 |
 | A6 | `Power_Deep, 120000, 30000` | Run 3 cycles | `Power: Waking from deep` at each boot. Readings every 2 min, and **no** 3-minute captive hold after a deep-sleep wake. | phase 1 (timing), phase 4 (captive hold) |
-| >> | TESTING HERE | | | |
 | A7 | `Power_Lora, 120000, 30000` | Run 3 cycles | At ~30 s: `preparing`, `WIFI Paused`, then **no WiFi messages at all** for ~90 s (no reconnect, no scan); the node stays awake. At 2 min: `Waking for`, WiFi reconnects, MQTT, readings, still on a 2-min schedule. No LoRaMesher on this board, so there are no `sleep rq` lines. | phase 2 |
 
 Optional ESP8266 check (env `d1_mini`, `Power_Deep, 60000, 20000`): it prints `Power: sleep modes
@@ -58,14 +57,14 @@ are ESP32 only - using Power_Loop` and takes readings every 60 s without ever pr
 
 ## Part B: LoRa pair (loramesher example)
 
-- **Gateway:** has WiFi credentials (so it gets MQTT). Build **without** `SYSTEM_LORAMESHER_SLEEP`, so it runs `Power_Loop`.
+- **Gateway:** has WiFi credentials (so it gets MQTT). Build **without** `SYSTEM_LORAMESHER_SLEEP`, so it runs `Power_Loop` - and LoRaMesher never asks to sleep, so it prints no `sleep rq` lines at all (the callbacks are only registered with that flag).
 - **Node:** **no** WiFi credentials (`uploadfs` with an empty `data/wifi/`), otherwise it gets MQTT during its wake and becomes a gateway. Build **with** `-D SYSTEM_LORAMESHER_SLEEP`. For testing, shorten its cycle in `loramesher.ino` to `Power_Lora, 120000, 30000`.
 
 A USB power meter on the node makes B2 much easier to read.
 
 | # | Do | Expect | If it fails |
 |---|---|---|---|
-| B1 | Run the gateway alone for a few minutes | Every `sleep rq` is `refused`. WiFi and MQTT stay up. (Before phase 3 the mesh light-slept the gateway and dropped its WiFi.) | phase 3 |
+| B1 | Build the gateway **with** `-D SYSTEM_LORAMESHER_SLEEP`, but edit the `configure_power` line under it in `main.cpp` to `Power_Loop, 30000, 30000`. Run it for a few minutes | Every `LoraMesher sleep rq` line ends `refused`, and you get one `Power: sleep refused by power` (printed once, not per slot). WiFi and MQTT stay up. This is the case where, before phase 3, the mesh light-slept a `Power_Loop` node and dropped its WiFi. Afterwards rebuild without the flag for B2-B4. | phase 3 |
 | B2 | Run the node with the gateway up | **First 30 s:** every slot `refused`. **At ~30 s:** `preparing`, `WIFI Paused`. **Then:** mostly `allowed` with `wakeUp` lines, and current should drop. **Last second or so before 2 min:** `refused`, then `Waking for` and a reading that reaches the dashboard through the gateway. Cycle stays on 2 min. | phase 3 (sleeping), phase 2 (dormant timing) |
 | B3 | Leave the B2 node running ≥ 30 min | It keeps cycling. If it ever **hangs** (no output, no readings), suspect the loop lock: LoRaMesher allowed a sleep and never called back. Note the last `sleep rq`/`wakeUp` line. | phase 3 |
 | B4 | Give the node WiFi credentials (`uploadfs`) and restart it, still with `SYSTEM_LORAMESHER_SLEEP` | Once it has MQTT and takes the gateway role: `sleep refused by loramesher` at each wake end, so it never goes dormant, and the mesh `sleep rq` lines are all `refused`. Readings continue every cycle. | phase 4 |
@@ -74,3 +73,5 @@ A USB power meter on the node makes B2 much easier to read.
 
 - **millis() rollover** (49 days). Checked by reading the code only.
 - **A connected MQTT whose publishes fail** (`lastSendOk`). Hard to produce on purpose: it needs the broker to drop the socket without the client noticing.
+
+

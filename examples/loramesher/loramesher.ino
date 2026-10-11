@@ -36,11 +36,7 @@ void setup() {
   // Deep - works but slow recovery and slow response to UX so do not use except for multi minute cycles.
   // Lora - sensors and WiFi off between readings, while LoRaMesher light-sleeps the CPU between its slots.
   //   A node that turns out to be the gateway (it has MQTT) stays awake regardless.
-  #ifdef SYSTEM_LORAMESHER_SLEEP
-    frugal_iot.configure_power(Power_Lora, 600000, 30000); // A reading every 10 minutes, awake 30 seconds of it
-  #else
-    frugal_iot.configure_power(Power_Loop, 30000, 30000); // Take a reading every 30 seconds - awake all the time
-  #endif
+  frugal_iot.configure_power(Power_Lora, 600000, 30000); // A reading every 10 minutes, awake 30 seconds of it
 
   frugal_iot.pre_setup(); // Encapsulate setting up and starting serial and read main config
   // The node fetches its OWN broker credential rather than sharing the organization's password.

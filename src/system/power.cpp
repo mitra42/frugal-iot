@@ -503,7 +503,7 @@ void System_Power::recover() {
     pinsPowerUp(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN);
     System_Interface::powerUpAll();
     #ifdef SYSTEM_POWER_DEBUG
-      Serial.print(F("Waking for")); Serial.println(wake_ms);
+      Serial.print(F("Waking for ")); Serial.println(wake_ms);
       #ifdef ACTUATOR_OLED_WANT // Maybe comment out once working
         frugal_iot.oled->display.setCursor(0,40);
         frugal_iot.oled->display.print("Recovering from Sleep");  
@@ -688,12 +688,16 @@ bool System_Power::sleepPermitted(const unsigned long ms, const uint16_t how) {
   #endif
   const bool ok = frugal_iot.okToSleep(ms, how);
   #ifdef SYSTEM_POWER_DEBUG
-    static const char* lastRefusedBy = nullptr;
-    if (System_Group::refusedBy != lastRefusedBy) {
+    // One per caller - loop() and the external sleeper are usually refused by different modules, and
+    // sharing one would print both lines alternately on every request instead of each once
+    static const char* lastRefusedBy[2] = {nullptr, nullptr};
+    const char*& last = lastRefusedBy[(how & ExternalSleepBit) ? 1 : 0];
+    if (System_Group::refusedBy != last) {
       if (System_Group::refusedBy) {
-        Serial.print(F("Power: sleep refused by ")); Serial.println(System_Group::refusedBy);
+        Serial.print(F("Power: sleep refused by ")); Serial.print(System_Group::refusedBy);
+        Serial.println((how & ExternalSleepBit) ? F(" (LoRaMesher request)") : F(""));
       }
-      lastRefusedBy = System_Group::refusedBy;
+      last = System_Group::refusedBy;
     }
   #endif
   return ok;

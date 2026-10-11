@@ -79,6 +79,7 @@ class System_LoraMesher : public System_Base {
     void createReceiveMessages();
     void PromoteToNetworkManager();
     bool in_network();
+    bool joined(); // Fully in the mesh - unlike in_network(), not while still JOINING. See okToSleep()
     // == INCOMING (up or downstream)
     uint16_t rcvdPacketCounter = 0;
     // Guards meshSubscriptions and resubscribePending, which App_LoRa_Recv writes and the main task reads.

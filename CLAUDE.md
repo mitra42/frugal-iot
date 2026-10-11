@@ -420,7 +420,7 @@ bits that will actually be applied, so a module objects only to what affects it:
 |---|---|
 | `System_MQTT` | connected, the last publish/subscribe got through, and either messages are still queued or something arrived in the last `SYSTEM_MQTT_QUIET_MS` (2s) - MQTT has no "end of retained messages" marker, so a quiet period is the test. A connection that cannot deliver does not hold the node awake |
 | `System_Captive` | for `SYSTEM_CAPTIVE_STARTUP_MS` (3 min) after a reset - not a deep-sleep wake - so the AP can be found and joined; and while a client is on the AP **and** made a request in the last `SYSTEM_CAPTIVE_ACTIVE_MS` (2 min) |
-| `System_LoraMesher` | it is the gateway - found out at runtime, so a gateway built with `Power_Lora` just stays awake |
+| `System_LoraMesher` | it is the gateway - found out at runtime, so a gateway built with `Power_Lora` just stays awake; and LoRaMesher's own light sleep until the node has fully joined (not while `JOINING`, when its slot timing is not yet the network's) |
 | `System_Power` | a LoRaMesher request (`ExternalSleepBit` in `how`) outside `Power_Lora`'s dormant period, or one that would end within `SYSTEM_POWER_EXTERNAL_MARGIN_MS` of the cycle's end |
 
 A refusal just means "ask again next `loop()`". There is deliberately no cap on how long a module
