@@ -248,7 +248,7 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       response->print(F("</select></label>"));
       response->print(F("<label>"));
       response->print(T->Password);
-      response->print(F(":<input name=password value=''></label>")); // TODO-153 what if have password already - maybe prefill with *** if known and check for this
+      response->print(F(":<input name=password value='' autocapitalize=none autocorrect=off spellcheck=false></label>")); // TODO-153 what if have password already - maybe prefill with *** if known and check for this
       response->print(F(
         "<input type=submit value=\""));
       response->print(T->SETWIFI);
@@ -407,7 +407,7 @@ void System_Captive::setup() {
 
 // String input
 void System_Captive::addString(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, uint8_t min_length, uint8_t max_length) {
-  response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlength=" + min_length + " maxlength=" + max_length + " onchange=\"s(this.name,this.value)\"></label></p>");  
+  response->print(String(F("<p><label>")) + label + ":<br><input name='" + id + "/" + topicTwig + "' value='" + init + "' minlength=" + min_length + " maxlength=" + max_length + " autocapitalize=none autocorrect=off spellcheck=false onchange=\"s(this.name,this.value)\"></label></p>");  
   // Chat GPT suggested:   + "onkeydown=\"if(event.key==='Enter'||event.keyCode==13){s(this.form);event.preventDefault();return false;}\">"  
 }
 // Number input
