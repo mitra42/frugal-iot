@@ -21,8 +21,14 @@ Each example directory contains a `platform.h` file alongside the `.ino`. This f
 - **Arduino IDE** picks `platform.h` up because `_settings.h` includes it when `PLATFORMIO` is
   undefined — the `.ino` does not need to (and on ESP8266 could not; see below).
 
-Do not hand-edit `platform.h` — regenerate it by re-running `scripts/prerelease.bash` after
-changing `platformio.ini`.
+Do not hand-edit `platform.h` or `esp8266/<sketch>.ino.globals.h`. **Do not regenerate them
+during development either** — don't run `scripts/prerelease.bash` or `generate_platform_h.py` after
+changing `platformio.ini`. They are rebuilt at release time; regenerating them in between only
+clutters the repo with diffs. Leave them stale.
+
+`arduino_compile.bash` (below) regenerates `platform.h` as a side effect. If you use it, restore the
+generated files afterwards (`git checkout -- 'examples/*/platform.h' 'examples/*/esp8266/'`) so
+they don't end up in a commit.
 
 ### Test-compiling an example for Arduino
 
