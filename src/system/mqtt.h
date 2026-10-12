@@ -44,6 +44,7 @@ class System_MQTT : public System_Base {
         // Upstream
     bool subscribe(const String& topicPath);
     bool send(const String &topicPath, const String &payload, const bool retain, const int qos);
+    void forgetCredential();         // the next connect falls back to the compiled-in pair, and enrols
 
   protected: // TODO - some of the other methods should probably be protected
     MQTTClient client; //was using (512,128) as discover message was bouncing back, but no longer subscribing to "device" topic.

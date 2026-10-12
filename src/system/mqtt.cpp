@@ -436,13 +436,16 @@ void System_MQTT::noteAuthFailure() {
   }
   Serial.print(F("MQTT: credential refused ")); Serial.print(authFailures);
   Serial.println(F(" times - discarding it and enrolling again"));
+  forgetCredential();
+  authFailures = 0;
+  nextEnrolTime = 0;                       // ask now rather than waiting for the next window
+  enrolIfNeeded();
+}
+void System_MQTT::forgetCredential() {
   storedUsername = String();
   storedPassword = String();
   frugal_iot.fs_LittleFS->spurt("/mqtt/username", String());
   frugal_iot.fs_LittleFS->spurt("/mqtt/password", String());
-  authFailures = 0;
-  nextEnrolTime = 0;                       // ask now rather than waiting for the next window
-  enrolIfNeeded();
 }
 
 // This is for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname

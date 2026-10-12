@@ -99,6 +99,9 @@ void System_Frugal::dispatch(System_Message &msg) {
         project = String(msg.payload); // Note weirdness, it really needs to copy 
         // TODO needs to restart if the value changes - so 
         // TODO - needs to redo stuff that uses "project"
+        // A credential only lets a node publish under its own org/project/node, so the old one
+        // would connect and then have everything it sends dropped. Enrol afresh in the new project.
+        if (mqtt) { mqtt->forgetCredential(); }
         needrestart = true;
         changed = true;
       // } else {  Serial.println("XXX project matches");
