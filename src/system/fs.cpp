@@ -404,29 +404,33 @@ void System_SD::setup() {
  * board whose filesystem never came up was indistinguishable from a healthy one: nothing was
  * reported here, and the first sign was every later config write failing with a per-file error
  * that pointed at the file rather than at the filesystem.
+ *
+ * The first mount on ESP32 is begin(false), not begin(true), so that a format is OURS to report.
+ * begin(true) formats silently after the core has already logged "Failed to initialise LittleFS",
+ * so on a first boot the log showed only that error and never that it had been dealt with - which
+ * looked like a broken board. Hence the unconditional print below, not under SYSTEM_LITTLEFS_DEBUG.
  */
 void System_LittleFS::pre_setup() {
+  // ESP8266/FS.cpp has no parameters to begin() and so does NOT format a non-existent filesystem
   #ifdef ESP8266
-    // ESP8266/FS.cpp has no parameters to begin() and so does NOT format a non-existent filesystem
     mounted = ESPFS.begin();
   #else
-    mounted = ESPFS.begin(true); // Format LittleFS if its not there
+    mounted = ESPFS.begin(false);
   #endif
   if (!mounted) {
-    // On ESP32 begin(true) has already tried formatting, so reaching here means something more
-    // basic - most often no partition for it to use at all. Try once explicitly, then say plainly
-    // that nothing can be saved, because every settings write from here on will fail.
-    Serial.println(F("LittleFS mount failed - formatting"));
-    if (ESPFS.format()) {
-      #ifdef ESP8266
+    Serial.println(F("LittleFS would not mount (expected on a first boot, explains any error above) - formatting"));
+    #ifdef ESP8266
+      if (ESPFS.format()) {
         mounted = ESPFS.begin();
-      #else
-        mounted = ESPFS.begin(false);
-      #endif
-    }
+      }
+    #else
+      mounted = ESPFS.begin(true); // Formats, then mounts
+    #endif
     if (mounted) {
-      Serial.println(F("LittleFS formatted - any previous settings are gone"));
+      Serial.println(F("LittleFS formatted and mounted OK - any previous settings are gone"));
     } else {
+      // Even a format did not help, so something more basic - most often no partition at all.
+      // Say plainly that nothing can be saved, because every settings write from here on will fail.
       Serial.println(F("LittleFS UNUSABLE - no settings can be saved."));
       Serial.println(F("  Check the partition table has a 'spiffs' entry (board_build.partitions)."));
     }
