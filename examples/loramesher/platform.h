@@ -86,6 +86,7 @@
 // #define CONTROL_BLINKEN_DEBUG
 // #define CONTROL_CLIMATE_DEBUG
 // #define CONTROL_LOGGERFS_DEBUG
+// #define SENSOR_BATTERY_NONE // No battery sensor, even where the board has a default pin
 // #define SENSOR_BH1750_DEBUG
 // #define SENSOR_DHT_DEBUG
 // #define SENSOR_AHT_DEBUG

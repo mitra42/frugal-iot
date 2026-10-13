@@ -252,12 +252,12 @@
 //     ${common.build_flags}
 //     ${common.build_flags_loramesher}
 #define SYSTEM_OTA_SUFFIX "nodemcu_tambak"
-#define ACTUATOR_RELAY_PIN 13
+#define ACTUATOR_RELAY_PIN 25
 #define SENSOR_DHT_PIN 27 // Note not shown on schematic but in code.
 // #define SENSOR_DHT_POWER3v3_PIN XX // Define and uncomment to power manage
-#define SENSOR_DS18B20_PIN 4
+// #define SENSOR_DS18B20_PIN 4
 // #define SENSOR_DS18B20_POWER3v3_PIN XX // Define and uncomment to power manage
-#define SENSOR_PH_PIN 35
+#define SENSOR_PH_PIN 32
 #define SENSOR_PH_SCALE -0.0051167
     // Flags whose value contains parentheses must be single-quoted or the shell that runs the
     // compiler treats them as syntax: "sh: syntax error near unexpected token `('"
@@ -268,16 +268,16 @@
     // salinity = 0.0176 * raw - 6.9707 is exactly these two flags, since the library computes
     // (raw - offset) * scale and offset is given below as 6.9707/scale.
     // See https://wiki.colabs.commonroom.info/Sensor_Laut
-#define SENSOR_TDS_PIN 32
+#define SENSOR_TDS_PIN 35
 #define SENSOR_TDS_SCALE 0.0176
 #define SENSOR_TDS_OFFSET (6.9707/SENSOR_TDS_SCALE)
 // #define SENSOR_TDS_POWER3v3_PIN XX // Define both (and pass to powerPins in main.cpp) to power manage
-#define SENSOR_DO_PIN 25 // This what Solitude repo says, wiki/Sensor_Tam ak says 34
+#define SENSOR_DO_PIN 33 // This what Solitude repo says, wiki/Sensor_Tam ak says 34
 // #define SENSOR_DO_POWER3v3_PIN XX
 // #define SYSTEM_LORAMESHER_WANT // nodemcu doesnt usually have LoRa
     // RS485 bus - the physical UART and transceiver, shared by every Modbus device
-#define SYSTEM_RS485_TX_PIN 17
-#define SYSTEM_RS485_RX_PIN 16
+// #define SYSTEM_RS485_TX_PIN 17
+// #define SYSTEM_RS485_RX_PIN 16
     // Transceiver direction pins - leave both undefined for a board that switches direction
     // automatically, or define DE only when DE and RE are tied together on the breakout.
     // These two are free on this board (relay is 13, DO is 34) so the wiki's pair works here.
@@ -285,11 +285,12 @@
 // #define SYSTEM_RS485_RE_PIN 25
 // #define SYSTEM_MODBUS_DEBUG
     // Modbus slave id of the ultrasonic module - defining it is what enables Sensor_UltrasonicModbus
-#define SENSOR_ULTRASONIC_SLAVE_ID 1
+// #define SENSOR_ULTRASONIC_SLAVE_ID 1
 // #define SENSOR_ULTRASONIC_DEBUG
+#define SENSOR_A01NYUB_RX_PIN 17
     // INA219 and BME280 on I2C
-#define I2C_SDA 21 // nodemcu default is 18
-#define I2C_SCL 22 // nodemcu default is 17
+#define I2C_SDA 22 // nodemcu default is 18
+#define I2C_SCL 21 // nodemcu default is 17
 #define SENSOR_BME280_WANT // this board has a BME280 - add it in main.cpp
 #define SENSOR_INA219_WANT // this board has an INA219 - add it in main.cpp
 // #define SENSOR_INA219_ADDRESS 0x40 // default 0x40; 0x41..0x4F via the A0/A1 links
@@ -303,7 +304,7 @@
 // #define SENSOR_BME280_ADDRESS 0x77 // default is 0x76; 0x77 if SDO tied high
 // #define SENSOR_BME280_DEBUG
 #define LORA_IRQ 2 // from lpooking at schematic
-#define LORA_RADIO_TYPE UNKNOWN
+#define LORA_RADIO_TYPE loramesher::RadioType::kSx1276
 #define LORA_IO1 PIN_NONE // not connected
 #define LORA_RST 14
 #define LORA_CS 5

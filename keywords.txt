@@ -184,6 +184,7 @@ fillRect	KEYWORD2
 findGatewayNode	KEYWORD2
 floatValue	KEYWORD2
 forEach	KEYWORD2
+forgetCredential	KEYWORD2
 formatBytes	KEYWORD2
 fullAdvertise	KEYWORD2
 hasMeshSubscription	KEYWORD2
