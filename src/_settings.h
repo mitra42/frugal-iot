@@ -158,7 +158,7 @@
 // TO_ADD_SENSOR - add in appropriate line below depending on superclass
 // (there is no SENSOR_HT_DEBUG any more - Sensor_HT is gone, and the temperature/humidity
 // sensors that used to share it now extend Sensor directly, so each lists itself below)
-#if defined(SENSOR_HCSR04_DEBUG)
+#if defined(SENSOR_HCSR04_DEBUG) || defined(SENSOR_A01NYUB_DEBUG)
   #define SENSOR_ULTRASONIC_DEBUG // The shared base class's own debug output
 #endif
 #if defined(SENSOR_BME280_DEBUG) || defined(SENSOR_BMP280_DEBUG)
@@ -170,7 +170,7 @@
 #if defined(SENSOR_ANALOG_DEBUG) 
   #define SENSOR_UINT16_DEBUG
 #endif
-#if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG) || defined(SENSOR_ULTRASONIC_DEBUG) || defined(SENSOR_HCSR04_DEBUG)
+#if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG) || defined(SENSOR_ULTRASONIC_DEBUG) || defined(SENSOR_HCSR04_DEBUG) || defined(SENSOR_A01NYUB_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
 #if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG) || defined(SENSOR_BMX280_DEBUG) || defined(SENSOR_BME680_DEBUG) || defined(SENSOR_AHT_DEBUG) || defined(SENSOR_ENS160_DEBUG) || defined(SENSOR_GPS_DEBUG) || defined(SENSOR_INA219_DEBUG) || defined(SENSOR_SOILMODBUS_DEBUG)

@@ -7,6 +7,7 @@
  *
  *   Sensor_UltrasonicModbus (sensor/ultrasonicmodbus.h) - RS485 / Modbus RTU module, e.g. A01ANY4B
  *   Sensor_HCSR04           (sensor/hcsr04.h)           - HC-SR04 trigger/echo timing module
+ *   Sensor_A01NYUB          (sensor/a01nyub.h)          - A01NYUB / A02YYUW, frames on a UART
  *
  * Output published to MQTT:
  *   <id>/<id>  - offset + raw * scale
@@ -19,7 +20,7 @@
  * fractional scale could not be typed into one).
  *
  * Build flags:
- *   SENSOR_ULTRASONIC_DEBUG - Serial debug output (SENSOR_HCSR04_DEBUG also turns it on)
+ *   SENSOR_ULTRASONIC_DEBUG - Serial debug output (SENSOR_HCSR04_DEBUG and SENSOR_A01NYUB_DEBUG also turn it on)
  */
 
 #ifndef SENSOR_ULTRASONIC_H

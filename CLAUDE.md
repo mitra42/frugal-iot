@@ -299,7 +299,7 @@ Frugal-IoT/
 │   ├── sensor/            # One file pair per sensor type (sht, dht, soil, battery, bh1750,
 │   │                       #   loadcell, ds18b20, ms5803, aht, ens160, bmx280, bme680, button,
 │   │                       #   analog, float, uint16, health, gps, ultrasonic, ultrasonicmodbus,
-│   │                       #   hcsr04, sensor [base class]…)
+│   │                       #   hcsr04, a01nyub, sensor [base class]…)
 │   ├── actuator/          # LED, digital output, OLED, LCD (actuator.h is the base class)
 │   └── control/           # Logic blocks (hysteresis, logger, logger_fs, blinken, carousel,
 │                           #   oled, oled_loramesher, gsheets, control.h [base class]…)
@@ -901,9 +901,10 @@ needs nothing — `lib/data-loader.js` already filters `isNaN` out of the graph 
 | `Sensor_UInt16` | sensor/uint16 | Arbitrary uint16 value |
 | `Sensor_Health` | sensor/health | Device health metrics |
 | `Sensor_GPS` | sensor/gps | GPS location (lat/lon/altitude/speed/course/hdop/satellites/UTC time) via NMEA serial module |
-| `Sensor_Ultrasonic` | sensor/ultrasonic | Base class for the two below — distance (mm) with persisted offset/scale. Not instantiated directly |
+| `Sensor_Ultrasonic` | sensor/ultrasonic | Base class for the three below — distance (mm) with persisted offset/scale. Not instantiated directly |
 | `Sensor_UltrasonicModbus` | sensor/ultrasonicmodbus | Distance (mm) from an RS485/Modbus ultrasonic module (A01ANY4B); needs `SENSOR_ULTRASONIC_SLAVE_ID` |
 | `Sensor_HCSR04` | sensor/hcsr04 | Distance (mm) from an HC-SR04 trigger/echo module, temperature compensated. Has an `IN`. Freestanding, no external library |
+| `Sensor_A01NYUB` | sensor/a01nyub | Distance (mm) from a DFRobot A01NYUB (or A02YYUW) waterproof module sending frames on a UART. Freestanding, no external library |
 | `Sensor_SoilModbus` | sensor/soilmodbus | Soil moisture (%) + temperature from an RS485/Modbus probe (DFRobot SEN0600 and similar); needs `SENSOR_SOILMODBUS_WANT` |
 
 ### There is no `Sensor_HT` — and `captiveLines()` is on `Sensor`
@@ -1538,14 +1539,14 @@ it skips the next `SYSTEM_MODBUS_RETRY_CYCLES` read attempts outright, then trie
 A device powered up later is picked up automatically, at one 2 s stall per 10 cycles rather
 than one per cycle.
 
-### Sensor_Ultrasonic, Sensor_UltrasonicModbus and Sensor_HCSR04
+### Sensor_Ultrasonic, Sensor_UltrasonicModbus, Sensor_HCSR04 and Sensor_A01NYUB
 
 `Sensor_Ultrasonic` (`sensor/ultrasonic.h`) is the shared base: one `Sensor_Float` output in whole
 mm, published as `offset + raw * scale`, with `offset`/`scale` persisted and settable over MQTT.
-The two subclasses only supply `readFloat()` — the raw distance in mm, or `NAN`. Until 2026-09-28
+The subclasses only supply `readFloat()` (and a range check in `validate()`) — the raw distance in mm, or `NAN`. Until 2026-09-28
 the Modbus class was itself called `Sensor_Ultrasonic`; its build flags kept their
 `SENSOR_ULTRASONIC_` names. `SENSOR_ULTRASONIC_DEBUG` covers the base (and the Modbus class);
-`SENSOR_HCSR04_DEBUG` turns it on as well.
+`SENSOR_HCSR04_DEBUG` and `SENSOR_A01NYUB_DEBUG` turn it on as well.
 
 #### Sensor_UltrasonicModbus
 
@@ -1623,6 +1624,37 @@ us->temperature->wireTo(sht->temperature->path()); // optional
 
 `hcsr04` is not in the server's `modules.yaml` yet, so `sensor/hcsr04.h` defines fallback
 `DEFAULT_hcsr04_hcsr04_color`/`_max` under `#ifndef` until `defaults.h` has them.
+
+#### Sensor_A01NYUB
+
+DFRobot's A01NYUB (SEN0313): waterproof, 28 cm - 7.5 m, 3.3-5 V, and it reports over a UART
+rather than by timing a pulse. It sends `0xFF H L SUM` continuously at 9600 8N1, where
+`mm = H*256 + L` and `SUM = (0xFF+H+L) & 0xFF`. `L` can itself be `0xFF`, so `readFloat()` slides a
+four-byte window and accepts only a window whose checksum matches. Each read discards the buffer
+(stale for any cycle over a few hundred ms - the `Sensor_GPS` approach), then returns the first good
+frame, or `NAN` after `SENSOR_A01NYUB_TIMEOUT_MS` (1000). `SENSOR_A01NYUB_MIN_MM`..`_MAX_MM`
+(280..7500) bound `validate()`. Freestanding.
+
+The module's yellow **RX wire selects the mode, it is not a data input**: floating or high gives
+the filtered "processed" value (a frame every 150-300 ms), low gives the unfiltered real-time one.
+Leave it unconnected. So the class takes one pin, the ESP RX, and starts the UART with TX `-1` -
+`HardwareSerial::begin()` substitutes the UART's default pins only when both are negative, so no
+TX pin is claimed. No median and no temperature input, unlike `Sensor_HCSR04`: the module filters
+in processed mode, and is understood to compensate for temperature itself (not yet confirmed).
+
+The A02YYUW (3 cm - 4.5 m) uses the same frame and should work with
+`SENSOR_A01NYUB_MIN_MM=30 _MAX_MM=4500`. Not ESP8266: UART0 is the console and `Serial1` cannot
+receive. ESP32-C3/S2 have no `Serial2`, so use `Serial1` there.
+
+```cpp
+frugal_iot.sensors->add(new Sensor_A01NYUB("a01nyub", "Distance", &Serial1, SENSOR_A01NYUB_RX_PIN));
+// Depth of water, sensor 2000mm above the tank floor:
+//  new Sensor_A01NYUB("a01nyub", "Depth", &Serial1, SENSOR_A01NYUB_RX_PIN,
+//    2000, DEFAULT_a01nyub_a01nyub_color, true, 2000.0, -1.0);
+```
+
+Like `hcsr04`, `a01nyub` is not in `modules.yaml` yet, so `sensor/a01nyub.h` has `#ifndef`
+fallbacks for `DEFAULT_a01nyub_a01nyub_color`/`_max`.
 
 **To add another Modbus sensor**: subclass `Sensor_Float` (or whichever base fits), give it a
 `System_Modbus` member built from `(slave_id, bus)`, call `modbus.initialize()` in `setup()`,
