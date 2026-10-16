@@ -12,9 +12,29 @@ Frugal IoT - Agriculture Sensor with SHT (temp and humidity) DS18B30 (soil temp)
 
 `<env>` is a name from the table below, for example `c3_pico_2`.
 
+Before flashing, give the node your organization's enrolment secret: copy
+`templates/platformio-secrets-local.ini.template` from the library to
+`platformio-secrets-local.ini` beside `platformio.ini`, and paste the line the dashboard
+gives you (gear icon > Nodes > Enrolment secret) over the placeholder. Without it the node
+is refused until an administrator approves it by hand. `platformio-local.ini.template` is
+the optional one, for your own debug flags and serial port. Neither file is committed.
+
 ## Arduino IDE
 
-Open `agri.ino`, then **Tools > Board** and pick the row for your hardware.
+1. **Tools > Manage Libraries**, search for **Frugal-IoT** and install it. When it asks
+   about the libraries it depends on, choose **Install All**.
+2. **Tools > Board > Boards Manager**, and install **esp32** by Espressif Systems.
+3. **File > Examples > Frugal-IoT > agri**, then **Tools > Board** and pick the row
+   for your hardware.
+4. **File > Save As** to keep your own copy, then give it your organization's enrolment
+   secret: copy `platform-secrets-local.h.template` from the library's `templates/` folder
+   (in your sketchbook, under `libraries/Frugal-IoT`) into the sketch folder (**Sketch > Show
+   Sketch Folder**) as `platform-secrets-local.h`, and paste the secret from the dashboard
+   (gear icon > Nodes > Enrolment secret). Without it the node is refused until an
+   administrator approves it by hand.
+
+Opening `agri.ino` from a download or a git clone does not install the library, and
+the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first.
 
 | Tools > Board | configuration | also define |
 | --- | --- | --- |
@@ -30,6 +50,14 @@ Open `agri.ino`, then **Tools > Board** and pick the row for your hardware.
 | Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V32` | `HELTEC_WIFI_LORA_32_V32` |
 | T-Beam | `tbeam` |  |
 | T-Beam | `tbeam_oled` | `TBEAM_OLED` |
+
+The LoRa boards - Heltec WiFi LoRa 32(V3), LilyGo T3-S3, T-Beam and TTGO LoRa32-OLED - also need LoRaMesher, which is not in the Library Manager:
+
+1. Download [LoRaMesher as a zip](https://github.com/loramesher/LoRaMesher/archive/refs/heads/main.zip) - leave it zipped.
+2. **Sketch > Include Library > Add .ZIP Library**, and choose that file.
+3. **Tools > Manage Libraries**, and install **RadioLib**, which LoRaMesher uses.
+
+Without it the build stops with *loramesher.hpp: No such file or directory*.
 
 A board listed **twice** has two sets of settings in this example, and the Arduino IDE
 has no way to ask for one - it only knows boards. So you get the row with an empty last

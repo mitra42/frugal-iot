@@ -12,9 +12,29 @@ Frugal IoT - Light Sensor with BH1750
 
 `<env>` is a name from the table below, for example `c3_pico`.
 
+Before flashing, give the node your organization's enrolment secret: copy
+`templates/platformio-secrets-local.ini.template` from the library to
+`platformio-secrets-local.ini` beside `platformio.ini`, and paste the line the dashboard
+gives you (gear icon > Nodes > Enrolment secret) over the placeholder. Without it the node
+is refused until an administrator approves it by hand. `platformio-local.ini.template` is
+the optional one, for your own debug flags and serial port. Neither file is committed.
+
 ## Arduino IDE
 
-Open `bh1750.ino`, then **Tools > Board** and pick the row for your hardware.
+1. **Tools > Manage Libraries**, search for **Frugal-IoT** and install it. When it asks
+   about the libraries it depends on, choose **Install All**.
+2. **Tools > Board > Boards Manager**, and install the one for your chip: **esp32** by Espressif Systems, or **esp8266** by ESP8266 Community (add `https://arduino.esp8266.com/stable/package_esp8266com_index.json` under **File > Preferences > Additional boards manager URLs** first).
+3. **File > Examples > Frugal-IoT > bh1750**, then **Tools > Board** and pick the row
+   for your hardware.
+4. **File > Save As** to keep your own copy, then give it your organization's enrolment
+   secret: copy `platform-secrets-local.h.template` from the library's `templates/` folder
+   (in your sketchbook, under `libraries/Frugal-IoT`) into the sketch folder (**Sketch > Show
+   Sketch Folder**) as `platform-secrets-local.h`, and paste the secret from the dashboard
+   (gear icon > Nodes > Enrolment secret). Without it the node is refused until an
+   administrator approves it by hand. On ESP8266, put the same `#define` in the globals file instead - see below.
+
+Opening `bh1750.ino` from a download or a git clone does not install the library, and
+the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first.
 
 | Tools > Board | configuration | also define |
 | --- | --- | --- |
@@ -31,6 +51,14 @@ Open `bh1750.ino`, then **Tools > Board** and pick the row for your hardware.
 | Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V32` | `HELTEC_WIFI_LORA_32_V32` |
 | T-Beam | `tbeam` |  |
 | T-Beam | `tbeam_oled` | `TBEAM_OLED` |
+
+The LoRa boards - Heltec WiFi LoRa 32(V3), LilyGo T3-S3, T-Beam and TTGO LoRa32-OLED - also need LoRaMesher, which is not in the Library Manager:
+
+1. Download [LoRaMesher as a zip](https://github.com/loramesher/LoRaMesher/archive/refs/heads/main.zip) - leave it zipped.
+2. **Sketch > Include Library > Add .ZIP Library**, and choose that file.
+3. **Tools > Manage Libraries**, and install **RadioLib**, which LoRaMesher uses.
+
+Without it the build stops with *loramesher.hpp: No such file or directory*.
 
 A board listed **twice** has two sets of settings in this example, and the Arduino IDE
 has no way to ask for one - it only knows boards. So you get the row with an empty last

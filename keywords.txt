@@ -130,6 +130,7 @@ canMQTT	KEYWORD2
 canOTA	KEYWORD2
 canRetry	KEYWORD2
 captiveLines	KEYWORD2
+captiveStatus	KEYWORD2
 captiveValueLines	KEYWORD2
 changed	KEYWORD2
 checkForUpdate	KEYWORD2
@@ -189,6 +190,7 @@ formatBytes	KEYWORD2
 fullAdvertise	KEYWORD2
 hasMeshSubscription	KEYWORD2
 heap_print	KEYWORD2
+html_entities	KEYWORD2
 httpPost	KEYWORD2
 in_network	KEYWORD2
 infrequently	KEYWORD2

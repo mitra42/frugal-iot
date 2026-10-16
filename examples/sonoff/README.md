@@ -12,9 +12,29 @@ Frugal IoT - Sonoff R2 switch
 
 `<env>` is a name from the table below, for example `r2`.
 
+Before flashing, give the node your organization's enrolment secret: copy
+`templates/platformio-secrets-local.ini.template` from the library to
+`platformio-secrets-local.ini` beside `platformio.ini`, and paste the line the dashboard
+gives you (gear icon > Nodes > Enrolment secret) over the placeholder. Without it the node
+is refused until an administrator approves it by hand. `platformio-local.ini.template` is
+the optional one, for your own debug flags and serial port. Neither file is committed.
+
 ## Arduino IDE
 
-Open `sonoff.ino`, then **Tools > Board** and pick the row for your hardware.
+1. **Tools > Manage Libraries**, search for **Frugal-IoT** and install it. When it asks
+   about the libraries it depends on, choose **Install All**.
+2. **Tools > Board > Boards Manager**, and install the one for your chip: **esp32** by Espressif Systems, or **esp8266** by ESP8266 Community (add `https://arduino.esp8266.com/stable/package_esp8266com_index.json` under **File > Preferences > Additional boards manager URLs** first).
+3. **File > Examples > Frugal-IoT > sonoff**, then **Tools > Board** and pick the row
+   for your hardware.
+4. **File > Save As** to keep your own copy, then give it your organization's enrolment
+   secret: copy `platform-secrets-local.h.template` from the library's `templates/` folder
+   (in your sketchbook, under `libraries/Frugal-IoT`) into the sketch folder (**Sketch > Show
+   Sketch Folder**) as `platform-secrets-local.h`, and paste the secret from the dashboard
+   (gear icon > Nodes > Enrolment secret). Without it the node is refused until an
+   administrator approves it by hand. On ESP8266, put the same `#define` in the globals file instead - see below.
+
+Opening `sonoff.ino` from a download or a git clone does not install the library, and
+the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first.
 
 | Tools > Board | configuration | also define |
 | --- | --- | --- |
