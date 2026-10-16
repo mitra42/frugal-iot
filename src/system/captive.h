@@ -22,6 +22,8 @@
 
 
 
+String html_entities(const String& raw); // Escape text for the portal's HTML - captive.cpp
+
 class System_Captive : public System_Base {
   public:
     String language_code;

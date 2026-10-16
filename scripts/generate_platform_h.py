@@ -702,6 +702,12 @@ def example_readme_block(conv: "PlatformIOConverter", sketch: str, has_globals: 
             "    pio run -e <env> -t uploadfs  # write data/ (wifi credentials, config)", ""]
     if default_env:
         out += [f"`<env>` is a name from the table below, for example `{default_env}`.", ""]
+    out += ["Before flashing, give the node your organization's enrolment secret: copy",
+            "`templates/platformio-secrets-local.ini.template` from the library to",
+            "`platformio-secrets-local.ini` beside `platformio.ini`, and paste the line the dashboard",
+            "gives you (gear icon > Nodes > Enrolment secret) over the placeholder. Without it the node",
+            "is refused until an administrator approves it by hand. `platformio-local.ini.template` is",
+            "the optional one, for your own debug flags and serial port. Neither file is committed.", ""]
 
     # Named per family, so an ESP32-only example does not send people off to add a board URL
     cores = []
@@ -717,7 +723,15 @@ def example_readme_block(conv: "PlatformIOConverter", sketch: str, has_globals: 
             "2. **Tools > Board > Boards Manager**, and install "
             + (cores[0] if len(cores) == 1 else "the one for your chip: " + ", or ".join(cores)) + ".",
             f"3. **File > Examples > Frugal-IoT > {sketch}**, then **Tools > Board** and pick the row",
-            "   for your hardware.", "",
+            "   for your hardware.",
+            "4. **File > Save As** to keep your own copy, then give it your organization's enrolment",
+            "   secret: copy `platform-secrets-local.h.template` from the library's `templates/` folder",
+            "   (in your sketchbook, under `libraries/Frugal-IoT`) into the sketch folder (**Sketch > Show",
+            "   Sketch Folder**) as `platform-secrets-local.h`, and paste the secret from the dashboard",
+            "   (gear icon > Nodes > Enrolment secret). Without it the node is refused until an",
+            "   administrator approves it by hand."
+            + (" On ESP8266, put the same `#define` in the globals file instead -"
+               " see below." if "espressif8266" in families else ""), "",
             f"Opening `{sketch}.ino` from a download or a git clone does not install the library, and",
             "the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first.", ""]
     out += ["| Tools > Board | configuration | also define |",

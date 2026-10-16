@@ -196,14 +196,25 @@ void System_MQTT::enrolIfNeeded() {
   Serial.print(F("Enrolling at ")); Serial.print(url);
   Serial.print(F(" as ")); Serial.print(frugal_iot.org); Serial.print('/');
   Serial.print(frugal_iot.project); Serial.print('/'); Serial.println(frugal_iot.nodeid);
+  enrolTlsErr = 0;
+  enrolMessage[0] = '\0';
   if (!http.begin(httpNet, url)) {
     Serial.println(F("Enrol: could not start the request"));
+    // -1, as a refused connection would be - captiveStatus() calls it unreachable. A literal, as the
+    // name differs: ESP32 has only _REFUSED, ESP8266 deprecates it in favour of _FAILED.
+    enrolCode = -1;
     return;
   }
   http.addHeader("Content-Type", "application/json");
   int code = http.POST(body);
   String reply = (code > 0) ? http.getString() : String();
   http.end();
+  enrolCode = code;
+  if (code > 0 && code != 200) {
+    // The server's {"error":..,"message":..} - the message is what tells two 403s apart
+    strncpy(enrolMessage, jsonField(reply, "message").c_str(), sizeof(enrolMessage) - 1);
+    enrolMessage[sizeof(enrolMessage) - 1] = '\0';
+  }
 
   if (code != 200) {
     // 409 means the server already has this node and wants proof we cannot give - which happens
@@ -249,6 +260,7 @@ void System_MQTT::enrolIfNeeded() {
         if (!plainHttp) {
           char err[128] = "";
           int tlsErr = secure.lastError(err, sizeof(err));
+          enrolTlsErr = tlsErr;
           if (tlsErr) {
             Serial.print(F("  TLS error ")); Serial.print(tlsErr);
             Serial.print(F(": ")); Serial.println(err);
@@ -275,6 +287,7 @@ void System_MQTT::enrolIfNeeded() {
   String pw = jsonField(reply, "password");
   if (!u.length() || !pw.length()) {
     Serial.println(F("Enrol: the reply had no credential in it"));
+    strcpy(enrolMessage, "the reply had no credential in it");
     return;
   }
   storedUsername = u;
@@ -326,6 +339,57 @@ void System_MQTT::setup_after_wifi() {
 void System_MQTT::captiveLines(AsyncResponseStream* response) {
   frugal_iot.captive->addString(response, id, "hostname", hostname, T->MQTThostname, 5, 60);
 }
+/* The portal's line under the WiFi one, shown only while WiFi is up - without it there is nothing to
+ * say. Mostly for the failure that is otherwise invisible without a serial cable: enrolment being
+ * refused, where the node sits on WiFi doing nothing and the server's log is the only other clue.
+ * English only, like /status - it quotes HTTP codes and the server's own messages, which are not
+ * translated either. Runs on the AsyncTCP task, hence only reading members loop() keeps current.
+ */
+void System_MQTT::captiveStatus(Print* out) {
+  out->print(F("<p class=i>MQTT: "));
+  out->print(html_entities(hostname));
+  if (connected()) {
+    out->print(F(" &#x2714;"));
+  } else if (enrolmentSecret && !storedUsername.length()) {
+    // No credential yet, so the connection cannot be the problem - enrolment is
+    out->print(F("<br>Not enrolled: "));
+    if (enrolCode == 0) {
+      out->print(F("enrolling&hellip;"));
+    } else if (enrolCode < 0) {
+      out->print(F("could not reach " SYSTEM_MQTT_ENROL_URL));
+      if (enrolTlsErr) {
+        out->print(F(" (TLS error ")); out->print(enrolTlsErr); out->print(F(")"));
+      } else {
+        out->print(F(" (error ")); out->print(enrolCode); out->print(F(")"));
+      }
+    } else if (enrolCode == 409) {
+      out->print(F("server already has this node - enable "));
+      out->print(html_entities(frugal_iot.nodeid));
+      out->print(F(" in the node list on the project's settings page"));
+    } else {
+      out->print(F("HTTP ")); out->print(enrolCode);
+      if (enrolMessage[0]) { out->print(F(" - ")); out->print(html_entities(String(enrolMessage))); }
+    }
+    if (enrolCode != 0) {
+      if (millisReached(nextEnrolTime)) { // Due, but loop() has not got to it yet
+        out->print(F("<br>Trying again shortly"));
+      } else {
+        out->print(F("<br>Next attempt in ")); out->print(((nextEnrolTime - millis()) / 60000) + 1); out->print(F(" min"));
+      }
+    }
+  } else if (connectError == 0) {
+    out->print(F(" &hellip;"));
+  } else if ((connectReturnCode == 5) || (connectError == -10)) {
+    out->print(F("<br>Login refused by the broker"));
+    if (enrolmentSecret) { out->print(F(" - will enrol again after a few more refusals")); }
+  } else if (connectError == -3) {
+    out->print(F("<br>Cannot reach the broker"));
+  } else {
+    out->print(F("<br>Cannot connect, error ")); out->print(connectError);
+    out->print(F("/")); out->print(connectReturnCode);
+  }
+  out->print(F("</p>"));
+}
 
 void System_MQTT::loop() {
   if (millisReached(nextLoopTime)) {
@@ -373,6 +437,8 @@ bool System_MQTT::connect() {
       // such method), so a plain literal is the only form that works on both.
       // Serial.print(F(...))/println(F(...)) ARE fine everywhere - both cores have those.
       Serial.printf("MQTT: Connect Fail %d %d\n", client.lastError(), client.returnCode());
+      connectError = client.lastError();
+      connectReturnCode = client.returnCode();
       /* https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h */
       // -3 is LWMQTT_NETWORK_FAILED_CONNECT -10 is userid/password fail
       // 6 is LWMQTT_UNKNOWN_RETURN_CODE 
@@ -389,6 +455,8 @@ bool System_MQTT::connect() {
       /* Fresh connection */
       Serial.println(F("MQTT: Connected "));
       authFailures = 0;   // the credential works; earlier refusals were not about it
+      connectError = 0;
+      connectReturnCode = 0;
       lastSendOk = true;  // A new connection deserves a chance to deliver the queue
       lastInboundMs = millis(); // and the broker a chance to send what it holds for us
       if (!client.sessionPresent()) {

@@ -45,8 +45,19 @@ class System_MQTT : public System_Base {
     bool subscribe(const String& topicPath);
     bool send(const String &topicPath, const String &payload, const bool retain, const int qos);
     void forgetCredential();         // the next connect falls back to the compiled-in pair, and enrols
+    void captiveStatus(Print* out);  // one line for the portal: connected, or why not
 
-  protected: // TODO - some of the other methods should probably be protected
+  protected:
+    /* Outcome of the last enrolment and connection attempts, so captiveStatus() can say why there
+     * is no connection without a serial cable. Plain ints and a char buffer, not Strings: the portal
+     * reads them from the AsyncTCP task while loop() writes them, and a String reassigned under a
+     * reader frees the buffer it is reading - a garbled line is the worst this way round.
+     */
+    int enrolCode = 0;            // 0 = not tried this boot; else HTTP status, or HTTPClient's negative code
+    int enrolTlsErr = 0;          // ESP32 mbedTLS error when enrolCode < 0, 0 if none recorded
+    char enrolMessage[80] = "";   // the server's "message" from a refusal
+    int connectError = 0;         // lwmqtt lastError() of the last failed connect, 0 after a success
+    int connectReturnCode = 0;    // and the broker's CONNACK return code // TODO - some of the other methods should probably be protected
     MQTTClient client; //was using (512,128) as discover message was bouncing back, but no longer subscribing to "device" topic.
     WiFiClient net;
     String hostname; 

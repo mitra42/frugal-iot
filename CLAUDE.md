@@ -30,6 +30,27 @@ clutters the repo with diffs. Leave them stale.
 generated files afterwards (`git checkout -- 'examples/*/platform.h' 'examples/*/esp8266/'`) so
 they don't end up in a commit.
 
+### Diagnosing someone else's setup: `scripts/frugal_iot_doctor.py`
+
+A single standard-library Python file (3.6+) meant to be **sent to a user** and run in their
+project or sketch folder; it only reads, and prints OK/INFO/WARN/FAIL lines with a fix under each.
+It runs the PlatformIO checks when there is a `platformio.ini`, the Arduino IDE checks when there is
+a `.ino` or neither, and **both** in an example folder, which has both. Each check is a failure seen
+in beta testing - `src_dir = .` with a clone in `lib/` (every symbol defined twice), a `lib_deps`
+spec that lib/'s copy does not satisfy, a dependency that failed to install once and is never
+retried, two copies of the library in the sketchbook, `#define` in `build_opt.h`. It also checks
+the uncommitted settings files - `platformio-secrets-local.ini`, `platformio-local.ini`,
+`platform-secrets-local.h` - for being missing, misnamed (`.ini.txt`), still holding the template's
+placeholder, or setting one key in both `*-local.ini` files. It reports whether the enrolment
+secret is set and **never prints it**, since the output is pasted into chats; keep it that way.
+
+The templates for those files are in `templates/`, named `*.template` so that neither
+`extra_configs = *-local.ini` nor `.gitignore`'s `*-local.ini`/`*-local.h` matches them - a template
+named like the real file would be loaded as config, and be invisible to git. When a new one
+turns up, add a check there rather than diagnosing it over chat again. It reads the LoRa board list
+from `_settings.h` the same way `generate_platform_h.py` does; `OLDEST_SUPPORTED` wants raising
+when a release breaks the examples for older installs.
+
 ### Test-compiling an example for Arduino
 
 `scripts/arduino_compile.bash <example> <env>` compiles an example exactly as the Arduino IDE

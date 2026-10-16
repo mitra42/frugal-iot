@@ -199,6 +199,10 @@ class CaptiveRequestHandler : public AsyncWebHandler {
           response->print(T->LoraMesher_Unconnected); // Just "Unconnected" - not LoRa specific
         }
         response->print(F("</p>"));
+        // Only once on WiFi - before that, "not connected to MQTT" is just the WiFi line again
+        if (frugal_iot.wifi->connected() && frugal_iot.mqtt) {
+          frugal_iot.mqtt->captiveStatus(response);
+        }
         if (frugal_iot.wifi->connected() && (current == pendingSSID)) { pendingSSID = ""; } // Done
       }
       String selectSSID = pendingSSID.length() ? pendingSSID : WiFi.SSID();

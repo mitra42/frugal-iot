@@ -1,0 +1,33 @@
+; Your own settings for this checkout - debug flags and serial ports. Optional.
+;
+; TO USE: copy this file beside your platformio.ini, named exactly
+;     platformio-local.ini
+; (no .template, and on Windows check it has not become .ini.txt), then uncomment what you want.
+; Every example's platformio.ini loads it through "extra_configs = *-local.ini", and it is in
+; .gitignore, so platformio.ini stays untouched and none of this is committed.
+;
+; A value set here REPLACES the one in platformio.ini rather than adding to it. The enrolment
+; secret does NOT go here - it is build_flags_secrets in platformio-secrets-local.ini.
+
+[common]
+
+; Applies to every env in the project. Any of the -D SOMETHING_DEBUG flags listed in
+; platformio.ini's build_flags_frugaliot can go here instead, so you need not edit that file.
+build_flags_local =
+    ;-D SYSTEM_WIFI_DEBUG
+    ;-D SYSTEM_MQTT_DEBUG
+    ;-D SYSTEM_POWER_DEBUG     ; power management, sleep
+    ;-D SYSTEM_I2C_DEBUG       ; also scans the I2C bus at startup and lists what answers
+    ;-D SYSTEM_OTA_PAUSE       ; stop over-the-air updates replacing what you just flashed
+
+[env]
+
+; Which serial port to flash and monitor - a property of your desk, not of the project. Usually
+; PlatformIO finds it by itself; set it when you have more than one board plugged in, or it
+; picks the wrong one. A glob survives the board reappearing under a new number on replug.
+;   macOS:   /dev/cu.usbmodem*  (C3/S2/S3 boards)   /dev/cu.usbserial-*  /dev/cu.wchusbserial*
+;   Linux:   /dev/ttyACM*       (C3/S2/S3 boards)   /dev/ttyUSB*
+;   Windows: COM3 (see Device Manager > Ports)
+; In VS Code, set the status-bar port picker to "Auto", or it overrides what is set here.
+;upload_port = /dev/cu.usbmodem*
+;monitor_port = /dev/cu.usbmodem*
