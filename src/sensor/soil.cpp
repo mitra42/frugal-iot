@@ -35,6 +35,6 @@ bool Sensor_Soil::validate(int v) {
 }
 void Sensor_Soil::captiveLines(AsyncResponseStream* response) {
   frugal_iot.captive->addButton(response, id, "output", "0", T->SoilMoistureTare);
-  frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),3), T->Calibrate, 0, output->max);
+  frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),3), T->Calibrate, 0, output->max, output);
 }
 

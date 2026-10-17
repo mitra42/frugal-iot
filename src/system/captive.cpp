@@ -89,6 +89,68 @@ String html_entities(const String& raw) {
     }
     return r;
 }
+// A Print that keeps what is printed - so a status line can go into a /values reply as well as the page
+class StringPrint : public Print {
+  public:
+    String s;
+    size_t write(uint8_t c) override { s += (char)c; return 1; }
+    size_t write(const uint8_t* buf, size_t n) override { s.concat((const char*)buf, n); return n; }
+};
+
+// Where the WiFi has got to - the only feedback for "Set WiFi", whose effect comes seconds later
+// on the main task, after the page has been sent. The page refreshes it - see captiveValues().
+static void statusWiFi(Print* out) {
+  String current = WiFi.SSID();
+  out->print(F("<p class=i>"));
+  out->print(T->WiFiNetwork);
+  out->print(F(": "));
+  if (frugal_iot.wifi->connected()) {
+    out->print(html_entities(current));
+    out->print(F(" &#x2714;"));
+  } else if (pendingSSID.length()) {
+    out->print(html_entities(pendingSSID));
+    out->print(F(" &hellip;"));
+  } else {
+    out->print(T->LoraMesher_Unconnected); // Just "Unconnected" - not LoRa specific
+  }
+  out->print(F("</p>"));
+  if (frugal_iot.wifi->connected() && (current == pendingSSID)) { pendingSSID = ""; } // Done
+}
+static void statusMQTT(Print* out) {
+  // Only once on WiFi - before that, "not connected to MQTT" is just the WiFi line again
+  if (frugal_iot.wifi->connected() && frugal_iot.mqtt) {
+    frugal_iot.mqtt->captiveStatus(out);
+  }
+}
+
+// A JSON string literal. UTF-8 passes through; only what JSON forbids raw is escaped.
+static void printJson(Print* out, const String& s) {
+  out->print('"');
+  for (unsigned int i = 0; i < s.length(); i++) {
+    const char c = s.charAt(i);
+    if ((c == '"') || (c == '\\')) {
+      out->print('\\');
+      out->print(c);
+    } else if ((uint8_t)c < 0x20) {
+      out->printf("\\u%04x", (uint8_t)c);
+    } else {
+      out->print(c);
+    }
+  }
+  out->print('"');
+}
+
+Captive_Values::Captive_Values(Print* out) : out(out) { out->print('{'); }
+void Captive_Values::add(const String& topicTwig, const String& value) {
+  if (!first) { out->print(','); }
+  first = false;
+  printJson(out, topicTwig);
+  out->print(':');
+  printJson(out, value);
+}
+void Captive_Values::add(IO* io) { add(io->topicTwig, io->StringValue()); }
+void Captive_Values::end() { out->print('}'); }
+
 // For debugging - as hard to view source on mobile
 //#define RESPONSEPRINT Serial.print
 //#define RESPONSEPRINT response->print
@@ -163,9 +225,26 @@ class CaptiveRequestHandler : public AsyncWebHandler {
             ".c{display:block;padding-left:2em}"
             ".w,.i{display:block;padding:.5ex .5ex .5ex 3em}"
             ".w,.i{background:#aaa;min-height:3em}"
+            ".st{opacity:.4}"
             "</style>"
       ));
-      response->print(F("<script>function s(name,value){let fd=new FormData();fd.set(name,value);fetch('/',{method:'POST',body:fd,credentials:'same-origin'}).catch(e=>console.error(e));};</script>"));
+      response->print(F("<script>function s(name,value){let fd=new FormData();fd.set(name,value);fetch('/',{method:'POST',body:fd,credentials:'same-origin'}).catch(e=>console.error(e));};"));
+      /* Live values. Every <div data-m=id data-r=ms> - see System_Base::captiveRefreshMs() - fetches
+       * /values/<id> every ms and puts each value into the [data-t=topicTwig] elements inside it:
+       * .value or .checked for an input, innerHTML where data-h, otherwise text. The field being
+       * edited is left alone. A failed fetch greys the block (.st) until one succeeds - a sleeping
+       * node shows as stale rather than frozen. d.b stops fetches piling up while one hangs, and
+       * the starts are staggered so blocks sharing a period do not all hit the server together.
+       */
+      response->print(F(
+        "function r(d){if(!d.b){d.b=1;fetch('/values/'+d.dataset.m).then(x=>x.json()).then(j=>{d.classList.remove('st');"
+        "for(let k in j){d.querySelectorAll('[data-t=\"'+k+'\"]').forEach(e=>{if(e!=document.activeElement){let v=j[k];"
+        "if(e.type=='checkbox'){e.checked=(v=='1')}else if(e.tagName=='INPUT'){e.value=v}"
+        "else if(e.hasAttribute('data-h')){e.innerHTML=v}else{e.textContent=v}}})}"
+        "}).catch(e=>d.classList.add('st')).finally(()=>{d.b=0})}}"
+        "addEventListener('DOMContentLoaded',()=>document.querySelectorAll('[data-m]').forEach((d,i)=>"
+        "setTimeout(()=>setInterval(()=>{if(!document.hidden){r(d)}},+d.dataset.r),i*300)));"
+        "</script>"));
       if (message.length()) { // Not "if (message)" - that is true for an emptied String
         response->print(F("<h4>"));
         response->print(message);
@@ -182,29 +261,14 @@ class CaptiveRequestHandler : public AsyncWebHandler {
        */
       response->print(String(F("<p><a href=\"http://")) + ip + F("/status\">Status</a> &middot; <a href=\"http://") + ip + F("/status?full\">Status (full)</a></p><hr>"));
 
-      // Where the WiFi has got to - the only feedback for "Set WiFi", whose effect comes seconds
-      // later on the main task, after this page has been sent. Reload to see it progress.
-      {
-        String current = WiFi.SSID();
-        response->print(F("<p class=i>"));
-        response->print(T->WiFiNetwork);
-        response->print(F(": "));
-        if (frugal_iot.wifi->connected()) {
-          response->print(html_entities(current));
-          response->print(F(" &#x2714;"));
-        } else if (pendingSSID.length()) {
-          response->print(html_entities(pendingSSID));
-          response->print(F(" &hellip;"));
-        } else {
-          response->print(T->LoraMesher_Unconnected); // Just "Unconnected" - not LoRa specific
-        }
-        response->print(F("</p>"));
-        // Only once on WiFi - before that, "not connected to MQTT" is just the WiFi line again
-        if (frugal_iot.wifi->connected() && frugal_iot.mqtt) {
-          frugal_iot.mqtt->captiveStatus(response);
-        }
-        if (frugal_iot.wifi->connected() && (current == pendingSSID)) { pendingSSID = ""; } // Done
-      }
+      // WiFi and MQTT status, refreshed in place as the connection progresses - innerHTML (data-h),
+      // as each is a whole <p>. Wrapped here rather than by System_Group, as it is not in captiveLines()
+      frugal_iot.captive->startRefresh(response, frugal_iot.captive->id, SYSTEM_CAPTIVE_STATUS_REFRESH_MS);
+      response->print(F("<div data-t=captive/wifi data-h>"));
+      statusWiFi(response);
+      response->print(F("</div><div data-t=captive/mqtt data-h>"));
+      statusMQTT(response);
+      response->print(F("</div></div>"));
       String selectSSID = pendingSSID.length() ? pendingSSID : WiFi.SSID();
       //Dropdown of SSIDs (see WiFiSettings.cpp ~L310)
       response->print(F("<form method=post action=\"/\"><label>"));
@@ -307,9 +371,10 @@ void System_Captive::setup() {
   String ip = WiFi.softAPIP().toString(); // Note how this is used by redirect 
   Serial.printf("Access point on: %s at %s\n", frugal_iot.nodeid.c_str(), ip.c_str());
 
-  // Note any request from the AP side, whichever handler takes it - see okToSleep()
+  // Note any request from the AP side, whichever handler takes it - see okToSleep(). Except the
+  // page's own /values polls, or a page left open on a phone would keep a battery node awake.
   server.addMiddleware([](AsyncWebServerRequest *request, ArMiddlewareNext next) {
-    if (ON_AP_FILTER(request)) {
+    if (ON_AP_FILTER(request) && !request->url().startsWith("/values")) {
       frugal_iot.captive->lastActivityMs = millis();
     }
     next();
@@ -378,6 +443,20 @@ void System_Captive::setup() {
     request->send(response);
   }).setFilter(ON_AP_FILTER);
 
+  /* One module's live values, polled by the portal page - see System_Base::captiveValues().
+   * A plain "/values" also matches "/values/<id>": ESPAsyncWebServer matches a plain path and
+   * anything below it. Before the catch-all portal handler, like /status.
+   */
+  server.on("/values", HTTP_GET, [](AsyncWebServerRequest *request){
+    const String moduleId = request->url().substring(8); // After "/values/" - "" matches nothing
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    response->addHeader("Cache-Control", "no-store");
+    Captive_Values values(response);
+    frugal_iot.captiveValues(&values, moduleId);
+    values.end();
+    request->send(response);
+  }).setFilter(ON_AP_FILTER);
+
   server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
     Serial.println(F("POST /restart"));
     request->send(200, "text/plain",T->RestartingPleaseWait);
@@ -415,8 +494,17 @@ void System_Captive::addString(AsyncResponseStream* response, const char* id, co
   // Chat GPT suggested:   + "onkeydown=\"if(event.key==='Enter'||event.keyCode==13){s(this.form);event.preventDefault();return false;}\">"  
 }
 // Number input
-void System_Captive::addNumber(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, long min, long max) {
-  response->print(String(F("<p><label>")) + label + ":<br><input type=number step=1 name='" + id + "/" + topicTwig + "' value='" + init + "' min=" + min + " max=" + max + " onchange=\"s(this.name,this.value)\"></label></p>");  
+void System_Captive::addNumber(AsyncResponseStream* response, const char* id, const char* topicTwig, String init, String label, long min, long max, IO* refresh) {
+  // data-t is the IO's topicTwig, not this field's name - Sensor_Float's field is <id>/output but its output is <id>/<id>
+  response->print(String(F("<p><label>")) + label + ":<br><input type=number step=1 name='" + id + "/" + topicTwig + "' value='" + init + "' min=" + min + " max=" + max
+    + (refresh ? String(F(" data-t='")) + refresh->topicTwig + "'" : String())
+    + " onchange=\"s(this.name,this.value)\"></label></p>");
+}
+void System_Captive::startRefresh(Print* out, const char* moduleId, unsigned long refresh_ms) {
+  out->print(String(F("<div data-m='")) + moduleId + "' data-r=" + refresh_ms + ">");
+}
+String System_Captive::valueSpan(IO* io) {
+  return String(F("<span data-t='")) + io->topicTwig + "'>" + io->StringValue() + "</span>";
 }
 // Bool input - e.g. LED
 void System_Captive::addBool(AsyncResponseStream* response, const char* id, const char* topicTwig, bool init, String label) {
@@ -479,6 +567,19 @@ void System_Captive::captiveLines(AsyncResponseStream* response) {
     + t->LanguageName + "</option>");  // name in its own language
   }
   response->print(String(F("</select></label></p></form>")));
+}
+
+// The WiFi and MQTT status at the top of the page. Those are not in captiveLines(), so
+// captiveRefreshMs() stays 0 and the page handler wraps them in their data-m block itself.
+void System_Captive::captiveValues(Captive_Values* values, const String& moduleId) {
+  if (moduleId == id) {
+    StringPrint wifi;
+    statusWiFi(&wifi);
+    values->add("captive/wifi", wifi.s);
+    StringPrint mqtt;
+    statusMQTT(&mqtt);
+    values->add("captive/mqtt", mqtt.s);
+  }
 }
 
 /* Not while the AP is needed - sleep would take it away. Two cases:

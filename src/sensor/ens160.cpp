@@ -158,8 +158,15 @@ void Sensor_ENS160::dispatch(System_Message &msg) {
 // in `outputs` and have to be added here - what is wired in matters when a reading looks wrong.
 void Sensor_ENS160::captiveLines(AsyncResponseStream* response) {
   response->print(String(F("<p><label>")) + name + captiveValueLines()
-    + "<br>Temperature (in): " + temperature->StringValue() + " C"
-    + "<br>Humidity (in): " + humidity->StringValue() + " %</label></p>");
+    + "<br>Temperature (in): " + frugal_iot.captive->valueSpan(temperature) + " C"
+    + "<br>Humidity (in): " + frugal_iot.captive->valueSpan(humidity) + " %</label></p>");
+}
+void Sensor_ENS160::captiveValues(Captive_Values* values, const String& moduleId) {
+  Sensor::captiveValues(values, moduleId);
+  if (moduleId == id) {
+    values->add(temperature);
+    values->add(humidity);
+  }
 }
 
 // Tell the chip the ambient conditions, so it can compensate its gas plate. Temperature is in
