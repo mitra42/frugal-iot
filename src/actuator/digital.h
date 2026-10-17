@@ -49,6 +49,14 @@ class Actuator_Digital : public Actuator {
     void prepare() override; // Hold the pin, so a deep sleep does not release it
     void recover() override; // Release and re-assert, after a light sleep
     void captiveLines(AsyncResponseStream* response);
+    /* The hardware, split out from setup()/act()/prepare()/recover() so that a subclass can drive
+     * something other than a GPIO - Actuator_Digital_Expander drives one bit of an I2C expander.
+     * The lifecycle, and the ORDER of the steps in it, stays here; only what each step touches moves.
+     */
+    virtual void beginOutput();           // Make the output usable - before the config is read
+    virtual void writeOutput(const bool on); // Drive it - true is "on", inversion is the hardware's business
+    virtual void holdOutput();            // Before a sleep, if preserve_during_sleep
+    virtual void releaseOutput();         // After a light sleep, before re-asserting
 }; // Class Actuator_Digital
 
 #endif // ACTUATOR_DIGITAL_H

@@ -36,7 +36,11 @@ void Actuator_Digital::setDefaultColor(char* color) {
 }
 
 void Actuator_Digital::act() {
-  digitalWrite(pin, input->value ? HIGH : LOW); // Relay pin on Wemos shield is NOT inverted
+  writeOutput(input->value);
+}
+
+void Actuator_Digital::writeOutput(const bool on) {
+  digitalWrite(pin, on ? HIGH : LOW); // Relay pin on Wemos shield is NOT inverted
 }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -49,7 +53,11 @@ void Actuator_Digital::set(const bool v) {
 }
 #pragma GCC diagnostic pop
 
-void Actuator_Digital::setup() {
+/* Make the GPIO an output, releasing any deep-sleep hold first.
+ *
+ * Called from setup() BEFORE Actuator::setup() reads the config - see the note there.
+ */
+void Actuator_Digital::beginOutput() {
   #ifdef ESP32
     /* Release any hold left by a deep sleep BEFORE touching the pin.
      *
@@ -75,7 +83,11 @@ void Actuator_Digital::setup() {
       }
     #endif
   #endif
-  /* Initialize the digital pin as an output, BEFORE Actuator::setup() reads the config.
+  pinMode(pin, OUTPUT);
+}
+
+void Actuator_Digital::setup() {
+  /* Initialize the output, BEFORE Actuator::setup() reads the config.
    *
    * Restoring a saved value dispatches it, and Actuator_Digital::set() calls act(), which
    * digitalWrites the pin - see the note in set(). With the config read first, that write
@@ -86,7 +98,7 @@ void Actuator_Digital::setup() {
    * The previous ordering was justified with "set pin after reading config as may change",
    * but `pin` is a constructor argument (digital.h) and nothing assigns it from config.
    */
-  pinMode(pin, OUTPUT);
+  beginOutput();
   Actuator::setup(); // Read config AFTER setup inputs, and now also after the pin is an output
   act(); // Set the digital output to match initial conditions.
 }
@@ -96,19 +108,27 @@ void Actuator_Digital::setup() {
  * is not reliably knowable: System_Power::checkLevel() forces a deep sleep whatever the mode says.
  */
 void Actuator_Digital::prepare() {
-  #ifdef ESP32
-    if (preserve_during_sleep) {
-      gpio_hold_en((gpio_num_t)pin);
-    }
-  #endif
+  if (preserve_during_sleep) {
+    holdOutput();
+  }
 }
 
 // After a LIGHT sleep, which returns to where it slept. A deep sleep goes through setup() instead.
 void Actuator_Digital::recover() {
+  releaseOutput();
+  act(); // Re-assert, in case anything moved the pin while we were not looking
+}
+
+void Actuator_Digital::holdOutput() {
+  #ifdef ESP32
+    gpio_hold_en((gpio_num_t)pin);
+  #endif
+}
+
+void Actuator_Digital::releaseOutput() {
   #ifdef ESP32
     gpio_hold_dis((gpio_num_t)pin);
   #endif
-  act(); // Re-assert, in case anything moved the pin while we were not looking
 }
 
 void Actuator_Digital::captiveLines(AsyncResponseStream* response) {

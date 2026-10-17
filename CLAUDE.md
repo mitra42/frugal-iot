@@ -1721,9 +1721,38 @@ by part - some add conductivity and pH.
 |-------|------|-------|
 | `Actuator_LEDBuiltin` | actuator/ledbuiltin | Built-in LED; added automatically on supported boards |
 | `Actuator_Digital` | actuator/digital | Any digital output (relay, LED) |
+| `Actuator_Digital_Expander` | actuator/digital_expander | `Actuator_Digital` on one pin of a TCA9534 I2C expander - see below |
 | `Actuator_OLED` | actuator/oled | SSD1306 or SSD1327 OLED; added automatically on supported boards. See "Two OLED chips" below |
 | `Actuator_LCD` | actuator/lcd | HD44780 LCD via I2C backpack; requires `ACTUATOR_LCD_WANT` |
 | `Actuator_Analog` | actuator/analog | A voltage out — DAC where the chip has one, PWM where it does not |
+
+### Actuator_Digital_Expander — a digital output on an I2C expander
+
+```cpp
+frugal_iot.actuators->add(new Actuator_Digital_Expander("valve1", "Valve 1", 0x20, 0, DEFAULT_valve_on_color));
+// (id, name, address, expander pin 0-7, color, invert = false, wire = &I2C_WIRE)
+```
+
+A subclass of `Actuator_Digital`, not a second constructor on it. `Actuator_Digital`'s lifecycle
+calls four hooks - `beginOutput()`, `writeOutput(on)`, `holdOutput()`, `releaseOutput()` - which
+are the GPIO calls (`pinMode`, `digitalWrite`, `gpio_hold_*`) on the base and expander writes here;
+the order of the steps in `setup()`/`prepare()`/`recover()` stays in one place.
+
+The chip is `System_TCA9534` (`system/tca9534.h`) - also the PCA9534, TCA/PCA9554 and TCA6408,
+which share its four registers. It is **one object per chip**, from
+`System_TCA9534::forAddress(addr, wire)`, because every output on the chip writes the same output
+register; it keeps a shadow of that register so each actuator changes only its own bit.
+
+**Cold boot vs. warm.** At power-on the output register reads 0xFF and every pin is an input, so
+reading it back and then making the pin an output would turn every relay on for a moment.
+`configureOutput()` checks the configuration register first: a pin still configured as an input
+means the chip has been power-cycled, and gets OFF before it becomes an output; a pin already an
+output means the chip kept its state (warm reboot, deep sleep) and is left alone.
+
+**Sleep.** There is no `gpio_hold` - the chip holds the output itself, through light or deep sleep,
+**as long as the chip stays powered**. Its I2C pull-ups may be on a switched rail; the chip must not
+be. `preserveDuringSleep(false)` has nothing to release. `invert` is applied only where the bit is
+written, so "on" means on in the input, the portal, MQTT and the restored config.
 
 ### Actuator_Analog — a value out as a voltage
 
@@ -2046,6 +2075,8 @@ SENSOR_LOADCELL_DEBUG
 SENSOR_MS5803_DEBUG
 SENSOR_SHT_DEBUG
 SENSOR_SOIL_DEBUG
+ACTUATOR_DIGITAL_EXPANDER_DEBUG (sets ACTUATOR_DIGITAL_DEBUG and SYSTEM_TCA9534_DEBUG)
+SYSTEM_TCA9534_DEBUG
 ```
 
 ## Example: Minimal Application (sht)

@@ -180,7 +180,10 @@
 
 
 //  TO_ADD_ACTUATOR - add in appropriate line below depending on superclass
-#if defined(ACTUATOR_RELAY_DEBUG) || defined(ACTUATOR_LEDBUILTIN_DEBUG)
+#if defined(ACTUATOR_DIGITAL_EXPANDER_DEBUG)
+  #define SYSTEM_TCA9534_DEBUG // The chip's writes are most of what there is to see
+#endif
+#if defined(ACTUATOR_RELAY_DEBUG) || defined(ACTUATOR_LEDBUILTIN_DEBUG) || defined(ACTUATOR_DIGITAL_EXPANDER_DEBUG)
   #define ACTUATOR_DIGITAL_DEBUG
 #endif
 #if defined(ACTUATOR_DIGITAL_DEBUG) || defined(ACTUATOR_LCD_DEBUG) || defined(ACTUATOR_OLED_DEBUG) 

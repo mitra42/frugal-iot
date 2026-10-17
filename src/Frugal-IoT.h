@@ -4,6 +4,7 @@
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #include "actuator/analog.h"
 #include "actuator/ledbuiltin.h"
+#include "actuator/digital_expander.h" // Actuator_Digital on a TCA9534 I2C expander pin
 #include "actuator/lcd.h"
 #include "actuator/oled.h"
 
