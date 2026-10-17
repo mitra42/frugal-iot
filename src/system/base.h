@@ -17,6 +17,7 @@ class System_Base {
   public:
     // Most of System_Base has to be public - I think (but am not sure) because while accessed from System_Frugal on a subclass of System_Base its not the class acting on itself?
     System_Base(const char * const id, const String name);
+    String name; // Name of actuator, sensor or control - public as captive.cpp builds the AP SSID from frugal_iot.name
     void setupFailed(); // Called from overrides of setup() on failure.
     const char* id = nullptr; // Name of actuator, sensor or control 
     bool connected = false; 
@@ -93,7 +94,6 @@ class System_Base {
      * The * means the filesystem holds it, tested against the path writeConfigToFS() uses.
      */
     void statusLine(Print* out, const char* leaf, const String& value);
-    String name; // Name of actuator, sensor or control
     String leaf2path(const char* leaf);  // eg. sht/temperature or sht/temperature/max -> dev/lotus/esp123/sht/temperature ...
     String leaf2path(const String& leaf); 
     void readConfigFromFS();

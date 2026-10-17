@@ -82,7 +82,7 @@ class System_Frugal : public System_Group {
     System_WiFi* wifi;
     // Operational
     bool timeForPeriodic = true;
-    System_Frugal(const char* org, const char* project, const char* id, const char* name);
+    System_Frugal(const char* org, const char* project, const char* name, const char* description);
     void configure_mqtt(const char* hostname, const char* username, const char* password);
     // Preferred over configure_mqtt's username/password: the node fetches its OWN broker credential
     // from the server at first boot, so no shared password is compiled into the image. The three

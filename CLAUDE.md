@@ -395,7 +395,7 @@ to each member.
 `System_Frugal` is the one global object every application creates:
 
 ```cpp
-System_Frugal frugal_iot("org", "project", "device_id", "Human Name");
+System_Frugal frugal_iot("org", "project", "Name", "Description"); // Name (e.g. "SHT") also becomes the WiFi AP SSID "SHT 12bc34"
 ```
 
 | Method | Call order | Notes |

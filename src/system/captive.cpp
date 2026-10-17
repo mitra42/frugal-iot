@@ -344,6 +344,26 @@ class CaptiveRequestHandler : public AsyncWebHandler {
 System_Captive::System_Captive()
 : System_Base("captive", "Captive") {}
 
+// The AP's SSID is the node's name plus the chip-id part of nodeid, e.g. "Common Ground 12bc34",
+// so a phone's network list says which device is which (issue #171). Only the SSID - MQTT, mDNS
+// and the DHCP hostname keep nodeid, which other nodes and saved messages depend on.
+// An SSID is at most 32 bytes, and phones show anything outside printable ASCII badly, so the name
+// is reduced to that; if nothing is left (e.g. a name entirely in Hindi) it falls back to nodeid.
+static String apSSID() {
+  String clean;
+  for (char c : frugal_iot.name) {
+    if ((c >= 0x20) && (c < 0x7F) && !((c == ' ') && clean.endsWith(" "))) { // Collapse the gaps left by stripped characters
+      clean += c;
+    }
+  }
+  clean.trim();
+  String suffix = frugal_iot.nodeid.substring(frugal_iot.nodeid.indexOf('-') + 1);
+  clean = clean.substring(0, 32 - 1 - suffix.length()); // Room for the space and the suffix
+  clean.trim(); // Truncating may have left a trailing space
+  String ssid = clean.length() ? (clean + " " + suffix) : frugal_iot.nodeid;
+  return ssid;
+}
+
 void System_Captive::setup() {
   Serial.println(F("Configuring access point..."));
   setupLanguages();
@@ -351,7 +371,8 @@ void System_Captive::setup() {
 
   // Unsure what these items choose - copied from example -SOC_WIFI_SUPPORTED seems to be defined for ESP32
   #if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI || defined(ESP8266)
-    if (!WiFi.softAP(frugal_iot.nodeid)) { //TODO-153 add password as option (see WiFiSettings)
+    String ssid = apSSID();
+    if (!WiFi.softAP(ssid.c_str())) { //TODO-153 add password as option (see WiFiSettings)
       Serial.println(F("Soft AP creation failed."));
       return;  // Shouldn't happen
     }
@@ -369,7 +390,7 @@ void System_Captive::setup() {
     #endif
   #endif
   String ip = WiFi.softAPIP().toString(); // Note how this is used by redirect 
-  Serial.printf("Access point on: %s at %s\n", frugal_iot.nodeid.c_str(), ip.c_str());
+  Serial.printf("Access point on: %s at %s\n", WiFi.softAPSSID().c_str(), ip.c_str());
 
   // Note any request from the AP side, whichever handler takes it - see okToSleep(). Except the
   // page's own /values polls, or a page left open on a phone would keep a battery node awake.
