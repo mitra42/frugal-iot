@@ -8,6 +8,7 @@
 #include "sensor/sensor.h"
 #include "system/message.h"
 #include "misc.h" // shouldBeDefined
+#include "system/frugal.h" // frugal_iot.captive and .powercontroller
 
 Sensor::Sensor(const char* const id, const char* const name, bool r) 
 : System_SensorActuator(id, name), retain(r) { }
@@ -62,13 +63,25 @@ void Sensor::captiveLines(AsyncResponseStream* response) {
 String Sensor::captiveValueLines() {
   String lines;
   for (auto &output : outputs) {
-    lines += "<br>" + output->name + ": " + output->StringValue();
+    lines += "<br>" + output->name + ": " + frugal_iot.captive->valueSpan(output);
     if (output->unit) {
       lines += " ";
       lines += output->unit;
     }
   }
   return lines;
+}
+
+// Every sensor's lines are refreshed by default; a reading changes at most once per cycle, so
+// polling faster gains nothing. A sensor that adds an input to its lines (Sensor_ENS160,
+// Sensor_DissolvedOxygen) adds it to captiveValues() too.
+unsigned long Sensor::captiveRefreshMs() { return frugal_iot.powercontroller->cycle_ms; }
+void Sensor::captiveValues(Captive_Values* values, const String& moduleId) {
+  if (moduleId == id) {
+    for (auto &output : outputs) {
+      values->add(output);
+    }
+  }
 }
 
 void Sensor::statusLines(Print* out, bool full) {

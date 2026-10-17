@@ -11,11 +11,13 @@
 
 class System_Message; // Forward declaration to avoid circular include with system_message.h
 class System_Interface; // system/interface.h - a shared bus, and the power feeding it
+class Captive_Values; // system/captive.h - the JSON body of a /values/<id> reply
 
 class System_Base {
   public:
     // Most of System_Base has to be public - I think (but am not sure) because while accessed from System_Frugal on a subclass of System_Base its not the class acting on itself?
     System_Base(const char * const id, const String name);
+    String name; // Name of actuator, sensor or control - public as captive.cpp builds the AP SSID from frugal_iot.name
     void setupFailed(); // Called from overrides of setup() on failure.
     const char* id = nullptr; // Name of actuator, sensor or control 
     bool connected = false; 
@@ -36,6 +38,18 @@ class System_Base {
     virtual void loop();
     virtual void periodically();
     virtual void captiveLines(AsyncResponseStream* response) { };
+    /* Live values in the captive portal.
+     *
+     * captiveRefreshMs() is how often the portal page should ask for this module's values; 0, the
+     * default, means never. When it is not 0, System_Group::captiveLines() wraps this module's
+     * lines in a <div data-m=id data-r=ms>, and the page fetches /values/<id> on that period.
+     *
+     * captiveValues() answers that fetch, adding "topicTwig":"value" for each element in its
+     * captiveLines() that carries a matching data-t - see System_Captive::valueSpan(). Like
+     * dispatch(), it is called on every module and each one tests moduleId against its own id.
+     */
+    virtual unsigned long captiveRefreshMs() { return 0; }
+    virtual void captiveValues(Captive_Values* values, const String& moduleId) { }
     /* Plain-text lines for the status page, and for dumping to Serial.
      *
      * The default is nothing, because most System_Base subclasses have no IO to report. The
@@ -80,7 +94,6 @@ class System_Base {
      * The * means the filesystem holds it, tested against the path writeConfigToFS() uses.
      */
     void statusLine(Print* out, const char* leaf, const String& value);
-    String name; // Name of actuator, sensor or control
     String leaf2path(const char* leaf);  // eg. sht/temperature or sht/temperature/max -> dev/lotus/esp123/sht/temperature ...
     String leaf2path(const String& leaf); 
     void readConfigFromFS();

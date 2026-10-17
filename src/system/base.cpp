@@ -50,7 +50,8 @@ void System_Base::discover() {} ; // Default to do nothing
 void System_Base::dispatch(System_Message &msg) {
   if (msg.isSet() && (msg.module() == id)) {
     if (msg.leaf() == "name") {
-      if (name != msg.payload) {
+      // A blank name is never meant - it leaves the portal with an empty label and the AP SSID falling back to nodeid - so ignore it, as frugal.cpp does for project.
+      if (msg.payload.length() && (name != msg.payload)) {
         name = msg.payload;
         msg.maybeWriteToFSandEcho();
       }

@@ -20,9 +20,24 @@ Sensor_Health::Sensor_Health(const char* const id, const char* const name)
 
 //void setup() -> Sensor
 
+/* Only while connected. Before that WiFi.SSID() is "" - the initial value, so nothing was ever
+ * sent - and WiFi.RSSI() is 0, which rssi_to_bars() reports as 5 bars, full strength.
+ */
 void Sensor_Health::readValidateConvertSet() {
-  // TODO-116 get wifi strenght and SSID
-  // 4 bars for -55 dBm or higher, 3 bars for -56 to -66 dBm, 2 bars for -67 to -77 dBm, 1 bar for -78 to -88 dBm, and 0 bars for -89 dBm or lower
-  wifibars->set(frugal_iot.wifi->bars());
-  wifissid->set(frugal_iot.wifi->SSID());
+  if (frugal_iot.wifi->connected()) {
+    wifibars->set(frugal_iot.wifi->bars());
+    wifissid->set(frugal_iot.wifi->SSID());
+  }
+}
+
+/* Read again as WiFi connects. periodically() runs on the first loop() after boot - under
+ * Power_Deep that is every wake - which is before WiFi has connected, so without this a sleeping
+ * node would never report its WiFi at all.
+ */
+void Sensor_Health::loop() {
+  const bool connected = frugal_iot.wifi->connected();
+  if (connected && !wasConnected) {
+    readValidateConvertSet();
+  }
+  wasConnected = connected;
 }
