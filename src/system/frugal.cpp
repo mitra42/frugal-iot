@@ -94,7 +94,8 @@ void System_Frugal::dispatch(System_Message &msg) {
     bool changed = false;
     if (msg.leaf() == "project") { 
       // Unclear we should be changing project on a device live
-      if ((msg.payload) != project) {
+      // A blank project would leave the node publishing under org//node and unable to enrol, so ignore it.
+      if (msg.payload.length() && ((msg.payload) != project)) {
         // Serial.print("XXX Project change from "); Serial.print(project); Serial.print(" to "); Serial.println(payload);
         project = String(msg.payload); // Note weirdness, it really needs to copy 
         // TODO needs to restart if the value changes - so 
