@@ -412,6 +412,27 @@ System_Frugal frugal_iot("org", "project", "Name", "Description"); // Name (e.g.
 
 **`loop()`** does **not** block; return quickly. The watchdog resets if `loop()` stalls.
 
+### The node's name, its nodeid, and the access point's SSID
+
+The third constructor argument is the node's **name** (`System_Base::name`), not an id - an id is
+built from the chip: `nodeid` is `esp32-` or `esp8266-` plus six hex digits of the MAC/chip id.
+The name can be changed later from the portal or MQTT (`set/frugal_iot/name`) and is persisted.
+
+The captive portal's AP is named from both (issue #171): `apSSID()` in `system/captive.cpp` takes
+the name, keeps only printable ASCII, collapses the gaps that leaves, trims it to fit the 32-byte
+SSID limit, and adds a space and the hex part of `nodeid` - so `"Common Ground"` on
+`esp32-12bc34` is `Common Ground 12bc34`. A name with nothing left after that (e.g. entirely in
+Hindi) falls back to plain `nodeid`.
+
+**Only the SSID changes.** MQTT topics and client id, the mDNS hostname and the DHCP hostname all
+stay `nodeid`. Topics have to stay stable across a rename, and mDNS peer discovery reads another
+node's mDNS hostname *as* its nodeid (`mdns.cpp`), so changing that would break peering.
+
+**A blank name is ignored** by `System_Base::dispatch()`, the same way `System_Frugal` ignores a
+blank `project`. A blank `/frugal_iot.name` on a device's LittleFS - which the portal can write, as
+`minlength` does not stop an empty field - used to replace the compiled-in name at every boot, and
+the SSID then silently fell back to `nodeid`.
+
 ## Power Modes
 
 ```cpp

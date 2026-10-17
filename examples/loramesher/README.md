@@ -75,8 +75,8 @@ pio run -e node_tbeam    -t upload -t monitor --upload-port /dev/ttyUSB1
 - Serial: `LoRaMesher started successfully` on both boards.
 - Serial: `Route updated - Destination: 0x…, Hops: 1` within ~60 s.
 - OLED: role changes from *Unconnected* → *Gateway* / *Node*.
-- Gateway joins WiFi (captive portal SSID `FrugalIoT-loramesher-<chipid>` on
-  first boot).
+- Gateway joins WiFi (captive portal SSID `loramesher <chipid>`, e.g.
+  `loramesher 12bc34`, on first boot).
 
 ## Troubleshooting
 
