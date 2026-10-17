@@ -471,8 +471,13 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
          * it through. Chip-wide rather than per-pin, so it belongs here rather than in the
          * actuator - and this is the only place that knows the sleep is really a deep one, since
          * checkLevel() forces one whatever `mode` says.
+         *
+         * Not on chips where each pin's own hold already lasts through deep sleep (the C6, H2 and
+         * later - SOC_GPIO_SUPPORT_HOLD_SINGLE_IO_IN_DSLP). The IDF does not declare it there at all.
          */
-        gpio_deep_sleep_hold_en();
+        #if !SOC_GPIO_SUPPORT_HOLD_SINGLE_IO_IN_DSLP
+          gpio_deep_sleep_hold_en();
+        #endif
         if (forceMode & WakeOnTimerBit) {
           // millis() and esp_timer_get_time() both reset to 0 after deep sleep - see sleepSafeSecs().
           esp_deep_sleep((uint64_t)sleep_millisecs * 1000ULL); // 64 bit - see the light sleep above
