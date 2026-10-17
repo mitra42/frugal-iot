@@ -5,6 +5,12 @@
 #include <vector>
 #include <string.h> // for memcmp/memcpy
 #include "system/onewire.h"
+#include "utils/Placeholder.h" // OneWireNg's - a DSTherm::Scratchpad cannot be default-constructed
+
+// Our ROM ids are plain byte arrays, which is what OneWireNg::Id is underneath
+static inline const OneWireNg::Id& asId(const uint8_t* addr) {
+  return *reinterpret_cast<const OneWireNg::Id*>(addr);
+}
 
 /* One bus per pin, for the lifetime of the process. A std::vector rather than a map: a node has
  * one or two 1-Wire pins, so a linear scan is smaller and faster than anything cleverer.
@@ -28,9 +34,18 @@ System_OneWire* System_OneWire::forPin(uint8_t pin) {
   return b;
 }
 
+/* No internal pull-up: the bus has its 4.7k, as it did with Stoffregen's OneWire, which did not
+ * enable one either. The ESP32's ~45k would do no harm in parallel, but would also let a bus with
+ * no resistor half-work, which is harder to diagnose than one that does not work at all.
+ */
 System_OneWire::System_OneWire(uint8_t pin)
-: pin(pin), wire(pin), dallas(&wire) {
+: pin(pin), ow(pin, false) {
   powerPins(SYSTEM_ONEWIRE_POWER3v3_PIN, SYSTEM_ONEWIRE_POWER0_PIN);
+  #if (CONFIG_MAX_SEARCH_FILTERS > 0)
+    // Search for thermometers only. Anything else on the bus has nothing to say to a
+    // Sensor_DS18B20, and binding one to it would publish garbage as a temperature.
+    DSTherm(ow).filterSupportedSlaves();
+  #endif
 }
 
 // Idempotent, so every device on the bus can safely call it from its own setup() - the same
@@ -57,8 +72,9 @@ bool System_OneWire::powerDown() {
 
 /* Walk the bus and remember what is on it.
  *
- * It is begin() that does the walking - getDeviceCount() only hands back the number begin()
- * cached, so re-reading it without another begin() would return the same answer forever.
+ * The ids are kept, rather than searching again whenever addressAt() is asked - DallasTemperature's
+ * getAddress(index) re-walked the bus on every call, so the captive portal listing three probes
+ * walked it three times.
  *
  * Separate from initialize() because a scan that finds nothing is not necessarily the final
  * answer - the probe may be on switched power that is not up yet, or simply not plugged in yet -
@@ -66,20 +82,31 @@ bool System_OneWire::powerDown() {
  * against when it is zero, and the captive portal has nothing to list. See rescanIfEmpty().
  */
 void System_OneWire::scan() {
-  dallas.begin();
-  devices = dallas.getDeviceCount();
-  if (devices > 0) {
-    // Here rather than in initialize(): setResolution() walks the bus writing to each device it
-    // finds, so on an empty bus it writes nothing, and a probe that appeared later would be left
-    // at whatever resolution it powered up with.
-    dallas.setResolution(SYSTEM_ONEWIRE_RESOLUTION);
+  devices = 0;
+  for (const auto& id : ow) { // The range-loop is OneWireNg's search, CRC-checked
+    if (devices < SYSTEM_ONEWIRE_MAX_DEVICES) {
+      memcpy(ids[devices], id, SYSTEM_ONEWIRE_ADDRLEN);
+      devices++;
+    }
+    #ifdef SYSTEM_ONEWIRE_DEBUG
+      else { Serial.println(F("OneWire: more probes than SYSTEM_ONEWIRE_MAX_DEVICES, ignoring the rest")); }
+    #endif
+  }
+  // 0 means some probe is parasitic. Asked every scan, since the probes may have changed.
+  parasite = (devices > 0) && (DSTherm(ow).readPowerSupplyAll() == 0);
+  /* Here rather than in initialize(), and every scan: a probe that appeared later, or was power
+   * cycled, comes up at whatever resolution its EEPROM says. Not copied to the EEPROM - that wears,
+   * and this runs again after anything that could have reset it.
+   */
+  for (uint8_t i = 0; i < devices; i++) {
+    setResolution(ids[i]);
   }
   #ifdef SYSTEM_ONEWIRE_DEBUG
     Serial.print(F("OneWire pin ")); Serial.print(pin);
-    Serial.print(F(": ")); Serial.print(devices); Serial.println(F(" device(s)"));
+    Serial.print(F(": ")); Serial.print(devices); Serial.println(F(" thermometer(s)"));
     // Worth printing: a probe with VDD unconnected powers itself off the data line through the
     // pull-up, which is a different and much more marginal way to run a conversion.
-    if (dallas.isParasitePowerMode()) { Serial.println(F("  parasite powered - VDD is not connected")); }
+    if (parasite) { Serial.println(F("  parasite powered - VDD is not connected")); }
     uint8_t a[SYSTEM_ONEWIRE_ADDRLEN];
     for (uint8_t i = 0; i < devices; i++) {
       if (addressAt(i, a)) { Serial.print(F("  ")); Serial.println(addressToString(a)); }
@@ -89,10 +116,10 @@ void System_OneWire::scan() {
 
 /* Free on a bus that has found something, which is the case that matters - one comparison.
  *
- * On a bus that is still empty it costs a whole begin(), and begin() retries three times with a
- * 50ms settle before giving up, so roughly 150ms. That is the price of a node whose probe is not
- * plugged in, paid once per read cycle, and it buys the node that IS plugged in but was not ready
- * at setup() - which is the more common of the two, and the one that used to fail permanently.
+ * On a bus that is still empty it costs a search, which on an empty bus is one reset with no
+ * presence pulse - about a millisecond. (DallasTemperature's begin() retried three times with a
+ * 50ms settle, so this used to be ~150ms.) That buys the node whose probe IS plugged in but was not
+ * ready at setup() - the more common case, and the one that used to fail permanently.
  */
 void System_OneWire::rescanIfEmpty() {
   if (devices == 0) {
@@ -150,11 +177,44 @@ void System_OneWire::resolveUnbound() {
 }
 
 bool System_OneWire::addressAt(uint8_t index, uint8_t* addr) {
-  return dallas.getAddress(addr, index);
+  const bool ok = (index < devices);
+  if (ok) {
+    memcpy(addr, ids[index], SYSTEM_ONEWIRE_ADDRLEN);
+  }
+  return ok;
 }
 
+// Asks the probe itself rather than the list from the last scan - a CRC-good scratchpad read.
 bool System_OneWire::isPresent(const uint8_t* addr) {
-  return dallas.isConnected(addr);
+  Placeholder<DSTherm::Scratchpad> scrpd;
+  return DSTherm(ow).readScratchpad(asId(addr), scrpd) == OneWireNg::EC_SUCCESS;
+}
+
+/* Set the resolution in the probe's scratchpad, if it is not already right.
+ *
+ * Read-modify-write, so the alarm thresholds Th/Tl are left alone. The DS18S20 (family 0x10) has a
+ * fixed resolution and no configuration register, so it is skipped.
+ */
+void System_OneWire::setResolution(const OneWireNg::Id& id) {
+  const DSTherm::Resolution want = (DSTherm::Resolution)(SYSTEM_ONEWIRE_RESOLUTION - 9);
+  Placeholder<DSTherm::Scratchpad> scrpd;
+  if ((id[0] != 0x10) && (DSTherm(ow).readScratchpad(id, scrpd) == OneWireNg::EC_SUCCESS)) {
+    DSTherm::Scratchpad& sp = scrpd;
+    if (sp.getResolution() != want) {
+      sp.setResolution(want);
+      sp.writeScratchpad();
+    }
+  }
+}
+
+float System_OneWire::readC(const uint8_t* addr) {
+  float c = SYSTEM_ONEWIRE_DISCONNECTED_C;
+  Placeholder<DSTherm::Scratchpad> scrpd;
+  if (DSTherm(ow).readScratchpad(asId(addr), scrpd) == OneWireNg::EC_SUCCESS) {
+    const DSTherm::Scratchpad& sp = scrpd;
+    c = sp.getTemp2() / 16.0f; // getTemp2() is sixteenths of a degree - exact, unlike getTemp()'s thousandths
+  }
+  return c;
 }
 
 /* Broadcast a convert, but only if one is not already fresh.
@@ -168,7 +228,12 @@ bool System_OneWire::isPresent(const uint8_t* addr) {
 void System_OneWire::requestIfDue() {
   const unsigned long now = millis();
   if (!converted || ((now - lastConvertMs) >= SYSTEM_ONEWIRE_RECONVERT_MS)) {
-    dallas.requestTemperatures(); // Blocks ~750ms at 12-bit - the cost this class exists to share
+    /* Blocks up to 750ms at 12-bit - the cost this class exists to share. With every probe
+     * powered from VDD, SCAN_BUS polls for completion and returns as soon as they are done; a
+     * parasitic probe cannot be polled, since the bus must be held high to power it, so that
+     * waits the full worst case.
+     */
+    DSTherm(ow).convertTempAll(parasite ? DSTherm::MAX_CONV_TIME : DSTherm::SCAN_BUS, parasite);
     lastConvertMs = millis();     // After, not before: the wait is part of the gap we are timing
     converted = true;
   }
@@ -189,11 +254,11 @@ void System_OneWire::requestIfDue() {
  */
 float System_OneWire::tempC(const uint8_t* addr) {
   requestIfDue();
-  float c = dallas.getTempC(addr); // DEVICE_DISCONNECTED_C (-127) if it did not answer
-  if (c == DEVICE_DISCONNECTED_C) {
+  float c = readC(addr);
+  if (c == SYSTEM_ONEWIRE_DISCONNECTED_C) {
     converted = false; // Force requestIfDue() to convert again rather than re-read the same scratchpad
     requestIfDue();
-    c = dallas.getTempC(addr);
+    c = readC(addr);
     #ifdef SYSTEM_ONEWIRE_DEBUG
       Serial.print(F("OneWire pin ")); Serial.print(pin);
       Serial.print(F(": ")); Serial.print(addressToString(addr));

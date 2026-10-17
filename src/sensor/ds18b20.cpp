@@ -66,10 +66,10 @@ void Sensor_DS18B20::owBindTo(const uint8_t* a) {
 }
 
 bool Sensor_DS18B20::validate(float v) {
-    // DEVICE_DISCONNECTED_C is -127, and 85C is the power-on reset value of an uninitialised
+    // SYSTEM_ONEWIRE_DISCONNECTED_C is -127, and 85C is the power-on reset value of an uninitialised
     // probe. 0.0C is NOT excluded - it is a real temperature, and excluding it made a probe at
     // freezing publish "no reading".
-    return !std::isnan(v) && (v > DEVICE_DISCONNECTED_C) && (v < 80);
+    return !std::isnan(v) && (v > SYSTEM_ONEWIRE_DISCONNECTED_C) && (v < 80);
 }
 
 float Sensor_DS18B20::readFloat() {

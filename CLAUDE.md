@@ -1400,14 +1400,23 @@ unpacking. Temperature, pressure, humidity, `t_fine`, both gas formulas, `res_he
 `System_RS485`/`System_Modbus` and `System_I2C`/`System_I2C_Bus`, and all three are
 `System_Interface` subclasses so that the bus is what carries the power pins. Two things drove it:
 
-**Position is not identity.** `DallasTemperature::getTempCByIndex(n)` re-walks the OneWire search
-tree on every read and returns whatever sits at position *n*. Add, remove or replace a probe and
+**Built on OneWireNg, not OneWire + DallasTemperature.** `pstolarz/OneWireNg` and its `DSTherm`
+driver, since 2026-10. Paul Stoffregen's OneWire 2.3.8 does not compile for the ESP32-C6 (it
+assigns a `uint32_t` to GPIO registers IDF 5 declares as structs), and DallasTemperature depends on
+it. OneWireNg's `OneWire` compatibility class can carry an unchanged DallasTemperature, but only
+via pstolarz's unpublished fork - the published one still pulls in Stoffregen's OneWire, giving two
+`OneWire.h` - and DallasTemperature was only eight calls in `onewire.cpp`. Search is filtered to
+thermometer families (`filterSupportedSlaves()`), the ids are cached by `scan()` so `addressAt()` no
+longer walks the bus, resolution is set read-modify-write per probe without an EEPROM copy, and a
+convert polls for completion (`SCAN_BUS`) unless a probe is parasitic.
+
+**Position is not identity.** DallasTemperature's `getTempCByIndex(n)`, used before the bus was
+split out, re-walked the search tree on every read and returned whatever sat at position *n*. Add, remove or replace a probe and
 everything after it renumbers — so two believable temperatures end up attributed to the wrong
 things, with nothing reporting an error. `Sensor_DS18B20` addresses by ROM id instead.
 
-**A conversion is expensive and shared.** `requestTemperatures()` broadcasts a convert to the
-whole bus and then blocks until it completes — 750 ms at 12-bit, because `waitForConversion`
-defaults to true. A sensor owning its own bus object pays that itself, so three probes on one pin
+**A conversion is expensive and shared.** A convert is broadcast to the whole bus and then
+blocks until it completes — up to 750 ms at 12-bit. A sensor owning its own bus object pays that itself, so three probes on one pin
 cost 2.25 s of blocking per cycle for one conversion's worth of information. The bus converts at
 most once per `SYSTEM_ONEWIRE_RECONVERT_MS` (1 s), so the first sensor in a `periodically()` pass
 pays the 750 ms and the rest read the scratchpad it filled. `converted` starts false and the
@@ -1497,7 +1506,9 @@ which also picks up a probe plugged in after boot. `Sensor_DS18B20::readFloat()`
 enumeration, retried up to three times only if nothing is found — and `getDeviceCount()` is free,
 returning the count `begin()` cached. Sharing the bus means that is paid once rather than per
 sensor, and the old per-sensor dummy `requestTemperatures()` in `setup()` is gone, so a
-three-probe bus went from roughly 2.5 s of every wake to about 110 ms.
+three-probe bus went from roughly 2.5 s of every wake to about 110 ms. (Those are
+DallasTemperature figures. OneWireNg's search has no settle delay, so a scan is just the
+enumeration, and re-scanning an empty bus is one reset with no presence pulse - about 1 ms.)
 
 **That dummy conversion was not redundant, and dropping it cost a reading.** Its comment said it
 was there "to reset OneWire which seems to fail otherwise", and the reasoning for removing it was
@@ -1516,7 +1527,7 @@ being ready as soon as the code was.
 **`validate()` does not reject 0.0 °C.** It used to, presumably to catch a startup artifact. That
 was survivable while a rejected reading was silently dropped, but once invalid readings began
 being published it meant a probe at freezing reported "no reading" and any wired
-`Control_Hysteresis` held. The disconnected sentinel (`DEVICE_DISCONNECTED_C`, -127 — the same
+`Control_Hysteresis` held. The disconnected sentinel (`SYSTEM_ONEWIRE_DISCONNECTED_C`, -127 — the same
 value OSPIT uses) and the 85 °C power-on value are still rejected.
 
 ### Modbus over RS485 (`system/modbus.h`)
@@ -2026,7 +2037,8 @@ Holding takes three things, and missing any one looks like it works until it doe
 | `setup()` | `gpio_hold_dis()` before `pinMode` | a DEEP sleep never reaches `recover()` - it reboots, and a held pin silently ignores `pinMode` and `digitalWrite` |
 
 plus `gpio_deep_sleep_hold_en()` once in `System_Power::sleep()`, or the holds are dropped as the
-digital domain powers down.
+digital domain powers down. Not on the C6 and later (`SOC_GPIO_SUPPORT_HOLD_SINGLE_IO_IN_DSLP`),
+where each pin's own hold lasts through deep sleep and the IDF does not declare the function.
 
 Two things fixed alongside it, both of which had hidden the problem:
 

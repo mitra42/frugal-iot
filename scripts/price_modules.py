@@ -69,7 +69,7 @@ MODULES = {
     # --- sensors that bring a third-party library with them ------------------------------------
     "ds18b20": (
         '  frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Soil Temp", 6, 0, true));',
-        [], ""),                                    # DallasTemperature + OneWire
+        [], ""),                                    # OneWireNg (DSTherm)
     "loadcell": (
         '  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Weight", 5000.0f, "blue",'
         ' true, 6, 7, 10, 0, 1));',

@@ -83,7 +83,7 @@ boards 6,232 bytes, because on **C** sources it *adds* unwind tables that the de
 ## 3. Add only the sensors you use
 
 Sensors you do not instantiate cost nothing. The linker discards them: on a typical build 27 of
-Frugal-IoT's 58 objects and every unused third-party sensor library — DallasTemperature, OneWire,
+Frugal-IoT's 58 objects and every unused third-party sensor library — OneWireNg,
 BH1750, DHTNEW, SHT85, SHT4x, HX711, TinyGPSPlus, ModbusMaster, Button2 — contribute **zero
 bytes**. You do not need to edit `library.json` or prune dependencies.
 

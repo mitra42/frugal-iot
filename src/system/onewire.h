@@ -6,24 +6,30 @@
  *
  * Why this exists rather than each sensor owning its own OneWire:
  *
- * DallasTemperature::requestTemperatures() broadcasts a convert to every device on the bus and
- * then BLOCKS until it completes - 750ms at 12-bit resolution, because waitForConversion
- * defaults to true. A sensor owning its own bus object therefore pays that 750ms itself, so
+ * A convert is broadcast to every device on the bus and then BLOCKS until it completes - up to
+ * 750ms at 12-bit resolution. A sensor owning its own bus object therefore pays that itself, so
  * three probes on one pin cost 2.25 seconds of blocking per read cycle for one conversion's
  * worth of information. Sharing turns that into one broadcast and N cheap scratchpad reads.
  *
- * Addressing is by ROM id, not by index. getTempCByIndex() re-walks the OneWire search tree on
- * every read and returns whatever sits at that position, so adding, removing or replacing a
- * probe silently renumbers the others - two believable temperatures attributed to the wrong
- * things, with nothing reporting an error.
+ * Addressing is by ROM id, not by index. DallasTemperature's getTempCByIndex(), which this
+ * replaced, re-walked the search tree on every read and returned whatever sat at that position,
+ * so adding, removing or replacing a probe silently renumbered the others - two believable
+ * temperatures attributed to the wrong things, with nothing reporting an error.
+ *
+ * Built on OneWireNg (pstolarz/OneWireNg) and its DSTherm driver, not Paul Stoffregen's OneWire and
+ * DallasTemperature. OneWire 2.3.8 does not compile for the ESP32-C6 - it assigns a uint32_t to
+ * GPIO registers that IDF 5 declares as structs - and DallasTemperature depends on it. OneWireNg's
+ * own OneWire compatibility class would have kept DallasTemperature, but only through an
+ * unpublished fork of it (the published one still pulls in Stoffregen's OneWire, giving two
+ * OneWire.h), and DallasTemperature was only ever eight calls in onewire.cpp.
  */
 #ifndef SYSTEM_ONEWIRE_H
 #define SYSTEM_ONEWIRE_H
 
 #include <Arduino.h>
 #include <vector>
-#include <OneWire.h>
-#include <DallasTemperature.h>
+#include "OneWireNg_CurrentPlatform.h"
+#include "drivers/DSTherm.h"
 #include "system/interface.h"
 
 /* The pins that switch power to the 1-Wire bus - the 4.7k pull-up as well as the probes.
@@ -47,6 +53,14 @@
 #ifndef SYSTEM_ONEWIRE_RECONVERT_MS
   #define SYSTEM_ONEWIRE_RECONVERT_MS 1000
 #endif
+
+// Thermometers remembered per bus. Anything beyond this is ignored, with a message under debug.
+#ifndef SYSTEM_ONEWIRE_MAX_DEVICES
+  #define SYSTEM_ONEWIRE_MAX_DEVICES 8
+#endif
+// What tempC() returns for a probe that did not answer. DallasTemperature's DEVICE_DISCONNECTED_C,
+// kept at the same value because OSPIT uses -127 for the same thing.
+#define SYSTEM_ONEWIRE_DISCONNECTED_C -127
 
 #define SYSTEM_ONEWIRE_ADDRLEN 8       // A 1-Wire ROM id is 8 bytes
 #define SYSTEM_ONEWIRE_ADDRSTRLEN 16   // ... or 16 characters as lower case hex
@@ -109,10 +123,13 @@ class System_OneWire : public System_Interface {
     const uint8_t pin;
   private:
     void scan();
+    void setResolution(const OneWireNg::Id& id);
+    float readC(const uint8_t* addr);   // This device's scratchpad, or SYSTEM_ONEWIRE_DISCONNECTED_C
     void requestIfDue();
     std::vector<OneWireDevice*> users; // Sensors on this bus, for resolveUnbound()
-    OneWire wire;
-    DallasTemperature dallas;
+    OneWireNg_CurrentPlatform ow;      // The bus driver for whichever chip this is built for
+    OneWireNg::Id ids[SYSTEM_ONEWIRE_MAX_DEVICES]; // What the last scan() found - see addressAt()
+    bool parasite = false;              // Some probe has VDD unconnected - set by scan()
     bool converted = false;             // False after any restart, so the first read always converts
     unsigned long lastConvertMs = 0;    // millis() not sleepSafeMillis - sub-cycle timing, and
                                         // `converted` covers the deep sleep restart
