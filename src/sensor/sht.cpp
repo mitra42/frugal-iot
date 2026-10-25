@@ -56,8 +56,8 @@ static const uint8_t SHT_ADDRESSES[] = { 0x44, 0x45 };
 
 Sensor_SHT::Sensor_SHT(const char * const name, uint8_t address, TwoWire *wire, bool retain)
     : Sensor("sht", name, retain),
-    temperature(new OUTfloat("sht", "temperature", "Temperature", 0, 1, DEFAULT_sht_temperature_min, DEFAULT_sht_temperature_max, DEFAULT_sht_temperature_color, false)),
-    humidity(new OUTfloat("sht", "humidity", "Humidity", 0, 1, DEFAULT_sht_humidity_min, DEFAULT_sht_humidity_max, DEFAULT_sht_humidity_color, false)),
+    temperature(new OUTfloat("sht", "temperature", "Temperature", 0, 1, IO_DEFAULTS(sht_temperature), false)),
+    humidity(new OUTfloat("sht", "humidity", "Humidity", 0, 1, IO_DEFAULTS(sht_humidity), false)),
     interface(address, wire) {
   outputs.push_back(temperature);
   outputs.push_back(humidity);

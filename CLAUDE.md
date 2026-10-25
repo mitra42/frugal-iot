@@ -1031,7 +1031,21 @@ Sensor_AHT21::Sensor_AHT21(...)
   { }
 ```
 
-Sensors with a fixed id (`Sensor_BME680`, `Sensor_ENS160`) just name their macros directly.
+Sensors with a fixed id (`Sensor_BME680`, `Sensor_ENS160`) name their macros directly, through
+`IO_DEFAULTS(<module>_<leaf>)` (in `system/io.h`), which expands to the three of them:
+
+```cpp
+temperature(new OUTfloat("sht", "temperature", "Temperature", 0, 1, IO_DEFAULTS(sht_temperature), false))
+```
+
+Use it with the **short** `INfloat`/`INuint16`/`OUTfloat`/`OUTuint16` constructors, which make
+`default_min`/`default_max` equal to min/max - so `discover()` sends neither and the UX keeps the
+schema's. Passing the same pair twice to the long constructor does the same thing and is what this
+replaced. The long constructor is still right where min/max come from the caller and the
+defaults from the schema (`Control_Hysteresis`: `min, max, IO_DEFAULTS(...)`).
+
+min/max are not only for the UX: they bound the captive portal's number fields and `/cycle`'s
+wraparound, so the node needs real values even when it sends nothing.
 Sensors whose id comes from the sketch and whose ranges are computed at runtime — `Sensor_INA219`
 scales `current`/`power` from `MAX_CURRENT`, `Sensor_UltrasonicModbus` takes a max — deliberately keep
 those runtime values, which are more accurate than a schema constant.

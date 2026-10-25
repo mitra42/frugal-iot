@@ -111,9 +111,9 @@
 
 Sensor_BME680::Sensor_BME680(const char * const name, uint8_t address, TwoWire* wire, bool retain, bool wantGas)
   : Sensor("bme680", name, retain),
-    temperature(new OUTfloat("bme680", "temperature", "Temperature", 0, 1, DEFAULT_bme680_temperature_min, DEFAULT_bme680_temperature_max, DEFAULT_bme680_temperature_color, false)),
-    humidity(new OUTfloat("bme680", "humidity", "Humidity", 0, 1, DEFAULT_bme680_humidity_min, DEFAULT_bme680_humidity_max, DEFAULT_bme680_humidity_color, false)),
-    pressure(new OUTfloat("bme680", "pressure", "Pressure", 0, 1, DEFAULT_bme680_pressure_min, DEFAULT_bme680_pressure_max, DEFAULT_bme680_pressure_color, false)),
+    temperature(new OUTfloat("bme680", "temperature", "Temperature", 0, 1, IO_DEFAULTS(bme680_temperature), false)),
+    humidity(new OUTfloat("bme680", "humidity", "Humidity", 0, 1, IO_DEFAULTS(bme680_humidity), false)),
+    pressure(new OUTfloat("bme680", "pressure", "Pressure", 0, 1, IO_DEFAULTS(bme680_pressure), false)),
     gas(nullptr), // Stays null if wantGas is false - the presence of the output is the flag
     interface(address, wire),
     wire(wire)
@@ -127,7 +127,7 @@ Sensor_BME680::Sensor_BME680(const char * const name, uint8_t address, TwoWire* 
   if (wantGas) {
     // Practical range is a few kOhm in dirty air to a few hundred in clean air, but it is a
     // relative measure - see the note on IAQ in bme680.h.
-    outputs.push_back(gas = new OUTfloat("bme680", "gas", "Gas Resistance", 0, 1, DEFAULT_bme680_gas_min, DEFAULT_bme680_gas_max, DEFAULT_bme680_gas_color, false));
+    outputs.push_back(gas = new OUTfloat("bme680", "gas", "Gas Resistance", 0, 1, IO_DEFAULTS(bme680_gas), false));
     gas->unit = "kOhm";
   }
 }

@@ -11,7 +11,7 @@
 
 Sensor_Health::Sensor_Health(const char* const id, const char* const name)
 : Sensor(id, name, true),
-  wifibars(new OUTuint16(id, "wifibars", "WiFi Strength", 0, DEFAULT_health_wifibars_min, DEFAULT_health_wifibars_max, DEFAULT_health_wifibars_color, false)),
+  wifibars(new OUTuint16(id, "wifibars", "WiFi Strength", 0, IO_DEFAULTS(health_wifibars), false)),
   wifissid(new OUTtext(id, "wifissid", "WiFi SSID", "" ))
 {
   outputs.push_back(wifibars);
