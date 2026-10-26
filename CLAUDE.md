@@ -395,7 +395,7 @@ to each member.
 `System_Frugal` is the one global object every application creates:
 
 ```cpp
-System_Frugal frugal_iot("org", "project", "device_id", "Human Name");
+System_Frugal frugal_iot("org", "project", "Name", "Description"); // Name (e.g. "SHT") also becomes the WiFi AP SSID "SHT 12bc34"
 ```
 
 | Method | Call order | Notes |
@@ -411,6 +411,27 @@ System_Frugal frugal_iot("org", "project", "device_id", "Human Name");
 | `loop()` | Only call in `loop()` | Drives the whole system |
 
 **`loop()`** does **not** block; return quickly. The watchdog resets if `loop()` stalls.
+
+### The node's name, its nodeid, and the access point's SSID
+
+The third constructor argument is the node's **name** (`System_Base::name`), not an id - an id is
+built from the chip: `nodeid` is `esp32-` or `esp8266-` plus six hex digits of the MAC/chip id.
+The name can be changed later from the portal or MQTT (`set/frugal_iot/name`) and is persisted.
+
+The captive portal's AP is named from both (issue #171): `apSSID()` in `system/captive.cpp` takes
+the name, keeps only printable ASCII, collapses the gaps that leaves, trims it to fit the 32-byte
+SSID limit, and adds a space and the hex part of `nodeid` - so `"Common Ground"` on
+`esp32-12bc34` is `Common Ground 12bc34`. A name with nothing left after that (e.g. entirely in
+Hindi) falls back to plain `nodeid`.
+
+**Only the SSID changes.** MQTT topics and client id, the mDNS hostname and the DHCP hostname all
+stay `nodeid`. Topics have to stay stable across a rename, and mDNS peer discovery reads another
+node's mDNS hostname *as* its nodeid (`mdns.cpp`), so changing that would break peering.
+
+**A blank name is ignored** by `System_Base::dispatch()`, the same way `System_Frugal` ignores a
+blank `project`. A blank `/frugal_iot.name` on a device's LittleFS - which the portal can write, as
+`minlength` does not stop an empty field - used to replace the compiled-in name at every boot, and
+the SSID then silently fell back to `nodeid`.
 
 ## Power Modes
 
@@ -769,6 +790,43 @@ serving this on the station interface needs a one-line GET variant of that helpe
 something loaded occasionally; if it ever is not, the fix is to list each module's directory once
 and test membership rather than stat each path.
 
+## Live values in the captive portal (`/values/<id>`)
+
+The portal page is built once and then refreshes its values in place (issue #186). Three pieces,
+each on `System_Base` with a do-nothing default, so a module opts in:
+
+| Piece | Where | Does |
+|---|---|---|
+| `captiveRefreshMs()` | the module | How often to refresh, 0 = never. `Sensor` returns `cycle_ms`, as a reading changes at most once a cycle |
+| `<div data-m=id data-r=ms>` | `System_Group::captiveLines()` | Wraps a module whose period is not 0. A nested group returns 0, so its members are wrapped one by one |
+| `captiveValues(values, moduleId)` | the module | Answers `GET /values/<id>` with `{"topicTwig":"value",...}`. Called on every module, each testing `moduleId == id` - the `dispatch()` shape, with no lookup |
+
+The page script runs one timer per `data-m` block and puts each value into the `[data-t=topicTwig]`
+elements inside it. `System_Captive::valueSpan(io)` writes a read-only one, and `addNumber(...,
+io)` tags an editable field. The tag is the **IO's** topicTwig, not the field's `name`: a
+`Sensor_Float`'s field is named `<id>/output` but its output is `<id>/<id>`, so matching on `name`
+would silently update nothing. An element with `data-h` takes HTML. That is how the WiFi and MQTT
+status lines refresh: they are the `captive` block, which the page handler wraps itself because
+those lines are not in `captiveLines()`. `SYSTEM_CAPTIVE_STATUS_REFRESH_MS` (3000) sets their period.
+
+**A sensor that shows more than its outputs** must add the extra values to `captiveValues()` as well
+(see `Sensor_ENS160`, `Sensor_DissolvedOxygen`). Otherwise those values are rendered once and then
+never refreshed.
+
+Behaviour worth knowing:
+
+- **Polls do not hold the node awake.** The activity middleware skips `/values`, so a page left
+  open on a phone does not stop a battery node sleeping. While it sleeps the fetches fail and the
+  block greys out (`.st`), so it shows as stale rather than frozen.
+- **The field being edited is never overwritten**, the timer pauses while the tab is hidden, a
+  hung fetch is not stacked, and the timers start 300 ms apart so blocks sharing a period do not
+  all arrive together.
+- **One connection per block per period**, on the AsyncTCP task. Cheap for a handful of modules;
+  something to watch on ESP8266 with many.
+
+Actuators and controls do not refresh yet. Giving one live values is an override of the two
+methods, plus `data-t` on its field.
+
 ## IO Classes (IN / OUT) — how sensors, actuators and controls actually connect
 
 Every value a component reads or writes is a member object, not a plain field — an `IN` (input)
@@ -973,7 +1031,21 @@ Sensor_AHT21::Sensor_AHT21(...)
   { }
 ```
 
-Sensors with a fixed id (`Sensor_BME680`, `Sensor_ENS160`) just name their macros directly.
+Sensors with a fixed id (`Sensor_BME680`, `Sensor_ENS160`) name their macros directly, through
+`IO_DEFAULTS(<module>_<leaf>)` (in `system/io.h`), which expands to the three of them:
+
+```cpp
+temperature(new OUTfloat("sht", "temperature", "Temperature", 0, 1, IO_DEFAULTS(sht_temperature), false))
+```
+
+Use it with the **short** `INfloat`/`INuint16`/`OUTfloat`/`OUTuint16` constructors, which make
+`default_min`/`default_max` equal to min/max - so `discover()` sends neither and the UX keeps the
+schema's. Passing the same pair twice to the long constructor does the same thing and is what this
+replaced. The long constructor is still right where min/max come from the caller and the
+defaults from the schema (`Control_Hysteresis`: `min, max, IO_DEFAULTS(...)`).
+
+min/max are not only for the UX: they bound the captive portal's number fields and `/cycle`'s
+wraparound, so the node needs real values even when it sends nothing.
 Sensors whose id comes from the sketch and whose ranges are computed at runtime — `Sensor_INA219`
 scales `current`/`power` from `MAX_CURRENT`, `Sensor_UltrasonicModbus` takes a max — deliberately keep
 those runtime values, which are more accurate than a schema constant.

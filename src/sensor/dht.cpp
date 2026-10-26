@@ -34,8 +34,8 @@
 // Add alternative constructor with id e.g. dht1, dht2 etc
 Sensor_DHT::Sensor_DHT(const char * const name, const uint8_t pin_init, const bool retain)
   : Sensor("dht", name, retain),
-    temperature(new OUTfloat("dht", "temperature", "Temperature", 0, 1, DEFAULT_dht_temperature_min, DEFAULT_dht_temperature_max, DEFAULT_dht_temperature_color, false)),
-    humidity(new OUTfloat("dht", "humidity", "Humidity", 0, 1, DEFAULT_dht_humidity_min, DEFAULT_dht_humidity_max, DEFAULT_dht_humidity_color, false)),
+    temperature(new OUTfloat("dht", "temperature", "Temperature", 0, 1, IO_DEFAULTS(dht_temperature), false)),
+    humidity(new OUTfloat("dht", "humidity", "Humidity", 0, 1, IO_DEFAULTS(dht_humidity), false)),
     dht(new DHTNEW(pin_init)),
    pin(pin_init) {
   outputs.push_back(temperature);

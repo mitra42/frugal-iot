@@ -12,12 +12,9 @@
 Sensor_SoilModbus::Sensor_SoilModbus(const char* const id, const char * const name, uint8_t slave_id,
   System_RS485* bus, const bool retain, uint16_t reg)
   : Sensor(id, name, retain),
-    humidity(new OUTfloat(id, "humidity", "Soil Moisture", 0, 1,
-      DEFAULT_soilmodbus_humidity_min, DEFAULT_soilmodbus_humidity_max,
-      DEFAULT_soilmodbus_humidity_color, false)),
+    humidity(new OUTfloat(id, "humidity", "Soil Moisture", 0, 1, IO_DEFAULTS(soilmodbus_humidity), false)),
     temperature(new OUTfloat(id, "temperature", "Soil Temperature", 0, 1,
-      DEFAULT_soilmodbus_temperature_min, DEFAULT_soilmodbus_temperature_max,
-      DEFAULT_soilmodbus_temperature_color, false)),
+      IO_DEFAULTS(soilmodbus_temperature), false)),
     modbus(slave_id, bus),
     slave_id(slave_id),
     reg(reg)

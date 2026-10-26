@@ -38,14 +38,14 @@ Sensor_ENS160::Sensor_ENS160(const char * const name, uint8_t address, TwoWire* 
   : Sensor("ens160", name, retain),
     // The compensation values, until something arrives on the wire. Wireable, unlike the
     // outputs - the whole point of the split is that these can come from anywhere.
-    temperature(new INfloat("ens160", "temperature", "Temperature", SENSOR_ENS160_DEFAULT_TEMPERATURE, 1, DEFAULT_ens160_temperature_min, DEFAULT_ens160_temperature_max, DEFAULT_ens160_temperature_color, true)),
-    humidity(new INfloat("ens160", "humidity", "Humidity", SENSOR_ENS160_DEFAULT_HUMIDITY, 1, DEFAULT_ens160_humidity_min, DEFAULT_ens160_humidity_max, DEFAULT_ens160_humidity_color, true)),
+    temperature(new INfloat("ens160", "temperature", "Temperature", SENSOR_ENS160_DEFAULT_TEMPERATURE, 1, IO_DEFAULTS(ens160_temperature), true)),
+    humidity(new INfloat("ens160", "humidity", "Humidity", SENSOR_ENS160_DEFAULT_HUMIDITY, 1, IO_DEFAULTS(ens160_humidity), true)),
     interface(address, wire)
 {
-  outputs.push_back(aqi = new OUTuint16("ens160", "aqi", "AQI", 0, DEFAULT_ens160_aqi_min, DEFAULT_ens160_aqi_max, DEFAULT_ens160_aqi_color, false));
-  outputs.push_back(tvoc = new OUTuint16("ens160", "tvoc", "TVOC", 0, DEFAULT_ens160_tvoc_min, DEFAULT_ens160_tvoc_max, DEFAULT_ens160_tvoc_color, false));
-  outputs.push_back(eco2 = new OUTuint16("ens160", "eco2", "eCO2", 0, DEFAULT_ens160_eco2_min, DEFAULT_ens160_eco2_max, DEFAULT_ens160_eco2_color, false));
-  outputs.push_back(aqi500 = new OUTuint16("ens160", "aqi500", "AQI500", 0, DEFAULT_ens160_aqi500_min, DEFAULT_ens160_aqi500_max, DEFAULT_ens160_aqi500_color, false)); // ENS161 only
+  outputs.push_back(aqi = new OUTuint16("ens160", "aqi", "AQI", 0, IO_DEFAULTS(ens160_aqi), false));
+  outputs.push_back(tvoc = new OUTuint16("ens160", "tvoc", "TVOC", 0, IO_DEFAULTS(ens160_tvoc), false));
+  outputs.push_back(eco2 = new OUTuint16("ens160", "eco2", "eCO2", 0, IO_DEFAULTS(ens160_eco2), false));
+  outputs.push_back(aqi500 = new OUTuint16("ens160", "aqi500", "AQI500", 0, IO_DEFAULTS(ens160_aqi500), false)); // ENS161 only
   tvoc->unit = "ppb";
   eco2->unit = "ppm";
 }
@@ -158,8 +158,15 @@ void Sensor_ENS160::dispatch(System_Message &msg) {
 // in `outputs` and have to be added here - what is wired in matters when a reading looks wrong.
 void Sensor_ENS160::captiveLines(AsyncResponseStream* response) {
   response->print(String(F("<p><label>")) + name + captiveValueLines()
-    + "<br>Temperature (in): " + temperature->StringValue() + " C"
-    + "<br>Humidity (in): " + humidity->StringValue() + " %</label></p>");
+    + "<br>Temperature (in): " + frugal_iot.captive->valueSpan(temperature) + " C"
+    + "<br>Humidity (in): " + frugal_iot.captive->valueSpan(humidity) + " %</label></p>");
+}
+void Sensor_ENS160::captiveValues(Captive_Values* values, const String& moduleId) {
+  Sensor::captiveValues(values, moduleId);
+  if (moduleId == id) {
+    values->add(temperature);
+    values->add(humidity);
+  }
 }
 
 // Tell the chip the ambient conditions, so it can compensate its gas plate. Temperature is in

@@ -531,7 +531,7 @@ INuint16::INuint16(const char * const sensorId, const char * const id, const Str
   : INuint16(sensorId, id, name, v, mn, mx, mn, mx, c, w) {
 }
 INuint16::INuint16(const INuint16 &other) 
-: IN(other.sensorId, other.id, other.name, other.color, other.wireable), value(other.value), default_min(other.default_min), default_max(other.default_max) {
+: IN(other.sensorId, other.id, other.name, other.color, other.wireable), value(other.value), min(other.min), max(other.max), default_min(other.default_min), default_max(other.default_max) {
 }
 
 INbool::INbool(const char * const sensorId, const char * const id, const String name, bool value, char const * const color, const bool wireable)

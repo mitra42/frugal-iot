@@ -5,6 +5,11 @@
 #include "_settings.h" // For MQTT_RETAIN
 #include "system/message.h" // For System_Message in dispatch
 
+/* The schema's min, max and color for a topic, as three constructor arguments, uses as e.g.
+ *   new INfloat(id, "maxminutes", name, 5, 1, IO_DEFAULTS(irrigation_maxminutes), false)
+ */
+#define IO_DEFAULTS(k) DEFAULT_##k##_min, DEFAULT_##k##_max, DEFAULT_##k##_color
+
 class IO {
   public:
     // Note that topicTwig = sensorId / id

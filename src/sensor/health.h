@@ -1,4 +1,4 @@
-// Deep Sleep issues: none today, but anything uptime-like added here would measure time since the last WAKE, not since power-on.
+// Deep Sleep issues: every wake reads before WiFi has connected, so the WiFi outputs are read again in loop() as it connects. Anything uptime-like added here would measure time since the last WAKE, not since power-on.
 /*  Frugal IoT - Health sensor 
  * 
  *  This will be an aggregation of health fields 
@@ -21,8 +21,10 @@ class Sensor_Health : public Sensor {
     OUTtext* wifissid;
     // TODO-116 more outputs to come here: uptime 
     //void setup() override; 
-    void readValidateConvertSet() override; 
+    void readValidateConvertSet() override;
+    void loop() override; // Reads as WiFi connects - see health.cpp
   private:
+    bool wasConnected = false;
  };
  
 #endif // SENSOR_HEALTH_H

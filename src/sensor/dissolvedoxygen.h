@@ -91,6 +91,7 @@ class Sensor_DissolvedOxygen : public Sensor_Analog {
     int readInt() override;            // Probe voltage in mV, not raw ADC counts
     bool validate(int millivolts) override;
     void captiveLines(AsyncResponseStream* response) override;
+    void captiveValues(Captive_Values* values, const String& moduleId) override; // Adds the water temperature
     // mg/L per mV at a given water temperature - static so it can seed `scale` in the
     // constructor's initialiser list, before any instance exists.
     static float scaleForTemperature(float temp_c);

@@ -6,7 +6,7 @@
 
 Control_Oled_Single::Control_Oled_Single(const char* name, const char* unit, const char* label, uint8_t decimals)
   : Control_Oled("control_oled_single", name, std::vector<IN*> { }),
-  value(new INfloat("control_oled_single", "value", "Value", 0, decimals, DEFAULT_control_oled_single_value_min, DEFAULT_control_oled_single_value_max, DEFAULT_control_oled_single_value_color, true)),
+  value(new INfloat("control_oled_single", "value", "Value", 0, decimals, IO_DEFAULTS(control_oled_single_value), true)),
   unit(unit),
   label(label)
   {

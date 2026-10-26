@@ -107,6 +107,7 @@ class Sensor_ENS160 : public Sensor {
     void dispatch(System_Message &msg) override;
     void readValidateConvertSet() override;
     void captiveLines(AsyncResponseStream* response) override; // Adds the compensation inputs
+    void captiveValues(Captive_Values* values, const String& moduleId) override; // ...and refreshes them
 
     bool sendAndWait(uint8_t reg, uint8_t val); // Register write plus the chip's settling delay
     bool setMode(uint8_t val);

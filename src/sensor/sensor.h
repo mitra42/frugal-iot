@@ -49,6 +49,8 @@ class Sensor : public System_SensorActuator {
     void captiveLines(AsyncResponseStream* response) override; // Read-only list of the outputs
     void statusLines(Print* out, bool full) override; // One block per output
     String captiveValueLines(); // The "<br>Name: value unit" fragment, for overrides to extend
+    unsigned long captiveRefreshMs() override; // cycle_ms - a reading changes at most once a cycle
+    void captiveValues(Captive_Values* values, const String& moduleId) override; // Every output
 }; // Class Sensor
 
 

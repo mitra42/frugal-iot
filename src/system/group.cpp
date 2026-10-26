@@ -142,8 +142,19 @@ void System_Group::loop()         { forEach("loop", &System_Base::loop); }
 void System_Group::periodically() { forEach("periodically", &System_Base::periodically); }
 void System_Group::infrequently() { forEach("infrequently", &System_Base::infrequently); }
 
-void System_Group::captiveLines(AsyncResponseStream* response)
-  { for (System_Base* fb: group) { fb->captiveLines(response); } }
+// A member that wants refreshing gets its lines wrapped in a <div data-m data-r> - see
+// System_Base::captiveRefreshMs(). A nested group returns 0, so it is never wrapped itself and
+// its own members are wrapped one by one when it recurses.
+void System_Group::captiveLines(AsyncResponseStream* response) {
+  for (System_Base* fb: group) {
+    const unsigned long refresh_ms = fb->captiveRefreshMs();
+    if (refresh_ms) { frugal_iot.captive->startRefresh(response, fb->id, refresh_ms); }
+    fb->captiveLines(response);
+    if (refresh_ms) { response->print(F("</div>")); }
+  }
+}
+void System_Group::captiveValues(Captive_Values* values, const String& moduleId)
+  { for (System_Base* fb: group) { fb->captiveValues(values, moduleId); } }
 void System_Group::statusLines(Print* out, bool full)
   { for (System_Base* fb: group) { fb->statusLines(out, full); } }
   

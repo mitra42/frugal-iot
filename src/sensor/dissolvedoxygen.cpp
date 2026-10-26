@@ -114,6 +114,12 @@ void Sensor_DissolvedOxygen::captiveLines(AsyncResponseStream* response) {
   // number, which for a Sensor_Analog means calibrate() and would set a scale that the next
   // temperature message immediately overwrites. Show it read-only instead.
   response->print(String(F("<p><label>")) + name
-    + "<br>Dissolved Oxygen: " + output->StringValue() + " mg/L"
-    + "<br>Water Temperature: " + watertemperature->StringValue() + " C</label></p>");
+    + "<br>Dissolved Oxygen: " + frugal_iot.captive->valueSpan(output) + " mg/L"
+    + "<br>Water Temperature: " + frugal_iot.captive->valueSpan(watertemperature) + " C</label></p>");
+}
+void Sensor_DissolvedOxygen::captiveValues(Captive_Values* values, const String& moduleId) {
+  Sensor::captiveValues(values, moduleId);
+  if (moduleId == id) {
+    values->add(watertemperature);
+  }
 }

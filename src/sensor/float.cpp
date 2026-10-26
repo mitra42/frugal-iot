@@ -70,6 +70,6 @@ void Sensor_Float::readValidateConvertSet() {
 }
 
 void Sensor_Float::captiveLines(AsyncResponseStream* response) {
-  frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),(int)width), name, output->min, output->max);
+  frugal_iot.captive->addNumber(response, id, "output", String(output->floatValue(),(int)width), name, output->min, output->max, output);
   // Could add Tare as button - but probably want immediate response, not waiting on SEND
 }
