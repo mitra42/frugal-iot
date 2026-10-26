@@ -65,8 +65,12 @@ void Actuator_Digital::beginOutput() {
      * hold gets dropped. While it is in place pinMode() and digitalWrite() are silently ignored -
      * the pin keeps its old value and nothing reports a problem, which is a memorable afternoon.
      * Harmless when no hold was set.
+     *
+     * Skipped when `pin` is not a real GPIO - see holdable().
      */
-    gpio_hold_dis((gpio_num_t)pin);
+    if (holdable()) {
+      gpio_hold_dis((gpio_num_t)pin);
+    }
     #if defined(SOC_RTCIO_HOLD_SUPPORTED) && SOC_RTCIO_HOLD_SUPPORTED
       /* The hold itself works either way. This is about the wake: see digital.h. On a chip that has
        * an RTC IO mux, an RTC pad is the better choice, so a pin outside that set is worth saying.
@@ -76,7 +80,7 @@ void Actuator_Digital::beginOutput() {
        * unguarded check would warn about all of them - on one of the commonest boards here - and
        * about something the user could not fix anyway.
        */
-      if (preserve_during_sleep && !rtc_gpio_is_valid_gpio((gpio_num_t)pin)) {
+      if (preserve_during_sleep && holdable() && !rtc_gpio_is_valid_gpio((gpio_num_t)pin)) {
         Serial.print(id);
         Serial.print(F(": pin ")); Serial.print(pin);
         Serial.println(F(" is not an RTC pad, so it will float for the first moments after waking"));
@@ -119,15 +123,33 @@ void Actuator_Digital::recover() {
   act(); // Re-assert, in case anything moved the pin while we were not looking
 }
 
+#ifdef ESP32
+/* Can gpio_hold_* be applied to `pin`? Only to a real output-capable GPIO.
+ *
+ * Not every `pin` is one. On boards with an RGB LED the core defines LED_BUILTIN as
+ * SOC_GPIO_PIN_COUNT + the LED's pin (e.g. 29 on a C3 Pico), a virtual number that only
+ * digitalWrite() understands and routes to rgbLedWrite(). The IDF rejects it with
+ * "gpio_hold_dis(...): Only output-capable GPIO support this function" on every boot. Nothing is
+ * lost by skipping it: a WS2812 keeps its colour for as long as it has power, with no hold at all.
+ */
+bool Actuator_Digital::holdable() {
+  return GPIO_IS_VALID_OUTPUT_GPIO(pin);
+}
+#endif
+
 void Actuator_Digital::holdOutput() {
   #ifdef ESP32
-    gpio_hold_en((gpio_num_t)pin);
+    if (holdable()) {
+      gpio_hold_en((gpio_num_t)pin);
+    }
   #endif
 }
 
 void Actuator_Digital::releaseOutput() {
   #ifdef ESP32
-    gpio_hold_dis((gpio_num_t)pin);
+    if (holdable()) {
+      gpio_hold_dis((gpio_num_t)pin);
+    }
   #endif
 }
 

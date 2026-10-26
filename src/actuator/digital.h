@@ -57,6 +57,9 @@ class Actuator_Digital : public Actuator {
     virtual void writeOutput(const bool on); // Drive it - true is "on", inversion is the hardware's business
     virtual void holdOutput();            // Before a sleep, if preserve_during_sleep
     virtual void releaseOutput();         // After a light sleep, before re-asserting
+    #ifdef ESP32
+      bool holdable();                    // Is `pin` a real GPIO gpio_hold_* accepts - not an RGB LED's virtual pin
+    #endif
 }; // Class Actuator_Digital
 
 #endif // ACTUATOR_DIGITAL_H

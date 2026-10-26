@@ -50,6 +50,19 @@
   #define RGB_BUILTIN LED_BUILTIN
 #endif
 
+/* C3 with the 0.42" 72x40 OLED. Its env borrows the lolin_c3_pico variant for SDA/SCL/USB, and that
+ * variant says the LED is a WS2812 on GPIO7 (LED_BUILTIN = RGB_BUILTIN = 7+SOC_GPIO_PIN_COUNT = 29).
+ * This board has a plain blue LED on GPIO8 that LOW turns on - the same as the supermini. Without this
+ * the node drove rgbLedWrite() at an LED that is not there, the real one never lit, and gpio_hold_dis(29)
+ * put an IDF error in every boot log.
+ */
+#ifdef ARDUINO_C3_OLED_72x40
+  #undef RGB_BUILTIN
+  #undef LED_BUILTIN
+  #define LED_BUILTIN 8
+  #define ACTUATOR_LEDBUILTIN_INVERT
+#endif
+
 /* Everything below needs LED_BUILTIN, and a board is allowed not to have one.
  *
  * This used to #error instead. Since the header is included unconditionally, that made an LED pin
