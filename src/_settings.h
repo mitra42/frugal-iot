@@ -269,8 +269,10 @@
 #define SYSTEM_WIFI_WANT  // currently always wanted
 
 // Define boards which have built in OLED and should include automatically
-#if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V32) || defined(ARDUINO_heltec_wifi_lora_32_V4) || defined(OLED_SDA)
-  #define ACTUATOR_OLED_WANT
+#ifndef ACTUATOR_OLED_WANT
+  #if defined(ARDUINO_TTGO_LoRa32) || defined(ARDUINO_LILYGO_T3_S3_V1_X) || defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(ARDUINO_heltec_wifi_lora_32_V32) || defined(ARDUINO_heltec_wifi_lora_32_V4) || defined(OLED_SDA)
+    #define ACTUATOR_OLED_WANT
+  #endif
 #endif
 
 // We test BUTTON_BUILTIN which is defined in all sorts of ways, add here. 
