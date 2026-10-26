@@ -91,7 +91,14 @@ float Sensor_DS18B20::readFloat() {
         // Nothing to read from. Returning NAN publishes the invalid state, which is the honest
         // answer and is visible in the UX, rather than silently reporting some other probe.
         #ifdef SENSOR_DS18B20_DEBUG
-            Serial.print(id); Serial.println(F(": unbound - set its id in the portal"));
+            // Which of the two it is matters: with nothing on the bus the portal has nothing to offer,
+            // and the problem is the wiring, the pull-up or the power - not the binding.
+            Serial.print(id); Serial.print(F(": unbound - "));
+            if (bus->count() == 0) {
+                Serial.print(F("no probes found on pin ")); Serial.println(bus->pin);
+            } else {
+                Serial.print(bus->count()); Serial.println(F(" probes on the bus, choose one in the portal"));
+            }
         #endif
     } else {
         tempC = bus->tempC(addr);

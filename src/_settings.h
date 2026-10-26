@@ -164,6 +164,9 @@
 #if defined(SENSOR_BME280_DEBUG) || defined(SENSOR_BMP280_DEBUG)
   #define SENSOR_BMX280_DEBUG // One implementation for both chips - either flag turns it on
 #endif
+#if defined(SENSOR_DS18B20_DEBUG)
+  #define SYSTEM_ONEWIRE_DEBUG // The scan and the probe matching live on the bus, and are most of what there is to see
+#endif
 #if defined(SENSOR_BATTERY_DEBUG) || defined(SENSOR_SOIL_DEBUG) || defined(SENSOR_DO_DEBUG)
   #define SENSOR_ANALOG_DEBUG
 #endif
@@ -173,7 +176,7 @@
 #if defined(SENSOR_BH1750_DEBUG) || defined(SENSOR_LOADCELL_DEBUG) || defined(SENSOR_ULTRASONIC_DEBUG) || defined(SENSOR_HCSR04_DEBUG) || defined(SENSOR_A01NYUB_DEBUG)
   #define SENSOR_FLOAT_DEBUG
 #endif
-#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG) || defined(SENSOR_BMX280_DEBUG) || defined(SENSOR_BME680_DEBUG) || defined(SENSOR_AHT_DEBUG) || defined(SENSOR_ENS160_DEBUG) || defined(SENSOR_GPS_DEBUG) || defined(SENSOR_INA219_DEBUG) || defined(SENSOR_SOILMODBUS_DEBUG)
+#if defined(SENSOR_UINT16_DEBUG) || defined(SENSOR_FLOAT_DEBUG) || defined(SENSOR_SHT_DEBUG) || defined(SENSOR_DHT_DEBUG) || defined(SENSOR_BMX280_DEBUG) || defined(SENSOR_BME680_DEBUG) || defined(SENSOR_AHT_DEBUG) || defined(SENSOR_ENS160_DEBUG) || defined(SENSOR_GPS_DEBUG) || defined(SENSOR_INA219_DEBUG) || defined(SENSOR_SOILMODBUS_DEBUG) || defined(SENSOR_DS18B20_DEBUG)
   #define SENSOR_DEBUG // Only used for ANY_DEBUG below
 #endif
 
@@ -208,7 +211,7 @@
   #define CONTROL_DEBUG
 #endif
 // TO_ADD_SYSTEM - there is no class hierarchy
-#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG) || defined(SYSTEM_MODBUS_DEBUG) || defined(SYSTEM_POWER_DEBUG)
+#if defined(SYSTEM_WIFI_DEBUG) || defined(SYSTEM_MQTT_DEBUG) || defined(SYSTEM_DISCOVERY_DEBUG) || defined(SYSTEM_OTA_DEBUG) || defined(SYSTEM_LORA_DEBUG) || defined(SYSTEM_FS_DEBUG) || defined(SYSTEM_TIME_DEBUG) || defined(SYSTEM_SPI_DEBUG) || defined(SYSTEM_LORAMESHER_DEBUG) || defined(SYSTEM_MODBUS_DEBUG) || defined(SYSTEM_POWER_DEBUG) || defined(SYSTEM_ONEWIRE_DEBUG)
   #define SYSTEM_DEBUG
 #endif
 
