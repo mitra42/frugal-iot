@@ -290,7 +290,7 @@ void System_WiFi::stateMachine() {
         }
         setStatus(WIFI_RECONNECTING);
         WiFi.reconnect();  // In theory should be quick if not possible.
-          // drop thru
+          [[fallthrough]];
       case WIFI_RECONNECTING: //2
           if (WiFi.status() == WL_CONNECTED) {
             setStatus(WIFI_CONNECTED);
@@ -301,7 +301,7 @@ void System_WiFi::stateMachine() {
           }
           Serial.println(F("WiFi failed to reconnect"));
           setStatus(WIFI_NEEDSCAN);
-          // drop thru
+          [[fallthrough]];
       case WIFI_NEEDSCAN: //4
           if (rescan()) { // async
             setStatus(WIFI_SCANNING);
@@ -310,7 +310,7 @@ void System_WiFi::stateMachine() {
             stabilizeTill = millis() + 2000; // Retry in 2s, not on every loop tick
             break; // stay in WIFI_NEEDSCAN
           }
-          // drop thru
+          [[fallthrough]];
       case WIFI_SCANNING: //5
         switch (num_networks = WiFi.scanComplete()) {
           case WIFI_SCAN_FAILED: {
@@ -340,7 +340,7 @@ void System_WiFi::stateMachine() {
         } else {
           setStatus(WIFI_CONNECTING);
         }
-        // Drop thru
+        [[fallthrough]];
       case WIFI_CONNECTING: //7
         if (WiFi.status() == WL_CONNECTED) {
           setStatus(WIFI_STABILIZING);
@@ -421,7 +421,7 @@ void System_WiFi::stateMachine() {
          */
         //WiFi.scanDelete();
         frugal_iot.setup_after_wifi(); // Callback to MQTT, Time and OTA as first connected
-        //drop thru
+        [[fallthrough]];
       case WIFI_CONNECTED: //3
         if (WiFi.status() != WL_CONNECTED) {
           setStatus(WIFI_DISCONNECTED);

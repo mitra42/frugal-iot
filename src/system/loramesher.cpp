@@ -193,14 +193,14 @@ void ReceiveTask(void* /*pvParameters*/) { // Runs on App_LoRa_Recv
 loramesher::power::SleepResult OnSleep(const loramesher::power::SleepContext& sc) {
   const bool allow = frugal_iot.powercontroller->externalSleepRequest(sc.sleep_duration_ms);
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.printf("LoraMesher sleep rq: ms %d slot %d messages %d - %s\n",
+    Serial.printf("LoraMesher sleep rq: ms %" PRIu32 " slot %d messages %d - %s\n",
       sc.sleep_duration_ms, sc.current_slot, sc.has_pending_messages, allow ? "allowed" : "refused");
   #endif
   return loramesher::power::SleepResult{.allow_sleep = allow, .max_sleep_duration_ms = sc.sleep_duration_ms};
 }
 void OnWakeUp(loramesher::power::PowerState previous_state) {
   #ifdef SYSTEM_POWER_DEBUG
-    Serial.printf("LoraMesher wakeUp type %d\n", previous_state);
+    Serial.printf("LoraMesher wakeUp type %d\n", (int)previous_state);
   #endif
   frugal_iot.powercontroller->externalWake();
 }
@@ -415,7 +415,7 @@ const __FlashStringHelper* LMstatus[] = {
         Serial.print(F(" Last seen: ")); Serial.print(route.last_seen_ms);
         Serial.print(F("ms ")); Serial.print(route.is_valid ? "valid" : "invalid");
         Serial.print(F(" Capabilities: ")); Serial.print(route.capabilities, HEX);
-        if (route.is_network_manager); Serial.print(F(" MANAGER"));
+        if (route.is_network_manager) { Serial.print(F(" MANAGER")); }
         Serial.println();
       }
   }

@@ -129,8 +129,8 @@ void printTaskList() {
 System_Power::System_Power()
 : System_Base("power", "Power Controller"),
   mode(Power_Loop),
-  cycleStart(0L), // not sleepSafeSecs() as by definition dont sleep before this
   cycle_ms(10000),
+  cycleStart(0L), // not sleepSafeSecs() as by definition dont sleep before this
   wake_ms(10000),
   timer_index(0)
 { }

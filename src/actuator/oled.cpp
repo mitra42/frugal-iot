@@ -28,7 +28,6 @@
 
 Actuator_OLED::Actuator_OLED(TwoWire* wire)
 : System_Base("oled", "OLED"),
-  wire(wire),
   #if defined(ACTUATOR_OLED_IS_SSD1306) || defined(OLED_IS_HW675)
     display(ACTUATOR_OLED_WIDTH, ACTUATOR_OLED_HEIGHT, wire, OLED_RST_X)
   #elif defined(ACTUATOR_OLED_IS_SSD1327) && defined(ACTUATOR_OLED_SPI_CS)
@@ -39,6 +38,7 @@ Actuator_OLED::Actuator_OLED(TwoWire* wire)
   #else
     #error have not defined how to construct the OLED driver for this chip
   #endif
+  , wire(wire) // After display, which is declared first - display is passed the parameter, not the member
 {}
 
 void Actuator_OLED::setup() {

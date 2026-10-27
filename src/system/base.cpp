@@ -12,7 +12,7 @@
 #include "misc.h" // pinsPowerUp / pinsPowerDown
 
 System_Base::System_Base(const char * const id, const String name)
-: id(id), name(name) { };
+: name(name), id(id) { };
 
 // Defaults for routines that can, but often are not, overridden in sub-class.
 void System_Base::statusLine(Print* out, const char* leaf, const String& value) {

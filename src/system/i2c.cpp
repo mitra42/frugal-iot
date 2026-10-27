@@ -151,7 +151,7 @@ uint32_t System_I2C::read(uint8_t bytes) {
     result |= wire->read();
   }
   #ifdef SYSTEM_I2C_DEBUG
-    Serial.printf("I2C read %x\n",result);
+    Serial.printf("I2C read %" PRIx32 "\n", result);
   #endif
   return result;
 }

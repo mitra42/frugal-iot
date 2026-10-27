@@ -5,11 +5,11 @@
 
 Control_Oled_HT::Control_Oled_HT(const char* name)
   :
+  //Control_Oled("control_oled_ht", name, { })
+  Control_Oled("control_oled_ht", name, std::vector<IN*> { }),
   temperature(new INfloat("control_oled_ht", "temperature", "Temperature", 0, 1, 0, 50, "#ff0000", true)),
   humidity(new INfloat("control_oled_ht", "humidity", "Humidity", 0, 1, 0, 100, "#0000ff", true)),
-  battery(new INfloat("control_oled_ht", "battery", "Battery", 0, 0, 0, 5000, "#00ff00", true)),
-  //Control_Oled("control_oled_ht", name, { })
-  Control_Oled("control_oled_ht", name, std::vector<IN*> { })
+  battery(new INfloat("control_oled_ht", "battery", "Battery", 0, 0, 0, 5000, "#00ff00", true))
   {
       inputs.push_back(temperature);
       inputs.push_back(humidity);

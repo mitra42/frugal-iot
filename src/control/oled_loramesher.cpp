@@ -4,8 +4,8 @@
 #if defined(ACTUATOR_OLED_WANT) && defined(SYSTEM_LORAMESHER_WANT) // Only compile if have an OLED
 Control_Oled_LoRaMesher::Control_Oled_LoRaMesher(const char* name)
   :
-  battery(new INfloat("control_oled_loramesher", "battery", "Battery", 0, 0, IO_DEFAULTS(control_oled_loramesher_battery), true)),
-  Control_Oled("control_oled_loramesher", name, std::vector<IN*> { })
+  Control_Oled("control_oled_loramesher", name, std::vector<IN*> { }),
+  battery(new INfloat("control_oled_loramesher", "battery", "Battery", 0, 0, IO_DEFAULTS(control_oled_loramesher_battery), true))
   {
       inputs.push_back(battery);
   }

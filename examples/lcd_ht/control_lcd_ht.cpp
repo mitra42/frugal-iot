@@ -18,10 +18,10 @@
 #include "control_lcd_ht.h"
 
 Control_LCD_HT::Control_LCD_HT()
-: temperature(new INfloat("control_lcd_ht", "temperature", "Temperature", 0.0f, 1, -40, 85, "#ff0000", true)),
+: Control("control_lcd_ht", "LCD SHT", std::vector<IN*>{}, std::vector<OUT*>{}),
+  temperature(new INfloat("control_lcd_ht", "temperature", "Temperature", 0.0f, 1, -40, 85, "#ff0000", true)),
   humidity(new INfloat("control_lcd_ht", "humidity", "Humidity", 0.0f, 1, 0, 100, "#0000ff", true)),
-  message(new OUTtext("control_lcd_ht", "message", "Message", "", "#ffffff", true)),
-  Control("control_lcd_ht", "LCD SHT", std::vector<IN*>{}, std::vector<OUT*>{})
+  message(new OUTtext("control_lcd_ht", "message", "Message", "", "#ffffff", true))
 {
   inputs.push_back(temperature);
   inputs.push_back(humidity);

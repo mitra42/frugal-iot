@@ -120,16 +120,6 @@ void System_OneWire::scan() {
   #endif
 }
 
-// Read the line without disturbing it. Not digitalRead() on ESP32: the core returns 0 for a pin its
-// peripheral manager does not have as GPIO, and OneWireNg configures this one through the IDF.
-static int readLine(uint8_t pin) {
-  #ifdef ESP32
-    return gpio_get_level((gpio_num_t)pin);
-  #else
-    return digitalRead(pin);
-  #endif
-}
-
 #ifdef ESP32
 /* What is on the line, found by reading it under the chip's own weak (~45k) pull-up and then its
  * weak pull-down. Anything external that is stronger - the 4.7k, a probe holding it, a short - wins
@@ -139,6 +129,9 @@ static int readLine(uint8_t pin) {
  * driven low by a reset, it stays low, and the sample that follows looks exactly like a presence
  * pulse. That fooled us into blaming a probe for "latching" the line, through two boards, three
  * probes and the old OneWire library, when the pull-up was simply not reaching the pin.
+ *
+ * gpio_get_level() rather than digitalRead(): the core returns 0 for a pin its peripheral manager
+ * does not have as GPIO, and OneWireNg configures this one through the IDF.
  */
 static OneWireLine classifyLine(uint8_t pin) {
   const gpio_num_t g = (gpio_num_t)pin;

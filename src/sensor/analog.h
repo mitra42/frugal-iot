@@ -44,6 +44,11 @@ class Sensor_Analog : public Sensor_Float {
     //Sensor_Analog(const uint8_t p);
     virtual void setup() override;
     virtual int readInt(); // Not overriding - its different return
+    // The int versions below replace Sensor_Float's float chain rather than override it. These
+    // using lines say the float versions are deliberately still there, so gcc's -Woverloaded-virtual
+    // does not warn that they are hidden. readValidateConvert() passes an int, so picks the int ones.
+    using Sensor_Float::validate;
+    using Sensor_Float::convert;
     virtual bool validate(int v);
     virtual float convert(int v);
     void tare();
