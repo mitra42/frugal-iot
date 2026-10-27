@@ -65,6 +65,16 @@ void Sensor_DS18B20::owBindTo(const uint8_t* a) {
     #endif
 }
 
+void Sensor_DS18B20::diagnose() {
+    Serial.print(id); Serial.print(F(": "));
+    if (bound) {
+        Serial.print(F("probe ")); Serial.print(System_OneWire::addressToString(addr)); Serial.println(F(" not answering"));
+    } else {
+        Serial.println(F("no probe found"));
+    }
+    bus->diagnose();
+}
+
 bool Sensor_DS18B20::validate(float v) {
     // SYSTEM_ONEWIRE_DISCONNECTED_C is -127, and 85C is the power-on reset value of an uninitialised
     // probe. 0.0C is NOT excluded - it is a real temperature, and excluding it made a probe at
@@ -90,6 +100,9 @@ float Sensor_DS18B20::readFloat() {
     if (!bound) {
         // Nothing to read from. Returning NAN publishes the invalid state, which is the honest
         // answer and is visible in the UX, rather than silently reporting some other probe.
+        if ((bus->count() == 0) && !bus->diagnosed) {
+            diagnose(); // Expected a probe and the bus has none - say why, once
+        }
         #ifdef SENSOR_DS18B20_DEBUG
             // Which of the two it is matters: with nothing on the bus the portal has nothing to offer,
             // and the problem is the wiring, the pull-up or the power - not the binding.
@@ -102,6 +115,9 @@ float Sensor_DS18B20::readFloat() {
         #endif
     } else {
         tempC = bus->tempC(addr);
+        if ((tempC == SYSTEM_ONEWIRE_DISCONNECTED_C) && !bus->diagnosed) {
+            diagnose(); // Bound, but its probe did not answer even the retry in tempC()
+        }
         #ifdef SENSOR_DS18B20_DEBUG
             Serial.print(id); Serial.print(F(" returned:")); Serial.println(tempC);
         #endif

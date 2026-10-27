@@ -50,6 +50,11 @@ public:
     Sensor_DS18B20(const char* id, const char* name, uint8_t pin, bool retain);
     // Explicit bus, matching how Sensor_UltrasonicModbus takes its System_RS485
     Sensor_DS18B20(const char* id, const char* name, System_OneWire* bus, bool retain);
+    /* Explain, on Serial, why this sensor has no probe to read. Called by readFloat() when the bus
+     * is empty or this sensor's probe stops answering, once per boot or wake for each bus - and
+     * public so a sketch can call it too. The work is the bus's, see System_OneWire::diagnose().
+     */
+    void diagnose();
 
 protected:
     float readFloat() override;

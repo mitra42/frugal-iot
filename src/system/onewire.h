@@ -61,6 +61,9 @@
 // What tempC() returns for a probe that did not answer. DallasTemperature's DEVICE_DISCONNECTED_C,
 // kept at the same value because OSPIT uses -127 for the same thing.
 #define SYSTEM_ONEWIRE_DISCONNECTED_C -127
+// What a DS18B20 scratchpad holds from power-on until its first conversion completes. Exact in the
+// sixteenths getTemp2() returns, so comparing for equality is safe.
+#define SYSTEM_ONEWIRE_POWERON_C 85.0f
 
 #define SYSTEM_ONEWIRE_ADDRLEN 8       // A 1-Wire ROM id is 8 bytes
 #define SYSTEM_ONEWIRE_ADDRSTRLEN 16   // ... or 16 characters as lower case hex
@@ -78,6 +81,9 @@ class OneWireDevice {
     virtual const uint8_t* owAddress() const = 0;  // Only meaningful when owBound()
     virtual void owBindTo(const uint8_t* addr) = 0;
 };
+
+// What diagnose() finds on the data line - see classifyLine() in onewire.cpp
+enum OneWireLine { LINE_UNKNOWN, LINE_PULLED_UP, LINE_FLOATING, LINE_HELD_LOW, LINE_UNSTABLE };
 
 class System_OneWire : public System_Interface {
   public:
@@ -120,12 +126,21 @@ class System_OneWire : public System_Interface {
     static bool addressFromString(const String& s, uint8_t* addr);
     static String addressToString(const uint8_t* addr);
 
+    /* Why a bus that should have a probe on it has nothing: prints one verdict line (rail dragged
+     * down / no pull-up on the line / line held low / pull-up not on the switched rail / pin cannot
+     * drive / no presence pulse / probe holds the line after a reset / wrong family / search
+     * failing), plus the raw checks under SYSTEM_ONEWIRE_DEBUG. Differs with and without a switched
+     * rail - see onewire.cpp.
+     * Called by Sensor_DS18B20::diagnose(); sets `diagnosed`, which a scan that finds something clears.
+     */
+    void diagnose();
+    bool diagnosed = false;             // diagnose() has run since the bus last had probes on it
     const uint8_t pin;
   private:
     void scan();
     void setResolution(const OneWireNg::Id& id);
     float readC(const uint8_t* addr);   // This device's scratchpad, or SYSTEM_ONEWIRE_DISCONNECTED_C
-    void requestIfDue();
+    void requestIfDue(bool fullWait = false); // fullWait: the fixed 750ms rather than polling for completion
     std::vector<OneWireDevice*> users; // Sensors on this bus, for resolveUnbound()
     OneWireNg_CurrentPlatform ow;      // The bus driver for whichever chip this is built for
     OneWireNg::Id ids[SYSTEM_ONEWIRE_MAX_DEVICES]; // What the last scan() found - see addressAt()

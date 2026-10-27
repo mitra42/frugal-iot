@@ -1590,11 +1590,32 @@ fails. Without it the first reading of every boot came back -127 (`DEVICE_DISCON
 every one after it was correct. `System_OneWire::tempC()` now retries a disconnected answer once
 with a **fresh conversion** rather than a fresh read of the same scratchpad. That costs nothing on
 a bus that is answering, rather than 750 ms of every boot and every deep-sleep wake, and it also
-covers a probe that recovers later in the life of the node rather than only at setup.
+covers a probe that recovers later in the life of the node rather than only at setup. 85.00 (the scratchpad's power-on content -
+no conversion finished before the read) is retried the same way, with the fixed 750 ms wait rather
+than polling the bus: the first hardware run (supermini, 2026-10-27) read 85.00 twice after boot.
 
 Note this is the second time a "looks redundant, was clearly added empirically" line in this file
 turned out to be load-bearing - the SHT's settle time was the first. Both were about a part not
 being ready as soon as the code was.
+
+**When there is no probe, the node says why.** `Sensor_DS18B20::diagnose()` → `System_OneWire::diagnose()`
+runs once per boot/wake per bus, when a sensor finds the bus empty or its bound probe stops answering,
+and prints one verdict line regardless of debug flags (raw checks under `SYSTEM_ONEWIRE_DEBUG`).
+
+The core check is `classifyLine()`: read the data pin under the chip's own weak pull-up, then its weak
+pull-down. High both times = an external pull-up is there; follows them = **floating, no pull-up**;
+low both times = something holds it down. This matters more than it looks: a line with no pull-up
+is a capacitor, so a reset drives it low, it STAYS low, and the sample after the reset reads as a
+presence pulse. On 2026-10-27 that cost a long session - two boards, three probes and a rollback to
+the old OneWire library - blaming a probe for "latching the line low" when the pull-up was not
+reaching the pin. `presence=1` means nothing until the line has been shown to be pulled up.
+
+With a switched rail (`SENSOR_DS18B20_POWER3v3_PIN`, handed to the bus by `powerPins()`) it also
+checks the rail pin reads back HIGH (a short or reversed probe drags it down), that the pull-up is on
+that rail (with the rail LOW a 4.7k to it beats the internal pull-up), and judges the line after
+power-cycling the probe, so a probe that latched low is told apart from a short. On plain 3V3 none of
+that is possible and a held-low line gets a verdict saying so. Software cannot see past the pull-up,
+so "no probe answers a reset" with a good pull-up means probe GND, data wire or the probe itself.
 
 **`validate()` does not reject 0.0 °C.** It used to, presumably to catch a startup artifact. That
 was survivable while a rejected reading was silently dropped, but once invalid readings began
