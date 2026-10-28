@@ -1963,8 +1963,10 @@ SSD1327 and draws in the darkest grey there is, i.e. invisibly.
 
 **There are two offset wrappers, not one template**, and that is deliberate. The wrapper exists so
 (0,0) means the first visible pixel on panels with a dead margin. Which methods need offsetting
-depends on what the driver overrides: `Adafruit_SSD1306` has its own fast-path `drawFastHLine`,
-`drawFastVLine` and `fillRect` that bypass `drawPixel`, so all four need it — whereas
+depends on what the driver overrides: `Adafruit_SSD1306` has its own fast-path `drawFastHLine`
+and `drawFastVLine` that bypass `drawPixel`, so those three need it, but **not** `fillRect` -
+it has none, and `Adafruit_GFX`'s draws through `drawFastVLine`. Offsetting it too once shifted
+every size>1 character (drawn as `fillRect`s) right by a second `OFFSET_X` on the HW675 - whereas
 `Adafruit_SSD1327` goes through `Adafruit_GrayOLED`, which overrides nothing but `drawPixel`, so
 the other three fall through to `Adafruit_GFX`'s generic versions that themselves call
 `drawPixel`. Offsetting those in the wrapper as well would apply the offset twice.

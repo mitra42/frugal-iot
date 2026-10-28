@@ -145,6 +145,34 @@ void Actuator_OLED::debug(const bool clear, const uint row, const uint n) {
     display.print(n);
     display.display();
 }
+/* UTF-8 characters the built-in font has a glyph for. The font is CP437, not UTF-8, so anything
+ * beyond ASCII in a sketch's source would otherwise draw as one unrelated glyph per byte.
+ * The glyph is one less than CP437's code, because unless cp437(true) is set Adafruit_GFX shifts
+ * every code >= 176 up by one. Add a row to handle another character.
+ */
+static const struct { const char* utf8; uint8_t glyph; } oledGlyphs[] = {
+  { "\xC2\xB0", 0xF7 }, // ° degree
+};
+
+// Print a UTF-8 string at the cursor, using the font's glyph for anything in oledGlyphs
+void Actuator_OLED::printUTF8(const char* s) {
+  while (*s) {
+    size_t len = 0;
+    for (const auto& g : oledGlyphs) {
+      const size_t n = strlen(g.utf8);
+      if ((len == 0) && (strncmp(s, g.utf8, n) == 0)) {
+        display.write(g.glyph);
+        len = n;
+      }
+    }
+    if (len == 0) { // Not in the table - pass the byte through
+      display.write(*s);
+      len = 1;
+    }
+    s += len;
+  }
+}
+
 void Actuator_OLED::drawXbox(const int16_t x0, const int16_t y0, const int16_t x1, const int16_t y1, const uint16_t color) {
     // Uses its own `color` argument, which it previously ignored in favour of WHITE - a
     // SSD1306-only macro, and the one caller passes the foreground colour anyway

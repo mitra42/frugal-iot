@@ -36,12 +36,12 @@ void Control_Oled_Single::act() {
       // Smaller, and bottom-aligned with the value: a size n character is 8n pixels high
       display->setCursor(display->getCursorX(), 8 * (big - small));
       display->setTextSize(small);
-      display->print(unit);
+      frugal_iot.oled->printUTF8(unit); // So "°C" draws a degree sign
     }
     if (label) {
       display->setCursor(0, 8 * big + 4 * small); // Half a line of the smaller size below the value
       display->setTextSize(small);
-      display->print(label);
+      frugal_iot.oled->printUTF8(label);
     }
     display->display();
   }

@@ -151,8 +151,10 @@
  * There is one wrapper per chip rather than a template, because which methods need the offset
  * depends on what the driver overrides, and getting that wrong double-offsets silently:
  *
- *  - Adafruit_SSD1306 bypasses drawPixel in its own fast-path drawFastHLine, drawFastVLine and
- *    fillRect, so all four need offsetting here.
+ *  - Adafruit_SSD1306 bypasses drawPixel in its own fast-path drawFastHLine and drawFastVLine, so
+ *    those three need offsetting here. It does NOT override fillRect: Adafruit_GFX's generic one
+ *    draws through drawFastVLine, so offsetting fillRect as well double-offsets - which is what
+ *    shifted every size>1 character (drawn as fillRects) right by a second OFFSET_X on the HW675.
  *  - Adafruit_SSD1327 goes through Adafruit_GrayOLED, which overrides NOTHING but drawPixel -
  *    the other three fall through to Adafruit_GFX's generic versions, which themselves call
  *    drawPixel. Offsetting them here as well would apply the offset twice.
@@ -175,9 +177,7 @@ class OLED_Offset : public Adafruit_SSD1306 {
     void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) override {
         Adafruit_SSD1306::drawFastVLine(x + ACTUATOR_OLED_OFFSET_X, y + ACTUATOR_OLED_OFFSET_Y, h, color);
     }
-    void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override {
-        Adafruit_SSD1306::fillRect(x + ACTUATOR_OLED_OFFSET_X, y + ACTUATOR_OLED_OFFSET_Y, w, h, color);
-    }
+    // Deliberately NOT overriding fillRect - see above
     int16_t visibleWidth()  const { return ACTUATOR_OLED_WIDTH  - ACTUATOR_OLED_OFFSET_X; }
     int16_t visibleHeight() const { return ACTUATOR_OLED_HEIGHT - ACTUATOR_OLED_OFFSET_Y; }
 };
@@ -215,6 +215,7 @@ class Actuator_OLED : public System_Base {
     //void displayMessage(const String &message); // Function to display a message on the OLED
     void debug(const bool clear, const uint row, const char* s);
     void debug(const bool clear, const uint row, const uint n);
+    void printUTF8(const char* s); // print() for text that may hold e.g. "°" - see oledGlyphs in oled.cpp
   protected:
     void drawXbox(const int16_t x0, const int16_t y0, const int16_t x1, const int16_t y1, const uint16_t color);
     TwoWire* wire;
