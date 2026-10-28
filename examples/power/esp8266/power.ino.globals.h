@@ -42,7 +42,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.6
+//     Frugal-IoT@^2.0.7
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -201,8 +201,9 @@
 #define CONFIG_FREERTOS_IDLE_TIME_BEFORE_SLEEP 2
 
     
-// selecting a platform for board descriotions
-// platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
+// selecting a platform for board descriptions
+// platform_esp32 = espressif32 @ ~8.0.0 ; released oct 2026, if problems switch back to the github one 
+//platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
 //platform_packages = framework-arduinoespressif32@3.3.2 ; also possible, but mostly unneeded and wont always work
 
 // [env]

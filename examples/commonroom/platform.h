@@ -37,7 +37,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.6
+//     Frugal-IoT@^2.0.7
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -186,8 +186,9 @@
 //     ${common.build_flags_map}
 //     ${common.build_flags_async}
    
-// selecting a platform for board descriotions
-// platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
+// selecting a platform for board descriptions
+// platform_esp32 = espressif32 @ ~8.0.0 ; released oct 2026, if problems switch back to the github one 
+//platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
 //platform_packages = framework-arduinoespressif32@3.3.2 ; also possible, but mostly unneeded and wont always work
 
 // [env]
@@ -404,10 +405,53 @@
 // board_build.partitions = min_spiffs.csv ; heltec_wifi_lora_32_v3 default of default_8MB.csv is fine (3.3Mb apps)
 // lib_deps = 
 //     ${common.lib_deps_lora_oled}
+
+// ===== Custom Boards ===== 
+
+// ==== Frugal-IoT V0.2 sensor board ======================================================
+// For frugal-iot-demo/platformio.ini - paste below the existing envs; uses its [common].
+// Copy variants/frugal_iot_v02/ into the project's variants/ folder.
+// Pin map: DECISIONS.md D3; connectors D4/D5 (J2 = sensors, J3 = RS485, J13/J5 = spares).
 #endif // ARDUINO_heltec_wifi_lora_32_V3
 
+// ===== [env:frugal_iot_v02] -> ARDUINO_ESP32C3_DEV
+#if defined(ARDUINO_ESP32C3_DEV) || defined(FRUGAL_IOT_V02)
+#define FRUGAL_IOT_BOARD_CONFIGURED
+// platform = ${common.platform_esp32}
+// board = esp32-c3-devkitm-1                ; generic C3, 4 MB = the -N4 module; defines ARDUINO_ESP32C3_DEV
+// board_build.variants_dir = variants
+// board_build.variant = frugal_iot_v02      ; LED_BUILTIN=8 plain LED, SDA=6, SCL=7
+// board_build.partitions = min_spiffs.csv
+// build_flags =
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "frugal_iot_v02"
+#define ARDUINO_FRUGAL_IOT_V02 // this board, for code and for scripts/generate_platform_h.py
+#define ARDUINO_USB_MODE 1 // native USB on the USB-C: no USB-UART chip
+#define ARDUINO_USB_CDC_ON_BOOT 1 // Serial = USB
+    // Status LED D4 on GPIO8 is active LOW; the library already inverts it for ARDUINO_ESP32C3_DEV.
+#define I2C_SDA 6
+#define I2C_SCL 7
+#define SYSTEM_POWER0_PIN 5 // 3V3_SW rail for all sensors, active low 
+#define SENSOR_BATTERY_PIN 3
+#define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // 1M/1M divider
+    // --- sensor inputs on J2: SENS1 = GPIO0, SENS2 = GPIO1, both ADC1.
+    // Each has unfitted pull-up (R18/R19, e.g. DS18B20) and filter-cap (C11/C12) positions. Examples:
+// #define SENSOR_SOIL_PIN 0
+// #define SENSOR_DS18B20_PIN 1 // fit R19 4.7k
+    // --- RS485 / Modbus on J3 pins 2 (A) / 3 (B), fitted by default (D29) ---
+#define SYSTEM_RS485_RX_PIN 20
+#define SYSTEM_RS485_TX_PIN 21
+#define SYSTEM_RS485_DE_PIN 10 // HIGH = transmit; RE is tied to DE; R20 = receive at reset
+#define SYSTEM_RS485_UART Serial1 // Serial is USB; Serial1 can be routed to GPIO20/21
+// #define SENSOR_SOILMODBUS_WANT // turn on for RS485 soil probes etc
+// #define SENSOR_SOILMODBUS_AUTOPROVISION
+    // --- spares on J13 (not fitted): GPIO2 (pin 6, ADC, must be high at reset - on-board pull-up)
+    // and GPIO4 (pin 9, ADC). On a board built without RS485, GPIO10 is free on J5 pin 2.
+
+#endif // ARDUINO_ESP32C3_DEV
+
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN S2 Mini / NodeMCU-32S / Heltec WiFi LoRa 32(V3)"
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN S2 Mini / NodeMCU-32S / Heltec WiFi LoRa 32(V3) / ESP32C3 Dev Module"
 #endif
 
 #endif // PLATFORM_H

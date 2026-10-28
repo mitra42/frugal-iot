@@ -5,9 +5,11 @@
 Actuator	KEYWORD1
 Actuator_Analog	KEYWORD1
 Actuator_Digital	KEYWORD1
+Actuator_Digital_Expander	KEYWORD1
 Actuator_LCD	KEYWORD1
 Actuator_Ledbuiltin	KEYWORD1
 Actuator_OLED	KEYWORD1
+Captive_Values	KEYWORD1
 Control	KEYWORD1
 Control_Blinken	KEYWORD1
 Control_Carousel	KEYWORD1
@@ -88,6 +90,7 @@ System_RS485	KEYWORD1
 System_SD	KEYWORD1
 System_SPI	KEYWORD1
 System_SensorActuator	KEYWORD1
+System_TCA9534	KEYWORD1
 System_Time	KEYWORD1
 System_Watchdog	KEYWORD1
 System_WiFi	KEYWORD1
@@ -98,6 +101,7 @@ System_WiFi	KEYWORD1
 
 Adafruit_SSD1306	KEYWORD2
 CRC4	KEYWORD2
+Captive_Values	KEYWORD2
 LightWifi_setup	KEYWORD2
 PromoteToNetworkManager	KEYWORD2
 RSSI	KEYWORD2
@@ -120,6 +124,7 @@ append	KEYWORD2
 attemptMdns	KEYWORD2
 awaitConversion	KEYWORD2
 bars	KEYWORD2
+beginOutput	KEYWORD2
 boolValue	KEYWORD2
 buildAndSend	KEYWORD2
 buildTopicPrefix	KEYWORD2
@@ -132,6 +137,7 @@ canRetry	KEYWORD2
 captiveLines	KEYWORD2
 captiveStatus	KEYWORD2
 captiveValueLines	KEYWORD2
+captiveValues	KEYWORD2
 changed	KEYWORD2
 checkForUpdate	KEYWORD2
 checkLevel	KEYWORD2
@@ -151,6 +157,7 @@ configEncode	KEYWORD2
 configPath	KEYWORD2
 configure	KEYWORD2
 configureMeasurement	KEYWORD2
+configureOutput	KEYWORD2
 configure_battery	KEYWORD2
 configure_enrolment	KEYWORD2
 configure_mqtt	KEYWORD2
@@ -170,6 +177,7 @@ createReceiveMessages	KEYWORD2
 dateTime	KEYWORD2
 debug	KEYWORD2
 detect	KEYWORD2
+diagnose	KEYWORD2
 discover	KEYWORD2
 dispatch	KEYWORD2
 dispatchIncomingQueued	KEYWORD2
@@ -177,6 +185,7 @@ drawFastHLine	KEYWORD2
 drawFastVLine	KEYWORD2
 drawPixel	KEYWORD2
 drawXbox	KEYWORD2
+end	KEYWORD2
 enrolIfNeeded	KEYWORD2
 exists	KEYWORD2
 externalSleepRequest	KEYWORD2
@@ -188,8 +197,11 @@ forEach	KEYWORD2
 forgetCredential	KEYWORD2
 formatBytes	KEYWORD2
 fullAdvertise	KEYWORD2
+getNextDaytime	KEYWORD2
 hasMeshSubscription	KEYWORD2
 heap_print	KEYWORD2
+holdOutput	KEYWORD2
+holdable	KEYWORD2
 html_entities	KEYWORD2
 httpPost	KEYWORD2
 in_network	KEYWORD2
@@ -266,6 +278,7 @@ reQueueSubscriptions	KEYWORD2
 reSubscribeAll	KEYWORD2
 read	KEYWORD2
 read16	KEYWORD2
+readC	KEYWORD2
 readCalibration	KEYWORD2
 readConfigFromFS	KEYWORD2
 readFloat	KEYWORD2
@@ -281,6 +294,7 @@ recover	KEYWORD2
 recoverWiFi	KEYWORD2
 relayDownstream	KEYWORD2
 relayPermitted	KEYWORD2
+releaseOutput	KEYWORD2
 remove	KEYWORD2
 requestIfDue	KEYWORD2
 rescan	KEYWORD2
@@ -312,6 +326,7 @@ setLanguage	KEYWORD2
 setMode	KEYWORD2
 setOutputsInvalid	KEYWORD2
 setPath	KEYWORD2
+setResolution	KEYWORD2
 setStatus	KEYWORD2
 setTimezoneOffset	KEYWORD2
 setup	KEYWORD2
@@ -329,6 +344,7 @@ speedOfSound	KEYWORD2
 spinTillReady	KEYWORD2
 split	KEYWORD2
 spurt	KEYWORD2
+startRefresh	KEYWORD2
 startSerial	KEYWORD2
 stateMachine	KEYWORD2
 statusLine	KEYWORD2
@@ -354,10 +370,13 @@ txEnable	KEYWORD2
 unlockLoop	KEYWORD2
 validate	KEYWORD2
 validateGas	KEYWORD2
+valueSpan	KEYWORD2
 visibleHeight	KEYWORD2
 visibleWidth	KEYWORD2
 wakeNow	KEYWORD2
 wireTo	KEYWORD2
+writeBit	KEYWORD2
 writeConfig	KEYWORD2
 writeConfigToFS	KEYWORD2
+writeOutput	KEYWORD2
 writeSingleRegister	KEYWORD2

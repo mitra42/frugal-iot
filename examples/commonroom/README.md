@@ -42,6 +42,7 @@ the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first
 | NodeMCU-32S | `nodemcu_tambak` |  |
 | NodeMCU-32S | `nodemcu_laut` | `NODEMCU_LAUT` |
 | Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V32` |  |
+| ESP32C3 Dev Module | `frugal_iot_v02` |  |
 
 The LoRa board - Heltec WiFi LoRa 32(V3) - also needs LoRaMesher, which is not in the Library Manager:
 

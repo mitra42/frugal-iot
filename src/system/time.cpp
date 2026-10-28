@@ -26,10 +26,13 @@
 #include "system/frugal.h"
 #include "system/language.h" // for Texts (captive portal labels)
 
-// Nothing in the library arms a sleep-safe timer for more than SYSTEM_OTA_S (an hour), so any
-// timer further out than this after a clock step is measuring against a clock that has moved.
+/* Any timer further out than this after a clock step is measuring against a clock that has moved.
+ *
+ * Two days, not one: an application arming a daily appointment with getNextDaytime() can be up to
+ * 25 hours out on the day the clocks go back, and one day would expire that early.
+ */
 #ifndef SYSTEM_TIME_TIMER_MAX_S
-  #define SYSTEM_TIME_TIMER_MAX_S 86400
+  #define SYSTEM_TIME_TIMER_MAX_S (2 * 86400)
 #endif
 
 #ifdef ESP32
@@ -109,6 +112,30 @@ void System_Time::sync() {
 bool System_Time::isTimeSet() {
   time(&_now);
   return (_now > JAN_01_2024); 
+}
+
+time_t System_Time::getNextDaytime(uint8_t hour, uint8_t minute, uint8_t second) {
+  time_t next = 0;
+  if (isTimeSet()) {
+    const time_t current = now();
+    struct tm lt;
+    localtime_r(&current, &lt);
+    lt.tm_hour = hour;
+    lt.tm_min = minute;
+    lt.tm_sec = second;
+    lt.tm_isdst = -1; // Let mktime decide, rather than inheriting today's flag
+    next = mktime(&lt);
+    if (next <= current) {
+      // <= so that asking exactly AT the time gives tomorrow - "next" is never now.
+      lt.tm_mday += 1;
+      lt.tm_hour = hour;
+      lt.tm_min = minute;
+      lt.tm_sec = second;
+      lt.tm_isdst = -1;
+      next = mktime(&lt);
+    }
+  }
+  return next;
 }
 
 //Return time in milliseconds since Epoch

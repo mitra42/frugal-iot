@@ -17,6 +17,14 @@ class System_Time : public System_Base {
     time_t now();
     String dateTime();
     bool isTimeSet();
+    /* Epoch of the next hour:minute:second local time strictly after now - today's if it is still
+     * to come, otherwise tomorrow's. 0 if the clock is not set, as anything computed from an unset
+     * clock would be a 1970 date, long past.
+     *
+     * Right across a daylight-saving change, and on a 23 or 25 hour day, because the day is moved
+     * on the calendar and mktime() works out the offset - not by adding 86400.
+     */
+    time_t getNextDaytime(uint8_t hour, uint8_t minute, uint8_t second = 0);
     void sync();
     /* Step the clock to epoch (seconds since 1970 UTC).
      *
