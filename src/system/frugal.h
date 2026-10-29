@@ -42,6 +42,7 @@
 #include "actuator/oled.h"
 #include "system/ota.h"
 #include "system/power.h"
+#include "system/serialconfig.h"
 #include "system/time.h"
 #include "system/watchdog.h"
 #include "system/wifi.h"
@@ -50,6 +51,9 @@ class System_Frugal : public System_Group {
   public:
     // Configuration strings 
     String org;
+    // A change that needs a restart, made over serial: held until the batch ends so one profile can
+    // set org, project and WiFi without the node resetting between them - see System_SerialConfig
+    bool restartPending = false;
     String project;
     String description; 
     const String nodeid; // Unique id - starts esp32- or esp8266-

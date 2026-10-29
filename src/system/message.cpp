@@ -283,6 +283,8 @@ String System_Message::leaf() { return leaf_; } // temperature or temperature/ma
 bool System_Message::isSet() { return flags_ & MsgIsSet; } 
 bool System_Message::isSubscription() { return flags_ & MsgIsSubscription; } 
 bool System_Message::isFromCaptive() { return flags_ & MsgFromCaptive; } 
+bool System_Message::isFromFS() { return flags_ & MsgFromFS; }
+bool System_Message::isFromSerial() { return flags_ & MsgFromSerial; }
 
 
 // Downstream MQTT -> modules (note that LoRaMesher is a module that forwards based on subscriptions)
@@ -335,6 +337,9 @@ void System_Messages::queueIncoming(const String &topicPath, const String &paylo
 }
 void System_Messages::queueFromCaptive(const String &twig, const String &payload) {
   queueIncoming(path(twig), payload, MsgFromCaptive);
+}
+void System_Messages::queueFromSerial(const String &twig, const String &payload) {
+  queueIncoming(path(twig), payload, MsgFromSerial);
 }
 void System_Messages::queueLoopback(const String &topicPath, const String &payload) {
   queueIncoming(topicPath, payload, MsgIsLoopback);

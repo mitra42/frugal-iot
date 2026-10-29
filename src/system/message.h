@@ -23,6 +23,7 @@
 #define MsgIsThisNode 0x08
 #define MsgFromCaptive 0x10
 #define MsgFromMQTT 0x20
+#define MsgFromSerial 0x1000      // A line from System_SerialConfig - see serialconfig.h
 #ifdef SYSTEM_LORAMESHER_WANT
   #define MsgFromLoRaMesher 0x40
 #endif
@@ -56,6 +57,8 @@ class System_Message { // Only used for outgoing queued messages
     bool isSet();
     bool isSubscription();
     bool isFromCaptive();
+    bool isFromSerial();
+    bool isFromFS();
     void maybeWriteToFS(bool appendValue = false);
     void maybeEcho();
     void maybeWriteToFSandEcho(bool appendValue = false);
@@ -107,6 +110,7 @@ class System_Messages : public System_Base {
     size_t outgoingCount() const { return outgoing.size(); }
     void queueIncoming(const String &topicPath, const String &payload, uint16_t flags); // Called by MQTT and LoRaMesher
     void queueFromCaptive(const String &twig, const String &payload);
+    void queueFromSerial(const String &twig, const String &payload);
     void queueLoopback(const String &topicPath, const String &payload);
     void sendRemote(const String topicPath, const String payload, bool retain, uint8_t qos, uint16_t flags); // Only remote send, no loopback
     #ifdef SYSTEM_MDNS_WANT

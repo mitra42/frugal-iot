@@ -268,6 +268,12 @@
     #define LANGUAGE_ALL
 #endif
 
+// Setting a node over USB serial (system/serialconfig.h). On unless SYSTEM_SERIALCONFIG_NOT, and it
+// starts Serial even without ANY_DEBUG, which is what lets a production build be configured.
+#if !defined(SYSTEM_SERIALCONFIG_NOT) && !defined(SYSTEM_SERIALCONFIG_WANT)
+  #define SYSTEM_SERIALCONFIG_WANT
+#endif
+
 // Always defined currently,
 #define SYSTEM_WIFI_WANT  // currently always wanted
 

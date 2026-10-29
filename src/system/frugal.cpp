@@ -92,7 +92,16 @@ void System_Frugal::dispatch(System_Message &msg) {
     bool dispatched = false;
     bool needrestart = false;
     bool changed = false;
-    if (msg.leaf() == "project") { 
+    if (msg.leaf() == "org") {
+      // Same rule as project: blank is ignored, and the credential belongs to the old org
+      if (msg.payload.length() && (msg.payload != org)) {
+        org = msg.payload;
+        if (mqtt) { mqtt->forgetCredential(); }
+        needrestart = true;
+        changed = true;
+      }
+      dispatched = true;
+    } else if (msg.leaf() == "project") { 
       // Unclear we should be changing project on a device live
       // A blank project would leave the node publishing under org//node and unable to enrol, so ignore it.
       if (msg.payload.length() && ((msg.payload) != project)) {
@@ -126,7 +135,11 @@ void System_Frugal::dispatch(System_Message &msg) {
       System_Base::dispatch(msg);
     }
     if (needrestart) {
-      ESP.restart();
+      if (msg.isFromSerial()) {
+        restartPending = true;
+      } else {
+        ESP.restart();
+      }
     }
   } 
   // Loop over all other actuators, sensors, controls etc -
@@ -248,6 +261,9 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
     system->add(loramesher);
   #endif // SYSTEM_LORAMESHER_WANT
   system->add(captive); // Must come before mdns — captive starts the server
+  #ifdef SYSTEM_SERIALCONFIG_WANT
+    system->add(new System_SerialConfig());
+  #endif
   #ifdef SYSTEM_MDNS_WANT
     system->add(mdns);  // setup() adds its STA route to captive's server
   #endif // SYSTEM_MDNS_WANT
@@ -314,6 +330,12 @@ void System_Frugal::pre_setup() {
     // one line saying which project the node is in reported the compiled-in default while the node
     // used the one from the filesystem.
     Serial.print(F("Project set to:")); Serial.println(project);
+  }
+  // Org the same way, and for the same reason: it is part of the topic prefix
+  String newOrg = fs_LittleFS->slurp(fs_LittleFS->configPath(id, "org"), true);
+  if (newOrg.length()) {
+    org = newOrg;
+    Serial.print(F("Org set to:")); Serial.println(org);
   }
   // Note this will read project again
   readConfigFromFS(); // Reads config (project, name) and passes to our dispatch - note this just reads frugal_iot/ not other directories which are read in actuator,sensor,control,system_xxx.setup
@@ -408,8 +430,10 @@ void System_Frugal::loop() {
 #endif
 void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
   // Encapsulate setting up and starting serial
-  #ifdef ANY_DEBUG
+  #if defined(ANY_DEBUG) || defined(SYSTEM_SERIALCONFIG_WANT)
     Serial.begin(baud);
+  #endif
+  #ifdef ANY_DEBUG
     /*
     // Don't wait for serial - it will block if there is no USB connected. 
     while (!Serial) { 
@@ -424,7 +448,7 @@ void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
       }
     #endif
     Serial.println(F("FrugalIoT Starting"));
-  #endif // ANY_DEBUG  
+  #endif // ANY_DEBUG
 }
 #ifndef SERIAL_BAUD
   #define SERIAL_BAUD 460800

@@ -46,6 +46,7 @@ class System_MQTT : public System_Base {
     bool send(const String &topicPath, const String &payload, const bool retain, const int qos);
     void forgetCredential();         // the next connect falls back to the compiled-in pair, and enrols
     void captiveStatus(Print* out);  // one line for the portal: connected, or why not
+    bool enrolled() { return storedUsername.length() && storedPassword.length(); }
 
   protected:
     /* Outcome of the last enrolment and connection attempts, so captiveStatus() can say why there
@@ -74,6 +75,11 @@ class System_MQTT : public System_Base {
     // dashboard. A null pointer means the sketch uses configure_mqtt(host, user, password) and does
     // not enrol at all.
     const char* enrolmentSecret = nullptr;
+    // Set over serial or MQTT, kept in LittleFS, and preferred to the compiled-in one so a single image
+    // can enrol into any org
+    String storedEnrolSecret;
+    bool canEnrol() { return enrolmentSecret || storedEnrolSecret.length(); }
+    String enrolSecret() { return storedEnrolSecret.length() ? storedEnrolSecret : String(enrolmentSecret); }
     /*
      * When to ask again, rather than once per boot.
      *

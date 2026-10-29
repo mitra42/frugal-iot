@@ -143,7 +143,7 @@ const char* System_MQTT::mqttPassword() {
  * every image for this one request.
  */
 void System_MQTT::enrolIfNeeded() {
-  if (!enrolmentSecret) return;                            // sketch uses the three-argument form
+  if (!canEnrol()) return;                                 // sketch uses the three-argument form
   if (storedUsername.length() && storedPassword.length()) return;   // already has one
   if (!frugal_iot.wifi->connected()) return;               // needs the network
   // Not once per boot: see nextEnrolTime in the header for why that stranded nodes. millisReached,
@@ -177,7 +177,7 @@ void System_MQTT::enrolIfNeeded() {
   String body = String(F("{\"org\":\"")) + frugal_iot.org
               + F("\",\"project\":\"") + frugal_iot.project
               + F("\",\"nodeid\":\"") + frugal_iot.nodeid
-              + F("\",\"enrolment_secret\":\"") + enrolmentSecret
+              + F("\",\"enrolment_secret\":\"") + enrolSecret()
               #ifdef SYSTEM_LORAMESHER_WANT
                 // Declared by the BUILD, not by whether it happens to be acting as a gateway: any
                 // node that sees WiFi can promote itself at runtime, so the broader publish a
@@ -492,7 +492,7 @@ bool System_MQTT::connect() {
  * Only reached on an authorisation refusal, never on a network failure.
  */
 void System_MQTT::noteAuthFailure() {
-  if (!enrolmentSecret) return;            // nothing to enrol with; the credential is all we have
+  if (!canEnrol()) return;                 // nothing to enrol with; the credential is all we have
   if (++authFailures < SYSTEM_MQTT_ENROL_RETRY_AFTER) return;
   // No "already has nothing stored, so give up" here, deliberately. That guard stranded exactly
   // the node this is for: one that has just discarded a refused credential holds nothing, and
@@ -512,8 +512,8 @@ void System_MQTT::noteAuthFailure() {
 void System_MQTT::forgetCredential() {
   storedUsername = String();
   storedPassword = String();
-  frugal_iot.fs_LittleFS->spurt("/mqtt/username", String());
-  frugal_iot.fs_LittleFS->spurt("/mqtt/password", String());
+  frugal_iot.fs_LittleFS->spurt(frugal_iot.fs_LittleFS->configPath(id, "username"), String());
+  frugal_iot.fs_LittleFS->spurt(frugal_iot.fs_LittleFS->configPath(id, "password"), String());
 }
 
 // This is for MQTT messages addressed at the mqtt module e.g. dev/org/node/set/mqtt/hostname
@@ -534,6 +534,14 @@ void System_MQTT::dispatch(System_Message &msg) {
       hostname = msg.payload;
       writeConfigToFS(msg.leaf(), msg.payload);
       // Could echo here but dont need to
+    } else if (msg.leaf() == "enrol_secret") {
+      // Never echoed, like the credential below: a retained echo would publish it to the broker.
+      // And only from disk or the cable - a secret sent through the broker would be on the broker.
+      if (msg.isFromFS() || msg.isFromSerial()) {
+        storedEnrolSecret = msg.payload;
+        if (!msg.isFromFS()) { writeConfigToFS(msg.leaf(), msg.payload); }
+        nextEnrolTime = 0; // a new secret is worth trying now rather than at the next window
+      }
     } else if (msg.leaf() == "username" || msg.leaf() == "password") {
       // This node's own broker credential, normally arriving from LittleFS at startup via
       // readConfigFromFS. Deliberately NOT echoed and not written back: an echo would publish the
