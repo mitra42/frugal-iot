@@ -44,6 +44,12 @@ void setup() {
   frugal_iot.sensors->add(new Sensor_BH1750("lux", "Light Sensor", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true))
   ->powerPins(SENSOR_BH1750_POWER3v3_PIN, SENSOR_BH1750_POWER0_PIN);
 
+  // On a board with an OLED, show the light level on it - large, with its unit and a label
+  #ifdef ACTUATOR_OLED_WANT
+    Control_Oled_Single* cos = new Control_Oled_Single("Control OLED", "lx", "Light");
+    frugal_iot.controls->add(cos);
+    cos->value->wireTo(frugal_iot.messages->path("lux/lux")); // The BH1750's output
+  #endif
 
   // If required, add a control - this is just an example
   Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);

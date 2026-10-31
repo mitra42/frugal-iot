@@ -45,6 +45,13 @@ void setup() {
   // Add sensors, actuators and controls
   frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
+  // On a board with an OLED, show the soil moisture on it - large, with its unit and a label
+  #ifdef ACTUATOR_OLED_WANT
+    Control_Oled_Single* cos = new Control_Oled_Single("Control OLED", "%", "Soil moisture");
+    frugal_iot.controls->add(cos);
+    cos->value->wireTo(frugal_iot.messages->path("soil/soil")); // The soil sensor's output
+  #endif
+
   // If required, add a control - this is just an example
   Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
