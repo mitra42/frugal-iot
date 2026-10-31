@@ -338,7 +338,7 @@ Frugal-IoT/
 │   ├── ensaht/            # ENS160 air quality + AHT21
 │   ├── gps/               # GPS location via NMEA serial module + OLED
 │   ├── gsheets/           # Google Sheets integration
-│   ├── hcsr04/            # HC-SR04 ultrasonic distance (trigger/echo)
+│   ├── ultrasonic/        # Ultrasonic distance - any of the three drivers, by build flag
 │   ├── lcd_ht/           # HD44780 LCD showing a remote HT (e.g. SHT) node's readings over MQTT
 │   ├── lilygohigrow/      # Plant watering (LilyGo HiGrow)
 │   ├── ms5803/            # MS5803 pressure sensor
@@ -1730,25 +1730,25 @@ Speed of sound is `331.3 + 0.606 * T` m/s — 0.17 %/°C — from a wireable `te
 `SENSOR_HCSR04_DEFAULT_TEMPERATURE` (20) until wired, and falls back to it if the wired sensor
 publishes `nan`. `SENSOR_HCSR04_TEMPERATURE_PATH` sets a default wiring.
 
-**Also the AJ-SR04M** (waterproof, probe on a cable), in its as-shipped trigger/echo mode (R19
-empty - the serial modes would need a new subclass). It differs in having a ~20-25 cm blind zone
+**Also the AJ-SR04M and SR04M-2** (waterproof, probe on a cable), in the as-shipped trigger/echo
+mode (R19 empty). With 120k on R19 they send the A01NYUB's frame instead - use `Sensor_A01NYUB`. It differs in having a ~20-25 cm blind zone
 (one transducer), ~4.5 m range and a 3.0-5.5 V supply, so wants `SENSOR_HCSR04_MIN_MM=200` and
 `_MAX_MM=4500`, and possibly `SENSOR_HCSR04_TRIGGER_US=20` (default 10) or `_INTERVAL_MS=100`.
 The comparison table and R19 modes are at the top of `sensor/hcsr04.h` - from vendor listings,
 not yet checked on hardware. The limits are build flags, so apply to every instance on a node.
 
-Pins are constructor arguments; `SENSOR_HCSR04_TRIGGER_PIN`/`_ECHO_PIN` are only what
-`examples/hcsr04` passes. **ECHO is 5 V on a standard HC-SR04** — a 1k/2k divider to the ESP pin.
+Pins are constructor arguments; `examples/ultrasonic` passes its own `SENSOR_ULTRASONIC_TRIG_PIN` and
+`SENSOR_ULTRASONIC_ECHO_PIN`, which it uses for all three drivers (see that example's README for wiring). **ECHO is 5 V on a standard HC-SR04** — a 1k/2k divider to the ESP pin.
 The HC-SR04P runs at 3.3 V and needs none.
 
 ```cpp
-Sensor_HCSR04* us = new Sensor_HCSR04("hcsr04", "Distance", SENSOR_HCSR04_TRIGGER_PIN, SENSOR_HCSR04_ECHO_PIN);
+Sensor_HCSR04* us = new Sensor_HCSR04("hcsr04", "Distance", SENSOR_ULTRASONIC_TRIG_PIN, SENSOR_ULTRASONIC_ECHO_PIN);
 frugal_iot.sensors->add(us);
 us->temperature->wireTo(sht->temperature->path()); // optional
 ```
 
-`hcsr04` is not in the server's `modules.yaml` yet, so `sensor/hcsr04.h` defines fallback
-`DEFAULT_hcsr04_hcsr04_color`/`_max` under `#ifndef` until `defaults.h` has them.
+`sensor/hcsr04.h` keeps `#ifndef` fallbacks for `DEFAULT_hcsr04_hcsr04_color`/`_max`, which
+`defaults.h` now defines anyway.
 
 #### Sensor_A01NYUB
 
@@ -1768,13 +1768,14 @@ TX pin is claimed. No median and no temperature input, unlike `Sensor_HCSR04`: t
 in processed mode, and is understood to compensate for temperature itself (not yet confirmed).
 
 The A02YYUW (3 cm - 4.5 m) uses the same frame and should work with
-`SENSOR_A01NYUB_MIN_MM=30 _MAX_MM=4500`. Not ESP8266: UART0 is the console and `Serial1` cannot
+`SENSOR_A01NYUB_MIN_MM=30 _MAX_MM=4500`, and so does an AJ-SR04M / SR04M-2 with 120k on R19
+(`_MIN_MM=200 _MAX_MM=4500`; ESPHome's `jsn_sr04t` parses the same frame). Not ESP8266: UART0 is the console and `Serial1` cannot
 receive. ESP32-C3/S2 have no `Serial2`, so use `Serial1` there.
 
 ```cpp
-frugal_iot.sensors->add(new Sensor_A01NYUB("a01nyub", "Distance", &Serial1, SENSOR_A01NYUB_RX_PIN));
+frugal_iot.sensors->add(new Sensor_A01NYUB("a01nyub", "Distance", &Serial1, SENSOR_ULTRASONIC_ECHO_PIN));
 // Depth of water, sensor 2000mm above the tank floor:
-//  new Sensor_A01NYUB("a01nyub", "Depth", &Serial1, SENSOR_A01NYUB_RX_PIN,
+//  new Sensor_A01NYUB("a01nyub", "Depth", &Serial1, SENSOR_ULTRASONIC_ECHO_PIN,
 //    2000, DEFAULT_a01nyub_a01nyub_color, true, 2000.0, -1.0);
 ```
 

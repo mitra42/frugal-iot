@@ -1,6 +1,6 @@
 // Deep Sleep issues: none - nothing is carried between reads, and setup() sets the pins up again each wake.
 /*
- * HC-SR04 ultrasonic distance sensor - trigger / echo timing. Also the AJ-SR04M, see below.
+ * HC-SR04 ultrasonic distance sensor - trigger / echo timing. Also the AJ-SR04M and SR04M-2, see below.
  *
  * NOTE - AS OF 2026-09-29 THIS IS UNTESTED CODE, on either module
  *
@@ -50,11 +50,16 @@
  *   The HC-SR04P, and boards built on the single RCWL-9610A chip that look like an HC-SR04 from
  *   the front, run at 3.0 - 5.5V and are otherwise the HC-SR04 column.
  *
- * AJ-SR04M modes, set by R19 - only the first is trigger/echo, and so only it works with this class:
- *   R19 empty (as shipped) - trigger/echo, the same protocol as the HC-SR04
- *   300k                   - low-power trigger/echo - probably works, untested
- *   120k                   - serial, 9600 baud, sends a reading about every 100ms  } would need
- *   47k                    - serial, sends a reading when asked                    } a new subclass
+ *   The SR04M-2 is a later AJ-SR04M board (an STM8 on it, hence a SWIM pad) and is the AJ-SR04M
+ *   column. Its header is labelled 5V / RX / TX / GND: RX is TRIG and TX is ECHO. Some sellers
+ *   rate it 5V only, so expect ECHO at 5V and use the divider unless it works from 3V3.
+ *
+ * AJ-SR04M / SR04M-2 modes, set by R19. Sources disagree on the low-power values (300k vs 47k),
+ * but agree that empty is trigger/echo and that 120k is continuous serial:
+ *   R19 empty (as shipped) - trigger/echo, the same protocol as the HC-SR04 - this class
+ *   300k or 47k            - low-power trigger/echo (longer TRIG pulse) or serial on request
+ *   120k                   - serial, 9600 baud, a frame about every 100ms - use Sensor_A01NYUB,
+ *                            the frame is the same (0xFF H L SUM) - with MIN_MM=200 MAX_MM=4500
  *
  * For a tank, mount an AJ-SR04M at least its blind zone above the highest the water will reach.
  *
@@ -76,8 +81,8 @@
  *   <id>/temperature   - air temperature in C, wireable
  *
  * Build flags:
- *   SENSOR_HCSR04_TRIGGER_PIN, SENSOR_HCSR04_ECHO_PIN - not used by the library, which takes the
- *                                     pins as constructor arguments; the examples pass these
+ *   (the library reads no pin flags - the pins are constructor arguments; examples/ultrasonic passes
+ *    SENSOR_ULTRASONIC_TRIG_PIN and SENSOR_ULTRASONIC_ECHO_PIN)
  *   SENSOR_HCSR04_TRIGGER_US     (10)    - length of the TRIG pulse
  *   SENSOR_HCSR04_SAMPLES        (5)     - pings per read, median taken
  *   SENSOR_HCSR04_INTERVAL_MS    (60)    - wait between pings

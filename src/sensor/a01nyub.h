@@ -40,7 +40,8 @@
  *   A01NYUB  - this one
  *   A01ANY4B - RS485/Modbus version, see Sensor_UltrasonicModbus
  *   "UART controlled" variants send a frame only when RX is pulsed - would need a new subclass
- *   AJ-SR04M in its serial modes (R19 = 120k) uses a different frame - see sensor/hcsr04.h
+ *   AJ-SR04M / SR04M-2 with 120k on R19 - same frame, a frame every ~100ms; set
+ *              SENSOR_A01NYUB_MIN_MM=200 and _MAX_MM=4500. See sensor/hcsr04.h for its other modes.
  *
  * The limits are build flags, so they apply to every Sensor_A01NYUB on the node.
  *
@@ -56,8 +57,8 @@
  *   <id>/<id>          - distance in mm (offset + raw * scale)
  *
  * Build flags:
- *   SENSOR_A01NYUB_RX_PIN - not used by the library, which takes the pin as a constructor
- *                           argument; for sketches to pass
+ *   (the library reads no pin flag - the pin is a constructor argument; examples/ultrasonic
+ *    passes SENSOR_ULTRASONIC_ECHO_PIN)
  *   SENSOR_A01NYUB_TIMEOUT_MS (1000) - wait for a good frame after the buffer is flushed
  *   SENSOR_A01NYUB_MIN_MM (280), SENSOR_A01NYUB_MAX_MM (7500) - valid range
  *   SENSOR_A01NYUB_DEBUG             - Serial debug output
