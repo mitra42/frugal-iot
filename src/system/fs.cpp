@@ -16,6 +16,9 @@
 
 #include "_settings.h"
 #include <Arduino.h>
+#ifdef ESP32
+  #include <esp_log.h>
+#endif
 
 #if defined(SYSTEM_SD_DEBUG) || defined(SYSTEM_LITTLEFS_DEBUG)
   #define SYSTEM_FS_DEBUG
@@ -409,22 +412,32 @@ void System_SD::setup() {
  * begin(true) formats silently after the core has already logged "Failed to initialise LittleFS",
  * so on a first boot the log showed only that error and never that it had been dealt with - which
  * looked like a broken board. Hence the unconditional print below, not under SYSTEM_LITTLEFS_DEBUG.
+ *
+ * Even so the component logs its own errors on that path, so ESP32 logging is silenced across the
+ * mount and format, and restored before anything is said. Only a real failure lets it speak again.
  */
 void System_LittleFS::pre_setup() {
   // ESP8266/FS.cpp has no parameters to begin() and so does NOT format a non-existent filesystem
   #ifdef ESP8266
     mounted = ESPFS.begin();
   #else
+    // A blank partition makes esp_littlefs and the core log errors ("Corrupted dir pair", "mount
+    // failed (-84)", a watchdog complaint from format) that read as a fault but are the ordinary way
+    // to a first format. Quiet until the outcome is known, and say it ourselves below.
+    esp_log_level_set("*", ESP_LOG_NONE);
     mounted = ESPFS.begin(false);
   #endif
   if (!mounted) {
-    Serial.println(F("LittleFS would not mount (expected on a first boot, explains any error above) - formatting"));
+    Serial.println(F("LittleFS would not mount (normal on a first boot) - formatting"));
     #ifdef ESP8266
       if (ESPFS.format()) {
         mounted = ESPFS.begin();
       }
     #else
       mounted = ESPFS.begin(true); // Formats, then mounts
+    #endif
+    #ifndef ESP8266
+      esp_log_level_set("*", (esp_log_level_t)CONFIG_LOG_DEFAULT_LEVEL);
     #endif
     if (mounted) {
       Serial.println(F("LittleFS formatted and mounted OK - any previous settings are gone"));
@@ -433,7 +446,14 @@ void System_LittleFS::pre_setup() {
       // Say plainly that nothing can be saved, because every settings write from here on will fail.
       Serial.println(F("LittleFS UNUSABLE - no settings can be saved."));
       Serial.println(F("  Check the partition table has a 'spiffs' entry (board_build.partitions)."));
+      #ifndef ESP8266
+        ESPFS.begin(false); // Again, now the component may speak: its error says why
+      #endif
     }
+  } else {
+    #ifndef ESP8266
+      esp_log_level_set("*", (esp_log_level_t)CONFIG_LOG_DEFAULT_LEVEL);
+    #endif
   }
   if (mounted) {
     // Unconditional, and cheap: it answers "is there a filesystem on this board, and is anything
