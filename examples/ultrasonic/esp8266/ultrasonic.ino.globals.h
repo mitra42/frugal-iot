@@ -4,8 +4,8 @@
   This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini
 */
 
-#ifndef HCSR04_INO_GLOBALS_H
-#define HCSR04_INO_GLOBALS_H
+#ifndef ULTRASONIC_INO_GLOBALS_H
+#define ULTRASONIC_INO_GLOBALS_H
 
 // Tells the library this file made it into the build. Deliberately outside
 // every #ifdef below: it says "the file is here", not "your board is covered",
@@ -35,14 +35,14 @@
 // checkout with no such file builds unchanged instead of erroring.
 // extra_configs = *-local.ini
 
-// name: Frugal-IoT HCSR04
-// description: Frugal IoT - HC-SR04 ultrasonic distance sensor
+// name: Frugal-IoT Ultrasonic
+// description: Frugal IoT - ultrasonic distance sensor: HC-SR04, AJ-SR04M / SR04M-2, A01NYUB or RS485
 // src_dir = .
 //This src_dir line should be present if your program is in xxx.ino or commented out if your program is in src/main.cpp
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.7
+//     Frugal-IoT@^2.0.8
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -74,19 +74,34 @@
 // #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
 // #define SENSOR_DS18B20_PIN 6
 // #define SENSOR_SOIL_PIN 4
-// #define SENSOR_HCSR04_SAMPLES 5 // pings per reading, median taken
-    // For an AJ-SR04M (waterproof) instead of an HC-SR04 - see the table in sensor/hcsr04.h
+    // WHICH SENSOR - see README.md for the wiring of each. Leave all three below commented for a
+    // trigger/echo module: HC-SR04, HC-SR04P, or an AJ-SR04M / SR04M-2 as shipped (nothing on R19).
+    //
+    // (a) Serial: DFRobot A01NYUB or A02YYUW, or an AJ-SR04M / SR04M-2 with 120k on R19.
+// #define SENSOR_A01NYUB_WANT
+// #define SENSOR_A01NYUB_MIN_MM 200 // AJ-SR04M / SR04M-2 (A02YYUW: 30). A01NYUB: leave at 280
+// #define SENSOR_A01NYUB_MAX_MM 4500 // AJ-SR04M / SR04M-2 and A02YYUW. A01NYUB: leave at 7500
+    //
+    // (b) RS485 / Modbus, e.g. A01ANY4B, through a TTL-RS485 converter. The slave id is what turns
+    // Modbus on; the converter uses the same two pins as the other sensors. ~20k of flash.
+// #define SENSOR_ULTRASONIC_SLAVE_ID 1
+// #define SYSTEM_RS485_RX_PIN SENSOR_ULTRASONIC_ECHO_PIN // converter RO
+// #define SYSTEM_RS485_TX_PIN SENSOR_ULTRASONIC_TRIG_PIN // converter DI
+// #define SYSTEM_RS485_DE_PIN <gpio> // only if the converter has DE/RE pins - a free GPIO, not auto-direction
+    //
+    // Power the module from a GPIO so it is off while the node sleeps - see README.md, a GPIO
+    // can only feed a small 3.3V module directly
+// #define SENSOR_ULTRASONIC_POWER3v3_PIN <gpio>
+    //
+    // Trigger/echo tuning
+// #define SENSOR_HCSR04_SAMPLES 5 // echoes wanted per reading, median taken
+// #define SENSOR_HCSR04_MAX_PINGS 15 // give up after this many pings if echoes are missing
+    // For an AJ-SR04M / SR04M-2 (waterproof) instead of an HC-SR04 - see the table in sensor/hcsr04.h
 // #define SENSOR_HCSR04_MIN_MM 200 // its blind zone is ~20-25cm
 // #define SENSOR_HCSR04_MAX_MM 4500
 // #define SENSOR_HCSR04_TRIGGER_US 20 // only if it never returns an echo at the default 10us
 // #define SENSOR_HCSR04_INTERVAL_MS 100 // only if readings jump about
 // #define SENSOR_HCSR04_TEMPERATURE_PATH "sht/temperature" // wire the speed of sound to a temperature
-    // The ultrasonic sensor talks Modbus over RS485. Its slave id switches on SYSTEM_MODBUS_WANT,
-    // which then needs the UART pins as well - all three, or system/modbus.h stops the build with
-    // an #error. Costs ~20k of flash (ModbusMaster + the RS485/Modbus classes).
-// #define SENSOR_ULTRASONIC_SLAVE_ID 1
-// #define SYSTEM_RS485_RX_PIN 20
-// #define SYSTEM_RS485_TX_PIN 21
 // #define SYSTEM_SD_WANT // Uses LittleFS by default
 // #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
     // Flags from other libraries
@@ -100,7 +115,9 @@
 // #define CONTROL_LOGGERFS_DEBUG
 // #define SENSOR_BH1750_DEBUG
 // #define SENSOR_DHT_DEBUG
+// #define SENSOR_A01NYUB_DEBUG
 // #define SENSOR_HCSR04_DEBUG
+// #define SENSOR_ULTRASONIC_DEBUG
 // #define SENSOR_LOADCELL_DEBUG
 // #define SENSOR_MS5803_DEBUG
 // #define SENSOR_SHT_DEBUG
@@ -136,7 +153,7 @@
 // - being phased out (apart from debug flags) in favor of parameters from main.cpp
 // but may be used where impact is across files, especially temporarily, for example where refactoring
 // build_flags_library = 
-#define SYSTEM_OTA_PREFIX "hcsr04"
+#define SYSTEM_OTA_PREFIX "ultrasonic"
 
 // LoRaMesher throws, so the boards that use it need C++ exceptions back on. build_unflags REMOVES
 // -fno-exceptions rather than countering it with -fexceptions - measured as byte-identical to a
@@ -188,8 +205,8 @@
 //     ${common.build_flags_async}
    
 // selecting a platform for board descriptions
-// platform_esp32 = espressif32 @ ~8.0.0 ; released oct 2026, if problems switch back to the github one 
-//platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
+//platform_esp32 = espressif32 @ ~8.0.0 ; released oct 2026, if problems switch back to the github one 
+// platform_esp32 = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip ; works in both PlatformIO and PIOArduino extensions
 //platform_packages = framework-arduinoespressif32@3.3.2 ; also possible, but mostly unneeded and wont always work
 
 // [env]
@@ -215,8 +232,8 @@
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "d1_mini_pro"
-#define SENSOR_HCSR04_TRIGGER_PIN 14
-#define SENSOR_HCSR04_ECHO_PIN 12 // via a divider - ECHO is 5V
+#define SENSOR_ULTRASONIC_TRIG_PIN 14
+#define SENSOR_ULTRASONIC_ECHO_PIN 12 // via a divider if the module runs at 5V - see README.md
 // board_build.partitions = min_spiffs.csv
 
 #endif // ARDUINO_ESP8266_WEMOS_D1MINIPRO
@@ -229,17 +246,17 @@
 // build_flags =
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "d1_mini"
-#define SENSOR_HCSR04_TRIGGER_PIN 14
-#define SENSOR_HCSR04_ECHO_PIN 12 // via a divider - ECHO is 5V
+#define SENSOR_ULTRASONIC_TRIG_PIN 14
+#define SENSOR_ULTRASONIC_ECHO_PIN 12 // via a divider if the module runs at 5V - see README.md
 
 // ===== LORA BOARDS - ALL ESP32 ======================================
 // Only the TTGO, for a 128x64 OLED to try Control_Oled_Single on. For other LoRa boards copy an
-// [env] from examples/ensaht and add the two SENSOR_HCSR04_*_PIN lines after checking which pins are free.
+// [env] from examples/ensaht and add the two ULTRASONIC_*_PIN lines after checking which pins are free.
 
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in esp8266/hcsr04.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"
+  #error "This board has no settings in esp8266/ultrasonic.ino.globals.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN(WEMOS) D1 mini Pro / LOLIN(WEMOS) D1 R2 & mini"
 #endif
 
-#endif // HCSR04_INO_GLOBALS_H
+#endif // ULTRASONIC_INO_GLOBALS_H

@@ -90,6 +90,7 @@ System_RS485	KEYWORD1
 System_SD	KEYWORD1
 System_SPI	KEYWORD1
 System_SensorActuator	KEYWORD1
+System_SerialConfig	KEYWORD1
 System_TCA9534	KEYWORD1
 System_Time	KEYWORD1
 System_Watchdog	KEYWORD1
@@ -131,6 +132,7 @@ buildTopicPrefix	KEYWORD2
 calcGasWait	KEYWORD2
 calcResHeat	KEYWORD2
 calibrate	KEYWORD2
+canEnrol	KEYWORD2
 canMQTT	KEYWORD2
 canOTA	KEYWORD2
 canRetry	KEYWORD2
@@ -187,10 +189,12 @@ drawPixel	KEYWORD2
 drawXbox	KEYWORD2
 end	KEYWORD2
 enrolIfNeeded	KEYWORD2
+enrolSecret	KEYWORD2
+enrolled	KEYWORD2
+err	KEYWORD2
 exists	KEYWORD2
 externalSleepRequest	KEYWORD2
 externalWake	KEYWORD2
-fillRect	KEYWORD2
 findGatewayNode	KEYWORD2
 floatValue	KEYWORD2
 forEach	KEYWORD2
@@ -198,8 +202,10 @@ forgetCredential	KEYWORD2
 formatBytes	KEYWORD2
 fullAdvertise	KEYWORD2
 getNextDaytime	KEYWORD2
+handleLine	KEYWORD2
 hasMeshSubscription	KEYWORD2
 heap_print	KEYWORD2
+hello	KEYWORD2
 holdOutput	KEYWORD2
 holdable	KEYWORD2
 html_entities	KEYWORD2
@@ -210,6 +216,8 @@ init	KEYWORD2
 initialize	KEYWORD2
 isClaimed	KEYWORD2
 isFromCaptive	KEYWORD2
+isFromFS	KEYWORD2
+isFromSerial	KEYWORD2
 isGateway	KEYWORD2
 isOK	KEYWORD2
 isPresent	KEYWORD2
@@ -237,6 +245,7 @@ ms5803CRC4	KEYWORD2
 noteAuthFailure	KEYWORD2
 notifyPeersOfSubscription	KEYWORD2
 now	KEYWORD2
+ok	KEYWORD2
 okToSleep	KEYWORD2
 onNewPeer	KEYWORD2
 onPeerLost	KEYWORD2
@@ -260,6 +269,7 @@ prepare	KEYWORD2
 printDirectory	KEYWORD2
 printNetworkStatus	KEYWORD2
 printRouteTable	KEYWORD2
+printUTF8	KEYWORD2
 probe3x	KEYWORD2
 probe4x	KEYWORD2
 processReceivedPacket	KEYWORD2
@@ -269,6 +279,7 @@ publishToPeer	KEYWORD2
 publishToSubscribers	KEYWORD2
 queueDownstream	KEYWORD2
 queueFromCaptive	KEYWORD2
+queueFromSerial	KEYWORD2
 queueIncoming	KEYWORD2
 queueLoopback	KEYWORD2
 queuedMessage	KEYWORD2
@@ -347,6 +358,7 @@ spurt	KEYWORD2
 startRefresh	KEYWORD2
 startSerial	KEYWORD2
 stateMachine	KEYWORD2
+status	KEYWORD2
 statusLine	KEYWORD2
 statusLines	KEYWORD2
 stepVolts	KEYWORD2

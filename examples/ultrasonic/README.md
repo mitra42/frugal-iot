@@ -224,7 +224,7 @@ the optional one, for your own debug flags and serial port. Neither file is comm
 1. **Tools > Manage Libraries**, search for **Frugal-IoT** and install it. When it asks
    about the libraries it depends on, choose **Install All**.
 2. **Tools > Board > Boards Manager**, and install the one for your chip: **esp32** by Espressif Systems, or **esp8266** by ESP8266 Community (add `https://arduino.esp8266.com/stable/package_esp8266com_index.json` under **File > Preferences > Additional boards manager URLs** first).
-3. **File > Examples > Frugal-IoT > hcsr04**, then **Tools > Board** and pick the row
+3. **File > Examples > Frugal-IoT > ultrasonic**, then **Tools > Board** and pick the row
    for your hardware.
 4. **File > Save As** to keep your own copy, then give it your organization's enrolment
    secret: copy `platform-secrets-local.h.template` from the library's `templates/` folder
@@ -233,7 +233,7 @@ the optional one, for your own debug flags and serial port. Neither file is comm
    (gear icon > Nodes > Enrolment secret). Without it the node is refused until an
    administrator approves it by hand. On ESP8266, put the same `#define` in the globals file instead - see below.
 
-Opening `hcsr04.ino` from a download or a git clone does not install the library, and
+Opening `ultrasonic.ino` from a download or a git clone does not install the library, and
 the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first.
 
 | Tools > Board | configuration | also define |
@@ -260,8 +260,8 @@ means the wrong pins.
 
 ## ESP8266: one extra step
 
-The ESP8266 settings live in `esp8266/hcsr04.ino.globals.h`, and that file has to be
-moved up beside `hcsr04.ino` before it is read. See `esp8266/README.md` - it is one
+The ESP8266 settings live in `esp8266/ultrasonic.ino.globals.h`, and that file has to be
+moved up beside `ultrasonic.ino` before it is read. See `esp8266/README.md` - it is one
 drag and no rename. ESP32 and PlatformIO users can ignore the folder.
 
 ## If it does not fit
