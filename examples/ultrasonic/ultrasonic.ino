@@ -62,7 +62,8 @@ void setup() {
     // One bus object per converter; its pins are SYSTEM_RS485_RX_PIN / _TX_PIN from platformio.ini
     System_RS485* rs485 = new System_RS485(&Serial1); // Serial1 - the C3 and S2 have no Serial2
     frugal_iot.sensors->add(new Sensor_UltrasonicModbus(ULTRASONIC_ID, "Distance",
-      DEFAULT_ultrasonic_ultrasonic_max, DEFAULT_ultrasonic_ultrasonic_color, true, rs485));
+      DEFAULT_ultrasonic_ultrasonic_max, DEFAULT_ultrasonic_ultrasonic_color, true, rs485))
+      ->powerPins(SENSOR_ULTRASONIC_POWER3v3_PIN, SENSOR_ULTRASONIC_POWER0_PIN); // Switches the RS485 bus
     // Depth of water instead, for a sensor mounted 2000mm above the tank floor:
     //  new Sensor_UltrasonicModbus(ULTRASONIC_ID, "Depth", 2000, DEFAULT_ultrasonic_ultrasonic_color,
     //    true, rs485, 2000.0, -1.0);
@@ -71,14 +72,15 @@ void setup() {
       #error "A serial module needs a UART that can receive, and the ESP8266's only one is the console - use an ESP32 board"
     #endif
     #define ULTRASONIC_ID "a01nyub"
-    frugal_iot.sensors->add(new Sensor_A01NYUB(ULTRASONIC_ID, "Distance", &Serial1, SENSOR_ULTRASONIC_ECHO_PIN));
+    frugal_iot.sensors->add(new Sensor_A01NYUB(ULTRASONIC_ID, "Distance", &Serial1, SENSOR_ULTRASONIC_ECHO_PIN))
+      ->powerPins(SENSOR_ULTRASONIC_POWER3v3_PIN, SENSOR_ULTRASONIC_POWER0_PIN);
     // Depth of water instead, for a sensor mounted 2000mm above the tank floor:
     //  new Sensor_A01NYUB(ULTRASONIC_ID, "Depth", &Serial1, SENSOR_ULTRASONIC_ECHO_PIN,
     //    2000, DEFAULT_a01nyub_a01nyub_color, true, 2000.0, -1.0);
   #else
     #define ULTRASONIC_ID "hcsr04"
     Sensor_HCSR04* hcsr04 = new Sensor_HCSR04(ULTRASONIC_ID, "Distance", SENSOR_ULTRASONIC_TRIG_PIN, SENSOR_ULTRASONIC_ECHO_PIN);
-    frugal_iot.sensors->add(hcsr04);
+    frugal_iot.sensors->add(hcsr04)->powerPins(SENSOR_ULTRASONIC_POWER3v3_PIN, SENSOR_ULTRASONIC_POWER0_PIN);
     // Depth of water instead, for a sensor mounted 2000mm above the tank floor:
     //  new Sensor_HCSR04(ULTRASONIC_ID, "Depth", SENSOR_ULTRASONIC_TRIG_PIN, SENSOR_ULTRASONIC_ECHO_PIN,
     //    2000, DEFAULT_hcsr04_hcsr04_color, true, 2000.0, -1.0);

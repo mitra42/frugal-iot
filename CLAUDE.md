@@ -1673,6 +1673,10 @@ the Modbus class was itself called `Sensor_Ultrasonic`; its build flags kept the
 `SENSOR_ULTRASONIC_` names. `SENSOR_ULTRASONIC_DEBUG` covers the base (and the Modbus class);
 `SENSOR_HCSR04_DEBUG` and `SENSOR_A01NYUB_DEBUG` turn it on as well.
 
+`SENSOR_ULTRASONIC_POWER3v3_PIN`/`_POWER0_PIN` (default `PIN_NONE`, in `ultrasonic.h`) are shared
+by all three; the sketch passes them to `powerPins()`, which on the Modbus class reaches the RS485
+bus. A GPIO can power an A01NYUB or HC-SR04P directly, not a 5 V HC-SR04.
+
 #### Sensor_UltrasonicModbus
 
 Reads one Modbus holding register from an ultrasonic distance module over RS485. Enabled by
@@ -1719,10 +1723,17 @@ but was rejected: a timed-out ping returns 0 and its average/median modes fold t
 `pulseIn` timeout is fixed at 200 ms, its default 1 ms sample interval is far under the module's
 60 ms, and an echo pin of 0 means "single-pin mode", so GPIO0 cannot be ECHO.
 
-Each read takes `SENSOR_HCSR04_SAMPLES` (5) pings `SENSOR_HCSR04_INTERVAL_MS` (60) apart, each
-waiting at most `SENSOR_HCSR04_TIMEOUT_US` (30000, about 5 m), drops the timeouts, and takes the
-median of the rest. None back → `NAN`; outside `SENSOR_HCSR04_MIN_MM`..`_MAX_MM` (20..4000) is
-rejected by `validate()`. About 0.3 s of blocking per read.
+Each read pings `SENSOR_HCSR04_INTERVAL_MS` (60) apart, each waiting at most
+`SENSOR_HCSR04_TIMEOUT_US` (30000, about 5 m), drops the timeouts, and stops at
+`SENSOR_HCSR04_SAMPLES` (5) echoes or `SENSOR_HCSR04_MAX_PINGS` (3 × SAMPLES) pings, then takes the
+median. None back → `NAN`; outside `SENSOR_HCSR04_MIN_MM`..`_MAX_MM` (20..4000) is rejected by
+`validate()`. About 0.3 s of blocking when every ping echoes, 1.35 s at worst. The first SR04M-2
+tried (2026-11-02) echoed only 0-1 pings in 5, hence the retries; the debug output lists every
+ping's µs so a miss rate can be seen.
+
+**An SR04M-2 at 5 V may miss triggers from a 3.3 V pin**: it is an STM8, whose V<sub>IH</sub> is
+0.7 × V<sub>DD</sub> = 3.5 V. Not yet confirmed as the cause of those missed echoes; running it from 3V3
+should tell.
 
 Speed of sound is `331.3 + 0.606 * T` m/s — 0.17 %/°C — from a wireable `temperature` `IN`
 (`<id>/temperature`), handled the same way as `Sensor_DissolvedOxygen`'s: set up before

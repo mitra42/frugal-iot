@@ -13,9 +13,11 @@
  * How it measures: a SENSOR_HCSR04_TRIGGER_US pulse on TRIG makes the module send a 40kHz burst
  * and then hold ECHO high until the echo returns. The time ECHO is high is the round trip, so
  *     distance_mm = echo_us * speed_of_sound_m_per_s / 2000
- * Each read takes SENSOR_HCSR04_SAMPLES pings, SENSOR_HCSR04_INTERVAL_MS apart (long enough for a
- * stray echo from the last ping to die away), drops the ones that timed out, and publishes the
- * median of the rest - or "nan" if none came back. Readings outside SENSOR_HCSR04_MIN_MM ..
+ * Each read pings SENSOR_HCSR04_INTERVAL_MS apart (long enough for a stray echo from the last ping
+ * to die away), drops the ones that timed out, and carries on until it has SENSOR_HCSR04_SAMPLES
+ * echoes or has sent SENSOR_HCSR04_MAX_PINGS pings. It publishes the median of the echoes it got -
+ * or "nan" if none came back. A module that answers every ping costs SAMPLES pings, as before;
+ * one that misses some (the first SR04M-2 tried managed 0-1 in 5) gets more chances. Readings outside SENSOR_HCSR04_MIN_MM ..
  * SENSOR_HCSR04_MAX_MM are rejected too.
  *
  * Temperature: the speed of sound is 331.3 + 0.606 * T m/s, about 0.17% per degree C - 3.4cm at
@@ -71,9 +73,9 @@
  * and 2k from the pin to GND. TRIG is fine driven at 3.3V. The 3.3V-capable modules above need no
  * divider when powered from 3V3.
  *
- * Blocking: roughly SENSOR_HCSR04_SAMPLES * SENSOR_HCSR04_INTERVAL_MS per read - 0.3s at the
- * defaults, 0.5s at INTERVAL_MS=100 - a little more if the module is missing, as each ping then
- * waits SENSOR_HCSR04_TIMEOUT_US.
+ * Blocking: roughly SENSOR_HCSR04_SAMPLES * SENSOR_HCSR04_INTERVAL_MS per read when every ping
+ * echoes - 0.3s at the defaults. At worst, when nothing echoes, MAX_PINGS * (INTERVAL_MS +
+ * TIMEOUT_US) - 15 * 90ms = 1.35s at the defaults.
  *
  * Output published to MQTT - see sensor/ultrasonic.h for offset and scale:
  *   <id>/<id>          - distance in mm (offset + raw * scale)
@@ -84,7 +86,8 @@
  *   (the library reads no pin flags - the pins are constructor arguments; examples/ultrasonic passes
  *    SENSOR_ULTRASONIC_TRIG_PIN and SENSOR_ULTRASONIC_ECHO_PIN)
  *   SENSOR_HCSR04_TRIGGER_US     (10)    - length of the TRIG pulse
- *   SENSOR_HCSR04_SAMPLES        (5)     - pings per read, median taken
+ *   SENSOR_HCSR04_SAMPLES        (5)     - echoes wanted per read, median taken
+ *   SENSOR_HCSR04_MAX_PINGS      (10*SAMPLES) - give up after this many pings
  *   SENSOR_HCSR04_INTERVAL_MS    (60)    - wait between pings
  *   SENSOR_HCSR04_TIMEOUT_US     (30000) - give up on an echo (30ms is about 5m)
  *   SENSOR_HCSR04_MIN_MM (20), SENSOR_HCSR04_MAX_MM (4000) - valid range
@@ -105,6 +108,9 @@
 #endif
 #ifndef SENSOR_HCSR04_SAMPLES
   #define SENSOR_HCSR04_SAMPLES 5
+#endif
+#ifndef SENSOR_HCSR04_MAX_PINGS
+  #define SENSOR_HCSR04_MAX_PINGS (10 * SENSOR_HCSR04_SAMPLES) // Must fit a uint8_t
 #endif
 #ifndef SENSOR_HCSR04_INTERVAL_MS
   #define SENSOR_HCSR04_INTERVAL_MS 60

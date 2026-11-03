@@ -37,10 +37,13 @@ Every module uses the **same two ESP pins**, set for each board in `platformio.i
 ### The one rule: nothing above 3.3V into an ESP pin
 
 The ESP's pins take 3.3V at most. A module powered from **5V** sends its readings back at 5V, so
-the wire to `ECHO` goes through a **divider**: 1k in series from the module to the pin, and 2k from
-the pin to GND (10k and 20k work as well). That gives 3.3V at the pin. A module powered from
-**3V3** needs no divider, but not every module works at 3.3V. The wire from `TRIG` to the
-module never needs anything: 3.3V is enough to trigger a 5V module.
+the wire to `ECHO` goes through a **divider**: one resistor in series from the module to the pin,
+and one **twice as big** from the pin to GND. That gives 3.3V at the pin. Any pair in that ratio
+works: 1k and 2k, 10k and 20k, or 4.7k and 9.4k (two 4.7k in series make the 9.4k). A module powered
+from **3V3** needs no divider, but not every module works at 3.3V.
+
+The wire from `TRIG` to the module has no resistors. 3.3V is enough to trigger an HC-SR04 at 5V,
+but it may not be enough for an SR04M-2 at 5V - see below.
 
 ### HC-SR04
 
@@ -68,9 +71,16 @@ board, and the header is labelled differently:
 
 Leave the RST and SWIM pads alone; they are for programming the board's own chip at the factory.
 
-**5V or 3.3V?** The AJ-SR04M is rated 3.0 - 5.5V, but SR04M-2 listings say 5V. Start at 5V with
-the divider, which works either way. If you want to drop the divider, try it from 3V3. If you get
-no readings, or a shorter range than the 4.5m you expected, go back to 5V.
+**5V or 3.3V?** The AJ-SR04M is rated 3.0 - 5.5V, but SR04M-2 listings say 5V. At 5V there is a
+catch on the trigger wire as well as the echo one. The SR04M-2 is run by an STM8 chip, which at 5V
+needs at least 3.5V (0.7 x 5V) to be sure a pin is HIGH. The ESP's 3.3V is just under that, so
+some triggers can be missed, and the ping then gets no echo. If you see few echoes (below), try
+in this order:
+
+1. **Power it from 3V3.** Then the trigger is well above the chip's threshold, and you can leave
+   out the divider. Check that it still reaches as far as you need.
+2. **Keep 5V and lift the trigger** with a level shifter, or an NPN transistor (inverting -
+   not supported here yet), on the `TRIG` wire.
 
 Add `-D SENSOR_HCSR04_MIN_MM=200 -D SENSOR_HCSR04_MAX_MM=4500`. These modules use one transducer
 to both send and listen, so they cannot hear anything closer than about 20 - 25cm. Closer than that
@@ -98,6 +108,22 @@ reading, try `-D SENSOR_HCSR04_TRIGGER_US=20`. If readings jump about, try
   Avoid GPIO2, GPIO8 and GPIO9, which decide how the C3 boots.
 * The same wiring works in serial mode (next section). The RX wire is then not used, so it can
   stay connected.
+
+#### Few echoes - `1/5` or `0/5` in the debug output
+
+With `-D SENSOR_HCSR04_DEBUG`, each reading prints the time of every ping (`0` means no echo came
+back) and then `n echoes from m pings`. Each reading keeps pinging until it has 5 echoes, or gives
+up after 15 pings (`SENSOR_HCSR04_SAMPLES`, `SENSOR_HCSR04_MAX_PINGS`). So an occasional miss
+costs a little time, not the reading. If most pings still get nothing:
+
+* Check the trigger level - see "5V or 3.3V?" above. This is the most likely cause on an SR04M-2
+  at 5V.
+* Point it at something big and flat 0.5 - 2m away. A small or angled target, or one inside the
+  25cm blind zone, may not echo.
+* `-D SENSOR_HCSR04_TRIGGER_US=20` for a longer trigger pulse.
+* `-D SENSOR_HCSR04_INTERVAL_MS=100`. The single transducer rings for longer than an HC-SR04's.
+* Check R19 is empty (next section). In serial mode it ignores the trigger and its readings arrive
+  on the echo wire as serial data - you would see the odd short "echo" and mostly zeros.
 
 ### AJ-SR04M and SR04M-2 - which mode is mine in?
 
@@ -147,6 +173,18 @@ The module talks RS485 on two wires, A and B, which can run a long way. The ESP 
 
 Power the module itself as its label says; RS485 modules often want more than 5V. Uncomment
 `SENSOR_ULTRASONIC_SLAVE_ID=1` and the two `SYSTEM_RS485_*_PIN` lines under it.
+
+## Switching the module off while the node sleeps
+
+`-D SENSOR_ULTRASONIC_POWER3v3_PIN=<gpio>` powers the module from that GPIO, so it is on only while
+the node is awake. Connect the module's VCC to that GPIO instead of to 3V3 or 5V. Nothing is
+switched while the node uses `Power_Loop`, which never sleeps.
+
+A GPIO gives 3.3V and about 20mA at most. That is fine for an A01NYUB or A02YYUW, and for an
+HC-SR04P. It is too little for an HC-SR04, which needs 5V, and marginal for an AJ-SR04M or
+SR04M-2, which draw about 30mA while measuring. For those, switch the 5V through a transistor or a
+load-switch board, and drive the switch from the GPIO. For an RS485 module the pin switches the
+converter (and the module, if it is powered through the converter's supply).
 
 ## Mounting
 

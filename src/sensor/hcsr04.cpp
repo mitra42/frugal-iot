@@ -77,12 +77,20 @@ float Sensor_HCSR04::speedOfSound() {
 
 float Sensor_HCSR04::readFloat() {
   uint32_t echoes[SENSOR_HCSR04_SAMPLES]; // Kept sorted as they arrive, for the median
-  uint8_t n = 0;
-  for (uint8_t i = 0; i < SENSOR_HCSR04_SAMPLES; i++) {
-    if (i) {
+  uint8_t n = 0;      // Echoes kept
+  uint8_t pings = 0;  // Pings sent - carries on past SAMPLES while echoes are missing
+  #ifdef SENSOR_HCSR04_DEBUG
+    Serial.print(id); Serial.print(F(": ping us"));
+  #endif
+  while ((n < SENSOR_HCSR04_SAMPLES) && (pings < SENSOR_HCSR04_MAX_PINGS)) {
+    if (pings) {
       delay(SENSOR_HCSR04_INTERVAL_MS); // Not sleepSafeMillis as this is a sub-second wait
     }
     const uint32_t us = ping();
+    pings++;
+    #ifdef SENSOR_HCSR04_DEBUG
+      Serial.print(F(" ")); Serial.print(us); // 0 is a timeout - no echo
+    #endif
     if (us) { // Timeouts are dropped, not averaged in as zeros
       uint8_t j = n++;
       while (j && (echoes[j - 1] > us)) {
@@ -98,8 +106,9 @@ float Sensor_HCSR04::readFloat() {
     mm = median_us * speedOfSound() / 2000.0; // Round trip, so half; m/s * us = um, /1000 = mm
   }
   #ifdef SENSOR_HCSR04_DEBUG
-    Serial.print(id); Serial.print(F(": ")); Serial.print(n); Serial.print(F("/"));
-    Serial.print(SENSOR_HCSR04_SAMPLES); Serial.print(F(" echoes, median "));
+    Serial.println();
+    Serial.print(id); Serial.print(F(": ")); Serial.print(n); Serial.print(F(" echoes from "));
+    Serial.print(pings); Serial.print(F(" pings, median "));
     Serial.print(mm); Serial.print(F("mm at ")); Serial.print(speedOfSound()); Serial.println(F("m/s"));
   #endif
   return mm;
