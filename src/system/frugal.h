@@ -16,10 +16,8 @@
  #define FRUGAL_IOT_H
 
 #include <vector>
-// Non Frugal IoT headers
-#include "ESPAsyncWebServer.h" // for AsyncResponseStream"
-// Frugal-iot headers
-#include "_settings.h" 
+// Frugal-iot headers - ESPAsyncWebServer.h (for AsyncResponseStream) comes via system/base.h, see comment there
+#include "_settings.h"
 #include "actuator/ledbuiltin.h"
 #include "sensor/battery.h"
 #include "sensor/health.h"

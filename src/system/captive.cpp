@@ -33,7 +33,7 @@
 #ifdef ESP8266
     #define INADDR_NONE IPAddress(0,0,0,0)
 #endif
-#include "ESPAsyncWebServer.h"
+#include "system/base.h" // for ESPAsyncWebServer.h - see comment there
 #include "system/captive.h"
 #include "system/language.h" // for Texts
 #include "misc.h" // for Sprintf

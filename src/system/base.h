@@ -7,7 +7,17 @@
 #include <Arduino.h>
 //TODO-010 Maybe needed on ESP8266
 //#include <FS.h>    // ~/Documents/Arduino/hardware/esp8266com/esp8266/cores/esp8266/FS.h
+// On ESP8266, ESPAsyncWebServer.h's own inline send_P() calls its own deprecated beginResponse_P(),
+// warning once per file that includes it. Not ours to fix, so silence it here - other files get the
+// header via this one so the suppression lives in one place.
+#ifdef ESP8266
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 #include "ESPAsyncWebServer.h" // for AsyncResponseStream"
+#ifdef ESP8266
+  #pragma GCC diagnostic pop
+#endif
 
 class System_Message; // Forward declaration to avoid circular include with system_message.h
 class System_Interface; // system/interface.h - a shared bus, and the power feeding it
