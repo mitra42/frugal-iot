@@ -42,7 +42,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.8
+//     Frugal-IoT@^2.0.9
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -89,13 +89,8 @@
 // #define SYSTEM_RS485_TX_PIN SENSOR_ULTRASONIC_TRIG_PIN // converter DI
 // #define SYSTEM_RS485_DE_PIN <gpio> // only if the converter has DE/RE pins - a free GPIO, not auto-direction
     //
-    // Power the module from a GPIO so it is off while the node sleeps - see README.md, a GPIO
-    // can only feed a small 3.3V module directly
-// #define SENSOR_ULTRASONIC_POWER3v3_PIN <gpio>
-    //
     // Trigger/echo tuning
-// #define SENSOR_HCSR04_SAMPLES 5 // echoes wanted per reading, median taken
-// #define SENSOR_HCSR04_MAX_PINGS 15 // give up after this many pings if echoes are missing
+// #define SENSOR_HCSR04_SAMPLES 5 // pings per reading, median taken
     // For an AJ-SR04M / SR04M-2 (waterproof) instead of an HC-SR04 - see the table in sensor/hcsr04.h
 // #define SENSOR_HCSR04_MIN_MM 200 // its blind zone is ~20-25cm
 // #define SENSOR_HCSR04_MAX_MM 4500

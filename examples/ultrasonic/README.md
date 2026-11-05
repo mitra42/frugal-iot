@@ -241,6 +241,7 @@ the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first
 | LOLIN C3 Pico | `c3_pico` |  |
 | LOLIN S2 Mini | `s2_mini` |  |
 | NodeMCU-32S | `nodemcu-32s` |  |
+| Nologo ESP32C3 Super Mini | `supermini` |  |
 | LOLIN C3 Mini | `c3_oled_72x40` |  |
 | LOLIN(WEMOS) D1 mini Pro | `d1_mini_pro` |  |
 | LOLIN(WEMOS) D1 R2 & mini | `d1_mini` |  |

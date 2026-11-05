@@ -37,7 +37,7 @@
 
 // [common]
 // lib_deps = 
-//     Frugal-IoT@^2.0.8
+//     Frugal-IoT@^2.0.9
     // Libraries specific to this hardware - sensor, actuator, etc
     // robtillaart/SHT85 ; included by frugal-iot (in library.json & library.properties)
  
@@ -84,13 +84,8 @@
 // #define SYSTEM_RS485_TX_PIN SENSOR_ULTRASONIC_TRIG_PIN // converter DI
 // #define SYSTEM_RS485_DE_PIN <gpio> // only if the converter has DE/RE pins - a free GPIO, not auto-direction
     //
-    // Power the module from a GPIO so it is off while the node sleeps - see README.md, a GPIO
-    // can only feed a small 3.3V module directly
-// #define SENSOR_ULTRASONIC_POWER3v3_PIN <gpio>
-    //
     // Trigger/echo tuning
-// #define SENSOR_HCSR04_SAMPLES 5 // echoes wanted per reading, median taken
-// #define SENSOR_HCSR04_MAX_PINGS 15 // give up after this many pings if echoes are missing
+// #define SENSOR_HCSR04_SAMPLES 5 // pings per reading, median taken
     // For an AJ-SR04M / SR04M-2 (waterproof) instead of an HC-SR04 - see the table in sensor/hcsr04.h
 // #define SENSOR_HCSR04_MIN_MM 200 // its blind zone is ~20-25cm
 // #define SENSOR_HCSR04_MAX_MM 4500
@@ -266,8 +261,40 @@
 #define SENSOR_ULTRASONIC_ECHO_PIN 19 // via a divider if the module runs at 5V - see README.md
 // board_build.partitions = min_spiffs.csv
 
-// An affordable C3 with a small HW675 OLED 
+
+// This is the tiny supermini board from Tencent (and clones)
 #endif // ARDUINO_NodeMCU_32S
+
+// ===== [env:supermini] -> ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
+#if defined(ARDUINO_NOLOGO_ESP32C3_SUPER_MINI) || defined(SUPERMINI)
+#define FRUGAL_IOT_BOARD_CONFIGURED
+// platform = ${common.platform_esp32}
+// board = nologo_esp32c3_super_mini // defines -DARDUINO_ESP32C3_DEV (as does esp32-c3-devkitm-1)
+// monochrome LED on GPIO8, unlike esp32-c3-devkitm-1's RGB LED
+// variant defaults to nologo_esp32c3_super_mini
+// board_build.partitions = min_spiffs.csv
+// build_flags =
+//     ${common.build_flags}
+#define SYSTEM_OTA_SUFFIX "supermini"
+    // SDA=8 SCL=9(grey) is the standard for this board but 8 is LED, so override with I2C_SDA and I2C_SCL
+// #define SYSTEM_I2C_DEBUG
+#define I2C_SDA 6
+#define I2C_SCL 5
+// #define SENSOR_BATTERY_PIN 4 // next to 3v3 for easy wiring
+// #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2
+#define SYSTEM_MDNS_WANT // device should report directly to other local devices
+// #define SYSTEM_MDNS_DEBUG
+#define SENSOR_ULTRASONIC_TRIG_PIN 21
+#define SENSOR_ULTRASONIC_ECHO_PIN 20 // via a divider if the module runs at 5V - see README.md
+// #define SENSOR_ULTRASONIC_POWER3v3_PIN // TODO add power control
+// #define SENSOR_DS18B20_DEBUG
+// #define SYSTEM_ONEWIRE_DEBUG
+
+
+
+
+// An affordable C3 with a small HW675 OLED 
+#endif // ARDUINO_NOLOGO_ESP32C3_SUPER_MINI
 
 // ===== [env:c3_oled_72x40] -> ARDUINO_LOLIN_C3_MINI
 #if defined(ARDUINO_LOLIN_C3_MINI) || defined(C3_OLED_72X40)
@@ -278,8 +305,8 @@
 // build_flags = 
 //     ${common.build_flags}
 #define SYSTEM_OTA_SUFFIX "c3_oled_72x40"
-#define SENSOR_ULTRASONIC_TRIG_PIN 3
-#define SENSOR_ULTRASONIC_ECHO_PIN 4 // via a divider if the module runs at 5V - see README.md
+#define SENSOR_ULTRASONIC_TRIG_PIN 21
+#define SENSOR_ULTRASONIC_ECHO_PIN 20 // via a divider if the module runs at 5V - see README.md
 #define ARDUINO_C3_OLED_72x40 // if using the C3/small OLED board define here
 #define ACTUATOR_OLED_WANT
 // #define ACTUATOR_OLED_DEBUG // Still debugging this one
@@ -311,7 +338,7 @@
 #endif // ARDUINO_TTGO_LoRa32_v21new
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / NodeMCU-32S / LOLIN C3 Mini / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1)"
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Pico / LOLIN S2 Mini / NodeMCU-32S / Nologo ESP32C3 Super Mini / LOLIN C3 Mini / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1)"
 #endif
 
 #endif // PLATFORM_H
