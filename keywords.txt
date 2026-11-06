@@ -55,9 +55,12 @@ Sensor_ENS160	KEYWORD1
 Sensor_Float	KEYWORD1
 Sensor_GPS	KEYWORD1
 Sensor_HCSR04	KEYWORD1
+Sensor_HM3301	KEYWORD1
 Sensor_Health	KEYWORD1
 Sensor_INA219	KEYWORD1
 Sensor_LoadCell	KEYWORD1
+Sensor_PM	KEYWORD1
+Sensor_SDS011	KEYWORD1
 Sensor_SHT	KEYWORD1
 Sensor_Soil	KEYWORD1
 Sensor_SoilModbus	KEYWORD1
@@ -227,6 +230,7 @@ isThisNode	KEYWORD2
 isTimeSet	KEYWORD2
 isValid	KEYWORD2
 joined	KEYWORD2
+keepRunning	KEYWORD2
 lastResult	KEYWORD2
 leaf	KEYWORD2
 leaf2path	KEYWORD2
@@ -297,6 +301,7 @@ readHoldingRegisters	KEYWORD2
 readInt	KEYWORD2
 readRegister	KEYWORD2
 readRegisters	KEYWORD2
+readSample	KEYWORD2
 readUint16	KEYWORD2
 readValidateConvert	KEYWORD2
 readValidateConvertSet	KEYWORD2
@@ -307,6 +312,7 @@ relayDownstream	KEYWORD2
 relayPermitted	KEYWORD2
 releaseOutput	KEYWORD2
 remove	KEYWORD2
+reportNoData	KEYWORD2
 requestIfDue	KEYWORD2
 rescan	KEYWORD2
 rescanIfEmpty	KEYWORD2
@@ -348,6 +354,7 @@ setup_after_mqtt_setup	KEYWORD2
 setup_after_wifi	KEYWORD2
 shouldBeDefined	KEYWORD2
 sleep	KEYWORD2
+sleepModule	KEYWORD2
 sleepPermitted	KEYWORD2
 sleepSafeSecs	KEYWORD2
 slurp	KEYWORD2
@@ -385,6 +392,8 @@ validateGas	KEYWORD2
 valueSpan	KEYWORD2
 visibleHeight	KEYWORD2
 visibleWidth	KEYWORD2
+wake	KEYWORD2
+wakeModule	KEYWORD2
 wakeNow	KEYWORD2
 wireTo	KEYWORD2
 writeBit	KEYWORD2
