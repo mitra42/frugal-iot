@@ -320,7 +320,7 @@ Frugal-IoT/
 │   ├── sensor/            # One file pair per sensor type (sht, dht, soil, battery, bh1750,
 │   │                       #   loadcell, ds18b20, ms5803, aht, ens160, bmx280, bme680, button,
 │   │                       #   analog, float, uint16, health, gps, ultrasonic, ultrasonicmodbus,
-│   │                       #   hcsr04, a01nyub, sensor [base class]…)
+│   │                       #   hcsr04, a01nyub, pm, sds011, hm3301, sensor [base class]…)
 │   ├── actuator/          # LED, digital output, OLED, LCD (actuator.h is the base class)
 │   └── control/           # Logic blocks (hysteresis, logger, logger_fs, blinken, carousel,
 │                           #   oled, oled_loramesher, gsheets, control.h [base class]…)
@@ -339,6 +339,7 @@ Frugal-IoT/
 │   ├── gps/               # GPS location via NMEA serial module + OLED
 │   ├── gsheets/           # Google Sheets integration
 │   ├── ultrasonic/        # Ultrasonic distance - any of the three drivers, by build flag
+│   ├── particulates/      # Particulate matter (SDS011 or HM3301) + a humidity sensor, on deep sleep
 │   ├── lcd_ht/           # HD44780 LCD showing a remote HT (e.g. SHT) node's readings over MQTT
 │   ├── lilygohigrow/      # Plant watering (LilyGo HiGrow)
 │   ├── ms5803/            # MS5803 pressure sensor
@@ -985,6 +986,9 @@ needs nothing — `lib/data-loader.js` already filters `isNaN` out of the graph 
 | `Sensor_HCSR04` | sensor/hcsr04 | Distance (mm) from an HC-SR04 trigger/echo module, temperature compensated. Has an `IN`. Freestanding, no external library |
 | `Sensor_A01NYUB` | sensor/a01nyub | Distance (mm) from a DFRobot A01NYUB (or A02YYUW) waterproof module sending frames on a UART. Freestanding, no external library |
 | `Sensor_SoilModbus` | sensor/soilmodbus | Soil moisture (%) + temperature from an RS485/Modbus probe (DFRobot SEN0600 and similar); needs `SENSOR_SOILMODBUS_WANT` |
+| `Sensor_SDS011` | sensor/sds011 | Particulate matter PM2.5 + PM10 (µg/m³) from a Nova SDS011 on a UART, as in the airRohr kit. ESP32 only. Freestanding, no external library. Extends `Sensor_PM` |
+| `Sensor_HM3301` | sensor/hm3301 | Particulate matter PM1.0 + PM2.5 + PM10 (µg/m³) from a Seeed Grove HM3301 on I2C. Freestanding, no external library. Extends `Sensor_PM` |
+| `Sensor_PM` | sensor/pm | Base class for laser particulate sensors - the warm-up / read / average / sleep cycle |
 
 ### There is no `Sensor_HT` — and `captiveLines()` is on `Sensor`
 
@@ -1798,6 +1802,82 @@ fallbacks for `DEFAULT_a01nyub_a01nyub_color`/`_max`.
 and make `readFloat()` a `modbus.readRegister(reg, &raw)` call. Then add its enabling flag to
 the `SYSTEM_MODBUS_WANT` derivation in `_settings.h`.
 
+### Sensor_PM, Sensor_SDS011, Sensor_HM3301 — sensors that hold the node awake
+
+Laser particulate sensors, split 2026-11-06 into a base class and one subclass per part, all
+**untested on hardware** at the time of writing:
+
+| Class | File | Publishes | Talks over | Sleeps? |
+|---|---|---|---|---|
+| `Sensor_PM` | `sensor/pm.h` | (base class - the measurement cycle) | | |
+| `Sensor_SDS011` | `sensor/sds011.h` | `sds011/pm25`, `sds011/pm10` | UART, 9600 baud. ESP32 only | yes, by command |
+| `Sensor_HM3301` | `sensor/hm3301.h` | `hm3301/pm1`, `hm3301/pm25`, `hm3301/pm10` | I2C, 0x40 | no - the fan always runs |
+
+The SDS011 was written from Nova's "Laser Dust Sensor Control Protocol V1.3". sensor.community's
+airRohr firmware (`opendata-stuttgart/sensors-software`) drives the same part but is **GPL-3**, so
+nothing was taken from it except its timing, which keeps readings comparable with theirs. The
+HM3301 was written from Seeed's MIT library (`Seeed-Studio/Seeed_PM2_5_sensor_HM3301`) and wiki.
+
+**They are the sensors that need time, so they do not read in `periodically()`.** The fan has to
+run a warm-up before a reading means anything (SDS011 15 s as airRohr, Nova suggest 30; HM3301 30 s,
+Seeed's figure), and samples come about one a second. Blocking that long would stall the whole
+loop, so `Sensor_PM` is a small state machine instead:
+
+| Where | Does |
+|---|---|
+| `periodically()` | `wake()`s the module and starts WARMING, or goes straight to READING if it is already `running` |
+| `loop()` | calls the subclass's `readSample()` every pass in every state (the SDS011's UART would overflow during a warm-up otherwise); adds samples up only while READING; moves the state on by `millis()` |
+| end of READING | `readValidateConvertSet()` - per channel, the mean of the samples dropping the max and min when there are 3+, `nan` if none - then `sleep()`s the module |
+| `okToSleep()` | `state == IDLE` - so under `Power_Deep` the node stays awake for warm-up + reading whatever `wake_ms` says |
+
+A subclass supplies `wakeModule()`, `sleepModule()` (returning false if it cannot sleep, which
+leaves `running` true), `readSample(v)` (tenths of µg/m³ in `v[PM1]`, `v[PM25]`, `v[PM10]`), and
+`reportNoData()`, and sets whichever of `pm1`/`pm25`/`pm10` it measures - a null one is skipped
+throughout. The warm-up and reading times are constructor arguments, from each subclass's own
+`SENSOR_<part>_WARMUP_MS`/`_READING_MS`.
+
+**`running` is what makes the two parts differ in practice.** The SDS011 is slept at the end of
+every measurement, so `running` starts false on every boot and every wake has a warm-up (~20 s
+awake). The HM3301 cannot sleep, so its fan runs straight through the ESP's deep sleep;
+`Sensor_HM3301::setup()` sets `running = (wake_count != 0)`, and only a power-on gets a warm-up -
+after that each wake is ~5 s. That depends on the HM3301's power NOT being switched, which is why it
+must not be given `powerPins()` (on an I2C sensor those switch the whole bus).
+
+`millis()` is right for the phases: it is sub-cycle timing, and a deep-sleep wake should restart the
+measurement anyway. A cycle shorter than WARMUP+READING leaves the module running rather than
+waking it again moments after it slept (airRohr does the same); `prepare()` still sleeps it if the
+node does. The HM3301 is polled, so its `readSample()` paces itself at `SENSOR_HM3301_SAMPLE_MS`
+and only reads while READING; the SDS011's streams, so it drains whatever has arrived.
+
+SDS011 specifics: on a **power-on only** (`wake_count == 0`), `setup()` also sets active reporting
+(`02`) and continuous working (`08`), because the module keeps both in its own flash and another
+firmware may have changed them. Not on every wake, as each is a flash write in the module. It
+deliberately sends the wake command raw there rather than through `wake()`, which would set
+`running` and skip the first warm-up. ESP32 only - the class compiles to nothing elsewhere, like
+`soilmodbus.h`.
+
+HM3301 specifics: `setup()` writes `0x88` (select I2C) on every boot, as it is harmless when already
+selected. It reads 29 bytes and publishes the "atmospheric environment" values (bytes 10-15), not
+the CF=1 "standard" ones. Its checksum passes on an all-zero block, so that is rejected separately.
+
+The `examples/particulates` sketch has four envs - `xiao_esp32c3-` and `nodemcu-32s-` each with
+`sds011` and `hm3301` - choosing the sensor by `SENSOR_SDS011_WANT` / `SENSOR_HM3301_WANT`, the
+`_sds011` ones `custom_arduino_default`. The XIAO ESP32C3 was the first board of its kind, added to
+the board tables in `generate_platform_h.py` and `arduino_compile.bash` (same macro
+`ARDUINO_XIAO_ESP32C3` both sides, no `LED_BUILTIN`). The envs are written out in full rather than
+with `extends`, which `generate_platform_h.py` does not follow.
+
+```cpp
+frugal_iot.sensors->add(new Sensor_SDS011("PM", &Serial1, SENSOR_SDS011_RX_PIN, SENSOR_SDS011_TX_PIN));
+frugal_iot.sensors->add(new Sensor_HM3301("PM"));  // address, wire, retain all defaulted
+```
+
+`sds011` and `hm3301` are in the server's `modules.yaml`, but `defaults.h` has not been regenerated
+since, so both headers still have `#ifndef` fallbacks for their `DEFAULT_*` macros.
+
+**Adding another PM sensor** (Plantower PMS5003/7003, Sensirion SPS30...): subclass `Sensor_PM`,
+supply the four methods, and set `running` in `setup()` if the module can be running at boot.
+
 ### Sensor_SoilModbus
 
 Soil moisture and temperature from an RS485/Modbus probe, one instance per probe. Ported from
@@ -2191,8 +2271,10 @@ SENSOR_BME680_DEBUG
 SENSOR_DHT_DEBUG
 SENSOR_DS18B20_DEBUG (sets SYSTEM_ONEWIRE_DEBUG - the scan and the probe matching are on the bus)
 SENSOR_ENS160_DEBUG
+SENSOR_HM3301_DEBUG
 SENSOR_LOADCELL_DEBUG
 SENSOR_MS5803_DEBUG
+SENSOR_SDS011_DEBUG
 SENSOR_SHT_DEBUG
 SENSOR_SOIL_DEBUG
 ACTUATOR_DIGITAL_EXPANDER_DEBUG (sets ACTUATOR_DIGITAL_DEBUG and SYSTEM_TCA9534_DEBUG)

@@ -75,6 +75,14 @@
 #ifndef SENSOR_BMP280_ADDRESS
   #define SENSOR_BMP280_ADDRESS 0x76
 #endif
+// Default power control pins, for powerPins() in a sketch - none unless platformio.ini sets them.
+// The rail is the I2C bus's, as for every I2C sensor - see system/interface.h.
+#ifndef SENSOR_BME280_POWER0_PIN
+  #define SENSOR_BME280_POWER0_PIN 0xff
+#endif
+#ifndef SENSOR_BME280_POWER3v3_PIN
+  #define SENSOR_BME280_POWER3v3_PIN 0xff
+#endif
 
 class Sensor_BMx280 : public Sensor {
   public:

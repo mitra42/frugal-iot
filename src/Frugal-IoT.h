@@ -31,6 +31,8 @@
 #include "sensor/ultrasonicmodbus.h" // Compiles to nothing unless SENSOR_ULTRASONIC_SLAVE_ID is defined
 #include "sensor/hcsr04.h"
 #include "sensor/a01nyub.h"
+#include "sensor/sds011.h" // ESP32 only - compiles to nothing elsewhere
+#include "sensor/hm3301.h"
 
 //TO-ADD-CONTROL
 #include "control/control.h"

@@ -49,6 +49,7 @@ class PlatformIOConverter:
             "ttgo-t-beam": "ARDUINO_T_Beam",                # Arduino: ARDUINO_TBEAM_USE_RADIO_<radio>
             "heltec_wifi_lora_32_V3": "ARDUINO_heltec_wifi_lora_32_V3", # Arduino: uppercase HELTEC
             "esp32-c3-devkitm-1": "ARDUINO_ESP32C3_DEV",
+            "seeed_xiao_esp32c3": "ARDUINO_XIAO_ESP32C3",   # Same macro in PlatformIO and Arduino
             # esp32dev - PlatformIO and Arduino ("ESP32 Dev Module") agree on this one
             "esp32dev": "ARDUINO_ESP32_DEV",
             # C3 SuperMini - DELIBERATELY Arduino's macro rather than PlatformIO's, the one place
@@ -94,6 +95,7 @@ class PlatformIOConverter:
             "ttgo-t-beam": "T-Beam",
             "heltec_wifi_lora_32_V3": "Heltec WiFi LoRa 32(V3)",
             "esp32-c3-devkitm-1": "ESP32C3 Dev Module",
+            "seeed_xiao_esp32c3": "XIAO_ESP32C3",
             "esp32dev": "ESP32 Dev Module",
             "nologo_esp32c3_super_mini": "Nologo ESP32C3 Super Mini",
             # No Arduino board matches sonoff_basic - see board_defines above

@@ -107,6 +107,7 @@ fqbn_for_board() {
     lolin_s2_mini)          echo "esp32:esp32:lolin_s2_mini" ;;
     nodemcu-32s)            echo "esp32:esp32:nodemcu-32s" ;;
     esp32-c3-devkitm-1)     echo "esp32:esp32:esp32c3" ;;
+    seeed_xiao_esp32c3)     echo "esp32:esp32:XIAO_ESP32C3" ;;
     ttgo-lora32-v21)        echo "esp32:esp32:ttgo-lora32" ;;
     lilygo-t3-s3)           echo "esp32:esp32:lilygo_t3s3" ;; # note: t3s3, not t3_s3
     heltec_wifi_lora_32_V3) echo "esp32:esp32:heltec_wifi_lora_32_V3" ;;
