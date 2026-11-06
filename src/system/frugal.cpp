@@ -127,6 +127,13 @@ void System_Frugal::dispatch(System_Message &msg) {
         changed = true;
       }
       dispatched = true;
+    } else if (msg.leaf() == "location") {
+      // Unlike org and project, blank is accepted: it is how a location is cleared
+      if ((msg.payload) != location) {
+        location = msg.payload;
+        changed = true;
+      }
+      dispatched = true;
     }
     if (changed) {
       msg.maybeWriteToFSandEcho(); // Save for next time (echo though not logged, so saved on MQTT server)
@@ -151,6 +158,10 @@ void System_Frugal::discover() {
   if (!discoveredSelf) {
     messages->send(leaf2path("name"), name, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
     messages->send(leaf2path("description"), description, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+    // A node that has never been given a location publishes nothing for it
+    if (location.length()) {
+      messages->send(leaf2path("location"), location, MQTT_RETAIN, MQTT_QOS_ATLEAST1);
+    }
     discoveredSelf = true;
   }
   // Commented out because already sending ota_key which contains it.

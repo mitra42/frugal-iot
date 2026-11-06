@@ -53,7 +53,8 @@ class System_Frugal : public System_Group {
     // set org, project and WiFi without the node resetting between them - see System_SerialConfig
     bool restartPending = false;
     String project;
-    String description; 
+    String description;
+    String location; // "lat,lon" set from the UI, never parsed here - empty means not set
     const String nodeid; // Unique id - starts esp32- or esp8266-
     // Pointers to other Frugal_Base objects or groups of objects
     System_Group* actuators;
