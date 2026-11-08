@@ -56,7 +56,8 @@ void setup() {
     ->powerPins(SENSOR_DHT_POWER3v3_PIN, SENSOR_DHT_POWER0_PIN);
   #endif
   #ifdef SENSOR_DS18B20_PIN
-    frugal_iot.sensors->add(new Sensor_DS18B20("ds18b20", "Water Temperature", SENSOR_DS18B20_PIN, true))
+    Sensor_DS18B20* ds18b20 = new Sensor_DS18B20("ds18b20", "Water Temperature", SENSOR_DS18B20_PIN, true);
+    frugal_iot.sensors->add(ds18b20)
     ->powerPins(SENSOR_DS18B20_POWER3v3_PIN, SENSOR_DS18B20_POWER0_PIN);
   #endif
   #ifdef SENSOR_TDS_PIN
@@ -70,10 +71,14 @@ void setup() {
       ->powerPins(SENSOR_TDS_POWER3v3_PIN, PIN_NONE);
   #endif 
   #ifdef SENSOR_DO_PIN
-    // Dissolved oxygen - publishes mg/L. Its water-temperature input wires itself to
-    // SENSOR_DO_TEMPERATURE_PATH (default "ds18b20/ds18b20") unless already wired via
-    // the filesystem or the UX, so there is nothing to wire here.
-    frugal_iot.sensors->add(new Sensor_DissolvedOxygen("do", "Dissolved Oxygen", SENSOR_DO_PIN));
+    // Dissolved oxygen - publishes mg/L, compensated by water temperature. Wired here to the
+    // DS18B20 when there is one; otherwise wire it in the UX (a path stored on the filesystem
+    // or set in the UX takes precedence over this anyway).
+    Sensor_DissolvedOxygen* dox = new Sensor_DissolvedOxygen("do", "Dissolved Oxygen", SENSOR_DO_PIN);
+    frugal_iot.sensors->add(dox);
+    #ifdef SENSOR_DS18B20_PIN
+      dox->wireFrom(ds18b20);
+    #endif
   #endif
   #ifdef SENSOR_INA219_WANT
     // Current/voltage/power over I2C. Publishes shunt(mV), bus(V), current(mA), power(mW)
@@ -109,7 +114,7 @@ void setup() {
   // If required, add a control - this is just an example
   //Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   //frugal_iot.controls->add(cb);
-  //cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+  //cb->wireTo(frugal_iot.led);
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

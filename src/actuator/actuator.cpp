@@ -53,3 +53,24 @@ Actuator* Actuator::preserveDuringSleep(bool on) {
   preserve_during_sleep = on;
   return this;
 }
+
+// See System_Base::wireFrom - these exist only so a chain keeps the Actuator type
+IN* Actuator::defaultInput() {
+  return (inputs.size() == 1) ? inputs[0] : nullptr;
+}
+Actuator* Actuator::wireFrom(System_Base* other) {
+  System_Base::wireFrom(other);
+  return this;
+}
+Actuator* Actuator::wireFrom(OUT* out) {
+  System_Base::wireFrom(out);
+  return this;
+}
+Actuator* Actuator::wireTo(System_Base* other) {
+  System_Base::wireTo(other);
+  return this;
+}
+Actuator* Actuator::wireTo(IN* in) {
+  System_Base::wireTo(in);
+  return this;
+}

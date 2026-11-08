@@ -100,3 +100,27 @@ void Control::discover() {
     output->discover();
   }
 }
+
+// See System_Base::wireFrom - these exist only so a chain keeps the Control type
+IN* Control::defaultInput() {
+  return (inputs.size() == 1) ? inputs[0] : nullptr;
+}
+OUT* Control::defaultOutput() {
+  return (outputs.size() == 1) ? outputs[0] : nullptr;
+}
+Control* Control::wireFrom(System_Base* other) {
+  System_Base::wireFrom(other);
+  return this;
+}
+Control* Control::wireFrom(OUT* out) {
+  System_Base::wireFrom(out);
+  return this;
+}
+Control* Control::wireTo(System_Base* other) {
+  System_Base::wireTo(other);
+  return this;
+}
+Control* Control::wireTo(IN* in) {
+  System_Base::wireTo(in);
+  return this;
+}

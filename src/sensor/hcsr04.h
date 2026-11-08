@@ -23,7 +23,7 @@
  * Temperature: the speed of sound is 331.3 + 0.606 * T m/s, about 0.17% per degree C - 3.4cm at
  * 2m for a 10 degree error, which matters for the depth of a tank. So there is a wireable
  * `temperature` input. Wire it to any temperature sensor on the node or elsewhere, in the sketch,
- * the UX or with SENSOR_HCSR04_TEMPERATURE_PATH. Until something arrives on it,
+ * (hcsr04->wireFrom(sht)) or the UX. Until something arrives on it,
  * SENSOR_HCSR04_DEFAULT_TEMPERATURE is used.
  *
  * Supported modules
@@ -92,7 +92,6 @@
  *   SENSOR_HCSR04_TIMEOUT_US     (30000) - give up on an echo (30ms is about 5m)
  *   SENSOR_HCSR04_MIN_MM (20), SENSOR_HCSR04_MAX_MM (4000) - valid range
  *   SENSOR_HCSR04_DEFAULT_TEMPERATURE (20) - C, until the temperature input has a value
- *   SENSOR_HCSR04_TEMPERATURE_PATH - default wiring for the temperature input, e.g. "sht/temperature"
  *   SENSOR_HCSR04_DEBUG            - Serial debug output
  */
 
@@ -142,7 +141,8 @@ class Sensor_HCSR04 : public Sensor_Ultrasonic {
     Sensor_HCSR04(const char* const id, const char * const name, uint8_t trigger_pin, uint8_t echo_pin,
       float max = DEFAULT_hcsr04_hcsr04_max, const char* color = DEFAULT_hcsr04_hcsr04_color,
       const bool retain = true, float offset = 0.0, float scale = 1.0);
-    INfloat* temperature; // Air temperature, for the speed of sound - public so a sketch can wireTo it
+    INfloat* temperature; // Air temperature, for the speed of sound - public so a sketch can wire it
+    IN* defaultInput() override { return temperature; } // So hcsr04->wireFrom(sht) works
   protected:
     const uint8_t trigger_pin;
     const uint8_t echo_pin;

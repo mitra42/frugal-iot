@@ -83,13 +83,13 @@ void setup() {
   // Add sensors, actuators and controls
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
   // Relay on Sonoff is on pin 12
-  frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, DEFAULT_relay_on_color));
+  Actuator_Digital* relay = new Actuator_Digital("relay", "Relay", RELAY_BUILTIN, DEFAULT_relay_on_color);
+  frugal_iot.actuators->add(relay);
 
   // Add the control and wire to the relay and the LED.
   Control_Sonoff* cs = new Control_Sonoff();
-  frugal_iot.controls->add(cs);
-  cs->outputs[0]->wireTo(frugal_iot.messages->setPath("relay/on")); // TODO refactor wireTo so can take a Base
-  cs->outputs[1]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on")); // Turn on LED if manual (TODO-187 may want inverse) 
+  frugal_iot.controls->add(cs->wireTo(relay)); // Default output (out) -> the relay's default input (on)
+  cs->outputs[1]->wireTo(frugal_iot.led); // Turn on LED if manual (TODO-187 may want inverse) 
   // https://github.com/mitra42/frugal-iot/issues/159
   cs->outputs[1]->sendWired(); // Send current value to LED 
   // Create a button, and wire its single and long clicks to the control.

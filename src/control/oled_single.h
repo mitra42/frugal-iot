@@ -10,9 +10,8 @@
  * The value arrives on a wireable input, `control_oled_single/value`, so wire it to whatever
  * should be shown - a sensor on this node, or one on another node:
  *
- *   Control_Oled_Single* cos = new Control_Oled_Single("Control OLED", "mm", "Distance");
- *   frugal_iot.controls->add(cos);
- *   cos->value->wireTo(frugal_iot.messages->path("ultrasonic/ultrasonic"));
+ *   frugal_iot.controls->add((new Control_Oled_Single("Control OLED", "mm", "Distance"))->wireFrom(us));
+ *   // or, for a sensor on another node:  cos->value->wireFrom("<topic path>");
  *
  * Text sizes come from the display's visible height, so the same code suits both panels in common
  * use - the 128x64 on the LoRa boards and the 72x40 HW675 - and the 128x128 SSD1327. Compare

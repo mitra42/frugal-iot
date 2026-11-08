@@ -23,6 +23,13 @@ class Control : public System_Base {
     bool enabled = true; // Set false to suppress act() drawing/output
 
     Control(const char * const id, const char * const name, std::vector<IN*> i, std::vector<OUT*> o);
+    // See System_Base
+    IN* defaultInput() override;   // The only input, or nullptr if none or several - override where one is obvious
+    OUT* defaultOutput() override; // The only output, likewise
+    Control* wireFrom(System_Base* other) override; // Only to return Control* for chaining
+    Control* wireFrom(OUT* out) override;
+    Control* wireTo(System_Base* other) override;
+    Control* wireTo(IN* in) override;
     void setup() override;
     /* False if any input is currently carrying "no reading" - see IN::isValid().
      *

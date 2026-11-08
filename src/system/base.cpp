@@ -9,6 +9,7 @@
 #include "system/base.h"
 #include "system/frugal.h"
 #include "system/interface.h"
+#include "system/io.h" // IN/OUT for wireFrom/wireTo
 #include "misc.h" // pinsPowerUp / pinsPowerDown
 
 System_Base::System_Base(const char * const id, const String name)
@@ -111,6 +112,44 @@ String System_Base::leaf2path(const String& leaf) {
 // The chaining stub - see base.h. Does nothing on a Control or a System module; overridden in
 // System_SensorActuator, which both Sensor and Actuator extend.
 System_Base* System_Base::powerPins(const uint8_t power3v3, const uint8_t power0v) { return this; }
+
+// See base.h. A missing default is a mistake in the sketch, so say so rather than doing nothing silently.
+System_Base* System_Base::wireFrom(System_Base* other) {
+  IN* in = defaultInput();
+  if (in) {
+    in->wireFrom(other);
+  } else {
+    Serial.print(id); Serial.println(F(" has no default input to wire from"));
+  }
+  return this;
+}
+System_Base* System_Base::wireFrom(OUT* out) {
+  IN* in = defaultInput();
+  if (in) {
+    in->wireFrom(out);
+  } else {
+    Serial.print(id); Serial.println(F(" has no default input to wire from"));
+  }
+  return this;
+}
+System_Base* System_Base::wireTo(System_Base* other) {
+  OUT* out = defaultOutput();
+  if (out) {
+    out->wireTo(other);
+  } else {
+    Serial.print(id); Serial.println(F(" has no default output to wire to"));
+  }
+  return this;
+}
+System_Base* System_Base::wireTo(IN* in) {
+  OUT* out = defaultOutput();
+  if (out) {
+    out->wireTo(in);
+  } else {
+    Serial.print(id); Serial.println(F(" has no default output to wire to"));
+  }
+  return this;
+}
 
 System_SensorActuator::System_SensorActuator(const char * const id, const String name) 
 : System_Base(id, name) {}

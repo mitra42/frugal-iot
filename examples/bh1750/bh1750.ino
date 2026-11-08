@@ -41,20 +41,19 @@ void setup() {
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
   
   // Add sensors, actuators and controls
-  frugal_iot.sensors->add(new Sensor_BH1750("lux", "Light Sensor", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true))
+  Sensor_BH1750* lux = new Sensor_BH1750("lux", "Light Sensor", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true);
+  frugal_iot.sensors->add(lux)
   ->powerPins(SENSOR_BH1750_POWER3v3_PIN, SENSOR_BH1750_POWER0_PIN);
 
   // On a board with an OLED, show the light level on it - large, with its unit and a label
   #ifdef ACTUATOR_OLED_WANT
-    Control_Oled_Single* cos = new Control_Oled_Single("Control OLED", "lx", "Light");
-    frugal_iot.controls->add(cos);
-    cos->value->wireTo(frugal_iot.messages->path("lux/lux")); // The BH1750's output
+    frugal_iot.controls->add((new Control_Oled_Single("Control OLED", "lx", "Light"))->wireFrom(lux));
   #endif
 
   // If required, add a control - this is just an example
   Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+  cb->wireTo(frugal_iot.led);
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

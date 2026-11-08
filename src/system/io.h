@@ -5,6 +5,8 @@
 #include "_settings.h" // For MQTT_RETAIN
 #include "system/message.h" // For System_Message in dispatch
 
+class System_Base; // system/base.h - for IN::wireFrom(System_Base*) and OUT::wireTo(System_Base*)
+
 /* The schema's min, max and color for a topic, as three constructor arguments, uses as e.g.
  *   new INfloat(id, "maxminutes", name, 5, 1, IO_DEFAULTS(irrigation_maxminutes), false)
  */
@@ -104,7 +106,17 @@ class IN : public IO {
     virtual bool convertAndSet(const String &payload);
     bool dispatch(System_Message &msg) override;
     void setup();
+    /* Where this input takes its value from. An IN wires FROM something, an OUT wires TO something.
+     *   wireFrom(String)       a topic path - subscribes to it; empty unwires
+     *   wireFrom(OUT*)         that output's own topic, e.g. ens->humidity->wireFrom(aht->humidity)
+     *   wireFrom(System_Base*) that module's defaultOutput() - see System_Base::wireFrom
+     */
+    void wireFrom(String topicPath);
+    void wireFrom(OUT* out);
+    void wireFrom(System_Base* other);
+    [[deprecated("IN::wireTo(String) is now IN::wireFrom(String)")]]
     void wireTo(String topicPath);
+    String setPath(); // The set/ topic an OUT writes to, to drive this input
   protected: // Most of IN appears to need to be public
 };
 class OUT : public IO {
@@ -126,6 +138,15 @@ class OUT : public IO {
      */
     virtual void setInvalid();
     bool dispatch(System_Message &msg) override;
+    /* Where this output also sends its value - see sendWired().
+     *   wireTo(String)       a topic path, normally another IN's set/ path; empty unwires
+     *   wireTo(IN*)          that input's setPath()
+     *   wireTo(System_Base*) that module's defaultInput() - see System_Base::wireTo
+     * Like IO::wireTo(String) these only record the path; nothing is sent until the next change.
+     */
+    void wireTo(String topicPath);
+    void wireTo(IN* in);
+    void wireTo(System_Base* other);
   protected: // Most of IN appears to need to be public
 };
 

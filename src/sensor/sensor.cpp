@@ -99,3 +99,24 @@ void Sensor::dispatch(System_Message &msg) {
     System_Base::dispatch(msg);
   }
 }
+
+// See System_Base::wireFrom - these exist only so a chain keeps the Sensor type
+OUT* Sensor::defaultOutput() {
+  return (outputs.size() == 1) ? outputs[0] : nullptr;
+}
+Sensor* Sensor::wireFrom(System_Base* other) {
+  System_Base::wireFrom(other);
+  return this;
+}
+Sensor* Sensor::wireFrom(OUT* out) {
+  System_Base::wireFrom(out);
+  return this;
+}
+Sensor* Sensor::wireTo(System_Base* other) {
+  System_Base::wireTo(other);
+  return this;
+}
+Sensor* Sensor::wireTo(IN* in) {
+  System_Base::wireTo(in);
+  return this;
+}

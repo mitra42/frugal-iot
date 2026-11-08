@@ -23,6 +23,12 @@ class Sensor : public System_SensorActuator {
     Sensor(const char* id, const char* const name, bool retain);
     virtual void prepare();   // Calls powerDown for power cycling before sensor read
     virtual void recover();   // Calls powerUp for power cycling after sleep
+    // See System_Base. A Sensor has no inputs vector, so a sensor with one IN overrides defaultInput()
+    OUT* defaultOutput() override; // The only output, or nullptr if none or several - no obvious one to pick
+    Sensor* wireFrom(System_Base* other) override; // Only to return Sensor* for chaining
+    Sensor* wireFrom(OUT* out) override;
+    Sensor* wireTo(System_Base* other) override;
+    Sensor* wireTo(IN* in) override;
   protected:
     std::vector<OUT*> outputs; // Vector of outputs
     const bool retain = false;

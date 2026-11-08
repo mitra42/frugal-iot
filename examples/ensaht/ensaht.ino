@@ -52,16 +52,15 @@ void setup() {
   frugal_iot.sensors->add(aht);
   Sensor_ENS160* ens = new Sensor_ENS160("ENS160");
   frugal_iot.sensors->add(ens);
-  // Feed the AHT21's readings to the ENS160 for its compensation. Sensor_ENS160::setup() would
-  // do exactly this on its own (SENSOR_ENS160_TEMPERATURE_PATH / _HUMIDITY_PATH default to the
-  // AHT21's topics), but it is spelled out here because it is the point of the example - and
-  // because wiring it explicitly is what you would edit to feed it from a different sensor.
-  ens->temperature->wireTo(aht->temperature->path());
-  ens->humidity->wireTo(aht->humidity->path());
+  // Feed the AHT21's readings to the ENS160 for its compensation. Nothing does this by default,
+  // so without these lines the ENS160 compensates against fixed defaults until the UX wires it.
+  // To feed it from a different sensor, wire that sensor here instead.
+  ens->temperature->wireFrom(aht->temperature);
+  ens->humidity->wireFrom(aht->humidity);
   
   Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+  cb->wireTo(frugal_iot.led);
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

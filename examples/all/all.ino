@@ -116,7 +116,7 @@ void setup() {
   frugal_iot.sensors->add(sht = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
   
   // The dissolved oxygen probe compensates against water temperature; the SHT will do here.
-  dox->watertemperature->wireTo(sht->temperature->path());
+  dox->wireFrom(sht->temperature); // dox's default input is its water temperature
 
   // Soil sensor 0%=4095 100%=0 pin=32 smooth=0 color=brown
   frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil", 32, 4095, -100.0/4095, "brown", true));
@@ -184,11 +184,11 @@ void setup() {
   // Controls that can be wire here, or in the UX
   Control* cb = new Control_Blinken("blinken", "Blinken", 5, 2);
   frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/id"));
+  cb->wireTo(frugal_iot.led);
 
   Control_Hysteresis* ch = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(ch);
-  ch->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+  ch->wireTo(frugal_iot.led);
 
   // A voltage out. Guarded by the pin, since it needs one wired to something that wants a control
   // voltage - and on a C3 or S3, where this becomes PWM, an RC filter as well (see analog.h).
@@ -234,7 +234,7 @@ void setup() {
       });
   frugal_iot.controls->add(clfs);
   // Wire the logger to the temperature sensor, it could be left blank and wired in the UX to a remote sensor
-  clfs->inputs[0]->wireTo(sht->temperature->path()); // Wired to the temperatur sensor  // TODO-141 probably breaks as MQTT wont have setup yet
+  clfs->inputs[0]->wireFrom(sht->temperature); // Wired to the temperatur sensor  // TODO-141 probably breaks as MQTT wont have setup yet
   // ==== GSHEETS 
 
   #ifndef CONTROL_GSHEETS_URL

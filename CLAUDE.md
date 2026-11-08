@@ -832,12 +832,12 @@ methods, plus `data-t` on its field.
 
 Every value a component reads or writes is a member object, not a plain field — an `IN` (input)
 or `OUT` (output), both defined in `system/io.h`. This is the mechanism the rest of this doc calls
-"signal wiring": `wireTo()`, MQTT publish, and `dispatch()` are all implemented on `IO`, not
+"signal wiring": `wireFrom()`/`wireTo()`, MQTT publish, and `dispatch()` are all implemented on `IO`, not
 hand-rolled per component.
 
 ```
 IO (system/io.h)          — sensorId, id, name, topicTwig ("sht/temperature"), color, wiredPath…
-├── IN                    — subscribes wiredPath on the message bus when wireTo() is called
+├── IN                    — subscribes wiredPath on the message bus when wireFrom() is called
 │   ├── INfloat           — value + min/max/width, e.g. a temperature reading or setpoint
 │   ├── INbool
 │   ├── INuint16
@@ -864,7 +864,7 @@ controls whether the UX offers rewiring it at all.
 
 **How wiring and dispatch actually flow:**
 
-1. `wireTo(path)` on an `IN` calls `frugal_iot.messages->subscribe(path)` — it does **not** talk to
+1. `wireFrom(path)` on an `IN` calls `frugal_iot.messages->subscribe(path)` — it does **not** talk to
    the other `IO` directly. `OUT::wireTo()` just records `wiredPath`; it does not subscribe (that
    would create a useless loopback since an `OUT` never receives).
 2. When an `OUT` changes (e.g. `((OUTfloat*)temperature)->set(21.5)`), `set()` both `send()`s to its
@@ -886,15 +886,50 @@ controls whether the UX offers rewiring it at all.
 via MQTT (`.../wired` topic), or from the captive portal / LittleFS config:
 
 ```cpp
-// Wire a sensor output to a control input (path() returns this node's own topic path):
-cc->inputs[0]->wireTo(sht->temperature->path());
+// Module to module, through each module's default IO (defaultInput()/defaultOutput() on System_Base):
+cc->wireFrom(soil)->wireTo(heater);    // soil's only output -> cc's inputs[0]; cc's outputs[0] -> heater's inputs[0]
+cc->wireFrom(sht->temperature);        // a module's default input <- a named output (sht has two, so no default)
+cb->wireTo(frugal_iot.led);            // the built-in LED, added automatically; its default input is "on"
 
-// Wire a control output to an actuator's "set" topic (setPath creates a writable endpoint):
+// IO to IO, for anything other than the default:
+cc->inputs[3]->wireFrom(sht->humidity);       // subscribes to sht->humidity->path()
+cc->outputs[1]->wireTo(humidifier->input);    // writes to the IN's setPath()
+
+// By topic path, e.g. to another node or to something with no object in the sketch:
+cc->inputs[0]->wireFrom("<topic path>");
 cc->outputs[0]->wireTo(frugal_iot.messages->setPath("heating/on"));
 ```
 
+An `IN` wires **from**, an `OUT` wires **to**. `IN::wireTo(String)` still compiles, with a
+deprecation warning, and calls `wireFrom`. The module-level `wireFrom`/`wireTo` return the module
+(as `Sensor*`, `Actuator*` or `Control*`), so they chain and can go straight into `add()`:
+`frugal_iot.controls->add((new Control_Oled_Single(...))->wireFrom(us));`
+
+Defaults exist only where the choice is obvious. `Sensor`, `Actuator` and `Control` return an
+input or output only when they have exactly one - so `sht`, `aht`, `gps`, `Control_Oled_HT` and
+`Control_Blinken`'s inputs have none, and you name the IO (`sht->temperature`). Classes whose main
+IO is obvious among several override `defaultInput()`/`defaultOutput()`:
+
+| Class | Default |
+|---|---|
+| `Control_Hysteresis` (and so `Control_Sonoff`) | input `now`, output `out` - the rest are settings |
+| `Actuator_Ledbuiltin` (`frugal_iot.led`) | input `on` - colour and brightness are settings |
+| `Sensor_ms5803` | output `pressure` - bought as a pressure/depth sensor |
+| `Sensor_DissolvedOxygen`, `Sensor_HCSR04` | their one `IN` (a Sensor has no `inputs` vector) |
+
+A module with no default prints an error rather than failing silently.
+`Sensor_Button` and `Actuator_OLED` extend `System_Base` directly, so have no defaults.
+
+`frugal_iot.led` is the `Actuator_Ledbuiltin` that `System_Frugal` adds on any board with
+`LED_BUILTIN`, typed `Actuator*` because that class compiles to nothing on a board without one -
+where `led` is `nullptr`, and wiring to it prints the "no default input" error.
+
+**Wire in the sketch, not with a path in `platformio.ini`.** When a sketch composes two modules
+on one node, it wires them with these calls. Wiring in the sketch runs before `frugal_iot.setup()`,
+so a path stored on LittleFS or set in the UX still overrides it.
+
 Paths follow the pattern `<device_id>/<leaf>`. `setPath` creates a writable endpoint; `path` creates
-a readable one — both just build the topic string, the actual subscribe only happens via `IN::wireTo()`.
+a readable one — both just build the topic string, the actual subscribe only happens via `IN::wireFrom()`.
 
 ## Invalid readings — how "there is no reading" propagates
 
@@ -1204,16 +1239,15 @@ three traps if you add another:
    does, and the reason it can't simply be delegated.
 3. Call `input->setup()` yourself and add it to `discover()` — `Sensor` does neither for you.
 
-The input wires itself in `setup()` to `SENSOR_DO_TEMPERATURE_PATH` (default
-`"ds18b20/ds18b20"`) **only if** nothing already wired it, so a path stored on LittleFS or set
-in the UX takes precedence over the compile-time default.
+Nothing wires the input by default. The sketch wires it (`dox->wireFrom(ds18b20)` - it is the
+sensor's `defaultInput()`), or the UX does later; a path stored on LittleFS or set in the UX takes
+precedence over the sketch's wiring. (`SENSOR_DO_TEMPERATURE_PATH` used to do this and is gone.)
 
 ```ini
 build_flags =
     -D SENSOR_DO_PIN=34
     ;-D SENSOR_DO_CAL1_V=269 -D SENSOR_DO_CAL1_T=25   ; single-point calibration
     ;-D SENSOR_DO_CAL2_V=... -D SENSOR_DO_CAL2_T=...  ; define BOTH for two-point
-    ;-D SENSOR_DO_TEMPERATURE_PATH=\"ds18b20/ds18b20\"
     ;-D SENSOR_DO_DEBUG
 ```
 
@@ -1316,18 +1350,17 @@ plate, but it does not care where they come from — the AHT21 sharing the break
 elsewhere on the node, or a reading published by another node entirely. Welding the two chips
 together made the AHT21 unusable on its own, made the ENS160 unusable without one, and hid the
 dependency from the UX. So the compensation values are now `IN`s (the `Sensor_DissolvedOxygen`
-shape) that default to `aht21/temperature` and `aht21/humidity` — the combined board still
-works with no wiring in the sketch, and anything else is one `wireTo()` away.
+shape), which the sketch wires - to the AHT21 on the combined board, or anything else. Nothing
+wires them by default (`SENSOR_ENS160_TEMPERATURE_PATH`/`_HUMIDITY_PATH` used to, and are gone).
 
 ```cpp
 Sensor_AHT21* aht = new Sensor_AHT21("AHT21");
 Sensor_ENS160* ens = new Sensor_ENS160("ENS160");
 frugal_iot.sensors->add(aht);
 frugal_iot.sensors->add(ens);
-ens->temperature->wireTo(aht->temperature->path()); // What setup() would do anyway
-ens->humidity->wireTo(aht->humidity->path());
-// ;-D SENSOR_ENS160_ADDRESS=0x52  ;-D SENSOR_ENS160_TEMPERATURE_PATH=\"sht/temperature\"
-// ;-D SENSOR_ENS160_HUMIDITY_PATH=\"sht/humidity\"  ;-D SENSOR_ENS160_DEBUG
+ens->temperature->wireFrom(aht->temperature); // Two inputs, two outputs - no defaults, so name both
+ens->humidity->wireFrom(aht->humidity);
+// ;-D SENSOR_ENS160_ADDRESS=0x52  ;-D SENSOR_ENS160_DEBUG
 ```
 
 `eco2` is *equivalent* CO2 — derived from the VOC reading, not measured, so it will not see
@@ -1743,7 +1776,8 @@ Speed of sound is `331.3 + 0.606 * T` m/s — 0.17 %/°C — from a wireable `te
 (`<id>/temperature`), handled the same way as `Sensor_DissolvedOxygen`'s: set up before
 `readConfigFromFS`, dispatched outside the `module() == id` test. It holds
 `SENSOR_HCSR04_DEFAULT_TEMPERATURE` (20) until wired, and falls back to it if the wired sensor
-publishes `nan`. `SENSOR_HCSR04_TEMPERATURE_PATH` sets a default wiring.
+publishes `nan`. Nothing wires it by default - `hcsr04->wireFrom(ds18b20)` in the sketch (as `examples/ultrasonic`
+does when `SENSOR_DS18B20_PIN` is set), or the UX.
 
 **Also the AJ-SR04M and SR04M-2** (waterproof, probe on a cable), in the as-shipped trigger/echo
 mode (R19 empty). With 120k on R19 they send the A01NYUB's frame instead - use `Sensor_A01NYUB`. It differs in having a ~20-25 cm blind zone
@@ -1759,7 +1793,7 @@ The HC-SR04P runs at 3.3 V and needs none.
 ```cpp
 Sensor_HCSR04* us = new Sensor_HCSR04("hcsr04", "Distance", SENSOR_ULTRASONIC_TRIG_PIN, SENSOR_ULTRASONIC_ECHO_PIN);
 frugal_iot.sensors->add(us);
-us->temperature->wireTo(sht->temperature->path()); // optional
+us->wireFrom(sht->temperature); // optional - temperature is its defaultInput()
 ```
 
 `sensor/hcsr04.h` keeps `#ifndef` fallbacks for `DEFAULT_hcsr04_hcsr04_color`/`_max`, which
@@ -2318,13 +2352,12 @@ void setup() {
   Sensor_SHT* sht = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true);
   frugal_iot.sensors->add(sht);
 
-  frugal_iot.actuators->add(new Actuator_Digital("heating", "Heating", HEATING_PIN, "red"));
+  Actuator_Digital* heating = new Actuator_Digital("heating", "Heating", HEATING_PIN, "red");
+  frugal_iot.actuators->add(heating);
   frugal_iot.actuators->add(new Actuator_Digital("humidifier", "Humidifier", HUMIDIFIER_PIN, "blue"));
 
   Control_Hysteresis* ch = new Control_Hysteresis("controlheat", "Heat Control", 22.0, 1.0, 0, 100);
-  frugal_iot.controls->add(ch);
-  ch->inputs[0]->wireTo(sht->temperature->path());
-  ch->outputs[0]->wireTo(frugal_iot.messages->setPath("heating/on"));
+  frugal_iot.controls->add(ch->wireFrom(sht->temperature)->wireTo(heating));
 
   frugal_iot.setup();
 }

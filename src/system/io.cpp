@@ -31,11 +31,42 @@ void IO::wireTo(String topicPath) {
   wiredPath = topicPath; // can set to empty
   // Intentionally not subscribing out to its wired path, leads to unnecessary loopback
 }
-void IN::wireTo(String topicPath) {
+void IN::wireFrom(String topicPath) {
   // TODO probably should unsubscribe from previous BUT could be subscribed elsewhere
   IO::wireTo(topicPath);
   if (topicPath.length()) {
     frugal_iot.messages->subscribe(wiredPath);
+  }
+}
+void IN::wireTo(String topicPath) { // Deprecated - see io.h
+  wireFrom(topicPath);
+}
+void IN::wireFrom(OUT* out) {
+  wireFrom(out->path());
+}
+void IN::wireFrom(System_Base* other) {
+  OUT* out = other ? other->defaultOutput() : nullptr;
+  if (out) {
+    wireFrom(out);
+  } else {
+    Serial.print(F("Cannot wire ")); Serial.print(topicTwig); Serial.println(F(" - source has no default output"));
+  }
+}
+String IN::setPath() {
+  return frugal_iot.messages->setPath(topicTwig.c_str());
+}
+void OUT::wireTo(String topicPath) {
+  IO::wireTo(topicPath);
+}
+void OUT::wireTo(IN* in) {
+  wireTo(in->setPath());
+}
+void OUT::wireTo(System_Base* other) {
+  IN* in = other ? other->defaultInput() : nullptr;
+  if (in) {
+    wireTo(in);
+  } else {
+    Serial.print(F("Cannot wire ")); Serial.print(topicTwig); Serial.println(F(" - destination has no default input"));
   }
 }
 String IO::path() {
@@ -260,7 +291,7 @@ bool IN::dispatch(System_Message &msg) {
     if (msg.isSet()) { // e.g : set/sht/temp/wired Note subclass handles set/sht/temp set/sht/temp/max etc
       if (msg.leaf().startsWith(id) && msg.leaf().endsWith("/wired")) { // Note: this is the "id" of the leaf, not of the sensor
         if (!(msg.payload == wiredPath)) { // if empty, or different
-          wireTo(msg.payload);
+          wireFrom(msg.payload);
           msg.maybeWriteToFSandEcho();
           // Does not trigger a changed return
         }

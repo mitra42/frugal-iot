@@ -33,7 +33,7 @@ Control_Gsheets::Control_Gsheets(const char* name, const char* const googleSheet
 void Control_Gsheets::track(const char* col, String topicPath) {
   // TODO-136 may not want to pass empty new string here
   INtext* i = new INtext(id, col, col, String(), "black", true); // sensorId, id, name, value, color, wireable 
-  i->wireTo(topicPath); // Does a subscription
+  i->wireFrom(topicPath); // Does a subscription
   inputs.push_back(i);
 }
 

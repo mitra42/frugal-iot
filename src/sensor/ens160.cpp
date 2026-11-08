@@ -79,14 +79,6 @@ void Sensor_ENS160::setup() {
   temperature->setup(); // Before readConfigFromFS, which may carry a stored wired path
   humidity->setup();
   Sensor::setup();      // Will readConfigFromFS - do before touching the device
-  // Only apply the compile-time defaults if nothing on the filesystem or in the UX wired them.
-  // On the common ENS160+AHT21 board this is what joins the two halves back together.
-  if (!temperature->wiredPath.length()) {
-    temperature->wireTo(frugal_iot.messages->path(SENSOR_ENS160_TEMPERATURE_PATH));
-  }
-  if (!humidity->wiredPath.length()) {
-    humidity->wireTo(frugal_iot.messages->path(SENSOR_ENS160_HUMIDITY_PATH));
-  }
   #ifdef SENSOR_ENS160_DEBUG
     Serial.print(F("ENS160 compensation wired to ")); Serial.print(temperature->wiredPath);
     Serial.print(F(" and ")); Serial.println(humidity->wiredPath);

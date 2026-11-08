@@ -15,8 +15,8 @@
  *
  * Dissolved oxygen saturation depends strongly on water temperature, so the probe's millivolt
  * reading only means something once you know the temperature. This class therefore takes an
- * IN, wired by default to the water temperature sensor - the first Sensor in Frugal-IoT to
- * have an input rather than only outputs.
+ * IN, which the sketch wires to a water temperature sensor (dox->wireFrom(ds18b20)) or the UX
+ * wires later - the first Sensor in Frugal-IoT to have an input rather than only outputs.
  *
  * How it maps onto Sensor_Analog
  * ──────────────────────────────
@@ -44,7 +44,6 @@
  *   SENSOR_DO_CAL1_V            (269)   - probe mV in saturated water at SENSOR_DO_CAL1_T
  *   SENSOR_DO_CAL1_T            (25)    - that calibration temperature, C
  *   SENSOR_DO_CAL2_V, SENSOR_DO_CAL2_T  - define BOTH for two-point calibration
- *   SENSOR_DO_TEMPERATURE_PATH  ("ds18b20/ds18b20") - default wiring for the water temperature
  *   SENSOR_DO_DEFAULT_TEMPERATURE (25)  - assumed until the first temperature message arrives
  *   SENSOR_DO_DEBUG                     - Serial debug output
  */
@@ -70,9 +69,6 @@
 #endif
 // SENSOR_DO_CAL2_V and SENSOR_DO_CAL2_T are intentionally not defaulted - defining both is
 // what selects two-point calibration.
-#ifndef SENSOR_DO_TEMPERATURE_PATH
-  #define SENSOR_DO_TEMPERATURE_PATH "ds18b20/ds18b20"
-#endif
 #ifndef SENSOR_DO_DEFAULT_TEMPERATURE
   #define SENSOR_DO_DEFAULT_TEMPERATURE 25.0 // TODO what is this and how used
 #endif
@@ -84,6 +80,7 @@ class Sensor_DissolvedOxygen : public Sensor_Analog {
     // Held as IN* not INfloat* deliberately: INfloat::dispatch() and ::discover() are
     // protected overrides, only reachable through the public IN declarations.
     INfloat* watertemperature;
+    IN* defaultInput() override { return watertemperature; } // So dox->wireFrom(ds18b20) works
   protected:
     void setup() override;
     void discover() override;

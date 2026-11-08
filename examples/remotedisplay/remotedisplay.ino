@@ -51,14 +51,18 @@ void setup() {
   // If required, add a control - this is just an example
   //Control_Hysteresis* cb = new Control_Hysteresis("Control_Hysteresis", "Control", 50, 1, 0, 100);
   //frugal_iot.controls->add(cb);
-  //cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+  //cb->wireTo(frugal_iot.led);
 
+  // The display shows a sensor on ANOTHER node, so the three paths below are only placeholders -
+  // this node has no SHT of its own. Either wire the display's inputs in the UX, or hard-wire
+  // them here to the topics of the actual device being monitored, e.g.
+  //   cos->temperature->wireFrom("dev/developers/esp32-123456/sht/temperature");
   #ifdef ACTUATOR_OLED_WANT
     Control_Oled_HT* cos = new Control_Oled_HT("Control OLED");
     frugal_iot.controls->add(cos);
-    cos->temperature->wireTo(frugal_iot.messages->path("sht/temperature"));
-    cos->humidity->wireTo(frugal_iot.messages->path("sht/humidity"));  
-    cos->battery->wireTo(frugal_iot.messages->path("battery/battery"));
+    cos->temperature->wireFrom(frugal_iot.messages->path("sht/temperature"));
+    cos->humidity->wireFrom(frugal_iot.messages->path("sht/humidity"));  
+    cos->battery->wireFrom(frugal_iot.messages->path("battery/battery"));
   #endif
 
   // Dont change below here - should be after setup the actuators, controls and sensors

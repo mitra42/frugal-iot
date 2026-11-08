@@ -36,6 +36,12 @@ class Actuator : public System_SensorActuator {
      * Light sleep is unaffected either way - the pins are never released.
      */
     Actuator* preserveDuringSleep(bool on = true) override;
+    // See System_Base
+    IN* defaultInput() override; // The only input, or nullptr if none or several - override where one is obvious
+    Actuator* wireFrom(System_Base* other) override; // Only to return Actuator* for chaining
+    Actuator* wireFrom(OUT* out) override;
+    Actuator* wireTo(System_Base* other) override;
+    Actuator* wireTo(IN* in) override;
   protected:
     bool preserve_during_sleep = true;
     // An Actuator has a group of inputs used to control it. Some things (like dispatch) will loop through them.

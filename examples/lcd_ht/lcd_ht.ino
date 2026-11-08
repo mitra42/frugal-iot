@@ -35,8 +35,8 @@ void setup() {
   Control_LCD_HT* cls = new Control_LCD_HT();
   frugal_iot.controls->add(cls);
   // Subscribe to the remote SHT sensor's MQTT readings
-  cls->temperature->wireTo(String(REMOTE_SHT_PATH) + "sht/temperature");
-  cls->humidity->wireTo(String(REMOTE_SHT_PATH) + "sht/humidity");
+  cls->temperature->wireFrom(String(REMOTE_SHT_PATH) + "sht/temperature");
+  cls->humidity->wireFrom(String(REMOTE_SHT_PATH) + "sht/humidity");
   // Wire the formatted string output to the local LCD actuator's message input
   cls->message->wireTo(frugal_iot.messages->setPath("lcd/message"));
 

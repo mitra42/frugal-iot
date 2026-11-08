@@ -66,14 +66,13 @@ void setup() {
   
   // Add a new sensor max=2000, color="pink", retain=true, DOUTpin=0, SCKpin=1, times=10, offset=0, scale=2000
   
-  frugal_iot.sensors->add(new Sensor_LoadCell("loadcell", "Load Cell", 100000, DEFAULT_loadcell_loadcell_color, true,
-    SENSOR_LOADCELL_DOUTPIN, SENSOR_LOADCELL_SCKPIN, SENSOR_LOADCELL_TIMES, SENSOR_LOADCELL_OFFSET, SENSOR_LOADCELL_SCALE)); // DOUT, SCK, times, offset, scale
+  Sensor_LoadCell* loadcell = new Sensor_LoadCell("loadcell", "Load Cell", 100000, DEFAULT_loadcell_loadcell_color, true,
+    SENSOR_LOADCELL_DOUTPIN, SENSOR_LOADCELL_SCKPIN, SENSOR_LOADCELL_TIMES, SENSOR_LOADCELL_OFFSET, SENSOR_LOADCELL_SCALE); // DOUT, SCK, times, offset, scale
+  frugal_iot.sensors->add(loadcell);
 
   // On a board with an OLED, show the weight on it - large, with its unit and a label
   #ifdef ACTUATOR_OLED_WANT
-    Control_Oled_Single* cos = new Control_Oled_Single("Control OLED", "g", "Weight");
-    frugal_iot.controls->add(cos);
-    cos->value->wireTo(frugal_iot.messages->path("loadcell/loadcell")); // The load cell's output
+    frugal_iot.controls->add((new Control_Oled_Single("Control OLED", "g", "Weight"))->wireFrom(loadcell));
   #endif
 
   // TODO-134 add a pair of buttons here hooked up to tare and calibrate

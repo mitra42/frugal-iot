@@ -54,6 +54,14 @@ void setup() {
 
   // Add sensors, actuators and controls
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
+  // Air temperature, from a DS18B20 probe - wired below to the HC-SR04's speed of sound
+  #ifdef SENSOR_DS18B20_PIN
+    Sensor_DS18B20* ds18b20 = new Sensor_DS18B20("ds18b20", "Air Temperature", SENSOR_DS18B20_PIN, true);
+    frugal_iot.sensors->add(ds18b20)
+    ->powerPins(SENSOR_DS18B20_POWER3v3_PIN, SENSOR_DS18B20_POWER0_PIN);
+  #endif
+
+  Sensor_Ultrasonic* ultrasonic; // Whichever of the three drivers below, so the OLED can be wired to it
   #if defined(SENSOR_ULTRASONIC_SLAVE_ID)
     #ifdef ESP8266
       #error "RS485 needs a UART that can receive, and the ESP8266's only one is the console - use an ESP32 board"
@@ -61,8 +69,9 @@ void setup() {
     #define ULTRASONIC_ID "ultrasonic"
     // One bus object per converter; its pins are SYSTEM_RS485_RX_PIN / _TX_PIN from platformio.ini
     System_RS485* rs485 = new System_RS485(&Serial1); // Serial1 - the C3 and S2 have no Serial2
-    frugal_iot.sensors->add(new Sensor_UltrasonicModbus(ULTRASONIC_ID, "Distance",
-      DEFAULT_ultrasonic_ultrasonic_max, DEFAULT_ultrasonic_ultrasonic_color, true, rs485));
+    ultrasonic = new Sensor_UltrasonicModbus(ULTRASONIC_ID, "Distance",
+      DEFAULT_ultrasonic_ultrasonic_max, DEFAULT_ultrasonic_ultrasonic_color, true, rs485);
+    frugal_iot.sensors->add(ultrasonic);
     // Depth of water instead, for a sensor mounted 2000mm above the tank floor:
     //  new Sensor_UltrasonicModbus(ULTRASONIC_ID, "Depth", 2000, DEFAULT_ultrasonic_ultrasonic_color,
     //    true, rs485, 2000.0, -1.0);
@@ -71,37 +80,36 @@ void setup() {
       #error "A serial module needs a UART that can receive, and the ESP8266's only one is the console - use an ESP32 board"
     #endif
     #define ULTRASONIC_ID "a01nyub"
-    frugal_iot.sensors->add(new Sensor_A01NYUB(ULTRASONIC_ID, "Distance", &Serial1, SENSOR_ULTRASONIC_ECHO_PIN));
+    ultrasonic = new Sensor_A01NYUB(ULTRASONIC_ID, "Distance", &Serial1, SENSOR_ULTRASONIC_ECHO_PIN);
+    frugal_iot.sensors->add(ultrasonic);
     // Depth of water instead, for a sensor mounted 2000mm above the tank floor:
     //  new Sensor_A01NYUB(ULTRASONIC_ID, "Depth", &Serial1, SENSOR_ULTRASONIC_ECHO_PIN,
     //    2000, DEFAULT_a01nyub_a01nyub_color, true, 2000.0, -1.0);
   #else
     #define ULTRASONIC_ID "hcsr04"
     Sensor_HCSR04* hcsr04 = new Sensor_HCSR04(ULTRASONIC_ID, "Distance", SENSOR_ULTRASONIC_TRIG_PIN, SENSOR_ULTRASONIC_ECHO_PIN);
-    frugal_iot.sensors->add(hcsr04);
+    frugal_iot.sensors->add(ultrasonic = hcsr04);
     // Depth of water instead, for a sensor mounted 2000mm above the tank floor:
     //  new Sensor_HCSR04(ULTRASONIC_ID, "Depth", SENSOR_ULTRASONIC_TRIG_PIN, SENSOR_ULTRASONIC_ECHO_PIN,
     //    2000, DEFAULT_hcsr04_hcsr04_color, true, 2000.0, -1.0);
 
     // Trigger/echo times the echo, so it needs the speed of sound, which changes with air
     // temperature by about 0.17% per degree C. It assumes 20C until something is wired to its
-    // temperature input - here an SHT on the same node. It can also be wired in the UX.
+    // temperature input - here the DS18B20 above. It can also be wired in the UX.
     // (The serial and RS485 modules correct for temperature themselves.)
-    //Sensor_SHT* sht = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true);
-    //frugal_iot.sensors->add(sht);
-    //hcsr04->temperature->wireTo(sht->temperature->path());
+    #ifdef SENSOR_DS18B20_PIN
+      hcsr04->wireFrom(ds18b20); // hcsr04's default input is its temperature
+    #endif
   #endif
 
   // On a board with an OLED, show the distance on it - large, with its unit and a label
   #ifdef ACTUATOR_OLED_WANT
-    Control_Oled_Single* cos = new Control_Oled_Single("Control OLED", "mm", "Distance");
-    frugal_iot.controls->add(cos);
-    cos->value->wireTo(frugal_iot.messages->path(ULTRASONIC_ID "/" ULTRASONIC_ID)); // The sensor's output
+    frugal_iot.controls->add((new Control_Oled_Single("Control OLED", "mm", "Distance"))->wireFrom(ultrasonic));
   #endif
 
   Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+  cb->wireTo(frugal_iot.led);
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

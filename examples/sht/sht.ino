@@ -48,19 +48,22 @@ void setup() {
   //frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
 
   // Add sensors, actuators and controls
-  frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true))
+  Sensor_SHT* sht = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true);
+  frugal_iot.sensors->add(sht)
     -> powerPins(SENSOR_SHT_POWER3v3_PIN, SENSOR_SHT_POWER0_PIN);
   // If required, add a control - this is just an example
   Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+  cb->wireTo(frugal_iot.led);
 
   #ifdef ACTUATOR_OLED_WANT
     Control_Oled_HT* cos = new Control_Oled_HT("Control OLED");
     frugal_iot.controls->add(cos);
-    cos->temperature->wireTo(frugal_iot.messages->path("sht/temperature"));
-    cos->humidity->wireTo(frugal_iot.messages->path("sht/humidity"));
-    cos->battery->wireTo(frugal_iot.messages->path("battery/battery"));
+    cos->temperature->wireFrom(sht->temperature);
+    cos->humidity->wireFrom(sht->humidity);
+    #ifdef SENSOR_BATTERY_PIN // frugal_iot.battery only exists if configure_battery() was called
+      cos->battery->wireFrom(frugal_iot.battery);
+    #endif
   #endif
 
   // Dont change below here - should be after setup the actuators, controls and sensors

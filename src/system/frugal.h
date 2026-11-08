@@ -80,6 +80,10 @@ class System_Frugal : public System_Group {
       System_OTA* ota;
     #endif
     Sensor_Battery* battery;
+    // The board's built-in LED, added automatically - nullptr on a board with no LED_BUILTIN.
+    // Actuator* rather than Actuator_Ledbuiltin*, as that class compiles to nothing on such a board.
+    // So a sketch can write cb->wireTo(frugal_iot.led) - its default input is "on".
+    Actuator* led = nullptr;
     System_LittleFS* fs_LittleFS; 
     System_Time* time; // Optional - may be nullptr if not set up
     System_WiFi* wifi;

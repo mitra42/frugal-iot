@@ -18,8 +18,8 @@
  * entirely. Welding the two chips into one class made the AHT21 unusable on its own, made the
  * ENS160 unusable without one, and hid the temperature/humidity dependency from the UX. So the
  * compensation values arrive as `IN`s, wired like any other signal - the same shape as
- * Sensor_DissolvedOxygen's water temperature input. They default to the AHT21's topics, so the
- * common breakout still works with no wiring in the sketch.
+ * Sensor_DissolvedOxygen's water temperature input. The sketch wires them - on the common
+ * breakout to the AHT21 sharing it - or the UX wires them later.
  *
  * Outputs published to MQTT:
  *   ens160/aqi     - air quality index, 1 (excellent) to 5 (unhealthy)
@@ -29,15 +29,13 @@
  *   ens160/aqi500  - 0..500 scale index, ENS161 only; the output is dropped in setup() on an
  *                    ENS160 rather than published as a value that never changes
  *
- * Inputs (both wireable, and both wired by default to the AHT21 on the combined board):
+ * Inputs (both wireable; no defaultInput(), since neither is the obvious one - wire each by name):
  *   ens160/temperature - ambient temperature, C
  *   ens160/humidity    - ambient relative humidity, %
  *
  * Required: nothing beyond the Frugal-IoT library itself
  * Optional:
  *   SENSOR_ENS160_ADDRESS (0x53)              - alternate is 0x52
- *   SENSOR_ENS160_TEMPERATURE_PATH ("aht21/temperature")
- *   SENSOR_ENS160_HUMIDITY_PATH ("aht21/humidity")
  *   SENSOR_ENS160_DEFAULT_TEMPERATURE (25)    - assumed until the first message arrives
  *   SENSOR_ENS160_DEFAULT_HUMIDITY (50)
  *   SENSOR_ENS160_TIMEOUT_MS (1000)           - give up waiting for a measurement
@@ -68,12 +66,6 @@
 #ifndef SENSOR_ENS160_ADDRESS
   #define SENSOR_ENS160_ADDRESS 0x53 // Alternates are 0x52 0x53
 #endif
-#ifndef SENSOR_ENS160_TEMPERATURE_PATH
-  #define SENSOR_ENS160_TEMPERATURE_PATH "aht21/temperature"
-#endif
-#ifndef SENSOR_ENS160_HUMIDITY_PATH
-  #define SENSOR_ENS160_HUMIDITY_PATH "aht21/humidity"
-#endif
 #ifndef SENSOR_ENS160_DEFAULT_TEMPERATURE
   #define SENSOR_ENS160_DEFAULT_TEMPERATURE 25.0 // Until something arrives on the input
 #endif
@@ -88,7 +80,7 @@ class Sensor_ENS160 : public Sensor {
   public:
     Sensor_ENS160(const char * const name, uint8_t address = SENSOR_ENS160_ADDRESS,
       TwoWire* wire = &I2C_WIRE, bool retain = false);
-    // Compensation inputs - wired in setup() to the AHT21 unless something already wired them
+    // Compensation inputs - wired by the sketch, the UX or the filesystem; nothing wires them by default
     INfloat* temperature;
     INfloat* humidity;
   protected:

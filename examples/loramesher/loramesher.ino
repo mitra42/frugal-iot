@@ -58,23 +58,35 @@ void setup() {
     frugal_iot.system->add(frugal_iot.loramesher);
   */
 
+  // Add sensors, actuators and controls - before the displays, so they can be wired to them
+  #ifdef SENSOR_SHT_WANT
+    Sensor_SHT* sht = new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true);
+    frugal_iot.sensors->add(sht);
+  #endif
+
   #ifdef ACTUATOR_OLED_WANT
     Control_Oled_HT* cos = new Control_Oled_HT("Control OLED SHT");
     frugal_iot.controls->add(cos);
-    // If LORAMESHER_REMOTE_SHT_DEVICE is defined point at that device, else point at this device (which hopefully has an sht)
+    // If LORAMESHER_REMOTE_SHT_DEVICE is defined point at that device, else at this device's own SHT (if SENSOR_SHT_WANT)
     #ifdef LORAMESHER_REMOTE_SHT_DEVICE
-      cos->temperature->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/temperature");
-      cos->humidity->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/sht/humidity");
-      cos->battery->wireTo(LORAMESHER_REMOTE_SHT_DEVICE "/battery/battery");
+      cos->temperature->wireFrom(LORAMESHER_REMOTE_SHT_DEVICE "/sht/temperature");
+      cos->humidity->wireFrom(LORAMESHER_REMOTE_SHT_DEVICE "/sht/humidity");
+      cos->battery->wireFrom(LORAMESHER_REMOTE_SHT_DEVICE "/battery/battery");
     #else
-      cos->temperature->wireTo(frugal_iot.messages->path("sht/temperature"));
-      cos->humidity->wireTo(frugal_iot.messages->path("sht/humidity"));
-      cos->battery->wireTo(frugal_iot.messages->path("battery/battery"));
+      #ifdef SENSOR_SHT_WANT
+        cos->temperature->wireFrom(sht->temperature);
+        cos->humidity->wireFrom(sht->humidity);
+      #endif
+      #ifdef SENSOR_BATTERY_PIN // frugal_iot.battery only exists if configure_battery() was called
+        cos->battery->wireFrom(frugal_iot.battery);
+      #endif
     #endif
 
     Control_Oled_LoRaMesher* col = new Control_Oled_LoRaMesher("Control OLED");
     frugal_iot.controls->add(col);
-    col->battery->wireTo(frugal_iot.messages->path("battery/battery"));
+    #ifdef SENSOR_BATTERY_PIN
+      col->wireFrom(frugal_iot.battery); // col's default input is its battery
+    #endif
     col->enabled = false; // Second in carousel, starts hidden
 
     carousel = new Control_Carousel("Carousel");
@@ -91,10 +103,6 @@ void setup() {
     #endif
   #endif
 
-  // Add sensors, actuators and controls
-  #ifdef SENSOR_SHT_WANT
-    frugal_iot.sensors->add(new Sensor_SHT("SHT", SENSOR_SHT_ADDRESS, &I2C_WIRE, true));
-  #endif
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

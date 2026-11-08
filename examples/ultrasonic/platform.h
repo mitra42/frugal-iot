@@ -91,7 +91,6 @@
 // #define SENSOR_HCSR04_MAX_MM 4500
 // #define SENSOR_HCSR04_TRIGGER_US 20 // only if it never returns an echo at the default 10us
 // #define SENSOR_HCSR04_INTERVAL_MS 100 // only if readings jump about
-// #define SENSOR_HCSR04_TEMPERATURE_PATH "sht/temperature" // wire the speed of sound to a temperature
 // #define SYSTEM_SD_WANT // Uses LittleFS by default
 // #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
     // Flags from other libraries

@@ -22,6 +22,8 @@
 class System_Message; // Forward declaration to avoid circular include with system_message.h
 class System_Interface; // system/interface.h - a shared bus, and the power feeding it
 class Captive_Values; // system/captive.h - the JSON body of a /values/<id> reply
+class IN; // system/io.h - forward declared as io.h includes message.h, which needs System_Base
+class OUT;
 
 class System_Base {
   public:
@@ -98,7 +100,30 @@ class System_Base {
      * which returns a System_Base*. Does nothing on anything that is not an actuator.
      */
     virtual System_Base* preserveDuringSleep(bool on = true) { (void)on; return this; }
-  protected: 
+    /* Wiring one module to another without naming topics, e.g.
+     *
+     *   Control_Hysteresis* ch = new Control_Hysteresis(...);
+     *   ch->wireFrom(sht->temperature)->wireTo(frugal_iot.led); // sht's temperature -> ch -> the LED's default input
+     *   cos->wireFrom(soil);                                     // soil's only output -> cos's default input
+     *
+     * defaultInput()/defaultOutput() say which IO a module-to-module wire attaches to, and are
+     * nullptr wherever there is no obvious one. Sensor, Actuator and Control return the IO only
+     * when there is exactly one (sht: temperature or humidity? - neither). A class whose main IO
+     * is obvious among several overrides them: Control_Hysteresis (now, out), Actuator_Ledbuiltin
+     * (on), Sensor_ms5803 (pressure), and the sensors with exactly one IN (DissolvedOxygen,
+     * HCSR04). Where there is no default, name the IO: ens->humidity->wireFrom(aht->humidity).
+     *
+     * wireFrom/wireTo return this, so they chain. Sensor, Actuator and Control override them only
+     * to return their own type. A path stored on LittleFS or set in the UX still wins, since
+     * readConfigFromFS() runs later, in setup().
+     */
+    virtual IN* defaultInput() { return nullptr; }
+    virtual OUT* defaultOutput() { return nullptr; }
+    virtual System_Base* wireFrom(System_Base* other); // this->defaultInput() <- other->defaultOutput()
+    virtual System_Base* wireFrom(OUT* out);           // this->defaultInput() <- out
+    virtual System_Base* wireTo(System_Base* other);   // this->defaultOutput() -> other->defaultInput()
+    virtual System_Base* wireTo(IN* in);               // this->defaultOutput() -> in
+  protected:
     /* One line "<id>/<leaf> <value>[ *]" for a module-level setting that is not an IO - the
      * things a system module handles in dispatch() and keeps in a member, such as mqtt/hostname.
      * The * means the filesystem holds it, tested against the path writeConfigToFS() uses.

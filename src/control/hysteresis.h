@@ -16,6 +16,10 @@ class Control_Hysteresis : public Control {
      */
     Control_Hysteresis(const char* const id, const char * const name, float now, uint8_t width, float min, float max, float hysteresis = 0);
     void act() override;
+    // See System_Base. The other inputs are settings, so "now" is the one to wire; "out" is the
+    // result - and stays the default in subclasses that add outputs, e.g. examples/sonoff
+    IN* defaultInput() override { return inputs[0]; }    // now
+    OUT* defaultOutput() override { return outputs[0]; } // out
   protected:
     void actInner(); // The threshold logic, run only when allInputsValid()
   public:

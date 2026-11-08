@@ -66,10 +66,6 @@ float Sensor_DissolvedOxygen::scaleForTemperature(float temp_c) {
 void Sensor_DissolvedOxygen::setup() {
   watertemperature->setup(); // Before readConfigFromFS, which may carry a stored wired path
   Sensor_Analog::setup();    // pinMode, and Sensor::setup -> readConfigFromFS
-  // Only apply the compile-time default if nothing on the filesystem or in the UX wired it
-  if (!watertemperature->wiredPath.length()) {
-    watertemperature->wireTo(frugal_iot.messages->path(SENSOR_DO_TEMPERATURE_PATH));
-  }
   #ifdef SENSOR_DO_DEBUG
     Serial.print(F("DO water temperature wired to ")); Serial.println(watertemperature->wiredPath);
   #endif

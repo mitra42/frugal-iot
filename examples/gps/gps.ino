@@ -27,6 +27,11 @@
 System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "gps", "GPS Sensor");
 
 void setup() {
+  // Battery sensor has to come before pre_setup, all others should come after
+  #ifdef SENSOR_BATTERY_PIN
+    frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
+  #endif
+
   // Power_Loop: always awake, 1-second cycle (matches GPS 1 Hz update rate).
   frugal_iot.configure_power(Power_Loop, 1000, 1000);
   frugal_iot.pre_setup();
@@ -48,18 +53,20 @@ void setup() {
   #ifdef ACTUATOR_OLED_WANT
     Control_Oled_GPS* cog = new Control_Oled_GPS("OLED GPS");
     frugal_iot.controls->add(cog);
-    cog->latitude->wireTo(  frugal_iot.messages->path("gps/latitude"));
-    cog->longitude->wireTo( frugal_iot.messages->path("gps/longitude"));
-    cog->altitude->wireTo(  frugal_iot.messages->path("gps/altitude"));
-    cog->speed->wireTo(     frugal_iot.messages->path("gps/speed"));
-    cog->course->wireTo(    frugal_iot.messages->path("gps/course"));
-    cog->satellites->wireTo(frugal_iot.messages->path("gps/satellites"));
-    cog->hdop->wireTo(      frugal_iot.messages->path("gps/hdop"));
+    cog->latitude->wireFrom(  gps->latitude);
+    cog->longitude->wireFrom( gps->longitude);
+    cog->altitude->wireFrom(  gps->altitude);
+    cog->speed->wireFrom(     gps->speed);
+    cog->course->wireFrom(    gps->course);
+    cog->satellites->wireFrom(gps->satellites);
+    cog->hdop->wireFrom(      gps->hdop);
 
     // Add LoRaMesher debug display
     Control_Oled_LoRaMesher* col = new Control_Oled_LoRaMesher("Control OLED");
     frugal_iot.controls->add(col);
-    col->battery->wireTo(frugal_iot.messages->path("battery/battery"));
+    #ifdef SENSOR_BATTERY_PIN // frugal_iot.battery only exists if configure_battery() was called
+      col->wireFrom(frugal_iot.battery); // col's default input is its battery
+    #endif
     col->enabled = false; // Second in carousel, starts hidden
 
     // Define a carousel for the displays and add cog

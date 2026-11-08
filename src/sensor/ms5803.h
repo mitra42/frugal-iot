@@ -19,6 +19,7 @@ class Sensor_ms5803 : public Sensor {
   public:
     Sensor_ms5803(const char* const id, const char * const name, uint8_t address, TwoWire* wire = &I2C_WIRE);
     ~Sensor_ms5803(); //TODO-132
+    OUT* defaultOutput() override { return pressure; } // Two outputs, but bought as a pressure/depth sensor - see System_Base
   protected: // Since this just overrides things in the Base class, its basically all private
     OUTfloat* pressure;  
     OUTfloat* temperature;

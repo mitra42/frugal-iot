@@ -246,7 +246,7 @@ System_Frugal::System_Frugal(const char* org, const char* project, const char* n
 {
   // Note order that things are added is significant - this is the order they will be run in each call that goes thru groups.
   #ifdef LED_BUILTIN // defined by board or _settings.h
-    actuators->add(new Actuator_Ledbuiltin(LED_BUILTIN)); // Default LED builtin actuator at default brightness and white
+    actuators->add(led = new Actuator_Ledbuiltin(LED_BUILTIN)); // Default LED builtin actuator at default brightness and white
   #endif
   #ifdef ACTUATOR_OLED_WANT // Set in _settings.h on applicable boards or can be added by main.cpp
     actuators->add(oled);

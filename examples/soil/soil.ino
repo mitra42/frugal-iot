@@ -35,7 +35,8 @@ void setup() {
   frugal_iot.configure_mqtt_enrolled(SYSTEM_MQTT_HOST, SYSTEM_MQTT_ENROL_SECRET);
 
 // Soil sensor 0%=4095 100%=0 pin=3 smooth=0 color=brown
-  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil",3, 4095, -100.0/4095, "brown", true));
+  Sensor_Soil* soil = new Sensor_Soil("soil", "Soil",3, 4095, -100.0/4095, "brown", true);
+  frugal_iot.sensors->add(soil);
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
@@ -47,15 +48,13 @@ void setup() {
   
   // On a board with an OLED, show the soil moisture on it - large, with its unit and a label
   #ifdef ACTUATOR_OLED_WANT
-    Control_Oled_Single* cos = new Control_Oled_Single("Control OLED", "%", "Soil moisture");
-    frugal_iot.controls->add(cos);
-    cos->value->wireTo(frugal_iot.messages->path("soil/soil")); // The soil sensor's output
+    frugal_iot.controls->add((new Control_Oled_Single("Control OLED", "%", "Soil moisture"))->wireFrom(soil));
   #endif
 
   // If required, add a control - this is just an example
   Control_Hysteresis* cb = new Control_Hysteresis("controlhysteresis", "Control", 50, 1, 0, 100);
   frugal_iot.controls->add(cb);
-  cb->outputs[0]->wireTo(frugal_iot.messages->setPath("ledbuiltin/on"));
+  cb->wireTo(frugal_iot.led);
 
   // Dont change below here - should be after setup the actuators, controls and sensors
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm

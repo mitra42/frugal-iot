@@ -29,12 +29,6 @@ void Sensor_HCSR04::setup() {
   pinMode(trigger_pin, OUTPUT);
   digitalWrite(trigger_pin, LOW);
   pinMode(echo_pin, INPUT);
-  #ifdef SENSOR_HCSR04_TEMPERATURE_PATH
-    // Only apply the compile-time default if nothing on the filesystem or in the UX wired it
-    if (!temperature->wiredPath.length()) {
-      temperature->wireTo(frugal_iot.messages->path(SENSOR_HCSR04_TEMPERATURE_PATH));
-    }
-  #endif
   #ifdef SENSOR_HCSR04_DEBUG
     Serial.print(id); Serial.print(F(": trigger=")); Serial.print(trigger_pin);
     Serial.print(F(" echo=")); Serial.print(echo_pin);
