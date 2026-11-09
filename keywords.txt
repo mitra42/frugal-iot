@@ -395,6 +395,7 @@ visibleWidth	KEYWORD2
 wake	KEYWORD2
 wakeModule	KEYWORD2
 wakeNow	KEYWORD2
+wireFrom	KEYWORD2
 wireTo	KEYWORD2
 writeBit	KEYWORD2
 writeConfig	KEYWORD2
