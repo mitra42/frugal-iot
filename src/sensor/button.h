@@ -15,6 +15,9 @@
  #ifndef SENSOR_BUTTON_MS
   #define SENSOR_BUTTON_MS 10
 #endif
+#ifndef SENSOR_BUTTON_REPEAT_MS
+  #define SENSOR_BUTTON_REPEAT_MS 150 // How often "held" fires while a button is held down
+#endif
  
 // Note this is a subclass of System_Base, not of Sensor 
  class Sensor_Button : public System_Base {
@@ -25,6 +28,11 @@
       OUTtext* longClick;
       OUTtext* doubleClick;
       OUTtext* tripleClick;
+      /* Fires repeatedly while the button is held down, once it has been held for a long click,
+       * with the payload counting up 1, 2, 3... - so a receiver can speed up the longer it is held.
+       * Control_Menu uses it to step a number faster. Wire it to the same input as singleClick.
+       */
+      OUTtext* held;
       void setup() override;
       void loop() override;
       void clickHandlerInner(clickType type);

@@ -13,7 +13,6 @@ class Control_LCD_HT : public Control {
     OUTtext* message;
     Control_LCD_HT();
     void act() override;
-
 };
 
 #endif // ACTUATOR_LCD_WANT

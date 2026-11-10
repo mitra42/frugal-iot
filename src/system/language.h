@@ -39,7 +39,8 @@ struct Texts {
         *SetTimeFromBrowser,
         *TimeNotSet,
         *OneWireProbe,
-        *OneWireUnbound
+        *OneWireUnbound,
+        *Back // Control_Menu's implicit last row when nothing is wired to its back input
         ;
 };
 

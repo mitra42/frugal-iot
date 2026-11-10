@@ -38,7 +38,8 @@ void System_Captive::setupLanguages() {
     F("Set time from this device"),
     F("not set"),
     F("Probe"),
-    F("not selected")
+    F("not selected"),
+    F("Back")
   };
 
   T = TT[Language_EN];
@@ -74,7 +75,8 @@ void System_Captive::setupLanguages() {
       F("Regler depuis cet appareil"),
       F("non reglee"),
       F("Sonde"),
-      F("non selectionnee")
+      F("non selectionnee"),
+      F("Retour")
       };
   #endif //LANGUAGE_FR
 
@@ -109,7 +111,8 @@ void System_Captive::setupLanguages() {
       F("Ajustar desde este dispositivo"),
       F("sin ajustar"),
       F("Sonda"),
-      F("sin seleccionar")
+      F("sin seleccionar"),
+      F("Volver")
  };
   #endif //LANGUAGE_SP
 
@@ -144,7 +147,8 @@ void System_Captive::setupLanguages() {
       F("Zeit von diesem Geraet setzen"),
       F("nicht gesetzt"),
       F("Fuehler"),
-      F("nicht gewaehlt")
+      F("nicht gewaehlt"),
+      F("Zurueck")
       };
   #endif //LANGUAGE_DE
 
@@ -179,7 +183,8 @@ void System_Captive::setupLanguages() {
       F("Tijd instellen vanaf dit apparaat"),
       F("niet ingesteld"),
       F("Sensor"),
-      F("niet gekozen")
+      F("niet gekozen"),
+      F("Terug")
       };
   #endif //LANGUAGE_NL
 
@@ -214,7 +219,8 @@ void System_Captive::setupLanguages() {
       F("Atur waktu dari perangkat ini"),
       F("belum diatur"),
       F("Probe"),
-      F("belum dipilih")
+      F("belum dipilih"),
+      F("Kembali")
       };
   #endif //LANGUAGE_ID
 
@@ -249,7 +255,8 @@ void System_Captive::setupLanguages() {
       F("इस डिवाइस से समय सेट करें"),
       F("सेट नहीं है"),
       F("प्रोब"),
-      F("चयनित नहीं")
+      F("चयनित नहीं"),
+      F("वापस")
       };
   #endif //LANGUAGE_HI
 }

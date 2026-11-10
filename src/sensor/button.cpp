@@ -33,6 +33,13 @@ void tripleClickHandler(Button2& btn) {
   button(btn)->tripleClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
 }
 
+// Called once when a long click is first detected, then every SENSOR_BUTTON_REPEAT_MS while held
+void heldHandler(Button2& btn) {
+  OUTtext* held = button(btn)->held;
+  held->value = String(btn.getLongClickCount()); // 1, 2, 3 ... so the receiver can accelerate
+  held->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
+}
+
 
 Sensor_Button::Sensor_Button(const char * const id, const char * const name, uint8_t pin, const char* const color) :
   System_Base(id, name), pin(pin) {
@@ -41,11 +48,14 @@ Sensor_Button::Sensor_Button(const char * const id, const char * const name, uin
   longClick = new OUTtext(id, "long", "Long Click", "1", "black", true);
   doubleClick = new OUTtext(id, "double", "Double CLick", "1", "black", true);
   tripleClick = new OUTtext(id, "triple", "Triple Click", "1", "black", true);
+  held = new OUTtext(id, "held", "Held", "1", "black", true);
   button = new Button2(pin);
   button->setClickHandler(clickHandler);
   button->setLongClickHandler(longClickHandler);
   button->setDoubleClickHandler(doubleClickHandler);
   button->setTripleClickHandler(tripleClickHandler);
+  button->setLongClickDetectedHandler(heldHandler);
+  button->setLongClickDetectedRetriggerable(true, SENSOR_BUTTON_REPEAT_MS);
   button->setID(frugal_iot.buttons->group.size());
 }
 

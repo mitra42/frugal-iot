@@ -331,6 +331,9 @@
 #ifdef ARDUINO_LOLIN_S2_MINI
   #define BUILTIN_BUTTON 0 // This is GPIO0, on pin 5, 
 #endif
+#ifdef ARDUINO_C3_OLED_72x40
+  #define BUILTIN_BUTTON 9
+#endif
 
 
 #endif // _SETTINGS_H
