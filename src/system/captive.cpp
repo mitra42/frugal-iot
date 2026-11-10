@@ -35,6 +35,7 @@
 #endif
 #include "system/base.h" // for ESPAsyncWebServer.h - see comment there
 #include "system/captive.h"
+#include "system/wifi.h" // for System_WiFi::setTxPower
 #include "system/language.h" // for Texts
 #include "misc.h" // for Sprintf
 #include "system/frugal.h" // for frugal_iot
@@ -377,6 +378,7 @@ void System_Captive::setup() {
       return;  // Shouldn't happen
     }
     dnsServer.setTTL(0); //grabbed from old WiFiSettings  - unclear if needed or useful
+    System_WiFi::setTxPower(); // softAP() may have just started the radio
     dnsServer.start(53, "*", WiFi.softAPIP());
     #ifdef ESP32
       // RFC8910: hand the portal URL to the client in the DHCP lease (option 114) instead of

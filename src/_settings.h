@@ -333,6 +333,12 @@
 #endif
 #ifdef ARDUINO_C3_OLED_72x40
   #define BUILTIN_BUTTON 9
+  // Its antenna is badly matched: at full power the router hears nothing back (disconnect reason 2,
+  // AUTH_EXPIRE, at -72) and the AP is invisible even close up. Lower power, as the SuperMini also needs.
+  // Override in platformio.ini, e.g. -D SYSTEM_WIFI_TX_POWER=WIFI_POWER_11dBm, if this is not enough or too much.
+  #ifndef SYSTEM_WIFI_TX_POWER
+    #define SYSTEM_WIFI_TX_POWER WIFI_POWER_8_5dBm
+  #endif
 #endif
 
 

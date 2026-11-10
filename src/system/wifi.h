@@ -22,6 +22,8 @@ class System_WiFi : public System_Base {
     int32_t minRSSI; // Minimum RSSI we are trying to connect to in this cycle of state Machine
     int nextNetwork;
     System_WiFi();
+    // Applies SYSTEM_WIFI_TX_POWER, if defined - ESP32 only. After anything that starts the radio, as that resets it
+    static void setTxPower();
     int8_t RSSI();
     uint8_t rssi_to_bars(int8_t rssi);
     uint8_t bars();

@@ -160,6 +160,14 @@ bool System_WiFi::connectOne(String ssid, int32_t rssi) {
     return false;
   }
 }
+void System_WiFi::setTxPower() {
+  #if defined(ESP32) && defined(SYSTEM_WIFI_TX_POWER)
+    if (!WiFi.setTxPower(SYSTEM_WIFI_TX_POWER)) {
+      Serial.println(F("WiFi setTxPower failed"));
+    }
+  #endif
+}
+
 // Try and connect to a single network
 void System_WiFi::connectInnerAsync(String ssid, String pw) {
   Serial.print(F("Connecting to WiFi SSID "));
@@ -170,6 +178,7 @@ void System_WiFi::connectInnerAsync(String ssid, String pw) {
   #else
     WiFi.mode(WIFI_AP_STA);
   #endif
+  setTxPower(); // After mode(), which starts the radio
   WiFi.setHostname(frugal_iot.nodeid.c_str());
   #ifndef ESP8266
     // This won't work on ESP8266 which is unforgiving - if dont set all four then Serial.print(WiFi.localIP()) will report IP unset and DNS lookup will fail
