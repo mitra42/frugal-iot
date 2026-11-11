@@ -16,7 +16,8 @@
  * Inputs: menu/up, menu/down, menu/accept, menu/back. Each message to one of them is a key press,
  * whatever its payload - except that a number in the payload (from Sensor_Button's "held") is how
  * many repeats the key has been held for, which speeds up number editing. Any can be left unwired.
- * So item ids up, down, accept and back are reserved, as is lcd - Menu_Display_LCD's output.
+ * menu/value, while a number is being edited, sets it to the payload and accepts it - so a display
+ * that can take typing, i.e. the captive portal, need not step there.
  *
  * Wiring, e.g. four buttons:      b->singleClick->wireTo(menu->up); b->held->wireTo(menu->up); ...
  *                 one button:     b->singleClick->wireTo(menu->down); b->doubleClick->wireTo(menu->accept);
@@ -26,7 +27,13 @@
  *   menu/<id>       an OUT, published when the item is accepted, and sent to the item's topic
  *   menu/<id>_live  an IN, wire it to the reading to show beside the item, e.g. the current weight
  *
- * Configuration: CONTROL_MENU_DEPTH (8), CONTROL_MENU_TIMEOUT_MS (30000), CONTROL_MENU_DEBUG
+ * Choosing item ids: they share the menu/ topics with the control's own IOs, so within one menu an
+ * item must not be called up, down, accept, back or value (the control's inputs and messages), or
+ * lcd (Menu_Display_LCD's output, menu/lcd, if one is added) - nor another item's id + "_live".
+ * Nothing checks this; a clash makes the item's messages be taken as the control's.
+ *
+ * Configuration: CONTROL_MENU_DEPTH (8), CONTROL_MENU_TIMEOUT_MS (30000), CONTROL_MENU_NOTICE_MS (2000),
+ * CONTROL_MENU_DEBUG
  */
 
 #include "_settings.h"
@@ -36,6 +43,9 @@
 
 #ifndef CONTROL_MENU_DEPTH
   #define CONTROL_MENU_DEPTH 8 // How many menus deep the history goes - deeper ones drop the oldest
+#endif
+#ifndef CONTROL_MENU_NOTICE_MS
+  #define CONTROL_MENU_NOTICE_MS 2000 // How long "OK <what was sent>" stays up after an accept
 #endif
 #ifndef CONTROL_MENU_TIMEOUT_MS
   #define CONTROL_MENU_TIMEOUT_MS 30000 // Return home after this long with no key pressed, 0 = never
@@ -178,6 +188,10 @@ class Control_Menu : public Control {
     MenuItem* item(uint8_t r);  // nullptr for the back row
     String rowText(uint8_t r);  // String, as "Back" is a flash string on ESP8266
     const char* title();        // The menu's, or while editing the number's
+    // What was just sent, e.g. "Calibrate 512 g" or "Tare" - for CONTROL_MENU_NOTICE_MS after an
+    // accept, otherwise empty. So the user can see it was taken.
+    String notice;
+    String heading();           // "OK " + notice while there is one, otherwise title() - for a display's top line
     void setup() override;
     void loop() override;
     void dispatch(System_Message &msg) override;
@@ -195,6 +209,8 @@ class Control_Menu : public Control {
     uint8_t depth = 0;
     unsigned long lastKey = 0;
     float editStart = 0;        // To tell on accept whether it changed
+    unsigned long noticeAt = 0;
+    void sent(MenuItem* i, const String& value); // Put up the notice
     // The four keys - count is how many repeats it has been held for, 1 for a click
     virtual void keyUp(uint16_t count) = 0;
     virtual void keyDown(uint16_t count) = 0;
@@ -208,6 +224,7 @@ class Control_Menu : public Control {
     void startEdit(MenuNumber* n);
     void sendNumber();          // Send editValue
     void endEdit(bool keep);    // keep=false puts back the value editing started from
+    void typed(const String& payload); // menu/value - the number being edited is set to it, and accepted
     void render();
 };
 

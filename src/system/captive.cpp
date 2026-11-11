@@ -233,13 +233,13 @@ class CaptiveRequestHandler : public AsyncWebHandler {
       /* Live values. Every <div data-m=id data-r=ms> - see System_Base::captiveRefreshMs() - fetches
        * /values/<id> every ms and puts each value into the [data-t=topicTwig] elements inside it:
        * .value or .checked for an input, innerHTML where data-h, otherwise text. The field being
-       * edited is left alone. A failed fetch greys the block (.st) until one succeeds - a sleeping
+       * edited is left alone, and so is a data-h block with it inside (contains() includes itself). A failed fetch greys the block (.st) until one succeeds - a sleeping
        * node shows as stale rather than frozen. d.b stops fetches piling up while one hangs, and
        * the starts are staggered so blocks sharing a period do not all hit the server together.
        */
       response->print(F(
         "function r(d){if(!d.b){d.b=1;fetch('/values/'+d.dataset.m).then(x=>x.json()).then(j=>{d.classList.remove('st');"
-        "for(let k in j){d.querySelectorAll('[data-t=\"'+k+'\"]').forEach(e=>{if(e!=document.activeElement){let v=j[k];"
+        "for(let k in j){d.querySelectorAll('[data-t=\"'+k+'\"]').forEach(e=>{if(!e.contains(document.activeElement)){let v=j[k];"
         "if(e.type=='checkbox'){e.checked=(v=='1')}else if(e.tagName=='INPUT'){e.value=v}"
         "else if(e.hasAttribute('data-h')){e.innerHTML=v}else{e.textContent=v}}})}"
         "}).catch(e=>d.classList.add('st')).finally(()=>{d.b=0})}}"

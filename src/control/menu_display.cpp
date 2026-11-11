@@ -22,7 +22,7 @@ void Menu_Display_LCD::render(Control_Menu* m) {
       text += "\n" + Menu_Display::fit(m->editing->format(m->editing->min) + ".." + m->editing->format(m->editing->max), "", cols);
     }
   } else {
-    text = Menu_Display::fit(m->title(), "", cols);
+    text = Menu_Display::fit(m->heading(), "", cols);
     const uint8_t visible = rows - 1; // Under the title
     const uint8_t first = Menu_Display::firstRow(m->row, visible);
     for (uint8_t r = first; (r < m->rows()) && (r < first + visible); r++) {
@@ -83,7 +83,7 @@ void Menu_Display_OLED::drawMenu(Control_Menu* m, bool cursor) {
   auto* display = &frugal_iot.oled->display;
   display->clearDisplay();
   display->setTextSize(1);
-  const int16_t top = drawTitle(m->title());
+  const int16_t top = drawTitle(m->heading().c_str());
   const int16_t lineH = (display->visibleHeight() >= 64) ? 9 : 8; // A little air where there is room
   const uint8_t visible = (display->visibleHeight() - top) / lineH;
   const uint8_t indent = 8; // Room for the triangle
@@ -128,10 +128,19 @@ void Menu_Display_OLED::drawEdit(Control_Menu* m) {
 // ==== Menu_Display_Captive ==========================================
 
 String Menu_Display_Captive::screen(Control_Menu* m) {
-  String h = String(F("<b>")) + html_entities(m->title()) + F("</b>");
+  String h;
+  if (m->notice.length()) {
+    h += String(F("<div style='color:green'>&#10004; ")) + html_entities(m->notice) + F("</div>");
+  }
+  h += String(F("<b>")) + html_entities(m->title()) + F("</b>");
   if (m->editing) {
     const char* unit = m->editing->live->unit;
-    h += String(F("<div style='font-size:2em'>")) + m->editing->format(m->editValue)
+    // A field to type into - OK sends it, see mk() below. The up/down buttons still step it.
+    // display:inline as the portal's CSS makes inputs blocks, which would put the unit underneath.
+    h += String(F("<div><input id=menuv type=number inputmode=decimal step=any style='display:inline;font-size:1.5em;width:7em' min="))
+      + m->editing->format(m->editing->min) + F(" max=") + m->editing->format(m->editing->max)
+      + F(" value=") + m->editing->format(m->editValue)
+      + F(" onchange=\"mk(this,'accept')\" onkeydown=\"if(event.key=='Enter'){mk(this,'accept')}\">") // Enter does not fire change in every browser
       + (unit ? String(" ") + html_entities(unit) : String()) + F("</div><small>")
       + m->editing->format(m->editing->min) + F(" .. ") + m->editing->format(m->editing->max) + F("</small>");
   } else {
@@ -148,15 +157,28 @@ String Menu_Display_Captive::screen(Control_Menu* m) {
   return h;
 }
 
-// One of the four buttons. After sending, fetch the screen at once rather than at the next refresh -
-// r() is the page's refresh function, see System_Captive
+/* The page's half of the keys, printed once with the buttons.
+ * mk(element, key) sends menu/<key> - except accept while the number field is showing, which sends
+ * what was typed as menu/value instead (one message, so it cannot arrive after the accept).
+ * The field calls it on change - Enter, iOS's Done, or tapping elsewhere - so, as with the portal's
+ * other number fields, leaving the field sends it. Tapping OK after that sends menu/value again,
+ * which the node ignores as the number is no longer being edited.
+ * Then lets go of the field, as the refresh leaves a block with focus in it alone, and fetches the
+ * screen at once rather than at the next refresh - r() is the page's refresh function, see System_Captive.
+ */
+static const char menuScript[] PROGMEM =
+  "<script>function mk(e,k){let i=document.getElementById('menuv');"
+  "if(k=='accept'&&i&&i.value!=''){s('menu/value',i.value)}else{s('menu/'+k,'1')}"
+  "if(document.activeElement){document.activeElement.blur()}"
+  "let d=e.closest('[data-m]');if(d&&typeof r=='function'){setTimeout(()=>r(d),300)}}</script>";
+
 static String keyButton(const char* key, const String& label) {
-  return String(F("<input type=button style='width:4em' value=\"")) + label + F("\" onclick=\"s('menu/") + key
-    + F("','1');let d=this.closest('[data-m]');if(d&&typeof r=='function'){setTimeout(()=>r(d),300)}\">");
+  return String(F("<input type=button style='width:4em' value=\"")) + label + F("\" onclick=\"mk(this,'") + key + F("')\">");
 }
 
 void Menu_Display_Captive::captiveLines(Control_Menu* m, AsyncResponseStream* response) {
   response->print(String(F("<p>")) + html_entities(m->name) + F("</p><div data-t='menu/screen' data-h>") + screen(m) + F("</div>"));
+  response->print(FPSTR(menuScript));
   // A diamond: up at the top, back and accept either side, down below
   response->print(String(F("<div style='display:grid;grid-template-columns:repeat(3,4.5em);gap:4px;margin:8px 0'><span></span>"))
     + keyButton("up", F("&#9650;")) + F("<span></span>")

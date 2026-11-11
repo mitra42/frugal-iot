@@ -184,7 +184,7 @@ void Menu_Display_Serial::render(Control_Menu* m) {
     Serial.print(F("..")); Serial.print(m->editing->format(m->editing->max)); Serial.println(F(")"));
   } else {
     homeShown = false;
-    Serial.print(F("[menu] ")); Serial.println(m->title());
+    Serial.print(F("[menu] ")); Serial.println(m->heading());
     for (uint8_t r = 0; r < m->rows(); r++) {
       Serial.print(r == m->row ? F("  > ") : F("    "));
       Serial.print(m->rowText(r));
@@ -239,6 +239,10 @@ void Control_Menu::setup() {
 }
 
 void Control_Menu::loop() {
+  if (notice.length() && (millis() - noticeAt > CONTROL_MENU_NOTICE_MS)) {
+    notice = "";
+    render();
+  }
   #if CONTROL_MENU_TIMEOUT_MS > 0
     if (active && (millis() - lastKey > CONTROL_MENU_TIMEOUT_MS)) {
       if (editing) {
@@ -257,6 +261,7 @@ void Control_Menu::loop() {
  * Control::dispatch.
  */
 void Control_Menu::dispatch(System_Message &msg) {
+  const bool value = (msg.module() == id) && (msg.leaf() == "value");
   INtext* key = nullptr;
   for (INtext* k : { up, down, accept, back }) {
     if ((msg.module() == id && msg.leaf() == k->id)
@@ -270,6 +275,7 @@ void Control_Menu::dispatch(System_Message &msg) {
       count = 1;
     }
     lastKey = millis();
+    notice = ""; // Any key moves on from it
     #ifdef CONTROL_MENU_DEBUG
       Serial.print(F("menu key ")); Serial.print(key->id); Serial.print(F(" x")); Serial.println(count);
     #endif
@@ -288,6 +294,13 @@ void Control_Menu::dispatch(System_Message &msg) {
       keyBack();
     }
     render();
+  } else if (value) {
+    if (!msg.isFromFS()) {
+      lastKey = millis();
+      notice = "";
+      typed(msg.payload);
+      render();
+    }
   } else if (!key) {
     Control::dispatch(msg);
   }
@@ -311,6 +324,19 @@ MenuItem* Control_Menu::item(uint8_t r) {
 
 const char* Control_Menu::title() {
   return editing ? editing->text.get() : menu->text.get();
+}
+
+String Control_Menu::heading() {
+  return notice.length() ? String(F("OK ")) + notice : String(title());
+}
+
+void Control_Menu::sent(MenuItem* i, const String& value) {
+  notice = i->text.get();
+  if (value.length()) {
+    notice += " ";
+    notice += value;
+  }
+  noticeAt = millis();
 }
 
 String Control_Menu::rowText(uint8_t r) {
@@ -366,6 +392,7 @@ static void sendOut(OUTtext* out, const String& payload) {
 
 void Control_Menu::sendLine(MenuLine* line) {
   sendOut(line->out, line->acceptPayload());
+  sent(line, String()); // Just its name - the payload is often a code, e.g. "0" to tare
 }
 
 void Control_Menu::startEdit(MenuNumber* n) {
@@ -388,6 +415,7 @@ void Control_Menu::endEdit(bool keep) {
         sendNumber();
       }
       editing->live->set(editValue); // So, unwired, the next edit starts here; wired, the source will update it anyway
+      sent(editing, editing->format(editValue) + (editing->live->unit ? String(" ") + editing->live->unit : String()));
     }
   } else if (editing->sendEachChange && changed(editValue, editStart)) {
     editValue = editStart; // Put back what was there
@@ -419,6 +447,21 @@ void Control_Menu::captiveValues(Captive_Values* values, const String& moduleId)
     for (auto &d : displays) {
       d->captiveValues(this, values);
     }
+  }
+}
+
+// Typed rather than stepped to - so clamped, not wrapped. Ignored unless a number is being edited.
+void Control_Menu::typed(const String& payload) {
+  String p = payload;
+  p.trim();
+  if (editing && p.length()) {
+    float v = p.toFloat();
+    const float d = powf(10, editing->decimals);
+    v = roundf(v * d) / d;
+    if (v < editing->min) { v = editing->min; }
+    if (v > editing->max) { v = editing->max; }
+    editValue = v;
+    endEdit(true);
   }
 }
 
