@@ -12,7 +12,7 @@
  *
  *  Buttons go between the pin and GND, on the pins set per board in platformio.ini. Back is
  *  optional: without it each menu ends in a "Back" row. Or, with SENSOR_BUTTON_ONE_PIN, one button:
- *  click for the next row, double click to accept, long press to go back.
+ *  click for the next row, double click to accept, hold to step fast, and the "Back" row to go back.
  *
  *  Without SENSOR_LOADCELL_DOUTPIN there is no load cell - the menu works, with nothing to weigh,
  *  for trying out the menu on a board with none attached.
@@ -125,24 +125,26 @@ void setup() {
   Sensor_Button* b;
   #ifdef SENSOR_BUTTON_ONE_PIN
     // One button: click for the next row (editing a number, the next one down), double click to
-    // accept, long press to go back. Up is not wired, so there is no hold-to-repeat.
+    // accept, hold to step - faster the longer it is held. Back is the "Back" row at the end of each
+    // menu, there because back is not wired - a long press is not used, as releasing a hold is one.
     frugal_iot.buttons->add(b = new Sensor_Button("button", "Button", SENSOR_BUTTON_ONE_PIN, "black"));
-    b->singleClick->wireTo(menu->down);
-    b->doubleClick->wireTo(menu->accept);
-    b->longClick->wireTo(menu->back);
+    menu->down->wireFrom(b->singleClick);
+    b->held->wireTo(menu->down);
+    menu->accept->wireFrom(b->doubleClick);
   #else
-    // Each button's click is a key press; holding it repeats, faster the longer it is held
+    // Each button's click is a key press, wired from the menu's side so it knows which keys it has.
+    // Holding up or down repeats, faster the longer it is held - pushed, as an input takes one source.
     frugal_iot.buttons->add(b = new Sensor_Button("button_up", "Up", SENSOR_BUTTON_UP_PIN, "black"));
-    b->singleClick->wireTo(menu->up);
+    menu->up->wireFrom(b->singleClick);
     b->held->wireTo(menu->up);
     frugal_iot.buttons->add(b = new Sensor_Button("button_down", "Down", SENSOR_BUTTON_DOWN_PIN, "black"));
-    b->singleClick->wireTo(menu->down);
+    menu->down->wireFrom(b->singleClick);
     b->held->wireTo(menu->down);
     frugal_iot.buttons->add(b = new Sensor_Button("button_accept", "Accept", SENSOR_BUTTON_ACCEPT_PIN, "black"));
-    b->singleClick->wireTo(menu->accept);
+    menu->accept->wireFrom(b->singleClick);
     #ifdef SENSOR_BUTTON_BACK_PIN
       frugal_iot.buttons->add(b = new Sensor_Button("button_back", "Back", SENSOR_BUTTON_BACK_PIN, "black"));
-      b->singleClick->wireTo(menu->back);
+      menu->back->wireFrom(b->singleClick);
     #endif
   #endif
 

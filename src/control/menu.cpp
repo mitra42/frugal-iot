@@ -234,11 +234,16 @@ Control_Menu* Control_Menu::addDisplay(Menu_Display* display) {
 
 void Control_Menu::setup() {
   Control::setup(); // Reads wiring from the filesystem - so only after it is back known to be wired or not
-  backrow = (back->wiredPath.length() == 0);
+  backrow = backrow || (back->wiredPath.length() == 0); // Or the sketch asked for it
   render(); // Home
 }
 
 void Control_Menu::loop() {
+  // The language changed - at boot, as the saved one is read after this has first drawn, or chosen
+  // from the menu, which is handled after the redraw that followed the accept
+  if (T != shownIn) {
+    render();
+  }
   if (notice.length() && (millis() - noticeAt > CONTROL_MENU_NOTICE_MS)) {
     notice = "";
     render();
@@ -466,6 +471,7 @@ void Control_Menu::typed(const String& payload) {
 }
 
 void Control_Menu::render() {
+  shownIn = T;
   for (auto &d : displays) {
     d->render(this);
   }
@@ -478,8 +484,15 @@ Control_Menu_Simple::Control_Menu_Simple(const char* name, Menu* top)
 
 void Control_Menu_Simple::step(int8_t direction, uint16_t count) {
   if (editing) {
-    // Held down, go faster: x10 after 10 repeats, x100 after 20
-    const float mult = (count >= 20) ? 100 : ((count >= 10) ? 10 : 1);
+    /* Held down, go faster: x10 for every 10 repeats (about 1.5s each, see SENSOR_BUTTON_REPEAT_MS),
+     * until a step is a tenth of the range - so 0..100000 goes up to steps of 10000, while 0..100
+     * stops at 10, where a bigger step would just wrap round.
+     */
+    const float limit = (editing->max - editing->min) / 10;
+    float mult = 1;
+    for (uint16_t c = count; (c >= 10) && (editing->step * mult * 10 <= limit); c -= 10) {
+      mult *= 10;
+    }
     float v = editValue + direction * editing->step * mult;
     const float p = powf(10, editing->decimals);
     v = roundf(v * p) / p; // So repeated steps of 0.1 do not drift

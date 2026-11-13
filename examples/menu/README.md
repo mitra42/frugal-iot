@@ -38,8 +38,8 @@ groups), so change them there.
 | LCD or OLED (I2C) | SDA 33, SCL 35 | built in | |
 
 **One button** - define `SENSOR_BUTTON_ONE_PIN` instead of the four, e.g. the board's boot button.
-Click for the next row (while editing a number, the next one down), double click to accept, long
-press to go back.
+Click for the next row (while editing a number, the next one down), double click to accept, hold
+to step, faster the longer it is held. Each menu ends in a "Back" row to go back.
 
 **No load cell** - leave out `SENSOR_LOADCELL_DOUTPIN` and `_SCKPIN`, to try the menu on a board
 with nothing attached. The weight then shows nothing.

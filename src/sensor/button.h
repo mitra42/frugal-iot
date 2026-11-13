@@ -30,7 +30,8 @@
       OUTtext* tripleClick;
       /* Fires repeatedly while the button is held down, once it has been held for a long click,
        * with the payload counting up 1, 2, 3... - so a receiver can speed up the longer it is held.
-       * Control_Menu uses it to step a number faster. Wire it to the same input as singleClick.
+       * Control_Menu uses it to step a number faster. Push it, b->held->wireTo(menu->up), as the
+       * input is already wired from singleClick and an IN takes only one source.
        */
       OUTtext* held;
       void setup() override;

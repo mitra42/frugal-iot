@@ -17,27 +17,40 @@ Sensor_Button* button(Button2& button) {
   return (Sensor_Button*)frugal_iot.buttons->group[button.getID()];
 }
 
+/* A press is an event, so every one is sent - not through OUT::set(), which only sends when the
+ * value changes, and a click is always "1". Sent both ways, as set() would:
+ *   on its own topic, e.g. button/click - so an IN can wireFrom() it, on this node or another.
+ *     Not retained: a retained click would be replayed as a fresh press to whatever subscribes
+ *     later, e.g. at its next boot.
+ *   to its wiredPath, if it has been wireTo()-ed somewhere - the older way of wiring a button.
+ * Wire a button one way or the other, not both, or each press arrives twice.
+ */
+static void press(OUTtext* out) {
+  frugal_iot.messages->send(out->path(), out->StringValue(), MQTT_DONT_RETAIN, MQTT_QOS_ATLEAST1); // published, and looped back
+  out->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
+}
+
 void clickHandler(Button2& btn) {
-  button(btn)->singleClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
+  press(button(btn)->singleClick);
 }
 
 void longClickHandler(Button2& btn) {
-  button(btn)->longClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
+  press(button(btn)->longClick);
 }
 
 void doubleClickHandler(Button2& btn) {
-  button(btn)->doubleClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
+  press(button(btn)->doubleClick);
 }
 
 void tripleClickHandler(Button2& btn) {
-  button(btn)->tripleClick->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
+  press(button(btn)->tripleClick);
 }
 
 // Called once when a long click is first detected, then every SENSOR_BUTTON_REPEAT_MS while held
 void heldHandler(Button2& btn) {
   OUTtext* held = button(btn)->held;
   held->value = String(btn.getLongClickCount()); // 1, 2, 3 ... so the receiver can accelerate
-  held->sendWired(MQTT_DONT_RETAIN, MQTT_QOS_EXACTLY1);
+  press(held);
 }
 
 

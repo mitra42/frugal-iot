@@ -332,6 +332,12 @@ void System_Frugal::pre_setup() {
       }
     }
   #endif
+  /* The language tables, before any module's setup() - T is null until then, and a module may show
+   * text in setup(): Control_Menu draws its home screen, which can include T->Back. They used to be
+   * built in System_Captive::setup(), but the system group is set up last, after the controls.
+   * The language actually chosen is still read later, by System_Captive::setup().
+   */
+  captive->setupLanguages();
   fs_LittleFS->pre_setup();
   // Project BEFORE it builds the prefix for topics, which will happen when reads first entry in readConfigFromFS()
   String newProject = fs_LittleFS->slurp(fs_LittleFS->configPath(id, "project"), true); // ignores if not found

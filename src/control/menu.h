@@ -19,9 +19,12 @@
  * menu/value, while a number is being edited, sets it to the payload and accepts it - so a display
  * that can take typing, i.e. the captive portal, need not step there.
  *
- * Wiring, e.g. four buttons:      b->singleClick->wireTo(menu->up); b->held->wireTo(menu->up); ...
- *                 one button:     b->singleClick->wireTo(menu->down); b->doubleClick->wireTo(menu->accept);
- *                                 b->longClick->wireTo(menu->back);
+ * Wiring - from the menu's side, so it knows whether back is wired, and so shows a "Back" row only
+ * when it is not:
+ *   four buttons:  menu->up->wireFrom(b->singleClick); and the same for down, accept, back. A
+ *                  key's input takes one source, so hold-to-repeat is b->held->wireTo(menu->up)
+ *   one button:    menu->down->wireFrom(b->singleClick); b->held->wireTo(menu->down);
+ *                  menu->accept->wireFrom(b->doubleClick); - and back is the "Back" row
  *
  * Each MenuLine and MenuNumber has two IOs:
  *   menu/<id>       an OUT, published when the item is accepted, and sent to the item's topic
@@ -177,7 +180,9 @@ class Control_Menu : public Control {
     Menu* menu;                 // The menu currently shown
     uint8_t row = 0;            // 0-based row in menu
     bool active = false;        // False = home, nothing shown
-    bool backrow = false;       // True to show "Back" as the last row - set in setup() if back is not wired
+    // True to show "Back" as the last row. setup() sets it if back is not wired; set it true in the
+    // sketch to have it anyway, e.g. where the back key is not obvious to someone new to the device
+    bool backrow = false;
     MenuNumber* editing = nullptr; // The number being edited, or nullptr when navigating
     float editValue = 0;
     std::vector<Menu_Display*> displays;
@@ -210,6 +215,7 @@ class Control_Menu : public Control {
     unsigned long lastKey = 0;
     float editStart = 0;        // To tell on accept whether it changed
     unsigned long noticeAt = 0;
+    Texts* shownIn = nullptr;   // The language last drawn in - redrawn when T changes, see loop()
     void sent(MenuItem* i, const String& value); // Put up the notice
     // The four keys - count is how many repeats it has been held for, 1 for a click
     virtual void keyUp(uint16_t count) = 0;

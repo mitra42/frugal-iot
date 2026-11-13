@@ -367,7 +367,6 @@ static String apSSID() {
 
 void System_Captive::setup() {
   Serial.println(F("Configuring access point..."));
-  setupLanguages();
   readConfigFromFS(); // Reads config (language_code) and passes to our dispatch (Must come AFTER setting language strings)
 
   // Unsure what these items choose - copied from example -SOC_WIFI_SUPPORTED seems to be defined for ESP32
