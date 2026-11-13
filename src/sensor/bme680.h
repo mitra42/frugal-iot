@@ -3,18 +3,11 @@
  *
  * NOTE - AS OF 2026-08-11 THIS IS UNTESTED CODE
  *
- * Bosch BME680 over I2C. Freestanding, like Sensor_BME280 and Sensor_ms5803 - no external
- * library, just System_I2C - so nothing extra is compiled in and there is no third-party
- * dependency to track. The compensation arithmetic, the calibration unpacking and the heater
+ * Bosch BME680 over I2C. 
+ * The compensation arithmetic, the calibration unpacking and the heater
  * register arithmetic are ported from Bosch's own reference driver:
- *
  *   https://github.com/boschsensortec/BME68x-Sensor-API  (bme68x.c, BME68X_USE_FPU)
  *   Copyright (c) 2023 Bosch Sensortec GmbH. SPDX-License-Identifier: BSD-3-Clause
- *
- * BSD-3-Clause is compatible with this library's MIT licence; the notice above is the
- * required attribution. (Note this is a *different* upstream repo to the one bme280.cpp cites
- * - the older BME680_driver repo is gone, and BME68x-Sensor-API is Bosch's replacement,
- * covering the BME680 and the BME688.)
  *
  * Why float here when bme280.cpp deliberately uses double: the reference implementation for
  * this chip *is* floating point single precision (Bosch's BME68X_USE_FPU variant, which is
@@ -102,7 +95,7 @@ class Sensor_BME680 : public Sensor {
   protected:
     OUTfloat* pressure;
     OUTfloat* gas;        // nullptr if the constructor was passed gas=false
-    System_I2C interface; // I2C object - compare Sensor_BME280 and Sensor_ms5803
+    System_I2C interface; // I2C object
     // powerPins() applies to the shared bus, not to this object - see system/interface.h
     System_Interface* powerInterface() override { return interface.bus(); }
     TwoWire* wire;
