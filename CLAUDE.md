@@ -326,7 +326,7 @@ Frugal-IoT/
 │                           #   oled, oled_loramesher, gsheets, control.h [base class]…)
 ├── examples/              # One subdirectory per example application
 │   ├── sht/             # Temperature + humidity with optional OLED
-│   ├── loadcell/          # HX711 weight scale
+│   ├── loadcell/          # HX711 weight scale, with a local menu - buttons, OLED/LCD/portal
 │   ├── soil/              # Soil moisture
 │   ├── loramesher/        # LoRa mesh gateway + node
 │   ├── agri/              # Agricultural multi-sensor
