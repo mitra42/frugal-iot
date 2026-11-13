@@ -49,16 +49,47 @@ void Sensor_HCSR04::dispatch(System_Message &msg) {
   Sensor_Ultrasonic::dispatch(msg);
 }
 
-// One round trip, in microseconds, or 0 if no echo arrived within SENSOR_HCSR04_TIMEOUT_US.
-// With nothing in range the module holds ECHO high for about 38ms, longer than the timeout, and
-// pulseIn returns 0 for that as well.
-uint32_t Sensor_HCSR04::ping() {
-  digitalWrite(trigger_pin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigger_pin, HIGH);
-  delayMicroseconds(SENSOR_HCSR04_TRIGGER_US);
-  digitalWrite(trigger_pin, LOW);
-  return pulseIn(echo_pin, HIGH, SENSOR_HCSR04_TIMEOUT_US);
+// One ping. us is the round trip in microseconds for HCSR04_PING_ECHO, and 0 otherwise.
+//
+// Timed by hand rather than with pulseIn(), which returns 0 both when ECHO never rose and when it
+// stayed high past its timeout - and those are different faults: a module that missed the trigger,
+// and one that fired and heard nothing. With nothing in range an HC-SR04 holds ECHO high for about
+// 38ms, longer than the timeout, so that is HCSR04_PING_NO_ECHO. Each of the three waits is capped
+// at SENSOR_HCSR04_TIMEOUT_US. micros() wraps, but the subtractions are rollover safe.
+Sensor_HCSR04_Ping Sensor_HCSR04::ping(uint32_t &us) {
+  Sensor_HCSR04_Ping result = HCSR04_PING_BUSY;
+  us = 0;
+  uint32_t start = micros();
+  bool high = digitalRead(echo_pin);
+  while (high && ((micros() - start) < SENSOR_HCSR04_TIMEOUT_US)) { // Let the last ping finish
+    high = digitalRead(echo_pin);
+  }
+  if (!high) {
+    digitalWrite(trigger_pin, LOW);
+    delayMicroseconds(2);
+    digitalWrite(trigger_pin, HIGH);
+    delayMicroseconds(SENSOR_HCSR04_TRIGGER_US);
+    digitalWrite(trigger_pin, LOW);
+    start = micros();
+    while (!high && ((micros() - start) < SENSOR_HCSR04_TIMEOUT_US)) { // Wait for ECHO to rise
+      high = digitalRead(echo_pin);
+    }
+    if (!high) {
+      result = HCSR04_PING_NOT_FIRED;
+    } else {
+      const uint32_t rise = micros();
+      while (high && ((micros() - rise) < SENSOR_HCSR04_TIMEOUT_US)) { // Time how long it stays high
+        high = digitalRead(echo_pin);
+      }
+      if (high) {
+        result = HCSR04_PING_NO_ECHO;
+      } else {
+        us = micros() - rise;
+        result = HCSR04_PING_ECHO;
+      }
+    }
+  }
+  return result;
 }
 
 float Sensor_HCSR04::speedOfSound() {
@@ -72,20 +103,29 @@ float Sensor_HCSR04::speedOfSound() {
 float Sensor_HCSR04::readFloat() {
   uint32_t echoes[SENSOR_HCSR04_SAMPLES]; // Kept sorted as they arrive, for the median
   uint8_t n = 0;      // Echoes kept
-  uint8_t pings = 0;  // Pings sent - carries on past SAMPLES while echoes are missing
+  uint16_t pings = 0; // Pings sent - carries on past SAMPLES while echoes are missing
   #ifdef SENSOR_HCSR04_DEBUG
-    Serial.print(id); Serial.print(F(": ping us"));
+    uint16_t counts[4] = {0, 0, 0, 0}; // Indexed by Sensor_HCSR04_Ping
+    Serial.print(id); Serial.print(F(": ping us (0 no echo, - not fired, b busy)"));
   #endif
   while ((n < SENSOR_HCSR04_SAMPLES) && (pings < SENSOR_HCSR04_MAX_PINGS)) {
     if (pings) {
       delay(SENSOR_HCSR04_INTERVAL_MS); // Not sleepSafeMillis as this is a sub-second wait
     }
-    const uint32_t us = ping();
+    uint32_t us;
+    const Sensor_HCSR04_Ping result = ping(us);
     pings++;
     #ifdef SENSOR_HCSR04_DEBUG
-      Serial.print(F(" ")); Serial.print(us); // 0 is a timeout - no echo
+      counts[result]++;
+      Serial.print(F(" "));
+      switch (result) {
+        case HCSR04_PING_ECHO:      Serial.print(us); break;
+        case HCSR04_PING_NO_ECHO:   Serial.print(F("0")); break;
+        case HCSR04_PING_NOT_FIRED: Serial.print(F("-")); break;
+        case HCSR04_PING_BUSY:      Serial.print(F("b")); break;
+      }
     #endif
-    if (us) { // Timeouts are dropped, not averaged in as zeros
+    if (result == HCSR04_PING_ECHO) { // Everything else is dropped, not averaged in as zeros
       uint8_t j = n++;
       while (j && (echoes[j - 1] > us)) {
         echoes[j] = echoes[j - 1];
@@ -102,7 +142,10 @@ float Sensor_HCSR04::readFloat() {
   #ifdef SENSOR_HCSR04_DEBUG
     Serial.println();
     Serial.print(id); Serial.print(F(": ")); Serial.print(n); Serial.print(F(" echoes from "));
-    Serial.print(pings); Serial.print(F(" pings, median "));
+    Serial.print(pings); Serial.print(F(" pings (")); Serial.print(counts[HCSR04_PING_NO_ECHO]);
+    Serial.print(F(" no echo, ")); Serial.print(counts[HCSR04_PING_NOT_FIRED]);
+    Serial.print(F(" not fired, ")); Serial.print(counts[HCSR04_PING_BUSY]);
+    Serial.print(F(" busy), median "));
     Serial.print(mm); Serial.print(F("mm at ")); Serial.print(speedOfSound()); Serial.println(F("m/s"));
   #endif
   return mm;

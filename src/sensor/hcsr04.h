@@ -106,10 +106,10 @@
   #define SENSOR_HCSR04_TRIGGER_US 10 // Datasheet minimum for the HC-SR04; some AJ-SR04Ms want 20
 #endif
 #ifndef SENSOR_HCSR04_SAMPLES
-  #define SENSOR_HCSR04_SAMPLES 5
+  #define SENSOR_HCSR04_SAMPLES 10
 #endif
 #ifndef SENSOR_HCSR04_MAX_PINGS
-  #define SENSOR_HCSR04_MAX_PINGS (10 * SENSOR_HCSR04_SAMPLES) // Must fit a uint8_t
+  #define SENSOR_HCSR04_MAX_PINGS (100 * SENSOR_HCSR04_SAMPLES) // Must fit a uint16_t
 #endif
 #ifndef SENSOR_HCSR04_INTERVAL_MS
   #define SENSOR_HCSR04_INTERVAL_MS 60
@@ -136,6 +136,14 @@
   #define DEFAULT_hcsr04_hcsr04_max 4000
 #endif
 
+// What one ping saw - see Sensor_HCSR04::ping(). pulseIn() returns 0 for the last three alike.
+enum Sensor_HCSR04_Ping : uint8_t {
+  HCSR04_PING_ECHO,      // ECHO rose and fell - the time it was high is the round trip
+  HCSR04_PING_NO_ECHO,   // ECHO rose but was still high after SENSOR_HCSR04_TIMEOUT_US - fired, heard nothing
+  HCSR04_PING_NOT_FIRED, // ECHO never rose - the module missed the trigger
+  HCSR04_PING_BUSY       // ECHO was still high from the last ping, so no trigger was sent
+};
+
 class Sensor_HCSR04 : public Sensor_Ultrasonic {
   public:
     Sensor_HCSR04(const char* const id, const char * const name, uint8_t trigger_pin, uint8_t echo_pin,
@@ -151,7 +159,7 @@ class Sensor_HCSR04 : public Sensor_Ultrasonic {
     void dispatch(System_Message &msg) override;
     float readFloat() override;       // Median distance in mm, or NAN if no echo came back
     bool validate(float mm) override; // Within the module's rated range
-    uint32_t ping();                  // One round trip in us, 0 if it timed out
+    Sensor_HCSR04_Ping ping(uint32_t &us); // One ping; us is the round trip, 0 unless HCSR04_PING_ECHO
     float speedOfSound();             // m/s at the current temperature input
 };
 
