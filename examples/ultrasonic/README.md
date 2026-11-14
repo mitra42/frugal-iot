@@ -5,6 +5,12 @@ library supports, so it works for measuring a tank, a well or a river level, or 
 something is there. It publishes the distance in mm, or the depth of water if you give it the
 height of the sensor (see "Depth instead of distance" below).
 
+> **Ultrasonic sensors are tricky.** On a bench pointed at a wall they just work. Put one in a
+> pipe, a tank or an enclosure and it can give a reading that looks perfectly reasonable, is the
+> same every time, and has nothing to do with the distance. Before trusting a reading, **move the
+> target and check the reading moves with it** - and read "Mounting" below, which is the part
+> most likely to catch you out.
+
 ## Which sensor - one flag
 
 | Module | Driver | In `platformio.ini` `[common] build_flags_frugaliot` |
@@ -111,10 +117,25 @@ reading, try `-D SENSOR_HCSR04_TRIGGER_US=20`. If readings jump about, try
 
 #### Few echoes - `1/5` or `0/5` in the debug output
 
-With `-D SENSOR_HCSR04_DEBUG`, each reading prints the time of every ping (`0` means no echo came
-back) and then `n echoes from m pings`. Each reading keeps pinging until it has 5 echoes, or gives
-up after 15 pings (`SENSOR_HCSR04_SAMPLES`, `SENSOR_HCSR04_MAX_PINGS`). So an occasional miss
-costs a little time, not the reading. If most pings still get nothing:
+With `-D SENSOR_HCSR04_DEBUG`, each reading prints what happened to every ping, then a summary:
+
+```
+hcsr04: ping us (0 no echo, - not fired, b busy) 1403 0 - - 0 b 1355 ...
+hcsr04: 10 echoes from 122 pings (80 no echo, 30 not fired, 2 busy), median ...
+```
+
+| Shown | Means | Look at |
+| --- | --- | --- |
+| a number | an echo, round trip in µs | |
+| `0` | the module fired but heard nothing within 30ms | the target, the mounting, the transducer |
+| `-` | the module ignored the trigger - ECHO never went high | trigger level, trigger length, power |
+| `b` | ECHO was still high from the last ping, so it was not triggered | `SENSOR_HCSR04_INTERVAL_MS` |
+
+Each reading keeps pinging until it has `SENSOR_HCSR04_SAMPLES` echoes, or gives up after
+`SENSOR_HCSR04_MAX_PINGS` pings, so an occasional miss costs a little time, not the reading.
+
+Plenty of echoes, all at much the same time whatever the distance, is a different problem - see
+"Readings stuck at 20-30cm" under Mounting. If most pings get nothing:
 
 * Check the trigger level - see "5V or 3.3V?" above. This is the most likely cause on an SR04M-2
   at 5V.
@@ -194,6 +215,41 @@ converter (and the module, if it is powered through the converter's supply).
 * Point it straight down, clear of the tank walls and any pipes. The beam spreads out as it goes,
   and it reports the first thing it hits.
 * Only the probe is waterproof. Keep the circuit board of an AJ-SR04M / SR04M-2 in a box.
+* Nothing close beside the face of the transducer - see the next section.
+
+### Readings stuck at 20-30cm - in a pipe, a cap or an enclosure (experimental)
+
+**EXPERIMENTAL** - from one set of bench tests, an SR04M-2 over a 100mm pipe (2026-11), not yet
+proven outdoors. Corrections and other results very welcome.
+
+**The symptom:** steady readings of about 230-280mm (1300-1650µs in the debug output) that do not
+change when the target moves. In that test, raising the pipe 50mm, taking the probe out of the
+pipe, even pointing it at a floor 800mm away, all gave the same reading - as long as the face
+of the transducer had a wall beside it. A cap that the probe sat inside did it, even with the
+probe hanging loose by its cable, and so did the top of the pipe.
+
+**What seems to be happening:** the AJ-SR04M, SR04M-2 and A01NYUB send and listen on the same
+transducer, so they cannot hear anything until it has stopped ringing - that is the 20-28cm blind
+zone. With a wall close beside the face, the sound is still bouncing between the walls when the
+module starts listening, and it takes that as the echo. So the reading is not a distance to
+anything; it is roughly the end of the blind zone. And because the module stops timing at the
+first thing it hears, the real echo never reaches the ESP - no software filter can recover it.
+
+**What worked:**
+
+* **The face just above the top of the pipe**, with no wall beside it. Even a few mm clear gave
+  correct readings. Weather may rule this out - a cover held well clear of the face, with a gap
+  all round its bottom edge, should keep the rain off without putting a wall beside it.
+* **Lining the top 100mm of the pipe** with something soft and loose that soaks up sound rather
+  than reflecting it. A microfibre towel did it in the test; open-cell foam or synthetic felt
+  should too. Closed-cell foam, rubber or hard plastic will not. Line the walls only, never across
+  the face. Untested outdoors: anything that holds water reflects much more when wet, so felt that
+  sheds water is a better bet than cloth or upholstery foam - check readings again after rain.
+* **Not** a probe sitting up inside a cap or a recess. The face should be flush with, or stick
+  out a little from, whatever holds it.
+
+**Check it worked** by moving the target - raise the pipe off the table, or change the water
+level - and watching the reading follow.
 
 ## Depth instead of distance
 

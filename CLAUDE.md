@@ -1772,6 +1772,18 @@ ping's µs so a miss rate can be seen.
 0.7 × V<sub>DD</sub> = 3.5 V. Not yet confirmed as the cause of those missed echoes; running it from 3V3
 should tell.
 
+**`ping()` is hand-timed, not `pulseIn`**, so that under `SENSOR_HCSR04_DEBUG` each ping shows µs,
+`0` (fired, no echo), `-` (never fired - ECHO did not rise) or `b` (ECHO still high, not triggered).
+At 3V3 an SR04M-2 showed mostly `-` (2026-11-13). Mitra's local `SAMPLES`/`MAX_PINGS` (10/1000) are
+why `pings` is a `uint16_t`.
+
+**A wall beside a single-transducer face gives a fixed false reading** (SR04M-2, bench, 2026-11):
+inside a cap or the top of a 100 mm pipe it read 230-280 mm whatever the distance - the walls are
+still ringing when the module starts listening at the end of its blind zone, and it stops timing
+there, so no software filter can help. Face just above the pipe, or the top 100 mm lined with
+something soft, fixed it. Written up as EXPERIMENTAL in `examples/ultrasonic/README.md` and
+`hcsr04.h`.
+
 Speed of sound is `331.3 + 0.606 * T` m/s — 0.17 %/°C — from a wireable `temperature` `IN`
 (`<id>/temperature`), handled the same way as `Sensor_DissolvedOxygen`'s: set up before
 `readConfigFromFS`, dispatched outside the `module() == id` test. It holds

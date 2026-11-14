@@ -65,6 +65,14 @@
  *
  * For a tank, mount an AJ-SR04M at least its blind zone above the highest the water will reach.
  *
+ * EXPERIMENTAL, from one bench test (SR04M-2 over a 100mm pipe, 2026-11): with a wall close beside
+ * the transducer face - a cap it sits in, or the top of a pipe - it reads a steady ~230-280mm
+ * (1300-1650us) whatever the distance. The sound is still bouncing off the walls when the module
+ * starts listening at the end of its blind zone, and it stops timing there, so the real echo never
+ * reaches us and no filter here can recover it. Fixed by the face sitting just above the pipe, or
+ * by lining the top 100mm of the pipe with something soft. See examples/ultrasonic/README.md,
+ * "Readings stuck at 20-30cm".
+ *
  * The limits are build flags, so they apply to every Sensor_HCSR04 on the node - one node cannot
  * run an HC-SR04 and an AJ-SR04M with different limits without making them constructor arguments.
  *
