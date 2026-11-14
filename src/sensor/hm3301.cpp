@@ -9,7 +9,7 @@
 #include "sensor/hm3301.h"
 #include <Arduino.h>
 
-extern unsigned long wake_count; // system/power.cpp - zero on a power-on, non-zero on a deep-sleep wake
+#include "system/power.h" // wokeFromDeepSleep()
 
 Sensor_HM3301::Sensor_HM3301(const char * const name, uint8_t address, TwoWire* wire, bool retain)
   : Sensor_PM("hm3301", name, SENSOR_HM3301_WARMUP_MS, SENSOR_HM3301_READING_MS, retain),
@@ -28,7 +28,7 @@ void Sensor_HM3301::setup() {
   interface.initialize();
   interface.send(0x88); // Select I2C - harmless if already selected, so sent on every wake
   // It cannot sleep, so after a deep-sleep wake its fan has been running all along - see hm3301.h
-  running = (wake_count != 0);
+  running = System_Power::wokeFromDeepSleep();
   #ifdef SENSOR_HM3301_DEBUG
     Serial.printf("%s: I2C 0x%02x %s\n", id, interface.addr, interface.isPresent() ? "found" : "NOT FOUND");
   #endif

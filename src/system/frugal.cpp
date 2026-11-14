@@ -442,9 +442,6 @@ void System_Frugal::loop() {
   powercontroller->unlockLoop();
   delay(10); // Slow down and let other things run
 }
-#ifdef ESP32 // Its in the RTC, no meaning in ESP8266
-  extern unsigned long wake_count;
-#endif
 void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
   // Encapsulate setting up and starting serial
   #if defined(ANY_DEBUG) || defined(SYSTEM_SERIALCONFIG_WANT)
@@ -457,13 +454,9 @@ void System_Frugal::startSerial(uint32_t baud, uint16_t serial_delay) {
       ; // wait for serial port to connect. Needed for Arduino Leonardo only
     }
     */
-    #ifdef ESP32
-      if (!wake_count) { // wake count is only zero on first boot, not after a deep sleep
-    #endif
-        delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
-    #ifdef ESP32
-      }
-    #endif
+    if (!System_Power::wokeFromDeepSleep()) { // Nobody is watching a serial monitor on a deep-sleep wake
+      delay(serial_delay); // If dont do this on D1 Mini and Arduino IDE then miss next debugging
+    }
     Serial.println(F("FrugalIoT Starting"));
   #endif // ANY_DEBUG
 }

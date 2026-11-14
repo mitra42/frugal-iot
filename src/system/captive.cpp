@@ -53,9 +53,6 @@ static AsyncWebServer server(80);
   // How long after a portal user's last request sleep is held off - long enough to fill in a form
   #define SYSTEM_CAPTIVE_ACTIVE_MS 120000
 #endif
-#ifdef ESP32
-  extern unsigned long wake_count; // system/power.cpp - zero unless this boot is a deep-sleep wake
-#endif
 #ifndef SYSTEM_CAPTIVE_STARTUP_MS
   // How long after a reset sleep is held off, so someone can find the AP and connect to it
   #define SYSTEM_CAPTIVE_STARTUP_MS 180000
@@ -619,11 +616,7 @@ bool System_Captive::okToSleep(const unsigned long ms, const uint16_t how) {
     /* A deep-sleep wake is a reboot too, but not a reset - holding every wake for minutes would undo
      * Power_Deep. millis() wrapping at 49 days reopens this for 3 minutes, which does no harm.
      */
-    const bool inStartup = (millis() < SYSTEM_CAPTIVE_STARTUP_MS)
-      #ifdef ESP32
-        && (wake_count == 0)
-      #endif
-      ;
+    const bool inStartup = (millis() < SYSTEM_CAPTIVE_STARTUP_MS) && !System_Power::wokeFromDeepSleep();
     const unsigned long last = lastActivityMs; // Read once - the async_tcp task may write it
     const bool inUse = (WiFi.softAPgetStationNum() > 0)
       && last && ((millis() - last) < SYSTEM_CAPTIVE_ACTIVE_MS);

@@ -15,7 +15,7 @@
  *   recover()  gpio_hold_dis(), then re-assert
  *   setup()    gpio_hold_dis() before pinMode - and this is the one that matters after a DEEP
  *              sleep. recover() IS reached on that path (System_Power::setup() calls it when
- *              RTC_DATA_ATTR wake_count says we woke rather than powered on), but the system group
+ *              wokeFromDeepSleep() says we woke rather than powered on), but the system group
  *              is set up LAST, so an actuator's own setup() has already run by then. A held pin
  *              silently ignores pinMode and digitalWrite, so releasing it late would be too late.
  *

@@ -12,7 +12,7 @@
 
 #include <Arduino.h>
 
-extern unsigned long wake_count; // system/power.cpp - zero on a power-on, non-zero on a deep-sleep wake
+#include "system/power.h" // wokeFromDeepSleep()
 
 Sensor_SDS011::Sensor_SDS011(const char * const name, HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, bool retain)
   : Sensor_PM("sds011", name, SENSOR_SDS011_WARMUP_MS, SENSOR_SDS011_READING_MS, retain),
@@ -32,7 +32,7 @@ void Sensor_SDS011::setup() {
   #ifdef SENSOR_SDS011_DEBUG
     Serial.printf("%s: UART rx=%d tx=%d\n", id, rx_pin, tx_pin);
   #endif
-  if (!wake_count) {
+  if (!System_Power::wokeFromDeepSleep()) {
     /* A power-on, not a deep-sleep wake. Make sure the module sends frames by itself and does not
      * duty-cycle itself - something else (a previous firmware, a PC utility) may have changed
      * either, and the module remembers both across power cycles. Not done on every wake as each

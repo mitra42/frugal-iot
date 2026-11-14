@@ -1,4 +1,4 @@
-// Deep Sleep issues: none in itself. prepare()/recover() are the sleep hooks; recover() IS reached after a deep sleep, from System_Power::setup() when wake_count says it was one - but only AFTER the actuators and sensors have run their own setup().
+// Deep Sleep issues: none in itself. prepare()/recover() are the sleep hooks; recover() IS reached after a deep sleep, from System_Power::setup() when wokeFromDeepSleep() says it was one - but only AFTER the actuators and sensors have run their own setup().
 #ifndef SYSTEM_BASE_H
 #define SYSTEM_BASE_H
 

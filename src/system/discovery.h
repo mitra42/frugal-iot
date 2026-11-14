@@ -1,4 +1,4 @@
-// Deep Sleep issues: none - doneFullAdvertise is a plain member and so lost, but System_Power::recover() sets it on a deep-sleep wake, which System_Power::setup() detects with wake_count.
+// Deep Sleep issues: none - doneFullAdvertise is a plain member and so lost, but System_Power::recover() sets it on a deep-sleep wake, which System_Power::setup() detects with wokeFromDeepSleep().
 #ifndef SYSTEM_DISCOVERY_H
 #define SYSTEM_DISCOVERY_H
 

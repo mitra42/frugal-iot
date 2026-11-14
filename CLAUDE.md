@@ -1873,7 +1873,7 @@ throughout. The warm-up and reading times are constructor arguments, from each s
 **`running` is what makes the two parts differ in practice.** The SDS011 is slept at the end of
 every measurement, so `running` starts false on every boot and every wake has a warm-up (~20 s
 awake). The HM3301 cannot sleep, so its fan runs straight through the ESP's deep sleep;
-`Sensor_HM3301::setup()` sets `running = (wake_count != 0)`, and only a power-on gets a warm-up -
+`Sensor_HM3301::setup()` sets `running = System_Power::wokeFromDeepSleep()`, and only a power-on gets a warm-up -
 after that each wake is ~5 s. That depends on the HM3301's power NOT being switched, which is why it
 must not be given `powerPins()` (on an I2C sensor those switch the whole bus).
 
@@ -1883,7 +1883,7 @@ waking it again moments after it slept (airRohr does the same); `prepare()` stil
 node does. The HM3301 is polled, so its `readSample()` paces itself at `SENSOR_HM3301_SAMPLE_MS`
 and only reads while READING; the SDS011's streams, so it drains whatever has arrived.
 
-SDS011 specifics: on a **power-on only** (`wake_count == 0`), `setup()` also sets active reporting
+SDS011 specifics: on a **power-on only** (`!System_Power::wokeFromDeepSleep()`), `setup()` also sets active reporting
 (`02`) and continuous working (`08`), because the module keeps both in its own flash and another
 firmware may have changed them. Not on every wake, as each is a flash write in the module. It
 deliberately sends the wake command raw there rather than through `wake()`, which would set
@@ -2184,10 +2184,12 @@ That repository builds against the `ospit-p1` branch of this library until it is
 
 ### How a deep-sleep wake is told apart from a power-on
 
-`RTC_DATA_ATTR wake_count` in `system/power.cpp`. It is incremented just before sleeping, and
-survives because RTC memory does; a power-on leaves it zero. `System_Power::setup()` tests it and
-calls `recover()` when it is non-zero, which is how things like `System_Discovery`'s
-`doneFullAdvertise` get restored without being persisted to flash.
+`System_Power::wokeFromDeepSleep()` - static, so any module can ask - reads the chip's reset
+reason: `esp_reset_reason() == ESP_RST_DEEPSLEEP` on ESP32, `ESP.getResetInfoPtr()->reason ==
+REASON_DEEP_SLEEP_AWAKE` on ESP8266, false elsewhere. `System_Power::setup()` tests it and calls
+`recover()` when it is true, which is how things like `System_Discovery`'s `doneFullAdvertise` get
+restored without being persisted to flash. (It replaced an `RTC_DATA_ATTR wake_count` that a wake
+stub incremented; the chip already records the same fact, and on both chips.)
 
 So **`recover()` IS reached after a deep sleep** - the obvious assumption that "deep sleep reboots,
 therefore only `setup()` runs" is wrong and cost me a wrong comment in three files. What is true is

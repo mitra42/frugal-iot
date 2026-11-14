@@ -1,4 +1,4 @@
-// Deep Sleep issues: this IS the deep sleep machinery. millis() resets, so use sleepSafeSecs(); RTC_DATA_ATTR wake_count is how a deep-sleep wake is told apart from a power-on, and is what makes setup() call recover().
+// Deep Sleep issues: this IS the deep sleep machinery. millis() resets, so use sleepSafeSecs(); wokeFromDeepSleep() - the chip's reset reason - is how a deep-sleep wake is told apart from a power-on, and is what makes setup() call recover().
 /* Frugal IoT - System Power - control power managemwent 
  * 
  */
@@ -123,6 +123,12 @@ class System_Power : public System_Base {
     void lockLoop();
     void unlockLoop();
     void pre_setup();
+    /* True when this boot is a wake from deep sleep rather than a power-on or a reset, from the
+     * chip's own reset reason. Static, so a module can ask without going through frugal_iot.
+     * Only deep sleep reboots - after light or modem sleep setup() is not run again, so nothing
+     * needs to ask. On a chip with no deep sleep it is always false.
+     */
+    static bool wokeFromDeepSleep();
     #ifdef ESP32
       // Use the RTC to track time, so safe over deep and light sleeps
       uint32_t sleepSafeSecs();

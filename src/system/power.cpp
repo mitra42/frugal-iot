@@ -106,7 +106,6 @@ void printTaskList() {
 
 #define TIMER_LENGTH 8 // Can make this longer (and add to initialization) if ever need >4 timers.
 #ifdef ESP32
-  RTC_DATA_ATTR unsigned long wake_count = 0L; // If 1 per minute, uint_16 would just be 45 days
   // Timers stored in seconds; uint32_t rolls over at 136 years vs 49 days for millis-based unsigned long.
   RTC_DATA_ATTR uint32_t timers[TIMER_LENGTH] = {0,0,0,0,0,0,0,0}; // Array used by entities - currently using max four (OTA, Discovery, time, Watchdog)
 #else
@@ -116,14 +115,19 @@ void printTaskList() {
 
 // ======
 
-#ifdef ESP32 // Deep, Light and Modem sleep specific to ESP32
-  // Note how this is placed in RTC code space so it can be executed prior to the restart - it has to be short, but not sure how short
-  // See https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/deep-sleep-stub.html#implement-wake-stub
-  void RTC_IRAM_ATTR esp_wake_deep_sleep(void) {
-      esp_default_wake_deep_sleep();
-      wake_count++; // This being non-zero is used as an indication recovering from a deep sleep 
-  }
-#endif
+/* Was an RTC_DATA_ATTR wake_count, incremented in a wake stub (esp_wake_deep_sleep) and tested
+ * for non-zero. The chip records why it booted, which is the same fact without the stub, and the
+ * ESP8266 records it too, so the test can be made everywhere rather than under #ifdef ESP32.
+ */
+bool System_Power::wokeFromDeepSleep() {
+  #ifdef ESP32
+    return (esp_reset_reason() == ESP_RST_DEEPSLEEP);
+  #elif defined(ESP8266)
+    return (ESP.getResetInfoPtr()->reason == REASON_DEEP_SLEEP_AWAKE);
+  #else
+    return false;
+  #endif
+}
 
 // Very basic power constructor, power_configure does most of the work
 System_Power::System_Power()
@@ -296,8 +300,8 @@ void System_Power::pre_setup() {
 }
 void System_Power::setup() {
 #ifdef ESP32 // Specific to ESP32s
-  if (wake_count) {
-    // Only time wake_count is non-zero is if recovering from a deep sleep - its false at startup and its false when recovering from other modes but setup() isn't run in those cases.
+  if (wokeFromDeepSleep()) {
+    // Only a deep sleep reboots - recovering from other modes doesn't run setup() at all.
     Serial.println(F("Power: Waking from deep"));
     // For Deep, millis is ~0 - and the sleep lasted exactly the rest of the last cycle, so a new one starts now
     cycleStart = millis(); // not sleepSafeSecs() as by definition dont deep sleep before this
@@ -530,7 +534,7 @@ void System_Power::recover() {
         // Note this is called from setup() after deep sleep, which will also call other sensors & actuators to repeat setup()
         // TODO-23 test and add a note here about order - what is this before/after ? 
         #ifdef SYSTEM_POWER_DEBUG
-          Serial.print(F("Power Management: recovering from Deep Sleep: ")); Serial.println(wake_count);
+          Serial.println(F("Power Management: recovering from Deep Sleep"));
         #endif
         // TODO-23 be smarter about doneFullAdvertise, for example could have powered up, failed to get comms, then slept. 
         frugal_iot.discovery->doneFullAdvertise = true; // Assume did this before sleep
