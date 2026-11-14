@@ -1,81 +1,33 @@
-/* Frugal IoT - Google Sheets
- * 
- * Idea is to be able to log any MQTT topic - local or remote 
- * to a Google Sheet
- * 
- * See https://github.com/mitra42/frugal-iot/issues/136
- * This was never completed becaause the functionality is already there in frugal-iot-logger and operating at the 
- * server side. 
- * 
- * Thanks to Abrar at Kopernik for the idea
-*/
+/* Control_Gsheets - see gsheets.h */
 #include "_settings.h"
-
-#ifdef ESP8266
-  #include <ESP8266HTTPClient.h> // For ESP8266
-  #include <ESP8266WiFi.h>  // for WiFiClient
-#else // ESP32  
-  #include <HTTPClient.h>
-#endif
-#include <Arduino.h> // For String
+#include <Arduino.h>
 #include "control/gsheets.h"
 #include "misc.h" // For StringF
 #include "system/frugal.h"
 
-Control_Gsheets::Control_Gsheets(const char* name, const String googleSheetsUrl)
-  : Control_Logger("gsheets", name), url(googleSheetsUrl)
+Control_Gsheets::Control_Gsheets(const char* name, const String url, bool everyCycle)
+  : Control_HttpPost("gsheets", name, url, everyCycle)
   {}
-  
-Control_Gsheets::Control_Gsheets(const char* name, const char* const googleSheetsUrl)
-  : Control_Gsheets(name,  String(googleSheetsUrl))
+Control_Gsheets::Control_Gsheets(const char* name, const char* const url, bool everyCycle)
+  : Control_Gsheets(name, String(url), everyCycle)
   {}
 
-void Control_Gsheets::track(const char* col, String topicPath) {
-  // TODO-136 may not want to pass empty new string here
-  INtext* i = new INtext(id, col, col, String(), "black", true); // sensorId, id, name, value, color, wireable 
-  i->wireFrom(topicPath); // Does a subscription
-  inputs.push_back(i);
+void Control_Gsheets::setup() {
+  if (!frugal_iot.time) {
+    Serial.println(F("Control_Gsheets: Time must be set up before Control_Gsheets"));
+  }
+  Control_HttpPost::setup();
 }
 
-void Control_Gsheets::track(const char* col, const char* topicPath) {
-  track(col, String(topicPath));
-}
-
-void Control_Gsheets::act() {
-  String payload = String(F("{\"timestamp\":\""))
-  + frugal_iot.time->dateTime()
-  + "\"";
-  // For some reason this alternative doesnt work - would have expected dateTime to be in scope but StringF is fussy.
-  //String dateTime = systemTime.dateTime();
-  //*payload += StringF("{\"timestamp\":\"%s\"", dateTime); // TODO-136 check this time is recognized by gsheets
+String Control_Gsheets::body() {
+  String payload = String(F("{\"timestamp\":\"")) + frugal_iot.time->dateTime() + "\"";
   for (auto &input : inputs) {
-    // TODO-136 may be a problem quoting output if it, for example, is a float
-    payload += StringF(",\"%s\":\"%s\"", 
-      input->id, 
-      input->StringValue().c_str());
+    // Every value quoted - a float arrives as a string, and the sheet converts it
+    payload += StringF(",\"%s\":\"%s\"", input->id, input->StringValue().c_str());
   }
   payload += "}";
-  sendGoogle(payload);
+  return payload;
 }
-
-void Control_Gsheets::sendGoogle(String payload) {
-    HTTPClient http;
-  #ifdef ESP8266
-    WiFiClient client; // Assumes system_wifi has already connected to access point - note this will not run if WiFi fails to connect and goes to portal mode
-    http.begin(client, url);
-  #else
-    http.begin(url);
-  #endif
-    http.addHeader("Content-Type", "application/json");
-    Serial.print(F("📤 Sending Data to Google Sheet at:")); Serial.println(url);
-    Serial.println(payload);  // Debug: Print JSON payload
-    int httpResponseCode = http.POST(payload);  
-    if (httpResponseCode >= 300 && httpResponseCode < 400) {
-        Serial.println(F("✅ Data Sent Successfully to Google Sheets!"));
-        Serial.println(httpResponseCode);
-    } else {
-        Serial.printf("❌ Error Sending Data! HTTP Code: %d\n", httpResponseCode);
-    }
-    http.end();
+const char* Control_Gsheets::contentType() {
+  return "application/json";
 }
-

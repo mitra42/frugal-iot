@@ -40,6 +40,7 @@
 #include "control/carousel.h"
 #include "control/menu.h" // Control_Menu, the menu items, and Menu_Display_Serial
 #include "control/menu_display.h" // Menu_Display_LCD, and Menu_Display_OLED with ACTUATOR_OLED_WANT
+#include "control/httppost.h" // Post readings to any web server; Control_Gsheets is built on it
 #include "control/gsheets.h"
 #include "control/hysteresis.h"
 #include "control/logger_fs.h"

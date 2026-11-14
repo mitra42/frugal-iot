@@ -323,7 +323,7 @@ Frugal-IoT/
 │   │                       #   hcsr04, a01nyub, pm, sds011, hm3301, sensor [base class]…)
 │   ├── actuator/          # LED, digital output, OLED, LCD (actuator.h is the base class)
 │   └── control/           # Logic blocks (hysteresis, logger, logger_fs, blinken, carousel,
-│                           #   oled, oled_loramesher, gsheets, control.h [base class]…)
+│                           #   oled, oled_loramesher, httppost, gsheets, control.h [base class]…)
 ├── examples/              # One subdirectory per example application
 │   ├── sht/             # Temperature + humidity with optional OLED
 │   ├── loadcell/          # HX711 weight scale, with a local menu - buttons, OLED/LCD/portal
@@ -2164,7 +2164,8 @@ env for a board that already has one, check which of the two `platform.h` marks
 | `Control_Oled_Single` | control/oled_single | `Control_OLED` subclass showing one wired value large, with optional unit and label - `(name, unit, label, decimals)`. Only declared with `ACTUATOR_OLED_WANT`; sizes text from the visible height, so fits 128x64 and 72x40 |
 | `Control_LoggerFS` | control/logger_fs | LittleFS CSV data logger |
 | `Control_Logger` | control/logger | Serial logger |
-| `Control_GSheets` | control/gsheets | Push readings to Google Sheets |
+| `Control_HttpPost` | control/httppost | POST every input's value to a URL, on change or once per cycle (`everyCycle`); subclass and override `body()`/`contentType()` for the server's format. Holds off sleep until posted, with a timeout; https:// is accepted without a certificate check |
+| `Control_Gsheets` | control/gsheets | `Control_HttpPost` subclass - JSON with a timestamp, to a Google Apps Script |
 
 ### Irrigation lives in its own repository
 

@@ -79,7 +79,7 @@ class System_Frugal : public System_Group {
     #if defined(SYSTEM_OTA_PREFIX) && defined(SYSTEM_OTA_SUFFIX)
       System_OTA* ota;
     #endif
-    Sensor_Battery* battery;
+    Sensor_Battery* battery = nullptr; // Set by configure_battery() - a sketch may test it
     // The board's built-in LED, added automatically - nullptr on a board with no LED_BUILTIN.
     // Actuator* rather than Actuator_Ledbuiltin*, as that class compiles to nothing on such a board.
     // So a sketch can write cb->wireTo(frugal_iot.led) - its default input is "on".
