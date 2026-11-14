@@ -37,10 +37,20 @@ class Sensor_Analog : public Sensor_Float {
   public:
     Sensor_Analog(const char* const id, const char * const name, const uint8_t pin, const uint8_t width, const float min, const float max, int offset, float scale, const char* color, bool retain);
     float readValidateConvert() override;
+    /* Take n readings and report their median, for a noisy probe such as a resistive soil sensor.
+     * Chainable, so it can be written in the sketch's add():
+     *   frugal_iot.sensors->add((new Sensor_Soil(...))->takeMedian(7));
+     * Applies to every read - periodic, tare() and calibrate(). Each sample is one readInt(), so a
+     * subclass that overrides readInt() is sampled through its override. n is clamped to
+     * SENSOR_ANALOG_MEDIAN_MAX; 1 (the default) is a single reading.
+     */
+    Sensor_Analog* takeMedian(uint8_t n);
   protected:
     uint8_t pin;    
     int offset;
     float scale;
+    uint8_t medianCount = 1; // See takeMedian()
+    int readMedian(); // readInt() once, or medianCount times and the median - what the reads call
     //Sensor_Analog(const uint8_t p);
     virtual void setup() override;
     virtual int readInt(); // Not overriding - its different return

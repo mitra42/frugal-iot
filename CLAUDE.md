@@ -1009,7 +1009,7 @@ needs nothing — `lib/data-loader.js` already filters `isNaN` out of the graph 
 | `Sensor_MS5803` | sensor/ms5803 | Pressure + temperature |
 | `Sensor_ENS160` | sensor/ens160 | Air quality — AQI, TVOC, eCO2 (+ aqi500 on an ENS161). Takes temperature and humidity as **`IN`s** for its compensation |
 | `Sensor_Button` | sensor/button | Button press events |
-| `Sensor_Analog` | sensor/analog | Raw ADC |
+| `Sensor_Analog` | sensor/analog | Raw ADC. `takeMedian(n)` (chainable) makes every read the median of n samples |
 | `Sensor_INA219` | sensor/ina219 | Current/voltage/power monitor — shunt (mV), bus (V), current (mA), power (mW), load (V). Freestanding, no external library |
 | `Sensor_DissolvedOxygen` | sensor/dissolvedoxygen | Dissolved oxygen (mg/L) from an analog probe, temperature compensated; extends `Sensor_Analog`. Has an `IN` (as `Sensor_ENS160` does) |
 | `Sensor_Float` | sensor/float | Arbitrary float value |

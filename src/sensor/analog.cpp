@@ -64,6 +64,13 @@
   #endif
 #endif // SENSOR_ANALOG_RESOLUTION
 
+#ifndef SENSOR_ANALOG_MEDIAN_MAX
+  #define SENSOR_ANALOG_MEDIAN_MAX 15 // Stack buffer in readMedian() - takeMedian() clamps to this
+#endif
+#ifndef SENSOR_ANALOG_MEDIAN_GAP_MS
+  #define SENSOR_ANALOG_MEDIAN_GAP_MS 10 // Between samples, so one glitch does not land in all of them
+#endif
+
 #ifndef SENSOR_ANALOG_UNSUPPORTED
 // If Analog unsupported then a linker error will be generated if try and add one. 
 
@@ -108,6 +115,33 @@ void Sensor_Analog::setup() {
 int Sensor_Analog::readInt() {
   return analogRead(pin); // Returns an int - which should be int16_t
 }
+Sensor_Analog* Sensor_Analog::takeMedian(uint8_t n) {
+  medianCount = (n > SENSOR_ANALOG_MEDIAN_MAX) ? SENSOR_ANALOG_MEDIAN_MAX : (n ? n : 1);
+  return this;
+}
+// The median of medianCount readInt() calls - or just one. Insertion sort, the buffer is tiny.
+int Sensor_Analog::readMedian() {
+  int result;
+  if (medianCount <= 1) {
+    result = readInt();
+  } else {
+    int samples[SENSOR_ANALOG_MEDIAN_MAX];
+    for (uint8_t i = 0; i < medianCount; i++) {
+      if (i) {
+        delay(SENSOR_ANALOG_MEDIAN_GAP_MS);
+      }
+      const int v = readInt();
+      uint8_t j = i;
+      while ((j > 0) && (samples[j - 1] > v)) {
+        samples[j] = samples[j - 1];
+        j--;
+      }
+      samples[j] = v;
+    }
+    result = samples[medianCount / 2]; // The upper of the two middle values when even - these are ADC counts
+  }
+  return result;
+}
 // Check if its valid, typically this will be overridden
 bool Sensor_Analog::validate(int v) {
   return true;
@@ -118,7 +152,7 @@ float Sensor_Analog::convert(const int v) {
 }
 float Sensor_Analog::readValidateConvert() {
   // Note almost identical code in Sensor_Uint16 Sensor_Float & Sensor_Analog
-  const int v = readInt();           // Read raw value from sensor
+  const int v = readMedian();        // Read raw value from sensor - one reading, or the median of several
   #ifdef SENSOR_ANALOG_DEBUG
     Serial.print(id); Serial.print(F(" raw:")); Serial.print(v);
   #endif
@@ -136,11 +170,11 @@ float Sensor_Analog::readValidateConvert() {
 }
 void Sensor_Analog::tare() {
   // Read and use the reading as the offset for a 0 value
-  offset = readInt();
+  offset = readMedian();
 }
 void Sensor_Analog::calibrate(const float val) {
   // Note this could calibrate off an invalid raw value, may want to check if see this behavior
-  int v = readInt();
+  int v = readMedian();
   #ifdef SENSOR_ANALOG_DEBUG
     Serial.println(F("Calibrating val=")); Serial.print(val); Serial.print(F(" read=")); Serial.print(v); Serial.print(F(" offset=")); Serial.print(offset); Serial.println("scale = val/(reading-offset)");
   #endif
