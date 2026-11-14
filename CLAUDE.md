@@ -449,8 +449,44 @@ frugal_iot.configure_power(type, cycle_ms, wake_ms);
 | `Power_Deep` | Deep sleep — slow to reconnect; use cycle_ms ≥ 60 000 |
 | `Power_Lora` | LoRaMesher nodes: sensors and WiFi off between readings, LoRaMesher light-sleeps the CPU between its slots |
 
-Sleep is ESP32 only: on anything else `System_Power::setMode()` forces `Power_Loop`, keeping
-`cycle_ms` as the time between readings.
+ESP32 has every mode. **ESP8266 has `Power_Deep` (and `Power_Panic`) only**; anything else there,
+and any mode on another chip, is forced to `Power_Loop` by `System_Power::setMode()`, keeping
+`cycle_ms` as the time between readings. See "ESP8266 deep sleep" below for what that chip needs.
+
+### ESP8266 deep sleep
+
+`ESP.deepSleep()`, from `System_Power::sleep()`, and it never returns - the chip restarts when its
+RTC timer pulses RST, **so D0 (GPIO16) must be wired to RST** or the node sleeps forever. On the
+Wemos D1 Mini that is a solder bridge or a wire; the library cannot tell whether it is there.
+
+Three things the ESP32 gets for free had to be done by hand, all under `TIMER_LENGTH` at the top of
+`power.cpp`:
+
+- **The timers live in RTC user memory**, the way `RTC_DATA_ATTR` puts them in RTC memory on an
+  ESP32: `timers` is a `volatile uint32_t*` into `RTC_USER_MEM` (the core maps the user area at
+  `0x60001200`, word access only - which is what `uint32_t` is) at `SYSTEM_POWER_RTC_OFFSET`, word
+  96, leaving 0-95 to a sketch. No copying. What the loader does for `RTC_DATA_ATTR` and nothing
+  does here is zero them on a cold boot, so `pre_setup()` clears them on any boot that is not a
+  deep-sleep wake. No magic or crc: if the chip says it woke from deep sleep the words are ours.
+- **The clock does not survive.** `gettimeofday()` on ESP8266 is `micros64()` plus an offset in
+  RAM, so it is back at 1970 on every wake. `sleep()` writes the time the wake is DUE into the two
+  words after the timers and `pre_setup()` `settimeofday()`s it back. `sleepSafeSecs()`/
+  `sleepSafeMillis()` are therefore `gettimeofday()` on both chips now, so `timer_set_to()`,
+  `timers_shift()` and `System_Time::set()` mean the same thing on both.
+- **It is in `pre_setup()`, not `setup()`**, because `checkLevel()` runs between the two and can
+  `sleep()` again on a low battery.
+- **The clock drifts.** The ESP8266's RTC oscillator is not calibrated, so a sleep is a few percent
+  long or short and the restored clock inherits that each cycle. The timers are relative, so they
+  do not care; a wall-clock timestamp does, until NTP corrects it.
+
+Two limits worth knowing: `ESP.deepSleepMax()` is about three and a half hours, and a longer sleep
+is cut to it (with a message) - the node just wakes early and starts a new cycle. And a soft reset
+between sleeps (OTA, `system_restart`) is not a deep-sleep wake, so it zeroes the timers and starts
+the clock over, as an ESP32 power cycle does.
+
+`Power_Light`, `Power_LightWiFi` and `Power_Modem` are not done for ESP8266 - its light sleep
+needs the WiFi forced off and a GPIO to wake it, and `wifi.cpp`'s `pauseWiFi()`/`recoverWiFi()`
+are ESP32 only - and `Power_Lora` needs LoRaMesher, which is ESP32 only.
 
 ### The cycle, and refusing sleep
 
@@ -598,7 +634,8 @@ hardware counter) stays powered. Two clocks look similar but behave very differe
 
 `System_Power::sleepSafeSecs()`/`sleepSafeMillis()` (`system/power.h`/`power.cpp`) wrap
 `gettimeofday()` for exactly this reason — use them (or `timer_set()`/`timer_expired()`, which are
-built on them) for any interval that needs to survive deep sleep, never raw `millis()`. This bit a
+built on them) for any interval that needs to survive deep sleep, never raw `millis()`. On ESP8266
+the same clock is carried across the sleep by hand - see "ESP8266 deep sleep" under Power Modes. This bit a
 previous AI session, which wrote `sleepSafeSecs()` around `esp_timer_get_time()` with a comment
 claiming it was "already compensated for deep sleep" — it wasn't; fixed 2026-07-20.
 

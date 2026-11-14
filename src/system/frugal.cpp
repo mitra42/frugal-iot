@@ -317,7 +317,7 @@ void System_Frugal::pre_setup() {
     powercontroller->checkLevel();
     startSerial(); // Encapsulate setting up and starting serial
   #endif
-  delay(5000);
+  //delay(5000); // Was here from the PSRAM work - on a deep-sleep node it cost 5s of every wake
   /*
    * Before anything can open a TLS connection - enrolment is the first, from setup_after_wifi.
    * Only where there is PSRAM to give it: getPsramSize() is a RUNTIME check on purpose, because

@@ -19,6 +19,9 @@
  * Normal control flow is .... 
  * System_Frugal::loop calls maybeSleep which if its the right time calls prepare sleep recover 
  * Except ... Deep sleep starts from scratch, like a reboot - and calls recover from setup
+ *
+ * ESP32 has all of the modes. ESP8266 has Power_Deep (and Power_Panic) only - see TIMER_LENGTH below
+ * for what it keeps across the sleep and how. Anything else runs as Power_Loop, see setMode().
  * 
  * Before any sleep every module is asked okToSleep() (System_Base), and any one can refuse.
  *
@@ -35,12 +38,12 @@
 
 
 #include <Arduino.h> // Required to get sdkconfig.h to get CONFIG_IDF_TARGET_xxx
-#ifdef ESP32 // Not available on ESP8266 - have not yet searched for equivalents
+#include <sys/time.h>        // gettimeofday()/settimeofday() - the sleep-safe clock, see sleepSafeSecs()
+#ifdef ESP32 // Light sleep, and the ESP32's own deep sleep - the ESP8266's is in Esp.h via Arduino.h
   // Next three .h might or might not be needed
   #include "esp_pm.h"
   #include "esp_wifi.h"
   #include "esp_sleep.h"
-  #include <sys/time.h>      // For gettimeofday() — RTC-backed clock, survives deep sleep
   #include "driver/uart.h"   // To allow disabling UART
   // To allow printing task list - which doesnt work anyway!
   //#include "freertos/FreeRTOS.h"
@@ -108,8 +111,38 @@ void printTaskList() {
 #ifdef ESP32
   // Timers stored in seconds; uint32_t rolls over at 136 years vs 49 days for millis-based unsigned long.
   RTC_DATA_ATTR uint32_t timers[TIMER_LENGTH] = {0,0,0,0,0,0,0,0}; // Array used by entities - currently using max four (OTA, Discovery, time, Watchdog)
+#elif defined(ESP8266)
+/* ESP8266: what deep sleep does to the timers and the clock.
+ *
+ * An ESP8266 keeps nothing through deep sleep but 512 bytes of RTC user memory - RAM is gone, and
+ * the clock (micros64() plus an offset in RAM) is back at 1970. So the timers LIVE in that memory,
+ * as they do in RTC_DATA_ATTR on an ESP32: word-sized accesses to RTC_USER_MEM are the memory, no
+ * copying. What RTC_DATA_ATTR gets from the loader and this does not is zeroing on a cold boot -
+ * the words hold whatever they held - so pre_setup() clears them on any boot that is not a
+ * deep-sleep wake. The clock is written by sleep() as the time the wake is DUE and put back by
+ * pre_setup() on the wake, so sleepSafeSecs() carries on roughly where it would have on an ESP32:
+ * a few percent out per sleep (the ESP8266's RTC oscillator is not calibrated against anything),
+ * which the relative timers do not mind and NTP corrects when there is any.
+ *
+ * A soft reset (OTA, system_restart) between sleeps is not a deep-sleep wake, so it clears the
+ * timers and starts the clock over, which is what an ESP32 does on a power cycle.
+ *
+ * The user area is 128 4-byte words; this takes 10 from SYSTEM_POWER_RTC_OFFSET and the rest is
+ * the sketch's. The core itself only uses the system area below it.
+ *
+ * Waking from deep sleep at all needs D0 (GPIO16) wired to RST - the chip pulses it when the timer
+ * fires - and ESP.deepSleepMax() (about three and a half hours) is as long as the timer goes; a
+ * longer sleep is cut to that, so a longer cycle just gets a wake it did not ask for.
+ */
+  #ifndef SYSTEM_POWER_RTC_OFFSET
+    #define SYSTEM_POWER_RTC_OFFSET 96 // In words of the user area - the same units as ESP.rtcUserMemoryRead()
+  #endif
+  static_assert((SYSTEM_POWER_RTC_OFFSET + TIMER_LENGTH + 2) <= 128, "SYSTEM_POWER_RTC_OFFSET too high - the user area is 128 words");
+  static volatile uint32_t* const timers = RTC_USER_MEM + SYSTEM_POWER_RTC_OFFSET; // TIMER_LENGTH words
+  static volatile uint32_t* const wakeDueSecs = timers + TIMER_LENGTH; // Then two words of clock
+  static volatile uint32_t* const wakeDueUsecs = timers + TIMER_LENGTH + 1;
 #else
-  uint32_t timers[TIMER_LENGTH] = {0,0,0,0}; // Array used by entities
+  uint32_t timers[TIMER_LENGTH] = {0,0,0,0,0,0,0,0}; // Array used by entities
 #endif
 //TODO-23 think about roll-over of timers and routines that test against a number maybe not rolled over
 
@@ -287,6 +320,18 @@ void System_Power::checkLevel() {
  * setup(). See SYSTEM_POWER3v3_PIN in power.h.
  */
 void System_Power::pre_setup() {
+  #ifdef ESP8266 // The timers and the clock across deep sleep - see TIMER_LENGTH above
+    if (wokeFromDeepSleep()) {
+      struct timeval tv; // The clock, from the time the wake was due
+      tv.tv_sec = *wakeDueSecs;
+      tv.tv_usec = *wakeDueUsecs;
+      settimeofday(&tv, NULL);
+    } else { // The RTC words hold whatever they held - zero them, as the loader does RTC_DATA_ATTR on an ESP32
+      for (uint8_t i = 0; i < TIMER_LENGTH; i++) {
+        timers[i] = 0;
+      }
+    }
+  #endif
   if (pinsPowerUp(SYSTEM_POWER3v3_PIN, SYSTEM_POWER0_PIN)) {
     delay(SYSTEM_POWER_ON_DELAY); // Nothing may be read until this rail is up
   }
@@ -299,7 +344,6 @@ void System_Power::pre_setup() {
   #endif
 }
 void System_Power::setup() {
-#ifdef ESP32 // Specific to ESP32s
   if (wokeFromDeepSleep()) {
     // Only a deep sleep reboots - recovering from other modes doesn't run setup() at all.
     Serial.println(F("Power: Waking from deep"));
@@ -307,10 +351,13 @@ void System_Power::setup() {
     cycleStart = millis(); // not sleepSafeSecs() as by definition dont deep sleep before this
 
     recover(); 
-  } else if (mode & DelaySleepBit) { // We'll use conditions to auto enter sleep (doesnt work yet)
-    LightWifi_setup();
+  } else {
+    #ifdef ESP32 // LightWiFi is ESP32 only
+      if (mode & DelaySleepBit) { // We'll use conditions to auto enter sleep (doesnt work yet)
+        LightWifi_setup();
+      }
+    #endif
   }
-#endif
   {
     readConfigFromFS(); // Reads config (mode, wake, cycle) and passes to our dispatch
     #ifdef SYSTEM_POWER_DEBUG
@@ -339,8 +386,9 @@ void System_Power::setup() {
 
 /* Every path that sets mode comes through here.
  *
- * Only ESP32 has sleep implemented - prepare(), sleep() and recover() are all ESP32 code - so
- * anywhere else the node runs Power_Loop whatever was asked for, keeping cycle_ms as the period
+ * ESP32 has every mode. ESP8266 has deep sleep only - Power_Deep and Power_Panic - as the chip
+ * has no light sleep worth the name and nothing here pauses its WiFi. Anywhere a mode is not
+ * implemented the node runs Power_Loop whatever was asked for, keeping cycle_ms as the period
  * between readings. Forcing it here, rather than letting a sleeping mode run with a sleep() that
  * does nothing, means prepare() and recover() are not power-cycling sensors for no saving.
  */
@@ -349,9 +397,14 @@ void System_Power::setMode(System_Power_Type m) {
     recover();
     dormant = false;
   }
-  #ifndef ESP32
+  #if defined(ESP8266)
+    if ((m != Power_Loop) && !(m & DeepSleepBit)) {
+      Serial.println(F("Power: only deep sleep is implemented on ESP8266 - using Power_Loop")); // Lost if Serial not yet started
+      m = Power_Loop;
+    }
+  #elif !defined(ESP32)
     if (m != Power_Loop) {
-      Serial.println(F("Power: sleep modes are ESP32 only - using Power_Loop")); // Lost if Serial not yet started
+      Serial.println(F("Power: sleep modes are ESP32 and ESP8266 only - using Power_Loop")); // Lost if Serial not yet started
     }
     m = Power_Loop;
   #endif
@@ -492,6 +545,33 @@ void System_Power::sleep(System_Power_Type forceMode, unsigned long sleep_millis
         }
       }
     #endif
+    #ifdef ESP8266
+      if (forceMode & DeepSleepBit) { // The only sleep an ESP8266 gets - see setMode(), and TIMER_LENGTH above
+        uint64_t sleep_us = 0; // ESP.deepSleep(0) is "until RST" - Power_Panic
+        if (forceMode & WakeOnTimerBit) {
+          sleep_us = (uint64_t)sleep_millisecs * 1000ULL;
+          const uint64_t max_us = ESP.deepSleepMax();
+          if (sleep_us > max_us) {
+            Serial.print(F("Power: ESP8266 cannot sleep ")); Serial.print(sleep_millisecs);
+            Serial.print(F("ms - the most is ")); Serial.print((unsigned long)(max_us / 1000ULL)); Serial.println(F("ms"));
+            sleep_us = max_us;
+            sleep_millisecs = (unsigned long)(max_us / 1000ULL);
+          }
+          #ifdef SYSTEM_POWER_DEBUG
+            Serial.print(F("Deep sleeping for ")); Serial.println(sleep_millisecs);
+          #endif
+        }
+        { // The clock, which RAM will not keep - the time this wake is due. The timers are already in RTC memory
+          struct timeval tv;
+          gettimeofday(&tv, NULL);
+          const uint64_t due_us = ((uint64_t)tv.tv_sec * 1000000ULL + tv.tv_usec) + ((uint64_t)sleep_millisecs * 1000ULL);
+          *wakeDueSecs = (uint32_t)(due_us / 1000000ULL);
+          *wakeDueUsecs = (uint32_t)(due_us % 1000000ULL);
+        }
+        Serial.flush(); // The UART stops with the chip, cutting off whatever is still in its buffer
+        ESP.deepSleep(sleep_us); // Does not return - the chip restarts when D0 pulses RST
+      }
+    #endif
   }
 }
 
@@ -519,27 +599,27 @@ void System_Power::recover() {
         frugal_iot.oled->display.display();
       #endif
     #endif
-    #ifdef ESP32
+    #ifdef ESP32 // The only chip that pauses WiFi - see wifi.h
       // Restore comms: Power_Loop & Power_Modem do not need it; and Power_Deep does it in setup
       bool WiFiOK = true;
       if (mode & PauseWiFiBit) {
         WiFiOK = frugal_iot.wifi->recoverWiFi();
       }
-      if (WiFiOK & PauseMQTTBit) { // Note MQTT not being explicitly paused
+      if (WiFiOK && (mode & PauseMQTTBit)) { // Note MQTT not being explicitly paused. Was `WiFiOK & PauseMQTTBit` - a bool & 2, never true
         frugal_iot.mqtt->recover(); // New or old session
       }
-      if (mode & DeepSleepBit) {
-        // Memory will have been wiped by the sleep, what can we assume?
-        // Note if required - can store stuff in RTC memory or on disk, but careful about overusing (writes) flash
-        // Note this is called from setup() after deep sleep, which will also call other sensors & actuators to repeat setup()
-        // TODO-23 test and add a note here about order - what is this before/after ? 
-        #ifdef SYSTEM_POWER_DEBUG
-          Serial.println(F("Power Management: recovering from Deep Sleep"));
-        #endif
-        // TODO-23 be smarter about doneFullAdvertise, for example could have powered up, failed to get comms, then slept. 
-        frugal_iot.discovery->doneFullAdvertise = true; // Assume did this before sleep
-      }
     #endif
+    if (mode & DeepSleepBit) { // ESP32 and ESP8266
+      // Memory will have been wiped by the sleep, what can we assume?
+      // Note if required - can store stuff in RTC memory or on disk, but careful about overusing (writes) flash
+      // Note this is called from setup() after deep sleep, which will also call other sensors & actuators to repeat setup()
+      // TODO-23 test and add a note here about order - what is this before/after ? 
+      #ifdef SYSTEM_POWER_DEBUG
+        Serial.println(F("Power Management: recovering from Deep Sleep"));
+      #endif
+      // TODO-23 be smarter about doneFullAdvertise, for example could have powered up, failed to get comms, then slept. 
+      frugal_iot.discovery->doneFullAdvertise = true; // Assume did this before sleep
+    }
     // Power up sensors after sleep
     frugal_iot.sensors->recover();
     frugal_iot.actuators->recover(); // Release the pin holds and re-assert - see prepare()
@@ -717,23 +797,22 @@ void System_Power::wakeNow() {
   cycleStart = millis() - cycle_ms;
 }
 
-#ifdef ESP32
-  // sleepSafeSecs: esp_timer_get_time() resets to 0 on every deep sleep wake (deep sleep is a
-  // full chip restart, and the ESP Timer counter lives in the digital domain that loses power).
-  // gettimeofday() is anchored to the RTC domain instead, which stays powered through deep sleep,
-  // so it keeps advancing across sleep/wake cycles regardless of wake source or sleep duration.
-  uint32_t System_Power::sleepSafeSecs() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (uint32_t)tv.tv_sec;
-  }
-  // sleepSafeMillis: same RTC-backed clock as sleepSafeSecs(), not millis() (which resets to 0
-  // on deep sleep and is on a different epoch than gettimeofday() anyway).
-  // Note tv_sec * 1000 does not fit in 32 bits, so this wraps every 49 days just as millis() does -
-  // compare two readings by subtracting them, never with < or >.
-  unsigned long System_Power::sleepSafeMillis() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (unsigned long)tv.tv_sec * 1000UL + (unsigned long)(tv.tv_usec / 1000);
-  }
-#endif
+// sleepSafeSecs: esp_timer_get_time() resets to 0 on every deep sleep wake (deep sleep is a
+// full chip restart, and the ESP Timer counter lives in the digital domain that loses power).
+// gettimeofday() is anchored to the RTC domain instead, which stays powered through deep sleep,
+// so it keeps advancing across sleep/wake cycles regardless of wake source or sleep duration.
+// On ESP8266 the same clock is carried across the sleep by hand - see TIMER_LENGTH at the top.
+uint32_t System_Power::sleepSafeSecs() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (uint32_t)tv.tv_sec;
+}
+// sleepSafeMillis: same RTC-backed clock as sleepSafeSecs(), not millis() (which resets to 0
+// on deep sleep and is on a different epoch than gettimeofday() anyway).
+// Note tv_sec * 1000 does not fit in 32 bits, so this wraps every 49 days just as millis() does -
+// compare two readings by subtracting them, never with < or >.
+unsigned long System_Power::sleepSafeMillis() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (unsigned long)tv.tv_sec * 1000UL + (unsigned long)(tv.tv_usec / 1000);
+}

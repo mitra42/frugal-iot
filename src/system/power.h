@@ -129,15 +129,12 @@ class System_Power : public System_Base {
      * needs to ask. On a chip with no deep sleep it is always false.
      */
     static bool wokeFromDeepSleep();
-    #ifdef ESP32
-      // Use the RTC to track time, so safe over deep and light sleeps
-      uint32_t sleepSafeSecs();
-      unsigned long sleepSafeMillis();
-    #else
-      // ESP8266 doesnt have deep sleep so this wont reset anyway - not sure if any viable sleep on ESP8266
-      uint32_t sleepSafeSecs() { return millis() / 1000; }
-      unsigned long sleepSafeMillis() { return millis(); }
-    #endif
+    /* The clock that survives sleep - gettimeofday(), not millis(). On ESP32 that is the RTC domain,
+     * which stays powered through deep sleep. On ESP8266 nothing does, so the clock is carried
+     * across in RTC user memory by sleep() and put back by pre_setup() - see TIMER_LENGTH in power.cpp.
+     */
+    uint32_t sleepSafeSecs();
+    unsigned long sleepSafeMillis();
     System_Power();
     void configure(System_Power_Type mode_init, unsigned long cycle_ms_init, unsigned long wake_ms_init);
     unsigned long cycle_ms; // Time for each cycle (wake + sleep)
@@ -178,7 +175,7 @@ class System_Power : public System_Base {
     unsigned long wake_ms; // Time to stay awake during each cycle
     void setup() override;
     void LightWifi_setup();
-    void setMode(System_Power_Type m); // Forces Power_Loop where sleep is not implemented (not ESP32)
+    void setMode(System_Power_Type m); // Forces Power_Loop where sleep is not implemented - see power.cpp
     unsigned long sleep_ms() { return cycle_ms - wake_ms; }
     uint8_t timer_index;
     //virtual void configure(); // Typically called from setup() but might also be called if switch modes
