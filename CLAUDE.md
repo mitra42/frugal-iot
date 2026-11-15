@@ -14,8 +14,13 @@ Every example `.ino` file must work in **both**:
 
 Each example directory contains a `platform.h` file alongside the `.ino`. This file is
 **auto-generated** from the example's `platformio.ini` by running `scripts/prerelease.bash`
-(which calls `scripts/generate_platform_h.py`). It converts `-D FLAG=value` build flags into
-`#define` statements and wraps board-specific defines in `#ifdef ARDUINO_BOARD_NAME` guards.
+(which calls `scripts/generate_platform_h.py`). It holds **only what PlatformIO would pass as
+`-D`**: each `[env:]`'s `build_flags` with every `${common.x}` reference followed and `extends =`
+honoured, as `#define` lines - a commented-out `;-D` as `// #define`, so a user can switch it on -
+inside an `#if` on that board's `ARDUINO_*` macro. Flags every env shares are written once at the
+top. Nothing else from the `.ini` (`lib_deps`, `platform`, `board`, the prose) is copied in: the
+first version echoed the whole file as comments, which made a 400-line `platform.h` nobody could
+follow and leaked `build_flags_loramesher` onto every board.
 
 - **PlatformIO** reads flags directly from `platformio.ini`; `platform.h` is not used.
 - **Arduino IDE** picks `platform.h` up because `_settings.h` includes it when `PLATFORMIO` is
@@ -241,23 +246,22 @@ anything that is not `[A-Za-z0-9_]` turned into `_`:
 
 ```c
 // A board with one env - the selector is an alternative to picking the board
-// ===== [env:c3_pico] -> ARDUINO_LOLIN_C3_PICO
+// [env:c3_pico] - Tools > Board: LOLIN C3 Pico
 #if defined(ARDUINO_LOLIN_C3_PICO) || defined(C3_PICO)
 
 // A board with two - the default stands down when the other is asked for
-// S2_MINI, S2_MINI_4X are alternative [env:] settings for one board - at most one.
 #if (defined(S2_MINI) + defined(S2_MINI_4X)) > 1
-  #error "Define at most one of S2_MINI, S2_MINI_4X - ..."
+  #error "S2_MINI, S2_MINI_4X are alternative settings for one board - define at most one"
 #endif
-// ===== [env:s2_mini] -> ARDUINO_LOLIN_S2_MINI, the DEFAULT for this board
+// [env:s2_mini] - Tools > Board: LOLIN S2 Mini. The default of 2 for this board
 #if (defined(ARDUINO_LOLIN_S2_MINI) && !defined(S2_MINI_4X)) || defined(S2_MINI)
 ...
-// ----- [env:s2_mini_4x] also targets ARDUINO_LOLIN_S2_MINI
+// [env:s2_mini_4x] - Tools > Board: LOLIN S2 Mini, then -DS2_MINI_4X in a build_opt.h beside the .ino (see README.md)
 #if defined(S2_MINI_4X)
 ```
 
 Selecting a non-default env is then **one `#define`**, added at the top of the generated file
-above the first `// =====` block. It replaced a scheme where the non-default env was emitted
+above the first `// [env:` block. It replaced a scheme where the non-default env was emitted
 inside `#if 0` and choosing it meant editing two `#if` lines.
 
 Four things about the shape that are not obvious:
@@ -1947,8 +1951,10 @@ The `examples/particulates` sketch has four envs - `xiao_esp32c3-` and `nodemcu-
 `sds011` and `hm3301` - choosing the sensor by `SENSOR_SDS011_WANT` / `SENSOR_HM3301_WANT`, the
 `_sds011` ones `custom_arduino_default`. The XIAO ESP32C3 was the first board of its kind, added to
 the board tables in `generate_platform_h.py` and `arduino_compile.bash` (same macro
-`ARDUINO_XIAO_ESP32C3` both sides, no `LED_BUILTIN`). The envs are written out in full rather than
-with `extends`, which `generate_platform_h.py` does not follow.
+`ARDUINO_XIAO_ESP32C3` both sides, no `LED_BUILTIN`). The envs are written out in full; they
+could now use `extends`, which `generate_platform_h.py` and `arduino_compile.bash` follow since
+2026-11-15 (`[env:c3_pico_no_battery]` in `sht` is the case: it inherits `c3_pico`'s board, and
+its Arduino board and label with it, and comes out as a second env on the C3 Pico).
 
 ```cpp
 frugal_iot.sensors->add(new Sensor_SDS011("PM", &Serial1, SENSOR_SDS011_RX_PIN, SENSOR_SDS011_TX_PIN));

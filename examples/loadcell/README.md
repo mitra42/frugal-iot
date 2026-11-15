@@ -53,7 +53,7 @@ with nothing attached. The weight then shows nothing.
     pio run -e <env> -t upload    # build and flash
     pio run -e <env> -t uploadfs  # write data/ (wifi credentials, config)
 
-`<env>` is a name from the table below, for example `c3_pico`.
+`<env>` is a name from the table below, for example `s2_mini`.
 
 Before flashing, give the node your organization's enrolment secret: copy
 `templates/platformio-secrets-local.ini.template` from the library to
@@ -81,20 +81,18 @@ the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first
 
 | Tools > Board | configuration | also define |
 | --- | --- | --- |
-| LOLIN C3 Pico | `c3_pico` |  |
 | LOLIN S2 Mini | `s2_mini` |  |
-| NodeMCU-32S | `nodemcu-32s` |  |
+| LOLIN S2 Mini | `s2_mini_lcd` | `S2_MINI_LCD` |
+| LOLIN S2 Mini | `s2_mini_oled` | `S2_MINI_OLED` |
+| LOLIN C3 Mini | `c3_oled_72x40` |  |
+| LOLIN C3 Mini | `test1` | `TEST1` |
+| LOLIN C3 Mini | `test3` | `TEST3` |
+| LOLIN C3 Mini | `test4` | `TEST4` |
 | LOLIN(WEMOS) D1 mini Pro | `d1_mini_pro` |  |
 | LOLIN(WEMOS) D1 R2 & mini | `d1_mini` |  |
-| TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) | `ttgo-lora32-v21` |  |
-| LilyGo T3-S3 | `lilygo_t3_s3_sx127x` |  |
-| LilyGo T3-S3 | `lilygo_t3_s3_sx127x_sht` | `LILYGO_T3_S3_SX127X_SHT` |
-| Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V3` |  |
-| Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V32` | `HELTEC_WIFI_LORA_32_V32` |
-| T-Beam | `tbeam` |  |
-| T-Beam | `tbeam_oled` | `TBEAM_OLED` |
+| Heltec WiFi LoRa 32(V3) | `test2` |  |
 
-The LoRa boards - Heltec WiFi LoRa 32(V3), LilyGo T3-S3, T-Beam and TTGO LoRa32-OLED - also need LoRaMesher, which is not in the Library Manager:
+The LoRa board - Heltec WiFi LoRa 32(V3) - also needs LoRaMesher, which is not in the Library Manager:
 
 1. Download [LoRaMesher as a zip](https://github.com/loramesher/LoRaMesher/archive/refs/heads/main.zip) - leave it zipped.
 2. **Sketch > Include Library > Add .ZIP Library**, and choose that file.
@@ -107,7 +105,7 @@ has no way to ask for one - it only knows boards. So you get the row with an emp
 column unless you define that macro. It has to reach the whole build rather than just the
 sketch, because the library's own sources read these settings too:
 
-* **ESP32** - put the line `-DLILYGO_T3_S3_SX127X_SHT` in a file called `build_opt.h`,
+* **ESP32** - put the line `-DS2_MINI_LCD` in a file called `build_opt.h`,
   beside `loadcell.ino`. Despite the `.h`, that file holds **compiler flags, not
   C**: a `#define` in it stops the build with *no such file or directory*. The
   core copies it into the build and passes it to every source file.

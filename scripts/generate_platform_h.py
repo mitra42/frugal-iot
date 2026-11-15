@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 """
-Convert platformio.ini to platform.h for Arduino C++
+Convert platformio.ini to platform.h (and the ESP8266 <sketch>.ino.globals.h) for the Arduino IDE.
+
+What comes out is only what PlatformIO would pass as -D: each [env:] block's build_flags, with
+every ${common.x} / ${env.x} / ${this.x} reference followed the way PlatformIO follows it and
+`extends =` honoured, turned into #define lines - live ones as they are, commented-out ones as
+"// #define" so a user can switch them on. Nothing else in the .ini (lib_deps, platform, board,
+monitor_speed, the prose) reaches the output: a user of the Arduino IDE cannot act on it and it was
+most of a 400-line file. Flags every env shares are written once, at the top, so a board's own
+block holds only what makes it different.
 """
 
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional
 
 class PlatformIOConverter:
     def __init__(self, input_file: str):
@@ -102,171 +110,143 @@ class PlatformIOConverter:
             "sonoff_basic": "(no matching Arduino board)",
         }
 
+    # ---------------------------------------------------------------- reading platformio.ini
+
     def read_file(self):
-        """Read the platformio.ini file"""
+        """Read and parse platformio.ini into self.sections: section -> key -> value lines.
+
+        A value is the text after the = (or :) on the key's own line followed by every indented
+        line under it, kept RAW - including indented ";" comment lines, which is where the
+        commented-out -D flags live. A ";" line at the left margin is a comment and is dropped.
+        """
         with open(self.input_file, 'r') as f:
             self.lines = f.readlines()
-
-    def convert_comment(self, line: str) -> str:
-        """Convert ; comments to // but preserve other content"""
-        result = []
-        i = 0
-        in_double_quotes = False
-        in_single_quotes = False
-        
-        while i < len(line):
-            char = line[i]
-            
-            # Track quote state
-            if char == '"' and (i == 0 or line[i-1] != '\\'):
-                in_double_quotes = not in_double_quotes
-                result.append(char)
-            elif char == "'" and (i == 0 or line[i-1] != '\\'):
-                in_single_quotes = not in_single_quotes
-                result.append(char)
-            elif char == ';' and not in_double_quotes and not in_single_quotes:
-                # Found a comment marker
-                result.append('//')
-                result.append(line[i+1:])
-                break
+        self.sections: Dict[str, Dict[str, List[str]]] = {}
+        self.section_order: List[str] = []
+        section = None
+        key = None
+        for line in self.lines:
+            stripped = line.rstrip('\n')
+            bare = stripped.strip()
+            if not bare:
+                continue
+            if bare.startswith('[') and not stripped[0].isspace():
+                section = self.strip_trailing_comment(bare).strip()[1:-1].strip()
+                if section not in self.sections:
+                    self.sections[section] = {}
+                    self.section_order.append(section)
+                key = None
+            elif stripped[0].isspace():
+                if section is not None and key is not None:
+                    self.sections[section][key].append(bare)
+            elif bare.startswith(';') or bare.startswith('#'):
+                continue
             else:
-                result.append(char)
-            i += 1
-        
-        return ''.join(result)
+                m = re.match(r'([A-Za-z_][\w.\-]*)\s*[=:]\s*(.*)$', bare)
+                if m and section is not None:
+                    key = m.group(1)
+                    self.sections[section][key] = [m.group(2)] if m.group(2).strip() else []
 
     def strip_trailing_comment(self, text: str) -> str:
         """Return text up to (not including) the first ';' comment marker outside quotes"""
-        in_double_quotes = False
-        in_single_quotes = False
+        return self.split_comment(text)[0]
+
+    def split_comment(self, text: str) -> Tuple[str, str]:
+        """(text, comment) at the first ';' outside quotes - comment without the ';', stripped."""
+        quote = None
         for i, char in enumerate(text):
-            if char == '"' and (i == 0 or text[i-1] != '\\'):
-                in_double_quotes = not in_double_quotes
-            elif char == "'" and (i == 0 or text[i-1] != '\\'):
-                in_single_quotes = not in_single_quotes
-            elif char == ';' and not in_double_quotes and not in_single_quotes:
-                return text[:i]
-        return text
+            if quote:
+                if char == quote:
+                    quote = None
+            elif char in ('"', "'"):
+                quote = char
+            elif char == ';':
+                return text[:i], text[i + 1:].strip()
+        return text, ""
 
-    def extract_define(self, line_content: str) -> Optional[str]:
-        """Extract and convert a single -D flag from line content"""
-        # Remove leading/trailing whitespace and quotes
-        content = line_content.strip()
-        # Drop any inline "; comment" - it's converted separately - so it doesn't end up in the value
-        content = self.strip_trailing_comment(content).strip()
+    def env_lookup(self, env_name: str, key: str, seen=()) -> Optional[List[str]]:
+        """An [env:x] key as PlatformIO resolves it: the env's own, else the env it extends, else
+        the [env] base section. None when nowhere."""
+        section = self.sections.get(f"env:{env_name}", {})
+        if key in section:
+            return section[key]
+        ext = section.get('extends')
+        if ext and env_name not in seen:
+            for parent in self.strip_trailing_comment(" ".join(ext)).replace(",", " ").split():
+                if parent.startswith('env:'):
+                    found = self.env_lookup(parent[4:], key, seen + (env_name,))
+                    if found is not None:
+                        return found
+        return self.sections.get('env', {}).get(key)
 
-        # Strip outer single quotes if present
-        if content.startswith("'") and content.endswith("'"):
-            content = content[1:-1]
-        
-        # Look for -D pattern
-        match = re.search(r"-D\s+([A-Za-z_][A-Za-z0-9_]*)(?:=(.+))?", content)
-        
-        if match:
-            name = match.group(1)
-            value = match.group(2)
-            
-            if value:
-                value = value.strip()
-                # Remove trailing quotes or other junk
-                if value.endswith("'"):
-                    value = value[:-1]
-                
-                # Check if it's a number (including floats with F suffix)
-                if re.match(r'^[\d.]+[FfLl]?$', value):
-                    return f"#define {name} {value}"
-                else:
-                    # It's a string, keep quotes
-                    return f"#define {name} {value}"
+    def env_value(self, env_name: str, key: str) -> str:
+        """A single-line env setting (board, platform) with its comment removed."""
+        lines = self.env_lookup(env_name, key)
+        return self.strip_trailing_comment(" ".join(lines)).strip() if lines else ""
+
+    # ---------------------------------------------------------------- the flags
+
+    def flags_of(self, section: str, key: str, env_name: Optional[str], seen=()) -> List["Flag"]:
+        """Every -D in a value, live or commented out, with ${...} references followed.
+
+        A commented line counts only when the comment IS a flag - starts with -D, possibly
+        quoted - so prose that happens to mention -D is not mistaken for one. A live line that
+        is not a -D (-fno-exceptions, -Wl,...) has no #define form and is dropped.
+        """
+        if section.startswith('env:'):
+            lines = self.env_lookup(section[4:], key)
+        else:
+            lines = self.sections.get(section, {}).get(key)
+        out: List[Flag] = []
+        for raw in lines or []:
+            text = raw.strip()
+            commented = text.startswith(';')
+            if commented:
+                text = text[1:].strip()
+            text, comment = self.split_comment(text)
+            text = text.strip()
+            ref = re.fullmatch(r'\$\{([\w.\-]+)\.([\w.\-]+)\}', text)
+            if ref:
+                if not commented:
+                    target = {'env': section, 'this': section}.get(ref.group(1), ref.group(1))
+                    if (target, ref.group(2)) not in seen and target != 'sysenv':
+                        out.extend(self.flags_of(target, ref.group(2), env_name,
+                                                 seen + ((target, ref.group(2)),)))
             else:
-                return f"#define {name}"
-        
-        return None
+                if len(text) >= 2 and text[0] in ('"', "'") and text[-1] == text[0]:
+                    text = text[1:-1].strip()
+                if text.startswith('-D'):
+                    out.extend(Flag.parse(text, comment, commented))
+        return out
 
-    def ensure_newline(self, line: str) -> str:
-        """Ensure line ends with newline"""
-        if line and not line.endswith('\n'):
-            return line + '\n'
-        return line
+    def env_flags(self, env_name: str) -> List["Flag"]:
+        """The env's build_flags as #defines, first occurrence of each kept."""
+        flags = []
+        keys = set()
+        for flag in self.flags_of(f"env:{env_name}", 'build_flags', env_name):
+            if flag.key not in keys:
+                keys.add(flag.key)
+                flags.append(flag)
+        return flags
 
-    def extract_trailing_comment(self, line: str) -> str:
-        """Return the //-converted trailing "; comment" on a -D line, if any"""
-        match = re.search(r'[;](.+)$', line)
-        if match:
-            return self.convert_comment(";" + match.group(1))
-        return ""
+    # ---------------------------------------------------------------- boards and envs
 
-    def process_single_line(self, line: str) -> str:
-        """Process a single line from the file"""
-        stripped = line.lstrip()
-
-        # Empty lines stay empty
-        if not stripped:
-            return line
-
-        # Section headers - comment them out
-        if stripped.startswith('[') and stripped.endswith(']\n'):
-            return f"// {line}"
-        if stripped.startswith('[') and stripped.endswith(']'):
-            return f"// {line}\n"
-
-        # Lines that are already comments (start with ;)
-        if stripped.startswith(';'):
-            # Drop just the leading ; marker - keep the rest raw so a -D flag's OWN trailing
-            # "; comment" (if any) is still found by extract_define/extract_trailing_comment,
-            # rather than being consumed as part of converting this leading marker.
-            marker_index = line.index(';')
-            rest = line[:marker_index] + line[marker_index + 1:]
-            define = self.extract_define(rest)
-            if define:
-                # It's a commented-out define - output it as a comment, plus its own comment if any
-                result = f"// {define}"
-                trailing_comment = self.extract_trailing_comment(rest)
-                if trailing_comment:
-                    result += " " + trailing_comment
-                return self.ensure_newline(result)
-            line = self.convert_comment(line)
-            return self.ensure_newline(line)
-
-        # Lines with -D flags (not commented)
-        if '-D' in line:
-            define = self.extract_define(line)
-            if define:
-                result = define
-                trailing_comment = self.extract_trailing_comment(line)
-                if trailing_comment:
-                    result += " " + trailing_comment
-                return self.ensure_newline(result)
-            # If we couldn't extract a define, fall through to comment it
-            line = self.convert_comment(line)
-            return f"// {self.ensure_newline(line)}"
-        
-        # Lines with ${...} variable references - comment them out
-        if '${' in line:
-            return f"// {self.ensure_newline(line)}"
-        
-        # Lines with = that are config lines - comment them out
-        if '=' in stripped and not stripped.startswith('//'):
-            return f"// {self.ensure_newline(line)}"
-        
-        # Lines that are already comments
-        if stripped.startswith('//'):
-            return self.ensure_newline(line)
-        
-        # Indented continuation lines (like library deps) - comment them out
-        if line.startswith(' ') or line.startswith('\t'):
-            if not stripped.startswith('//'):
-                return f"// {self.ensure_newline(line)}"
-            return self.ensure_newline(line)
-        
-        # Other non-section lines - comment them out
-        if stripped and not stripped.startswith('['):
-            return f"// {self.ensure_newline(line)}"
-        
-        return self.ensure_newline(line)
+    def env_alias(self, env_name: Optional[str], table: dict) -> Optional[str]:
+        """The env to look up in an env-keyed table: itself, or the nearest env it extends that
+        the table names. [env:c3_pico_no_battery] extends [env:c3_pico], whose Arduino board is
+        not its PlatformIO one, and inherits that along with everything else."""
+        seen = ()
+        while env_name and env_name not in table and env_name not in seen:
+            seen += (env_name,)
+            ext = getattr(self, 'sections', {}).get(f"env:{env_name}", {}).get('extends')
+            parents = [p[4:] for p in self.strip_trailing_comment(" ".join(ext)).replace(",", " ").split()
+                       if p.startswith('env:')] if ext else []
+            env_name = parents[0] if parents else None
+        return env_name
 
     def get_board_define(self, board_name: str, env_name: Optional[str] = None) -> str:
         """Determine the #ifdef value for an env, preferring an env-specific override"""
+        env_name = self.env_alias(env_name, self.env_defines)
         if env_name and env_name in self.env_defines:
             return self.env_defines[env_name]
         if board_name in self.board_defines:
@@ -281,6 +261,7 @@ class PlatformIOConverter:
         Falls back to the platformio.ini board name, which is at least recognisable, rather than
         inventing a label that would not be found in the menu.
         """
+        env_name = self.env_alias(env_name, self.env_names)
         if env_name and env_name in self.env_names:
             return self.env_names[env_name]
         if board_name in self.board_names:
@@ -292,67 +273,60 @@ class PlatformIOConverter:
 
         Several envs can share one board, and the Arduino IDE has no concept of an environment,
         so the only way to ask for a non-default one is to name it. The name is the env name
-        uppercased - define it at the TOP of this generated file (above the first block) and
-        that env's settings apply instead of the board's default.
-
-        It has to be at the top of the generated file rather than in the sketch: this file is
-        pulled in by _settings.h for EVERY translation unit, the library's own .cpp files
-        included, and a #define in the .ino would only reach the sketch's one - leaving the rest
-        of the library built against different settings.
+        uppercased. It has to reach every translation unit, so it cannot be a #define in the
+        sketch: on ESP32 it goes in build_opt.h beside the .ino (as -DNAME), on ESP8266 at the
+        top of <sketch>.ino.globals.h.
         """
         return re.sub(r'[^A-Za-z0-9_]', '_', env_name).upper()
 
-    def how_to_define(self, selector: str, family: Optional[str]) -> List[str]:
-        """The ways an Arduino IDE user can get one -D in front of every translation unit.
-
-        Both cores have a mechanism for it and they are not the same one, so say only the one
-        that applies to the file being written - the other is noise to whoever is reading it.
-
-        The last option works on either and is listed last because regenerating this file throws
-        it away; it is the quick try, not the way to keep a board configured.
-        """
-        lines = []
-        if family != "espressif8266":
-            # esp32 platform.txt: recipe.hooks.prebuild.5 copies build_opt.h from the sketch
-            # folder into the build, and every compile recipe passes it as "@{build.opt.path}".
-            # It is a gcc response file despite the .h - COMPILER FLAGS, not C. A #define in it
-            # is taken as two filenames and the build stops with "no such file or directory".
-            # Being a separate file, it is the only one of these that regenerating does not undo.
-            lines.append(f'put the flag -D{selector} (not a #define) in a file called build_opt.h')
-            lines.append(f'  beside the .ino - it survives this file being regenerated - or')
-        lines.append(f'#define {selector} at the TOP of this file, which regenerating discards.')
-        return lines
+    def process_env_sections(self) -> List[Tuple[str, Dict[str, List[str]]]]:
+        """Every [env:xxx] section in file order, and the two per-env facts the header needs:
+        self.env_platforms (which chip) and self.env_arduino_default (custom_arduino_default)."""
+        if not hasattr(self, 'sections'):
+            self.read_file()
+        sections = []
+        self.env_platforms = {}  # env name -> 'espressif8266' | 'espressif32'
+        self.env_arduino_default = set()  # envs marked custom_arduino_default
+        for name in self.section_order:
+            if name.startswith('env:'):
+                env_name = name[4:]
+                sections.append((env_name, self.sections[name]))
+                platform = self.env_value(env_name, 'platform')
+                ref = re.fullmatch(r'\$\{([\w.\-]+)\.([\w.\-]+)\}', platform)
+                if ref:
+                    platform = self.strip_trailing_comment(
+                        " ".join(self.sections.get(ref.group(1), {}).get(ref.group(2), [])))
+                self.env_platforms[env_name] = (
+                    'espressif8266' if 'espressif8266' in platform else 'espressif32')
+                # PlatformIO ignores options prefixed custom_ silently; a plain "arduino_default"
+                # would print "Warning! Ignore unknown configuration option" on every build.
+                if re.match(r'(true|yes|1|on)\b', self.env_value(env_name, 'custom_arduino_default'), re.I):
+                    self.env_arduino_default.add(env_name)
+        return sections
 
     def group_envs(self, env_sections, family: Optional[str] = None):
         """Group [env:] sections by the board macro they will be guarded with.
 
         Returns [(board_define, active, others)], where each member is
-        (env_name, converted_lines, board_name) and `active` is the env that gets the board to
-        itself - the one marked custom_arduino_default, or the first in the file.
+        (env_name, flags, board_name) and `active` is the env that gets the board to itself -
+        the one marked custom_arduino_default, or the first in the file.
 
         Both platform.h and the example README are built from this, so that the README cannot
         end up naming a different env as the default than the header actually compiles.
         """
         groups = []
         index_of = {}
-        for env_name, section_lines in env_sections:
+        for env_name, _section in env_sections:
             if family and self.env_platforms.get(env_name, 'espressif32') != family:
                 continue
-            board_name = None
-            for line in section_lines:
-                stripped = line.strip()
-                if stripped.startswith('board') and '=' in stripped:
-                    match = re.search(r'board\s*=\s*(.+?)(?:\s*;|$)', stripped)
-                    if match:
-                        board_name = match.group(1).strip()
+            board_name = self.env_value(env_name, 'board')
             if not board_name:
                 continue
             board_define = self.get_board_define(board_name, env_name)
-            converted_lines = [self.process_single_line(l) for l in section_lines]
             if board_define not in index_of:
                 index_of[board_define] = len(groups)
                 groups.append((board_define, []))
-            groups[index_of[board_define]][1].append((env_name, converted_lines, board_name))
+            groups[index_of[board_define]][1].append((env_name, self.env_flags(env_name), board_name))
 
         out = []
         for board_define, members in groups:
@@ -368,98 +342,16 @@ class PlatformIOConverter:
     def project_meta(self) -> Tuple[str, str]:
         """The [platformio] name/description, which every example's ini carries.
 
-        Written with a colon rather than an = in these files; PlatformIO accepts both, so read
-        both rather than silently returning nothing for one of them.
+        Written with a colon rather than an = in these files; PlatformIO accepts both.
         """
-        name = description = ""
-        in_section = False
-        for line in self.lines:
-            stripped = line.strip()
-            if stripped.startswith('['):
-                in_section = stripped == '[platformio]'
-                continue
-            if in_section:
-                m = re.match(r'(name|description)\s*[:=]\s*(.+?)\s*$', stripped)
-                if m:
-                    value = self.strip_trailing_comment(m.group(2)).strip()
-                    if m.group(1) == 'name':
-                        name = value
-                    else:
-                        description = value
+        if not hasattr(self, 'sections'):
+            self.read_file()
+        meta = self.sections.get('platformio', {})
+        name = self.strip_trailing_comment(" ".join(meta.get('name', []))).strip()
+        description = self.strip_trailing_comment(" ".join(meta.get('description', []))).strip()
         return name, description
 
-    def process_nonenv_content(self) -> List[str]:
-        """Extract and process non-[env:xxx] content"""
-        output = []
-        in_env_section = False
-        
-        for i, line in enumerate(self.lines):
-            stripped = line.strip()
-            
-            # Check if we're entering an env section
-            if stripped.startswith('[env:'):
-                in_env_section = True
-                continue
-            
-            # Check if we're entering a non-env section
-            if stripped.startswith('[') and not stripped.startswith('[env:'):
-                in_env_section = False
-                # Process this non-env section header
-                output.append(self.process_single_line(line))
-                continue
-            
-            # Skip content inside env sections
-            if in_env_section:
-                continue
-            
-            # Process the line (non-env content)
-            output.append(self.process_single_line(line))
-        
-        return output
-
-    def process_env_sections(self) -> List[Tuple[str, List[str], Optional[str]]]:
-        """Extract all [env:xxx] sections with their content"""
-        sections = []
-        current_env = None
-        current_content = []
-        self.env_platforms = {}  # env name -> 'espressif8266' | 'espressif32' | ''
-        self.env_arduino_default = set()  # envs marked custom_arduino_default
-
-        for line in self.lines:
-            stripped = line.strip()
-
-            # PlatformIO ignores options prefixed custom_ silently; a plain "arduino_default"
-            # would print "Warning! Ignore unknown configuration option" on every single build.
-            if current_env is not None and re.match(r'\s*custom_arduino_default\s*=', line):
-                if re.search(r'=\s*(true|yes|1|on)\b', line, re.I):
-                    self.env_arduino_default.add(current_env)
-
-            if current_env is not None and re.match(r'\s*platform\s*=', line):
-                self.env_platforms[current_env] = (
-                    'espressif8266' if 'espressif8266' in line else 'espressif32')
-
-            if stripped.startswith('[env:'):
-                # New env section
-                if current_env is not None:
-                    sections.append((current_env, current_content))
-                    current_content = []
-                hdr = re.sub(r'\s*;.*$', '', stripped).strip()
-                current_env = hdr[5:-1]  # Extract name from [env:name]
-            elif current_env is not None:
-                if stripped.startswith('['):
-                    # End of current env section (new section started)
-                    sections.append((current_env, current_content))
-                    current_env = None
-                    current_content = []
-                else:
-                    # Still in current env section
-                    current_content.append(line)
-        
-        # Don't forget the last section
-        if current_env is not None:
-            sections.append((current_env, current_content))
-        
-        return sections
+    # ---------------------------------------------------------------- writing the header
 
     def convert(self, family: Optional[str] = None, guard: str = "PLATFORM_H",
                 output_name: str = "platform.h", marker: Optional[str] = None) -> str:
@@ -474,132 +366,109 @@ class PlatformIOConverter:
                 ESP8266 file, which the user has to put in place by hand; see main().
         """
         self.read_file()
+        env_sections = self.process_env_sections()
+        groups = self.group_envs(env_sections, family)
+        members = [m for _bd, active, others in groups for m in [active] + others]
 
         self.env_blocks_emitted = 0
         self.guards_used = []
         self.names_used = []
         self.selectors_used = {}   # selector macro -> env that owns it, to catch collisions
-        output = []
+        is8266 = (family == "espressif8266")
+        out = []
 
-        # Header
-        output.append("// Autogenerated by generate_platform_h.py and not yet checked by a human\n")
-        output.append("\n")
-        output.append("/*\n")
-        output.append("  This file is auto converted. And possibly manually edited, from platformio.ini so that it can be included by those using Arduino.ini\n")
-        output.append("*/\n")
-        output.append("\n")
-        output.append(f"#ifndef {guard}\n#define {guard}\n\n")
-
+        # Header. Short: whoever opens this has a board to configure, not a file to read.
+        out.append(f"// {output_name} - this example's settings from platformio.ini, for the Arduino IDE.\n")
+        out.append("// Generated by scripts/generate_platform_h.py: change platformio.ini and re-run it, do not edit here.\n")
+        out.append("// PlatformIO reads platformio.ini itself and ignores this file.\n")
+        out.append('// A "// #define" is an option that is off - remove the "// " to turn it on.\n')
+        out.append(f"#ifndef {guard}\n#define {guard}\n\n")
         if marker:
-            output.append("// Tells the library this file made it into the build. Deliberately outside\n")
-            output.append("// every #ifdef below: it says \"the file is here\", not \"your board is covered\",\n")
-            output.append("// which is a separate failure with its own #error at the end.\n")
-            output.append(f"#define {marker}\n\n")
+            out.append(f"#define {marker} // Tells the library this file reached the build - leave it in\n\n")
 
-        # Process non-env content
-        nonenv_output = self.process_nonenv_content()
-        output.extend(nonenv_output)
-        output.append("\n")
-        
-        # Process env sections
-        env_sections = self.process_env_sections()
-        
-        # The Arduino IDE has no concept of an environment, so only ONE env per board can be
-        # active. Group by the guard macro; the env marked custom_arduino_default (or the first
-        # one if none is marked) is the board's default, and every env in the group also gets a
-        # selector macro named after it so a non-default one can be chosen with a single #define.
-        for board_define, active, others in self.group_envs(env_sections, family):
-            members = [active] + others
+        # What every board has in common goes once, at the top; a board's block holds the rest.
+        common: List[Flag] = []
+        if members:
+            keys_in_all = set.intersection(*(set(f.key for f in m[1]) for m in members))
+            common = [f for f in members[0][1] if f.key in keys_in_all]
+        common_keys = set(f.key for f in common)
+        if common:
+            out.append("// Every board\n" if len(members) > 1 else "")
+            out.extend(f.render() + "\n" for f in common)
+            out.append("\n")
 
-            # One selector macro per env, so a non-default env is one #define away rather than an
-            # edit to the #if of two separate blocks. EVERY env gets one, including a board with
-            # only one - otherwise the name a user had defined would stop working the day a
-            # second env for that board is added or removed, which is a silent change of
-            # behaviour rather than a build error.
-            #
+        for board_define, active, others in groups:
+            group = [active] + others
+            # One selector macro per env, so a non-default env is one #define away. EVERY env
+            # gets one, including a board with only one - otherwise the name a user had defined
+            # would stop working the day a second env for that board is added or removed.
             # Where there are siblings, the default's guard also has to stand down for each of
             # them: the board macro comes from Tools > Board and stays defined whichever env is
-            # wanted, so without the !defined()s both blocks would fire and redefine everything
-            # the two envs have in common.
-            selector_of = {m[0]: self.get_env_selector(m[0]) for m in members}
+            # wanted, so without the !defined()s both blocks would fire.
+            selector_of = {m[0]: self.get_env_selector(m[0]) for m in group}
             for env_name, selector in selector_of.items():
                 if selector in self.selectors_used and self.selectors_used[selector] != env_name:
                     print(f"! selector {selector} is shared by [env:{self.selectors_used[selector]}] "
                           f"and [env:{env_name}] - rename one of the envs")
                 self.selectors_used[selector] = env_name
+            label = self.get_board_name(active[2], active[0])
 
             if others:
-                # Defining two of a board's selectors would fire two blocks at once. Where the
-                # envs share a setting that is a macro-redefinition WARNING, and where they do
-                # not it is silent - so say it outright. defined() is 1 or 0 in an #if
-                # expression, so summing them counts how many were asked for.
-                all_selectors = [selector_of[m[0]] for m in members]
+                # Defining two of a board's selectors would fire two blocks at once. defined() is
+                # 1 or 0 in an #if expression, so summing them counts how many were asked for.
+                all_selectors = [selector_of[m[0]] for m in group]
                 joined = ", ".join(all_selectors)
                 total = " + ".join(f"defined({sel})" for sel in all_selectors)
-                output.append(f"// {joined} are alternative [env:] settings for one board - at most one.\n")
-                output.append(f"#if ({total}) > 1\n")
-                output.append(f'  #error "Define at most one of {joined} - they are alternative '
-                              f'settings for the same board, and defining two applies both."\n')
-                output.append("#endif\n")
-
-                output.append(f"// ===== [env:{active[0]}] -> {board_define}, the DEFAULT for this board\n")
+                out.append(f"#if ({total}) > 1\n")
+                out.append(f'  #error "{joined} are alternative settings for one board - define at most one"\n')
+                out.append("#endif\n")
+                out.append(f"// [env:{active[0]}] - Tools > Board: {label}. The default of {len(group)} for this board\n")
                 stand_down = "".join(f" && !defined({selector_of[m[0]]})" for m in others)
-                output.append(f"#if (defined({board_define}){stand_down}) || defined({selector_of[active[0]]})\n")
+                out.append(f"#if (defined({board_define}){stand_down}) || defined({selector_of[active[0]]})\n")
             else:
-                output.append(f"// ===== [env:{active[0]}] -> {board_define}\n")
-                output.append(f"#if defined({board_define}) || defined({selector_of[active[0]]})\n")
-            # Marker for the catch-all at the end of the file. Namespaced because on ESP8266
-            # this file is force-included into EVERY translation unit, the core's own
-            # sources included, so a name like BOARD_FOUND could collide.
-            output.append("#define FRUGAL_IOT_BOARD_CONFIGURED\n")
-            output.extend(active[1])
-            output.append(f"#endif // {board_define}\n")
-            output.append("\n")
+                out.append(f"// [env:{active[0]}] - Tools > Board: {label}\n")
+                out.append(f"#if defined({board_define}) || defined({selector_of[active[0]]})\n")
+            self.emit_env_body(out, active[1], common_keys)
+            out.append(f"#endif // {board_define}\n\n")
             self.env_blocks_emitted += 1
             if board_define not in self.guards_used:
                 self.guards_used.append(board_define)
-                self.names_used.append(self.get_board_name(active[2], active[0]))
+                self.names_used.append(label)
 
-            for env_name, converted_lines, _board_name in others:
+            for env_name, flags, _board_name in others:
                 selector = selector_of[env_name]
-                output.append(f"// ----- [env:{env_name}] also targets {board_define}\n")
-                output.append(f"// Only one env per board can be active in the Arduino IDE, and [env:{active[0]}]\n")
-                output.append(f"// is the default. To use this one instead, define {selector} for the WHOLE\n")
-                output.append(f"// build - it has to reach the library's sources too, so a #define in the .ino\n")
-                how = self.how_to_define(selector, family)
-                # "Either:" reads as a broken sentence when the core offers only the one route
-                output.append(f"// is not enough. Either:\n" if len(how) > 1 else f"// is not enough:\n")
-                for line in how:
-                    output.append(f"//   {line}\n")
-                output.append(f"// To make it the default instead, and so need no define at all, set\n")
-                output.append(f"//   custom_arduino_default = yes\n")
-                output.append(f"// on [env:{env_name}] in platformio.ini (and remove it from any other env for\n")
-                output.append(f"// this board), then re-run scripts/generate_platform_h.py.\n")
-                output.append(f"#if defined({selector})\n")
-                output.append("#define FRUGAL_IOT_BOARD_CONFIGURED\n")
-                output.extend(converted_lines)
-                output.append(f"#endif // {selector}\n")
-                output.append("\n")
+                # The define has to reach the library's sources too, so not the .ino. Each core
+                # has one place for that, and only the one that applies is named.
+                where = (f"#define {selector} at the top of this file" if is8266 else
+                         f"-D{selector} in a build_opt.h beside the .ino")
+                out.append(f"// [env:{env_name}] - Tools > Board: {label}, then {where} (see README.md)\n")
+                out.append(f"#if defined({selector})\n")
+                self.emit_env_body(out, flags, common_keys)
+                out.append(f"#endif // {selector}\n\n")
 
         # Catch-all: if none of the blocks above matched, the selected board has no settings in
         # this file and the sketch would otherwise compile with library defaults only - a build
         # that looks fine and is not what anyone intended. Fail loudly instead.
         if self.guards_used:
             # Board menu labels, not the ARDUINO_* macros - whoever reads this error is sitting in
-            # front of Tools > Board and needs to know what to pick there. The macros are still on
-            # every #ifdef above for anyone debugging the file itself.
-            # Separated by ' / ' and NOT quoted: the whole message is one C string literal, so an
-            # inner " would end it early and the file would not even parse.
+            # front of Tools > Board and needs to know what to pick there. Separated by ' / ' and
+            # NOT quoted: the message is one C string literal, so an inner " would end it early.
             supported = " / ".join(self.names_used)
-            output.append("#ifndef FRUGAL_IOT_BOARD_CONFIGURED\n")
-            output.append(f'  #error "This board has no settings in {output_name}. Under Tools > Board, '
-                          f'select one of the boards this example supports, or add a section for yours to its '
-                          f'platformio.ini and re-run scripts/generate_platform_h.py. Supported here: '
-                          f'{supported}"\n')
-            output.append("#endif\n\n")
+            out.append("#ifndef FRUGAL_IOT_BOARD_CONFIGURED\n")
+            out.append(f'  #error "This board has no settings in {output_name}. Under Tools > Board, '
+                       f'select one of the boards this example supports, or add a section for yours to its '
+                       f'platformio.ini and re-run scripts/generate_platform_h.py. Supported here: '
+                       f'{supported}"\n')
+            out.append("#endif\n\n")
 
-        output.append(f"#endif // {guard}\n")
-        return ''.join(output)
+        out.append(f"#endif // {guard}\n")
+        return ''.join(out)
+
+    def emit_env_body(self, out: List[str], flags: List["Flag"], common_keys: set):
+        # Marker for the catch-all at the end of the file. Namespaced because on ESP8266 this
+        # file is force-included into EVERY translation unit, the core's own sources included.
+        out.append("  #define FRUGAL_IOT_BOARD_CONFIGURED\n")
+        out.extend("  " + f.render() + "\n" for f in flags if f.key not in common_keys)
 
     def write_output(self, output_file: str, family: Optional[str] = None,
                      guard: str = "PLATFORM_H", skip_if_no_envs: bool = False,
@@ -620,6 +489,51 @@ class PlatformIOConverter:
         with open(output_file, 'w') as f:
             f.write(content)
         print(f"✓ Converted to {output_file}")
+
+
+class Flag:
+    """One -D from a build_flags value, as a #define line. `commented` is a flag the .ini has
+    switched off with a leading ; - it comes out as "// #define" so a user can switch it on."""
+
+    def __init__(self, name: str, value: Optional[str], comment: str, commented: bool):
+        self.name = name
+        self.value = value
+        self.comment = comment
+        self.commented = commented
+
+    @property
+    def key(self):
+        return (self.name, self.value, self.commented)
+
+    def render(self) -> str:
+        text = f"#define {self.name}" + (f" {self.value}" if self.value else "")
+        if self.commented:
+            text = "// " + text
+        if self.comment:
+            text += " // " + self.comment
+        return text
+
+    @staticmethod
+    def parse(text: str, comment: str, commented: bool) -> List["Flag"]:
+        """Every -D in one line - "-D A -D B=2" is two - split at a -D outside quotes."""
+        starts = []
+        quote = None
+        for i, char in enumerate(text):
+            if quote:
+                if char == quote:
+                    quote = None
+            elif char in ('"', "'"):
+                quote = char
+            elif text.startswith('-D', i) and (i == 0 or text[i - 1].isspace()):
+                starts.append(i)
+        flags = []
+        for n, start in enumerate(starts):
+            end = starts[n + 1] if n + 1 < len(starts) else len(text)
+            m = re.match(r'-D\s*([A-Za-z_]\w*)(?:=(.*))?$', text[start:end].strip())
+            if m:
+                value = (m.group(2) or "").strip()
+                flags.append(Flag(m.group(1), value or None, comment if n == len(starts) - 1 else "", commented))
+        return flags
 
 ESP8266_DIR = "esp8266"
 

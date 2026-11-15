@@ -127,12 +127,27 @@ fqbn_for_board() {
 
 # Ask generate_platform_h.py itself which macro it guards this env with, rather than keeping a
 # duplicate table here that could drift out of step with it.
-guard_for_env() { # $1 = board  $2 = env
+guard_for_env() { # $1 = board  $2 = env  $3 = platformio.ini (so an env built with extends is seen as its parent)
+  python3 - "$SCRIPTS_DIR" "$1" "$2" "$3" <<'PYEOF'
+import sys
+sys.path.insert(0, sys.argv[1])
+from generate_platform_h import PlatformIOConverter
+conv = PlatformIOConverter(sys.argv[4])
+conv.read_file()
+print(conv.get_board_define(sys.argv[2], sys.argv[3]))
+PYEOF
+}
+
+# The env whose name the tables above and fqbn_for_env know: the env itself, or the one it
+# extends - [env:c3_pico_no_battery] is a C3 Pico because [env:c3_pico] is.
+defining_env() { # $1 = platformio.ini  $2 = env
   python3 - "$SCRIPTS_DIR" "$1" "$2" <<'PYEOF'
 import sys
 sys.path.insert(0, sys.argv[1])
 from generate_platform_h import PlatformIOConverter
-print(PlatformIOConverter("").get_board_define(sys.argv[2], sys.argv[3]))
+conv = PlatformIOConverter(sys.argv[2])
+conv.read_file()
+print(conv.env_alias(sys.argv[3], conv.env_defines) or sys.argv[3])
 PYEOF
 }
 
@@ -152,12 +167,14 @@ PYEOF
 # Same idea for the Tools > Board label, which is what the "no board configured" #error tells the
 # user to go and select. A stale label there sends someone hunting a menu entry that does not
 # exist, so check it against the core rather than trusting the table.
-boardname_for_env() { # $1 = board  $2 = env
-  python3 - "$SCRIPTS_DIR" "$1" "$2" <<'PYEOF'
+boardname_for_env() { # $1 = board  $2 = env  $3 = platformio.ini
+  python3 - "$SCRIPTS_DIR" "$1" "$2" "$3" <<'PYEOF'
 import sys
 sys.path.insert(0, sys.argv[1])
 from generate_platform_h import PlatformIOConverter
-print(PlatformIOConverter("").get_board_name(sys.argv[2], sys.argv[3]))
+conv = PlatformIOConverter(sys.argv[4])
+conv.read_file()
+print(conv.get_board_name(sys.argv[2], sys.argv[3]))
 PYEOF
 }
 
@@ -180,26 +197,22 @@ scheme_for_partitions() {
   esac
 }
 
+# Both ask generate_platform_h.py, which resolves a setting the way PlatformIO does: the env's
+# own, else the env it `extends`, else the [env] base section. An awk over the env's own lines
+# used to do this and could not see an env built with extends at all.
 value_for_env() { # $1 = platformio.ini  $2 = env  $3 = key
-  awk -v want="[env:$2]" -v key="$3" '
-    /^\[/ { hdr = $0; sub(/[[:space:]]*;.*$/, "", hdr); gsub(/[[:space:]]+$/, "", hdr);
-             inenv = (hdr == want); next }
-    inenv && index($0, key) {
-      sub(/^[^=]*=[[:space:]]*/, ""); sub(/[[:space:]]*;.*$/, ""); gsub(/[[:space:]]+$/, "");
-      print; exit
-    }' "$1"
+  python3 - "$SCRIPTS_DIR" "$1" "$2" "$3" <<'PYEOF'
+import sys
+sys.path.insert(0, sys.argv[1])
+from generate_platform_h import PlatformIOConverter
+conv = PlatformIOConverter(sys.argv[2])
+conv.read_file()
+print(conv.env_value(sys.argv[3], sys.argv[4]))
+PYEOF
 }
 
 board_for_env() { # $1 = platformio.ini  $2 = env name
-  awk -v want="[env:$2]" '
-    /^\[/ { hdr = $0; sub(/[[:space:]]*;.*$/, "", hdr); gsub(/[[:space:]]+$/, "", hdr);
-             inenv = (hdr == want); next }
-    inenv && /^[[:space:]]*board[[:space:]]*=/ {
-      sub(/^[[:space:]]*board[[:space:]]*=[[:space:]]*/, "");
-      sub(/[[:space:]]*;.*$/, "");
-      gsub(/[[:space:]]+$/, "");
-      print; exit
-    }' "$1"
+  value_for_env "$1" "$2" board
 }
 
 # ── dependency helpers ──────────────────────────────────────────────────────────────────────
@@ -306,7 +319,7 @@ if [ -z "$BOARD" ]; then
   exit 1
 fi
 
-FQBN="$(fqbn_for_env "$ENVNAME")"
+FQBN="$(fqbn_for_env "$(defining_env "$PIO_INI" "$ENVNAME")")"
 [ -z "$FQBN" ] && FQBN="$(fqbn_for_board "$BOARD")"
 if [ -z "$FQBN" ]; then
   echo "No Arduino FQBN known for PlatformIO board '$BOARD'." >&2
@@ -447,7 +460,7 @@ for extra in "$SKETCH_DIR"/*.cpp; do
 done
 
 # Does the core actually define the macro platform.h guards this env with?
-GUARD="$(guard_for_env "$BOARD" "$ENVNAME")"
+GUARD="$(guard_for_env "$BOARD" "$ENVNAME" "$PIO_INI")"
 BUILD_BOARD="$(echo "$BOARD_PROPS" | grep '^build\.board=' | head -1 | cut -d= -f2- | tr -d '\r')"
 if [ -n "$BUILD_BOARD" ]; then
   CORE_MACRO="ARDUINO_$BUILD_BOARD"
@@ -472,7 +485,7 @@ fi
 # Is the Tools > Board label the "no board configured" #error names still the core's own? Checked
 # with a prefix match, because some entries qualify the board with the menu option that picks its
 # variant ("TTGO LoRa32-OLED, with Board Revision = ...").
-BOARD_LABEL="$(boardname_for_env "$BOARD" "$ENVNAME")"
+BOARD_LABEL="$(boardname_for_env "$BOARD" "$ENVNAME" "$PIO_INI")"
 CORE_LABEL="$(arduino-cli board details -b "$(echo "$FQBN" | cut -d: -f1-3)" --no-color 2>/dev/null \
               | grep '^Board name:' | head -1 | sed 's/^Board name:[[:space:]]*//' | tr -d '\r')"
 if [ -n "$CORE_LABEL" ]; then

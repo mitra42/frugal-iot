@@ -39,6 +39,7 @@ the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first
 | Tools > Board | configuration | also define |
 | --- | --- | --- |
 | LOLIN C3 Pico | `c3_pico` |  |
+| LOLIN C3 Pico | `c3_pico_no_battery` | `C3_PICO_NO_BATTERY` |
 | LOLIN S2 Mini | `s2_mini` |  |
 | LOLIN S2 Mini | `s2_mini_4x` | `S2_MINI_4X` |
 | NodeMCU-32S | `nodemcu-32s` |  |
@@ -68,7 +69,7 @@ has no way to ask for one - it only knows boards. So you get the row with an emp
 column unless you define that macro. It has to reach the whole build rather than just the
 sketch, because the library's own sources read these settings too:
 
-* **ESP32** - put the line `-DS2_MINI_4X` in a file called `build_opt.h`,
+* **ESP32** - put the line `-DC3_PICO_NO_BATTERY` in a file called `build_opt.h`,
   beside `sht.ino`. Despite the `.h`, that file holds **compiler flags, not
   C**: a `#define` in it stops the build with *no such file or directory*. The
   core copies it into the build and passes it to every source file.
