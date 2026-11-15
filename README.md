@@ -1,4 +1,4 @@
-# Frugal IoT
+# Frugal IoT 
 A platform to enable affordable sensor networks
 
 The best source of information is the [Wiki here](https://github.com/mitra42/frugal-iot/wiki)
