@@ -351,14 +351,14 @@ if [ "${CORE%%:*}" != "esp32" ]; then
   # path), and the defines arrive instead from <sketch>.ino.globals.h, which this core
   # force-includes into every translation unit.
   #
-  # That file ships in the example's esp8266/ subfolder rather than beside the .ino, because a
+  # In an example it just #includes platform.h, and ships as X_<sketch>.ino.globals.h, because a
   # <sketch>.ino* file in the sketch root makes arduino-cli drop the whole example from
-  # File > Examples (see CLAUDE.md). An IDE user moves it up by hand; here we just point the core
-  # at where it really is. globals.h.source.fqfn is the core's own property for this, so the file
+  # File > Examples (see CLAUDE.md). An IDE user removes the X_ by hand; here we just point the
+  # core at the file as it ships. globals.h.source.fqfn is the core's own property for this, so the file
   # still goes through mkbuildoptglobals.py and gets the same copy/-include/dependency handling.
   # Without this the build would still go green - on library defaults, not the env's settings,
   # which is exactly the silent pass this script exists to prevent.
-  GLOBALS_H="$SKETCH_DIR/esp8266/$EXAMPLE.ino.globals.h"
+  GLOBALS_H="$SKETCH_DIR/X_$EXAMPLE.ino.globals.h"
   if [ -f "$GLOBALS_H" ]; then
     BUILD_PROPS+=(--build-property "globals.h.source.fqfn=$GLOBALS_H")
     echo "== ESP8266 globals: $GLOBALS_H"

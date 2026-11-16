@@ -34,7 +34,8 @@ Every module uses the **same two ESP pins**, set for each board in `platformio.i
 
 | Board (`[env:]`) | `TRIG` | `ECHO` |
 | --- | --- | --- |
-| `c3_pico`, `c3_oled_72x40` | GPIO3 | GPIO4 |
+| `c3_pico` | GPIO3 | GPIO4 |
+| `c3_oled_72x40`, `supermini` | GPIO21 (printed TX) | GPIO20 (printed RX) |
 | `s2_mini` | GPIO16 | GPIO18 |
 | `nodemcu-32s` | GPIO18 | GPIO19 |
 | `d1_mini`, `d1_mini_pro` | D5 (GPIO14) | D6 (GPIO12) |
@@ -96,24 +97,18 @@ reading, try `-D SENSOR_HCSR04_TRIGGER_US=20`. If readings jump about, try
 
 #### Wiring diagram - SR04M-2 on the C3 OLED 72x40 board
 
-```
-   C3 OLED 72x40                                  SR04M-2
-  ┌──────────────┐                               ┌────────────┐
-  │           5V ├───────────────────────────────┤ 5V         │
-  │        GPIO3 ├───────────────────────────────┤ RX  (Trig) │
-  │        GPIO4 ├──────────┬────────[1k]────────┤ TX  (Echo) │
-  │          GND ├────┐    [2k]          ┌───────┤ GND        │
-  └──────────────┘    │     │            │       └────────────┘
-                      └─────┴────────────┘
-```
+![SR04M-2 wiring on the C3 OLED 72x40 board](docs/wiring_sr04m2_c3_oled.png)
 
 * The board's 5V pin is only live when the board is powered from USB or another 5V supply. On a
   board with no 5V pin, take 5V from the USB supply.
-* The 1k and 2k make the divider. GPIO4 joins between them, and the 2k's other end goes to GND.
-* The OLED is already on GPIO5 and GPIO6 and the LED on GPIO8, so GPIO3 and GPIO4 are free.
-  Avoid GPIO2, GPIO8 and GPIO9, which decide how the C3 boots.
-* The same wiring works in serial mode (next section). The RX wire is then not used, so it can
-  stay connected.
+* The 1k and 2k make the divider. RX (GPIO20) joins between them, and the 2k's other end goes to
+  GND.
+* TX and RX are GPIO21 and GPIO20, the chip's serial port. They are free because this board's
+  serial monitor runs over USB. At reset the chip prints its boot messages on TX, which may fire
+  the module once or twice. That does no harm.
+* Check the labels on your module's header. Other batches may put the pins in a different order.
+* The same wiring works in serial mode (next section). The green wire to the module's RX is then
+  not used, so it can stay connected.
 
 #### Few echoes - `1/5` or `0/5` in the debug output
 
@@ -287,7 +282,7 @@ the optional one, for your own debug flags and serial port. Neither file is comm
    (in your sketchbook, under `libraries/Frugal-IoT`) into the sketch folder (**Sketch > Show
    Sketch Folder**) as `platform-secrets-local.h`, and paste the secret from the dashboard
    (gear icon > Nodes > Enrolment secret). Without it the node is refused until an
-   administrator approves it by hand. On ESP8266, put the same `#define` in the globals file instead - see below.
+   administrator approves it by hand.
 
 Opening `ultrasonic.ino` from a download or a git clone does not install the library, and
 the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first.
@@ -317,9 +312,14 @@ means the wrong pins.
 
 ## ESP8266: one extra step
 
-The ESP8266 settings live in `esp8266/ultrasonic.ino.globals.h`, and that file has to be
-moved up beside `ultrasonic.ino` before it is read. See `esp8266/README.md` - it is one
-drag and no rename. ESP32 and PlatformIO users can ignore the folder.
+In your saved copy, **Sketch > Show Sketch Folder** and rename
+`X_ultrasonic.ino.globals.h` to `ultrasonic.ino.globals.h` - just remove the `X_`. If you
+saved it under a new name, use that: `mytank.ino` needs `mytank.ino.globals.h`. Without it
+the build stops with a message saying so. ESP32 and PlatformIO users leave the file alone.
+
+The ESP8266 core reads only a file with exactly that name, which is how the settings in
+`platform.h` reach it. The example cannot ship it under that name, because the Arduino IDE
+then leaves the example out of **File > Examples**.
 
 ## If it does not fit
 

@@ -669,7 +669,7 @@ def check_arduino_sketch(sketch, frugal, libdir):
     for name, meant in near_misses(sketch, [header.name]):
         report("WARN", f"{name} will not be found - it has to be named exactly {meant}",
                f"Rename it to {meant}. On Windows, turn on File name extensions in Explorer to see a hidden .txt.")
-    globals_h = list(sketch.glob("*.ino.globals.h"))
+    globals_h = [g for g in sketch.glob("*.ino.globals.h") if not g.name.startswith("X_")]
     in_globals = any(secret_state(g.read_text(errors="replace"), header=True) == "set" for g in globals_h)
     if header.is_file():
         state = secret_state(header.read_text(errors="replace"), header=True)
@@ -682,10 +682,18 @@ def check_arduino_sketch(sketch, frugal, libdir):
         report("OK", "the ESP8266 globals file sets the enrolment secret (value not shown)")
     else:
         report("WARN", f"no {header.name} - {REFUSED}",
-               f"ESP32: copy {find_template(header.name + '.template', libdir)}\n"
-               f"into this folder as {header.name} and paste your secret into it.\n"
-               "ESP8266: put the same #define in your <sketch>.ino.globals.h instead.")
+               f"Copy {find_template(header.name + '.template', libdir)}\n"
+               f"into this folder as {header.name} and paste your secret into it.")
 
+    # The ESP8266 shim, as it ships (library 2.0.14 on) - harmless until an ESP8266 build needs it
+    for shim in sketch.glob("X_*.ino.globals.h"):
+        wanted = [f"{ino.stem}.ino.globals.h" for ino in sketch.glob("*.ino")]
+        if any((sketch / w).is_file() for w in wanted):
+            report("INFO", f"{shim.name} has been renamed for ESP8266 (the X_ copy is still here - fine)")
+        else:
+            report("INFO", f"{shim.name} still has its X_ - fine for ESP32; ESP8266 boards need it renamed",
+                   f"For ESP8266: rename it to {wanted[0] if wanted else '<sketch>.ino.globals.h'}.")
+    # The ESP8266 file as library 2.0.13 and earlier shipped it
     stray = sketch / "esp8266"
     if stray.is_dir() and any(stray.glob("*.ino.globals.h")):
         moved = any(sketch.glob("*.ino.globals.h"))

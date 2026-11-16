@@ -26,13 +26,13 @@ follow and leaked `build_flags_loramesher` onto every board.
 - **Arduino IDE** picks `platform.h` up because `_settings.h` includes it when `PLATFORMIO` is
   undefined — the `.ino` does not need to (and on ESP8266 could not; see below).
 
-Do not hand-edit `platform.h` or `esp8266/<sketch>.ino.globals.h`. **Do not regenerate them
+Do not hand-edit `platform.h` or `X_<sketch>.ino.globals.h`. **Do not regenerate them
 during development either** — don't run `scripts/prerelease.bash` or `generate_platform_h.py` after
 changing `platformio.ini`. They are rebuilt at release time; regenerating them in between only
 clutters the repo with diffs. Leave them stale.
 
 `arduino_compile.bash` (below) regenerates `platform.h` as a side effect. If you use it, restore the
-generated files afterwards (`git checkout -- 'examples/*/platform.h' 'examples/*/esp8266/'`) so
+generated files afterwards (`git checkout -- 'examples/*/platform.h' 'examples/*/X_*.ino.globals.h'`) so
 they don't end up in a commit.
 
 ### Diagnosing someone else's setup: `scripts/frugal_iot_doctor.py`
@@ -180,7 +180,7 @@ directly, reading the app size from the largest `app` partition in the core's ow
 --build-property build.partitions=min_spiffs --build-property upload.maximum_size=1966080
 ```
 
-### ESP8266: `<sketch>.ino.globals.h`, and why it sits in a subfolder
+### ESP8266: `X_<sketch>.ino.globals.h`, a shim that ships with an X_
 
 The `platform.h` mechanism relies on a library header (`_settings.h`) being able to
 `#include "platform.h"` from the *sketch* directory. That works on ESP32 only because its
@@ -191,9 +191,26 @@ it just silently contributes nothing.
 
 The one mechanism that does reach library sources on ESP8266 is
 **`<sketch>.ino.globals.h`**: the core copies it into the build and `-include`s it into every
-translation unit. `generate_platform_h.py` emits the ESP8266 `[env:]` blocks into it (measured:
-force-included into all 48 library TUs). ESP32 has no equivalent — its `build_opt.h` is a flat
-compiler response file and cannot hold `#ifdef` — which is why both files exist.
+translation unit (measured: all 48 library TUs). ESP32 has no equivalent — its `build_opt.h` is a
+flat compiler response file and cannot hold `#ifdef` — which is why both files exist.
+
+**All the settings are in `platform.h`, for both chips; the globals file only passes it on.** The
+core copies the globals file to `{build}/core/` before force-including it, and arduino-cli has
+already copied the sketch folder to `{build}/sketch/`, so the shim is two lines:
+
+```c
+#define FRUGAL_IOT_GLOBALS_FOUND // Tells the library this file reached the build
+#include "../sketch/platform.h"
+```
+
+Tested: settings reach the ESP8266 build, and editing `platform.h` alone triggers a rebuild.
+`_settings.h`'s own `__has_include("platform.h")` still finds nothing on ESP8266, which is fine,
+as the file has already arrived and its guard would make a second include a no-op. A generated
+`platform.h` also includes `platform-secrets-local.h` - a quoted include searches the including
+file's directory first, `{build}/sketch/` here - so the enrolment secret works on ESP8266 too, and
+it defines `FRUGAL_IOT_SECRETS_CHECKED` so `_settings.h` does not include it a second time on ESP32.
+Until 2.0.13 the ESP8266 settings were generated into the globals file itself, separately from
+`platform.h`, and the secret had to be pasted into it by hand.
 
 **But that filename hides the example from the Arduino IDE.** arduino-cli — which Arduino IDE 2
 embeds — refuses to recognise a folder as a sketch if it contains *any* file named
@@ -206,34 +223,40 @@ Examples** with no error anywhere. Verified on arduino-cli 1.5.1:
 | `other.ino.globals.h` | yes |
 | `soil.ino.globals.h`, `soil.ino.h`, `soil.ino.txt` | **no** |
 | `esp8266/soil.ino.globals.h` (subfolder) | yes |
+| `X_soil.ino.globals.h` | yes |
 
 The name is not negotiable at either end: the core resolves
 `globals.h.source.fqfn={build.source.path}/{build.project_name}.globals.h` and `build.project_name`
 includes the `.ino`, so `soil.globals.h` is ignored outright (measured: 0 TUs).
 
-So the generated file is parked in the example's **`esp8266/` subfolder**, with a `README.md`
-explaining that an ESP8266 IDE user must move it up beside the `.ino` — one drag, no rename, since
-the filename is already exact. ESP32 and PlatformIO users ignore the folder entirely.
+So the shim ships as **`X_<sketch>.ino.globals.h`**, and an ESP8266 IDE user removes the `X_` in
+their saved copy (the README's "ESP8266: one extra step"). If they saved it under a new name, the
+file takes that name: the core wants `{build.project_name}`. ESP32 and PlatformIO users ignore it.
+It replaced an `esp8266/` subfolder holding the full settings, which the user had to move up -
+which left two generated files of settings to keep in step, and a folder plus a README to explain.
 
-Left unmoved, an ESP8266 IDE build would otherwise succeed on the library's built-in defaults
-instead of the example's settings — silently, since on ESP8266 nothing the example ships is
-reachable at compile time until that file is in place. So the generated file carries a
-`#define FRUGAL_IOT_GLOBALS_FOUND` outside every `#ifdef`, and **`system/frugal.cpp` `#error`s
-without it** on `ESP8266 && !PLATFORMIO`. That marker deliberately means "the file got here", which
-is a different failure from "your board is covered" — the latter is the `FRUGAL_IOT_BOARD_CONFIGURED`
-catch-all at the end of the same file.
+Left with its `X_`, an ESP8266 IDE build gets none of the example's settings. Usually that is a
+compile error in the sketch (`SENSOR_..._PIN was not declared`), which does not say what is wrong;
+for a sketch that uses no example-specific macro it would be a green build on the library's
+defaults. So the shim carries `#define FRUGAL_IOT_GLOBALS_FOUND`, and **`Frugal-IoT.h` `#error`s
+without it** on `ESP8266 && !PLATFORMIO`, saying to remove the `X_`. That marker deliberately
+means "the file got here", which is a different failure from "your board is covered" — the latter
+is the `FRUGAL_IOT_BOARD_CONFIGURED` catch-all at the end of `platform.h`.
 
-The check lives in a `.cpp`, not in `_settings.h`: the ESP8266 core force-includes into ~48
-translation units, so a header would print it 48 times. `SYSTEM_OTA_PREFIX` looks like a tempting
-thing to test instead, but OTA is optional by design (`frugal.h` and `ota.cpp` compile it out
-cleanly when either half is undefined), so requiring it would break legitimate no-OTA builds.
+The check is in `Frugal-IoT.h`, which the sketch includes and which is compiled before any library
+source; a failure there stops the build, so it prints once, ahead of the confusing errors. It used
+to be in `system/frugal.cpp`, and was never reached - the sketch's own errors stopped the build
+first (found 2026-11-15). Not `_settings.h`, which would print it once per translation unit.
+`SYSTEM_OTA_PREFIX` looks like a tempting thing to test instead, but OTA is optional by design
+(`frugal.h` and `ota.cpp` compile it out cleanly when either half is undefined), so requiring it
+would break legitimate no-OTA builds.
 
-Someone writing their own ESP8266 sketch and happy with the defaults satisfies the check with a
-one-line `<sketch>.ino.globals.h` containing just that define — the same file they need the moment
-they want to configure anything.
+Someone writing their own ESP8266 sketch copies an example's shim, named for their sketch, and
+writes a `platform.h` beside it; happy with the defaults, a one-line `<sketch>.ino.globals.h`
+holding just that define satisfies the check.
 
-`arduino_compile.bash` is unaffected: it points the core's own `globals.h.source.fqfn` property at
-the file in the `esp8266/` subfolder, so the file goes through `mkbuildoptglobals.py` and gets the
+`arduino_compile.bash` needs no rename: it points the core's own `globals.h.source.fqfn` property at
+the `X_` file as it ships, so the file goes through `mkbuildoptglobals.py` and gets the
 same copy/`-include`/dependency handling it would have had sitting beside the `.ino`. (It borrows
 the empty `compiler.c/cpp.extra_flags` slots too, but for `-D` arguments - see above.)
 
@@ -287,7 +310,7 @@ Three ways to do that, and they are not interchangeable:
 | | Where | Form | Survives regeneration |
 |---|---|---|---|
 | ESP32 | `build_opt.h` beside the `.ino` | `-DS2_MINI_4X` | **yes** |
-| ESP8266 | top of `<sketch>.ino.globals.h` | `#define D1_MINI_4X` | no |
+| ESP8266 | `<sketch>.ino.globals.h`, above its `#include` | `#define D1_MINI_4X` | **yes** - the user's renamed copy is not regenerated |
 | either | top of the generated header | `#define S2_MINI_4X` | no |
 
 **`build_opt.h` is a gcc response file, not a header.** The `.h` is a lie the ESP32 core tells:
@@ -295,10 +318,10 @@ Three ways to do that, and they are not interchangeable:
 is parsed as two filenames and the build stops with *no such file or directory* - verified, not
 assumed. ESP8266's `/*@create-file:build.opt@ ... */` block is the same kind of thing, and there
 `mkbuildoptglobals.py` *skips* lines starting with `#`, so a `#define` in that block is dropped in
-silence. It is also inside `<sketch>.ino.globals.h`, which this script regenerates - so it buys
-nothing over the plain `#define` above it, and the plain one is what the generated file suggests.
+silence - so it buys nothing over a plain `#define` above the shim's `#include`, which is what
+the shim suggests.
 
-Everything but `build_opt.h` is a local edit to a generated file. `custom_arduino_default = yes`
+The last row is a local edit to a generated file. `custom_arduino_default = yes`
 on an `[env:]` in `platformio.ini` is the durable form: it makes that env the one needing no
 define at all, and survives regeneration.
 
@@ -354,10 +377,11 @@ Frugal-IoT/
 ```
 
 Each example directory contains a `.ino` file (the application), a `platform.h` (hardware
-pin/address overrides) and a `README.md`, plus — for examples with ESP8266 environments — an
-`esp8266/` subfolder holding the equivalent `<sketch>.ino.globals.h` that an ESP8266 Arduino IDE
-user moves up beside the `.ino`. See "ESP8266: `<sketch>.ino.globals.h`" above for why it cannot
-just live there.
+pin/address overrides, for every board) and a `README.md`, plus — for examples with ESP8266
+environments — `X_<sketch>.ino.globals.h`, a two-line shim that passes `platform.h` on, which an
+ESP8266 Arduino IDE user renames. See "ESP8266: `X_<sketch>.ino.globals.h`" above for why. Only
+`examples/ultrasonic` has been converted so far; the others still have the older `esp8266/`
+subfolder until they are regenerated.
 
 **The README is generated too**, by the same script, and says which Tools > Board to pick for each
 `[env:]`, what to define for a board that has more than one, the ESP8266 extra step and what to do

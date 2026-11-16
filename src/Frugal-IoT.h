@@ -1,6 +1,24 @@
 /* Frugal IoT - main .h file - includes all the others */
 
 #include "_settings.h" // Load board definitions first
+
+// Did the sketch's settings actually reach this build?
+//
+// On PlatformIO flags come straight from platformio.ini
+// On Arduino IDE on ESP32 `platform.h` is on the include path
+//
+// On ESP8266 it requires a file `<sketch>.ino.globals.h` next to the .ino, which includes `platform.h`
+// This file is in examples as `X_<sketch>.ino.globals.h` because Arduino IDE ignores an example if it 
+// contains `<sketch>.ino.globals.h`. So on ESP8266 copy the example, and rename the file 
+//
+// Writing your own sketch? Copy an example's X_<sketch>.ino.globals.h beside your .ino, named
+// <your sketch>.ino.globals.h, and put your settings in a platform.h beside it. Happy with the
+// defaults, it can hold just:  #define FRUGAL_IOT_GLOBALS_FOUND
+
+#if !defined(PLATFORMIO) && defined(ESP8266) && !defined(FRUGAL_IOT_GLOBALS_FOUND)
+  #error "ESP8266 + Arduino IDE: no <sketch>.ino.globals.h reached this build, so none of the sketch's settings did either. For a bundled example, open Sketch > Show Sketch Folder and rename X_<sketch>.ino.globals.h to <sketch>.ino.globals.h - remove the X_, and if you saved the sketch under a new name use that name. For your own sketch, see the note above this line in Frugal-IoT.h."
+#endif
+
 //TO_ADD_ACTUATOR - follow the pattern below and add any variables and search for other places tagged TO_ADD_ACTUATOR
 #include "actuator/analog.h"
 #include "actuator/ledbuiltin.h"
