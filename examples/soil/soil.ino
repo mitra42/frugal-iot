@@ -34,8 +34,11 @@ void setup() {
   //frugal_iot.configure_mqtt(SYSTEM_MQTT_HOST, SYSTEM_MQTT_USER, SYSTEM_MQTT_PASSWORD);
   frugal_iot.configure_mqtt_enrolled(SYSTEM_MQTT_HOST, SYSTEM_MQTT_ENROL_SECRET);
 
-  // Soil sensor 0%=4095 100%=0 color=brown - the pin is set per board in platformio.ini
-  Sensor_Soil* soil = new Sensor_Soil("soil", "Soil", SENSOR_SOIL_PIN, 4095, -100.0/4095, "brown", true);
+  // Soil sensor: 0% at the DRY reading, 100% at the WET one. The pin and both readings are set per
+  // board in platformio.ini, as the ADC's range differs by chip. Tare and Calibrate in the captive
+  // portal to set them for your probe.
+  Sensor_Soil* soil = new Sensor_Soil("soil", "Soil", SENSOR_SOIL_PIN,
+    SENSOR_SOIL_DRY, -100.0 / (SENSOR_SOIL_DRY - SENSOR_SOIL_WET), "brown", true);
   frugal_iot.sensors->add(soil);
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.

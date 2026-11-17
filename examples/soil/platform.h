@@ -8,43 +8,11 @@
 
 // Every board
 // #define LANGUAGE_DEFAULT "id" // Default language for portal (if not en) - de,nl,id currently supported
-// #define ACTUATOR_LCD_WANT
-// #define ACTUATOR_LCD_COLS 20 // uncomment for 20x4 display (default is 16x2)
-// #define ACTUATOR_LCD_ROWS 4
-// #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
-// #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
-// #define SENSOR_DS18B20_PIN 6
-// #define SENSOR_SOIL_PIN 4
-// #define SENSOR_ULTRASONIC_SLAVE_ID 1
-// #define SYSTEM_RS485_RX_PIN 20
-// #define SYSTEM_RS485_TX_PIN 21
-// #define SYSTEM_SD_WANT // Uses LittleFS by default
-// #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
-// #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
-// #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
-// #define ACTUATOR_LCD_DEBUG
-// #define CONTROL_BLINKEN_DEBUG
-// #define CONTROL_CLIMATE_DEBUG
-// #define CONTROL_LOGGERFS_DEBUG
-// #define SENSOR_BH1750_DEBUG
-// #define SENSOR_DHT_DEBUG
-// #define SENSOR_AHT_DEBUG
-// #define SENSOR_ENS160_DEBUG
-// #define SENSOR_LOADCELL_DEBUG
-// #define SENSOR_MS5803_DEBUG
-// #define SENSOR_SHT_DEBUG
 // #define SENSOR_SOIL_DEBUG
-// #define SYSTEM_DISCOVERY_DEBUG
-// #define SYSTEM_FRUGAL_DEBUG
-// #define SYSTEM_LITTLEFS_DEBUG
 #define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration old to new file format, remove when none left in field
-// #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
-// #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG // report messages received, sent, looped etc
 // #define SYSTEM_MQTT_DEBUG
-// #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
-// #define SYSTEM_TIME_DEBUG
 // #define SYSTEM_WIFI_DEBUG
 #define SYSTEM_OTA_PREFIX "soil"
 #define CONFIG_ASYNC_TCP_STACK_SIZE 4096
@@ -53,7 +21,9 @@
 #if defined(ARDUINO_LOLIN_C3_PICO) || defined(C3_PICO)
   #define FRUGAL_IOT_BOARD_CONFIGURED
   #define SYSTEM_OTA_SUFFIX "c3_pico"
-  #define SENSOR_SOIL_PIN 3
+  #define SENSOR_SOIL_PIN 4 // not 3, which reads the battery on this board
+  #define SENSOR_SOIL_DRY 3600 // Raw reading in dry air = 0%, 12-bit ADC, 0-4095 - a starting point, Tare to calibrate
+  #define SENSOR_SOIL_WET 1000 // Raw reading in water = 100%, Calibrate to 100 to set
   #define ARDUINO_LOLIN_C3_PICO // if using C3_PICO use lolin_c3_mini as board and define here
   // #define RGB_BUILTIN_LED_COLOR_ORDER LED_COLOR_ORDER_RGB
 #endif // ARDUINO_LOLIN_C3_PICO
@@ -63,6 +33,8 @@
   #define FRUGAL_IOT_BOARD_CONFIGURED
   #define SYSTEM_OTA_SUFFIX "s2_mini"
   #define SENSOR_SOIL_PIN 3
+  #define SENSOR_SOIL_DRY 7200 // Raw reading in dry air = 0%, 13-bit ADC, 0-8191 - a starting point, Tare to calibrate
+  #define SENSOR_SOIL_WET 2000 // Raw reading in water = 100%, Calibrate to 100 to set
 #endif // ARDUINO_LOLIN_S2_MINI
 
 // [env:nodemcu-32s] - Tools > Board: NodeMCU-32S
@@ -70,6 +42,8 @@
   #define FRUGAL_IOT_BOARD_CONFIGURED
   #define SYSTEM_OTA_SUFFIX "nodemcu-32s"
   #define SENSOR_SOIL_PIN 34
+  #define SENSOR_SOIL_DRY 3600 // Raw reading in dry air = 0%, 12-bit ADC, 0-4095 - a starting point, Tare to calibrate
+  #define SENSOR_SOIL_WET 1000 // Raw reading in water = 100%, Calibrate to 100 to set
 #endif // ARDUINO_NodeMCU_32S
 
 // [env:d1_mini_pro] - Tools > Board: LOLIN(WEMOS) D1 mini Pro
@@ -77,6 +51,8 @@
   #define FRUGAL_IOT_BOARD_CONFIGURED
   #define SYSTEM_OTA_SUFFIX "d1_mini_pro"
   #define SENSOR_SOIL_PIN A0
+  #define SENSOR_SOIL_DRY 900 // Raw reading in dry air = 0%, 10-bit ADC, 0-1023 - a starting point, Tare to calibrate
+  #define SENSOR_SOIL_WET 250 // Raw reading in water = 100%, Calibrate to 100 to set
 #endif // ARDUINO_ESP8266_WEMOS_D1MINIPRO
 
 // [env:d1_mini] - Tools > Board: LOLIN(WEMOS) D1 R2 & mini
@@ -84,6 +60,8 @@
   #define FRUGAL_IOT_BOARD_CONFIGURED
   #define SYSTEM_OTA_SUFFIX "d1_mini"
   #define SENSOR_SOIL_PIN A0
+  #define SENSOR_SOIL_DRY 900 // Raw reading in dry air = 0%, 10-bit ADC, 0-1023 - a starting point, Tare to calibrate
+  #define SENSOR_SOIL_WET 250 // Raw reading in water = 100%, Calibrate to 100 to set
 #endif // ARDUINO_ESP8266_WEMOS_D1MINI
 
 // Your enrolment secret, if you made platform-secrets-local.h (see README.md). Never commit it.
