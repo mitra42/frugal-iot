@@ -238,8 +238,9 @@ first thing it hears, the real echo never reaches the ESP - no software filter c
 * **Lining the top 100mm of the pipe** with something soft and loose that soaks up sound rather
   than reflecting it. A microfibre towel did it in the test; open-cell foam or synthetic felt
   should too. Closed-cell foam, rubber or hard plastic will not. Line the walls only, never across
-  the face. Untested outdoors: anything that holds water reflects much more when wet, so felt that
-  sheds water is a better bet than cloth or upholstery foam - check readings again after rain.
+  the face. Untested outdoors: anything that holds water reflects much more when wet, so a
+  synthetic (polyester) felt that sheds water, or foam sold for outdoor acoustic use, is a better
+  bet than cloth or upholstery foam - check readings again after rain.
 * **Not** a probe sitting up inside a cap or a recess. The face should be flush with, or stick
   out a little from, whatever holds it.
 
