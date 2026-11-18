@@ -44,6 +44,9 @@ the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first
 | Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V32` |  |
 | ESP32C3 Dev Module | `frugal_iot_v02` |  |
 
+For `frugal_iot_v02`, also set **Tools > USB CDC On Boot > Enabled**. The board has no USB-serial
+chip, so without it the Serial Monitor stays empty - the build stops to remind you.
+
 The LoRa board - Heltec WiFi LoRa 32(V3) - also needs LoRaMesher, which is not in the Library Manager:
 
 1. Download [LoRaMesher as a zip](https://github.com/loramesher/LoRaMesher/archive/refs/heads/main.zip) - leave it zipped.
@@ -65,6 +68,10 @@ sketch, because the library's own sources read these settings too:
 Pick a board that is not in the table and the build stops with a message listing the ones
 that are - rather than quietly compiling on the library's defaults, which for most boards
 means the wrong pins.
+
+Board not listed? `examples/all/platformio.ini` has `[env:]` sections for more boards,
+including the LoRa ones. Copy one into this example's `platformio.ini`, add the pins this
+example uses, and re-run `scripts/generate_platform_h.py` to rebuild `platform.h`.
 
 ## If it does not fit
 

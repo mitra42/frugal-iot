@@ -43,15 +43,12 @@ the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first
 | LOLIN S2 Mini | `s2_mini_5` | `S2_MINI_5` |
 | LOLIN S2 Mini | `s2_mini_6` | `S2_MINI_6` |
 | ESP32C3 Dev Module | `c3_wedoo` |  |
-| TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) | `ttgo-lora32-v21` |  |
-| LilyGo T3-S3 | `lilygo_t3_s3_sx127x` |  |
-| LilyGo T3-S3 | `lilygo_t3_s3_sx127x_sht` | `LILYGO_T3_S3_SX127X_SHT` |
-| Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V3` |  |
-| Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V32` | `HELTEC_WIFI_LORA_32_V32` |
-| T-Beam | `tbeam` |  |
-| T-Beam | `tbeam_oled` | `TBEAM_OLED` |
+| Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V32` |  |
 
-The LoRa boards - Heltec WiFi LoRa 32(V3), LilyGo T3-S3, T-Beam and TTGO LoRa32-OLED - also need LoRaMesher, which is not in the Library Manager:
+For `c3_wedoo`, also set **Tools > USB CDC On Boot > Enabled**. The board has no USB-serial
+chip, so without it the Serial Monitor stays empty - the build stops to remind you.
+
+The LoRa board - Heltec WiFi LoRa 32(V3) - also needs LoRaMesher, which is not in the Library Manager:
 
 1. Download [LoRaMesher as a zip](https://github.com/loramesher/LoRaMesher/archive/refs/heads/main.zip) - leave it zipped.
 2. **Sketch > Include Library > Add .ZIP Library**, and choose that file.
@@ -72,6 +69,10 @@ sketch, because the library's own sources read these settings too:
 Pick a board that is not in the table and the build stops with a message listing the ones
 that are - rather than quietly compiling on the library's defaults, which for most boards
 means the wrong pins.
+
+Board not listed? `examples/all/platformio.ini` has `[env:]` sections for more boards,
+including the LoRa ones. Copy one into this example's `platformio.ini`, add the pins this
+example uses, and re-run `scripts/generate_platform_h.py` to rebuild `platform.h`.
 
 ## If it does not fit
 

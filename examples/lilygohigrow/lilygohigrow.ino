@@ -11,6 +11,7 @@ System_Frugal frugal_iot(SYSTEM_FRUGAL_ORG, SYSTEM_FRUGAL_PROJECT, "lilygohigrow
 
 void setup() {
   // Battery sensor has to come before pre_setup, all others should come after
+  // On the HiGrow it is on pin 33 (set in platformio.ini) - not tested, as the battery never arrived
   #ifdef SENSOR_BATTERY_PIN
     frugal_iot.configure_battery(SENSOR_BATTERY_PIN); // Adds default battery sensor can specify (pin, Scale)
   #endif
@@ -35,27 +36,22 @@ void setup() {
 
   // actuator_oled and actuator_ledbuiltin added automatically on boards that have them.
 
-  // Add local wifis here, or see instructions in the wiki for adding via the /data
-  frugal_iot.wifi->addWiFi(F("mywifissid"),F("mywifipassword"));
-  
-  frugal_iot.sensors->add(new Sensor_DHT("DHT", GPIO_NUM_16, true));
-  // Soil sensor 0%=4095 100%=0 pin=32 smooth=0 color=brown
-  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil", 32, 4095, -100.0/4095, DEFAULT_soil_soil_color, true));
+  // Pins are set in platformio.ini
+  frugal_iot.sensors->add(new Sensor_DHT("DHT", SENSOR_DHT_PIN, true));
+  // Soil sensor 0%=4095 100%=0 color=brown
+  frugal_iot.sensors->add(new Sensor_Soil("soil", "Soil", SENSOR_SOIL_PIN, 4095, -100.0/4095, DEFAULT_soil_soil_color, true));
   // The salt sensor does not seem to work - got incorrect readings. TODO debug
   // Salt sensor 0%=0 100%=5000 pin=34 color=green
   // frugal_iot.sensors->add(new Sensor_Analog("salt", "Salt", 34, 1, 0, 100, 0, 0.02, "green", true)); //TODO-213 add min/max/color defaults
   // actuator_ledbuiltin automatically added, but doesnt seem to work on LilyGo HiGrow
-
-  // Battery sensor on pin 33 - but note battery didnt arrive so not tested TODO test
-  frugal_iot.sensors->add(new Sensor_Battery(33));
 
   // Light sensor BH1750 TODO see notes in sensor_bh1750.cpp,h about I2C pin conflicts
   frugal_iot.sensors->add(new Sensor_BH1750("lux", "Lux", SENSOR_BH1750_ADDRESS, &I2C_WIRE, true));
 
   // TODO-115 there is a relay pin 19 - haven't tested it yet 
   // frugal_iot.actuators->add(new Actuator_Digital("relay", "Relay", 19, "purple"));
-  // Button on pin 35 - not sure if this is tested yet
-  frugal_iot.sensors->add(new Sensor_Button("button", "Button", 35, "purple"));
+  // Button - not sure if this is tested yet
+  frugal_iot.buttons->add(new Sensor_Button("button", "Button", SENSOR_BUTTON_PIN, "purple"));
 
   frugal_iot.setup(); // Has to be after setup sensors and actuators and controls and sysetm
   Serial.println(F("FrugalIoT Starting Loop"));

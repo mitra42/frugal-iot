@@ -10,7 +10,7 @@ Frugal IoT - GPS sensor node (Heltec WiFi LoRa 32 V4 + Quectel L76K)
     pio run -e <env> -t upload    # build and flash
     pio run -e <env> -t uploadfs  # write data/ (wifi credentials, config)
 
-`<env>` is a name from the table below, for example `c3_pico`.
+`<env>` is a name from the table below, for example `heltec_wifi_lora_32_V4`.
 
 Before flashing, give the node your organization's enrolment secret: copy
 `templates/platformio-secrets-local.ini.template` from the library to
@@ -23,7 +23,7 @@ the optional one, for your own debug flags and serial port. Neither file is comm
 
 1. **Tools > Manage Libraries**, search for **Frugal-IoT** and install it. When it asks
    about the libraries it depends on, choose **Install All**.
-2. **Tools > Board > Boards Manager**, and install the one for your chip: **esp32** by Espressif Systems, or **esp8266** by ESP8266 Community (add `https://arduino.esp8266.com/stable/package_esp8266com_index.json` under **File > Preferences > Additional boards manager URLs** first).
+2. **Tools > Board > Boards Manager**, and install **esp32** by Espressif Systems.
 3. **File > Examples > Frugal-IoT > gps**, then **Tools > Board** and pick the row
    for your hardware.
 4. **File > Save As** to keep your own copy, then give it your organization's enrolment
@@ -31,30 +31,19 @@ the optional one, for your own debug flags and serial port. Neither file is comm
    (in your sketchbook, under `libraries/Frugal-IoT`) into the sketch folder (**Sketch > Show
    Sketch Folder**) as `platform-secrets-local.h`, and paste the secret from the dashboard
    (gear icon > Nodes > Enrolment secret). Without it the node is refused until an
-   administrator approves it by hand. On ESP8266, put the same `#define` in the globals file instead - see below.
+   administrator approves it by hand.
 
 Opening `gps.ino` from a download or a git clone does not install the library, and
 the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first.
 
 | Tools > Board | configuration | also define |
 | --- | --- | --- |
-| LOLIN C3 Pico | `c3_pico` |  |
-| LOLIN S2 Mini | `s2_mini` |  |
-| LOLIN S2 Mini | `s2_mini_4x` | `S2_MINI_4X` |
-| NodeMCU-32S | `nodemcu-32s` |  |
-| LOLIN(WEMOS) D1 mini Pro | `d1_mini_pro` |  |
-| LOLIN(WEMOS) D1 R2 & mini | `d1_mini` |  |
-| LOLIN(WEMOS) D1 R2 & mini | `d1_mini_4x` | `D1_MINI_4X` |
-| TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) | `ttgo-lora32-v21` |  |
-| LilyGo T3-S3 | `lilygo_t3_s3_sx127x` |  |
-| LilyGo T3-S3 | `lilygo_t3_s3_sx127x_sht` | `LILYGO_T3_S3_SX127X_SHT` |
-| Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V3` |  |
-| Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V32` | `HELTEC_WIFI_LORA_32_V32` |
-| T-Beam | `tbeam` |  |
-| T-Beam | `tbeam_oled` | `TBEAM_OLED` |
-| heltec_wifi_lora_32_V4 | `heltec_wifi_lora_32_V4` |  |
+| Heltec WiFi LoRa 32(V4) | `heltec_wifi_lora_32_V4` |  |
 
-The LoRa boards - Heltec WiFi LoRa 32(V3), LilyGo T3-S3, T-Beam and TTGO LoRa32-OLED - also need LoRaMesher, which is not in the Library Manager:
+For `heltec_wifi_lora_32_V4`, also set **Tools > USB CDC On Boot > Enabled**. The board has no USB-serial
+chip, so without it the Serial Monitor stays empty - the build stops to remind you.
+
+The LoRa board - Heltec WiFi LoRa 32(V4) - also needs LoRaMesher, which is not in the Library Manager:
 
 1. Download [LoRaMesher as a zip](https://github.com/loramesher/LoRaMesher/archive/refs/heads/main.zip) - leave it zipped.
 2. **Sketch > Include Library > Add .ZIP Library**, and choose that file.
@@ -62,27 +51,13 @@ The LoRa boards - Heltec WiFi LoRa 32(V3), LilyGo T3-S3, T-Beam and TTGO LoRa32-
 
 Without it the build stops with *loramesher.hpp: No such file or directory*.
 
-A board listed **twice** has two sets of settings in this example, and the Arduino IDE
-has no way to ask for one - it only knows boards. So you get the row with an empty last
-column unless you define that macro. It has to reach the whole build rather than just the
-sketch, because the library's own sources read these settings too:
-
-* **ESP32** - put the line `-DS2_MINI_4X` in a file called `build_opt.h`,
-  beside `gps.ino`. Despite the `.h`, that file holds **compiler flags, not
-  C**: a `#define` in it stops the build with *no such file or directory*. The
-  core copies it into the build and passes it to every source file.
-* **ESP8266** - add `#define D1_MINI_4X` at the top of
-  `gps.ino.globals.h`, which the core force-includes into every source file.
-
 Pick a board that is not in the table and the build stops with a message listing the ones
 that are - rather than quietly compiling on the library's defaults, which for most boards
 means the wrong pins.
 
-## ESP8266: one extra step
-
-The ESP8266 settings live in `esp8266/gps.ino.globals.h`, and that file has to be
-moved up beside `gps.ino` before it is read. See `esp8266/README.md` - it is one
-drag and no rename. ESP32 and PlatformIO users can ignore the folder.
+Board not listed? `examples/all/platformio.ini` has `[env:]` sections for more boards,
+including the LoRa ones. Copy one into this example's `platformio.ini`, add the pins this
+example uses, and re-run `scripts/generate_platform_h.py` to rebuild `platform.h`.
 
 ## If it does not fit
 

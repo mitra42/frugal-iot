@@ -63,6 +63,24 @@
   #define ACTUATOR_LEDBUILTIN_INVERT
 #endif
 
+/* Sonoff Basic R4 - built on the stock esp32c3 variant, which says the LED is a WS2812 on GPIO8.
+ * The R4 has a plain LED on GPIO6; ARDUINO_ESP32C3_DEV below makes it LOW-on, as before.
+ */
+#ifdef ARDUINO_SONOFF_BASICR4
+  #undef RGB_BUILTIN
+  #undef LED_BUILTIN
+  #define LED_BUILTIN 6
+#endif
+
+/* Frugal-IoT V0.2 - also on the stock esp32c3 variant, whose LED is a WS2812 on GPIO8. This board
+ * has a plain LED on GPIO8, LOW-on; ARDUINO_ESP32C3_DEV below inverts it.
+ */
+#ifdef ARDUINO_FRUGAL_IOT_V02
+  #undef RGB_BUILTIN
+  #undef LED_BUILTIN
+  #define LED_BUILTIN 8
+#endif
+
 /* Everything below needs LED_BUILTIN, and a board is allowed not to have one.
  *
  * This used to #error instead. Since the header is included unconditionally, that made an LED pin

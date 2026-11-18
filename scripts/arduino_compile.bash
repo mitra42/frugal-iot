@@ -22,6 +22,9 @@
 #   --clean          discard the cached build directory first (full rebuild)
 #   --keep           accepted but redundant - build dirs are now kept and reused
 #   --list           list the examples and environments available, then exit
+#   --library PATH   another library folder to compile against, repeatable - e.g. LoRaMesher and
+#                    RadioLib from a PlatformIO .pio/libdeps/<env>/, for a LoRa board without
+#                    installing them into the sketchbook
 #
 # Why this is not just "pio run"
 # ──────────────────────────────
@@ -61,6 +64,7 @@ DO_LIST=0
 EXAMPLE=""
 ENVNAME=""
 EXTRA_DEFINES=()
+EXTRA_LIBS=()
 
 # A while loop rather than "for arg in", so that -D can take its macro as the next word
 while [ $# -gt 0 ]; do
@@ -70,6 +74,9 @@ while [ $# -gt 0 ]; do
     --keep)         KEEP_BUILD=1 ;;   # kept anyway now, accepted for compatibility
     --clean)        CLEAN_BUILD=1 ;;
     --list)         DO_LIST=1 ;;
+    --library)      shift
+                    if [ $# -eq 0 ]; then echo "--library needs a path" >&2; exit 2; fi
+                    EXTRA_LIBS+=(--library "$1") ;;
     -D)             shift
                     if [ $# -eq 0 ]; then echo "-D needs a macro name" >&2; exit 2; fi
                     EXTRA_DEFINES+=("-D$1") ;;
@@ -111,11 +118,11 @@ fqbn_for_board() {
     ttgo-lora32-v21)        echo "esp32:esp32:ttgo-lora32" ;;
     lilygo-t3-s3)           echo "esp32:esp32:lilygo_t3s3" ;; # note: t3s3, not t3_s3
     heltec_wifi_lora_32_V3) echo "esp32:esp32:heltec_wifi_lora_32_V3" ;;
+    heltec_wifi_lora_32_V4) echo "esp32:esp32:heltec_wifi_lora_32_V4" ;;
     esp32dev)               echo "esp32:esp32:esp32" ;;              # "ESP32 Dev Module"
     nologo_esp32c3_super_mini) echo "esp32:esp32:nologo_esp32c3_super_mini" ;;
-    # sonoff_basic deliberately unmapped: Arduino's only Sonoff board is ITEAD Sonoff, which is
-    # the SV variant, not the Basic this code targets. Better to fail loudly than build for the
-    # wrong hardware.
+    # ITEAD Sonoff picks its model from a menu; Basic (the default) defines ARDUINO_ESP8266_SONOFF_BASIC
+    sonoff_basic)           echo "esp8266:esp8266:sonoff:BoardModel=sonoffBasic" ;;
     ttgo-t-beam)            echo "esp32:esp32:t-beam" ;;
     # Note there may also be an ancient esp8266com:esp8266 2.3.0 installed; esp8266:esp8266 is
     # the current core and the only one with d1_mini_pro
@@ -178,8 +185,27 @@ print(conv.get_board_name(sys.argv[2], sys.argv[3]))
 PYEOF
 }
 
-list_envs() { # $1 = platformio.ini
-  grep -oE '^\[env:[^]]+\]' "$1" | sed 's/^\[env://; s/\]$//'
+# Add a Menu=Option to an FQBN. The first goes after a colon, any more after commas -
+# esp32:esp32:ttgo-lora32:Revision=X,PartitionScheme=Y - a second colon is "not an FQBN".
+fqbn_add() { # $1 = fqbn  $2 = Menu=Option
+  if [ "$(echo "$1" | awk -F: '{print NF}')" -ge 4 ]; then echo "$1,$2"; else echo "$1:$2"; fi
+}
+
+# Does the env set ARDUINO_USB_CDC_ON_BOOT=1? In the IDE that is Tools > USB CDC On Boot, and the
+# generated platform.h stops the build unless it is Enabled - so select it, as a user would.
+cdc_for_env() { # $1 = platformio.ini  $2 = env
+  python3 - "$SCRIPTS_DIR" "$1" "$2" <<'PYEOF'
+import sys
+sys.path.insert(0, sys.argv[1])
+from generate_platform_h import PlatformIOConverter, needs_cdc_on_boot
+conv = PlatformIOConverter(sys.argv[2])
+conv.read_file()
+print("yes" if needs_cdc_on_boot(conv.env_flags(sys.argv[3])) else "")
+PYEOF
+}
+
+list_envs() { # $1 = platformio.ini - leaves out envs marked "; PIO ONLY", which Arduino cannot build
+  grep -E '^\[env:[^]]+\]' "$1" | grep -viE ';.*\bPIO ONLY\b' | grep -oE '^\[env:[^]]+\]' | sed 's/^\[env://; s/\]$//'
 }
 
 # PlatformIO's board_build.partitions -> Arduino's PartitionScheme menu option. Without this
@@ -312,6 +338,11 @@ if [ ! -f "$SKETCH_DIR/$EXAMPLE.ino" ]; then
   exit 1
 fi
 
+if grep -E "^\[env:$ENVNAME\]" "$PIO_INI" | grep -qiE ';.*\bPIO ONLY\b'; then
+  echo "[env:$ENVNAME] is marked PIO ONLY in $PIO_INI - the Arduino IDE cannot build it. Use: pio run -e $ENVNAME" >&2
+  echo "Environments in $EXAMPLE: $(list_envs "$PIO_INI" | tr '\n' ' ')" >&2
+  exit 1
+fi
 BOARD="$(board_for_env "$PIO_INI" "$ENVNAME")"
 if [ -z "$BOARD" ]; then
   echo "No [env:$ENVNAME] with a 'board =' in $PIO_INI" >&2
@@ -368,7 +399,7 @@ if [ "${CORE%%:*}" != "esp32" ]; then
 elif [ -n "$PARTITIONS" ]; then
   SCHEME="${PARTITIONS%.csv}"
   if echo "$BOARD_PROPS" | grep -q "^menu\.PartitionScheme\.$SCHEME="; then
-    FQBN="$FQBN:PartitionScheme=$SCHEME"
+    FQBN="$(fqbn_add "$FQBN" "PartitionScheme=$SCHEME")"
     PART_NOTE="$PARTITIONS -> menu PartitionScheme=$SCHEME"
   else
     DATA_DIR="$(arduino-cli config get directories.data 2>/dev/null)"
@@ -393,6 +424,11 @@ elif [ -n "$PARTITIONS" ]; then
           | sed -n 's/^menu\.PartitionScheme\.\([a-z_0-9]*\)=.*/\1/p' | sort -u | tr '\n' ' ')"
     fi
   fi
+fi
+
+if [ -n "$(cdc_for_env "$PIO_INI" "$ENVNAME")" ]; then
+  FQBN="$(fqbn_add "$FQBN" "CDCOnBoot=cdc")"
+  echo "== USB CDC On Boot: Enabled (the env sets ARDUINO_USB_CDC_ON_BOOT=1)"
 fi
 
 # ── extra defines ───────────────────────────────────────────────────────────────────────────
@@ -513,6 +549,7 @@ echo "== compiling"
 arduino-cli compile \
   --fqbn "$FQBN" \
   --library "$LIB_ROOT" \
+  "${EXTRA_LIBS[@]}" \
   "${BUILD_PROPS[@]}" \
   --build-path "$BUILD_DIR" \
   --warnings default \

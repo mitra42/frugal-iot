@@ -6,54 +6,37 @@
 #define PLATFORM_H
 
 // #define LANGUAGE_DEFAULT "id" // Default language for portal (if not en) - de,nl,id currently supported
-// #define ACTUATOR_LCD_WANT
-// #define ACTUATOR_LCD_COLS 20 // uncomment for 20x4 display (default is 16x2)
-// #define ACTUATOR_LCD_ROWS 4
 // #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
 // #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
-// #define SENSOR_DS18B20_PIN 6
 // #define SENSOR_SOIL_PIN 4
-// #define SENSOR_ULTRASONIC_SLAVE_ID 1
-// #define SYSTEM_RS485_RX_PIN 20
-// #define SYSTEM_RS485_TX_PIN 21
-// #define SYSTEM_SD_WANT // Uses LittleFS by default
-// #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
-// #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
-// #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
-// #define ACTUATOR_LCD_DEBUG
-// #define CONTROL_BLINKEN_DEBUG
-// #define CONTROL_CLIMATE_DEBUG
-// #define CONTROL_LOGGERFS_DEBUG
 // #define SENSOR_BH1750_DEBUG
 // #define SENSOR_DHT_DEBUG
-// #define SENSOR_AHT_DEBUG
-// #define SENSOR_ENS160_DEBUG
-// #define SENSOR_LOADCELL_DEBUG
-// #define SENSOR_MS5803_DEBUG
-// #define SENSOR_SHT_DEBUG
 // #define SENSOR_SOIL_DEBUG
-// #define SYSTEM_DISCOVERY_DEBUG
-// #define SYSTEM_FRUGAL_DEBUG
-// #define SYSTEM_LITTLEFS_DEBUG
 #define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration old to new file format, remove when none left in field
-// #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
-// #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG // report messages received, sent, looped etc
 // #define SYSTEM_MQTT_DEBUG
-// #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
-// #define SYSTEM_TIME_DEBUG
 // #define SYSTEM_WIFI_DEBUG
 #define SYSTEM_OTA_PREFIX "lilygohigrow"
 #define POWER_CTRL 4 // Required before reading anything TODO-power consumption turnoff outside loops TODO-115 move this to a system_power module
 #define LILYGOHIGROW // TODO-141 should be obsoleted by arguments in main.cpp
 #define CONFIG_ASYNC_TCP_STACK_SIZE 4096
 #define SYSTEM_OTA_SUFFIX "lilygohigrow"
+#define SENSOR_DHT_PIN 16
+#define SENSOR_SOIL_PIN 32
+#define SENSOR_BATTERY_PIN 33 // divider 6.6 is the library default for LILYGOHIGROW
+#define SENSOR_BUTTON_PIN 35
 
 // [env:lilygohigrow] - Tools > Board: ESP32 Dev Module
 #if defined(ARDUINO_ESP32_DEV) || defined(LILYGOHIGROW)
   #define FRUGAL_IOT_BOARD_CONFIGURED
 #endif // ARDUINO_ESP32_DEV
+
+// Your enrolment secret, if you made platform-secrets-local.h (see README.md). Never commit it.
+#if __has_include("platform-secrets-local.h")
+  #include "platform-secrets-local.h"
+#endif
+#define FRUGAL_IOT_SECRETS_CHECKED // Tells _settings.h not to include it again
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
   #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: ESP32 Dev Module"

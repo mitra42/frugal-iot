@@ -68,6 +68,10 @@ Pick a board that is not in the table and the build stops with a message listing
 that are - rather than quietly compiling on the library's defaults, which for most boards
 means the wrong pins.
 
+Board not listed? `examples/all/platformio.ini` has `[env:]` sections for more boards,
+including the LoRa ones. Copy one into this example's `platformio.ini`, add the pins this
+example uses, and re-run `scripts/generate_platform_h.py` to rebuild `platform.h`.
+
 ## ESP8266: one extra step
 
 In your saved copy, **Sketch > Show Sketch Folder** and rename

@@ -8,13 +8,8 @@
 
 // Every board
 // #define LANGUAGE_DEFAULT "id" // Default language for portal (if not en) - de,nl,id currently supported
-// #define ACTUATOR_LCD_WANT
-// #define ACTUATOR_LCD_COLS 20 // uncomment for 20x4 display (default is 16x2)
-// #define ACTUATOR_LCD_ROWS 4
 // #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
 // #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
-// #define SENSOR_DS18B20_PIN 6
-// #define SENSOR_SOIL_PIN 4
 // #define SENSOR_A01NYUB_WANT
 // #define SENSOR_A01NYUB_MIN_MM 200 // AJ-SR04M / SR04M-2 (A02YYUW: 30). A01NYUB: leave at 280
 // #define SENSOR_A01NYUB_MAX_MM 4500 // AJ-SR04M / SR04M-2 and A02YYUW. A01NYUB: leave at 7500
@@ -27,35 +22,15 @@
 // #define SENSOR_HCSR04_MAX_MM 4500
 #define SENSOR_HCSR04_TRIGGER_US 100 // only if it never returns an echo at the default 10us (if see "-") I found it needed >20 e.g. 100 when using 5V board at 3v3
 // #define SENSOR_HCSR04_INTERVAL_MS 100 // only if readings jump about
-// #define SYSTEM_SD_WANT // Uses LittleFS by default
-// #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
 // #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
-// #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
-// #define ACTUATOR_LCD_DEBUG
-// #define CONTROL_BLINKEN_DEBUG
-// #define CONTROL_CLIMATE_DEBUG
-// #define CONTROL_LOGGERFS_DEBUG
-// #define SENSOR_BH1750_DEBUG
-// #define SENSOR_DHT_DEBUG
 // #define SENSOR_A01NYUB_DEBUG
 // #define SENSOR_HCSR04_DEBUG
 // #define SENSOR_ULTRASONIC_DEBUG
-// #define SENSOR_LOADCELL_DEBUG
-// #define SENSOR_MS5803_DEBUG
-// #define SENSOR_SHT_DEBUG
-// #define SENSOR_SOIL_DEBUG
-// #define SYSTEM_DISCOVERY_DEBUG
-// #define SYSTEM_FRUGAL_DEBUG
-// #define SYSTEM_LITTLEFS_DEBUG
-#define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration old to new file format, remove when none left in field
-// #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
-// #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
-// #define SYSTEM_MESSAGE_DEBUG // report messages received, sent, looped etc
-// #define SYSTEM_MQTT_DEBUG
-// #define SYSTEM_OTA_DEBUG
-// #define SYSTEM_POWER_DEBUG
-// #define SYSTEM_TIME_DEBUG
-// #define SYSTEM_WIFI_DEBUG
+#define SYSTEM_MESSAGE_DEBUG // report messages received, sent, looped etc
+#define SYSTEM_MQTT_DEBUG
+#define SYSTEM_OTA_DEBUG
+#define SYSTEM_POWER_DEBUG
+#define SYSTEM_WIFI_DEBUG
 #define SYSTEM_OTA_PREFIX "ultrasonic"
 #define CONFIG_ASYNC_TCP_STACK_SIZE 4096
 

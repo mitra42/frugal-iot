@@ -7,45 +7,15 @@
 
 // Every board
 // #define LANGUAGE_DEFAULT "id" // Default language for portal (if not en) - de,nl,id currently supported
-// #define ACTUATOR_LCD_WANT
-// #define ACTUATOR_LCD_COLS 20 // uncomment for 20x4 display (default is 16x2)
-// #define ACTUATOR_LCD_ROWS 4
 // #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
 // #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
-// #define SENSOR_DS18B20_PIN 6
-// #define SENSOR_SOIL_PIN 4
-// #define SENSOR_ULTRASONIC_SLAVE_ID 1
-// #define SYSTEM_RS485_RX_PIN 20
-// #define SYSTEM_RS485_TX_PIN 21
-// #define SYSTEM_SD_WANT // Uses LittleFS by default
-// #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
 #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
-// #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
-// #define ACTUATOR_LCD_DEBUG
-// #define CONTROL_BLINKEN_DEBUG
-// #define CONTROL_CLIMATE_DEBUG
-// #define CONTROL_LOGGERFS_DEBUG
 // #define SENSOR_BATTERY_NONE // No battery sensor, even where the board has a default pin
-// #define SENSOR_BH1750_DEBUG
-// #define SENSOR_DHT_DEBUG
-// #define SENSOR_AHT_DEBUG
-// #define SENSOR_ENS160_DEBUG
-// #define SENSOR_LOADCELL_DEBUG
-// #define SENSOR_MS5803_DEBUG
 // #define SENSOR_SHT_DEBUG
-// #define SENSOR_SOIL_DEBUG
-// #define SYSTEM_DISCOVERY_DEBUG
-// #define SYSTEM_FRUGAL_DEBUG
-// #define SYSTEM_LITTLEFS_DEBUG
 #define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration old to new file format, remove when none left in field
-// #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
-// #define SYSTEM_GROUP_DEBUG // debug the process of passing messages through modules - useful to find in which module a crash occurs
-// #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG // debug the message passing process and messages in/out
 // #define SYSTEM_MQTT_DEBUG
-// #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
-// #define SYSTEM_TIME_DEBUG
 // #define SYSTEM_WIFI_DEBUG
 #define SYSTEM_OTA_PREFIX "loramesher"
 #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia; Note there are country specific laws as to what this needs to be
@@ -109,6 +79,12 @@
   #define OLED_SCL 22
   #define SYSTEM_OTA_SUFFIX "tbeam_oled"
 #endif // TBEAM_OLED
+
+// Your enrolment secret, if you made platform-secrets-local.h (see README.md). Never commit it.
+#if __has_include("platform-secrets-local.h")
+  #include "platform-secrets-local.h"
+#endif
+#define FRUGAL_IOT_SECRETS_CHECKED // Tells _settings.h not to include it again
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
   #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"

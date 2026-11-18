@@ -56,6 +56,7 @@ class PlatformIOConverter:
             "lilygo-t3-s3": "ARDUINO_LILYGO_T3_S3_V1_X",    # Arduino: ARDUINO_LILYGO_T3S3_<radio>
             "ttgo-t-beam": "ARDUINO_T_Beam",                # Arduino: ARDUINO_TBEAM_USE_RADIO_<radio>
             "heltec_wifi_lora_32_V3": "ARDUINO_heltec_wifi_lora_32_V3", # Arduino: uppercase HELTEC
+            "heltec_wifi_lora_32_V4": "ARDUINO_heltec_wifi_lora_32_V4", # Arduino: uppercase HELTEC
             "esp32-c3-devkitm-1": "ARDUINO_ESP32C3_DEV",
             "seeed_xiao_esp32c3": "ARDUINO_XIAO_ESP32C3",   # Same macro in PlatformIO and Arduino
             # esp32dev - PlatformIO and Arduino ("ESP32 Dev Module") agree on this one
@@ -68,10 +69,7 @@ class PlatformIOConverter:
             # ARDUINO_NOLOGO_ESP32C3_SUPER_MINI, which is unambiguous, so use that and add no
             # alias in _settings.h (an alias would reintroduce exactly the collision).
             "nologo_esp32c3_super_mini": "ARDUINO_NOLOGO_ESP32C3_SUPER_MINI",
-            # sonoff_basic intentionally left as PlatformIO's macro with NO alias: Arduino's only
-            # Sonoff board is "ITEAD Sonoff" = ARDUINO_ESP8266_SONOFF_SV, and SV is different
-            # hardware from the Basic this code targets. So the sonoff ESP8266 env cannot
-            # currently be configured from the Arduino IDE - see notes in _settings.h.
+            # Same macro in PlatformIO and Arduino, where it is "ITEAD Sonoff" with Model = Basic
             "sonoff_basic": "ARDUINO_ESP8266_SONOFF_BASIC",
         }
 
@@ -102,12 +100,12 @@ class PlatformIOConverter:
             "lilygo-t3-s3": "LilyGo T3-S3",
             "ttgo-t-beam": "T-Beam",
             "heltec_wifi_lora_32_V3": "Heltec WiFi LoRa 32(V3)",
+            "heltec_wifi_lora_32_V4": "Heltec WiFi LoRa 32(V4)",
             "esp32-c3-devkitm-1": "ESP32C3 Dev Module",
             "seeed_xiao_esp32c3": "XIAO_ESP32C3",
             "esp32dev": "ESP32 Dev Module",
             "nologo_esp32c3_super_mini": "Nologo ESP32C3 Super Mini",
-            # No Arduino board matches sonoff_basic - see board_defines above
-            "sonoff_basic": "(no matching Arduino board)",
+            "sonoff_basic": "ITEAD Sonoff, with Model = ITEAD Sonoff Basic",
         }
 
     # ---------------------------------------------------------------- reading platformio.ini
@@ -123,6 +121,9 @@ class PlatformIOConverter:
             self.lines = f.readlines()
         self.sections: Dict[str, Dict[str, List[str]]] = {}
         self.section_order: List[str] = []
+        # "[env:r4] ; PIO ONLY" - an env the Arduino IDE cannot build (it needs PlatformIO's
+        # board_build.variants_dir or a board JSON of its own), so platform.h and the README leave it out
+        self.pio_only_sections = set()
         section = None
         key = None
         for line in self.lines:
@@ -132,6 +133,8 @@ class PlatformIOConverter:
                 continue
             if bare.startswith('[') and not stripped[0].isspace():
                 section = self.strip_trailing_comment(bare).strip()[1:-1].strip()
+                if PIO_ONLY.search(bare):
+                    self.pio_only_sections.add(section)
                 if section not in self.sections:
                     self.sections[section] = {}
                     self.section_order.append(section)
@@ -287,8 +290,11 @@ class PlatformIOConverter:
         sections = []
         self.env_platforms = {}  # env name -> 'espressif8266' | 'espressif32'
         self.env_arduino_default = set()  # envs marked custom_arduino_default
+        self.pio_only_envs = []  # envs marked "; PIO ONLY" - left out of everything Arduino
         for name in self.section_order:
-            if name.startswith('env:'):
+            if name.startswith('env:') and name in self.pio_only_sections:
+                self.pio_only_envs.append(name[4:])
+            elif name.startswith('env:'):
                 env_name = name[4:]
                 sections.append((env_name, self.sections[name]))
                 platform = self.env_value(env_name, 'platform')
@@ -399,7 +405,7 @@ class PlatformIOConverter:
         common_keys = set(f.key for f in common)
         if common:
             out.append("// Every board\n" if len(members) > 1 else "")
-            out.extend(f.render() + "\n" for f in common)
+            out.extend(render_flag(f, "") for f in common)
             out.append("\n")
 
         for board_define, active, others in groups:
@@ -461,6 +467,14 @@ class PlatformIOConverter:
             out.append("#endif\n")
             out.append("#define FRUGAL_IOT_SECRETS_CHECKED // Tells _settings.h not to include it again\n\n")
 
+        if self.pio_only_envs:
+            names = ", ".join(f"[env:{e}]" for e in self.pio_only_envs)
+            out.append(f"// No block for {names}: marked PIO ONLY in platformio.ini\n\n")
+            if not self.guards_used:
+                verb = "needs" if len(self.pio_only_envs) == 1 else "need"
+                out.append(f'#error "This example is PlatformIO only: {", ".join(self.pio_only_envs)} '
+                           f'{verb} board files the Arduino IDE cannot use - see README.md"\n\n')
+
         # Catch-all: if none of the blocks above matched, the selected board has no settings in
         # this file and the sketch would otherwise compile with library defaults only - a build
         # that looks fine and is not what anyone intended. Fail loudly instead.
@@ -483,7 +497,7 @@ class PlatformIOConverter:
         # Marker for the catch-all at the end of the file. Namespaced because on ESP8266 this
         # file is force-included into EVERY translation unit, the core's own sources included.
         out.append("  #define FRUGAL_IOT_BOARD_CONFIGURED\n")
-        out.extend("  " + f.render() + "\n" for f in flags if f.key not in common_keys)
+        out.extend(render_flag(f, "  ") for f in flags if f.key not in common_keys)
 
     def write_output(self, output_file: str, family: Optional[str] = None,
                      guard: str = "PLATFORM_H", marker: Optional[str] = None,
@@ -576,6 +590,25 @@ def esp8266_shim(sketch: str) -> str:
 #include "../sketch/platform.h"
 """
 
+def needs_cdc_on_boot(flags) -> bool:
+    """An env whose Serial is the chip's own USB - in the Arduino IDE that is a Tools menu setting."""
+    return any(f.name == "ARDUINO_USB_CDC_ON_BOOT" and f.value == "1" and not f.commented for f in flags)
+
+
+def render_flag(f: "Flag", indent: str) -> str:
+    """A flag as platform.h lines. ARDUINO_USB_CDC_ON_BOOT=1 is the exception: in the Arduino IDE it is
+    the Tools > USB CDC On Boot menu, compiled into the core before this file is read - a #define
+    here would change nothing - so check the menu was set instead."""
+    if needs_cdc_on_boot([f]):
+        return (f"{indent}#if !ARDUINO_USB_CDC_ON_BOOT // {f.comment or 'Serial = USB'}\n"
+                f'{indent}  #error "Set Tools > USB CDC On Boot > Enabled - this board has no USB-serial chip, '
+                f'so without it the Serial Monitor stays empty"\n'
+                f"{indent}#endif\n")
+    return indent + f.render() + "\n"
+
+
+PIO_ONLY = re.compile(r";.*\bPIO ONLY\b", re.I)  # marks an [env:] the Arduino IDE cannot build
+
 README_BEGIN = "<!-- BEGIN generated by scripts/generate_platform_h.py - do not edit inside -->"
 README_END = "<!-- END generated -->"
 
@@ -619,14 +652,26 @@ def example_readme_block(conv: "PlatformIOConverter", sketch: str, has_shim: boo
             "    pio run -e <env>              # build",
             "    pio run -e <env> -t upload    # build and flash",
             "    pio run -e <env> -t uploadfs  # write data/ (wifi credentials, config)", ""]
+    pio_only = [f"`{e}`" for e in conv.pio_only_envs]
     if default_env:
-        out += [f"`<env>` is a name from the table below, for example `{default_env}`.", ""]
+        out += [f"`<env>` is a name from the table below, for example `{default_env}`"
+                + (f" - or {', '.join(pio_only)}, which only PlatformIO can build." if pio_only else "."), ""]
+    elif pio_only:
+        out += [f"`<env>` is {' or '.join(pio_only)}.", ""]
     out += ["Before flashing, give the node your organization's enrolment secret: copy",
             "`templates/platformio-secrets-local.ini.template` from the library to",
             "`platformio-secrets-local.ini` beside `platformio.ini`, and paste the line the dashboard",
             "gives you (gear icon > Nodes > Enrolment secret) over the placeholder. Without it the node",
             "is refused until an administrator approves it by hand. `platformio-local.ini.template` is",
             "the optional one, for your own debug flags and serial port. Neither file is committed.", ""]
+
+    if not groups:
+        # Every env is PIO ONLY - nothing for the Arduino IDE to build
+        out += ["## Arduino IDE", "",
+                f"This example is PlatformIO only: {', '.join(pio_only)} "
+                f"{'needs' if len(pio_only) == 1 else 'need'} board files that the Arduino IDE cannot use.", "",
+                README_END]
+        return "\n".join(out) + "\n"
 
     # Named per family, so an ESP32-only example does not send people off to add a board URL
     cores = []
@@ -661,6 +706,14 @@ def example_readme_block(conv: "PlatformIOConverter", sketch: str, has_shim: boo
             selector = "" if member is active else f"`{conv.get_env_selector(env_name)}`"
             out.append(f"| {label} | `{env_name}` | {selector} |")
     out.append("")
+    cdc = [m[0] for _bd, a, o in groups for m in [a] + o if needs_cdc_on_boot(m[1])]
+    if cdc:
+        names = ", ".join(f"`{e}`" for e in cdc)
+        out += [f"For {names}, also set **Tools > USB CDC On Boot > Enabled**. The board has no USB-serial",
+                "chip, so without it the Serial Monitor stays empty - the build stops to remind you.", ""]
+    if pio_only:
+        out += [f"Not in the table: {', '.join(pio_only)}, which only PlatformIO can build - "
+                f"{'it needs' if len(pio_only) == 1 else 'they need'} board files the Arduino IDE cannot use.", ""]
 
     lora_macros = loramesher_board_defines()
     # Up to the comma, as the TTGO label goes on to name a Board Revision; the table has that
@@ -711,6 +764,10 @@ def example_readme_block(conv: "PlatformIOConverter", sketch: str, has_shim: boo
     out += ["Pick a board that is not in the table and the build stops with a message listing the ones",
             "that are - rather than quietly compiling on the library's defaults, which for most boards",
             "means the wrong pins.", ""]
+    if sketch != "all":  # examples/all is where the other boards' [env:] sections live
+        out += ["Board not listed? `examples/all/platformio.ini` has `[env:]` sections for more boards,",
+                "including the LoRa ones. Copy one into this example's `platformio.ini`, add the pins this",
+                "example uses, and re-run `scripts/generate_platform_h.py` to rebuild `platform.h`.", ""]
 
     if has_shim:
         out += ["## ESP8266: one extra step", "",

@@ -7,43 +7,16 @@
 
 // Every board
 // #define LANGUAGE_DEFAULT "id" // Default language for portal (if not en) - de,nl,id currently supported
-// #define ACTUATOR_LCD_WANT
-// #define ACTUATOR_LCD_COLS 20 // uncomment for 20x4 display (default is 16x2)
-// #define ACTUATOR_LCD_ROWS 4
 // #define SENSOR_BATTERY_PIN 0 // Read battery voltage on pin 0 as its external (note pin 5 failed for some reason)
 // #define SENSOR_BATTERY_VOLTAGE_DIVIDER 2 // Typically use a 100k+100k voltage divider on external power supplies
 // #define SENSOR_DS18B20_PIN 6
 // #define SENSOR_SOIL_PIN 4
-// #define SENSOR_ULTRASONIC_SLAVE_ID 1
-// #define SYSTEM_RS485_RX_PIN 20
-// #define SYSTEM_RS485_TX_PIN 21
-// #define SYSTEM_SD_WANT // Uses LittleFS by default
-// #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
-// #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
-// #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
-// #define ACTUATOR_LCD_DEBUG
-// #define CONTROL_BLINKEN_DEBUG
-// #define CONTROL_CLIMATE_DEBUG
-// #define CONTROL_LOGGERFS_DEBUG
-// #define SENSOR_BH1750_DEBUG
-// #define SENSOR_DHT_DEBUG
-// #define SENSOR_AHT_DEBUG
-// #define SENSOR_ENS160_DEBUG
-// #define SENSOR_LOADCELL_DEBUG
-// #define SENSOR_MS5803_DEBUG
 // #define SENSOR_SHT_DEBUG
 // #define SENSOR_SOIL_DEBUG
-// #define SYSTEM_DISCOVERY_DEBUG
-// #define SYSTEM_FRUGAL_DEBUG
-// #define SYSTEM_LITTLEFS_DEBUG
 #define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration old to new file format, remove when none left in field
-// #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
-// #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG // report messages received, sent, looped etc
 // #define SYSTEM_MQTT_DEBUG
-// #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
-// #define SYSTEM_TIME_DEBUG
 // #define SYSTEM_WIFI_DEBUG
 #define SYSTEM_OTA_PREFIX "agri"
 #define CONFIG_ASYNC_TCP_STACK_SIZE 4096 // defaults to 16384 and additional to RAM size figure in build
@@ -118,7 +91,9 @@
   #define FRUGAL_IOT_BOARD_CONFIGURED
   #define SYSTEM_OTA_SUFFIX "c3_wedoo"
   #define ARDUINO_USB_MODE 1
-  #define ARDUINO_USB_CDC_ON_BOOT 1
+  #if !ARDUINO_USB_CDC_ON_BOOT // Serial = USB
+    #error "Set Tools > USB CDC On Boot > Enabled - this board has no USB-serial chip, so without it the Serial Monitor stays empty"
+  #endif
   #define SENSOR_SHT_3v3_PIN 0
   #define I2C_WIRE Wire
   #define I2C_SDA 1
@@ -129,59 +104,8 @@
   #define SENSOR_DS18B20_0v_PIN 7
 #endif // ARDUINO_ESP32C3_DEV
 
-// [env:ttgo-lora32-v21] - Tools > Board: TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1)
-#if defined(ARDUINO_TTGO_LoRa32_v21new) || defined(TTGO_LORA32_V21)
-  #define FRUGAL_IOT_BOARD_CONFIGURED
-  #define SYSTEM_OTA_SUFFIX "ttgo-lora32-v21"
-  #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-  // #define LORA_DUTY_CYCLE 0.01f // Uncomment for 868.0F (Europe), legally limited to 1% of airtime. Default 5% - see loramesher.cpp
-  // #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
-  // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
-  // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib
-#endif // ARDUINO_TTGO_LoRa32_v21new
-
-#if (defined(LILYGO_T3_S3_SX127X) + defined(LILYGO_T3_S3_SX127X_SHT)) > 1
-  #error "LILYGO_T3_S3_SX127X, LILYGO_T3_S3_SX127X_SHT are alternative settings for one board - define at most one"
-#endif
-// [env:lilygo_t3_s3_sx127x] - Tools > Board: LilyGo T3-S3. The default of 2 for this board
-#if (defined(ARDUINO_LILYGO_T3_S3_V1_X) && !defined(LILYGO_T3_S3_SX127X_SHT)) || defined(LILYGO_T3_S3_SX127X)
-  #define FRUGAL_IOT_BOARD_CONFIGURED
-  #define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x"
-  #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-  // #define LORA_DUTY_CYCLE 0.01f // Uncomment for 868.0F (Europe), legally limited to 1% of airtime. Default 5% - see loramesher.cpp
-  // #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
-  // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
-  // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib
-#endif // ARDUINO_LILYGO_T3_S3_V1_X
-
-// [env:lilygo_t3_s3_sx127x_sht] - Tools > Board: LilyGo T3-S3, then -DLILYGO_T3_S3_SX127X_SHT in a build_opt.h beside the .ino (see README.md)
-#if defined(LILYGO_T3_S3_SX127X_SHT)
-  #define FRUGAL_IOT_BOARD_CONFIGURED
-  #define SYSTEM_OTA_SUFFIX "lilygo_t3_s3_sx127x_sht"
-  #define SENSOR_SHT_WANT // I2C Sensor
-  #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-  // #define LORA_DUTY_CYCLE 0.01f // Uncomment for 868.0F (Europe), legally limited to 1% of airtime. Default 5% - see loramesher.cpp
-  // #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
-  // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
-  // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib
-#endif // LILYGO_T3_S3_SX127X_SHT
-
-#if (defined(HELTEC_WIFI_LORA_32_V3) + defined(HELTEC_WIFI_LORA_32_V32)) > 1
-  #error "HELTEC_WIFI_LORA_32_V3, HELTEC_WIFI_LORA_32_V32 are alternative settings for one board - define at most one"
-#endif
-// [env:heltec_wifi_lora_32_V3] - Tools > Board: Heltec WiFi LoRa 32(V3). The default of 2 for this board
-#if (defined(ARDUINO_heltec_wifi_lora_32_V3) && !defined(HELTEC_WIFI_LORA_32_V32)) || defined(HELTEC_WIFI_LORA_32_V3)
-  #define FRUGAL_IOT_BOARD_CONFIGURED
-  #define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v3"
-  #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-  // #define LORA_DUTY_CYCLE 0.01f // Uncomment for 868.0F (Europe), legally limited to 1% of airtime. Default 5% - see loramesher.cpp
-  // #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
-  // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
-  // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib
-#endif // ARDUINO_heltec_wifi_lora_32_V3
-
-// [env:heltec_wifi_lora_32_V32] - Tools > Board: Heltec WiFi LoRa 32(V3), then -DHELTEC_WIFI_LORA_32_V32 in a build_opt.h beside the .ino (see README.md)
-#if defined(HELTEC_WIFI_LORA_32_V32)
+// [env:heltec_wifi_lora_32_V32] - Tools > Board: Heltec WiFi LoRa 32(V3)
+#if defined(ARDUINO_heltec_wifi_lora_32_V3) || defined(HELTEC_WIFI_LORA_32_V32)
   #define FRUGAL_IOT_BOARD_CONFIGURED
   #define ARDUINO_heltec_wifi_lora_32_V32 // If using 3.2 board uncomment this
   #define SYSTEM_OTA_SUFFIX "heltec_wifi_lora_32_v32"
@@ -190,37 +114,16 @@
   // #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
   // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
   // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib
-#endif // HELTEC_WIFI_LORA_32_V32
+#endif // ARDUINO_heltec_wifi_lora_32_V3
 
-#if (defined(TBEAM) + defined(TBEAM_OLED)) > 1
-  #error "TBEAM, TBEAM_OLED are alternative settings for one board - define at most one"
+// Your enrolment secret, if you made platform-secrets-local.h (see README.md). Never commit it.
+#if __has_include("platform-secrets-local.h")
+  #include "platform-secrets-local.h"
 #endif
-// [env:tbeam] - Tools > Board: T-Beam. The default of 2 for this board
-#if (defined(ARDUINO_T_Beam) && !defined(TBEAM_OLED)) || defined(TBEAM)
-  #define FRUGAL_IOT_BOARD_CONFIGURED
-  #define SYSTEM_OTA_SUFFIX "tbeam"
-  #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-  // #define LORA_DUTY_CYCLE 0.01f // Uncomment for 868.0F (Europe), legally limited to 1% of airtime. Default 5% - see loramesher.cpp
-  // #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
-  // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
-  // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib
-#endif // ARDUINO_T_Beam
-
-// [env:tbeam_oled] - Tools > Board: T-Beam, then -DTBEAM_OLED in a build_opt.h beside the .ino (see README.md)
-#if defined(TBEAM_OLED)
-  #define FRUGAL_IOT_BOARD_CONFIGURED
-  #define OLED_SDA 21
-  #define OLED_SCL 22
-  #define SYSTEM_OTA_SUFFIX "tbeam_oled"
-  #define SYSTEM_LORAMESHER_FREQUENCY 915.0F // 868.0F for Europe, 915.0F for US/AU; 433.0F for Asia
-  // #define LORA_DUTY_CYCLE 0.01f // Uncomment for 868.0F (Europe), legally limited to 1% of airtime. Default 5% - see loramesher.cpp
-  // #define SYSTEM_LORAMESHER_DEBUG // to get debugging at the app (not LoRaMesher or Radio) layers
-  // #define CORE_DEBUG_LEVEL 5 // To get lots of debugging out of LoraMesher
-  // #define RADIOLIB_DEBUG_BASIC // Debugging from RadioLib
-#endif // TBEAM_OLED
+#define FRUGAL_IOT_SECRETS_CHECKED // Tells _settings.h not to include it again
 
 #ifndef FRUGAL_IOT_BOARD_CONFIGURED
-  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Mini / LOLIN S2 Mini / ESP32C3 Dev Module / TTGO LoRa32-OLED, with Board Revision = TTGO LoRa32 V2.1 (1.6.1) / LilyGo T3-S3 / Heltec WiFi LoRa 32(V3) / T-Beam"
+  #error "This board has no settings in platform.h. Under Tools > Board, select one of the boards this example supports, or add a section for yours to its platformio.ini and re-run scripts/generate_platform_h.py. Supported here: LOLIN C3 Mini / LOLIN S2 Mini / ESP32C3 Dev Module / Heltec WiFi LoRa 32(V3)"
 #endif
 
 #endif // PLATFORM_H

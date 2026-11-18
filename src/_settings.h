@@ -37,6 +37,10 @@
 #if defined(ARDUINO_HELTEC_WIFI_LORA_32_V3) && !defined(ARDUINO_heltec_wifi_lora_32_V3)
   #define ARDUINO_heltec_wifi_lora_32_V3
 #endif
+// Heltec WiFi LoRa 32 V4 - same again (examples/gps/boards/ gives PlatformIO the lowercase one)
+#if defined(ARDUINO_HELTEC_WIFI_LORA_32_V4) && !defined(ARDUINO_heltec_wifi_lora_32_V4)
+  #define ARDUINO_heltec_wifi_lora_32_V4
+#endif
 // LilyGo T3-S3 - Arduino says LILYGO_T3_S3, or LILYGO_T3S3_<radio> once a Revision is picked
 #if !defined(ARDUINO_LILYGO_T3_S3_V1_X) && ( \
      defined(ARDUINO_LILYGO_T3_S3)         || defined(ARDUINO_LILYGO_T3S3_SX1262) \
@@ -331,6 +335,11 @@
 
 
 // Pin definitions that should really be in the variant files could submit PR
+#ifdef ARDUINO_SONOFF_BASICR4 // Uses the stock esp32c3 variant; its own is in examples/sonoff/variants
+  #define BUILTIN_BUTTON 9
+  #define BUTTON_BUILTIN 9
+  #define RELAY_BUILTIN 4
+#endif
 #ifdef ARDUINO_LOLIN_S2_MINI
   #define BUILTIN_BUTTON 0 // This is GPIO0, on pin 5, 
 #endif

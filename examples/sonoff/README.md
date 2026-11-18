@@ -31,14 +31,14 @@ the optional one, for your own debug flags and serial port. Neither file is comm
    (in your sketchbook, under `libraries/Frugal-IoT`) into the sketch folder (**Sketch > Show
    Sketch Folder**) as `platform-secrets-local.h`, and paste the secret from the dashboard
    (gear icon > Nodes > Enrolment secret). Without it the node is refused until an
-   administrator approves it by hand. On ESP8266, put the same `#define` in the globals file instead - see below.
+   administrator approves it by hand.
 
 Opening `sonoff.ino` from a download or a git clone does not install the library, and
 the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first.
 
 | Tools > Board | configuration | also define |
 | --- | --- | --- |
-| (no matching Arduino board) | `r2` |  |
+| ITEAD Sonoff, with Model = ITEAD Sonoff Basic | `r2` |  |
 | ESP32C3 Dev Module | `r4` |  |
 | LOLIN S2 Mini | `s2_mini` |  |
 
@@ -46,11 +46,20 @@ Pick a board that is not in the table and the build stops with a message listing
 that are - rather than quietly compiling on the library's defaults, which for most boards
 means the wrong pins.
 
+Board not listed? `examples/all/platformio.ini` has `[env:]` sections for more boards,
+including the LoRa ones. Copy one into this example's `platformio.ini`, add the pins this
+example uses, and re-run `scripts/generate_platform_h.py` to rebuild `platform.h`.
+
 ## ESP8266: one extra step
 
-The ESP8266 settings live in `esp8266/sonoff.ino.globals.h`, and that file has to be
-moved up beside `sonoff.ino` before it is read. See `esp8266/README.md` - it is one
-drag and no rename. ESP32 and PlatformIO users can ignore the folder.
+In your saved copy, **Sketch > Show Sketch Folder** and rename
+`X_sonoff.ino.globals.h` to `sonoff.ino.globals.h` - just remove the `X_`. If you
+saved it under a new name, use that: `mytank.ino` needs `mytank.ino.globals.h`. Without it
+the build stops with a message saying so. ESP32 and PlatformIO users leave the file alone.
+
+The ESP8266 core reads only a file with exactly that name, which is how the settings in
+`platform.h` reach it. The example cannot ship it under that name, because the Arduino IDE
+then leaves the example out of **File > Examples**.
 
 ## If it does not fit
 
