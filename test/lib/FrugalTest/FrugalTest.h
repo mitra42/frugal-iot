@@ -116,6 +116,24 @@ inline String statusText(bool full = false) {
   return out.text;
 }
 
+// The current value of an IO, e.g. statusValue("sht/temperature") - from the status page, so it
+// is the value held now, whether or not anything has been published since clearOutgoing()
+inline String statusValue(const String& twig) {
+  const String text = statusText();
+  const String key = String("\n") + twig + " ";
+  String value = "<none>";
+  const int start = text.indexOf(key);
+  if (start >= 0) {
+    const int from = start + key.length();
+    int to = from;
+    while ((to < (int)text.length()) && (text.charAt(to) != ' ') && (text.charAt(to) != '\n') && (text.charAt(to) != '\r')) {
+      to++;
+    }
+    value = text.substring(from, to);
+  }
+  return value;
+}
+
 // TEST_ASSERT on a String containing another, printing both if it does not
 #define TEST_ASSERT_CONTAINS(needle, haystack) \
   TEST_ASSERT_MESSAGE(String(haystack).indexOf(needle) >= 0, (String("expected \"") + (needle) + "\" in:\n" + (haystack)).c_str())

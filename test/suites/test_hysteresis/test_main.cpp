@@ -44,9 +44,22 @@ void test_no_reading_publishes_nan_once() {
   TEST_ASSERT_NULL(published("fake/fake"));
 }
 
-void test_hysteresis_switches_on_and_off() {
+/* Wired to the local sensor, limit 20, output off, and nothing published yet.
+ *
+ * Every test using the output starts here, because an output only publishes when it CHANGES -
+ * a test expecting "1" from a node whose output was left on by an earlier test sees nothing.
+ */
+static void startOff() {
+  inject("set/controlhysteresis/now/wired", frugal_iot.messages->path("fake/fake"));
   inject("set/controlhysteresis/limit", "20");
   pump();
+  reading(10);
+  TEST_ASSERT_EQUAL_STRING("0", statusValue("controlhysteresis/out").c_str());
+  clearOutgoing();
+}
+
+void test_hysteresis_switches_on_and_off() {
+  startOff();
   reading(25);
   TEST_ASSERT_EQUAL_STRING("1", latest("controlhysteresis/out").c_str());
   reading(15);
@@ -54,8 +67,7 @@ void test_hysteresis_switches_on_and_off() {
 }
 
 void test_hysteresis_holds_when_input_has_no_reading() {
-  inject("set/controlhysteresis/limit", "20");
-  pump();
+  startOff();
   reading(25);
   TEST_ASSERT_EQUAL_STRING("1", latest("controlhysteresis/out").c_str());
   clearOutgoing();
@@ -79,7 +91,7 @@ void test_status_marks_persisted_limit() {
 
 void test_rewire_to_another_node() {
   const String remote = String("test/test/esp32-remote/sht/temperature");
-  inject("set/controlhysteresis/limit", "30");
+  startOff();
   inject("set/controlhysteresis/now/wired", remote);
   pump();
   TEST_ASSERT_TRUE(subscribed(remote));
@@ -87,10 +99,10 @@ void test_rewire_to_another_node() {
   TEST_ASSERT_TRUE(persisted("controlhysteresis", "now/wired"));
   injectPath(remote, "25");
   pump();
-  TEST_ASSERT_EQUAL_STRING("0", latest("controlhysteresis/out").c_str());
-  injectPath(remote, "35");
-  pump();
   TEST_ASSERT_EQUAL_STRING("1", latest("controlhysteresis/out").c_str());
+  injectPath(remote, "15");
+  pump();
+  TEST_ASSERT_EQUAL_STRING("0", latest("controlhysteresis/out").c_str());
   // The local sensor is no longer what drives it
   clearOutgoing();
   reading(10);

@@ -817,8 +817,10 @@ controlhysteresis/limit/wired esp32-a41f3c/sht/temperature
 **The `*` means the filesystem holds it**, so it survives a restart. That is the one thing on the
 page you cannot find out any other way — a value that is only in RAM looks identical to one that
 will come back after a reboot, and on a node in a field that difference is most of what you want
-to know. It is tested against the path `maybeWriteToFS()` would have written to:
-`/<topicTwig>/<param>`, or `/<topicTwig>/value` for the IO's own value.
+to know. It is tested against the file `maybeWriteToFS()` would have written, built the same
+way with `configPath()`: `/<module>.<io>.<param>`, or `/<module>.<io>.value` for the IO's own
+value. Until 2026-11-18 all three checks built the pre-flat `/<module>/<io>/<param>` path, so
+after the flat layout no `*` ever appeared - found by `test/suites/test_hysteresis`.
 
 **What the short form shows:** the value; the wired path when there is one; and min/max/color only
 when they **differ from the default** — the same test `discover()` makes. A parameter persisted at
@@ -827,7 +829,7 @@ its default value is a no-op, since it changes nothing at setup, so a line sayin
 **System modules report what they hold too.** `System_Base::statusLines` gives every module its
 `name` when that has been persisted (i.e. renamed — the compiled-in name is already in the header),
 and `System_Base::statusLine(out, leaf, value)` prints a module-level setting that is not an IO,
-checked against the `/<id>/<leaf>` path `writeConfigToFS()` uses. The rule is that the short form
+checked against the `configPath(id, leaf)` file `writeConfigToFS()` uses. The rule is that the short form
 carries whatever `dispatch()` handles and keeps in a member:
 
 | Module | Short form | Full form adds |
