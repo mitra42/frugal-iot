@@ -105,6 +105,14 @@ definition, but Arduino has a real `esp32:esp32:lolin_c3_pico` defining `ARDUINO
 natively. Some boards also need a menu option: TTGO LoRa32-OLED picks its variant through
 `Revision=TTGO_LoRa32_v21new`, and without it you silently get the V1 default.
 
+### Tests: `test/`, on a board, through messages
+
+`cd test && pio test -e c3_pico`. Each `test/suites/test_*` folder is one firmware/node built
+from the working tree (`symlink://..`), with `Sensor_Fake` for readings. Tests talk to it only
+through messages: `inject()` in, `System_Messages::outgoing` out (public for this reason). The
+board's LittleFS is **formatted** by every suite. ESP32 envs only. See `test/README.md` for the
+helpers and the PlatformIO quirks. When adding a module, add a suite for its message behaviour.
+
 ### Partitions: getting min_spiffs in the Arduino IDE
 
 Why this is needed: these boards' default partition scheme (`default.csv`) gives **1,310,720

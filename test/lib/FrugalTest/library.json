@@ -1,0 +1,7 @@
+{
+    "name": "FrugalTest",
+    "version": "0.0.1",
+    "description": "Helpers shared by the Frugal-IoT test suites - not part of the library",
+    "frameworks": "arduino",
+    "platforms": "*"
+}

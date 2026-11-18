@@ -62,11 +62,11 @@ class System_Message { // Only used for outgoing queued messages
     void maybeWriteToFS(bool appendValue = false);
     void maybeEcho();
     void maybeWriteToFSandEcho(bool appendValue = false);
-  protected:
-    friend class System_Messages;
-    // Only relevant/accurate on outgoing
+    // Only relevant/accurate on outgoing. Public so the tests in test/ can check them.
     const bool retain;
     const int qos;
+  protected:
+    friend class System_Messages;
     bool send();
     void dispatch();
     bool queuedMessage();
@@ -118,9 +118,11 @@ class System_Messages : public System_Base {
       // locally-registered subscription whose topic path starts with that peer's prefix.
       void subscribeViaMdns(const String& peerNodeId, IPAddress ip, uint16_t port);
     #endif
+    // Public so the tests in test/ can see what a module published: with no broker connected
+    // nothing leaves this queue, and sendRemote() keeps only the latest payload per topic.
+    std::list<System_Message> outgoing;
   protected:
     friend class System_Message;
-    std::list<System_Message> outgoing;
     std::list<System_Message> incoming;
     std::forward_list<System_Message> subscriptions;
     #ifdef ESP32
