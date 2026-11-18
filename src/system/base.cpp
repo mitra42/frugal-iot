@@ -19,7 +19,7 @@ System_Base::System_Base(const char * const id, const String name)
 void System_Base::statusLine(Print* out, const char* leaf, const String& value) {
   out->print(id); out->print('/'); out->print(leaf);
   out->print(' '); out->print(value);
-  if (frugal_iot.fs_LittleFS && frugal_iot.fs_LittleFS->exists(String("/") + id + "/" + leaf)) {
+  if (frugal_iot.fs_LittleFS && frugal_iot.fs_LittleFS->exists(frugal_iot.fs_LittleFS->configPath(id, leaf))) {
     out->print(" *");
   }
   out->print('\n');
@@ -32,7 +32,7 @@ void System_Base::statusLine(Print* out, const char* leaf, const String& value) 
  * override this and add to it; see System_MQTT for the shape.
  */
 void System_Base::statusLines(Print* out, bool full) {
-  if (full || (frugal_iot.fs_LittleFS && frugal_iot.fs_LittleFS->exists(String("/") + id + "/name"))) {
+  if (full || (frugal_iot.fs_LittleFS && frugal_iot.fs_LittleFS->exists(frugal_iot.fs_LittleFS->configPath(id, "name")))) {
     statusLine(out, "name", name);
   }
 }

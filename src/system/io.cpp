@@ -82,10 +82,12 @@ void IO::send() {
  * like one that will come back after a reboot, and on a node in a field that difference is most
  * of what you want to know.
  */
-// maybeWriteToFS() appends /value for the IO's own value, and uses the bare leaf for a parameter
+// maybeWriteToFS() appends /value for the IO's own value, and uses the bare leaf for a parameter.
+// configPath(), as the writes use - this built the pre-flat "/sht/temperature/value" path, so after
+// the flat layout (c63f5676) nothing was ever marked; caught by test/suites/test_hysteresis.
 bool IO::persisted(const char* param) {
   return frugal_iot.fs_LittleFS
-      && frugal_iot.fs_LittleFS->exists(String("/") + topicTwig + "/" + (param ? param : "value"));
+      && frugal_iot.fs_LittleFS->exists(frugal_iot.fs_LittleFS->configPath(sensorId, String(id) + "/" + (param ? param : "value")));
 }
 
 void IO::statusLine(Print* out, const char* param, const String& value, bool isPersisted, const String& defaultValue) {
