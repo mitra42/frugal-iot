@@ -647,30 +647,34 @@ def example_readme_block(conv: "PlatformIOConverter", sketch: str, has_shim: boo
                 for _bd, a, o in groups for m in [a] + o}
 
     out = [README_BEGIN, ""]
+    wiki = "https://github.com/mitra42/frugal-iot/wiki/Getting-Started"
+    example_env = default_env or (conv.pio_only_envs[0] if conv.pio_only_envs else "<env>")
 
     out += ["## PlatformIO", "",
-            "    pio run -e <env>              # build",
-            "    pio run -e <env> -t upload    # build and flash",
-            "    pio run -e <env> -t uploadfs  # write data/ (wifi credentials, config)", ""]
-    pio_only = [f"`{e}`" for e in conv.pio_only_envs]
-    if default_env:
-        out += [f"`<env>` is a name from the table below, for example `{default_env}`"
-                + (f" - or {', '.join(pio_only)}, which only PlatformIO can build." if pio_only else "."), ""]
-    elif pio_only:
-        out += [f"`<env>` is {' or '.join(pio_only)}.", ""]
-    out += ["Before flashing, give the node your organization's enrolment secret: copy",
-            "`templates/platformio-secrets-local.ini.template` from the library to",
-            "`platformio-secrets-local.ini` beside `platformio.ini`, and paste the line the dashboard",
-            "gives you (gear icon > Nodes > Enrolment secret) over the placeholder. Without it the node",
-            "is refused until an administrator approves it by hand. `platformio-local.ini.template` is",
-            "the optional one, for your own debug flags and serial port. Neither file is committed.", ""]
+            f"1. Copy this folder (`examples/{sketch}` in [frugal-iot](https://github.com/mitra42/frugal-iot))"
+            " to wherever you keep projects.",
+            "2. In VS Code, **PlatformIO Home > Open Project**, and choose that folder.",
+            "3. In the status bar, pick the environment for your board"
+            + (" from the table below" if groups else "") + ", and plug the board in.",
+            "4. **Upload** (→), then **Serial Monitor** (the plug icon) to watch it start.", "",
+            f"Or from a terminal: `pio run -e {example_env} -t upload -t monitor`", ""]
+    if groups and conv.pio_only_envs:
+        out += [f"PlatformIO only: {', '.join(f'`{e}`' for e in conv.pio_only_envs)}.", ""]
+
+    next_steps = ["## Next steps", "",
+                  f"* Connect it to WiFi and see it on the dashboard: [Getting Started]({wiki}).",
+                  "* Debug messages (PlatformIO): copy `templates/platformio-local.ini.template` from the"
+                  " library to `platformio-local.ini` beside `platformio.ini`, and uncomment the flags you want.",
+                  "* So the node joins your organization without an administrator approving it, add its"
+                  " enrolment secret: `templates/platformio-secrets-local.ini.template` (PlatformIO) or"
+                  " `platform-secrets-local.h.template` (Arduino IDE) - each says how.",
+                  f"* Won't build? Run `python3 frugal_iot_doctor.py` (from the library's `scripts/`) in this folder, or see [Getting Started]({wiki}#if-it-does-not-work).", ""]
 
     if not groups:
         # Every env is PIO ONLY - nothing for the Arduino IDE to build
         out += ["## Arduino IDE", "",
-                f"This example is PlatformIO only: {', '.join(pio_only)} "
-                f"{'needs' if len(pio_only) == 1 else 'need'} board files that the Arduino IDE cannot use.", "",
-                README_END]
+                f"This example is PlatformIO only - it needs board files the Arduino IDE cannot use.", ""]
+        out += next_steps + [README_END]
         return "\n".join(out) + "\n"
 
     # Named per family, so an ESP32-only example does not send people off to add a board URL
@@ -678,25 +682,22 @@ def example_readme_block(conv: "PlatformIOConverter", sketch: str, has_shim: boo
     if "espressif32" in families:
         cores.append("**esp32** by Espressif Systems")
     if "espressif8266" in families:
-        cores.append("**esp8266** by ESP8266 Community (add "
+        cores.append("**esp8266** by ESP8266 Community (first add "
                      "`https://arduino.esp8266.com/stable/package_esp8266com_index.json` under "
-                     "**File > Preferences > Additional boards manager URLs** first)")
-    out += ["## Arduino IDE", "",
-            "1. **Tools > Manage Libraries**, search for **Frugal-IoT** and install it. When it asks",
-            "   about the libraries it depends on, choose **Install All**.",
-            "2. **Tools > Board > Boards Manager**, and install "
-            + (cores[0] if len(cores) == 1 else "the one for your chip: " + ", or ".join(cores)) + ".",
-            f"3. **File > Examples > Frugal-IoT > {sketch}**, then **Tools > Board** and pick the row",
-            "   for your hardware.",
-            "4. **File > Save As** to keep your own copy, then give it your organization's enrolment",
-            "   secret: copy `platform-secrets-local.h.template` from the library's `templates/` folder",
-            "   (in your sketchbook, under `libraries/Frugal-IoT`) into the sketch folder (**Sketch > Show",
-            "   Sketch Folder**) as `platform-secrets-local.h`, and paste the secret from the dashboard",
-            "   (gear icon > Nodes > Enrolment secret). Without it the node is refused until an",
-            "   administrator approves it by hand."
-            , "",
-            f"Opening `{sketch}.ino` from a download or a git clone does not install the library, and",
-            "the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first.", ""]
+                     "**File > Preferences > Additional boards manager URLs**)")
+    steps = [
+        "**Tools > Manage Libraries**, install **Frugal-IoT**, and choose **Install All** when it asks about dependencies.",
+        "**Tools > Board > Boards Manager**, and install "
+        + (cores[0] if len(cores) == 1 else "the one for your chip: " + ", or ".join(cores)) + ".",
+        f"**File > Examples > Frugal-IoT > {sketch}**, then **File > Save As** to keep your own copy.",
+    ]
+    if has_shim:
+        steps.append(f"ESP8266 only: **Sketch > Show Sketch Folder**, and rename `{SHIM_PREFIX}{sketch}.ino.globals.h`"
+                     f" to match your sketch, e.g. `{sketch}.ino.globals.h`.")
+    steps += ["**Tools > Board**: the row for your hardware in the table below. **Tools > Port**: your board.",
+              "**Upload** (→), then **Tools > Serial Monitor** at 115200 baud to watch it start."]
+    out += ["## Arduino IDE", ""] + [f"{i}. {t}" for i, t in enumerate(steps, 1)] + [""]
+
     out += ["| Tools > Board | configuration | also define |",
             "| --- | --- | --- |"]
     for _board_define, active, others in groups:
@@ -709,11 +710,17 @@ def example_readme_block(conv: "PlatformIOConverter", sketch: str, has_shim: boo
     cdc = [m[0] for _bd, a, o in groups for m in [a] + o if needs_cdc_on_boot(m[1])]
     if cdc:
         names = ", ".join(f"`{e}`" for e in cdc)
-        out += [f"For {names}, also set **Tools > USB CDC On Boot > Enabled**. The board has no USB-serial",
-                "chip, so without it the Serial Monitor stays empty - the build stops to remind you.", ""]
-    if pio_only:
-        out += [f"Not in the table: {', '.join(pio_only)}, which only PlatformIO can build - "
-                f"{'it needs' if len(pio_only) == 1 else 'they need'} board files the Arduino IDE cannot use.", ""]
+        out += [f"For {names}, also set **Tools > USB CDC On Boot > Enabled**, or the Serial Monitor stays empty.", ""]
+
+    out += next_steps
+
+    # Arduino IDE problems - after the success path, so they do not get in its way
+    trouble = ["*Frugal-IoT.h: No such file or directory* - the library is not installed (step 1);"
+               " opening the `.ino` from a download does not install it."]
+    if has_min_spiffs:
+        trouble.append("*text section exceeds available space* - **Tools > Partition Scheme > Minimal SPIFFS**"
+                       " if offered. Otherwise rename `min_spiffs.csv` to `partitions.csv` in the sketch folder and"
+                       " choose **No OTA (2MB APP/2MB SPIFFS)**; OTA still works, as `partitions.csv` sets the real layout.")
 
     lora_macros = loramesher_board_defines()
     # Up to the comma, as the TTGO label goes on to name a Board Revision; the table has that
@@ -724,19 +731,12 @@ def example_readme_block(conv: "PlatformIOConverter", sketch: str, has_shim: boo
         # LoRaMesher is not in the Library Manager, so depends= cannot pull it in - and Add .ZIP
         # Library installs no dependencies, hence RadioLib named separately
         named = " and ".join(filter(None, [", ".join(lora_boards[:-1]), lora_boards[-1]]))
-        one = len(lora_boards) == 1
-        out += [f"The LoRa {'board' if one else 'boards'} - {named} - also "
-                f"{'needs' if one else 'need'} LoRaMesher, which is not in the Library Manager:", "",
-                f"1. Download [LoRaMesher as a zip]({LORAMESHER_ZIP}) - leave it zipped.",
-                "2. **Sketch > Include Library > Add .ZIP Library**, and choose that file.",
-                "3. **Tools > Manage Libraries**, and install **RadioLib**, which LoRaMesher uses.", "",
-                "Without it the build stops with *loramesher.hpp: No such file or directory*.", ""]
+        trouble.append(f"*loramesher.hpp: No such file* ({named}) - download [LoRaMesher as a zip]({LORAMESHER_ZIP}),"
+                       " **Sketch > Include Library > Add .ZIP Library**, then install **RadioLib** from the Library Manager.")
 
     if multi:
-        # Only worth explaining on an example that actually has one; most do not. The example
-        # macro has to come from a board of the family the bullet is about - quoting an ESP32
-        # board's selector in the ESP8266 instruction is exactly the sort of thing someone
-        # copies verbatim.
+        # The example macro has to come from a board of the family the bullet is about - quoting an
+        # ESP32 board's selector in the ESP8266 instruction is exactly the sort of thing someone copies verbatim.
         def sample_selector(want_family):
             for _bd, _active, siblings in multi:
                 env_name = siblings[0][0]
@@ -746,51 +746,21 @@ def example_readme_block(conv: "PlatformIOConverter", sketch: str, has_shim: boo
 
         esp32_sel = sample_selector("espressif32")
         esp8266_sel = sample_selector("espressif8266")
-        out += [
-            "A board listed **twice** has two sets of settings in this example, and the Arduino IDE",
-            "has no way to ask for one - it only knows boards. So you get the row with an empty last",
-            "column unless you define that macro. It has to reach the whole build rather than just the",
-            "sketch, because the library's own sources read these settings too:", ""]
+        how = []
         if esp32_sel:
-            out += [f"* **ESP32** - put the line `-D{esp32_sel}` in a file called `build_opt.h`,",
-                    f"  beside `{sketch}.ino`. Despite the `.h`, that file holds **compiler flags, not",
-                    f"  C**: a `#define` in it stops the build with *no such file or directory*. The",
-                    f"  core copies it into the build and passes it to every source file."]
+            how.append(f"on ESP32 put the line `-D{esp32_sel}` in a file `build_opt.h` beside `{sketch}.ino`"
+                       " (compiler flags, not a `#define`)")
         if esp8266_sel:
-            out += [f"* **ESP8266** - add `#define {esp8266_sel}` to `{sketch}.ino.globals.h` (once renamed,",
-                    f"  see below), above its `#include`. The core force-includes that file into every source file."]
-        out += [""]
+            how.append(f"on ESP8266 add `#define {esp8266_sel}` above the `#include` in `{sketch}.ino.globals.h`")
+        trouble.append("A board listed twice - you get the row with an empty last column unless you define that macro: "
+                       + "; ".join(how) + ".")
 
-    out += ["Pick a board that is not in the table and the build stops with a message listing the ones",
-            "that are - rather than quietly compiling on the library's defaults, which for most boards",
-            "means the wrong pins.", ""]
     if sketch != "all":  # examples/all is where the other boards' [env:] sections live
-        out += ["Board not listed? `examples/all/platformio.ini` has `[env:]` sections for more boards,",
-                "including the LoRa ones. Copy one into this example's `platformio.ini`, add the pins this",
-                "example uses, and re-run `scripts/generate_platform_h.py` to rebuild `platform.h`.", ""]
+        trouble.append("Board not in the table - the build stops and lists the ones that are. `examples/all/platformio.ini`"
+                       " has more boards: copy one into this `platformio.ini`, add this example's pins, and re-run"
+                       " `scripts/generate_platform_h.py`.")
 
-    if has_shim:
-        out += ["## ESP8266: one extra step", "",
-                "In your saved copy, **Sketch > Show Sketch Folder** and rename",
-                f"`{SHIM_PREFIX}{sketch}.ino.globals.h` to `{sketch}.ino.globals.h` - just remove the `{SHIM_PREFIX}`. If you",
-                f"saved it under a new name, use that: `mytank.ino` needs `mytank.ino.globals.h`. Without it",
-                "the build stops with a message saying so. ESP32 and PlatformIO users leave the file alone.", "",
-                "The ESP8266 core reads only a file with exactly that name, which is how the settings in",
-                "`platform.h` reach it. The example cannot ship it under that name, because the Arduino IDE",
-                "then leaves the example out of **File > Examples**.", ""]
-
-    if has_min_spiffs:
-        out += ["## If it does not fit", "",
-                "*\"text section exceeds available space in board\"* means this board's default flash",
-                "layout has less app space than the sketch needs. **Tools > Partition Scheme** and pick",
-                "**Minimal SPIFFS (1.9MB APP with OTA/128KB SPIFFS)** if your board offers it. Most of",
-                "these boards do not, and then:", "",
-                "1. **Sketch > Show Sketch Folder**, and rename `min_spiffs.csv` to `partitions.csv`.",
-                "2. **Tools > Partition Scheme >** choose **No OTA (2MB APP/2MB SPIFFS)**.", "",
-                "Over-the-air updates still work despite that menu label: step 1 is what sets the real",
-                "layout and it keeps both OTA slots. The menu choice only raises the size limit the IDE",
-                "checks against.", ""]
-
+    out += ["## Arduino IDE problems", ""] + [f"* {t}" for t in trouble] + [""]
     out += [README_END]
     return "\n".join(out) + "\n"
 

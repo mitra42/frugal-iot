@@ -6,35 +6,21 @@ Frugal IoT - Google Sheets - largely abandoned and done on frugal-iot-logger
 
 ## PlatformIO
 
-    pio run -e <env>              # build
-    pio run -e <env> -t upload    # build and flash
-    pio run -e <env> -t uploadfs  # write data/ (wifi credentials, config)
+1. Copy this folder (`examples/gsheets` in [frugal-iot](https://github.com/mitra42/frugal-iot)) to wherever you keep projects.
+2. In VS Code, **PlatformIO Home > Open Project**, and choose that folder.
+3. In the status bar, pick the environment for your board from the table below, and plug the board in.
+4. **Upload** (→), then **Serial Monitor** (the plug icon) to watch it start.
 
-`<env>` is a name from the table below, for example `c3_pico`.
-
-Before flashing, give the node your organization's enrolment secret: copy
-`templates/platformio-secrets-local.ini.template` from the library to
-`platformio-secrets-local.ini` beside `platformio.ini`, and paste the line the dashboard
-gives you (gear icon > Nodes > Enrolment secret) over the placeholder. Without it the node
-is refused until an administrator approves it by hand. `platformio-local.ini.template` is
-the optional one, for your own debug flags and serial port. Neither file is committed.
+Or from a terminal: `pio run -e c3_pico -t upload -t monitor`
 
 ## Arduino IDE
 
-1. **Tools > Manage Libraries**, search for **Frugal-IoT** and install it. When it asks
-   about the libraries it depends on, choose **Install All**.
-2. **Tools > Board > Boards Manager**, and install the one for your chip: **esp32** by Espressif Systems, or **esp8266** by ESP8266 Community (add `https://arduino.esp8266.com/stable/package_esp8266com_index.json` under **File > Preferences > Additional boards manager URLs** first).
-3. **File > Examples > Frugal-IoT > gsheets**, then **Tools > Board** and pick the row
-   for your hardware.
-4. **File > Save As** to keep your own copy, then give it your organization's enrolment
-   secret: copy `platform-secrets-local.h.template` from the library's `templates/` folder
-   (in your sketchbook, under `libraries/Frugal-IoT`) into the sketch folder (**Sketch > Show
-   Sketch Folder**) as `platform-secrets-local.h`, and paste the secret from the dashboard
-   (gear icon > Nodes > Enrolment secret). Without it the node is refused until an
-   administrator approves it by hand.
-
-Opening `gsheets.ino` from a download or a git clone does not install the library, and
-the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first.
+1. **Tools > Manage Libraries**, install **Frugal-IoT**, and choose **Install All** when it asks about dependencies.
+2. **Tools > Board > Boards Manager**, and install the one for your chip: **esp32** by Espressif Systems, or **esp8266** by ESP8266 Community (first add `https://arduino.esp8266.com/stable/package_esp8266com_index.json` under **File > Preferences > Additional boards manager URLs**).
+3. **File > Examples > Frugal-IoT > gsheets**, then **File > Save As** to keep your own copy.
+4. ESP8266 only: **Sketch > Show Sketch Folder**, and rename `X_gsheets.ino.globals.h` to match your sketch, e.g. `gsheets.ino.globals.h`.
+5. **Tools > Board**: the row for your hardware in the table below. **Tools > Port**: your board.
+6. **Upload** (→), then **Tools > Serial Monitor** at 115200 baud to watch it start.
 
 | Tools > Board | configuration | also define |
 | --- | --- | --- |
@@ -45,45 +31,18 @@ the build stops with *Frugal-IoT.h: No such file or directory* - do step 1 first
 | LOLIN(WEMOS) D1 R2 & mini | `d1_mini` |  |
 | Heltec WiFi LoRa 32(V3) | `heltec_wifi_lora_32_V32` |  |
 
-The LoRa board - Heltec WiFi LoRa 32(V3) - also needs LoRaMesher, which is not in the Library Manager:
+## Next steps
 
-1. Download [LoRaMesher as a zip](https://github.com/loramesher/LoRaMesher/archive/refs/heads/main.zip) - leave it zipped.
-2. **Sketch > Include Library > Add .ZIP Library**, and choose that file.
-3. **Tools > Manage Libraries**, and install **RadioLib**, which LoRaMesher uses.
+* Connect it to WiFi and see it on the dashboard: [Getting Started](https://github.com/mitra42/frugal-iot/wiki/Getting-Started).
+* Debug messages (PlatformIO): copy `templates/platformio-local.ini.template` from the library to `platformio-local.ini` beside `platformio.ini`, and uncomment the flags you want.
+* So the node joins your organization without an administrator approving it, add its enrolment secret: `templates/platformio-secrets-local.ini.template` (PlatformIO) or `platform-secrets-local.h.template` (Arduino IDE) - each says how.
+* Won't build? Run `python3 frugal_iot_doctor.py` (from the library's `scripts/`) in this folder, or see [Getting Started](https://github.com/mitra42/frugal-iot/wiki/Getting-Started#if-it-does-not-work).
 
-Without it the build stops with *loramesher.hpp: No such file or directory*.
+## Arduino IDE problems
 
-Pick a board that is not in the table and the build stops with a message listing the ones
-that are - rather than quietly compiling on the library's defaults, which for most boards
-means the wrong pins.
-
-Board not listed? `examples/all/platformio.ini` has `[env:]` sections for more boards,
-including the LoRa ones. Copy one into this example's `platformio.ini`, add the pins this
-example uses, and re-run `scripts/generate_platform_h.py` to rebuild `platform.h`.
-
-## ESP8266: one extra step
-
-In your saved copy, **Sketch > Show Sketch Folder** and rename
-`X_gsheets.ino.globals.h` to `gsheets.ino.globals.h` - just remove the `X_`. If you
-saved it under a new name, use that: `mytank.ino` needs `mytank.ino.globals.h`. Without it
-the build stops with a message saying so. ESP32 and PlatformIO users leave the file alone.
-
-The ESP8266 core reads only a file with exactly that name, which is how the settings in
-`platform.h` reach it. The example cannot ship it under that name, because the Arduino IDE
-then leaves the example out of **File > Examples**.
-
-## If it does not fit
-
-*"text section exceeds available space in board"* means this board's default flash
-layout has less app space than the sketch needs. **Tools > Partition Scheme** and pick
-**Minimal SPIFFS (1.9MB APP with OTA/128KB SPIFFS)** if your board offers it. Most of
-these boards do not, and then:
-
-1. **Sketch > Show Sketch Folder**, and rename `min_spiffs.csv` to `partitions.csv`.
-2. **Tools > Partition Scheme >** choose **No OTA (2MB APP/2MB SPIFFS)**.
-
-Over-the-air updates still work despite that menu label: step 1 is what sets the real
-layout and it keeps both OTA slots. The menu choice only raises the size limit the IDE
-checks against.
+* *Frugal-IoT.h: No such file or directory* - the library is not installed (step 1); opening the `.ino` from a download does not install it.
+* *text section exceeds available space* - **Tools > Partition Scheme > Minimal SPIFFS** if offered. Otherwise rename `min_spiffs.csv` to `partitions.csv` in the sketch folder and choose **No OTA (2MB APP/2MB SPIFFS)**; OTA still works, as `partitions.csv` sets the real layout.
+* *loramesher.hpp: No such file* (Heltec WiFi LoRa 32(V3)) - download [LoRaMesher as a zip](https://github.com/loramesher/LoRaMesher/archive/refs/heads/main.zip), **Sketch > Include Library > Add .ZIP Library**, then install **RadioLib** from the Library Manager.
+* Board not in the table - the build stops and lists the ones that are. `examples/all/platformio.ini` has more boards: copy one into this `platformio.ini`, add this example's pins, and re-run `scripts/generate_platform_h.py`.
 
 <!-- END generated -->
