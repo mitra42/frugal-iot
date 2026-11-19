@@ -19,7 +19,9 @@
 // #define SYSTEM_RS485_RX_PIN 20
 // #define SYSTEM_RS485_TX_PIN 21
 // #define SYSTEM_SD_WANT // Uses LittleFS by default
+// #define SYSTEM_WIFI_SCANPERIOD 50000 // Slow down scanning so can easier debug captive portal
 // #define LORAMESHER_LOG_LEVEL 2 // 0 is LOTS of debugging 2 is less
+// #define DEBUG_DNSSERVER // If captive portal not seeing requests - as happening on ESP8266
 // #define ACTUATOR_LCD_DEBUG
 // #define CONTROL_BLINKEN_DEBUG
 // #define CONTROL_LOGGERFS_DEBUG
@@ -31,10 +33,17 @@
 // #define SENSOR_MS5803_DEBUG
 // #define SENSOR_SHT_DEBUG
 // #define SENSOR_SOIL_DEBUG
+// #define SYSTEM_DISCOVERY_DEBUG
+// #define SYSTEM_FRUGAL_DEBUG
+// #define SYSTEM_LITTLEFS_DEBUG
 #define SYSTEM_LITTLEFS_SUPPORTDEPRECATED // one-shot migration old to new file format, remove when none left in field
+// #define SYSTEM_FS_DEBUG_DIR // List the whole LittleFS directory tree at boot
+// #define SYSTEM_MEMORY_DEBUG // cos seeing intermittent crash after some period (>7 mins)
 // #define SYSTEM_MESSAGE_DEBUG
 // #define SYSTEM_MQTT_DEBUG
+// #define SYSTEM_OTA_DEBUG
 // #define SYSTEM_POWER_DEBUG
+// #define SYSTEM_TIME_DEBUG
 // #define SYSTEM_WIFI_DEBUG
 #define SYSTEM_OTA_PREFIX "all"
 #define CONFIG_ASYNC_TCP_STACK_SIZE 4096
