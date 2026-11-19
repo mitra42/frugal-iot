@@ -430,6 +430,16 @@ def check_pio_libdeps(env, family, libdeps, local_libs, local_frugal):
 
 TEMPLATES_URL = "https://github.com/mitra42/frugal-iot/tree/main/templates"
 PLACEHOLDER = "paste-your-enrolment-secret-here"  # what the templates ship with
+ORG_PLACEHOLDER = "paste-your-organization-here"
+
+
+def org_unfilled(text):
+    """True if SYSTEM_FRUGAL_ORG is still the template's placeholder, on a line that is not commented out."""
+    live = [l for l in text.splitlines() if not l.strip().startswith((";", "//"))]
+    return any(ORG_PLACEHOLDER in l for l in live)
+
+
+ORG_HOW = "Set SYSTEM_FRUGAL_ORG to your organization - the dashboard prints it under the secret."
 
 
 def find_template(name, *roots):
@@ -505,6 +515,8 @@ def check_pio_local_files(project, cfg):
             else:
                 report("WARN", f"{secrets.name} has the enrolment secret {state} - {REFUSED}",
                        "Paste the line from the dashboard: gear icon -> Nodes -> Enrolment secret.")
+            if org_unfilled(secrets.read_text(errors="replace")):
+                report("WARN", f"{secrets.name} still has the placeholder organization - {REFUSED}", ORG_HOW)
         else:
             report("WARN", f"no {secrets.name} - {REFUSED}",
                    f"Copy {find_template(secrets.name + '.template', *roots)}\n"
@@ -678,6 +690,8 @@ def check_arduino_sketch(sketch, frugal, libdir):
         else:
             report("WARN", f"{header.name} has the enrolment secret {state} - {REFUSED}",
                    "Paste it from the dashboard: gear icon -> Nodes -> Enrolment secret.")
+        if org_unfilled(header.read_text(errors="replace")):
+            report("WARN", f"{header.name} still has the placeholder organization - {REFUSED}", ORG_HOW)
     elif in_globals:
         report("OK", "the ESP8266 globals file sets the enrolment secret (value not shown)")
     else:
